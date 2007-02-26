@@ -1,0 +1,153 @@
+source index.html::
+
+    {% page extends='layout.html', defaultfilter='autoescape',
+            charset='utf-8' %}
+
+    {% def title %}Index | {{ super.title }}{% enddef %}
+    {% def body %}
+      <h1>Index</h1>
+      <p>
+        This is just a mockup template so that you can see how the new
+        jinja syntax looks like. It also shows the python output of this
+        template when compiled.
+      </p>
+      <ul>
+        {% for user in users %}
+          <li class="{% cycle 'row1', 'row2' %}">{{ user.username }}</li>
+        {% endfor %}
+      </ul>
+    {% enddef %}
+
+source layout.html::
+
+    {% page defaultfilter='autoescape', charset='utf-8' %}
+    <html>
+      <head>
+        <title>{% block title %}My Webpage{% endblock %}</title>
+      </head>
+      <body>
+        <div class="header">
+          <h1>My Webpage</h1>
+          <h2>{{ self.title }}</h2>
+        </div>
+        <div class="body">
+          {{ self.body }}
+        </div>
+        <div class="footer">
+          {% block footer %}
+            Copyright 2007 by the Pocoo Team.
+          {% endblock %}
+        </div>
+      </body>
+    </html>
+
+generated python code::
+
+    from jinja.runtime import Template, Markup
+
+    class Layer1Template(Template):
+
+        defaultfilter = 'autoescape'
+
+        def p_title(self):
+            yield Markup(u'My Webpage')
+
+        def p_footer(self):
+            yield Markup(u'\n        Copyright 2007 by the Pocoo Team.\n      ')
+
+        def p_outer_body(self):
+            yield Markup(u'<html>\n  <head>\n    <title>\n')
+            for i in self.resolve('self.title'):
+                yield i
+            yield Markup(u'</title>\n  </head>\n  <body>\n    <div class="header">\n'
+                         u'      <h1>My Webpage</h1>\n      <h2>')
+            for i in self.resolve('self.title'):
+                yield i
+            yield Markup(u'</h2>\n    </div>\n    <div class="body">\n      ')
+            for i in self.resolve('self.body'):
+                yield i
+            yield Markup(u'\n    </div>\n    <div class="footer">\n      ')
+            for i in self.resolve('self.footer'):
+                yield i
+            yield Markup(u'\n    </div>\n  </body>\n</html')
+
+    class Layer2Template(Layer1Template):
+
+        defaultfilter = 'autoescape'
+
+        def p_title(self):
+            yield Markup(u'Index | ')
+            for i in self.resolve('super.title'):
+                yield i
+
+        def p_body(self):
+            yield Markup(u'\n  <h1>Index</h1>\n  <p>\n    This is just a mockup '
+                         u'template so that you can see how the new jinja syntax '
+                         u'looks like. It also shows the python output of this '
+                         u'template when compiled.\n  </p>\n  <ul>\n    ')
+            iteration_1 = self.start_iteration(['user'], 'users')
+            for _ in iteration_1:
+                yield Markup(u'\n      <li class="')
+                for i in self.cycle(u'row1', u'row2'):
+                    yield i
+                yield Markup(u'">')
+                for i in self.resolve('user.username'):
+                    yield i
+                yield Markup(u'</li>\n      ')
+            iteration_1.close()
+
+    def get_template(context):
+        return Layer2Template(context)
+
+generated javascript code::
+
+    (function(c) {
+        var m = function(x) { return new Jinja.Markup(x) };
+
+        var l1 = function() {};
+        l1.defaultfilter = 'autoescape';
+        l1.prototype.p_title = function() {
+            this.yield(m('My Webpage'));
+        };
+        l1.prototype.p_footer = function() {
+            this.yield(m('\n        Copyright 2007 by the Pocoo Team.\n      '));
+        };
+        l1.prototype.p_outer_body = function() {
+            this.yield(m('<html>\n  <head>\n    <title>\n'));
+            this.resolve('self.title');
+            this.yield(m('</title>\n  </head>\n  <body>\n    <div class="header">\n'
+                         '      <h1>My Webpage</h1>\n      <h2>'));
+            this.resolve('self.title');
+            this.yield(m('</h2>\n    </div>\n    <div class="body">\n      '));
+            this.resolve('self.body');
+            this.yield(m('\n    </div>\n    <div class="footer">\n      '));
+            this.resolve('self.footer');
+            this.yield(m('\n    </div>\n  </body>\n</html'));
+        };
+
+        var l2 = function() {};
+        l2.defaultfilter = 'autoescape';
+        l2.prototype.p_title = function() {
+            this.yield(m('Index | '));
+            this.resolve('super.title');
+        };
+        l2.prototype.p_body = function() {
+            this.yield(m('\n  <h1>Index</h1>\n  <p>\n    This is just a mockup '
+                         'template so that you can see how the new jinja syntax '
+                         'looks like. It also shows the python output of this '
+                         'template when compiled.\n  </p>\n  <ul>\n    '));
+            var iteration_1 = this.startIteration(['user'], 'users');
+            while (iteration_1.next()) {
+                this.yield(m('\n      <li class="'));
+                this.cycle('row1', 'row2');
+                this.yield(m('">'));
+                this.resolve('user.username');
+                this.yield('</li>\n      ');
+            };
+            iteration_1.close();
+        };
+
+        return function(context) {
+            return new Jinja.Template(context, l1, l2);
+        };
+    })();

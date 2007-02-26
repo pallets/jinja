@@ -1,0 +1,61 @@
+Jinja 1.0 Syntax
+================
+
+<ul>
+{% for char in my_string|upper|replace(" ", "") %}
+    <li>{{ loop.index }} - {{ char|e }}</li>
+{% endfor %}
+</ul>
+
+{{ variable|strip(" ")|escape|replace("a", "b") }}
+
+{% if item == 42 %}
+    ...
+{% endif %}
+
+{% if item|odd? %}
+    applies the odd? filter which returns true if the
+    item in is odd.
+{% endif %}
+
+{{ item|e(true) }} -- escape the variable for attributes
+
+<ul>
+{% for item in seq %}
+    <li>{{ item.current|e }}
+        {% if item.items %}<ul>{% recurse item.items %}</ul>{% endif %}
+    </li>
+{% endfor %}
+</ul>
+
+How a Filter Looks Like
+=======================
+
+def replace(search, repl):
+    def wrapped(env, value):
+        return env.to_unicode(value).replace(search, repl)
+    return wrapped
+
+
+def escape(attr=False):
+    def wrapped(env, value):
+        return cgi.escape(env.to_unicode(value), attr)
+    return wrapped
+
+
+def odd():
+    return lambda env, value: value % 2 == 1
+odd.__name__ = 'odd?'
+
+
+@stringfilter
+def replace(value, search, repl):
+    return value.replace(search, repl)
+
+
+def stringfilter(f):
+    def decorator(*args):
+        def wrapped(env, value):
+            return f(env.to_unicode(value), *args)
+        return wrapped
+    return decorator

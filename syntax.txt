@@ -1,0 +1,22 @@
+For Loops
+---------
+
+Simple Syntax::
+
+    {% for <item> in <seq> %}
+        <data>
+    {% endfor %}
+
+Item Unpacking::
+
+    {% for <item1>, <item2> in <seq> %}
+        <data>
+    {% endfor %}
+
+With else block::
+    
+    {% for <item> in <seq> %}
+        <data>
+    {% else %}
+        <data>
+    {% endfor %}

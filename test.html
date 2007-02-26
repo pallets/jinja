@@ -1,0 +1,53 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML Frameset//EN"
+  "http://www.w3.org/TR/xhtml1/DTD/xhtml1-frameset.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml">
+  <head>
+    <title>{% block "page_title" %}Untitled{% endblock %} | My Webpage</title>
+    <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+    <link rel="stylesheet" href="screen.css" type="text/css" media="screen" />
+    <link rel="stylesheet" href="print.css" type="text/css" media="print" />
+    {% block html_head %}{% endblock %}
+  </head>
+  <body>
+    <div id="header">
+      <h1>My Webpage</h1>
+      <ul id="navigation">
+        {% for item in page_navigation %}
+          <li><a href="{{ item.url|e }}"{% if item.active %}
+            class="active"{% endif %}>{{ item.caption|e }}</a></li>
+        {% endfor %}
+      </ul>
+    </div>
+    <div id="body">
+      {% block body %}
+        content goes here.
+      {% endblock %}
+    </div>
+    <div id="sidebar">
+      <h2>Who is online?</h2>
+      <ul>
+      {% for user in online_users %}
+        <li class="row_{% cycle 'even', 'odd' %}"><a href="{{ user.url|e }}">{{ user.username|e }}</a></li>
+      {% endfor %}
+      </ul>
+      <h2>Sitemap</h2>
+      {% macro draw_sitemap(items) %}
+        <ul>
+        {% for item in items %}
+          <li>{{ item.name|e }}{% if item.items %}{{ draw_sitemap(item.items) }}{% endif %}</li>
+        {% endfor %}
+        </ul>
+      {% endmacro %}
+      {{ draw_sitemap(sitemap) }}
+      <!-- alternative solution -->
+      <ul>
+      {% for item in items %}
+        <li>{{ item.name|e }}{% if item.items %}<ul>{% recurse item.items %}</ul>{% endif %}</li>
+      {% endfor %}
+      </ul>
+    </div>
+    <div id="footer">
+      &copy; Copyrigh by yourself.
+    </div>
+  </body>
+</html>
