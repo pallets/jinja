@@ -22,7 +22,7 @@ operator_re = re.compile('(%s)' % '|'.join(
     # braces and parenthesis
     '[', ']', '(', ')', '{', '}',
     # attribute access and comparison / logical operators
-    '.', ',', '|', '==', '<', '>', '<=', '>=', '!=',
+    '.', ':', ',', '|', '==', '<', '>', '<=', '>=', '!=', '=',
     ur'or\b', ur'and\b', ur'not\b'
 ]))
 

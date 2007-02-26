@@ -10,7 +10,8 @@
 """
 from jinja.lexer import Lexer
 from jinja.parser import Parser
-from jinja.exceptions import TagNotFound, FilterNotFound
+from jinja.datastructure import LoopContext, Undefined
+from jinja.exceptions import FilterNotFound
 from jinja.defaults import DEFAULT_FILTERS
 
 
@@ -29,7 +30,6 @@ class Environment(object):
                  template_charset='utf-8',
                  charset='utf-8',
                  loader=None,
-                 tags=None,
                  filters=None):
 
         # lexer / parser information
@@ -54,15 +54,6 @@ class Environment(object):
         parser = Parser(self, source)
         return parser.parse_page()
 
-    def get_filter(self, name):
-        """
-        Return the filter for a given name. Raise a `FilterNotFound` exception
-        if the requested filter is not registered.
-        """
-        if name not in self._filters:
-            raise FilterNotFound(name)
-        return self._filters[name]
-
     def to_unicode(self, value):
         """
         Convert a value to unicode with the rules defined on the environment.
@@ -74,3 +65,46 @@ class Environment(object):
                 return unicode(value)
             except UnicodeError:
                 return str(value).decode(self.charset, 'ignore')
+
+    def iterate(self, seq):
+        """
+        Helper function used by the python translator runtime code to
+        iterate over a sequence.
+        """
+        try:
+            length = len(seq)
+        except TypeError:
+            seq = list(seq)
+            length = len(seq)
+        loop_data = LoopContext(0, length)
+        for item in seq:
+            loop_data.index += 1
+            yield loop_data, item
+
+    def prepare_filter(self, name, *args):
+        """
+        Prepare a filter.
+        """
+        try:
+            return self.filters[name](*args)
+        except KeyError:
+            raise FilterNotFound(name)
+
+    def apply_filters(self, value, context, filters):
+        """
+        Apply a list of filters on the variable.
+        """
+        for f in filters:
+            value = f(self, context, value)
+        return value
+
+    def get_attribute(self, obj, name):
+        """
+        Get the attribute name from obj.
+        """
+        try:
+            return getattr(obj, name)
+        except AttributeError:
+            return obj[name]
+        except:
+            return Undefined

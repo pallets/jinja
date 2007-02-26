@@ -36,7 +36,6 @@ def do_replace(s, old, new, count=None):
     if count is None:
         return s.replace(old, new)
     return s.replace(old, new, count)
-do_replace = stringfilter(do_replace)
 
 
 def do_upper(s):
@@ -46,7 +45,6 @@ def do_upper(s):
     Return a copy of s converted to uppercase.
     """
     return s.upper()
-do_upper = stringfilter(do_upper)
 
 
 def do_lower(s):
@@ -56,7 +54,6 @@ def do_lower(s):
     Return a copy of s converted to lowercase.
     """
     return s.lower()
-do_lower = stringfilter(do_lower)
 
 
 def do_escape(s, attribute=False):
@@ -70,7 +67,6 @@ def do_escape(s, attribute=False):
     if attribute:
         s = s.replace('"', "&quot;")
     return s
-do_escape = stringfilter(do_escape)
 
 
 def do_addslashes(s):
@@ -80,7 +76,6 @@ def do_addslashes(s):
     Adds slashes to s.
     """
     return s.encode('utf-8').encode('string-escape').decode('utf-8')
-do_addslashes = stringfilter(do_addslashes)
 
 
 def do_capitalize(s):
@@ -91,7 +86,6 @@ def do_capitalize(s):
     capitalized.
     """
     return s.capitalize()
-do_capitalize = stringfilter(do_capitalize)
 
 
 def do_title(s):
@@ -102,7 +96,6 @@ def do_title(s):
     characters, all remaining cased characters have lowercase.
     """
     return s.title()
-do_title = stringfilter(do_title)
 
 
 def do_default(default_value=u''):

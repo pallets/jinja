@@ -14,25 +14,13 @@ class TemplateError(RuntimeError):
     pass
 
 
-class TagNotFound(KeyError, TemplateError):
-    """
-    The parser looked for a specific tag in the tag library but was unable to find
-    one.
-    """
-
-    def __init__(self, tagname):
-        super(TagNotFound, self).__init__('The tag %r does not exist.' % tagname)
-        self.tagname = tagname
-
-
 class FilterNotFound(KeyError, TemplateError):
     """
-    The template engine looked for a filter but was unable to find it.
+    Raised if a filter does not exist.
     """
 
-    def __init__(self, filtername):
-        super(FilterNotFound, self).__init__('The filter %r does not exist.' % filtername)
-        self.filtername = filtername
+    def __init__(self, message):
+        KeyError.__init__(self, message)
 
 
 class TemplateSyntaxError(SyntaxError, TemplateError):
@@ -41,7 +29,7 @@ class TemplateSyntaxError(SyntaxError, TemplateError):
     """
 
     def __init__(self, message, pos):
-        super(TemplateSyntaxError, self).__init__(message)
+        SyntaxError.__init__(self, message)
         self.pos = pos
 
 
@@ -52,5 +40,5 @@ class TemplateRuntimeError(TemplateError):
     """
 
     def __init__(self, message, pos):
-        super(TemplateRuntimeError, self).__init__(message)
+        RuntimeError.__init__(self, message)
         self.pos = pos

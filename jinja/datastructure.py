@@ -79,11 +79,6 @@ class Context(object):
             raise TypeError('%r requires environment as first argument. '
                             'The rest of the arguments are forwarded to '
                             'the default dict constructor.')
-        initial.update(
-            false=False,
-            true=True,
-            none=None
-        )
         self._stack = [initial, {}]
 
     def pop(self):
@@ -113,6 +108,44 @@ class Context(object):
             for key, value in d.iteritems():
                 tmp[key] = value
         return 'Context(%s)' % repr(tmp)
+
+
+class LoopContext(object):
+    """
+    Simple class that provides special loop variables.
+    Used by `Environment.iterate`.
+    """
+
+    def __init__(self, index, length):
+        self.index = 0
+        self.length = length
+        try:
+            self.length = len(seq)
+        except TypeError:
+            self.seq = list(seq)
+            self.length = len(self.seq)
+        else:
+            self.seq = seq
+
+    def revindex(self):
+        return self.length - self.index + 1
+    revindex = property(revindex)
+
+    def revindex0(self):
+        return self.length - self.index
+    revindex0 = property(revindex0)
+
+    def index0(self):
+        return self.index - 1
+    index0 = property(index0)
+
+    def even(self):
+        return self.index % 2 == 0
+    even = property(even)
+
+    def odd(self):
+        return self.index % 2 == 1
+    odd = property(odd)
 
 
 class TokenStream(object):

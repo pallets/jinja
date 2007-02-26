@@ -10,6 +10,7 @@
 """
 from compiler import ast
 from jinja import nodes
+from jinja.exceptions import TemplateSyntaxError
 
 
 class PythonTranslator(object):
@@ -22,6 +23,13 @@ class PythonTranslator(object):
         self.node = node
         self.indention = 0
         self.last_pos = 0
+
+        self.constants = {
+            'true':                 'True',
+            'false':                'False',
+            'none':                 'None',
+            'undefined':            'Undefined'
+        }
 
         self.handlers = {
             # jinja nodes
@@ -45,6 +53,7 @@ class PythonTranslator(object):
             ast.Div:                self.handle_div,
             ast.Mul:                self.handle_mul,
             ast.Mod:                self.handle_mod,
+            ast.UnaryAdd:           self.handle_unary_add,
             ast.UnarySub:           self.handle_unary_sub,
             ast.Power:              self.handle_power,
             ast.Dict:               self.handle_dict,
@@ -52,8 +61,20 @@ class PythonTranslator(object):
             ast.Tuple:              self.handle_list,
             ast.And:                self.handle_and,
             ast.Or:                 self.handle_or,
-            ast.Not:                self.handle_not
+            ast.Not:                self.handle_not,
+            ast.Slice:              self.handle_slice,
+            ast.Sliceobj:           self.handle_sliceobj
         }
+
+        self.unsupported = {
+            ast.ListComp:           'list comprehensions',
+            ast.From:               'imports',
+            ast.Import:             'imports',
+        }
+        if hasattr(ast, 'GenExpr'):
+            self.unsupported.update({
+                ast.GenExpr:        'generator expressions'
+            })
 
     def indent(self, text):
         """
@@ -67,6 +88,10 @@ class PythonTranslator(object):
         """
         if node.__class__ in self.handlers:
             out = self.handlers[node.__class__](node)
+        elif node.__class__ in self.unsupported:
+            raise TemplateSyntaxError('unsupported syntax element %r found.'
+                                      % self.unsupported[node.__class__],
+                                      self.last_pos)
         else:
             raise AssertionError('unhandled node %r' % node.__class__)
         return out
@@ -150,6 +175,8 @@ class PythonTranslator(object):
         """
         Handle name assignments and name retreivement.
         """
+        if node.name in self.constants:
+            return self.constants[node.name]
         return 'context[%r]' % node.name
 
     def handle_compare(self, node):
@@ -177,7 +204,12 @@ class PythonTranslator(object):
             raise TemplateSyntaxError('attribute access requires one argument',
                                       self.last_pos)
         assert node.flags != 'OP_DELETE', 'wtf? do we support that?'
-        return 'get_attribute(%s, %s)' % (
+        if node.subs[0].__class__ is ast.Sliceobj:
+            return '%s[%s]' % (
+                self.handle_node(node.expr),
+                self.handle_node(node.subs[0])
+            )
+        return 'environment.get_attribute(%s, %s)' % (
             self.handle_node(node.expr),
             self.handle_node(node.subs[0])
         )
@@ -186,7 +218,7 @@ class PythonTranslator(object):
         """
         Handle hardcoded attribute access. foo.bar
         """
-        return 'get_attribute(%s, %r)' % (
+        return 'environment.get_attribute(%s, %r)' % (
             self.handle_node(node.expr),
             node.attrname
         )
@@ -201,9 +233,37 @@ class PythonTranslator(object):
         """
         We use the pipe operator for filtering.
         """
-        return 'environment.apply_filters(%s, [%s])' % (
+        filters = []
+        for n in node.nodes[1:]:
+            if n.__class__ is ast.CallFunc:
+                args = []
+                for arg in n.args:
+                    if arg.__class__ is ast.Keyword:
+                        raise TemplateSyntaxError('keyword arguments for '
+                                                  'filters are not supported.',
+                                                  self.last_pos)
+                    args.append(self.handle_node(arg))
+                if n.star_args is not None or n.dstar_args is not None:
+                    raise TemplateSynaxError('*args / **kwargs is not supported '
+                                             'for filters', self.last_pos)
+                args = ', '.join(args)
+                if args:
+                    args = ', ' + args
+                filters.append('environment.prepare_filter(%s%s)' % (
+                    self.handle_node(n.node),
+                    args
+                ))
+            elif n.__class__ is ast.Name:
+                filters.append('environment.prepare_filter(%s)' %
+                               self.handle_node(n))
+            else:
+                raise TemplateSyntaxError('invalid filter. filter must be a '
+                                          'hardcoded function name from the '
+                                          'filter namespace',
+                                          self.last_pos)
+        return 'environment.apply_filters(%s, context, [%s])' % (
             self.handle_node(node.nodes[0]),
-            ', '.join([self.handle_node(n) for n in node.nodes[1:]])
+            ', '.join(filters)
         )
 
     def handle_call_func(self, node):
@@ -275,6 +335,12 @@ class PythonTranslator(object):
             self.handle_node(node.right)
         )
 
+    def handle_unary_add(self, node):
+        """
+        One of the more or less unused nodes.
+        """
+        return '(+%s)' % self.handle_node(node.expr)
+
     def handle_unary_sub(self, node):
         """
         Make a number negative.
@@ -306,7 +372,7 @@ class PythonTranslator(object):
         We don't know tuples, tuples are lists for jinja.
         """
         return '[%s]' % ', '.join([
-            self.handle_node(n) for n in nodes
+            self.handle_node(n) for n in node.nodes
         ])
 
     def handle_and(self, node):
@@ -331,9 +397,39 @@ class PythonTranslator(object):
         """
         return 'not %s' % self.handle_node(node.expr)
 
+    def handle_slice(self, node):
+        """
+        Slice access.
+        """
+        if node.lower is None:
+            lower = ''
+        else:
+            lower = self.handle_node(node.lower)
+        if node.upper is None:
+            upper = ''
+        else:
+            upper = self.handle_node(node.upper)
+        assert node.flags != 'OP_DELETE', 'wtf? shouldn\'t happen'
+        return '%s[%s:%s]' % (
+            self.handle_node(node.expr),
+            lower,
+            upper
+        )
+
+    def handle_sliceobj(self, node):
+        """
+        Extended Slice access.
+        """
+        args = []
+        for n in node.nodes:
+            args.append(self.handle_node(n))
+        return '[%s]' % ':'.join(args)
+
     def translate(self):
         self.indention = 1
+        self.last_pos = 0
         lines = [
+            'from jinja.datastructures import Undefined',
             'def generate(environment, context, write, write_var=None):',
             '    """This function was automatically generated by',
             '    the jinja python translator. do not edit."""',
