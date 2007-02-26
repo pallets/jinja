@@ -201,9 +201,9 @@ class PythonTranslator(object):
         """
         We use the pipe operator for filtering.
         """
-        return 'environment.apply_filters(%s, %r)' % (
+        return 'environment.apply_filters(%s, [%s])' % (
             self.handle_node(node.nodes[0]),
-            [self.handle_node(n) for n in node.nodes[1:]]
+            ', '.join([self.handle_node(n) for n in node.nodes[1:]])
         )
 
     def handle_call_func(self, node):
