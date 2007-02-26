@@ -8,8 +8,4 @@
     :copyright: 2006 by Armin Ronacher.
     :license: BSD, see LICENSE for more details.
 """
-
-
-DEFAULT_TAGS = {}
-
-DEFAULT_FILTERS = {}
+from jinja.filters import FILTERS as DEFAULT_FILTERS

@@ -11,7 +11,7 @@
 from jinja.lexer import Lexer
 from jinja.parser import Parser
 from jinja.exceptions import TagNotFound, FilterNotFound
-from jinja.defaults import DEFAULT_TAGS, DEFAULT_FILTERS
+from jinja.defaults import DEFAULT_FILTERS
 
 
 class Environment(object):
@@ -44,7 +44,6 @@ class Environment(object):
         self.template_charset = template_charset
         self.charset = charset
         self.loader = loader
-        self.tags = tags or DEFAULT_TAGS.copy()
         self.filters = filters or DEFAULT_FILTERS.copy()
 
         # create lexer
@@ -54,15 +53,6 @@ class Environment(object):
         """Function that creates a new parser and parses the source."""
         parser = Parser(self, source)
         return parser.parse_page()
-
-    def get_tag(self, name):
-        """
-        Return the tag for a specific name. Raise a `TagNotFound` exception
-        if a tag with this name is not registered.
-        """
-        if name not in self._tags:
-            raise TagNotFound(name)
-        return self._tags[name]
 
     def get_filter(self, name):
         """
