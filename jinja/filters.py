@@ -8,6 +8,23 @@
     :copyright: 2006 by Armin Ronacher.
     :license: BSD, see LICENSE for more details.
 """
+from random import choice
+from urllib import urlencode, quote
+
+
+try:
+    _reversed = reversed
+except NameError:
+    # python2.3 compatibility hack for the do_reverse function
+    def _reversed(seq):
+        try:
+            return seq[::-1]
+        except:
+            try:
+                return list(seq)[::-1]
+            except:
+                raise TypeError('argument to _reversed must '
+                                'be a sequence')
 
 
 def stringfilter(f):
@@ -178,6 +195,111 @@ def do_reversed():
     return wrapped
 
 
+def do_center(value, width=80):
+    """
+    {{ var|center(80) }}
+
+    Centers the value in a field of a given width.
+    """
+    return value.center(width)
+do_center = stringfilter(do_center)
+
+
+def do_title(value):
+    """
+    {{ var|title }}
+
+    Capitalize the first character of all words.
+    """
+    return value.title()
+do_title = stringfilter(do_title)
+
+
+def do_capitalize(value):
+    """
+    {{ var|capitalize }}
+
+    Capitalize the first character of the string.
+    """
+    return value.capitalize()
+do_capitalize = stringfilter(do_capitalize)
+
+
+def do_first():
+    """
+    {{ var|first }}
+
+    Return the frist item of a sequence or None.
+    """
+    def wrapped(env, context, seq):
+        try:
+            return iter(seq).next()
+        except StopIteration:
+            return
+    return wrapped
+
+
+def do_last():
+    """
+    {{ var|last }}
+
+    Return the last item of a sequence.
+    """
+    def wrapped(env, context, seq):
+        try:
+            return iter(_reversed(seq)).next()
+        except (TypeError, StopIteration):
+            return
+    return wrapped
+
+
+def do_random():
+    """
+    {{ var|random }}
+
+    Return a random item from the sequence.
+    """
+    def wrapped(env, context, seq):
+        try:
+            return choice(seq)
+        except:
+            return
+    return wrapped
+
+
+def do_urlencode():
+    """
+    {{ var|urlencode }}
+
+    {{ {'foo': 'bar'}|urlencode }}
+
+    urlencode a string or directory.
+    """
+    def wrapped(env, context, value):
+        if isinstance(value, dict):
+            tmp = {}
+            for key, value in value.iteritems():
+                tmp[env.to_unicode(key)] = env.to_unicode(value)
+            return urlencode(tmp)
+        else:
+            return quote(env.to_unicode(value))
+    return wrapped
+
+
+def do_jsonencode():
+    """
+    {{ var|jsonencode }}
+
+    JSON dump a variable. just works if simplejson is installed.
+    """
+    global simplejson
+    try:
+        simplejson
+    except NameError:
+        import simplejson
+    return lambda e, c, v: simplejson.dumps(v)
+
+
 FILTERS = {
     'replace':              do_replace,
     'upper':                do_upper,
@@ -192,5 +314,13 @@ FILTERS = {
     'count':                do_count,
     'odd':                  do_odd,
     'even':                 do_even,
-    'reversed':             do_reversed
+    'reversed':             do_reversed,
+    'center':               do_center,
+    'title':                do_title,
+    'capitalize':           do_capitalize,
+    'first':                do_first,
+    'last':                 do_last,
+    'random':               do_random,
+    'urlencode':            do_urlencode,
+    'jsonencode':           do_jsonencode
 }

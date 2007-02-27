@@ -53,6 +53,7 @@ class Parser(object):
         self.directives = {
             'for':          self.handle_for_directive,
             'if':           self.handle_if_directive,
+            'cycle':        self.handle_cycle_directive,
             'print':        self.handle_print_directive
         }
 
@@ -89,6 +90,15 @@ class Parser(object):
         self.close_remaining_block()
 
         return nodes.IfCondition(pos, ast.tests[0][0], body, else_)
+
+    def handle_cycle_directive(self, pos, gen):
+        """
+        Handle {% cycle foo, bar, baz %}.
+        """
+        ast = self.parse_python(pos, gen, '_cycle((%s))')
+        # ast is something like Discard(CallFunc(Name('_cycle'), ...))
+        # skip that.
+        return nodes.Cycle(pos, ast.expr.args[0])
 
     def handle_print_directive(self, pos, gen):
         """

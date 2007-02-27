@@ -77,6 +77,19 @@ class IfCondition(Node):
         )
 
 
+class Cycle(Node):
+    """
+    A node that represents the cycle statement.
+    """
+
+    def __init__(self, pos, seq):
+        self.pos = pos
+        self.seq = seq
+
+    def __repr__(self):
+        return 'Cycle(%r)' % (self.seq,)
+
+
 class Print(Node):
     """
     A node that represents variable tags and print calls

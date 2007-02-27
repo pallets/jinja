@@ -37,6 +37,7 @@ class PythonTranslator(object):
             nodes.NodeList:         self.handle_node_list,
             nodes.ForLoop:          self.handle_for_loop,
             nodes.IfCondition:      self.handle_if_condition,
+            nodes.Cycle:            self.handle_cycle,
             nodes.Print:            self.handle_print,
             # used python nodes
             ast.Name:               self.handle_name,
@@ -153,6 +154,16 @@ class PythonTranslator(object):
             self.indention += 1
             buf.append(self.handle_node(node.else_))
             self.indention -= 1
+        return '\n'.join(buf)
+
+    def handle_cycle(self, node):
+        """
+        Handle the cycle tag.
+        """
+        buf = []
+        write = lambda x: buf.append(self.indent(x))
+        write('# XXX: add some code here')
+        self.last_pos = node.pos
         return '\n'.join(buf)
 
     def handle_print(self, node):
