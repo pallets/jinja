@@ -19,7 +19,10 @@ def inc_lineno(offset, tree):
     todo = [tree]
     while todo:
         node = todo.pop()
-        node.lineno = (node.lineno or 0) + offset
+        if node.lineno:
+            node.lineno += offset - 1
+        else:
+            node.lineno = offset
         todo.extend(node.getChildNodes())
 
 

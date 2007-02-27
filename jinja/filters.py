@@ -33,11 +33,11 @@ def stringfilter(f):
     """
     def decorator(*args):
         def wrapped(env, context, value):
-            args = list(args)
-            for idx, var in enumerate(args):
+            nargs = list(args)
+            for idx, var in enumerate(nargs):
                 if isinstance(var, str):
-                    args[idx] = env.to_unicode(var)
-            return f(env.to_unicode(value), *args)
+                    nargs[idx] = env.to_unicode(var)
+            return f(env.to_unicode(value), *nargs)
         return wrapped
     return decorator
 
@@ -53,6 +53,7 @@ def do_replace(s, old, new, count=None):
     if count is None:
         return s.replace(old, new)
     return s.replace(old, new, count)
+do_replace = stringfilter(do_replace)
 
 
 def do_upper(s):
@@ -62,6 +63,7 @@ def do_upper(s):
     Return a copy of s converted to uppercase.
     """
     return s.upper()
+do_upper = stringfilter(do_upper)
 
 
 def do_lower(s):
@@ -71,6 +73,7 @@ def do_lower(s):
     Return a copy of s converted to lowercase.
     """
     return s.lower()
+do_lower = stringfilter(do_lower)
 
 
 def do_escape(s, attribute=False):
@@ -84,6 +87,7 @@ def do_escape(s, attribute=False):
     if attribute:
         s = s.replace('"', "&quot;")
     return s
+escape = stringfilter(do_escape)
 
 
 def do_addslashes(s):
@@ -93,6 +97,7 @@ def do_addslashes(s):
     Adds slashes to s.
     """
     return s.encode('utf-8').encode('string-escape').decode('utf-8')
+do_addslashes = stringfilter(do_addslashes)
 
 
 def do_capitalize(s):
@@ -103,6 +108,7 @@ def do_capitalize(s):
     capitalized.
     """
     return s.capitalize()
+do_capitalize = stringfilter(do_capitalize)
 
 
 def do_title(s):
@@ -113,6 +119,7 @@ def do_title(s):
     characters, all remaining cased characters have lowercase.
     """
     return s.title()
+do_title = stringfilter(do_title)
 
 
 def do_default(default_value=u''):
@@ -123,6 +130,7 @@ def do_default(default_value=u''):
     which is '' per default.
     """
     return lambda e, c, v: v or default_value
+do_default = stringfilter(do_default)
 
 
 def do_join(d=u''):
@@ -146,10 +154,7 @@ def do_count():
     Return the length of var. In case if getting an integer or float
     it will convert it into a string an return the length of the new
     string.
-    If the object doesn't provide a __len__ function it will return
-    zero.st(value)
-        l.reverse()
-        return 
+    If the object doesn't provide a __len__ function it will return zero
     """
     def wrapped(env, context, value):
         try:

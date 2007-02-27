@@ -2,6 +2,9 @@
 """
     jinja.lexer
     ~~~~~~~~~~~
+
+    :copyright: 2006 by Armin Ronacher.
+    :license: BSD, see LICENSE for more details.
 """
 import re
 from jinja.datastructure import TokenStream

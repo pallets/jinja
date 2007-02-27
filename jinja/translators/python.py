@@ -359,8 +359,8 @@ class PythonTranslator(object):
                     args or ''
                 ))
             elif n.__class__ is ast.Name:
-                filters.append('environment.prepare_filter(%s)' %
-                               self.handle_node(n))
+                filters.append('environment.prepare_filter(%r)' %
+                               n.name)
             else:
                 raise TemplateSyntaxError('invalid filter. filter must be a '
                                           'hardcoded function name from the '
@@ -536,7 +536,7 @@ class PythonTranslator(object):
 
     def translate(self):
         return (
-            'from jinja.datastructures import Undefined, LoopContext, CycleContext\n'
+            'from jinja.datastructure import Undefined, LoopContext, CycleContext\n'
             'def generate(context, write, write_var=None):\n'
             '    environment = context.environment\n'
             '    if write_var is None:\n'
