@@ -22,6 +22,7 @@ class UndefinedType(object):
     """
     An object that does not exist.
     """
+    __slots__ = ()
 
     def __init__(self):
         try:
@@ -68,8 +69,6 @@ class Context(object):
     Dict like object.
     """
 
-    __slots__ = ('stack')
-
     def __init__(*args, **kwargs):
         try:
             self = args[0]
@@ -80,16 +79,23 @@ class Context(object):
                             'The rest of the arguments are forwarded to '
                             'the default dict constructor.')
         self._stack = [initial, {}]
+        self.globals, self.current = self._stack
 
     def pop(self):
         if len(self._stack) <= 2:
             raise ValueError('cannot pop initial layer')
-        return self._stack.pop()
+        rv = self._stack.pop()
+        self.current = self._stack[-1]
+        return rv
 
     def push(self, data=None):
         self._stack.append(data or {})
+        self.current = self._stack[-1]
 
     def __getitem__(self, name):
+        # don't give access to jinja internal variables
+        if name.startswith('::'):
+            return Undefined
         for d in _reversed(self._stack):
             if name in d:
                 return d[name]
@@ -116,36 +122,66 @@ class LoopContext(object):
     Used by `Environment.iterate`.
     """
 
-    def __init__(self, index, length):
-        self.index = 0
-        self.length = length
-        try:
-            self.length = len(seq)
-        except TypeError:
-            self.seq = list(seq)
-            self.length = len(self.seq)
-        else:
+    jinja_allowed_attributes = ['index', 'index0', 'length', 'parent',
+                                'even', 'odd']
+
+    def __init__(self, seq, parent, loop_function):
+        self.loop_function = loop_function
+        self.parent = parent
+        self._stack = []
+        if seq is not None:
+            self.push(seq)
+
+    def push(self, seq):
+        self._stack.append({
+            'index':            -1,
+            'seq':              seq,
+            'length':           len(seq)
+        })
+
+    def pop(self):
+        return self._stack.pop()
+
+    iterated = property(lambda s: s._stack[-1]['index'] > -1)
+    index0 = property(lambda s: s._stack[-1]['index'])
+    index = property(lambda s: s._stack[-1]['index'] + 1)
+    length = property(lambda s: s._stack[-1]['length'])
+    even = property(lambda s: s._stack[-1]['index'] % 2 == 0)
+    odd = property(lambda s: s._stack[-1]['index'] % 2 == 1)
+
+    def __iter__(self):
+        s = self._stack[-1]
+        for idx, item in enumerate(s['seq']):
+            s['index'] = idx
+            yield item
+
+    def __call__(self, seq):
+        if self.loop_function is not None:
+            return self.loop_function(seq)
+        return Undefined
+
+
+class CycleContext(object):
+    """
+    Helper class used for cycling.
+    """
+
+    def __init__(self, seq=None):
+        self.lineno = -1
+        if seq is not None:
             self.seq = seq
+            self.length = len(seq)
+            self.cycle = self.cycle_static
+        else:
+            self.cycle = self.cycle_dynamic
 
-    def revindex(self):
-        return self.length - self.index + 1
-    revindex = property(revindex)
+    def cycle_static(self):
+        self.lineno = (self.lineno + 1) % self.length
+        return self.seq[self.lineno]
 
-    def revindex0(self):
-        return self.length - self.index
-    revindex0 = property(revindex0)
-
-    def index0(self):
-        return self.index - 1
-    index0 = property(index0)
-
-    def even(self):
-        return self.index % 2 == 0
-    even = property(even)
-
-    def odd(self):
-        return self.index % 2 == 1
-    odd = property(odd)
+    def cycle_dynamic(self, seq):
+        self.lineno = (self.lineno + 1) % len(seq)
+        return seq[self.lineno]
 
 
 class TokenStream(object):
@@ -203,6 +239,6 @@ class TokenStream(object):
         except StopIteration:
             raise IndexError('end of stream reached')
 
-    def push(self, pos, token, data):
+    def push(self, lineno, token, data):
         """Push an yielded token back to the stream."""
-        self._pushed.append((pos, token, data))
+        self._pushed.append((lineno, token, data))

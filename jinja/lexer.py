@@ -23,7 +23,7 @@ operator_re = re.compile('(%s)' % '|'.join(
     '[', ']', '(', ')', '{', '}',
     # attribute access and comparison / logical operators
     '.', ':', ',', '|', '==', '<', '>', '<=', '>=', '!=', '=',
-    ur'or\b', ur'and\b', ur'not\b'
+    ur'or\b', ur'and\b', ur'not\b', ur'in\b', ur'is'
 ]))
 
 
@@ -37,8 +37,8 @@ class Failure(object):
         self.message = message
         self.error_class = cls
 
-    def __call__(self, position):
-        raise self.error_class(self.message, position)
+    def __call__(self, lineno):
+        raise self.error_class(self.message, lineno)
 
 
 class Lexer(object):
@@ -103,7 +103,8 @@ class Lexer(object):
         returns a `TokenStream` but in some situations it can be useful
         to use this function since it can be marginally faster.
         """
-        pos = 0
+        source = type(source)('\n').join(source.splitlines())
+        pos = lineno = 0
         stack = ['root']
         statetokens = self.rules['root']
         source_length = len(source)
@@ -118,6 +119,9 @@ class Lexer(object):
                         for idx, token in enumerate(tokens):
                             # hidden group
                             if token is None:
+                                g += m.group(idx)
+                                if g:
+                                    lineno += g.count('\n')
                                 continue
                             # failure group
                             elif isinstance(token, Failure):
@@ -128,7 +132,8 @@ class Lexer(object):
                             elif token == '#bygroup':
                                 for key, value in m.groupdict().iteritems():
                                     if value is not None:
-                                        yield m.start(key), key, value
+                                        yield lineno, key, value
+                                        lineno += value.count('\n')
                                         break
                                 else:
                                     raise RuntimeError('%r wanted to resolve '
@@ -139,14 +144,16 @@ class Lexer(object):
                             else:
                                 data = m.group(idx + 1)
                                 if data:
-                                    yield m.start(idx + 1), token, data
+                                    yield lineno, token, data
+                                lineno += data.count('\n')
                     # strings as token just are yielded as it, but just
                     # if the data is not empty
                     else:
                         data = m.group()
                         if tokens is not None:
                             if data:
-                                yield pos, tokens, data
+                                yield lineno, tokens, data
+                        lineno += data.count('\n')
                     # fetch new position into new variable so that we can check
                     # if there is a internal parsing error which would result
                     # in an infinite loop
@@ -188,4 +195,4 @@ class Lexer(object):
                     return
                 # something went wrong
                 raise TemplateSyntaxError('unexpected char %r at %d' %
-                                          (source[pos], pos), pos)
+                                          (source[pos], pos), lineno)

@@ -21,8 +21,6 @@ class PythonTranslator(object):
     def __init__(self, environment, node):
         self.environment = environment
         self.node = node
-        self.indention = 0
-        self.last_pos = 0
 
         self.constants = {
             'true':                 'True',
@@ -33,12 +31,14 @@ class PythonTranslator(object):
 
         self.handlers = {
             # jinja nodes
+            nodes.Template:         self.handle_template,
             nodes.Text:             self.handle_template_text,
             nodes.NodeList:         self.handle_node_list,
             nodes.ForLoop:          self.handle_for_loop,
             nodes.IfCondition:      self.handle_if_condition,
             nodes.Cycle:            self.handle_cycle,
             nodes.Print:            self.handle_print,
+            nodes.Macro:            self.handle_macro,
             # used python nodes
             ast.Name:               self.handle_name,
             ast.AssName:            self.handle_name,
@@ -77,6 +77,8 @@ class PythonTranslator(object):
                 ast.GenExpr:        'generator expressions'
             })
 
+        self.reset()
+
     def indent(self, text):
         """
         Indent the current text.
@@ -92,19 +94,31 @@ class PythonTranslator(object):
         elif node.__class__ in self.unsupported:
             raise TemplateSyntaxError('unsupported syntax element %r found.'
                                       % self.unsupported[node.__class__],
-                                      self.last_pos)
+                                      node.lineno)
         else:
             raise AssertionError('unhandled node %r' % node.__class__)
         return out
 
     # -- jinja nodes
 
+    def handle_template(self, node):
+        """
+        Handle a template node. Basically do nothing but calling the
+        handle_node_list function.
+        """
+        return self.handle_node_list(node)
+
+    def handle_template_text(self, node):
+        """
+        Handle data around nodes.
+        """
+        return self.indent('write(%r)' % node.text)
+
     def handle_node_list(self, node):
         """
         In some situations we might have a node list. It's just
         a collection of multiple statements.
         """
-        self.last_pos = node.pos
         buf = []
         for n in node:
             buf.append(self.handle_node(n))
@@ -115,26 +129,46 @@ class PythonTranslator(object):
         Handle a for loop. Pretty basic, just that we give the else
         clause a different behavior.
         """
-        self.last_pos = node.pos
         buf = []
         write = lambda x: buf.append(self.indent(x))
         write('context.push()')
-        write('parent_loop = context[\'loop\']')
-        write('loop_data = None')
-        write('for (loop_data, %s) in environment.iterate(%s):' % (
-            self.handle_node(node.item),
-            self.handle_node(node.seq)
-        ))
+
+        # recursive loops
+        if node.recursive:
+            write('def forloop(seq):')
+            self.indention += 1
+            write('context[\'loop\'].push(seq)')
+            write('for %s in context[\'loop\']:' %
+                self.handle_node(node.item),
+            )
+
+        # simple loops
+        else:
+            write('context[\'loop\'] = LoopContext(%s, context[\'loop\'], None)' %
+                  self.handle_node(node.seq))
+            write('for %s in context[\'loop\']:' %
+                self.handle_node(node.item)
+            )
+
+        # handle real loop code
         self.indention += 1
-        write('loop_data.parent = parent_loop')
-        write('context[\'loop\'] = loop_data')
         buf.append(self.handle_node(node.body))
         self.indention -= 1
+
+        # else part of loop
         if node.else_ is not None:
-            write('if loop_data is None:')
+            write('if not context[\'loop\'].iterated:')
             self.indention += 1
             buf.append(self.handle_node(node.else_))
             self.indention -= 1
+
+        # call recursive for loop!
+        if node.recursive:
+            write('context[\'loop\'].pop()')
+            self.indention -= 1
+            write('context[\'loop\'] = LoopContext(None, context[\'loop\'], forloop)')
+            write('forloop(%s)' % self.handle_node(node.seq))
+
         write('context.pop()')
         return '\n'.join(buf)
 
@@ -142,13 +176,16 @@ class PythonTranslator(object):
         """
         Handle an if condition node.
         """
-        self.last_pos = node.pos
         buf = []
         write = lambda x: buf.append(self.indent(x))
-        write('if %s:' % self.handle_node(node.test))
-        self.indention += 1
-        buf.append(self.handle_node(node.body))
-        self.indention -= 1
+        for idx, (test, body) in enumerate(node.tests):
+            write('%sif %s:' % (
+                idx and 'el' or '',
+                self.handle_node(test)
+            ))
+            self.indention += 1
+            buf.append(self.handle_node(body))
+            self.indention -= 1
         if node.else_ is not None:
             write('else:')
             self.indention += 1
@@ -160,25 +197,59 @@ class PythonTranslator(object):
         """
         Handle the cycle tag.
         """
+        name = '::cycle_%x' % self.last_cycle_id
+        self.last_cycle_id += 1
         buf = []
         write = lambda x: buf.append(self.indent(x))
-        write('# XXX: add some code here')
-        self.last_pos = node.pos
+
+        write('if not %r in context.current:' % name)
+        self.indention += 1
+        if node.seq.__class__ in (ast.Tuple, ast.List):
+            write('context.current[%r] = CycleContext([%s])' % (
+                name,
+                ', '.join([self.handle_node(n) for n in node.seq.nodes])
+            ))
+            hardcoded = True
+        else:
+            write('context.current[%r] = CycleContext()' % name)
+            hardcoded = False
+        self.indention -= 1
+
+        if hardcoded:
+            write('write_var(context.current[%r].cycle())' % name)
+        else:
+            write('write_var(context.current[%r].cycle(%s))' % (
+                name,
+                self.handle_node(node.seq)
+            ))
+
         return '\n'.join(buf)
 
     def handle_print(self, node):
         """
         Handle a print statement.
         """
-        self.last_pos = node.pos
         return self.indent('write_var(%s)' % self.handle_node(node.variable))
 
-    def handle_template_text(self, node):
+    def handle_macro(self, node):
         """
-        Handle data around nodes.
+        Handle macro declarations.
         """
-        self.last_pos = node.pos
-        return self.indent('write(%r)' % node.text)
+        buf = []
+
+        args = []
+        for name, n in node.arguments:
+            if n is None:
+                args.append('%s=Undefined' % name)
+            else:
+                args.append('%s=%s' % (name, self.handle_node(n)))
+        buf.append(self.indent('def macro(%s):' % ', '.join(args)))
+        self.indention += 1
+        buf.append(self.handle_node(node.body))
+        self.indention -= 1
+        buf.append(self.indent('context[%r] = macro' % node.name))
+
+        return '\n'.join(buf)
 
     # -- python nodes
 
@@ -194,9 +265,28 @@ class PythonTranslator(object):
         """
         Any sort of comparison
         """
+        # the semantic for the is operator is different.
+        # for jinja the is operator performs tests and must
+        # be the only operator
+        if node.ops[0][0] == 'is':
+            if len(node.ops) > 1:
+                raise TemplateSyntaxError('is operator must not be chained',
+                                          node.lineno)
+            elif node.ops[0][1].__class__ is not ast.Name:
+                raise TemplateSyntaxError('is operator requires a test name',
+                                          ' as operand', node.lineno)
+            return 'environment.perform_test(%s, context, %r)' % (
+                self.handle_node(node.expr),
+                node.ops[0][1].name
+            )
+
+        # normal operators
         buf = []
         buf.append(self.handle_node(node.expr))
         for op, n in node.ops:
+            if op == 'is':
+                raise TemplateSyntaxError('is operator must not be chained',
+                                          node.lineno)
             buf.append(op)
             buf.append(self.handle_node(n))
         return ' '.join(buf)
@@ -213,7 +303,7 @@ class PythonTranslator(object):
         """
         if len(node.subs) != 1:
             raise TemplateSyntaxError('attribute access requires one argument',
-                                      self.last_pos)
+                                      node.lineno)
         assert node.flags != 'OP_DELETE', 'wtf? do we support that?'
         if node.subs[0].__class__ is ast.Sliceobj:
             return '%s[%s]' % (
@@ -247,22 +337,26 @@ class PythonTranslator(object):
         filters = []
         for n in node.nodes[1:]:
             if n.__class__ is ast.CallFunc:
+                if n.node.__class__ is not ast.Name:
+                    raise TemplateSyntaxError('invalid filter. filter must '
+                                              'be a hardcoded function name '
+                                              'from the filter namespace',
+                                              n.lineno)
                 args = []
                 for arg in n.args:
                     if arg.__class__ is ast.Keyword:
                         raise TemplateSyntaxError('keyword arguments for '
                                                   'filters are not supported.',
-                                                  self.last_pos)
+                                                  n.lineno)
                     args.append(self.handle_node(arg))
                 if n.star_args is not None or n.dstar_args is not None:
                     raise TemplateSynaxError('*args / **kwargs is not supported '
-                                             'for filters', self.last_pos)
-                args = ', '.join(args)
+                                             'for filters', n.lineno)
                 if args:
-                    args = ', ' + args
-                filters.append('environment.prepare_filter(%s%s)' % (
-                    self.handle_node(n.node),
-                    args
+                    args = ', ' + ', '.join(args)
+                filters.append('environment.prepare_filter(%r%s)' % (
+                    n.node.name,
+                    args or ''
                 ))
             elif n.__class__ is ast.Name:
                 filters.append('environment.prepare_filter(%s)' %
@@ -271,7 +365,7 @@ class PythonTranslator(object):
                 raise TemplateSyntaxError('invalid filter. filter must be a '
                                           'hardcoded function name from the '
                                           'filter namespace',
-                                          self.last_pos)
+                                          n.lineno)
         return 'environment.apply_filters(%s, context, [%s])' % (
             self.handle_node(node.nodes[0]),
             ', '.join(filters)
@@ -436,19 +530,18 @@ class PythonTranslator(object):
             args.append(self.handle_node(n))
         return '[%s]' % ':'.join(args)
 
-    def translate(self):
+    def reset(self):
         self.indention = 1
-        self.last_pos = 0
-        lines = [
-            'from jinja.datastructures import Undefined',
-            'def generate(environment, context, write, write_var=None):',
-            '    """This function was automatically generated by',
-            '    the jinja python translator. do not edit."""',
-            '    if write_var is None:',
-            '        write_var = write'
-        ]
-        lines.append(self.handle_node(self.node))
-        return '\n'.join(lines)
+        self.last_cycle_id = 0
+
+    def translate(self):
+        return (
+            'from jinja.datastructures import Undefined, LoopContext, CycleContext\n'
+            'def generate(context, write, write_var=None):\n'
+            '    environment = context.environment\n'
+            '    if write_var is None:\n'
+            '        write_var = lambda x: write(environment.finish_var(x))\n'
+        ) + self.handle_node(self.node)
 
 
 def translate(environment, node):

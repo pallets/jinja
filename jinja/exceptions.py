@@ -23,14 +23,23 @@ class FilterNotFound(KeyError, TemplateError):
         KeyError.__init__(self, message)
 
 
+class TestNotFound(KeyError, TemplateError):
+    """
+    Raised if a test does not exist.
+    """
+
+    def __init__(self, message):
+        KeyError.__init__(self, message)
+
+
 class TemplateSyntaxError(SyntaxError, TemplateError):
     """
     Raised to tell the user that there is a problem with the template.
     """
 
-    def __init__(self, message, pos):
+    def __init__(self, message, lineno):
         SyntaxError.__init__(self, message)
-        self.pos = pos
+        self.lineno = lineno
 
 
 class TemplateRuntimeError(TemplateError):
@@ -39,6 +48,6 @@ class TemplateRuntimeError(TemplateError):
     rendering.
     """
 
-    def __init__(self, message, pos):
+    def __init__(self, message, lineno):
         RuntimeError.__init__(self, message)
-        self.pos = pos
+        self.lineno = lineno

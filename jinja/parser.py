@@ -10,6 +10,7 @@
 """
 import re
 from compiler import ast, parse
+from compiler.misc import set_filename
 from jinja import nodes
 from jinja.datastructure import TokenStream
 from jinja.exceptions import TemplateSyntaxError
@@ -20,8 +21,9 @@ end_of_block = lambda p, t, d: t == 'block_end'
 end_of_variable = lambda p, t, d: t == 'variable_end'
 switch_for = lambda p, t, d: t == 'name' and d in ('else', 'endfor')
 end_of_for = lambda p, t, d: t == 'name' and d == 'endfor'
-switch_if = lambda p, t, d: t == 'name' and d in ('else', 'endif')
+switch_if = lambda p, t, d: t == 'name' and d in ('else', 'elif', 'endif')
 end_of_if = lambda p, t, d: t == 'name' and d == 'endif'
+end_of_macro = lambda p, t, d: t == 'name' and d == 'endmacro'
 
 
 class Parser(object):
@@ -54,14 +56,31 @@ class Parser(object):
             'for':          self.handle_for_directive,
             'if':           self.handle_if_directive,
             'cycle':        self.handle_cycle_directive,
-            'print':        self.handle_print_directive
+            'print':        self.handle_print_directive,
+            'macro':        self.handle_macro_directive
         }
 
-    def handle_for_directive(self, pos, gen):
+    def handle_for_directive(self, lineno, gen):
         """
         Handle a for directive and return a ForLoop node
         """
-        ast = self.parse_python(pos, gen, 'for %s:pass\nelse:pass')
+        #XXX: maybe we could make the "recurse" part optional by using
+        #     a static analysis later.
+        recursive = []
+        def wrapgen():
+            """Wrap the generator to check if we have a recursive for loop."""
+            for token in gen:
+                if token[1:] == ('name', 'recursive'):
+                    try:
+                        item = gen.next()
+                    except StopIteration:
+                        recursive.append(True)
+                        return
+                    yield token
+                    yield item
+                else:
+                    yield token
+        ast = self.parse_python(lineno, wrapgen(), 'for %s:pass')
         body = self.subparse(switch_for)
 
         # do we have an else section?
@@ -72,39 +91,47 @@ class Parser(object):
             else_ = None
         self.close_remaining_block()
 
-        return nodes.ForLoop(pos, ast.assign, ast.list, body, else_)
+        return nodes.ForLoop(lineno, ast.assign, ast.list, body, else_, bool(recursive))
 
-    def handle_if_directive(self, pos, gen):
+    def handle_if_directive(self, lineno, gen):
         """
-        Handle if/else blocks. elif is not supported by now.
+        Handle if/else blocks.
         """
-        ast = self.parse_python(pos, gen, 'if %s:pass\nelse:pass')
-        body = self.subparse(switch_if)
+        ast = self.parse_python(lineno, gen, 'if %s:pass')
+        tests = [(ast.tests[0][0], self.subparse(switch_if))]
 
         # do we have an else section?
-        if self.tokenstream.next()[2] == 'else':
-            self.close_remaining_block()
-            else_ = self.subparse(end_of_if, True)
-        else:
-            else_ = None
+        while True:
+            lineno, token, needle = self.tokenstream.next()
+            if needle == 'else':
+                self.close_remaining_block()
+                else_ = self.subparse(end_of_if, True)
+                break
+            elif needle == 'elif':
+                gen = self.tokenstream.fetch_until(end_of_block, True)
+                ast = self.parse_python(lineno, gen, 'if %s:pass')
+                tests.append((ast.tests[0][0], self.subparse(switch_if)))
+            else:
+                else_ = None
+                break
         self.close_remaining_block()
 
-        return nodes.IfCondition(pos, ast.tests[0][0], body, else_)
+        return nodes.IfCondition(lineno, tests, else_)
 
-    def handle_cycle_directive(self, pos, gen):
+    def handle_cycle_directive(self, lineno, gen):
         """
         Handle {% cycle foo, bar, baz %}.
         """
-        ast = self.parse_python(pos, gen, '_cycle((%s))')
+        ast = self.parse_python(lineno, gen, '_cycle((%s))')
         # ast is something like Discard(CallFunc(Name('_cycle'), ...))
         # skip that.
-        return nodes.Cycle(pos, ast.expr.args[0])
+        return nodes.Cycle(lineno, ast.expr.args[0])
 
-    def handle_print_directive(self, pos, gen):
+    def handle_print_directive(self, lineno, gen):
         """
         Handle {{ foo }} and {% print foo %}.
         """
-        ast = self.parse_python(pos, gen, 'print_(%s)')
+        ast = self.parse_python(lineno, gen, 'print_(%s)')
         # ast is something like Discard(CallFunc(Name('print_'), ...))
         # so just use the args
         arguments = ast.expr.args
@@ -112,17 +139,38 @@ class Parser(object):
         if len(arguments) != 1:
             raise TemplateSyntaxError('invalid argument count for print; '
                                       'print requires exactly one argument, '
-                                      'got %d.' % len(arguments), pos)
-        return nodes.Print(pos, arguments[0])
+                                      'got %d.' % len(arguments), lineno)
+        return nodes.Print(lineno, arguments[0])
 
-    def parse_python(self, pos, gen, template='%s'):
+    def handle_macro_directive(self, lineno, gen):
+        """
+        Handle {% macro foo(bar, baz) %}.
+        """
+        try:
+            macro_name = gen.next()
+        except StopIteration:
+            raise TemplateSyntaxError('macro requires a name', lineno)
+        if macro_name[1] != 'name':
+            raise TemplateSyntaxError('expected \'name\', got %r' %
+                                      macro_name[1], lineno)
+        ast = self.parse_python(lineno, gen, 'def %s(%%s):pass' % str(macro_name[2]))
+        body = self.subparse(end_of_macro, True)
+        self.close_remaining_block()
+
+        if ast.varargs or ast.kwargs:
+            raise TemplateSyntaxError('variable length macro signature '
+                                      'not allowed.', lineno)
+        defaults = [None] * (len(ast.argnames) - len(ast.defaults)) + ast.defaults
+        return nodes.Macro(lineno, ast.name, zip(ast.argnames, defaults), body)
+
+    def parse_python(self, lineno, gen, template='%s'):
         """
         Convert the passed generator into a flat string representing
         python sourcecode and return an ast node or raise a
         TemplateSyntaxError.
         """
         tokens = []
-        for t_pos, t_token, t_data in gen:
+        for t_lineno, t_token, t_data in gen:
             if t_token == 'string':
                 tokens.append('u' + t_data)
             else:
@@ -131,20 +179,22 @@ class Parser(object):
         try:
             ast = parse(source, 'exec')
         except SyntaxError, e:
-            raise TemplateSyntaxError(str(e), pos + e.offset - 1)
+            raise TemplateSyntaxError(str(e), lineno + e.lineno - 1)
         assert len(ast.node.nodes) == 1, 'get %d nodes, 1 expected' % len(ast.node.nodes)
-        return ast.node.nodes[0]
+        result = ast.node.nodes[0]
+        nodes.inc_lineno(lineno, result)
+        return result
 
     def parse(self):
         """
-        Parse the template and return a nodelist.
+        Parse the template and return a Template.
         """
-        return self.subparse(None)
+        return nodes.Template(self.filename, self.subparse(None))
 
     def subparse(self, test, drop_needle=False):
         """
         Helper function used to parse the sourcecode until the test
-        function which is passed a tuple in the form (pos, token, data)
+        function which is passed a tuple in the form (lineno, token, data)
         returns True. In that case the current token is pushed back to
         the tokenstream and the generator ends.
 
@@ -160,57 +210,57 @@ class Parser(object):
                 return result[0]
             return result
 
-        pos = self.tokenstream.last[0]
-        result = nodes.NodeList(pos)
-        for pos, token, data in self.tokenstream:
+        lineno = self.tokenstream.last[0]
+        result = nodes.NodeList(lineno)
+        for lineno, token, data in self.tokenstream:
             # this token marks the begin or a variable section.
             # parse everything till the end of it.
             if token == 'variable_begin':
                 gen = self.tokenstream.fetch_until(end_of_variable, True)
-                result.append(self.directives['print'](pos, gen))
+                result.append(self.directives['print'](lineno, gen))
 
             # this token marks the start of a block. like for variables
             # just parse everything until the end of the block
             elif token == 'block_begin':
                 gen = self.tokenstream.fetch_until(end_of_block, True)
                 try:
-                    pos, token, data = gen.next()
+                    lineno, token, data = gen.next()
                 except StopIteration:
-                    raise TemplateSyntaxError('unexpected end of block', pos)
+                    raise TemplateSyntaxError('unexpected end of block', lineno)
 
                 # first token *must* be a name token
                 if token != 'name':
-                    raise TemplateSyntaxError('unexpected %r token' % token, pos)
+                    raise TemplateSyntaxError('unexpected %r token' % token, lineno)
 
                 # if a test function is passed to subparse we check if we
                 # reached the end of such a requested block.
-                if test is not None and test(pos, token, data):
+                if test is not None and test(lineno, token, data):
                     if not drop_needle:
-                        self.tokenstream.push(pos, token, data)
+                        self.tokenstream.push(lineno, token, data)
                     return finish()
 
                 # the first token tells us which directive we want to call.
                 # if if doesn't match any existing directive it's like a
                 # template syntax error.
                 if data in self.directives:
-                    node = self.directives[data](pos, gen)
+                    node = self.directives[data](lineno, gen)
                 else:
-                    raise TemplateSyntaxError('unknown directive %r' % data, pos)
+                    raise TemplateSyntaxError('unknown directive %r' % data, lineno)
                 result.append(node)
 
             # here the only token we should get is "data". all other
             # tokens just exist in block or variable sections. (if the
             # tokenizer is not brocken)
             elif token == 'data':
-                result.append(nodes.Text(pos, data))
+                result.append(nodes.Text(lineno, data))
 
             # so this should be unreachable code
             else:
-                raise AssertionError('unexpected token %r' % token)
+                raise AssertionError('unexpected token %r(%r)' % (token, data))
 
         # still here and a test function is provided? raise and error
         if test is not None:
-            raise TemplateSyntaxError('unexpected end of template', pos)
+            raise TemplateSyntaxError('unexpected end of template', lineno)
         return finish()
 
     def close_remaining_block(self):
@@ -220,10 +270,10 @@ class Parser(object):
         the stream. If the next token isn't the block end we throw an
         error.
         """
-        pos = self.tokenstream.last[0]
+        lineno = self.tokenstream.last[0]
         try:
-            pos, token, data = self.tokenstream.next()
+            lineno, token, data = self.tokenstream.next()
         except StopIteration:
-            raise TemplateSyntaxError('missing closing tag', pos)
+            raise TemplateSyntaxError('missing closing tag', lineno)
         if token != 'block_end':
-            raise TemplateSyntaxError('expected close tag, found %r' % token, pos)
+            raise TemplateSyntaxError('expected close tag, found %r' % token, lineno)
