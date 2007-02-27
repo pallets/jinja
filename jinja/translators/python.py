@@ -10,6 +10,7 @@
 """
 from compiler import ast
 from jinja import nodes
+from jinja.parser import Parser
 from jinja.exceptions import TemplateSyntaxError
 
 
@@ -548,4 +549,12 @@ def translate(environment, node):
     """
     Do the translation to python.
     """
+    return PythonTranslator(environment, node).translate()
+
+
+def parse_and_translate(environment, source, filename=None):
+    """
+    Parse sourcecode and translate it to python
+    """
+    node = Parser(environment, source, filename).parse()
     return PythonTranslator(environment, node).translate()

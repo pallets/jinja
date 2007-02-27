@@ -230,7 +230,8 @@ class Parser(object):
 
                 # first token *must* be a name token
                 if token != 'name':
-                    raise TemplateSyntaxError('unexpected %r token' % token, lineno)
+                    raise TemplateSyntaxError('unexpected %r token (%r)' % (
+                                              token, data), lineno)
 
                 # if a test function is passed to subparse we check if we
                 # reached the end of such a requested block.
@@ -256,7 +257,7 @@ class Parser(object):
 
             # so this should be unreachable code
             else:
-                raise AssertionError('unexpected token %r(%r)' % (token, data))
+                raise AssertionError('unexpected token %r (%r)' % (token, data))
 
         # still here and a test function is provided? raise and error
         if test is not None:

@@ -64,16 +64,30 @@ class Lexer(object):
             (string_re, 'string', None)
         ]
 
+        # assamble the root lexing rule. because "|" is ungreedy
+        # we have to sort by length so that the lexer continues working
+        # as expected when we have parsing rules like <% for block and
+        # <%= for variables. (if someone wants asp like syntax)
+        root_tag_rules = [
+            ('comment',     environment.comment_start_string),
+            ('block',       environment.block_start_string),
+            ('variable',    environment.variable_start_string)
+        ]
+        root_tag_rules.sort(lambda a, b: cmp(len(b[1]), len(a[1])))
+
         # global parsing rules
         self.rules = {
             'root': [
-                (c('(.*?)(?:(?P<comment_begin>' +
-                    e(environment.comment_start_string) +
-                    ')|(?P<block_begin>' +
-                    e(environment.block_start_string) +
-                    ')|(?P<variable_begin>' +
-                    e(environment.variable_start_string) +
-                   '))'), ('data', '#bygroup'), '#bygroup'),
+                (c('(.*?)(?:%s)' % '|'.join([
+                    '(?P<%s_begin>%s)' % (n, e(r)) for n, r in root_tag_rules
+                ])), ('data', '#bygroup'), '#bygroup'),
+                #(c('(.*?)(?:(?P<comment_begin>' +
+                #    e(environment.comment_start_string) +
+                #    ')|(?P<block_begin>' +
+                #    e(environment.block_start_string) +
+                #    ')|(?P<variable_begin>' +
+                #    e(environment.variable_start_string) +
+                #   '))'), ('data', '#bygroup'), '#bygroup'),
                 (c('.+'), 'data', None)
             ],
             'comment_begin': [
