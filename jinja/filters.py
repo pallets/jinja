@@ -87,7 +87,7 @@ def do_escape(s, attribute=False):
     if attribute:
         s = s.replace('"', "&quot;")
     return s
-escape = stringfilter(do_escape)
+do_escape = stringfilter(do_escape)
 
 
 def do_addslashes(s):
