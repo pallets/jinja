@@ -10,9 +10,10 @@
 """
 from jinja.lexer import Lexer
 from jinja.parser import Parser
+from jinja.loaders import LoaderWrapper
 from jinja.datastructure import Undefined
 from jinja.exceptions import FilterNotFound, TestNotFound
-from jinja.defaults import DEFAULT_FILTERS, DEFAULT_TESTS
+from jinja.defaults import DEFAULT_FILTERS, DEFAULT_TESTS, DEFAULT_NAMESPACE
 
 
 class Environment(object):
@@ -29,6 +30,7 @@ class Environment(object):
                  comment_end_string='#}',
                  template_charset='utf-8',
                  charset='utf-8',
+                 namespace=None,
                  loader=None,
                  filters=None,
                  tests=None):
@@ -45,16 +47,33 @@ class Environment(object):
         self.template_charset = template_charset
         self.charset = charset
         self.loader = loader
-        self.filters = filters or DEFAULT_FILTERS.copy()
-        self.tests = filters or DEFAULT_TESTS.copy()
+        self.filters = filters is None and DEFAULT_FILTERS.copy() or filters
+        self.tests = tests is None and DEFAULT_TESTS.copy() or tests
+
+        # global namespace
+        self.globals = namespace is None and DEFAULT_NAMESPACE.copy() \
+                       or namespace
 
         # create lexer
         self.lexer = Lexer(self)
+
+    def loader(self, value):
+        """
+        Get or set the template loader.
+        """
+        self._loader = LoaderWrapper(self, value)
+    loader = property(lambda s: s._loader, loader, loader.__doc__)
 
     def parse(self, source):
         """Function that creates a new parser and parses the source."""
         parser = Parser(self, source)
         return parser.parse_page()
+
+    def from_string(self, source):
+        """Load a template from a string."""
+        from jinja.parser import Parser
+        from jinja.translators.python import PythonTranslator
+        return PythonTranslator.process(self, Parser(self, source).parse())
 
     def to_unicode(self, value):
         """

@@ -1,0 +1,23 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML Frameset//EN"
+  "http://www.w3.org/TR/xhtml1/DTD/xhtml1-frameset.dtd">
+<html>
+  <head>
+    <title>{% block page_title %}Untitled{% endblock %} | My Webpage</title>
+    {% block page_head %}{% endblock %}
+  </head>
+  <body>
+    <div id="header">
+      <h1>My Webpage</h1>
+      <ul id="navigation">
+      {% for item in navigation_items %}
+        <li><a href="{{ item.url|escape }}">{{ item.caption|escape }}</a></li>
+      {% endfor %}
+      </ul>
+    </div>
+    <div id="body">
+      {% block body %}
+        content goes here.
+      {% endblock %}
+    </div>
+  </body>
+</html>

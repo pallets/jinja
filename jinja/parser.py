@@ -24,23 +24,14 @@ end_of_for = lambda p, t, d: t == 'name' and d == 'endfor'
 switch_if = lambda p, t, d: t == 'name' and d in ('else', 'elif', 'endif')
 end_of_if = lambda p, t, d: t == 'name' and d == 'endif'
 end_of_macro = lambda p, t, d: t == 'name' and d == 'endmacro'
+end_of_block_tag = lambda p, t, d: t == 'name' and d == 'endblock'
 
 
 class Parser(object):
     """
     The template parser class.
 
-    Transforms sourcecode into an abstract syntax tree::
-
-        >>> parse("{% for item in seq|reversed %}{{ item }}{% endfor %}")
-        Document(ForLoop(AssignName('item'), Filter(Name('seq'), Name('reversed')),
-                         Print('item'), None))
-        >>> parse("{% if true %}foo{% else %}bar{% endif %}")
-        Document(IfCondition(Name('true'), Data('foo'), Data('bar')))
-        >>> parse("{% if false %}...{% elif 0 > 1 %}...{% else %}...{% endif %}")
-        Document(IfCondition(Name('false'), Data('...'),
-                             IfCondition(Compare('>', Const(0), Const(1)),
-                                         Data('...'), Data('...'))))
+    Transforms sourcecode into an abstract syntax tree.
     """
 
     def __init__(self, environment, source, filename=None):
@@ -50,14 +41,18 @@ class Parser(object):
         self.source = source
         self.filename = filename
         self.tokenstream = environment.lexer.tokenize(source)
-        self._parsed = False
+
+        self.extends = None
+        self.blocks = {}
 
         self.directives = {
             'for':          self.handle_for_directive,
             'if':           self.handle_if_directive,
             'cycle':        self.handle_cycle_directive,
             'print':        self.handle_print_directive,
-            'macro':        self.handle_macro_directive
+            'macro':        self.handle_macro_directive,
+            'block':        self.handle_block_directive,
+            'extends':      self.handle_extends_directive
         }
 
     def handle_for_directive(self, lineno, gen):
@@ -163,6 +158,43 @@ class Parser(object):
         defaults = [None] * (len(ast.argnames) - len(ast.defaults)) + ast.defaults
         return nodes.Macro(lineno, ast.name, zip(ast.argnames, defaults), body)
 
+    def handle_block_directive(self, lineno, gen):
+        """
+        Handle block directives used for inheritance.
+        """
+        tokens = list(gen)
+        if not tokens:
+            raise TemplateSyntaxError('block requires a name', lineno)
+        block_name = tokens.pop(0)
+        if block_name[1] != 'name':
+            raise TemplateSyntaxError('expected \'name\', got %r' %
+                                      block_name[1], lineno)
+        if tokens:
+            print tokens
+            raise TemplateSyntaxError('block got too many arguments, '
+                                      'requires one.', lineno)
+
+        if block_name[2] in self.blocks:
+            raise TemplateSyntaxError('block %r defined twice' %
+                                      block_name[2], lineno)
+
+        body = self.subparse(end_of_block_tag, True)
+        self.close_remaining_block()
+        rv = nodes.Block(lineno, block_name[2], body)
+        self.blocks[block_name[2]] = rv
+        return rv
+
+    def handle_extends_directive(self, lineno, gen):
+        """
+        Handle extends directive used for inheritance.
+        """
+        tokens = list(gen)
+        if len(tokens) != 1 or tokens[0][1] != 'string':
+            raise TemplateSyntaxError('extends requires a string', lineno)
+        if self.extends is not None:
+            raise TemplateSyntaxError('extends called twice', lineno)
+        self.extends = nodes.Extends(lineno, tokens[0][2][1:-1])
+
     def parse_python(self, lineno, gen, template='%s'):
         """
         Convert the passed generator into a flat string representing
@@ -179,7 +211,7 @@ class Parser(object):
         try:
             ast = parse(source, 'exec')
         except SyntaxError, e:
-            raise TemplateSyntaxError(str(e), lineno + e.lineno - 1)
+            raise TemplateSyntaxError('invalid syntax', lineno + e.lineno)
         assert len(ast.node.nodes) == 1, 'get %d nodes, 1 expected' % len(ast.node.nodes)
         result = ast.node.nodes[0]
         nodes.inc_lineno(lineno, result)
@@ -187,9 +219,10 @@ class Parser(object):
 
     def parse(self):
         """
-        Parse the template and return a Template.
+        Parse the template and return a Template node.
         """
-        return nodes.Template(self.filename, self.subparse(None))
+        body = self.subparse(None)
+        return nodes.Template(self.filename, body, self.blocks, self.extends)
 
     def subparse(self, test, drop_needle=False):
         """
@@ -247,7 +280,10 @@ class Parser(object):
                     node = self.directives[data](lineno, gen)
                 else:
                     raise TemplateSyntaxError('unknown directive %r' % data, lineno)
-                result.append(node)
+                # some tags like the extends tag do not output nodes.
+                # so just skip that.
+                if node is not None:
+                    result.append(node)
 
             # here the only token we should get is "data". all other
             # tokens just exist in block or variable sections. (if the

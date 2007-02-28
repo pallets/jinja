@@ -31,6 +31,9 @@ class Node(ast.Node):
     jinja node.
     """
 
+    def get_items(self):
+        return []
+
     def getChildren(self):
         return self.get_items()
 
@@ -63,7 +66,7 @@ class NodeList(list, Node):
         self.lineno = lineno
         list.__init__(self, data or ())
 
-    getChildren = getChildNodes = lambda s: list(s)
+    getChildren = getChildNodes = lambda s: list(s) + s.get_items()
 
     def __repr__(self):
         return '%s(%s)' % (
@@ -74,14 +77,22 @@ class NodeList(list, Node):
 
 class Template(NodeList):
     """
-    A template.
+    Node that represents a template.
     """
 
-    def __init__(self, filename, node):
-        if node.__class__ is not NodeList:
-            node = (node,)
-        NodeList.__init__(self, 0, node)
+    def __init__(self, filename, body, blocks, extends):
+        if body.__class__ is not NodeList:
+            body = (body,)
+        NodeList.__init__(self, 0, body)
+        self.blocks = blocks
+        self.extends = extends
         set_filename(filename, self)
+
+    def get_items(self):
+        result = self.blocks.values()
+        if self.extends is not None:
+            result.append(self.extends)
+        return result
 
 
 class ForLoop(Node):
@@ -190,3 +201,43 @@ class Macro(Node):
             self.arguments,
             self.body
         )
+
+
+class Block(Node):
+    """
+    A node that represents a block.
+    """
+
+    def __init__(self, lineno, name, body):
+        self.lineno = lineno
+        self.name = name
+        self.body = body
+
+    def replace(self, node):
+        """
+        Replace the current data with the data of another block node.
+        """
+        assert node.__class__ is Block
+        self.__dict__.update(node.__dict__)
+
+    def get_items(self):
+        return [self.name, self.body]
+
+    def __repr__(self):
+        return 'Block(%r, %r)' % (
+            self.name,
+            self.body
+        )
+
+
+class Extends(Node):
+    """
+    A node that represents the extends tag.
+    """
+
+    def __init__(self, lineno, template):
+        self.lineno = lineno
+        self.template = template
+
+    def __repr__(self):
+        return 'Extends(%r)' % self.template

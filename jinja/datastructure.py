@@ -64,6 +64,19 @@ class UndefinedType(object):
 Undefined = UndefinedType()
 
 
+class Deferred(object):
+    """
+    Object marking an deferred value. Deferred objects are
+    objects that are called first access in the context.
+    """
+
+    def __init__(self, factory):
+        self.factory = factory
+
+    def __call__(self, context, name):
+        return self.factory(context, name)
+
+
 class Context(object):
     """
     Dict like object.
@@ -78,8 +91,8 @@ class Context(object):
             raise TypeError('%r requires environment as first argument. '
                             'The rest of the arguments are forwarded to '
                             'the default dict constructor.')
-        self._stack = [initial, {}]
-        self.globals, self.current = self._stack
+        self._stack = [self.environment.globals, initial, {}]
+        self.globals, _, self.current = self._stack
 
     def pop(self):
         if len(self._stack) <= 2:
@@ -92,13 +105,26 @@ class Context(object):
         self._stack.append(data or {})
         self.current = self._stack[-1]
 
+    def to_dict(self):
+        """
+        Convert the context into a dict. This skips the globals.
+        """
+        result = {}
+        for layer in self._stack[1:]:
+            for key, value in layer.iteritems():
+                result[key] = value
+        return result
+
     def __getitem__(self, name):
         # don't give access to jinja internal variables
         if name.startswith('::'):
             return Undefined
         for d in _reversed(self._stack):
             if name in d:
-                return d[name]
+                rv = d[name]
+                if isinstance(rv, Deferred):
+                    d[name] = rv = rv(self, name)
+                return rv
         return Undefined
 
     def __setitem__(self, name, value):
@@ -193,7 +219,7 @@ class TokenStream(object):
     def __init__(self, generator):
         self._generator = generator
         self._pushed = []
-        self.last = (0, 'initial', '')
+        self.last = (1, 'initial', '')
 
     def __iter__(self):
         return self

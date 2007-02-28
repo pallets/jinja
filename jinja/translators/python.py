@@ -11,10 +11,31 @@
 from compiler import ast
 from jinja import nodes
 from jinja.parser import Parser
+from jinja.datastructure import Context
 from jinja.exceptions import TemplateSyntaxError
+from jinja.translators import Translator
 
 
-class PythonTranslator(object):
+class Template(object):
+    """
+    Represents a finished template.
+    """
+
+    def __init__(self, environment, generate_func):
+        self.environment = environment
+        self.generate_func = generate_func
+
+    def render(self, *args, **kwargs):
+        """
+        Render a template.
+        """
+        result = []
+        ctx = Context(self.environment, *args, **kwargs)
+        self.generate_func(ctx, result.append)
+        return u''.join(result)
+
+
+class PythonTranslator(Translator):
     """
     Pass this translator a ast tree to get valid python code.
     """
@@ -40,6 +61,7 @@ class PythonTranslator(object):
             nodes.Cycle:            self.handle_cycle,
             nodes.Print:            self.handle_print,
             nodes.Macro:            self.handle_macro,
+            nodes.Block:            self.handle_block,
             # used python nodes
             ast.Name:               self.handle_name,
             ast.AssName:            self.handle_name,
@@ -78,7 +100,17 @@ class PythonTranslator(object):
                 ast.GenExpr:        'generator expressions'
             })
 
-        self.reset()
+    # -- public methods
+
+    def process(environment, node):
+        translator = PythonTranslator(environment, node)
+        source = translator.translate()
+        ns = {}
+        exec source in ns
+        return Template(environment, ns['generate'])
+    process = staticmethod(process)
+
+    # -- private methods
 
     def indent(self, text):
         """
@@ -104,10 +136,36 @@ class PythonTranslator(object):
 
     def handle_template(self, node):
         """
-        Handle a template node. Basically do nothing but calling the
-        handle_node_list function.
+        Handle the overall template node. This node is the first node and ensures
+        that we get the bootstrapping code. It also knows about inheritance
+        information. It only occours as outer node, never in the tree itself.
+
+        Nevertheless we call indent here to simplify futur changes.
         """
-        return self.handle_node_list(node)
+        # if there is a parent template we parse the parent template and
+        # update the blocks there. Once this is done we drop the current
+        # template in favor of the new one. Do that until we found the
+        # root template.
+        while node.extends is not None:
+            tmpl = self.environment.loader.parse(node.extends.template,
+                                                 node.filename)
+            for block in tmpl.blocks.itervalues():
+                if block.name in node.blocks:
+                    block.replace(node.blocks[block.name])
+            node = tmpl
+
+        lines = [self.indent(
+            'from jinja.datastructure import Undefined, LoopContext, CycleContext\n'
+            'def generate(context, write, write_var=None):\n'
+            '    environment = context.environment\n'
+            '    if write_var is None:\n'
+            '        write_var = lambda x: write(environment.finish_var(x))'
+        )]
+        write = lambda x: lines.append(self.indent(x))
+        self.indention += 1
+        lines.append(self.handle_node_list(node))
+
+        return '\n'.join(lines)
 
     def handle_template_text(self, node):
         """
@@ -250,6 +308,32 @@ class PythonTranslator(object):
         self.indention -= 1
         buf.append(self.indent('context[%r] = macro' % node.name))
 
+        return '\n'.join(buf)
+
+    def handle_block(self, node):
+        """
+        Handle blocks in the sourcecode. We only use them to
+        call the current block implementation that is stored somewhere
+        else.
+        """
+        rv = self.handle_node(node.body)
+        if not rv:
+            return self.indent('# empty block from %r, line %s' % (
+                node.filename or '?',
+                node.lineno
+            ))
+
+        buf = []
+        write = lambda x: buf.append(self.indent(x))
+
+        write('# block from %r, line %s' % (
+            node.filename or '?',
+            node.lineno
+        ))
+        write('context.push()')
+        buf.append(self.handle_node(node.body))
+        write('context.pop()')
+        buf.append(self.indent('# end of block'))
         return '\n'.join(buf)
 
     # -- python nodes
@@ -532,29 +616,9 @@ class PythonTranslator(object):
         return '[%s]' % ':'.join(args)
 
     def reset(self):
-        self.indention = 1
+        self.indention = 0
         self.last_cycle_id = 0
 
     def translate(self):
-        return (
-            'from jinja.datastructure import Undefined, LoopContext, CycleContext\n'
-            'def generate(context, write, write_var=None):\n'
-            '    environment = context.environment\n'
-            '    if write_var is None:\n'
-            '        write_var = lambda x: write(environment.finish_var(x))\n'
-        ) + self.handle_node(self.node)
-
-
-def translate(environment, node):
-    """
-    Do the translation to python.
-    """
-    return PythonTranslator(environment, node).translate()
-
-
-def parse_and_translate(environment, source, filename=None):
-    """
-    Parse sourcecode and translate it to python
-    """
-    node = Parser(environment, source, filename).parse()
-    return PythonTranslator(environment, node).translate()
+        self.reset()
+        return self.handle_node(self.node)

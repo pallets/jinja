@@ -7,6 +7,6 @@
     :license: BSD, see LICENSE for more details.
 """
 from jinja.environment import Environment
-from jinja.template import Template
+from jinja.loaders import FileSystemLoader
 
-__all__ = ['Environment', 'Template']
+__all__ = ['Environment', 'FileSystemLoader']

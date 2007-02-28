@@ -32,6 +32,15 @@ class TestNotFound(KeyError, TemplateError):
         KeyError.__init__(self, message)
 
 
+class TemplateNotFound(IOError, TemplateError):
+    """
+    Raised if a template does not exist.
+    """
+
+    def __init__(self, message):
+        IOError.__init__(self, message)
+
+
 class TemplateSyntaxError(SyntaxError, TemplateError):
     """
     Raised to tell the user that there is a problem with the template.
