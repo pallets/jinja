@@ -37,12 +37,16 @@ class LoaderWrapper(object):
         """
         Retrieve the sourcecode of a template.
         """
+        # just ascii chars are allowed as template names
+        name = str(name)
         return self.loader.get_source(self.environment, name, parent)
 
     def parse(self, name, parent=None):
         """
         Retreive a template and parse it.
         """
+        # just ascii chars are allowed as template names
+        name = str(name)
         return self.loader.parse(self.environment, name, parent)
 
     def load(self, name, translator=PythonTranslator):
@@ -51,6 +55,8 @@ class LoaderWrapper(object):
         be a template class. The javascript translator for example
         will just output a string with the translated code.
         """
+        # just ascii chars are allowed as template names
+        name = str(name)
         return self.loader.load(self.environment, name, translator)
 
 

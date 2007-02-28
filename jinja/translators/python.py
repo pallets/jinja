@@ -16,6 +16,16 @@ from jinja.exceptions import TemplateSyntaxError
 from jinja.translators import Translator
 
 
+def _to_tuple(args):
+    """
+    Return a tuple repr without nested repr.
+    """
+    return '(%s%s)' % (
+        ', '.join(args),
+        len(args) == 1 and ',' or ''
+    )
+
+
 class Template(object):
     """
     Represents a finished template.
@@ -105,6 +115,7 @@ class PythonTranslator(Translator):
     def process(environment, node):
         translator = PythonTranslator(environment, node)
         source = translator.translate()
+        print source
         ns = {}
         exec source in ns
         return Template(environment, ns['generate'])
@@ -155,13 +166,20 @@ class PythonTranslator(Translator):
             node = tmpl
 
         lines = [self.indent(
-            'from jinja.datastructure import Undefined, LoopContext, CycleContext\n'
-            'def generate(context, write, write_var=None):\n'
+            'from jinja.datastructure import Undefined, LoopContext, CycleContext\n\n'
+            'def generate(context, write):\n'
+            '    # BOOTSTRAPPING CODE\n'
             '    environment = context.environment\n'
-            '    if write_var is None:\n'
-            '        write_var = lambda x: write(environment.finish_var(x))'
+            '    get_attribute = environment.get_attribute\n'
+            '    perform_test = environment.perform_test\n'
+            '    apply_filters = environment.apply_filters\n'
+            '    call_function = environment.call_function\n'
+            '    call_function_simple = environment.call_function_simple\n'
+            '    finish_var = environment.finish_var\n'
+            '    write_var = lambda x: write(finish_var(x))\n'
+            '    filtercache = {}\n\n'
+            '    # TEMPLATE CODE'
         )]
-        write = lambda x: lines.append(self.indent(x))
         self.indention += 1
         lines.append(self.handle_node_list(node))
 
@@ -318,7 +336,7 @@ class PythonTranslator(Translator):
         """
         rv = self.handle_node(node.body)
         if not rv:
-            return self.indent('# empty block from %r, line %s' % (
+            return self.indent('# EMPTY BLOCK (%r:%s)' % (
                 node.filename or '?',
                 node.lineno
             ))
@@ -326,14 +344,14 @@ class PythonTranslator(Translator):
         buf = []
         write = lambda x: buf.append(self.indent(x))
 
-        write('# block from %r, line %s' % (
+        write('# BLOCK (%r:%s)' % (
             node.filename or '?',
             node.lineno
         ))
         write('context.push()')
         buf.append(self.handle_node(node.body))
         write('context.pop()')
-        buf.append(self.indent('# end of block'))
+        buf.append(self.indent('# END OF BLOCK'))
         return '\n'.join(buf)
 
     # -- python nodes
@@ -360,9 +378,9 @@ class PythonTranslator(Translator):
             elif node.ops[0][1].__class__ is not ast.Name:
                 raise TemplateSyntaxError('is operator requires a test name',
                                           ' as operand', node.lineno)
-            return 'environment.perform_test(%s, context, %r)' % (
-                self.handle_node(node.expr),
-                node.ops[0][1].name
+            return 'perform_test(context, %r, %s)' % (
+                node.ops[0][1].name,
+                self.handle_node(node.expr)
             )
 
         # normal operators
@@ -395,7 +413,7 @@ class PythonTranslator(Translator):
                 self.handle_node(node.expr),
                 self.handle_node(node.subs[0])
             )
-        return 'environment.get_attribute(%s, %s)' % (
+        return 'get_attribute(%s, %s)' % (
             self.handle_node(node.expr),
             self.handle_node(node.subs[0])
         )
@@ -404,7 +422,7 @@ class PythonTranslator(Translator):
         """
         Handle hardcoded attribute access. foo.bar
         """
-        return 'environment.get_attribute(%s, %r)' % (
+        return 'get_attribute(%s, %r)' % (
             self.handle_node(node.expr),
             node.attrname
         )
@@ -413,7 +431,7 @@ class PythonTranslator(Translator):
         """
         Tuple unpacking loops.
         """
-        return '(%s)' % ', '.join([self.handle_node(n) for n in node.nodes])
+        return _to_tuple([self.handle_node(n) for n in node.nodes])
 
     def handle_bitor(self, node):
         """
@@ -437,23 +455,20 @@ class PythonTranslator(Translator):
                 if n.star_args is not None or n.dstar_args is not None:
                     raise TemplateSynaxError('*args / **kwargs is not supported '
                                              'for filters', n.lineno)
-                if args:
-                    args = ', ' + ', '.join(args)
-                filters.append('environment.prepare_filter(%r%s)' % (
+                filters.append('(%r, %s)' % (
                     n.node.name,
-                    args or ''
+                    _to_tuple(args)
                 ))
             elif n.__class__ is ast.Name:
-                filters.append('environment.prepare_filter(%r)' %
-                               n.name)
+                filters.append('(%r, ())' % n.name)
             else:
                 raise TemplateSyntaxError('invalid filter. filter must be a '
                                           'hardcoded function name from the '
                                           'filter namespace',
                                           n.lineno)
-        return 'environment.apply_filters(%s, context, [%s])' % (
+        return 'apply_filters(%s, filtercache, context, %s)' % (
             self.handle_node(node.nodes[0]),
-            ', '.join(filters)
+            _to_tuple(filters)
         )
 
     def handle_call_func(self, node):
@@ -472,9 +487,11 @@ class PythonTranslator(Translator):
                 kwargs[arg.name] = self.handle_node(arg.expr)
             else:
                 args.append(self.handle_node(arg))
-        return 'environment.call_function(%s, [%s], {%s}, %s, %s)' % (
+        if not (args or kwargs or star_args or dstar_args):
+            return 'call_function_simple(%s)' % self.handle_node(node.node)
+        return 'call_function(%s, %s, {%s}, %s, %s)' % (
             self.handle_node(node.node),
-            ', '.join(args),
+            _to_tuple(args),
             ', '.join(['%r: %s' % i for i in kwargs.iteritems()]),
             star_args,
             dstar_args

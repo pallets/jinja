@@ -67,7 +67,7 @@ class Environment(object):
     def parse(self, source):
         """Function that creates a new parser and parses the source."""
         parser = Parser(self, source)
-        return parser.parse_page()
+        return parser.parse()
 
     def from_string(self, source):
         """Load a template from a string."""
@@ -87,58 +87,64 @@ class Environment(object):
             except UnicodeError:
                 return str(value).decode(self.charset, 'ignore')
 
-    def prepare_filter(self, name, *args):
-        """
-        Prepare a filter.
-        """
-        try:
-            return self.filters[name](*args)
-        except KeyError:
-            raise FilterNotFound(name)
-
-    def apply_filters(self, value, context, filters):
+    def apply_filters(self, value, filtercache, context, filters):
         """
         Apply a list of filters on the variable.
         """
-        for f in filters:
-            value = f(self, context, value)
+        for key in filters:
+            if key in filtercache:
+                func = filtercache[key]
+            else:
+                filtername, args = key
+                if filtername not in self.filters:
+                    raise FilterNotFound(filtername)
+                filtercache[key] = func = self.filters[filtername](*args)
+            value = func(self, context, value)
         return value
 
-    def perform_test(self, value, context, testname):
+    def perform_test(self, context, testname, value):
         """
         Perform a test on a variable.
         """
-        try:
-            test = self.tests[testname]
-        except KeyError:
+        if testname not in self.tests:
             raise TestNotFound(testname)
-        return bool(test(self, context, value))
+        return bool(self.tests[testname](self, context, value))
 
     def get_attribute(self, obj, name):
         """
         Get the attribute name from obj.
         """
-        try:
+        if name in obj:
+            return obj[name]
+        elif hasattr(obj, name):
             rv = getattr(obj, name)
             r = getattr(obj, 'jinja_allowed_attributes', None)
             if r is not None:
                 if name not in r:
                     raise AttributeError()
             return rv
-        except AttributeError:
-            return obj[name]
-        except:
-            return Undefined
+        return Undefined
 
     def call_function(self, f, args, kwargs, dyn_args, dyn_kwargs):
         """
-        Function call helper
+        Function call helper. Called for all functions that are passed
+        any arguments.
         """
         if dyn_args is not None:
-            args += dyn_args
+            args += tuple(dyn_args)
         elif dyn_kwargs is not None:
             kwargs.update(dyn_kwargs)
+        if getattr(f, 'jinja_unsafe_call', False):
+            raise SecurityException('unsafe function %r called' % f.__name__)
         return f(*args, **kwargs)
+
+    def call_function_simple(self, f):
+        """
+        Function call without arguments.
+        """
+        if getattr(f, 'jinja_unsafe_call', False):
+            raise SecurityException('unsafe function %r called' % f.__name__)
+        return f()
 
     def finish_var(self, value):
         """
