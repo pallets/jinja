@@ -82,16 +82,9 @@ class Context(object):
     Dict like object.
     """
 
-    def __init__(*args, **kwargs):
-        try:
-            self = args[0]
-            self.environment = args[1]
-            initial = dict(*args[2:], **kwargs)
-        except:
-            raise TypeError('%r requires environment as first argument. '
-                            'The rest of the arguments are forwarded to '
-                            'the default dict constructor.')
-        self._stack = [self.environment.globals, initial, {}]
+    def __init__(self, _environment_, *args, **kwargs):
+        self.environment = _environment_
+        self._stack = [self.environment.globals, dict(*args, **kwargs), {}]
         self.globals, _, self.current = self._stack
 
     def pop(self):
@@ -180,6 +173,9 @@ class LoopContext(object):
         for idx, item in enumerate(s['seq']):
             s['index'] = idx
             yield item
+
+    def __len__(self):
+        return self._stack[-1]['length']
 
     def __call__(self, seq):
         if self.loop_function is not None:

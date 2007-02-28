@@ -115,7 +115,6 @@ class PythonTranslator(Translator):
     def process(environment, node):
         translator = PythonTranslator(environment, node)
         source = translator.translate()
-        print source
         ns = {}
         exec source in ns
         return Template(environment, ns['generate'])
