@@ -17,14 +17,22 @@ from genshi.template import MarkupTemplate
 
 from jinja import Environment
 
-from django.conf import settings
-settings.configure()
-from django.template import Context as DjangoContext
-from django.template import Template as DjangoTemplate
+try:
+    from django.conf import settings
+    settings.configure()
+    from django.template import Context as DjangoContext
+    from django.template import Template as DjangoTemplate
+    have_django = True
+except ImportError:
+    have_django = False
 
 from Cheetah.Template import Template as CheetahTemplate
 
-from mako.template import Template as MakoTemplate
+try:
+    from mako.template import Template as MakoTemplate
+    have_mako = True
+except ImportError:
+    have_mako = False
 
 table = [dict(a='1',b='2',c='3',d='4',e='5',f='6',g='7',h='8',i='9',j='10')
           for x in range(1000)]
@@ -37,7 +45,8 @@ genshi_tmpl = MarkupTemplate("""
 </table>
 """)
 
-django_tmpl = DjangoTemplate("""
+if have_django:
+    django_tmpl = DjangoTemplate("""
 <table>
 {% for row in table %}
 <tr>{% for col in row.values %}{{ col|escape }}{% endfor %}</tr>
@@ -66,7 +75,8 @@ $col
 </table>
 ''', searchList=[{'table': table, 'escape': cgi.escape}])
 
-mako_tmpl = MakoTemplate('''
+if have_mako:
+    mako_tmpl = MakoTemplate('''
 <table>
 % for row in table:
 <tr>
@@ -80,6 +90,8 @@ mako_tmpl = MakoTemplate('''
 
 def test_django():
     """Django Templates"""
+    if not have_django:
+        return
     context = DjangoContext({'table': table})
     django_tmpl.render(context)
 
@@ -98,6 +110,8 @@ def test_cheetah():
 
 def test_mako():
     """Mako Templates"""
+    if not have_mako:
+        return
     mako_tmpl.render(table=table)
 
 
