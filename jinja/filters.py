@@ -10,6 +10,7 @@
 """
 from random import choice
 from urllib import urlencode, quote
+from jinja.utils import escape
 
 
 try:
@@ -83,10 +84,7 @@ def do_escape(s, attribute=False):
     XML escape &, <, and > in a string of data. If attribute is
     True it also converts ``"`` to ``&quot;``
     """
-    s = s.replace("&", "&amp;").replace("<", "&lt;").replace(">", "&gt;")
-    if attribute:
-        s = s.replace('"', "&quot;")
-    return s
+    return escape(s, attribute)
 do_escape = stringfilter(do_escape)
 
 

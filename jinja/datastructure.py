@@ -17,6 +17,12 @@ except NameError:
     def _reversed(c):
         return c[::-1]
 
+# sets
+try:
+    set
+except NameError:
+    from sets import Set as set
+
 
 class UndefinedType(object):
     """
@@ -77,6 +83,16 @@ class Deferred(object):
         return self.factory(context, name)
 
 
+class Markup(unicode):
+    """
+    Mark a string as safe for XML. If the environment uses the
+    auto_escape option values marked as `Markup` aren't escaped.
+    """
+
+
+safe_types = set([Markup, int, long, float])
+
+
 class Context(object):
     """
     Dict like object.
@@ -84,8 +100,11 @@ class Context(object):
 
     def __init__(self, _environment_, *args, **kwargs):
         self.environment = _environment_
-        self._stack = [self.environment.globals, dict(*args, **kwargs), {}]
-        self.globals, _, self.current = self._stack
+        self._stack = [self.environment.globals, dict(*args, **kwargs), {}, {}]
+        self.globals, self.initial, self.current = self._stack
+
+        # cache object used for filters and tests
+        self.cache = {}
 
     def pop(self):
         if len(self._stack) <= 2:
@@ -116,7 +135,12 @@ class Context(object):
             if name in d:
                 rv = d[name]
                 if isinstance(rv, Deferred):
-                    d[name] = rv = rv(self, name)
+                    rv = rv(self, name)
+                    # never tough the globals!
+                    if d is self.globals:
+                        self.initial[name] = rv
+                    else:
+                        d[name] = rv
                 return rv
         return Undefined
 
@@ -142,7 +166,7 @@ class LoopContext(object):
     """
 
     jinja_allowed_attributes = ['index', 'index0', 'length', 'parent',
-                                'even', 'odd']
+                                'even', 'odd', 'revindex0', 'revindex']
 
     def __init__(self, seq, parent, loop_function):
         self.loop_function = loop_function
@@ -164,6 +188,8 @@ class LoopContext(object):
     iterated = property(lambda s: s._stack[-1]['index'] > -1)
     index0 = property(lambda s: s._stack[-1]['index'])
     index = property(lambda s: s._stack[-1]['index'] + 1)
+    revindex0 = property(lambda s: s._stack[-1]['length'] - s._stack[-1]['index'] - 1)
+    revindex = property(lambda s: s._stack[-1]['length'] - s._stack[-1]['index'])
     length = property(lambda s: s._stack[-1]['length'])
     even = property(lambda s: s._stack[-1]['index'] % 2 == 0)
     odd = property(lambda s: s._stack[-1]['index'] % 2 == 1)

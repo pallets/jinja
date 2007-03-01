@@ -14,6 +14,12 @@ class TemplateError(RuntimeError):
     pass
 
 
+class SecurityException(TemplateError):
+    """
+    Raise if the template designer tried to do something dangerous.
+    """
+
+
 class FilterNotFound(KeyError, TemplateError):
     """
     Raised if a filter does not exist.

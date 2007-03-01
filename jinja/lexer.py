@@ -81,13 +81,6 @@ class Lexer(object):
                 (c('(.*?)(?:%s)' % '|'.join([
                     '(?P<%s_begin>%s)' % (n, e(r)) for n, r in root_tag_rules
                 ])), ('data', '#bygroup'), '#bygroup'),
-                #(c('(.*?)(?:(?P<comment_begin>' +
-                #    e(environment.comment_start_string) +
-                #    ')|(?P<block_begin>' +
-                #    e(environment.block_start_string) +
-                #    ')|(?P<variable_begin>' +
-                #    e(environment.variable_start_string) +
-                #   '))'), ('data', '#bygroup'), '#bygroup'),
                 (c('.+'), 'data', None)
             ],
             'comment_begin': [
@@ -96,7 +89,8 @@ class Lexer(object):
                 (c('(.)'), (Failure('Missing end of comment tag'),), None)
             ],
             'block_begin': [
-                (c(e(environment.block_end_string)), 'block_end', '#pop')
+                (c(e(environment.block_end_string) +
+                  (environment.trim_blocks and '\\n?' or '')), 'block_end', '#pop')
             ] + tag_rules,
             'variable_begin': [
                 (c(e(environment.variable_end_string)), 'variable_end',

@@ -32,19 +32,20 @@ class LoaderWrapper(object):
     def __init__(self, environment, loader):
         self.environment = environment
         self.loader = loader
+        if self.loader is None:
+            self.get_source = self.parse = self.load = self._loader_missing
+            self.available = False
+        else:
+            self.available = True
 
     def get_source(self, name, parent=None):
-        """
-        Retrieve the sourcecode of a template.
-        """
+        """Retrieve the sourcecode of a template."""
         # just ascii chars are allowed as template names
         name = str(name)
         return self.loader.get_source(self.environment, name, parent)
 
     def parse(self, name, parent=None):
-        """
-        Retreive a template and parse it.
-        """
+        """Retreive a template and parse it."""
         # just ascii chars are allowed as template names
         name = str(name)
         return self.loader.parse(self.environment, name, parent)
@@ -58,6 +59,11 @@ class LoaderWrapper(object):
         # just ascii chars are allowed as template names
         name = str(name)
         return self.loader.load(self.environment, name, translator)
+
+    def _loader_missing(self, *args, **kwargs):
+        """Helper method that overrides all other methods if no
+        loader is defined."""
+        raise RuntimeError('no loader defined')
 
 
 class FileSystemLoader(object):

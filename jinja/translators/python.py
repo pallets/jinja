@@ -31,14 +31,29 @@ class Template(object):
     Represents a finished template.
     """
 
-    def __init__(self, environment, generate_func):
+    def __init__(self, environment, code):
         self.environment = environment
-        self.generate_func = generate_func
+        self.code = code
+        self.generate_func = None
+
+    def dump(self, filename):
+        """Dump the template into python bytecode."""
+        from marshal import dumps
+        return dumps(self.code)
+
+    def load(environment, data):
+        """Load the template from python bytecode."""
+        from marshal import loads
+        code = loads(data)
+        return Template(environment, code)
+    load = staticmethod(load)
 
     def render(self, *args, **kwargs):
-        """
-        Render a template.
-        """
+        """Render a template."""
+        if self.generate_func is None:
+            ns = {}
+            exec self.code in ns
+            self.generate_func = ns['generate']
         result = []
         ctx = Context(self.environment, *args, **kwargs)
         self.generate_func(ctx, result.append)
@@ -114,10 +129,8 @@ class PythonTranslator(Translator):
 
     def process(environment, node):
         translator = PythonTranslator(environment, node)
-        source = translator.translate()
-        ns = {}
-        exec source in ns
-        return Template(environment, ns['generate'])
+        return Template(environment,
+                        compile(translator.translate(), node.filename, 'exec'))
     process = staticmethod(process)
 
     # -- private methods
@@ -149,8 +162,6 @@ class PythonTranslator(Translator):
         Handle the overall template node. This node is the first node and ensures
         that we get the bootstrapping code. It also knows about inheritance
         information. It only occours as outer node, never in the tree itself.
-
-        Nevertheless we call indent here to simplify futur changes.
         """
         # if there is a parent template we parse the parent template and
         # update the blocks there. Once this is done we drop the current
@@ -164,7 +175,7 @@ class PythonTranslator(Translator):
                     block.replace(node.blocks[block.name])
             node = tmpl
 
-        lines = [self.indent(
+        lines = [
             'from jinja.datastructure import Undefined, LoopContext, CycleContext\n\n'
             'def generate(context, write):\n'
             '    # BOOTSTRAPPING CODE\n'
@@ -175,12 +186,12 @@ class PythonTranslator(Translator):
             '    call_function = environment.call_function\n'
             '    call_function_simple = environment.call_function_simple\n'
             '    finish_var = environment.finish_var\n'
-            '    write_var = lambda x: write(finish_var(x))\n'
-            '    filtercache = {}\n\n'
+            '    write_var = lambda x: write(finish_var(x))\n\n'
             '    # TEMPLATE CODE'
-        )]
+        ]
         self.indention += 1
         lines.append(self.handle_node_list(node))
+        self.indention -= 1
 
         return '\n'.join(lines)
 
@@ -281,9 +292,9 @@ class PythonTranslator(Translator):
         write('if not %r in context.current:' % name)
         self.indention += 1
         if node.seq.__class__ in (ast.Tuple, ast.List):
-            write('context.current[%r] = CycleContext([%s])' % (
+            write('context.current[%r] = CycleContext(%s)' % (
                 name,
-                ', '.join([self.handle_node(n) for n in node.seq.nodes])
+                _to_tuple([self.handle_node(n) for n in node.seq.nodes])
             ))
             hardcoded = True
         else:
@@ -370,23 +381,46 @@ class PythonTranslator(Translator):
         # the semantic for the is operator is different.
         # for jinja the is operator performs tests and must
         # be the only operator
-        if node.ops[0][0] == 'is':
+        if node.ops[0][0] in ('is', 'is not'):
             if len(node.ops) > 1:
                 raise TemplateSyntaxError('is operator must not be chained',
                                           node.lineno)
-            elif node.ops[0][1].__class__ is not ast.Name:
-                raise TemplateSyntaxError('is operator requires a test name',
+            elif node.ops[0][1].__class__ is ast.Name:
+                args = []
+                name = node.ops[0][1].name
+            elif node.ops[0][1].__class__ is ast.CallFunc:
+                n = node.ops[0][1]
+                if n.node.__class__ is not ast.Name:
+                    raise TemplateSyntaxError('invalid test. test must '
+                                              'be a hardcoded function name '
+                                              'from the test namespace',
+                                              n.lineno)
+                name = n.node.name
+                args = []
+                for arg in n.args:
+                    if arg.__class__ is ast.Keyword:
+                        raise TemplateSyntaxError('keyword arguments for '
+                                                  'tests are not supported.',
+                                                  n.lineno)
+                    args.append(self.handle_node(arg))
+                if n.star_args is not None or n.dstar_args is not None:
+                    raise TemplateSynaxError('*args / **kwargs is not supported '
+                                             'for tests', n.lineno)
+            else:
+                raise TemplateSyntaxError('is operator requires a test name'
                                           ' as operand', node.lineno)
-            return 'perform_test(context, %r, %s)' % (
-                node.ops[0][1].name,
-                self.handle_node(node.expr)
-            )
+            return 'perform_test(context, %r, %s, %s, %s)' % (
+                    name,
+                    _to_tuple(args),
+                    self.handle_node(node.expr),
+                    node.ops[0][0] == 'is not'
+                )
 
         # normal operators
         buf = []
         buf.append(self.handle_node(node.expr))
         for op, n in node.ops:
-            if op == 'is':
+            if op in ('is', 'is not'):
                 raise TemplateSyntaxError('is operator must not be chained',
                                           node.lineno)
             buf.append(op)
@@ -465,7 +499,7 @@ class PythonTranslator(Translator):
                                           'hardcoded function name from the '
                                           'filter namespace',
                                           n.lineno)
-        return 'apply_filters(%s, filtercache, context, %s)' % (
+        return 'apply_filters(%s, context, %s)' % (
             self.handle_node(node.nodes[0]),
             _to_tuple(filters)
         )
