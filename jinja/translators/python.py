@@ -129,8 +129,9 @@ class PythonTranslator(Translator):
 
     def process(environment, node):
         translator = PythonTranslator(environment, node)
+        filename = node.filename or '<template>'
         return Template(environment,
-                        compile(translator.translate(), node.filename, 'exec'))
+                        compile(translator.translate(), filename, 'exec'))
     process = staticmethod(process)
 
     # -- private methods

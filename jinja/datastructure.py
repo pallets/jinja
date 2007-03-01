@@ -100,7 +100,7 @@ class Context(object):
 
     def __init__(self, _environment_, *args, **kwargs):
         self.environment = _environment_
-        self._stack = [self.environment.globals, dict(*args, **kwargs), {}, {}]
+        self._stack = [self.environment.globals, dict(*args, **kwargs), {}]
         self.globals, self.initial, self.current = self._stack
 
         # cache object used for filters and tests
