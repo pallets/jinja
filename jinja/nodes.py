@@ -203,6 +203,26 @@ class Macro(Node):
         )
 
 
+class Filter(Node):
+    """
+    Node for filter sections.
+    """
+
+    def __init__(self, lineno, body, filters):
+        self.lineno = lineno
+        self.body = body
+        self.filters = filters
+
+    def get_items(self):
+        return [self.body, self.filters]
+
+    def __repr__(self):
+        return 'Filter(%r)' % (
+            self.body,
+            self.filters
+        )
+
+
 class Block(Node):
     """
     A node that represents a block.
@@ -239,5 +259,24 @@ class Extends(Node):
         self.lineno = lineno
         self.template = template
 
+    def get_items(self):
+        return [self.template]
+
     def __repr__(self):
         return 'Extends(%r)' % self.template
+
+
+class Include(Node):
+    """
+    A node that represents the include tag.
+    """
+
+    def __init__(self, lineno, template):
+        self.lineno = lineno
+        self.template = template
+
+    def get_items(self):
+        return [self.template]
+
+    def __repr__(self):
+        return 'Include(%r)' % self.template

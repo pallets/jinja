@@ -23,6 +23,7 @@ switch_for = lambda p, t, d: t == 'name' and d in ('else', 'endfor')
 end_of_for = lambda p, t, d: t == 'name' and d == 'endfor'
 switch_if = lambda p, t, d: t == 'name' and d in ('else', 'elif', 'endif')
 end_of_if = lambda p, t, d: t == 'name' and d == 'endif'
+end_of_filter = lambda p, t, d: t == 'name' and d == 'endfilter'
 end_of_macro = lambda p, t, d: t == 'name' and d == 'endmacro'
 end_of_block_tag = lambda p, t, d: t == 'name' and d == 'endblock'
 
@@ -49,10 +50,12 @@ class Parser(object):
             'for':          self.handle_for_directive,
             'if':           self.handle_if_directive,
             'cycle':        self.handle_cycle_directive,
+            'filter':       self.handle_filter_directive,
             'print':        self.handle_print_directive,
             'macro':        self.handle_macro_directive,
             'block':        self.handle_block_directive,
-            'extends':      self.handle_extends_directive
+            'extends':      self.handle_extends_directive,
+            'include':      self.handle_include_directive
         }
 
     def handle_for_directive(self, lineno, gen):
@@ -122,6 +125,15 @@ class Parser(object):
         # skip that.
         return nodes.Cycle(lineno, ast.expr.args[0])
 
+    def handle_filter_directive(self, lineno, gen):
+        """
+        Handle {% filter foo|bar %} directives.
+        """
+        ast = self.parse_python(lineno, gen, '_filter(dummy|%s)')
+        body = self.subparse(end_of_filter, True)
+        self.close_remaining_block()
+        return nodes.Filter(lineno, body, ast.expr.args[0].nodes[1:])
+
     def handle_print_directive(self, lineno, gen):
         """
         Handle {{ foo }} and {% print foo %}.
@@ -186,7 +198,7 @@ class Parser(object):
 
     def handle_extends_directive(self, lineno, gen):
         """
-        Handle extends directive used for inheritance.
+        Handle the extends directive used for inheritance.
         """
         tokens = list(gen)
         if len(tokens) != 1 or tokens[0][1] != 'string':
@@ -194,6 +206,15 @@ class Parser(object):
         if self.extends is not None:
             raise TemplateSyntaxError('extends called twice', lineno)
         self.extends = nodes.Extends(lineno, tokens[0][2][1:-1])
+
+    def handle_include_directive(self, lineno, gen):
+        """
+        Handle the include directive used for template inclusion.
+        """
+        tokens = list(gen)
+        if len(tokens) != 1 or tokens[0][1] != 'string':
+            raise TemplateSyntaxError('include requires a string', lineno)
+        return nodes.Include(lineno, tokens[0][2][1:-1])
 
     def parse_python(self, lineno, gen, template='%s'):
         """

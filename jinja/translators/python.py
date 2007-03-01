@@ -86,7 +86,9 @@ class PythonTranslator(Translator):
             nodes.Cycle:            self.handle_cycle,
             nodes.Print:            self.handle_print,
             nodes.Macro:            self.handle_macro,
+            nodes.Filter:           self.handle_filter,
             nodes.Block:            self.handle_block,
+            nodes.Include:          self.handle_include,
             # used python nodes
             ast.Name:               self.handle_name,
             ast.AssName:            self.handle_name,
@@ -142,6 +144,41 @@ class PythonTranslator(Translator):
         """
         return (' ' * (self.indention * 4)) + text
 
+    def filter(self, s, filter_nodes):
+        """
+        Apply a filter on an object.
+        """
+        filters = []
+        for n in filter_nodes:
+            if n.__class__ is ast.CallFunc:
+                if n.node.__class__ is not ast.Name:
+                    raise TemplateSyntaxError('invalid filter. filter must '
+                                              'be a hardcoded function name '
+                                              'from the filter namespace',
+                                              n.lineno)
+                args = []
+                for arg in n.args:
+                    if arg.__class__ is ast.Keyword:
+                        raise TemplateSyntaxError('keyword arguments for '
+                                                  'filters are not supported.',
+                                                  n.lineno)
+                    args.append(self.handle_node(arg))
+                if n.star_args is not None or n.dstar_args is not None:
+                    raise TemplateSynaxError('*args / **kwargs is not supported '
+                                             'for filters', n.lineno)
+                filters.append('(%r, %s)' % (
+                    n.node.name,
+                    _to_tuple(args)
+                ))
+            elif n.__class__ is ast.Name:
+                filters.append('(%r, ())' % n.name)
+            else:
+                raise TemplateSyntaxError('invalid filter. filter must be a '
+                                          'hardcoded function name from the '
+                                          'filter namespace',
+                                          n.lineno)
+        return 'apply_filters(%s, context, %s)' % (s, _to_tuple(filters))
+
     def handle_node(self, node):
         """
         Handle one node
@@ -186,8 +223,7 @@ class PythonTranslator(Translator):
             '    apply_filters = environment.apply_filters\n'
             '    call_function = environment.call_function\n'
             '    call_function_simple = environment.call_function_simple\n'
-            '    finish_var = environment.finish_var\n'
-            '    write_var = lambda x: write(finish_var(x))\n\n'
+            '    finish_var = environment.finish_var\n\n'
             '    # TEMPLATE CODE'
         ]
         self.indention += 1
@@ -304,9 +340,9 @@ class PythonTranslator(Translator):
         self.indention -= 1
 
         if hardcoded:
-            write('write_var(context.current[%r].cycle())' % name)
+            write('write(finish_var(context.current[%r].cycle()))' % name)
         else:
-            write('write_var(context.current[%r].cycle(%s))' % (
+            write('write(finish_var(context.current[%r].cycle(%s)))' % (
                 name,
                 self.handle_node(node.seq)
             ))
@@ -317,7 +353,7 @@ class PythonTranslator(Translator):
         """
         Handle a print statement.
         """
-        return self.indent('write_var(%s)' % self.handle_node(node.variable))
+        return self.indent('write(finish_var(%s))' % self.handle_node(node.variable))
 
     def handle_macro(self, node):
         """
@@ -337,6 +373,24 @@ class PythonTranslator(Translator):
         self.indention -= 1
         buf.append(self.indent('context[%r] = macro' % node.name))
 
+        return '\n'.join(buf)
+
+    def handle_filter(self, node):
+        """
+        Handle filter sections.
+        """
+        buf = []
+        write = lambda x: buf.append(self.indent(x))
+        write('def filtered():')
+        self.indention += 1
+        write('context.push()')
+        write('buffer = []')
+        write('write = buffer.append')
+        buf.append(self.handle_node(node.body))
+        write('context.pop()')
+        write('return u\'\'.join(buffer)')
+        self.indention -= 1
+        write('write(%s)' % self.filter('filtered()', node.filters))
         return '\n'.join(buf)
 
     def handle_block(self, node):
@@ -363,6 +417,17 @@ class PythonTranslator(Translator):
         buf.append(self.handle_node(node.body))
         write('context.pop()')
         buf.append(self.indent('# END OF BLOCK'))
+        return '\n'.join(buf)
+
+    def handle_include(self, node):
+        """
+        Include another template at the current position.
+        """
+        buf = [self.indent('# INCLUDED TEMPLATE %r' % node.filename)]
+        tmpl = self.environment.loader.parse(node.template,
+                                             node.filename)
+        buf.append(self.handle_node(tmpl))
+        buf.append(self.indent('# END OF INCLUSION'))
         return '\n'.join(buf)
 
     # -- python nodes
@@ -471,39 +536,7 @@ class PythonTranslator(Translator):
         """
         We use the pipe operator for filtering.
         """
-        filters = []
-        for n in node.nodes[1:]:
-            if n.__class__ is ast.CallFunc:
-                if n.node.__class__ is not ast.Name:
-                    raise TemplateSyntaxError('invalid filter. filter must '
-                                              'be a hardcoded function name '
-                                              'from the filter namespace',
-                                              n.lineno)
-                args = []
-                for arg in n.args:
-                    if arg.__class__ is ast.Keyword:
-                        raise TemplateSyntaxError('keyword arguments for '
-                                                  'filters are not supported.',
-                                                  n.lineno)
-                    args.append(self.handle_node(arg))
-                if n.star_args is not None or n.dstar_args is not None:
-                    raise TemplateSynaxError('*args / **kwargs is not supported '
-                                             'for filters', n.lineno)
-                filters.append('(%r, %s)' % (
-                    n.node.name,
-                    _to_tuple(args)
-                ))
-            elif n.__class__ is ast.Name:
-                filters.append('(%r, ())' % n.name)
-            else:
-                raise TemplateSyntaxError('invalid filter. filter must be a '
-                                          'hardcoded function name from the '
-                                          'filter namespace',
-                                          n.lineno)
-        return 'apply_filters(%s, context, %s)' % (
-            self.handle_node(node.nodes[0]),
-            _to_tuple(filters)
-        )
+        return self.filter(self.handle_node(node.nodes[0]), node.nodes[1:])
 
     def handle_call_func(self, node):
         """
