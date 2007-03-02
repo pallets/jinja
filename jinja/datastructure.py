@@ -166,7 +166,8 @@ class LoopContext(object):
     """
 
     jinja_allowed_attributes = ['index', 'index0', 'length', 'parent',
-                                'even', 'odd', 'revindex0', 'revindex']
+                                'even', 'odd', 'revindex0', 'revindex',
+                                'first', 'last']
 
     def __init__(self, seq, parent, loop_function):
         self.loop_function = loop_function
@@ -193,6 +194,8 @@ class LoopContext(object):
     length = property(lambda s: s._stack[-1]['length'])
     even = property(lambda s: s._stack[-1]['index'] % 2 == 0)
     odd = property(lambda s: s._stack[-1]['index'] % 2 == 1)
+    first = property(lambda s: s._stack[-1]['index'] == 0)
+    last = property(lambda s: s._stack[-1]['index'] == s._stack[-1]['length'] - 1)
 
     def __iter__(self):
         s = self._stack[-1]

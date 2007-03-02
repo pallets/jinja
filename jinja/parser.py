@@ -50,6 +50,7 @@ class Parser(object):
             'for':          self.handle_for_directive,
             'if':           self.handle_if_directive,
             'cycle':        self.handle_cycle_directive,
+            'set':          self.handle_set_directive,
             'filter':       self.handle_filter_directive,
             'print':        self.handle_print_directive,
             'macro':        self.handle_macro_directive,
@@ -125,6 +126,19 @@ class Parser(object):
         # skip that.
         return nodes.Cycle(lineno, ast.expr.args[0])
 
+    def handle_set_directive(self, lineno, gen):
+        """
+        Handle {% set foo = 'value of foo' %}.
+        """
+        try:
+            name = gen.next()
+            if name[1] != 'name' or gen.next()[1:] != ('operator', '='):
+                raise ValueError()
+        except (StopIteration, ValueError):
+            raise TemplateSyntaxError('invalid syntax for set', lineno)
+        ast = self.parse_python(lineno, gen, '(%s)')
+        return nodes.Set(lineno, name[1], ast.expr)
+
     def handle_filter_directive(self, lineno, gen):
         """
         Handle {% filter foo|bar %} directives.
@@ -151,7 +165,7 @@ class Parser(object):
 
     def handle_macro_directive(self, lineno, gen):
         """
-        Handle {% macro foo(bar, baz) %}.
+        Handle {% macro foo bar, baz %}.
         """
         try:
             macro_name = gen.next()
@@ -216,7 +230,7 @@ class Parser(object):
             raise TemplateSyntaxError('include requires a string', lineno)
         return nodes.Include(lineno, tokens[0][2][1:-1])
 
-    def parse_python(self, lineno, gen, template='%s'):
+    def parse_python(self, lineno, gen, template):
         """
         Convert the passed generator into a flat string representing
         python sourcecode and return an ast node or raise a

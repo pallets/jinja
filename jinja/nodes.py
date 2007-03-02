@@ -203,6 +203,26 @@ class Macro(Node):
         )
 
 
+class Set(Node):
+    """
+    Allow defining own variables.
+    """
+
+    def __init__(self, lineno, name, expr):
+        self.lineno = lineno
+        self.name = name
+        self.expr = expr
+
+    def get_items(self):
+        return [self.name, self.expr]
+
+    def __repr__(self):
+        return 'Set(%r, %r)' % (
+            self.name,
+            self.expr
+        )
+
+
 class Filter(Node):
     """
     Node for filter sections.

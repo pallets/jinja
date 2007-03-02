@@ -86,6 +86,7 @@ class PythonTranslator(Translator):
             nodes.Cycle:            self.handle_cycle,
             nodes.Print:            self.handle_print,
             nodes.Macro:            self.handle_macro,
+            nodes.Set:              self.handle_set,
             nodes.Filter:           self.handle_filter,
             nodes.Block:            self.handle_block,
             nodes.Include:          self.handle_include,
@@ -136,7 +137,7 @@ class PythonTranslator(Translator):
                         compile(translator.translate(), filename, 'exec'))
     process = staticmethod(process)
 
-    # -- private methods
+    # -- private helper methods
 
     def indent(self, text):
         """
@@ -146,7 +147,8 @@ class PythonTranslator(Translator):
 
     def filter(self, s, filter_nodes):
         """
-        Apply a filter on an object.
+        Apply a filter on an object that already is a python expression.
+        Used to avoid redundant code in bitor and the filter directive.
         """
         filters = []
         for n in filter_nodes:
@@ -214,6 +216,7 @@ class PythonTranslator(Translator):
             node = tmpl
 
         lines = [
+            'from __future__ import division\n'
             'from jinja.datastructure import Undefined, LoopContext, CycleContext\n\n'
             'def generate(context, write):\n'
             '    # BOOTSTRAPPING CODE\n'
@@ -374,6 +377,15 @@ class PythonTranslator(Translator):
         buf.append(self.indent('context[%r] = macro' % node.name))
 
         return '\n'.join(buf)
+
+    def handle_set(self, node):
+        """
+        Handle variable assignments.
+        """
+        return self.indent('context[%r] = %s' % (
+            node.name,
+            self.handle_node(node.expr)
+        ))
 
     def handle_filter(self, node):
         """
