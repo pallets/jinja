@@ -19,54 +19,52 @@ regex_type = type(number_re)
 
 def test_odd():
     """
-    {{ var is odd }}
-
-    Return True if the variable is odd.
+    Return true if the variable is odd.
     """
     return lambda e, c, v: v % 2 == 1
 
 
 def test_even():
     """
-    {{ var is even }}
-
-    Return True of the variable is even.
+    Return true of the variable is even.
     """
     return lambda e, c, v: v % 2 == 0
 
 
 def test_defined():
     """
-    {{ var is defined }}
+    Return true if the variable is defined:
 
-    Return True if the variable is defined.
+    .. sourcecode:: jinja
+
+        {% if variable is defined %}
+            value of variable: {{ variable }}
+        {% else %}
+            variable is not defined
+        {% endif %}
+
+    See also the ``default`` filter.
     """
     return lambda e, c, v: v is not Undefined
 
 
 def test_lower():
     """
-    {{ var is lower }}
-
-    Return True if the variable is lowercase.
+    Return true if the variable is lowercase.
     """
     return lambda e, c, v: isinstance(v, basestring) and v.islower()
 
 
 def test_upper():
     """
-    {{ var is upper }}
-
-    Return True if the variable is uppercase.
+    Return true if the variable is uppercase.
     """
     return lambda e, c, v: isinstance(v, basestring) and v.isupper()
 
 
 def test_numeric():
     """
-    {{ var is numeric }}
-
-    Return True if the variable is numeric.
+    Return true if the variable is numeric.
     """
     return lambda e, c, v: isinstance(v, (int, long, float)) or (
                            isinstance(v, basestring) and
@@ -75,9 +73,8 @@ def test_numeric():
 
 def test_sequence():
     """
-    {{ var is sequence }}
-
-    Return True if the variable is a sequence.
+    Return true if the variable is a sequence. Sequences are variables
+    that are iterable.
     """
     def wrapped(environment, context, value):
         try:
@@ -91,12 +88,18 @@ def test_sequence():
 
 def test_matching(regex):
     """
-    {{ var is matching('\d+$') }}
-
     Test if the variable matches the regular expression
     given. If the regular expression is a string additional
     slashes are automatically added, if it's a compiled regex
-    it's used without any modifications.
+    it's used without any modifications:
+
+    .. sourcecode:: jinja
+
+        {% if var is matching('\d+$') %}
+            var looks like a number
+        {% else %}
+            var doesn't really look like a number
+        {% endif %}
     """
     if isinstance(regex, unicode):
         regex = re.compile(regex.encode('unicode-escape'), re.U)

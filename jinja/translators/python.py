@@ -674,7 +674,7 @@ class PythonTranslator(Translator):
         handle foo or bar.
         """
         return ' or '.join([
-            self.handle_node(n) for n in self.nodse
+            self.handle_node(n) for n in node.nodes
         ])
 
     def handle_not(self, node):

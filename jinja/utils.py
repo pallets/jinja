@@ -9,7 +9,7 @@
     :license: BSD, see LICENSE for more details.
 """
 import re
-from jinja.datastructure import safe_types
+from jinja.datastructure import safe_types, Markup
 
 
 _escape_pairs = {
@@ -30,5 +30,5 @@ def escape(x, attribute=False):
     """
     if type(x) in safe_types:
         return x
-    return _escape_res[not attribute].sub(lambda m: _escape_pairs[m.group()],
-                                          unicode(x))
+    return Markup(_escape_res[not attribute].sub(lambda m:
+                  _escape_pairs[m.group()], unicode(x)))

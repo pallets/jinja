@@ -133,9 +133,9 @@ class IfCondition(Node):
 
     def get_items(self):
         result = []
-        for test in tests:
+        for test in self.tests:
             result.extend(test)
-        result.append(self._else)
+        result.append(self.else_)
         return result
 
     def __repr__(self):

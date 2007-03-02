@@ -89,6 +89,9 @@ class Markup(unicode):
     auto_escape option values marked as `Markup` aren't escaped.
     """
 
+    def __repr__(self):
+        return 'Markup(%s)' % unicode.__repr__(self)
+
 
 safe_types = set([Markup, int, long, float])
 

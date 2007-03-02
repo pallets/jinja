@@ -68,11 +68,11 @@ class Environment(object):
         Get or set the template loader.
         """
         self._loader = LoaderWrapper(self, value)
-    loader = property(lambda s: s._loader, loader, loader.__doc__)
+    loader = property(lambda s: s._loader.loader, loader, loader.__doc__)
 
-    def parse(self, source):
+    def parse(self, source, filename=None):
         """Function that creates a new parser and parses the source."""
-        parser = Parser(self, source)
+        parser = Parser(self, source, filename)
         return parser.parse()
 
     def from_string(self, source):

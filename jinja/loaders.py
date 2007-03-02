@@ -16,6 +16,9 @@ from jinja.translators.python import PythonTranslator
 from jinja.exceptions import TemplateNotFound
 
 
+__all__ = ['FileSystemLoader']
+
+
 def get_template_filename(searchpath, name):
     """
     Return the filesystem filename wanted.
@@ -68,10 +71,28 @@ class LoaderWrapper(object):
 
 class FileSystemLoader(object):
     """
-    Loads templates from the filesystem::
+    Loads templates from the filesystem:
+
+    .. sourcecode:: python
 
         from jinja import Environment, FileSystemLoader
         e = Environment(loader=FileSystemLoader('templates/'))
+
+    You can pass the following keyword arguments to the loader on
+    initialisation:
+
+    =================== =================================================
+    ``searchpath``      String with the path to the templates on the
+                        filesystem.
+    ``use_cache``       Set this to ``True`` to enable memory caching.
+                        This is usually a good idea in production mode,
+                        but disable it during development since it won't
+                        reload template changes automatically.
+                        This only works in persistent environments like
+                        FastCGI.
+    ``cache_size``      Number of template instance you want to cache.
+                        Defaults to ``40``.
+    =================== =================================================
     """
 
     def __init__(self, searchpath, use_cache=False, cache_size=40):

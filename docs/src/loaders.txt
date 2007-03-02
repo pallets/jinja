@@ -1,0 +1,10 @@
+================
+Template Loaders
+================
+
+This part of the documentation explains how to use and write a template loader.
+
+Builtin Loaders
+===============
+
+[[list_of_loaders]]

@@ -11,6 +11,7 @@
 from random import choice
 from urllib import urlencode, quote
 from jinja.utils import escape
+from jinja.datastructure import Undefined
 
 
 try:
@@ -40,16 +41,29 @@ def stringfilter(f):
                     nargs[idx] = env.to_unicode(var)
             return f(env.to_unicode(value), *nargs)
         return wrapped
+    try:
+        decorator.__doc__ = f.__doc__
+        decorator.__name__ = f.__name__
+    except:
+        pass
     return decorator
 
 
 def do_replace(s, old, new, count=None):
     """
-    {{ s|replace(old, new, count=None) }}
+    Return a copy of the value with all occurrences of a substring
+    replaced with a new one. The first argument is the substring
+    that should be replaced, the second is the replacement string.
+    If the optional third argument ``count`` is given, only the first
+    ``count`` occurrences are replaced:
 
-    Return a copy of s with all occurrences of substring
-    old replaced by new. If the optional argument count is
-    given, only the first count occurrences are replaced.
+    .. sourcecode:: jinja
+
+        {{ "Hello World"|replace("Hello", "Goodbye") }}
+            -> Goodbye World
+
+        {{ "aaaaargh"|replace("a", "d'oh, ", 2) }}
+            -> d'oh, d'oh, aaargh
     """
     if count is None:
         return s.replace(old, new)
@@ -59,9 +73,7 @@ do_replace = stringfilter(do_replace)
 
 def do_upper(s):
     """
-    {{ s|upper }}
-
-    Return a copy of s converted to uppercase.
+    Convert a value to uppercase.
     """
     return s.upper()
 do_upper = stringfilter(do_upper)
@@ -69,9 +81,7 @@ do_upper = stringfilter(do_upper)
 
 def do_lower(s):
     """
-    {{ s|lower }}
-
-    Return a copy of s converted to lowercase.
+    Convert a value to lowercase.
     """
     return s.lower()
 do_lower = stringfilter(do_lower)
@@ -79,10 +89,12 @@ do_lower = stringfilter(do_lower)
 
 def do_escape(s, attribute=False):
     """
-    {{ s|escape(attribute) }}
+    XML escape ``&``, ``<``, and ``>`` in a string of data. If the
+    optional parameter is `true` this filter will also convert
+    ``"`` to ``&quot;``. This filter is just used if the environment
+    was configured with disabled `auto_escape`.
 
-    XML escape &, <, and > in a string of data. If attribute is
-    True it also converts ``"`` to ``&quot;``
+    This method will have no effect it the value is already escaped.
     """
     return escape(s, attribute)
 do_escape = stringfilter(do_escape)
@@ -90,9 +102,9 @@ do_escape = stringfilter(do_escape)
 
 def do_addslashes(s):
     """
-    {{ s|addslashes }}
-
-    Adds slashes to s.
+    Add backslashes in front of special characters to s. This method
+    might be useful if you try to fill javascript strings. Also have
+    a look at the `jsonencode` filter.
     """
     return s.encode('utf-8').encode('string-escape').decode('utf-8')
 do_addslashes = stringfilter(do_addslashes)
@@ -100,10 +112,8 @@ do_addslashes = stringfilter(do_addslashes)
 
 def do_capitalize(s):
     """
-    {{ s|capitalize }}
-
-    Return a copy of the string s with only its first character
-    capitalized.
+    Capitalize a value. The first character will be uppercase, all others
+    lowercase.
     """
     return s.capitalize()
 do_capitalize = stringfilter(do_capitalize)
@@ -111,33 +121,52 @@ do_capitalize = stringfilter(do_capitalize)
 
 def do_title(s):
     """
-    {{ s|title }}
-
-    Return a titlecased version of s, i.e. words start with uppercase
-    characters, all remaining cased characters have lowercase.
+    Return a titlecased version of the value. I.e. words will start with
+    uppercase letters, all remaining characters are lowercase.
     """
     return s.title()
 do_title = stringfilter(do_title)
 
 
-def do_default(default_value=u''):
+def do_default(default_value=u'', boolean=False):
     """
-    {{ s|default(default_value='') }}
+    If the value is undefined it will return the passed default value,
+    otherwise the value of the variable:
 
-    In case of s isn't set or True default will return default_value
-    which is '' per default.
+    .. sourcecode:: jinja
+
+        {{ my_variable|default('my_variable is not defined') }}
+
+    This will output the value of ``my_variable`` if the variable was
+    defined, otherwise ``'my_variable is not defined'``. If you want
+    to use default with variables that evaluate to false you have to
+    set the second parameter to `true`:
+
+    .. sourcecode:: jinja
+
+        {{ ''|default('the string was empty', true) }}
     """
-    return lambda e, c, v: v or default_value
+    def wrapped(env, context, value):
+        if (boolean and not v) or v in (Undefined, None):
+            return default_value
+        return v
+    return wrapped
 do_default = stringfilter(do_default)
 
 
 def do_join(d=u''):
     """
-    {{ sequence|join(d='') }}
-
     Return a string which is the concatenation of the strings in the
-    sequence. The separator between elements is d which is an empty
-    string per default.
+    sequence. The separator between elements is an empty string per
+    default, you can define ith with the optional parameter:
+
+    .. sourcecode:: jinja
+
+        {{ [1, 2, 3]|join('|') }}
+            -> 1|2|3
+
+        {{ [1, 2, 3]|join }}
+            -> 123
     """
     def wrapped(env, context, value):
         d = env.to_unicode(d)
@@ -147,12 +176,9 @@ def do_join(d=u''):
 
 def do_count():
     """
-    {{ var|count }}
-
-    Return the length of var. In case if getting an integer or float
+    Return the length of the value. In case if getting an integer or float
     it will convert it into a string an return the length of the new
-    string.
-    If the object doesn't provide a __len__ function it will return zero
+    string. If the object has no length it will of corse return 0.
     """
     def wrapped(env, context, value):
         try:
@@ -164,29 +190,16 @@ def do_count():
     return wrapped
 
 
-def do_odd():
-    """
-    {{ var|odd }}
-
-    Return true if the variable is odd.
-    """
-    return lambda e, c, v: v % 2 == 1
-
-
-def do_even():
-    """
-    {{ var|even }}
-
-    Return true of the variable is even.
-    """
-    return lambda e, c, v: v % 2 == 0
-
-
 def do_reversed():
     """
-    {{ var|reversed }}
+    Return a reversed list of the sequence filtered. You can use this
+    for example for reverse iteration:
 
-    Return a reversed list of the iterable filtered.
+    .. sourcecode:: jinja
+
+        {% for item in seq|reversed %}
+            {{ item|e }}
+        {% endfor %}
     """
     def wrapped(env, context, value):
         try:
@@ -200,83 +213,59 @@ def do_reversed():
 
 def do_center(value, width=80):
     """
-    {{ var|center(80) }}
-
     Centers the value in a field of a given width.
     """
     return value.center(width)
 do_center = stringfilter(do_center)
 
 
-def do_title(value):
-    """
-    {{ var|title }}
-
-    Capitalize the first character of all words.
-    """
-    return value.title()
-do_title = stringfilter(do_title)
-
-
-def do_capitalize(value):
-    """
-    {{ var|capitalize }}
-
-    Capitalize the first character of the string.
-    """
-    return value.capitalize()
-do_capitalize = stringfilter(do_capitalize)
-
-
 def do_first():
     """
-    {{ var|first }}
-
-    Return the frist item of a sequence or None.
+    Return the frist item of a sequence.
     """
     def wrapped(env, context, seq):
         try:
             return iter(seq).next()
         except StopIteration:
-            return
+            return Undefined
     return wrapped
 
 
 def do_last():
     """
-    {{ var|last }}
-
     Return the last item of a sequence.
     """
     def wrapped(env, context, seq):
         try:
             return iter(_reversed(seq)).next()
         except (TypeError, StopIteration):
-            return
+            return Undefined
     return wrapped
 
 
 def do_random():
     """
-    {{ var|random }}
-
     Return a random item from the sequence.
     """
     def wrapped(env, context, seq):
         try:
             return choice(seq)
         except:
-            return
+            return Undefined
     return wrapped
 
 
 def do_urlencode():
     """
-    {{ var|urlencode }}
-
-    {{ {'foo': 'bar'}|urlencode }}
-
     urlencode a string or directory.
+
+    .. sourcecode:: jinja
+
+        {{ {'foo': 'bar', 'blub': 'blah'}|urlencode }}
+            -> foo=bar&blub=blah
+
+        {{ 'Hello World' }}
+            -> Hello%20World
     """
     def wrapped(env, context, value):
         if isinstance(value, dict):
@@ -291,9 +280,12 @@ def do_urlencode():
 
 def do_jsonencode():
     """
-    {{ var|jsonencode }}
-
     JSON dump a variable. just works if simplejson is installed.
+
+    .. sourcecode:: jinja
+
+        {{ 'Hello World'|jsonencode }}
+            -> "Hello World"
     """
     global simplejson
     try:
@@ -315,8 +307,6 @@ FILTERS = {
     'default':              do_default,
     'join':                 do_join,
     'count':                do_count,
-    'odd':                  do_odd,
-    'even':                 do_even,
     'reversed':             do_reversed,
     'center':               do_center,
     'title':                do_title,
