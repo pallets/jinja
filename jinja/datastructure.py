@@ -148,11 +148,11 @@ class Context(object):
         return Undefined
 
     def __setitem__(self, name, value):
-        self._stack[-1][name] = value
+        self.current[name] = value
 
     def __delitem__(self, name):
-        if name in self._stack[-1]:
-            del self._stack[-1][name]
+        if name in self.current:
+            del self.current[name]
 
     def __repr__(self):
         tmp = {}

@@ -58,7 +58,7 @@ class Environment(object):
 
         # global namespace
         self.globals = namespace is None and DEFAULT_NAMESPACE.copy() \
-                       or namespace
+                       or namespace or {}
 
         # create lexer
         self.lexer = Lexer(self)
@@ -153,7 +153,8 @@ class Environment(object):
             args += tuple(dyn_args)
         elif dyn_kwargs is not None:
             kwargs.update(dyn_kwargs)
-        if getattr(f, 'jinja_unsafe_call', False):
+        if getattr(f, 'jinja_unsafe_call', False) or \
+           getattr(f, 'alters_data', False):
             raise SecurityException('unsafe function %r called' % f.__name__)
         return f(*args, **kwargs)
 

@@ -137,7 +137,7 @@ class Parser(object):
         except (StopIteration, ValueError):
             raise TemplateSyntaxError('invalid syntax for set', lineno)
         ast = self.parse_python(lineno, gen, '(%s)')
-        return nodes.Set(lineno, name[1], ast.expr)
+        return nodes.Set(lineno, name[2], ast.expr)
 
     def handle_filter_directive(self, lineno, gen):
         """
