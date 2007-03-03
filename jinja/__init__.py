@@ -3,7 +3,7 @@
     Jinja Sandboxed Template Engine
     ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
-    :copyright: 2006 by Armin Ronacher.
+    :copyright: 2007 by Armin Ronacher.
     :license: BSD, see LICENSE for more details.
 """
 from jinja.environment import Environment

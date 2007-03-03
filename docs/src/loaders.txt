@@ -8,3 +8,61 @@ Builtin Loaders
 ===============
 
 [[list_of_loaders]]
+
+Developing Loaders
+==================
+
+Template loaders are just normal python classes that have to provide some
+functions used to load and translate templates. Here a simple loader implementation
+you can use as base for your own loader:
+
+.. sourcecode:: python
+
+    from os.path import join
+    from jinja.parser import Parser
+    from jinja.exceptions import TemplateNotFound
+
+    class SimpleLoader(object):
+        """
+        Slimmed down version of the included `FileSystemLoader`.
+        """
+
+        def __init__(self, searchpath):
+            self.searchpath = searchpath
+
+        def get_source(self, environment, name, parent):
+            """
+            The get_source function is unused at the moment. However future
+            versions of jinja will use this function for the debugging
+            system. It also works as helper functions for `parse` and
+            `load`.
+            """
+            filename = join(self.searchpath, name)
+            if not path.exists(filename):
+                raise TemplateNotFound(name)
+            f = codecs.open(filename, 'r', environment.template_charset)
+            try:
+                return f.read()
+            finally:
+                f.close()
+
+        def parse(self, environment, name, parent):
+            """
+            Load and parse a template and return the syntax tree.
+            """
+            source = self.get_source(environment, name, parent)
+            return Parser(environment, source, name).parse()
+
+        def load(self, environment, name, translator):
+            """
+            Parse and translate a template. Currently only translation to
+            python code is possible, later jinja versions however will
+            support translating templates to javascript too.
+            """
+            return translator.process(environment, self.parse(environment, name, None))
+
+
+.. admonition:: Note
+
+    Once a loader is bound to an environment you have to omit the environment
+    argument for the public functions `get_source`, `parse` and `load`.

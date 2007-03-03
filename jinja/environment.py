@@ -5,7 +5,7 @@
 
     Provides a class that holds runtime and parsing time options.
 
-    :copyright: 2006 by Armin Ronacher.
+    :copyright: 2007 by Armin Ronacher.
     :license: BSD, see LICENSE for more details.
 """
 import re
@@ -68,7 +68,7 @@ class Environment(object):
         Get or set the template loader.
         """
         self._loader = LoaderWrapper(self, value)
-    loader = property(lambda s: s._loader.loader, loader, loader.__doc__)
+    loader = property(lambda s: s._loader, loader, loader.__doc__)
 
     def parse(self, source, filename=None):
         """Function that creates a new parser and parses the source."""

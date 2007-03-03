@@ -1,0 +1,64 @@
+============
+Installation
+============
+
+Jinja requires at least Python 2.3 to work correctly.
+
+Installing a released version
+=============================
+
+As a Python egg (via easy_install)
+----------------------------------
+
+You can install the most recent Jinja version using `easy_install`_::
+
+    sudo easy_install Jinja
+
+This will install a Jinja egg in your Python installation's site-packages
+directory.
+
+
+From the tarball release
+-------------------------
+
+1.  Download the most recent tarball from the `download page`_
+2.  Unpack the tarball
+3.  ``sudo python setup.py install``
+
+Note that the last command will automatically download and install
+`setuptools`_ if you don't already have it installed. This requires a working
+internet connection.
+
+This will install Jinja into your Python installation's site-packages directory.
+
+
+Installing the development version
+==================================
+
+If you want to play around with the code
+----------------------------------------
+
+1.  Install `Subversion`_
+2.  ``svn co http://trac.pocoo.org/repos/jinja/trunk jinja``
+3.  ``cd jinja``
+4.  ``ln -s jinja /usr/lib/python2.X/site-packages``
+
+As an alternative to steps 4 you can also do ``python setup.py develop``
+which will install the package via setuptools in development mode.
+
+If you just want the latest features and use them
+-------------------------------------------------
+
+::
+    
+    sudo easy_install Jinja==dev
+
+This will install a Jinja egg containing the latest Subversion trunk code
+in your Python installation's site-packages directory. Every time the command
+is run, the sources are updated from Subversion.
+
+
+.. _download page: http://jinja.pocoo.org/download/
+.. _setuptools: http://peak.telecommunity.com/DevCenter/setuptools
+.. _easy_install: http://peak.telecommunity.com/DevCenter/EasyInstall
+.. _Subversion: http://subversion.tigris.org/

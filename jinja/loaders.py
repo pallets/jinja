@@ -5,7 +5,7 @@
 
     Jinja loader classes.
 
-    :copyright: 2006 by Armin Ronacher.
+    :copyright: 2007 by Armin Ronacher.
     :license: BSD, see LICENSE for more details.
 """
 
