@@ -1,0 +1,72 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML Frameset//EN"
+  "http://www.w3.org/TR/xhtml1/DTD/xhtml1-frameset.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml">
+  <head>
+    <title>FAQ | Jinja Template Engine</title>
+    <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+    <link rel="stylesheet" href="./static/style.css" type="text/css" />
+    <link rel="stylesheet" href="./static/print.css" type="text/css" media="print" />
+    <link rel="stylesheet" href="./static/pygments.css" type="text/css" />
+  </head>
+  <body>
+    <div id="header">
+      <h1>Jinja</h1>
+    </div>
+    <ul id="navigation">
+                  <li><a href="./index.html">Index</a></li>
+                        <li class="active">FAQ</li>
+                        <li><a href="./documentation.html">Documentation</a></li>
+                        <li><a href="./download.html">Download</a></li>
+              </ul>
+        <div id="content">
+      <div id="contentwrapper">
+          <h1>Frequently Asked Questions</h1>
+  <p>
+    Here a list of frequently asked questions.
+  </p>
+  <h2>Why the Name?</h2>
+  <p>
+    The name Jinja was chosen because it's the name of a Japanese temple and
+    temple and template share a similar pronunciation.
+  </p>
+  <h2>How fast is it?</h2>
+  <p>
+    I really hate benchmarks especially since they don't reflect much. The
+    performance of a template depends on many factors and you would have to
+    benchmark different engines in differen situations. However Jinja isn't
+    slow. The benchmarks from the testsuite show that Jinja is about twice
+    as fast as Django templates and about three times as slow as
+    <a href="http://www.makotemplates.org/">mako</a>. That's not bad for a
+    sandboxed template engine that has to sanitize template input on the fly.
+    If you really need the best performance of a template engine consider
+    using mako.
+  </p>
+  <h2>What happened to Jinja &lt; 1?</h2>
+  <p>
+    Before Jinja 1 there was a template engine too with the same name. Beside
+    the name and the same maintainer those two projects don't share a single
+    line of code. If you have an application using Jinja &lt; 1 you should try
+    to make it Jinja 1 compatible. If that's not possible, the old project is
+    still available as 
+    <a href="http://trac.pocoo.org/repos/jinja/branches/0.9-maint/">0.9-maint</a>
+    in the Jinja subversion repository.
+  </p>
+  <h2>Why should I use Jinja?</h2>
+  <p>
+    There are dozens of template engines for Python, many of them try to
+    achieve different things. If you are looking for a XML based template
+    engine have a look at <a href="http://genshi.edgewall.org/">genshi</a>,
+    if you want a bleezing fast template engine with the full range of
+    python constructs have a look at mako. If you want sandboxed templates
+    you probably want to check out Jinja.
+  </p>
+      </div>
+      <p id="meta">
+        <a href="./faq.tmpl">show template source</a>
+      </p>
+    </div>
+    <div id="footer">
+      &copy; Copyright 2007 by the Pocoo Team.
+    </div>
+  </body>
+</html>

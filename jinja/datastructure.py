@@ -66,6 +66,9 @@ class UndefinedType(object):
     def __float__(self):
         return 1
 
+    def __call__(self, *args, **kwargs):
+        return self
+
 
 Undefined = UndefinedType()
 
@@ -214,6 +217,9 @@ class LoopContext(object):
             return self.loop_function(seq)
         return Undefined
 
+    def __repr__(self):
+        return str(self._stack)
+
 
 class CycleContext(object):
     """
@@ -263,7 +269,7 @@ class TokenStream(object):
         return True
 
     eos = property(lambda x: not x.__nonzero__(), doc=__nonzero__.__doc__)
-
+    
     def next(self):
         """Return the next token from the stream."""
         if self._pushed:

@@ -1,0 +1,137 @@
+/**
+ * Jinja Webpage Design
+ */
+
+body {
+    background-color: #333;
+    margin: 0;
+    padding: 0;
+    font-family: 'Georgia', serif;
+    font-size: 15px;
+    color: #111;
+}
+
+p, li, dd, dt, blockquote {
+    color: #333;
+}
+
+p {
+    line-height: 150%;
+    margin-bottom: 0;
+    margin-top: 10px;
+    text-align: justify;
+}
+
+hr {
+    border-top: 1px solid #ccc;
+    border-bottom: 0;
+    border-right: 0;
+    border-left: 0;
+    margin-bottom: 10px;
+    margin-top: 20px;
+}
+
+a {
+    color: #b41717;
+}
+
+a:hover {
+    color: #444;
+}
+
+pre {
+    background-color: #f9f9f9;
+    border-top: 1px solid #ccc;
+    border-bottom: 1px solid #ccc;
+    padding: 5px;
+    font-size: 13px;
+    font-family: 'Bitstream Vera Sans Mono', 'Monaco', monospace;
+}
+
+#content {
+    background-color: white;
+    background-image: url(watermark.png);
+    padding: 10px;
+    margin: 25px 25px 0 25px;
+    border: 4px solid #ddd;
+    border-bottom: none;
+}
+
+#footer {
+    margin: 0 25px 25px 25px;
+    border-bottom: 4px solid #ddd;
+    background-color: #fff;
+    text-align: right;
+    padding: 0 10px 5px 0;
+}
+
+#contentwrapper {
+    max-width: 700px;
+    padding: 0 10px 0 20px;
+}
+
+#header {
+    height: 80px;
+    background-color: #eee;
+    background-image: url(jinjabanner.png);
+    background-repeat: no-repeat;
+    border-bottom: 4px solid #ccc;
+}
+
+#header h1 {
+    display: none
+}
+
+#navigation {
+    background-color: #fff;
+    border: 1px solid #ccc;
+    border-right: none;
+    margin: 50px 29px 10px 10px;
+    padding: 0;
+    float: right;
+    list-style: none;
+    font-weight: bold;
+}
+
+#navigation li a {
+    display: block;
+    text-decoration: none;
+    padding: 5px 10px 5px 10px;
+    color: #333;
+}
+
+#navigation li a:hover {
+    color: #fff;
+    background-color: #444;
+}
+
+#navigation li.active {
+    padding: 5px 10px 5px 10px;
+    background-color: #b41717;
+    color: white;
+}
+
+#navigation li a:focus {
+    outline: none;
+    background-color: #222;
+    color: #fff;
+}
+
+#contentwrapper h1 {
+    color: #b41717;
+    font-size: 26px;
+    margin: 20px 0 0 -5px;
+}
+
+#contentwrapper h2 {
+    color: #444;
+    font-size: 20px;
+    margin: 20px 0 0 0;
+}
+
+#meta {
+    clear: both;
+    text-align: right;
+    color: #888;
+    font-size: 13px;
+}

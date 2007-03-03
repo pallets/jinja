@@ -133,15 +133,14 @@ class Environment(object):
         """
         Get the attribute name from obj.
         """
-        if name in obj:
+        try:
             return obj[name]
-        elif hasattr(obj, name):
-            rv = getattr(obj, name)
-            r = getattr(obj, 'jinja_allowed_attributes', None)
-            if r is not None:
-                if name not in r:
+        except (TypeError, KeyError, IndexError):
+            if hasattr(obj, name):
+                r = getattr(obj, 'jinja_allowed_attributes', None)
+                if r is not None and name not in r:
                     raise SecurityException('unsafe attributed %r accessed' % name)
-            return rv
+                return getattr(obj, name)
         return Undefined
 
     def call_function(self, f, args, kwargs, dyn_args, dyn_kwargs):

@@ -1,0 +1,24 @@
+<% extends 'layout/base.tmpl' %>
+<% block title %>Download<% endblock %>
+<% block content %>
+  <h1>Download</h1>
+  <p>
+    If you want to install the release with
+    <a href="http://peak.telecommunity.com/DevCenter/EasyInstall">easy_install</a>,
+    you can do it using this command:
+  </p>
+  <pre>easy_install Pygments</pre>
+  <p>
+    You can also get the development source from subversion using this command:
+  </p>
+  <pre>svn co http://trac.pocoo.org/repos/jinja/trunk jinja</pre>
+  <p>
+    Installing the current subversion trunk as a Python egg is done with:
+  </p>
+  <pre>easy_install Jinja==dev</pre>
+  <p>
+    Development takes place at the <a href="http://trac.pocoo.org/">Pocoo trac</a>,
+    you can browse the source online
+    <a href="http://trac.pocoo.org/browser/jinja/trunk">here</a>.
+  </p>
+<% endblock %>

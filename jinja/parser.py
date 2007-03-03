@@ -26,6 +26,7 @@ end_of_if = lambda p, t, d: t == 'name' and d == 'endif'
 end_of_filter = lambda p, t, d: t == 'name' and d == 'endfilter'
 end_of_macro = lambda p, t, d: t == 'name' and d == 'endmacro'
 end_of_block_tag = lambda p, t, d: t == 'name' and d == 'endblock'
+end_of_raw = lambda p, t, d: t == 'name' and d == 'endraw'
 
 
 class Parser(object):
