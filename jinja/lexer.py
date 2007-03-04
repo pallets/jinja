@@ -13,7 +13,7 @@ from jinja.exceptions import TemplateSyntaxError
 
 # static regular expressions
 whitespace_re = re.compile(r'\s+(?m)')
-name_re = re.compile(r'[a-zA-Z_][a-zA-Z0-9_]*[!?]?')
+name_re = re.compile(r'[a-zA-Z_][a-zA-Z0-9_]*')
 string_re = re.compile(r"('([^'\\]*(?:\\.[^'\\]*)*)'"
                        r'|"([^"\\]*(?:\\.[^"\\]*)*)")(?ms)')
 number_re = re.compile(r'\d+(\.\d+)*')
@@ -59,8 +59,8 @@ class Lexer(object):
         tag_rules = [
             (whitespace_re, None, None),
             (number_re, 'number', None),
-            (operator_re, 'operator', None),
             (name_re, 'name', None),
+            (operator_re, 'operator', None),
             (string_re, 'string', None)
         ]
 
