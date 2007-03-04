@@ -73,6 +73,20 @@ class UndefinedType(object):
 Undefined = UndefinedType()
 
 
+class FakeTranslator(object):
+    """
+    Default null translator.
+    """
+
+    def gettext(self, s):
+        return s
+
+    def ngettext(self, s, p, n):
+        if n == 1:
+            return s
+        return p
+
+
 class Deferred(object):
     """
     Object marking an deferred value. Deferred objects are
@@ -114,7 +128,7 @@ class Context(object):
 
     def get_translator(self):
         """Return the translator for i18n."""
-        return lambda a, b, c: a
+        return FakeTranslator()
 
     def pop(self):
         if len(self._stack) <= 2:

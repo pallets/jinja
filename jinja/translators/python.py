@@ -227,13 +227,19 @@ class PythonTranslator(Translator):
             '    apply_filters = environment.apply_filters\n'
             '    call_function = environment.call_function\n'
             '    call_function_simple = environment.call_function_simple\n'
-            '    finish_var = environment.finish_var\n'
+            '    finish_var = environment.finish_var'
         ]
         self.indention = 1
         rv = self.handle_node_list(node)
 
         if self.require_translations:
-            lines.append('    translate = context.get_translator()')
+            lines.append(
+                '    translator = context.get_translator()\n'
+                '    def translate(s, p=None, n=None, r=None):\n'
+                '        if p is None:\n'
+                '            return translator.gettext(s) % (r or {})\n'
+                '        return translator.ngettext(s, p, r[n]) % (r or {})'
+            )
         lines.append(rv)
 
         return '\n'.join(lines)
@@ -460,14 +466,10 @@ class PythonTranslator(Translator):
             replacements = '{%s}' % ', '.join(replacements)
         else:
             replacements = 'None'
-        if node.indicator is not None:
-            indicator = 'context[\'%s\']' % node.indicator
-        else:
-            indicator = 'None'
-        return self.indent('write(translate(%r, %r, %s) %% %s)' % (
+        return self.indent('write(translate(%r, %r, %r, %s))' % (
             node.singular,
             node.plural,
-            indicator,
+            node.indicator,
             replacements
         ))
 
