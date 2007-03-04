@@ -13,5 +13,5 @@ from jinja.tests import TESTS as DEFAULT_TESTS
 
 
 DEFAULT_NAMESPACE = {
-    'range':                xrange
+    'range':                range
 }
