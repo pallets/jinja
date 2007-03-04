@@ -59,7 +59,8 @@ pre {
 
 #footer {
     margin: 0 25px 25px 25px;
-    border-bottom: 4px solid #ddd;
+    border: 4px solid #ddd;
+    border-top: none;
     background-color: #fff;
     text-align: right;
     padding: 0 10px 5px 0;

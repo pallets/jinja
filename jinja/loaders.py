@@ -68,6 +68,9 @@ class LoaderWrapper(object):
         loader is defined."""
         raise RuntimeError('no loader defined')
 
+    def __nonzero__(self):
+        return self.loader is not None
+
 
 class FileSystemLoader(object):
     """

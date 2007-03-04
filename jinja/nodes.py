@@ -300,3 +300,31 @@ class Include(Node):
 
     def __repr__(self):
         return 'Include(%r)' % self.template
+
+
+class Trans(Node):
+    """
+    A node for translatable sections.
+    """
+
+    def __init__(self, lineno, singular, plural, indicator, replacements):
+        self.lineno = lineno
+        self.singular = singular
+        self.plural = plural
+        self.indicator = indicator
+        self.replacements = replacements
+
+    def get_items(self):
+        rv = [self.singular, self.plural, self.indicator]
+        if self.replacements:
+            rv.extend(self.replacements.values())
+            rv.extend(self.replacements.keys())
+        return rv
+
+    def __repr__(self):
+        return 'Trans(%r, %r, %r, %r)' % (
+            self.singular,
+            self.plural,
+            self.indicator,
+            self.replacements
+        )

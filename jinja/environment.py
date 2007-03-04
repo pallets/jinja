@@ -12,7 +12,7 @@ import re
 from jinja.lexer import Lexer
 from jinja.parser import Parser
 from jinja.loaders import LoaderWrapper
-from jinja.datastructure import Undefined
+from jinja.datastructure import Undefined, Context
 from jinja.utils import escape
 from jinja.exceptions import FilterNotFound, TestNotFound, SecurityException
 from jinja.defaults import DEFAULT_FILTERS, DEFAULT_TESTS, DEFAULT_NAMESPACE
@@ -37,7 +37,8 @@ class Environment(object):
                  namespace=None,
                  loader=None,
                  filters=None,
-                 tests=None):
+                 tests=None,
+                 context_class=Context):
 
         # lexer / parser information
         self.block_start_string = block_start_string
@@ -55,6 +56,7 @@ class Environment(object):
         self.filters = filters is None and DEFAULT_FILTERS.copy() or filters
         self.tests = tests is None and DEFAULT_TESTS.copy() or tests
         self.auto_escape = auto_escape
+        self.context_class = context_class
 
         # global namespace
         self.globals = namespace is None and DEFAULT_NAMESPACE.copy() \

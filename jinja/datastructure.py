@@ -112,6 +112,10 @@ class Context(object):
         # cache object used for filters and tests
         self.cache = {}
 
+    def get_translator(self):
+        """Return the translator for i18n."""
+        return lambda a, b, c: a
+
     def pop(self):
         if len(self._stack) <= 2:
             raise ValueError('cannot pop initial layer')
@@ -216,9 +220,6 @@ class LoopContext(object):
         if self.loop_function is not None:
             return self.loop_function(seq)
         return Undefined
-
-    def __repr__(self):
-        return str(self._stack)
 
 
 class CycleContext(object):

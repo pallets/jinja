@@ -11,7 +11,6 @@
 from compiler import ast
 from jinja import nodes
 from jinja.parser import Parser
-from jinja.datastructure import Context
 from jinja.exceptions import TemplateSyntaxError
 from jinja.translators import Translator
 
@@ -55,7 +54,7 @@ class Template(object):
             exec self.code in ns
             self.generate_func = ns['generate']
         result = []
-        ctx = Context(self.environment, *args, **kwargs)
+        ctx = self.environment.context_class(self.environment, *args, **kwargs)
         self.generate_func(ctx, result.append)
         return u''.join(result)
 
@@ -90,6 +89,7 @@ class PythonTranslator(Translator):
             nodes.Filter:           self.handle_filter,
             nodes.Block:            self.handle_block,
             nodes.Include:          self.handle_include,
+            nodes.Trans:            self.handle_trans,
             # used python nodes
             ast.Name:               self.handle_name,
             ast.AssName:            self.handle_name,
@@ -127,6 +127,8 @@ class PythonTranslator(Translator):
             self.unsupported.update({
                 ast.GenExpr:        'generator expressions'
             })
+
+        self.require_translations = False
 
     # -- public methods
 
@@ -219,19 +221,20 @@ class PythonTranslator(Translator):
             'from __future__ import division\n'
             'from jinja.datastructure import Undefined, LoopContext, CycleContext\n\n'
             'def generate(context, write):\n'
-            '    # BOOTSTRAPPING CODE\n'
             '    environment = context.environment\n'
             '    get_attribute = environment.get_attribute\n'
             '    perform_test = environment.perform_test\n'
             '    apply_filters = environment.apply_filters\n'
             '    call_function = environment.call_function\n'
             '    call_function_simple = environment.call_function_simple\n'
-            '    finish_var = environment.finish_var\n\n'
-            '    # TEMPLATE CODE'
+            '    finish_var = environment.finish_var\n'
         ]
-        self.indention += 1
-        lines.append(self.handle_node_list(node))
-        self.indention -= 1
+        self.indention = 1
+        rv = self.handle_node_list(node)
+
+        if self.require_translations:
+            lines.append('    translate = context.get_translator()')
+        lines.append(rv)
 
         return '\n'.join(lines)
 
@@ -442,6 +445,32 @@ class PythonTranslator(Translator):
         buf.append(self.indent('# END OF INCLUSION'))
         return '\n'.join(buf)
 
+    def handle_trans(self, node):
+        """
+        Handle translations.
+        """
+        self.require_translations = True
+        if node.replacements:
+            replacements = []
+            for name, n in node.replacements.iteritems():
+                replacements.append('%r: %s' % (
+                    name,
+                    self.handle_node(n)
+                ))
+            replacements = '{%s}' % ', '.join(replacements)
+        else:
+            replacements = 'None'
+        if node.indicator is not None:
+            indicator = 'context[\'%s\']' % node.indicator
+        else:
+            indicator = 'None'
+        return self.indent('write(translate(%r, %r, %s) %% %s)' % (
+            node.singular,
+            node.plural,
+            indicator,
+            replacements
+        ))
+
     # -- python nodes
 
     def handle_name(self, node):
@@ -450,6 +479,9 @@ class PythonTranslator(Translator):
         """
         if node.name in self.constants:
             return self.constants[node.name]
+        elif node.name == '_':
+            self.require_translations = True
+            return 'translate'
         return 'context[%r]' % node.name
 
     def handle_compare(self, node):

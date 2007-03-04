@@ -26,7 +26,25 @@ end_of_if = lambda p, t, d: t == 'name' and d == 'endif'
 end_of_filter = lambda p, t, d: t == 'name' and d == 'endfilter'
 end_of_macro = lambda p, t, d: t == 'name' and d == 'endmacro'
 end_of_block_tag = lambda p, t, d: t == 'name' and d == 'endblock'
-end_of_raw = lambda p, t, d: t == 'name' and d == 'endraw'
+end_of_trans = lambda p, t, d: t == 'name' and d == 'endtrans'
+
+
+string_inc_re = re.compile(r'(?:[^\d]*(\d+)[^\d]*)+')
+
+
+def inc_string(s):
+    """
+    Increment a string
+    """
+    m = string_inc_re.search(s)
+    if m:
+        next = str(int(m.group(1)) + 1)
+        start, end = m.span(1)
+        s = s[:max(end - len(next), start)] + next + s[end:]
+    else:
+        name, ext = s.rsplit('.', 1)
+        return '%s2.%s' % (name, ext)
+    return s
 
 
 class Parser(object):
@@ -57,7 +75,8 @@ class Parser(object):
             'macro':        self.handle_macro_directive,
             'block':        self.handle_block_directive,
             'extends':      self.handle_extends_directive,
-            'include':      self.handle_include_directive
+            'include':      self.handle_include_directive,
+            'trans':        self.handle_trans_directive
         }
 
     def handle_for_directive(self, lineno, gen):
@@ -230,6 +249,112 @@ class Parser(object):
         if len(tokens) != 1 or tokens[0][1] != 'string':
             raise TemplateSyntaxError('include requires a string', lineno)
         return nodes.Include(lineno, tokens[0][2][1:-1])
+
+    def handle_trans_directive(self, lineno, gen):
+        """
+        Handle translatable sections.
+        """
+        # save the initial line number for the resulting node
+        flineno = lineno
+        try:
+            # check for string translations
+            lineno, token, data = gen.next()
+            if token == 'string':
+                # check that there are not any more elements
+                try:
+                    gen.next()
+                except StopIteration:
+                    #XXX: what about escapes?
+                    return nodes.Trans(lineno, data[1:-1], None, None, None)
+                raise TemplateSyntaxError('string based translations '
+                                          'require at most one argument.',
+                                          lineno)
+
+            # create a new generator with the popped item as first one
+            def wrapgen(oldgen):
+                yield lineno, token, data
+                for item in oldgen:
+                    yield item
+            gen = wrapgen(gen)
+
+            # block based translations
+            first_var = None
+            replacements = {}
+            for arg in self.parse_python(lineno, gen, '_trans(%s)').expr.args:
+                if arg.__class__ is not ast.Keyword:
+                    raise TemplateSyntaxError('translation tags need explicit '
+                                              'names for values.', lineno)
+                if first_var is None:
+                    first_var = arg.name
+                replacements[arg.name] = arg.expr
+
+            # look for endtrans/pluralize
+            buf = singular = []
+            plural = indicator = None
+
+            while True:
+                lineno, token, data = self.tokenstream.next()
+                # nested variables
+                if token == 'variable_begin':
+                    _, variable_token, variable_name = self.tokenstream.next()
+                    if variable_token != 'name' or variable_name not in replacements:
+                        raise TemplateSyntaxError('unregistered translation '
+                                                  'variable %r.' % variable_name,
+                                                  lineno)
+                    if self.tokenstream.next()[1] != 'variable_end':
+                        raise TemplateSyntaxError('invalid syntax for variable '
+                                                  'expression.', lineno)
+                    buf.append('%%(%s)s' % variable_name)
+                # nested blocks are not supported, just look for end blocks
+                elif token == 'block_begin':
+                    _, block_token, block_name = self.tokenstream.next()
+                    if block_token != 'name' or \
+                       block_name not in ('pluralize', 'endtrans'):
+                        raise TemplateSyntaxError('blocks in translatable sections '
+                                                  'are not supported', lineno)
+                    # pluralize
+                    if block_name == 'pluralize':
+                        if plural is not None:
+                            raise TemplateSyntaxError('translation blocks support '
+                                                      'at most one plural block',
+                                                      lineno)
+                        _, plural_token, plural_name = self.tokenstream.next()
+                        if plural_token == 'block_end':
+                            indicator = first_var
+                        elif plural_token == 'name':
+                            if plural_name not in replacements:
+                                raise TemplateSyntaxError('unknown tranlsation '
+                                                          'variable %r' %
+                                                          plural_name, lineno)
+                            elif self.tokenstream.next()[1] != 'block_end':
+                                raise TemplateSyntaxError('pluralize takes '
+                                                          'at most one '
+                                                          'argument', lineno)
+                            indicator = plural_name
+                        else:
+                            raise TemplateSyntaxError('pluralize requires no '
+                                                      'argument or a variable '
+                                                      'name.')
+                        plural = buf = []
+                    # end translation
+                    elif block_name == 'endtrans':
+                        self.close_remaining_block()
+                        break
+                # normal data
+                else:
+                    if replacements:
+                        data = data.replace('%', '%%')
+                    buf.append(data)
+
+        except StopIteration:
+            raise TemplateSyntaxError('unexpected end of translation section',
+                                      self.tokenstream.last[0])
+
+        singular = u''.join(singular)
+        if plural is not None:
+            plural = u''.join(plural)
+        return nodes.Trans(flineno, singular, plural, indicator, replacements or None)
+
 
     def parse_python(self, lineno, gen, template):
         """
