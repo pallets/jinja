@@ -49,6 +49,16 @@ class JinjaPlugin(object):
                     if k.startswith('jinja.loader.'):
                         loaderoptions[k[14:]] = v
                 loader = loadercls(**loaderoptions)
+            if 'jinja.environment.context_class' in options:
+                context_class = options['jinja.environment.context_class']
+            else:
+                contextname = options.get('jinja.context_class') or \
+                              'jinja.datastructure.Context'
+                if '.' in contextname:
+                    p = contextname.rsplit('.', 1)
+                    context_class = getattr(__import__(p[0], '', '', ['']), p[1])
+                else:
+                    from jinja import Context as context_class
             self.environment = Environment(
                 block_start_string=options.get('jinja.block_start_string', '{%'),
                 block_end_string=options.get('jinja.block_end_string', '%}'),
@@ -63,7 +73,8 @@ class JinjaPlugin(object):
                 namespace=options.get('jinja.namespace'),
                 loader=loader,
                 filters=options.get('jinja.filters'),
-                tests=options.get('jinja.tests')
+                tests=options.get('jinja.tests'),
+                context_class=context_class
             )
 
     def load_template(self, templatename, template_string=None):
