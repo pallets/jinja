@@ -60,7 +60,7 @@ class Environment(object):
 
         # global namespace
         self.globals = namespace is None and DEFAULT_NAMESPACE.copy() \
-                       or namespace or {}
+                       or namespace
 
         # create lexer
         self.lexer = Lexer(self)

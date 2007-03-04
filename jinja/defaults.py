@@ -12,6 +12,6 @@ from jinja.filters import FILTERS as DEFAULT_FILTERS
 from jinja.tests import TESTS as DEFAULT_TESTS
 
 
-#: for global objects in later jinja releases. (add stuff like debug())
 DEFAULT_NAMESPACE = {
+    'range':                xrange
 }
