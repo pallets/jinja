@@ -273,6 +273,8 @@ class PythonTranslator(Translator):
         if node.recursive:
             write('def forloop(seq):')
             self.indention += 1
+            write('loopbuffer = []')
+            write('write = loopbuffer.append')
             write('context[\'loop\'].push(seq)')
             write('for %s in context[\'loop\']:' %
                 self.handle_node(node.item),
@@ -301,9 +303,10 @@ class PythonTranslator(Translator):
         # call recursive for loop!
         if node.recursive:
             write('context[\'loop\'].pop()')
+            write('return u\'\'.join(buffer)')
             self.indention -= 1
             write('context[\'loop\'] = LoopContext(None, context[\'loop\'], forloop)')
-            write('forloop(%s)' % self.handle_node(node.seq))
+            write('write(forloop(%s))' % self.handle_node(node.seq))
 
         write('context.pop()')
         return '\n'.join(buf)
