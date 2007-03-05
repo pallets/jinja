@@ -258,35 +258,40 @@ class Parser(object):
         flineno = lineno
         try:
             # check for string translations
-            lineno, token, data = gen.next()
-            if token == 'string':
-                # check that there are not any more elements
-                try:
-                    gen.next()
-                except StopIteration:
-                    #XXX: what about escapes?
-                    return nodes.Trans(lineno, data[1:-1], None, None, None)
-                raise TemplateSyntaxError('string based translations '
-                                          'require at most one argument.',
-                                          lineno)
+            try:
+                lineno, token, data = gen.next()
+            except StopIteration:
+                # no dynamic replacements
+                replacements = {}
+                first_var = None
+            else:
+                if token == 'string':
+                    # check that there are not any more elements
+                    try:
+                        gen.next()
+                    except StopIteration:
+                        #XXX: what about escapes?
+                        return nodes.Trans(lineno, data[1:-1], None, None, None)
+                    raise TemplateSyntaxError('string based translations '
+                                              'require at most one argument.',
+                                              lineno)
+                # create a new generator with the popped item as first one
+                def wrapgen(oldgen):
+                    yield lineno, token, data
+                    for item in oldgen:
+                        yield item
+                gen = wrapgen(gen)
 
-            # create a new generator with the popped item as first one
-            def wrapgen(oldgen):
-                yield lineno, token, data
-                for item in oldgen:
-                    yield item
-            gen = wrapgen(gen)
-
-            # block based translations
-            first_var = None
-            replacements = {}
-            for arg in self.parse_python(lineno, gen, '_trans(%s)').expr.args:
-                if arg.__class__ is not ast.Keyword:
-                    raise TemplateSyntaxError('translation tags need explicit '
-                                              'names for values.', lineno)
-                if first_var is None:
-                    first_var = arg.name
-                replacements[arg.name] = arg.expr
+                # block based translations
+                first_var = None
+                replacements = {}
+                for arg in self.parse_python(lineno, gen, '_trans(%s)').expr.args:
+                    if arg.__class__ is not ast.Keyword:
+                        raise TemplateSyntaxError('translation tags need explicit '
+                                                  'names for values.', lineno)
+                    if first_var is None:
+                        first_var = arg.name
+                    replacements[arg.name] = arg.expr
 
             # look for endtrans/pluralize
             buf = singular = []

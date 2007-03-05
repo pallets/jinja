@@ -375,16 +375,24 @@ class PythonTranslator(Translator):
         Handle macro declarations.
         """
         buf = []
+        write = lambda x: buf.append(self.indent(x))
 
         args = []
+        defaults = []
         for name, n in node.arguments:
+            args.append('context[\'%s\']' % name)
             if n is None:
-                args.append('%s=Undefined' % name)
+                defaults.append('Undefined')
             else:
-                args.append('%s=%s' % (name, self.handle_node(n)))
-        buf.append(self.indent('def macro(%s):' % ', '.join(args)))
+                defaults.append(self.handle_node(n))
+
+        write('def macro(*args):')
         self.indention += 1
+        write('%s = (args + %s[len(args):])' % (_to_tuple(args), _to_tuple(defaults)))
+        write('macrobuffer = []')
+        write('write = macrobuffer.append')
         buf.append(self.handle_node(node.body))
+        write('return u\'\'.join(macrobuffer)')
         self.indention -= 1
         buf.append(self.indent('context[%r] = macro' % node.name))
 
