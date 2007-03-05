@@ -303,7 +303,7 @@ class PythonTranslator(Translator):
         # call recursive for loop!
         if node.recursive:
             write('context[\'loop\'].pop()')
-            write('return u\'\'.join(buffer)')
+            write('return u\'\'.join(loopbuffer)')
             self.indention -= 1
             write('context[\'loop\'] = LoopContext(None, context[\'loop\'], forloop)')
             write('write(forloop(%s))' % self.handle_node(node.seq))
