@@ -280,7 +280,7 @@ Now you can use it from everywhere in the code by passing it an item:
         {{ show_user(user) }}
     {% endfor %}
 
-You can also specify more then one value:
+You can also specify more than one value:
 
 .. sourcecode:: html+jinja
 
@@ -298,7 +298,7 @@ Inheritance
 
 The most powerful part of Jinja is template inheritance. Template inheritance
 allows you to build a base "skeleton" template that contains all the common
-elements of your site and defines **blocks** or **markers** that child
+elements of your site and defines **blocks** that child
 templates can override.
 
 Sounds complicated but is very basic. It's easiest to understand it by starting
@@ -327,7 +327,7 @@ document that you might use for a simple two-column page. It's the job of
       </div>
 
       <div id="footer">
-        {% block "footer" %}
+        {% block footer %}
         &copy; Copyright 2006 by <a href="http://mydomain.tld">myself</a>.
         {% endblock %}
       </div>
