@@ -190,14 +190,14 @@ def do_count():
     return wrapped
 
 
-def do_reversed():
+def do_reverse():
     """
     Return a reversed list of the sequence filtered. You can use this
     for example for reverse iteration:
 
     .. sourcecode:: jinja
 
-        {% for item in seq|reversed %}
+        {% for item in seq|reverse %}
             {{ item|e }}
         {% endfor %}
     """
@@ -307,7 +307,7 @@ FILTERS = {
     'default':              do_default,
     'join':                 do_join,
     'count':                do_count,
-    'reversed':             do_reversed,
+    'reverse':              do_reverse,
     'center':               do_center,
     'title':                do_title,
     'capitalize':           do_capitalize,

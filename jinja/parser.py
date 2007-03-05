@@ -342,9 +342,7 @@ class Parser(object):
                         break
                 # normal data
                 else:
-                    if replacements:
-                        data = data.replace('%', '%%')
-                    buf.append(data)
+                    buf.append(data.replace('%', '%%'))
 
         except StopIteration:
             raise TemplateSyntaxError('unexpected end of translation section',
