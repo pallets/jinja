@@ -447,7 +447,7 @@ class PythonTranslator(Translator):
         buf = [self.indent('# INCLUDED TEMPLATE %r' % node.filename)]
         tmpl = self.environment.loader.parse(node.template,
                                              node.filename)
-        buf.append(self.handle_nodelist(tmpl))
+        buf.append(self.handle_node_list(tmpl))
         buf.append(self.indent('# END OF INCLUSION'))
         return '\n'.join(buf)
 
