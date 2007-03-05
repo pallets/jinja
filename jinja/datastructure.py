@@ -201,6 +201,8 @@ class LoopContext(object):
             self.push(seq)
 
     def push(self, seq):
+        if seq in (Undefined, None):
+            seq = ()
         self._stack.append({
             'index':            -1,
             'seq':              seq,
