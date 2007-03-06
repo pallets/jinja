@@ -18,6 +18,8 @@ Welcome in the Jinja documentation.
 
   - `Translators <translators.txt>`_
 
+  - `Framework Integration <frameworks.txt>`_
+
 - Template Designer Documentation:
 
   - `Syntax Reference <designerdoc.txt>`_

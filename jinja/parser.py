@@ -19,6 +19,7 @@ from jinja.exceptions import TemplateSyntaxError
 # callback functions for the subparse method
 end_of_block = lambda p, t, d: t == 'block_end'
 end_of_variable = lambda p, t, d: t == 'variable_end'
+end_of_comment = lambda p, t, d: t == 'comment_end'
 switch_for = lambda p, t, d: t == 'name' and d in ('else', 'endfor')
 end_of_for = lambda p, t, d: t == 'name' and d == 'endfor'
 switch_if = lambda p, t, d: t == 'name' and d in ('else', 'elif', 'endif')
@@ -299,8 +300,11 @@ class Parser(object):
 
             while True:
                 lineno, token, data = self.tokenstream.next()
+                # comments
+                if token == 'comment_begin':
+                    self.tokenstream.drop_until(end_of_comment, True)
                 # nested variables
-                if token == 'variable_begin':
+                elif token == 'variable_begin':
                     _, variable_token, variable_name = self.tokenstream.next()
                     if variable_token != 'name' or variable_name not in replacements:
                         raise TemplateSyntaxError('unregistered translation '
@@ -410,9 +414,13 @@ class Parser(object):
         lineno = self.tokenstream.last[0]
         result = nodes.NodeList(lineno)
         for lineno, token, data in self.tokenstream:
+            # comments
+            if token == 'comment_begin':
+                self.tokenstream.drop_until(end_of_comment, True)
+
             # this token marks the begin or a variable section.
             # parse everything till the end of it.
-            if token == 'variable_begin':
+            elif token == 'variable_begin':
                 gen = self.tokenstream.fetch_until(end_of_variable, True)
                 result.append(self.directives['print'](lineno, gen))
 

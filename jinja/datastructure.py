@@ -286,7 +286,7 @@ class TokenStream(object):
         return True
 
     eos = property(lambda x: not x.__nonzero__(), doc=__nonzero__.__doc__)
-    
+
     def next(self):
         """Return the next token from the stream."""
         if self._pushed:
@@ -315,6 +315,12 @@ class TokenStream(object):
                     yield token
         except StopIteration:
             raise IndexError('end of stream reached')
+
+    def drop_until(self, test, drop_needle=False):
+        """Fetch tokens until a function matches and drop all
+        tokens."""
+        for token in self.fetch_until(test, drop_needle):
+            pass
 
     def push(self, lineno, token, data):
         """Push an yielded token back to the stream."""

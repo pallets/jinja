@@ -1,0 +1,8 @@
+===================
+TODO List for Jinja
+===================
+
+-   Requirements in Jinja (blocks and set directives) outside of renderable
+    blocks should become part of the module not the generate function.
+
+-   Improve the context lookup (maybe with an optional C extension)

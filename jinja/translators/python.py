@@ -415,10 +415,12 @@ class PythonTranslator(Translator):
 
         write('def macro(*args):')
         self.indention += 1
+        write('context.push()')
         write('%s = (args + %s[len(args):])' % (_to_tuple(args), _to_tuple(defaults)))
         write('macrobuffer = []')
         write('write = macrobuffer.append')
         buf.append(self.handle_node(node.body))
+        write('context.pop()')
         write('return u\'\'.join(macrobuffer)')
         self.indention -= 1
         buf.append(self.indent('context[%r] = macro' % node.name))

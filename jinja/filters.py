@@ -169,8 +169,7 @@ def do_join(d=u''):
             -> 123
     """
     def wrapped(env, context, value):
-        d = env.to_unicode(d)
-        return d.join([env.to_unicode(x) for x in value])
+        return env.to_unicode(d).join([env.to_unicode(x) for x in value])
     return wrapped
 
 
@@ -183,8 +182,8 @@ def do_count():
     def wrapped(env, context, value):
         try:
             if type(value) in (int, float, long):
-                return len(str(var))
-            return len(var)
+                return len(str(value))
+            return len(value)
         except TypeError:
             return 0
     return wrapped
@@ -307,6 +306,7 @@ FILTERS = {
     'default':              do_default,
     'join':                 do_join,
     'count':                do_count,
+    'length':               do_count,
     'reverse':              do_reverse,
     'center':               do_center,
     'title':                do_title,

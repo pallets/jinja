@@ -1,0 +1,33 @@
+=====================
+Framework Integration
+=====================
+
+Jinja registers itself in the baker template plugin system. If your framework
+supports baker (currently `TurboGears`_ and `pylons`_) you can add it very
+easy.
+
+Pylons
+------
+
+Edit ``yourproject/config/middleware.py`` and add the following lines to
+`config.init_app...`:
+
+.. sourcecode:: python
+
+    from jinja import Environment, FileSystemLoader
+
+    config.add_template_engine('jinja', {
+        'jinja.environment': Environment(loader=FileSystemLoader('path/to/templates'))
+    })
+
+To make Jinja the default template engine change the `init_app` call to
+something like this:
+
+.. sourcecode:: python
+
+    config.init_app(global_conf, app_conf, package='yourproject',
+                    template_engine='jinja')
+
+
+.. _TurboGears: http://www.turbogears.org/
+.. _pylons: http://www.pylonshq.com/
