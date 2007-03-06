@@ -36,7 +36,6 @@ def escape(x, attribute=False):
                   _escape_pairs[m.group()], unicode(x)))
 
 
-
 def find_translations(environment, source):
     """
     Find all translatable strings in a template and yield

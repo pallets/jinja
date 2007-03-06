@@ -209,18 +209,35 @@ class PythonTranslator(Translator):
         # update the blocks there. Once this is done we drop the current
         # template in favor of the new one. Do that until we found the
         # root template.
+        requirements_todo = []
         while node.extends is not None:
+            if node not in requirements_todo:
+                requirements_todo.append(node)
+
             tmpl = self.environment.loader.parse(node.extends.template,
                                                  node.filename)
+            # handle block inheritance
             for block in tmpl.blocks.itervalues():
                 if block.name in node.blocks:
                     block.replace(node.blocks[block.name])
             node = tmpl
 
+            if tmpl not in requirements_todo:
+                requirements_todo.append(node)
+
+        # look up requirements
+        requirements = []
+        for req in requirements_todo:
+            for n in req:
+                if n.__class__ in (nodes.Set, nodes.Macro):
+                    requirements.append(n)
+
+        # bootstrapping code
         lines = [
             'from __future__ import division\n'
             'from jinja.datastructure import Undefined, LoopContext, CycleContext\n\n'
             'def generate(context, write):\n'
+            '    # BOOTSTRAPPING CODE\n'
             '    environment = context.environment\n'
             '    get_attribute = environment.get_attribute\n'
             '    perform_test = environment.perform_test\n'
@@ -230,8 +247,18 @@ class PythonTranslator(Translator):
             '    finish_var = environment.finish_var'
         ]
         self.indention = 1
+
+        # we have requirements? add them here.
+        if requirements:
+            lines.append(self.indent('# REQUIREMENTS'))
+            for n in requirements:
+                lines.append(self.handle_node(n))
+            lines.append(self.indent('# END OF REQUIREMENTS'))
+
+        # the template body
         rv = self.handle_node_list(node)
 
+        # add translation helpers if required
         if self.require_translations:
             lines.append(
                 '    translator = context.get_translator()\n'
@@ -433,7 +460,7 @@ class PythonTranslator(Translator):
         """
         rv = self.handle_node(node.body)
         if not rv:
-            return self.indent('# EMPTY BLOCK (%r:%s)' % (
+            return self.indent('# EMPTY BLOCK FROM %r, LINE %s' % (
                 node.filename or '?',
                 node.lineno
             ))
@@ -441,7 +468,7 @@ class PythonTranslator(Translator):
         buf = []
         write = lambda x: buf.append(self.indent(x))
 
-        write('# BLOCK (%r:%s)' % (
+        write('# BLOCK FROM %r, LINE %s' % (
             node.filename or '?',
             node.lineno
         ))
