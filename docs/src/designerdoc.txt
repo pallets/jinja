@@ -86,6 +86,24 @@ that automatically xml escapes the value. The ``e`` filter is an alias for
 
 [[list_of_filters]]
 
+.. admonition:: note
+
+    Filters have a pretty low priority. If you want to add fitered values
+    you have to put them into parenthesis. Also you you want to access
+    attributes:
+
+    .. sourcecode:: jinja
+
+        correct:
+            {{ (foo|filter) + (bar|filter) }}
+        wrong:
+            {{ foo|filter + bar|filter }}
+
+        correct:
+            {{ (foo|filter).attribute }}
+        wrong:
+            {{ foo|filter.attribute }}
+
 Tests
 =====
 
@@ -465,3 +483,61 @@ and `macro` two additional rules exist. If a macro is defined in an extended
 template but outside of a visible block (thus outside of any block) will be
 available in all blocks below. This allows you to use `include` statements to
 load often used macros at once.
+
+Internationalization
+====================
+
+If the application is configured for i18n you can define translatable blocks
+for translators using the `trans` tag or the special underscore function:
+
+.. sourcecode:: jinja
+
+    {% trans %}
+        this is a translatable block
+    {% endtrans %}
+
+    {% trans "This is a translatable string" %}
+
+    {{ _("This is a translatable string") }}
+
+The latter one is useful if you want translatable arguments for filters etc.
+
+If you want to have plural forms too use the `pluralize` block:
+
+.. sourcecode:: jinja
+
+    {% trans users=users %}
+        One user found.
+    {% pluralize %}
+        {{ users }} users found.
+    {% endtrans %}
+
+    {% trans first=(users|first).username|escape, user=users|length %}
+        one user {{ first }} found.
+    {% pluralize users %}
+        {{ users }} users found, the first one is called {{ first }}.
+    {% endtrans %}
+
+If you have multiple arguments the first one is assumed to be the indicator (the
+number that is used to determine the correct singular or plural form. If you
+don't have the indicator variable on position 1 you have to tell the `pluralize`
+tag the correct variable name.
+
+Inside of translatable blocks you cannot use blocks or expressions. the variable
+print syntax (``{{ variablename }}``) is just used to insert the variables defined
+in the ``trans`` header.
+
+.. admonition:: note
+
+    Please make sure that you always use pluralize blocks where required.
+    Many languages have more complex plural forms than the english language.
+    
+    Never try to workaround that issue by using something like this:
+
+    .. sourcecode:: jinja
+
+        {% if count != 1 %}
+            {{ count }} users found.
+        {% else %}
+            one user found.
+        {% endif %}
