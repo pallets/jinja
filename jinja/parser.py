@@ -311,8 +311,9 @@ class Parser(object):
                                                   'variable %r.' % variable_name,
                                                   lineno)
                     if self.tokenstream.next()[1] != 'variable_end':
-                        raise TemplateSyntaxError('invalid syntax for variable '
-                                                  'expression.', lineno)
+                        raise TemplateSyntaxError('you cannot use variable expressions '
+                                                  'inside trans tags. apply filters '
+                                                  'in the trans header.', lineno)
                     buf.append('%%(%s)s' % variable_name)
                 # nested blocks are not supported, just look for end blocks
                 elif token == 'block_begin':
