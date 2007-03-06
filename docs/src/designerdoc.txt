@@ -251,11 +251,17 @@ can use Expressions. In expressions you can use any of the following operators:
             filters for more information.
     ``and`` return true if the left and the right operand is true.
     ``or``  return true if the left or the right operand is true.
+    ``not`` negate an statement *
     ``()``  call a callable. ``{{ user.get_username() }}``. Inside of the
             parenthesis you can use variables: ``{{ user.get('username') }}``.
     ======= ===================================================================
 
 Note that there is no support for any bit operation or something similar.
+
+* special note regarding `not`. The `is` and `in` operators support negation
+  using an infix notation too: ``foo is not bar`` and ``foo not in bar``
+  instead of ``not foo is bar`` and ``not foo in bar``. All other expressions
+  require a prefix notation: ``not (foo and bar)``.
 
 Macros
 ======
