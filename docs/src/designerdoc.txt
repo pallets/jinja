@@ -430,3 +430,32 @@ You can also define variables in the namespace using the ``{% set %}`` tag:
     {{ foo }}
 
 This should ouputput ``foobar``.
+
+Scopes
+======
+
+Jinja has multiple scopes. A scope is something like a new transparent foil on
+a stack of foils. You can only write to the outermost foil but read all of them
+since you can look through them. If you remove the top foil all data on that
+foil disappears. Some tags in Jinja add a new layer to the stack. Currently
+these are `block`, `for`, `macro` and `filter`. This means that variables and
+other elements defined inside a macro, loop or some of the other tags listed
+above will be only available in that block. Here an example:
+
+.. sourcecode:: jinja
+
+    {% macro angryhello name %}
+      {% set angryname = name|upper %}
+      Hello {{ name }}. Hello {{ name }}!
+      HELLO {{ angryname }}!!!!!!111
+    {% endmacro %}
+
+The variable ``angryname`` just exists inside of the macro, not outside of it.
+
+Defined macros appear on the context as variables. Because of this those are
+affected by the scoping too. A macro defined inside of a macro is just available
+in those two macros (the macro itself and the macro it's defined in). For `set`
+and `macro` two additional rules exist. If a macro is defined in an extended
+template but outside of a visible block (thus outside of any block) will be
+available in all blocks below. This allows you to use `include` statements to
+load often used macros at once.
