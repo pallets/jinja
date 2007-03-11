@@ -142,12 +142,12 @@ class Environment(object):
             try:
                 node = node[name]
             except (TypeError, KeyError, IndexError):
-                if not hasattr(obj, name):
+                if not hasattr(node, name):
                     return Undefined
                 r = getattr(obj, 'jinja_allowed_attributes', None)
                 if r is not None and name not in r:
                     raise SecurityException('unsafe attributed %r accessed' % name)
-                node = getattr(obj, name)
+                node = getattr(node, name)
         return node
 
     def call_function(self, f, args, kwargs, dyn_args, dyn_kwargs):

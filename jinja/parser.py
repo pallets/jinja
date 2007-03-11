@@ -14,6 +14,10 @@ from compiler.misc import set_filename
 from jinja import nodes
 from jinja.datastructure import TokenStream
 from jinja.exceptions import TemplateSyntaxError
+try:
+    set
+except NameError:
+    from sets import Set as set
 
 
 # callback functions for the subparse method
@@ -64,7 +68,7 @@ class Parser(object):
         self.tokenstream = environment.lexer.tokenize(source)
 
         self.extends = None
-        self.blocks = {}
+        self.blocks = set()
 
         self.directives = {
             'for':          self.handle_for_directive,
@@ -221,19 +225,19 @@ class Parser(object):
             raise TemplateSyntaxError('expected \'name\', got %r' %
                                       block_name[1], lineno)
         if tokens:
-            print tokens
             raise TemplateSyntaxError('block got too many arguments, '
                                       'requires one.', lineno)
 
+        # check if this block does not exist by now.
         if block_name[2] in self.blocks:
             raise TemplateSyntaxError('block %r defined twice' %
-                                      block_name[2], lineno)
+                                       block_name[2], lineno)
+        self.blocks.add(block_name[2])
 
+        # now parse the body and attach it to the block
         body = self.subparse(end_of_block_tag, True)
         self.close_remaining_block()
-        rv = nodes.Block(lineno, block_name[2], body)
-        self.blocks[block_name[2]] = rv
-        return rv
+        return nodes.Block(lineno, block_name[2], body)
 
     def handle_extends_directive(self, lineno, gen):
         """
@@ -395,7 +399,7 @@ class Parser(object):
         Parse the template and return a Template node.
         """
         body = self.subparse(None)
-        return nodes.Template(self.filename, body, self.blocks, self.extends)
+        return nodes.Template(self.filename, body, self.extends)
 
     def subparse(self, test, drop_needle=False):
         """

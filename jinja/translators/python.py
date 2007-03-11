@@ -10,6 +10,7 @@
 """
 from compiler import ast
 from jinja import nodes
+from jinja.nodes import get_nodes
 from jinja.parser import Parser
 from jinja.exceptions import TemplateSyntaxError
 from jinja.translators import Translator
@@ -212,12 +213,13 @@ class PythonTranslator(Translator):
         inheritance information. It only occours as outer node, never in
         the tree itself.
         """
+        self.indention = 1
+
         # if there is a parent template we parse the parent template and
         # update the blocks there. Once this is done we drop the current
         # template in favor of the new one. Do that until we found the
         # root template.
         requirements_todo = []
-        blocks = node.blocks.copy()
         parent = None
 
         while node.extends is not None:
@@ -231,17 +233,15 @@ class PythonTranslator(Translator):
             # to the block registry, make this template the new root.
             parent = self.environment.loader.parse(node.extends.template,
                                                    node.filename)
-            for name, block in parent.blocks.iteritems():
-                if name not in blocks:
-                    blocks[name] = block
+
+            overwrites = {}
+            for n in get_nodes(nodes.Block, node):
+                overwrites[n.name] = n
+            for n in get_nodes(nodes.Block, parent):
+                if n.name in overwrites:
+                    n.replace(overwrites[n.name])
 
             node = parent
-
-        # if there is a parent template, do the inheritance handling now
-        if parent is not None:
-            for name, block in blocks.iteritems():
-                if name in node.blocks:
-                    node.blocks[name].replace(block)
 
         # look up requirements
         requirements = []
@@ -267,7 +267,6 @@ class PythonTranslator(Translator):
             '    ctx_push = context.push\n'
             '    ctx_pop = context.pop\n'
         ]
-        self.indention = 1
 
         # we have requirements? add them here.
         if requirements:
@@ -490,7 +489,8 @@ class PythonTranslator(Translator):
         """
         rv = self.handle_node(node.body)
         if not rv:
-            return self.indent('# EMPTY BLOCK FROM %r, LINE %s' % (
+            return self.indent('# EMPTY BLOCK "%s" FROM %r, LINE %s' % (
+                node.name,
                 node.filename or '?',
                 node.lineno
             ))
@@ -498,7 +498,8 @@ class PythonTranslator(Translator):
         buf = []
         write = lambda x: buf.append(self.indent(x))
 
-        write('# BLOCK FROM %r, LINE %s' % (
+        write('# BLOCK "%s" FROM %r, LINE %s' % (
+            node.name,
             node.filename or '?',
             node.lineno
         ))
@@ -626,7 +627,7 @@ class PythonTranslator(Translator):
                 self.handle_node(node.expr),
                 self.handle_node(node.subs[0])
             )
-        return 'get_attribute(%s, %s)' % (
+        return 'get_attribute(%s, (%s,))' % (
             self.handle_node(node.expr),
             self.handle_node(node.subs[0])
         )
@@ -640,8 +641,9 @@ class PythonTranslator(Translator):
         # chain getattrs for speed reasons
         path = [repr(node.attrname)]
         while node.expr.__class__ is ast.Getattr:
-            path.append(repr(node.attrname))
             node = node.expr
+            path.append(repr(node.attrname))
+        path.reverse()
 
         return 'get_attribute(%s, %s)' % (
             self.handle_node(node.expr),

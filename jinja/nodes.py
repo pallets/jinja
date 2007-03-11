@@ -26,6 +26,18 @@ def inc_lineno(offset, tree):
         todo.extend(node.getChildNodes())
 
 
+def get_nodes(nodetype, tree):
+    """
+    Get all nodes from nodetype in the tree.
+    """
+    todo = [tree]
+    while todo:
+        node = todo.pop()
+        if node.__class__ is nodetype:
+            yield node
+        todo.extend(node.getChildNodes())
+
+
 class Node(ast.Node):
     """
     jinja node.
@@ -69,10 +81,7 @@ class NodeList(list, Node):
     getChildren = getChildNodes = lambda s: list(s) + s.get_items()
 
     def __repr__(self):
-        return '%s(%s)' % (
-            self.__class__.__name__,
-            list.__repr__(self)
-        )
+        return 'NodeList(%s)' % list.__repr__(self)
 
 
 class Template(NodeList):
@@ -80,19 +89,24 @@ class Template(NodeList):
     Node that represents a template.
     """
 
-    def __init__(self, filename, body, blocks, extends):
+    def __init__(self, filename, body, extends):
         if body.__class__ is not NodeList:
             body = (body,)
         NodeList.__init__(self, 0, body)
-        self.blocks = blocks
         self.extends = extends
         set_filename(filename, self)
 
     def get_items(self):
-        result = self.blocks.values()
         if self.extends is not None:
-            result.append(self.extends)
-        return result
+            return [self.extends]
+        return []
+
+    def __repr__(self):
+        return 'Template(%r, %r, %r)' % (
+            self.filename,
+            self.extends,
+            NodeList.__repr__(self)
+        )
 
 
 class ForLoop(Node):
