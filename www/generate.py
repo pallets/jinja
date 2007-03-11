@@ -14,7 +14,8 @@ from pygments.formatters import HtmlFormatter
 
 formatter = HtmlFormatter(cssclass='syntax', encoding=None, style='pastie')
 
-env = Environment('<%', '%>', '<%=', '%>', loader=FileSystemLoader('.'), trim_blocks=True)
+env = Environment('<%', '%>', '<%=', '%>', loader=FileSystemLoader('.',
+    cache_folder='/tmp'), trim_blocks=True)
 env.filters['pygmentize'] = stringfilter(lambda v, l:
     highlight(v.strip(), get_lexer_by_name(l), formatter))
 

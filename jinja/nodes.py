@@ -190,8 +190,9 @@ class Macro(Node):
 
     def get_items(self):
         result = [self.name]
-        for item in self.arguments:
-            result.extend(item)
+        if self.arguments:
+            for item in self.arguments:
+                result.extend(item)
         result.append(self.body)
         return result
 

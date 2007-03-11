@@ -62,7 +62,3 @@ class TemplateRuntimeError(TemplateError):
     Raised by the template engine if a tag encountered an error when
     rendering.
     """
-
-    def __init__(self, message, lineno):
-        RuntimeError.__init__(self, message)
-        self.lineno = lineno

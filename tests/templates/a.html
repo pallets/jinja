@@ -1,0 +1,9 @@
+{% block block1 %}from template a.html{% endblock %}
+{% block block2 %}from template a.html{% endblock %}
+{% block block3 %}from template a.html{% endblock %}
+{% block block4 %}
+  nested block from template a.html
+  {% block block5 %}
+    contents of the nested block from a.html
+  {% endblock %}
+{% endblock %}

@@ -9,19 +9,13 @@
     :license: BSD, see LICENSE for more details.
 """
 
-# python2.3 compatibility. do not use this method for anything else
-# then context reversing.
-try:
-    _reversed = reversed
-except NameError:
-    def _reversed(c):
-        return c[::-1]
-
 # sets
 try:
     set
 except NameError:
     from sets import Set as set
+
+from jinja.exceptions import TemplateRuntimeError
 
 
 class UndefinedType(object):
@@ -110,9 +104,6 @@ class Markup(unicode):
         return 'Markup(%s)' % unicode.__repr__(self)
 
 
-safe_types = set([Markup, int, long, float])
-
-
 class Context(object):
     """
     Dict like object.
@@ -120,7 +111,7 @@ class Context(object):
 
     def __init__(self, _environment_, *args, **kwargs):
         self.environment = _environment_
-        self._stack = [self.environment.globals, dict(*args, **kwargs), {}]
+        self._stack = [_environment_.globals, dict(*args, **kwargs), {}]
         self.globals, self.initial, self.current = self._stack
 
         # cache object used for filters and tests
@@ -131,20 +122,20 @@ class Context(object):
         return FakeTranslator()
 
     def pop(self):
-        if len(self._stack) <= 2:
-            raise ValueError('cannot pop initial layer')
+        """Pop the last layer from the stack and return it."""
         rv = self._stack.pop()
         self.current = self._stack[-1]
         return rv
 
     def push(self, data=None):
-        self._stack.append(data or {})
+        """Push a new dict or empty layer to the stack and return that layer"""
+        data = data or {}
+        self._stack.append(data)
         self.current = self._stack[-1]
+        return data
 
     def to_dict(self):
-        """
-        Convert the context into a dict. This skips the globals.
-        """
+        """Convert the context into a dict. This skips the globals."""
         result = {}
         for layer in self._stack[1:]:
             for key, value in layer.iteritems():
@@ -155,12 +146,14 @@ class Context(object):
         # don't give access to jinja internal variables
         if name.startswith('::'):
             return Undefined
-        for d in _reversed(self._stack):
+        # because the stack is usually quite small we better use [::-1]
+        # which is faster than reversed() somehow.
+        for d in self._stack[::-1]:
             if name in d:
                 rv = d[name]
                 if isinstance(rv, Deferred):
                     rv = rv(self, name)
-                    # never tough the globals!
+                    # never touch the globals!
                     if d is self.globals:
                         self.initial[name] = rv
                     else:
@@ -201,6 +194,10 @@ class LoopContext(object):
             self.push(seq)
 
     def push(self, seq):
+        """
+        Push a sequence to the loop stack. This is used by the
+        recursive for loop.
+        """
         if seq in (Undefined, None):
             seq = ()
         self._stack.append({
@@ -208,8 +205,10 @@ class LoopContext(object):
             'seq':              seq,
             'length':           len(seq)
         })
+        return self
 
     def pop(self):
+        """Remove the last layer from the loop stack."""
         return self._stack.pop()
 
     iterated = property(lambda s: s._stack[-1]['index'] > -1)
@@ -235,7 +234,8 @@ class LoopContext(object):
     def __call__(self, seq):
         if self.loop_function is not None:
             return self.loop_function(seq)
-        return Undefined
+        raise TemplateRuntimeError('Loops are just callable if defined with '
+                                   'the "recursive" modifier.')
 
 
 class CycleContext(object):
@@ -245,6 +245,7 @@ class CycleContext(object):
 
     def __init__(self, seq=None):
         self.lineno = -1
+        # bind the correct helper function based on the constructor signature
         if seq is not None:
             self.seq = seq
             self.length = len(seq)
@@ -253,10 +254,12 @@ class CycleContext(object):
             self.cycle = self.cycle_dynamic
 
     def cycle_static(self):
+        """Helper function for static cycling."""
         self.lineno = (self.lineno + 1) % self.length
         return self.seq[self.lineno]
 
     def cycle_dynamic(self, seq):
+        """Helper function for dynamic cycling."""
         self.lineno = (self.lineno + 1) % len(seq)
         return seq[self.lineno]
 

@@ -202,8 +202,12 @@ class Parser(object):
         if ast.varargs or ast.kwargs:
             raise TemplateSyntaxError('variable length macro signature '
                                       'not allowed.', lineno)
-        defaults = [None] * (len(ast.argnames) - len(ast.defaults)) + ast.defaults
-        return nodes.Macro(lineno, ast.name, zip(ast.argnames, defaults), body)
+        if ast.argnames:
+            defaults = [None] * (len(ast.argnames) - len(ast.defaults)) + ast.defaults
+            args = zip(ast.argnames, defaults)
+        else:
+            args = None
+        return nodes.Macro(lineno, ast.name, args, body)
 
     def handle_block_directive(self, lineno, gen):
         """
