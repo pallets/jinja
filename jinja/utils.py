@@ -88,6 +88,9 @@ def raise_template_exception(template, exception, filename, lineno, context):
     Raise an exception "in a template". Return a traceback
     object.
     """
+    # some traceback systems allow to skip blocks
+    __traceback_hide__ = True
+
     offset = '\n' * (lineno - 1)
     code = compile(offset + 'raise __exception_to_raise__', filename, 'exec')
     namespace = context.to_dict()
@@ -221,7 +224,10 @@ class CacheDict(object):
 
     def clear(self):
         self._mapping.clear()
-        del self._queue[:]
+        try:
+            self._queue.clear()
+        except AttributeError:
+            del self._queue[:]
 
     def __contains__(self, key):
         return key in self._mapping

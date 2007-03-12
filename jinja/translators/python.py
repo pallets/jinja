@@ -301,7 +301,8 @@ class PythonTranslator(Translator):
                 lines.append(self.handle_node(n))
 
         # the template body
-        rv = self.handle_node_list(node)
+        body_lines = [self.handle_node(n) for n in node]
+        print list(node)
 
         # add translation helpers if required
         if self.require_translations:
@@ -312,7 +313,7 @@ class PythonTranslator(Translator):
                 '            return translator.gettext(s) % (r or {})\n'
                 '        return translator.ngettext(s, p, r[n]) % (r or {})'
             )
-        lines.append(rv)
+        lines.extend(body_lines)
         lines.append('    if False:\n        yield None')
 
         return '\n'.join(lines)
@@ -529,7 +530,7 @@ class PythonTranslator(Translator):
         """
         rv = self.handle_node(node.body)
         if not rv:
-            return
+            return ''
 
         buf = []
         write = lambda x: buf.append(self.indent(x))
