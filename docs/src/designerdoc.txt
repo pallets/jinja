@@ -46,7 +46,7 @@ the statement ``{% print foobar %}``.
 
 Variables are coming from the context provided by the application. Normally there
 should be a documentation regarding the context contents but if you want to know
-the content of the current context you can add this to your template:
+the content of the current context, you can add this to your template:
 
 .. sourcecode:: html+jinja
 
@@ -54,7 +54,7 @@ the content of the current context you can add this to your template:
 
 A context isn't flat which means that each variable can has subvariables, as long
 as it is representable as python data structure. You can access attributes of
-a variable by using the dot and brace operators. The following examples show
+a variable using the dot and bracket operators. The following examples show
 this:
 
 .. sourcecode:: jinja
@@ -71,25 +71,25 @@ Filters
 =======
 
 In the examples above you might have noticed the pipe symbols. Pipe symbols tell
-the engine that it has to apply a filter on the variable. Here a small example:
+the engine that it has to apply a filter on the variable. Here is a small example:
 
 .. sourcecode:: jinja
 
     {{ variable|replace('foo', 'bar')|escape }}
 
-If you like you can also put whitespace between the filters.
+If you want, you can also put whitespace between the filters.
 
-This will look for a variable variable, passes it to the filter replace with the
-arguments ``'foo'`` and ``'bar'``, and passes the result to the filter `escape`
-that automatically xml escapes the value. The ``e`` filter is an alias for
-``escape``. Here the complete list of supported filters:
+This will look for a variable `variable`, pass it to the filter `replace`
+with the arguments ``'foo'`` and ``'bar'``, and pass the result to the filter
+`escape` that automatically XML-escapes the value. The `e` filter is an alias for
+`escape`. Here is the complete list of supported filters:
 
 [[list_of_filters]]
 
 .. admonition:: note
 
     Filters have a pretty low priority. If you want to add fitered values
-    you have to put them into parenthesis. Also you you want to access
+    you have to put them into parentheses. The same applies if you want to access
     attributes:
 
     .. sourcecode:: jinja
@@ -107,7 +107,7 @@ that automatically xml escapes the value. The ``e`` filter is an alias for
 Tests
 =====
 
-You can use the `is`-operator to perform tests on a value:
+You can use the `is` operator to perform tests on a value:
 
 .. sourcecode:: jinja
 
@@ -115,15 +115,15 @@ You can use the `is`-operator to perform tests on a value:
     {{ "foobar" is numeric }} -> false
     {{ 'FOO' is upper }} -> true
 
-Those tests are especially useful if used in `if`-conditions.
+These tests are especially useful when used in `if` conditions.
 
 [[list_of_tests]]
 
 Loops
 =====
 
-To iterate over a sequence you can use the `for`-loop. If basically looks like a
-normal python for loop and works pretty much the same:
+To iterate over a sequence, you can use the `for` loop. It basically looks like a
+normal Python `for` loop and works pretty much the same:
 
 .. sourcecode:: html+jinja
 
@@ -136,40 +136,40 @@ normal python for loop and works pretty much the same:
     {% endfor %}
     </ul>
 
-The optional ``else`` block is only executed if the template did not iterate
-because the sequence was empty.
+*Important difference from Python:* the optional ``else`` block is only
+executed if there was no iteration because the sequence was empty.
 
-Inside of a for loop block you can access some special variables:
+Inside of a `for` loop block you can access some special variables:
 
 +----------------------+----------------------------------------+
 | Variable             | Description                            |
 +======================+========================================+
-| ``loop.index``       | The current iteration of the loop.     |
+| `loop.index`         | The current iteration of the loop.     |
 +----------------------+----------------------------------------+
-| ``loop.index0``      | The current iteration of the loop,     |
+| `loop.index0`        | The current iteration of the loop,     |
 |                      | starting counting by 0.                |
 +----------------------+----------------------------------------+
-| ``loop.revindex``    | The number of iterations from the end  |
+| `loop.revindex`      | The number of iterations from the end  |
 |                      | of the loop.                           |
 +----------------------+----------------------------------------+
-| ``loop.revindex0``   | The number of iterations from the end  |
+| `loop.revindex0`     | The number of iterations from the end  |
 |                      | of the loop, starting counting by 0.   |
 +----------------------+----------------------------------------+
-| ``loop.first``       | True if first iteration.               |
+| `loop.first`         | True if first iteration.               |
 +----------------------+----------------------------------------+
-| ``loop.last``        | True if last iteration.                |
+| `loop.last`          | True if last iteration.                |
 +----------------------+----------------------------------------+
-| ``loop.even``        | True if current iteration is even.     |
+| `loop.even`          | True if current iteration is even.     |
 +----------------------+----------------------------------------+
-| ``loop.odd``         | True if current iteration is odd.      |
+| `loop.odd`           | True if current iteration is odd.      |
 +----------------------+----------------------------------------+
-| ``loop.length``      | Total number of items in the sequence. |
+| `loop.length`        | Total number of items in the sequence. |
 +----------------------+----------------------------------------+
-| ``loop.parent``      | The context of the parent loop.        |
+| `loop.parent`        | The context of the parent loop.        |
 +----------------------+----------------------------------------+
 
-Loops also support recursion. For example you have a sitemap where each item
-might have a number of child items. Such a template could look like this:
+Loops also support recursion. Let's assume you have a sitemap where each item
+might have a number of child items. A template for that could look like this:
 
 .. sourcecode:: html+jinja
 
@@ -181,17 +181,17 @@ might have a number of child items. Such a template could look like this:
     {% endfor %}
     </ul>
 
-Now. What happens here? Basically the first thing that is different to a normal
+What happens here? Basically the first thing that is different to a normal
 loop is the additional ``recursive`` modifier in the `for`-loop declaration.
 It tells the template engine that we want recursion. If recursion is enabled
-the special loop variable is callable. If you call it with a sequence it will
-automatically render that loop at that position with the new sequence as argument.
+the special `loop` variable is callable. If you call it with a sequence it will
+automatically render the loop at that position with the new sequence as argument.
 
 Cycling
 =======
 
-Sometimes you might want to have different classes for each row in a list. For
-example to have alternating row colors. You can easily do this by using the
+Sometimes you might want to have different text snippets for each row in a list,
+for example to have alternating row colors. You can easily do this by using the
 ``{% cycle %}`` tag:
 
 .. sourcecode:: html+jinja
@@ -202,7 +202,7 @@ example to have alternating row colors. You can easily do this by using the
     {% endfor %}
     </ul>
 
-Each time Jinja encounters a cycle tag it will evaluate cycle through the list
+Each time Jinja encounters a `cycle` tag it will cycle through the list
 of given items and return the next one. If you pass it one item jinja assumes
 that this item is a sequence from the context and uses this:
 
@@ -213,7 +213,7 @@ that this item is a sequence from the context and uses this:
 Conditions
 ==========
 
-Jinja supports python like ``if`` / ``elif`` / ``else`` constructs:
+Jinja supports Python-like `if` / `elif` / `else` constructs:
 
 .. sourcecode:: jinja
 
@@ -240,43 +240,45 @@ You can also use comparison operators:
 
 .. admonition:: Note
 
-    Of course you can use `or` / `and` and parenthesis to create more complex
-    conditions but usually the logic is already handled in the application and
-    you don't have to create such complex constucts in the template code. However
+    Of course you can use `or` / `and` and parentheses to create more complex
+    conditions, but usually the logic is already handled in the application and
+    you don't have to create such complex constructs in the template code. However
     in some situations it might be a good thing to have the abilities to create
     them.
 
 Operators
 =========
 
-Inside ``{{ variable }}`` blocks, `if`-conditions and many other parts you can
-can use Expressions. In expressions you can use any of the following operators:
+Inside ``{{ variable }}`` blocks, `if` conditions and many other parts you can
+can use expressions. In expressions you can use any of the following operators:
 
     ======= ===================================================================
     ``+``   add the right operand to the left one.
-            ``{{ 1 + 2 }}`` would return three.
-    ``-``   substract the right operand from the left one.
-            ``{{ 1 - 1 }}`` would return zero.
-    ``/``   divide the right from the left operand.
-            ``{{ 1 / 2 }}`` would return 0.5
-    ``*``   multiply the left operand with the right.
-            ``{{ 2 * 2}}`` would return 4
+            ``{{ 1 + 2 }}`` would return ``3``.
+    ``-``   subtract the right operand from the left one.
+            ``{{ 1 - 1 }}`` would return ``0``.
+    ``/``   divide the left operand by the right one.
+            ``{{ 1 / 2 }}`` would return ``0.5``.
+    ``*``   multiply the left operand with the right one.
+            ``{{ 2 * 2 }}`` would return ``4``.
     ``**``  raise the left operand to the power of the right
-            operand. ``{{ 2**3 }}`` would return 8
+            operand. ``{{ 2**3 }}`` would return ``8``.
+    ``in``  perform sequence membership test. ``{{ 1 in [1,2,3] }}`` would
+            return true.
     ``is``  perform a test on the value. See the section about
             tests for more information.
     ``|``   apply a filter on the value. See the section about
             filters for more information.
     ``and`` return true if the left and the right operand is true.
     ``or``  return true if the left or the right operand is true.
-    ``not`` negate an statement *
-    ``()``  call a callable. ``{{ user.get_username() }}``. Inside of the
-            parenthesis you can use variables: ``{{ user.get('username') }}``.
+    ``not`` negate a statement (see below)
+    ``()``  call a callable: ``{{ user.get_username() }}``. Inside of the
+            parentheses you can use variables: ``{{ user.get(username) }}``.
     ======= ===================================================================
 
-Note that there is no support for any bit operation or something similar.
+Note that there is no support for any bit operations or something similar.
 
-* special note regarding `not`. The `is` and `in` operators support negation
+* special note regarding `not`: The `is` and `in` operators support negation
   using an infix notation too: ``foo is not bar`` and ``foo not in bar``
   instead of ``not foo is bar`` and ``not foo in bar``. All other expressions
   require a prefix notation: ``not (foo and bar)``.
@@ -284,8 +286,8 @@ Note that there is no support for any bit operation or something similar.
 Macros
 ======
 
-If you want to use a partial template on more than one place you might want to
-create a macro out of it:
+If you want to use a partial template in more than one place, you might want to
+create a macro from it:
 
 .. sourcecode:: html+jinja
 
@@ -322,8 +324,7 @@ Inheritance
 
 The most powerful part of Jinja is template inheritance. Template inheritance
 allows you to build a base "skeleton" template that contains all the common
-elements of your site and defines **blocks** that child
-templates can override.
+elements of your site and defines **blocks** that child templates can override.
 
 Sounds complicated but is very basic. It's easiest to understand it by starting
 with an example.
@@ -358,7 +359,7 @@ document that you might use for a simple two-column page. It's the job of
     </body>
 
 In this example, the ``{% block %}`` tags define four blocks that child templates
-can fill in. All the ``block`` tag does is to tell the template engine that a
+can fill in. All the `block` tag does is to tell the template engine that a
 child template may override those portions of the template.
 
 Child Template
@@ -392,7 +393,7 @@ this template, first it locates the parent.
 
 The filename of the template depends on the template loader. For example the
 ``FileSystemLoader`` allows you to access other templates by giving the
-filename. You can access subdirectory with an slash:
+filename. You can access templates in subdirectories with an slash:
 
 .. sourcecode:: jinja
 
@@ -415,23 +416,23 @@ value from the parent template is used instead.
 Template Inclusion
 ==================
 
-You can load another template at a given posiiton using ``{% include %}``.
+You can load another template at a given position using ``{% include %}``.
 Usually it's a better idea to use inheritance but if you for example want to
-load macros ``include`` works better than ``extends``:
+load macros, `include` works better than `extends`:
 
 .. sourcecode:: jinja
 
     {% include "myhelpers.html" %}
     {{ my_helper("foo") }}
 
-If you define a macro called ``my_helper`` in ``myhelpers.html`` you can now
+If you define a macro called ``my_helper`` in ``myhelpers.html``, you can now
 use it from the template as shown above.
 
 Filtering Blocks
 ================
 
-Sometimes it could be a good idea to filter a complete block. For example if
-you want to escape some html code:
+Sometimes it could be a good idea to filter a complete block of text. For
+example, if you want to escape some html code:
 
 .. sourcecode:: jinja
 
@@ -441,7 +442,15 @@ you want to escape some html code:
         </html>
     {% endfilter %}
 
-Of course you can chain filters too.
+Of course you can chain filters too:
+
+.. sourcecode:: jinja
+
+    {% filter lower|escape %}
+        <B>SOME TEXT</B>
+    {% endfilter %}
+
+returns ``"&lt;b&gt;some text&lt;/b&gt;"``.
 
 Defining Variables
 ==================
@@ -453,7 +462,7 @@ You can also define variables in the namespace using the ``{% set %}`` tag:
     {% set foo = 'foobar' %}
     {{ foo }}
 
-This should ouputput ``foobar``.
+This should ouput ``foobar``.
 
 Scopes
 ======
@@ -474,12 +483,12 @@ above will be only available in that block. Here an example:
       HELLO {{ angryname }}!!!!!!111
     {% endmacro %}
 
-The variable ``angryname`` just exists inside of the macro, not outside of it.
+The variable ``angryname`` just exists inside the macro, not outside it.
 
-Defined macros appear on the context as variables. Because of this those are
+Defined macros appear on the context as variables. Because of this, they are
 affected by the scoping too. A macro defined inside of a macro is just available
 in those two macros (the macro itself and the macro it's defined in). For `set`
-and `macro` two additional rules exist. If a macro is defined in an extended
+and `macro` two additional rules exist: If a macro is defined in an extended
 template but outside of a visible block (thus outside of any block) will be
 available in all blocks below. This allows you to use `include` statements to
 load often used macros at once.
@@ -487,7 +496,7 @@ load often used macros at once.
 Internationalization
 ====================
 
-If the application is configured for i18n you can define translatable blocks
+If the application is configured for i18n, you can define translatable blocks
 for translators using the `trans` tag or the special underscore function:
 
 .. sourcecode:: jinja
@@ -502,7 +511,7 @@ for translators using the `trans` tag or the special underscore function:
 
 The latter one is useful if you want translatable arguments for filters etc.
 
-If you want to have plural forms too use the `pluralize` block:
+If you want to have plural forms too, use the `pluralize` block:
 
 .. sourcecode:: jinja
 
@@ -518,19 +527,19 @@ If you want to have plural forms too use the `pluralize` block:
         {{ users }} users found, the first one is called {{ first }}.
     {% endtrans %}
 
-If you have multiple arguments the first one is assumed to be the indicator (the
+If you have multiple arguments, the first one is assumed to be the indicator (the
 number that is used to determine the correct singular or plural form. If you
 don't have the indicator variable on position 1 you have to tell the `pluralize`
 tag the correct variable name.
 
-Inside of translatable blocks you cannot use blocks or expressions. the variable
-print syntax (``{{ variablename }}``) is just used to insert the variables defined
+Inside translatable blocks you cannot use blocks or expressions. The variable
+print syntax (``{{ variablename }}``) can just be used to insert the variables defined
 in the ``trans`` header.
 
 .. admonition:: note
 
     Please make sure that you always use pluralize blocks where required.
-    Many languages have more complex plural forms than the english language.
+    Many languages have more complex plural forms than the English language.
     
     Never try to workaround that issue by using something like this:
 
