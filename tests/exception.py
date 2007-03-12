@@ -7,4 +7,4 @@ def test(*args):
     tmpl = e.loader.load('error.html')
     tmpl.render(items=range(10))
 
-make_server("localhost", 7000, DebuggedApplication(test)).serve_forever()
+make_server("localhost", 7000, DebuggedApplication(test, False)).serve_forever()

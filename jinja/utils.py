@@ -56,6 +56,16 @@ def find_translations(environment, source):
         queue.extend(node.getChildNodes())
 
 
+def debug_context():
+    """
+    Use this function in templates to get a printed context.
+    Use this only in templates because it touches the stack.
+    """
+    context = sys._getframe(2).f_locals['context']
+    from pprint import pformat
+    return pformat(context.to_dict())
+
+
 # python2.4 and lower has a bug regarding joining of broken generators
 if sys.hexversion < (2, 5):
     def capture_generator(gen):

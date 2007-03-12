@@ -302,7 +302,6 @@ class PythonTranslator(Translator):
 
         # the template body
         body_lines = [self.handle_node(n) for n in node]
-        print list(node)
 
         # add translation helpers if required
         if self.require_translations:
