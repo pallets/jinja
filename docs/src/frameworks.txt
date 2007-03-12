@@ -4,7 +4,7 @@ Framework Integration
 
 Jinja registers itself in the baker template plugin system. If your framework
 supports baker (currently `TurboGears`_ and `pylons`_) you can add it very
-easy.
+easily.
 
 Pylons
 ------

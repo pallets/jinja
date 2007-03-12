@@ -2,7 +2,7 @@
 Developer Quickstart
 ====================
 
-This part of the documentation shows you how to embedd Jinja into your
+This part of the documentation shows you how to embed Jinja into your
 application.
 
 Starting Up
@@ -21,52 +21,52 @@ This example should output the following string after execution::
 
     Hello John Doe!
 
-If you receive an error check if you have a typo in your code. If not have
+If you receive an error, check if you have a typo in your code. If not, have
 a look at the `installation`_ page for troubleshooting.
 
 The Environment
 ===============
 
-The core component of Jinja is the `Environment`. It helds important shared
+The core component of Jinja is the `Environment`. It contains important shared
 variables like configuration, filters, tests, globals and other stuff.
 
-Here the possible initialisation parameters:
+Here the possible initialization parameters:
 
-=========================== ==================================================
-``block_start_string`` *    the string marking the begin of a block. this
-                            defaults to ``'{%'``.
-``block_end_string`` *      the string marking the end of a block. defaults
-                            to ``'%}'``.
-``variable_start_string`` * the string marking the begin of a print
-                            statement. defaults to ``'{{'``.
-``comment_start_string`` *  the string marking the begin of a
-                            comment. defaults to ``'{#'``.
-``comment_end_string`` *    the string marking the end of a comment.
-                            defaults to ``'#}'``.
-``trim_blocks`` *           If this is set to ``True`` the first newline
-                            after a block is removed (block, not
-                            variable tag!). Defaults to ``False``.
-``auto_escape``             If this is set to ``True`` Jinja will
-                            automatically escape all variables using xml
-                            escaping methods. If you don't want to escape a
-                            string you have to wrap it in a ``Markup``
-                            object from the ``jinja.datastructure`` module.
-``template_charset``        The charset of the templates. Defaults
-                            to ``'utf-8'``.
-``charset``                 Charset of all string input data. Defaults
-                            to ``'utf-8'``.
-``namespace``               Global namespace for all templates.
-``loader``                  Specify a template loader.
-``filters``                 dict of filters or the default filters if not
-                            defined.
-``tests``                   dict of tests of the default tests if not defined.
-=========================== ==================================================
+========================= ==================================================
+`block_start_string` *    the string marking the begin of a block. this
+                          defaults to ``'{%'``.
+`block_end_string` *      the string marking the end of a block. defaults
+                          to ``'%}'``.
+`variable_start_string` * the string marking the begin of a print
+                          statement. defaults to ``'{{'``.
+`comment_start_string` *  the string marking the begin of a
+                          comment. defaults to ``'{#'``.
+`comment_end_string` *    the string marking the end of a comment.
+                          defaults to ``'#}'``.
+`trim_blocks` *           If this is set to ``True`` the first newline
+                          after a block is removed (block, not
+                          variable tag!). Defaults to ``False``.
+`auto_escape`             If this is set to ``True`` Jinja will
+                          automatically escape all variables using xml
+                          escaping methods. If you don't want to escape a
+                          string you have to wrap it in a ``Markup``
+                          object from the ``jinja.datastructure`` module.
+`template_charset`        The charset of the templates. Defaults
+                          to ``'utf-8'``.
+`charset`                 Charset of all string input data. Defaults
+                          to ``'utf-8'``.
+`namespace`               Global namespace for all templates.
+`loader`                  Specify a template loader.
+`filters`                 dict of filters or the default filters if not
+                          defined.
+`tests`                   dict of tests of the default tests if not defined.
+========================= ==================================================
 
-All of this variables except those marked with a star(*) are modifyable after
-environment initialisation.
+All of these variables except those marked with a star (*) are modifiable after
+environment initialization.
 
-The environment provides the following useful functions and properties
-additional to the initialisation values:
+The environment provides the following useful functions and properties in
+addition to the initialization values:
 
 =========================== ==================================================
 ``parse(source, filename)`` Parse the sourcecode and return the abstract
@@ -74,11 +74,11 @@ additional to the initialisation values:
                             `translators`_ to convert the template into
                             executable source- or bytecode.
 ``from_string(source)``     Load and parse a template source and translate it
-                            into evaluable python code. This code is wrapped
-                            with in a `Template` class that allows you to
+                            into eval-able Python code. This code is wrapped
+                            within a `Template` class that allows you to
                             render it.
-``get_template(name)``      load a template from a loader. If the template
-                            does not exist you will get a `TemplateNotFound`
+``get_template(name)``      Load a template from a loader. If the template
+                            does not exist, you will get a `TemplateNotFound`
                             exception.
 =========================== ==================================================
 
@@ -108,7 +108,7 @@ loaders or how to write your own, head over to the `loader`_ documentation.
 Adding Filters
 ==============
 
-If you want to add additional filters to the environment the best way is to
+If you want to add additional filters to the environment, the best way is to
 modify the ``filters`` attribute and not to pass a dict to the environment.
 If you pass it a dict it will not include the default filters!
 
@@ -122,7 +122,7 @@ Writing filter functions is explained in the `filter development`_ section.
 Adding Tests
 ============
 
-Adding additional tests works analog to filters:
+Adding additional tests works analogous to filters:
 
 .. sourcecode:: python
 

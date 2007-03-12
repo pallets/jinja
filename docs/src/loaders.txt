@@ -12,9 +12,9 @@ Builtin Loaders
 Developing Loaders
 ==================
 
-Template loaders are just normal python classes that have to provide some
-functions used to load and translate templates. Here a simple loader implementation
-you can use as base for your own loader:
+Template loaders are just normal Python classes that have to provide some
+functions used to load and translate templates. Here is a simple loader implementation
+you can use as the base for your own loader:
 
 .. sourcecode:: python
 
@@ -32,7 +32,7 @@ you can use as base for your own loader:
 
         def get_source(self, environment, name, parent):
             """
-            The get_source function is unused at the moment. However future
+            The get_source function is unused at the moment. However, future
             versions of jinja will use this function for the debugging
             system. It also works as helper functions for `parse` and
             `load`.
@@ -56,7 +56,7 @@ you can use as base for your own loader:
         def load(self, environment, name, translator):
             """
             Parse and translate a template. Currently only translation to
-            python code is possible, later jinja versions however will
+            python code is possible, later Jinja versions however will
             support translating templates to javascript too.
             """
             return translator.process(environment, self.parse(environment, name, None))
@@ -64,5 +64,5 @@ you can use as base for your own loader:
 
 .. admonition:: Note
 
-    Once a loader is bound to an environment you have to omit the environment
+    Once a loader is bound to an environment, you have to omit the environment
     argument for the public functions `get_source`, `parse` and `load`.

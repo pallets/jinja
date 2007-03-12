@@ -2,7 +2,7 @@
 Test Functions
 ==============
 
-Additionally to filters Jinja also supports test functions. Test functions
+In addition to filters, Jinja also supports test functions. Test functions
 always return either ``True`` or ``False``. Inside the template they are available
 using the `is` operator.
 

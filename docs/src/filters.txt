@@ -12,8 +12,8 @@ Jinja comes with some builtin filters explained in the `designer documentation`_
 Writing Filters
 ===============
 
-A filter basically is a factory function. Thus a function that returns another
-function. We do this because filters can get an unlimited amount of position
+A filter basically is a factory function, a function that returns another
+function. We do this because filters can get an unlimited amount of positional
 arguments and aditionally should gain access to the environment, context and
 piped value. A simple filter looks like this:
 
@@ -33,13 +33,13 @@ Now you have to register that filter on an environment:
 
     env.filters['join'] = do_join
 
-In fact this filter is already bundled so you won't see any effect. But its
+In fact this filter is already bundled so you won't see any effect. But it
 should explain how such a filter looks like. The template designer can just
-trigger the outer code (eg: call do_join with or without arguments). The
+trigger the outer code (i.e. call `join` with or without arguments). The
 returned function is then processed by the jinja template engine once all
 filters are created.
 
-If you want to create filters that just operate on string (in fact unicode
+If you want to create filters that just operate on a string (in fact unicode
 objects) you can use the `stringfilter` decorator:
 
 .. sourcecode:: python

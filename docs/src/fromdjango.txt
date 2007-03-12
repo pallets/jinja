@@ -2,17 +2,17 @@
 Differences To Django Templates
 ===============================
 
-If you have previously worked with Django templates you should feel very
-familiar. In fact most of the syntax elements look and work the same.
+If you have previously worked with Django templates, you should find Jinja very
+familiar. In fact, most of the syntax elements look and work the same.
 
-However Jinja provides some more syntax elements covered in the documentation
+However, Jinja provides some more syntax elements covered in the documentation
 and some work a bit different.
 
 Method Calls
 ============
 
-In Django method calls work implicit. With Jinja you have to tell it that you
-want to call it. Thus this Django code:
+In Django method calls work implicitly. With Jinja you have to specify that you
+want to call an object. Thus this Django code:
 
 .. sourcecode:: django
 
@@ -72,7 +72,7 @@ You can also have multiple ``elif`` branches in your template:
 Filter Arguments
 ================
 
-Jinja provides more than one argument for a filter. Also the syntax for argument
+Jinja provides more than one argument for filters. Also the syntax for argument
 passing is different. A template that looks like this in Django:
 
 .. sourcecode:: django
@@ -85,14 +85,14 @@ looks like this in jinja:
 
     {{ items|join(', ') }}
 
-In fact it's a bit more to write but it allows different type of arguments including
-variables and more then one of them.
+In fact it's a bit more verbose but it allows different types of arguments - including
+variables - and more than one of them.
 
 Tests
 =====
 
-Additionally to filters there also exists tests you can perform using the `is`
-operator. Here some examples:
+In addition to filters there also are tests you can perform using the `is` operator.
+Here are some examples:
 
 .. sourcecode:: jinja
 
