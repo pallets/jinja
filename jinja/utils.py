@@ -56,13 +56,30 @@ def find_translations(environment, source):
         queue.extend(node.getChildNodes())
 
 
+# python2.4 and lower has a bug regarding joining of broken generators
+if sys.hexversion < (2, 5):
+    def capture_generator(gen):
+        """
+        Concatenate the generator output.
+        """
+        return u''.join(tuple(gen))
+
+# this should be faster and used in python2.5 and higher
+else:
+    def capture_generator(gen):
+        """
+        Concatenate the generator output
+        """
+        return u''.join(gen)
+
+
 def buffereater(f):
     """
     Used by the python translator to capture output of substreams.
     (macros, filter sections etc)
     """
     def wrapped(*args, **kwargs):
-        return u''.join(f(*args, **kwargs))
+        return capture_generator(f(*args, **kwargs))
     return wrapped
 
 
@@ -71,7 +88,7 @@ def raise_template_exception(template, exception, filename, lineno, context):
     Raise an exception "in a template". Return a traceback
     object.
     """
-    offset = '\n'.join([''] * lineno)
+    offset = '\n' * (lineno - 1)
     code = compile(offset + 'raise __exception_to_raise__', filename, 'exec')
     namespace = context.to_dict()
     globals = {
@@ -97,7 +114,6 @@ def translate_exception(template, exc_type, exc_value, traceback, context):
     # looks like we loaded the template from string. we cannot
     # do anything here.
     if startpos > len(sourcelines):
-        print startpos, len(sourcelines)
         return traceback
 
     while startpos > 0:

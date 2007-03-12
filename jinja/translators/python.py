@@ -15,7 +15,7 @@ from jinja.nodes import get_nodes
 from jinja.parser import Parser
 from jinja.exceptions import TemplateSyntaxError
 from jinja.translators import Translator
-from jinja.utils import translate_exception
+from jinja.utils import translate_exception, capture_generator
 
 
 def _to_tuple(args):
@@ -72,12 +72,14 @@ class Template(object):
             self.generate_func = ns['generate']
         ctx = self.environment.context_class(self.environment, *args, **kwargs)
         try:
-            return u''.join(self.generate_func(ctx))
+            return capture_generator(self.generate_func(ctx))
         except:
             exc_type, exc_value, traceback = sys.exc_info()
-            traceback = translate_exception(self, exc_type,
-                                            exc_value, traceback.tb_next,
-                                            ctx)
+            # translate the exception, We skip two frames. One
+            # frame that is the "capture_generator" frame, and another
+            # one which is the frame of this function
+            traceback = translate_exception(self, exc_type, exc_value,
+                                            traceback.tb_next.tb_next, ctx)
             raise exc_type, exc_value, traceback
 
 
