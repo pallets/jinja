@@ -139,6 +139,8 @@ class Context(object):
         result = {}
         for layer in self._stack[1:]:
             for key, value in layer.iteritems():
+                if key.startswith('::'):
+                    continue
                 result[key] = value
         return result
 
@@ -237,6 +239,15 @@ class LoopContext(object):
         raise TemplateRuntimeError('In order to make loops callable you have '
                                    'to define them with the "recursive" '
                                    'modifier.')
+
+    def __repr__(self):
+        if self._stack:
+            return '<LoopContext %d/%d%s>' % (
+                self.index,
+                self.length,
+                self.loop_function is not None and ' recursive' or ''
+            )
+        return '<LoopContext (empty)>'
 
 
 class CycleContext(object):
