@@ -234,8 +234,9 @@ class LoopContext(object):
     def __call__(self, seq):
         if self.loop_function is not None:
             return self.loop_function(seq)
-        raise TemplateRuntimeError('Loops are just callable if defined with '
-                                   'the "recursive" modifier.')
+        raise TemplateRuntimeError('In order to make loops callable you have '
+                                   'to define them with the "recursive" '
+                                   'modifier.')
 
 
 class CycleContext(object):

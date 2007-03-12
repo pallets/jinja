@@ -92,7 +92,7 @@ class Template(NodeList):
     def __init__(self, filename, body, extends):
         if body.__class__ is not NodeList:
             body = (body,)
-        NodeList.__init__(self, 0, body)
+        NodeList.__init__(self, 1, body)
         self.extends = extends
         set_filename(filename, self)
 

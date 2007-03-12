@@ -9,6 +9,7 @@
     :license: BSD, see LICENSE for more details.
 """
 import re
+import sys
 from types import MethodType, FunctionType
 from jinja.nodes import Trans
 from jinja.datastructure import Markup
@@ -18,6 +19,7 @@ try:
 except ImportError:
     deque = None
 
+_debug_info_re = re.compile(r'^\s*\# DEBUG\(filename=(.*?), lineno=(.*?)\)$')
 
 _escape_pairs = {
     '&':            '&amp;',
@@ -62,6 +64,66 @@ def buffereater(f):
     def wrapped(*args, **kwargs):
         return u''.join(f(*args, **kwargs))
     return wrapped
+
+
+def raise_template_exception(template, exception, filename, lineno, context):
+    """
+    Raise an exception "in a template". Return a traceback
+    object.
+    """
+    offset = '\n'.join([''] * lineno)
+    code = compile(offset + 'raise __exception_to_raise__', filename, 'exec')
+    namespace = context.to_dict()
+    globals = {
+        '__name__':                 filename,
+        '__file__':                 filename,
+        '__loader__':               TracebackLoader(template),
+        '__exception_to_raise__':   exception
+    }
+    try:
+        exec code in globals, namespace
+    except:
+        traceback = sys.exc_info()[2]
+    return traceback
+
+
+def translate_exception(template, exc_type, exc_value, traceback, context):
+    """
+    Translate an exception and return the new traceback.
+    """
+    sourcelines = template.translated_source.splitlines()
+    startpos = traceback.tb_lineno - 1
+    args = None
+    # looks like we loaded the template from string. we cannot
+    # do anything here.
+    if startpos > len(sourcelines):
+        print startpos, len(sourcelines)
+        return traceback
+
+    while startpos > 0:
+        m = _debug_info_re.search(sourcelines[startpos])
+        if m is not None:
+            args = m.groups()
+            break
+        startpos -= 1
+
+    # no traceback information found, reraise unchanged
+    if args is None:
+        return traceback
+    return raise_template_exception(template, exc_value, args[0],
+                                    int(args[1] or 0), context)
+
+
+class TracebackLoader(object):
+    """
+    Fake importer that just returns the source of a template.
+    """
+
+    def __init__(self, template):
+        self.template = template
+
+    def get_source(self, impname):
+        return self.template.source
 
 
 class CacheDict(object):

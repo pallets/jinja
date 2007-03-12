@@ -115,7 +115,8 @@ class Lexer(object):
         to use this function since it can be marginally faster.
         """
         source = type(source)('\n').join(source.splitlines())
-        pos = lineno = 0
+        pos = 0
+        lineno = 1
         stack = ['root']
         statetokens = self.rules['root']
         source_length = len(source)

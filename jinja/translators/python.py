@@ -8,12 +8,14 @@
     :copyright: 2007 by Armin Ronacher.
     :license: BSD, see LICENSE for more details.
 """
+import sys
 from compiler import ast
 from jinja import nodes
 from jinja.nodes import get_nodes
 from jinja.parser import Parser
 from jinja.exceptions import TemplateSyntaxError
 from jinja.translators import Translator
+from jinja.utils import translate_exception
 
 
 def _to_tuple(args):
@@ -31,39 +33,52 @@ class Template(object):
     Represents a finished template.
     """
 
-    def __init__(self, environment, code):
+    def __init__(self, environment, code, translated_source=None):
         self.environment = environment
         self.code = code
+        self.translated_source = translated_source
         self.generate_func = None
+
+    def source(self):
+        """The original sourcecode for this template."""
+        return self.environment.loader.get_source(self.code.co_filename)
+    source = property(source, doc=source.__doc__)
 
     def dump(self, stream=None):
         """Dump the template into python bytecode."""
         if stream is not None:
             from marshal import dump
-            dump(self.code, stream)
+            dump((self.code, self.translated_source), stream)
         else:
             from marshal import dumps
-            return dumps(self.code)
+            return dumps((self.code, self.translated_source))
 
     def load(environment, data):
         """Load the template from python bytecode."""
         if isinstance(data, basestring):
             from marshal import loads
-            code = loads(data)
+            code, src = loads(data)
         else:
             from marshal import load
-            code = load(data)
-        return Template(environment, code)
+            code, src = load(data)
+        return Template(environment, code, src)
     load = staticmethod(load)
 
     def render(self, *args, **kwargs):
         """Render a template."""
         if self.generate_func is None:
-            ns = {}
+            ns = {'environment': self.environment}
             exec self.code in ns
             self.generate_func = ns['generate']
         ctx = self.environment.context_class(self.environment, *args, **kwargs)
-        return u''.join(self.generate_func(ctx))
+        try:
+            return u''.join(self.generate_func(ctx))
+        except:
+            exc_type, exc_value, traceback = sys.exc_info()
+            traceback = translate_exception(self, exc_type,
+                                            exc_value, traceback.tb_next,
+                                            ctx)
+            raise exc_type, exc_value, traceback
 
 
 class PythonTranslator(Translator):
@@ -142,8 +157,10 @@ class PythonTranslator(Translator):
     def process(environment, node):
         translator = PythonTranslator(environment, node)
         filename = node.filename or '<template>'
+        source = translator.translate()
         return Template(environment,
-                        compile(translator.translate(), filename, 'exec'))
+                        compile(source, filename, 'exec'),
+                        source)
     process = staticmethod(process)
 
     # -- private helper methods
@@ -153,6 +170,15 @@ class PythonTranslator(Translator):
         Indent the current text.
         """
         return (' ' * (self.indention * 4)) + text
+
+    def nodeinfo(self, node):
+        """
+        Return a comment that helds the node informations.
+        """
+        return '# DEBUG(filename=%r, lineno=%s)' % (
+            node.filename,
+            node.lineno
+        )
 
     def filter(self, s, filter_nodes):
         """
@@ -230,17 +256,16 @@ class PythonTranslator(Translator):
                 requirements_todo.append(node)
 
             # load the template we inherit from and add not known blocks
-            # to the block registry, make this template the new root.
             parent = self.environment.loader.parse(node.extends.template,
                                                    node.filename)
-
+            # look up all block nodes and let them override each other
             overwrites = {}
             for n in get_nodes(nodes.Block, node):
                 overwrites[n.name] = n
             for n in get_nodes(nodes.Block, parent):
                 if n.name in overwrites:
                     n.replace(overwrites[n.name])
-
+            # make the parent node the new node
             node = parent
 
         # look up requirements
@@ -254,10 +279,10 @@ class PythonTranslator(Translator):
         lines = [
             'from __future__ import division\n'
             'from jinja.datastructure import Undefined, LoopContext, CycleContext\n'
-            'from jinja.utils import buffereater\n\n'
+            'from jinja.utils import buffereater\n'
+            '__name__ = %r\n\n'
             'def generate(context):\n'
-            '    # BOOTSTRAPPING CODE\n'
-            '    environment = context.environment\n'
+            '    assert environment is context.environment\n'
             '    get_attribute = environment.get_attribute\n'
             '    perform_test = environment.perform_test\n'
             '    apply_filters = environment.apply_filters\n'
@@ -265,15 +290,13 @@ class PythonTranslator(Translator):
             '    call_function_simple = environment.call_function_simple\n'
             '    finish_var = environment.finish_var\n'
             '    ctx_push = context.push\n'
-            '    ctx_pop = context.pop\n'
+            '    ctx_pop = context.pop\n' % node.filename
         ]
 
         # we have requirements? add them here.
         if requirements:
-            lines.append(self.indent('# REQUIREMENTS'))
             for n in requirements:
                 lines.append(self.handle_node(n))
-            lines.append(self.indent('# END OF REQUIREMENTS'))
 
         # the template body
         rv = self.handle_node_list(node)
@@ -296,17 +319,18 @@ class PythonTranslator(Translator):
         """
         Handle data around nodes.
         """
-        return self.indent('yield %r' % node.text)
+        return self.indent(self.nodeinfo(node)) + '\n' + \
+               self.indent('yield %r' % node.text)
 
     def handle_node_list(self, node):
         """
         In some situations we might have a node list. It's just
         a collection of multiple statements.
         """
-        buf = []
-        for n in node:
-            buf.append(self.handle_node(n))
-        return '\n'.join(buf)
+        buf = [self.handle_node(n) for n in node]
+        if buf:
+            return '\n'.join([self.indent(self.nodeinfo(node))] + buf)
+        return ''
 
     def handle_for_loop(self, node):
         """
@@ -315,6 +339,7 @@ class PythonTranslator(Translator):
         """
         buf = []
         write = lambda x: buf.append(self.indent(x))
+        write(self.nodeinfo(node))
         write('ctx_push()')
 
         # recursive loops
@@ -335,6 +360,7 @@ class PythonTranslator(Translator):
 
         # handle real loop code
         self.indention += 1
+        buf.append(self.indent(self.nodeinfo(node.body)))
         buf.append(self.handle_node(node.body))
         self.indention -= 1
 
@@ -342,6 +368,7 @@ class PythonTranslator(Translator):
         if node.else_:
             write('if not context[\'loop\'].iterated:')
             self.indention += 1
+            buf.append(self.indent(self.nodeinfo(node.else_)))
             buf.append(self.handle_node(node.else_))
             self.indention -= 1
 
@@ -367,17 +394,20 @@ class PythonTranslator(Translator):
         """
         buf = []
         write = lambda x: buf.append(self.indent(x))
+        write(self.nodeinfo(node))
         for idx, (test, body) in enumerate(node.tests):
             write('%sif %s:' % (
                 idx and 'el' or '',
                 self.handle_node(test)
             ))
             self.indention += 1
+            write(self.nodeinfo(node))
             buf.append(self.handle_node(body))
             self.indention -= 1
         if node.else_ is not None:
             write('else:')
             self.indention += 1
+            write(self.nodeinfo(node))
             buf.append(self.handle_node(node.else_))
             self.indention -= 1
         return '\n'.join(buf)
@@ -393,6 +423,7 @@ class PythonTranslator(Translator):
 
         write('if not %r in context.current:' % name)
         self.indention += 1
+        write(self.nodeinfo(node))
         if node.seq.__class__ in (ast.Tuple, ast.List):
             write('context.current[%r] = CycleContext(%s)' % (
                 name,
@@ -418,7 +449,9 @@ class PythonTranslator(Translator):
         """
         Handle a print statement.
         """
-        return self.indent('yield finish_var(%s)' % self.handle_node(node.variable))
+        return self.indent(self.nodeinfo(node)) + '\n' + \
+               self.indent('yield finish_var(%s)' %
+                           self.handle_node(node.variable))
 
     def handle_macro(self, node):
         """
@@ -429,6 +462,7 @@ class PythonTranslator(Translator):
 
         write('def macro(*args):')
         self.indention += 1
+        write(self.nodeinfo(node))
 
         if node.arguments:
             write('argcount = len(args)')
@@ -444,6 +478,7 @@ class PythonTranslator(Translator):
         else:
             write('ctx_push()')
 
+        write(self.nodeinfo(node.body))
         buf.append(self.handle_node(node.body))
         write('ctx_pop()')
         write('if False:')
@@ -458,7 +493,8 @@ class PythonTranslator(Translator):
         """
         Handle variable assignments.
         """
-        return self.indent('context[%r] = %s' % (
+        return self.indent(self.nodeinfo(node)) + '\n' + \
+               self.indent('context[%r] = %s' % (
             node.name,
             self.handle_node(node.expr)
         ))
@@ -471,7 +507,9 @@ class PythonTranslator(Translator):
         write = lambda x: buf.append(self.indent(x))
         write('def filtered():')
         self.indention += 1
+        write(self.nodeinfo(node))
         write('ctx_push()')
+        write(self.nodeinfo(node.body))
         buf.append(self.handle_node(node.body))
         write('ctx_pop()')
         write('if False:')
@@ -489,36 +527,24 @@ class PythonTranslator(Translator):
         """
         rv = self.handle_node(node.body)
         if not rv:
-            return self.indent('# EMPTY BLOCK "%s" FROM %r, LINE %s' % (
-                node.name,
-                node.filename or '?',
-                node.lineno
-            ))
+            return
 
         buf = []
         write = lambda x: buf.append(self.indent(x))
 
-        write('# BLOCK "%s" FROM %r, LINE %s' % (
-            node.name,
-            node.filename or '?',
-            node.lineno
-        ))
         write('ctx_push()')
+        write(self.nodeinfo(node.body))
         buf.append(self.handle_node(node.body))
         write('ctx_pop()')
-        buf.append(self.indent('# END OF BLOCK'))
         return '\n'.join(buf)
 
     def handle_include(self, node):
         """
         Include another template at the current position.
         """
-        buf = [self.indent('# INCLUDED TEMPLATE %r' % node.filename)]
         tmpl = self.environment.loader.parse(node.template,
                                              node.filename)
-        buf.append(self.handle_node_list(tmpl))
-        buf.append(self.indent('# END OF INCLUSION'))
-        return '\n'.join(buf)
+        return self.handle_node_list(tmpl)
 
     def handle_trans(self, node):
         """
@@ -535,7 +561,8 @@ class PythonTranslator(Translator):
             replacements = '{%s}' % ', '.join(replacements)
         else:
             replacements = 'None'
-        return self.indent('yield translate(%r, %r, %r, %s)' % (
+        return self.indent(self.nodeinfo(node)) + '\n' + \
+               self.indent('yield translate(%r, %r, %r, %s)' % (
             node.singular,
             node.plural,
             node.indicator,
