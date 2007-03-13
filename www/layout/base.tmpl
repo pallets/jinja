@@ -4,12 +4,11 @@
   ('documentation', 'Documentation'),
   ('download', 'Download')
 ] %>
-<% block code %><% endblock %>
 <!DOCTYPE html PUBLIC "-//W3C//DTD XHTML Frameset//EN"
   "http://www.w3.org/TR/xhtml1/DTD/xhtml1-frameset.dtd">
 <html xmlns="http://www.w3.org/1999/xhtml">
   <head>
-    <title><% block title %>Untitled<% endblock %> | Jinja Template Engine</title>
+    <title><%= title or 'Untitled' %> | Jinja Template Engine</title>
     <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
     <link rel="stylesheet" href="<%= root %>static/style.css" type="text/css" />
     <link rel="stylesheet" href="<%= root %>static/print.css" type="text/css" media="print" />
@@ -21,11 +20,9 @@
     </div>
     <ul id="navigation">
     <% for id, caption in navigation %>
-      <% if id == file_id or id.startswith(file_id + '/') %>
-        <li class="active"><%= caption|escape %></li>
-      <% else %>
-        <li><a href="<%= root %><%= id|escape %>.html"><%= caption|escape %></a></li>
-      <% endif %>
+      <li<% if id == active_page %> class="active"<% endif
+        %>><a href="<%= root %><%= id|escape %>.html"><%= caption|escape
+        %></a></li>
     <% endfor %>
     </ul>
     <% if trace %>
@@ -43,9 +40,6 @@
       <div id="contentwrapper">
         <% block content %><% endblock %>
       </div>
-      <p id="meta">
-        <a href="<%= root + file_id + '.tmpl' %>">show template source</a>
-      </p>
     </div>
     <div id="footer">
       &copy; Copyright 2007 by the Pocoo Team.

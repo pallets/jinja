@@ -232,6 +232,14 @@ class PythonTranslator(Translator):
             raise AssertionError('unhandled node %r' % node.__class__)
         return out
 
+    def reset(self):
+        self.indention = 0
+        self.last_cycle_id = 0
+
+    def translate(self):
+        self.reset()
+        return self.handle_node(self.node)
+
     # -- jinja nodes
 
     def handle_template(self, node):
@@ -851,11 +859,3 @@ class PythonTranslator(Translator):
         for n in node.nodes:
             args.append(self.handle_node(n))
         return '[%s]' % ':'.join(args)
-
-    def reset(self):
-        self.indention = 0
-        self.last_cycle_id = 0
-
-    def translate(self):
-        self.reset()
-        return self.handle_node(self.node)

@@ -47,6 +47,15 @@ class TestNotFound(KeyError, TemplateError):
         KeyError.__init__(self, message)
 
 
+class TestArgumentError(TypeError, TemplateError):
+    """
+    An argument passed to a test function was invalid.
+    """
+
+    def __init__(self, message):
+        TypeError.__init__(self, message)
+
+
 class TemplateNotFound(IOError, TemplateError):
     """
     Raised if a template does not exist.

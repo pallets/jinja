@@ -109,7 +109,7 @@ LIST_OF_FILTERS = generate_list_of_filters()
 LIST_OF_TESTS = generate_list_of_tests()
 LIST_OF_LOADERS = generate_list_of_loaders()
 
-TEMPLATE = e.from_string('''\
+FULL_TEMPLATE = e.from_string('''\
 <!DOCTYPE html PUBLIC "-//W3C//DTD HTML 4.01//EN"
    "http://www.w3.org/TR/html4/strict.dtd">
 <html>
@@ -154,6 +154,13 @@ TEMPLATE = e.from_string('''\
 <!-- generated on: {{ generation_date }}
      file id: {{ file_id }} -->
 </html>\
+''')
+
+PREPROC_TEMPLATE = e.from_string('''\
+<!-- TITLE -->{{ title }}<!-- ENDTITLE -->
+<!-- TOC -->{% for key, value in toc %}<li><a href="{{
+    key }}">{{ value }}</a></li>{% endfor %}<!-- ENDTOC -->
+<!-- BODY -->{{ body }}<!-- ENDBODY -->\
 ''')
 
 def pygments_directive(name, arguments, options, content, lineno,
@@ -238,7 +245,7 @@ def generate_documentation(data, link_style):
     }
 
 
-def handle_file(filename, fp, dst):
+def handle_file(filename, fp, dst, preproc):
     now = datetime.now()
     title = os.path.basename(filename)[:-4]
     content = fp.read()
@@ -248,11 +255,15 @@ def handle_file(filename, fp, dst):
     c['style'] = PYGMENTS_FORMATTER.get_style_defs('.syntax')
     c['generation_date'] = now
     c['file_id'] = title
-    result.write(TEMPLATE.render(c).encode('utf-8'))
+    if preproc:
+        tmpl = PREPROC_TEMPLATE
+    else:
+        tmpl = FULL_TEMPLATE
+    result.write(tmpl.render(c).encode('utf-8'))
     result.close()
 
 
-def run(dst, sources=()):
+def run(dst, preproc, sources=(), handle_file=handle_file):
     path = os.path.abspath(os.path.join(os.path.dirname(__file__), 'src'))
     if not sources:
         sources = [os.path.join(path, fn) for fn in os.listdir(path)]
@@ -262,13 +273,13 @@ def run(dst, sources=()):
         print 'Processing %s' % fn
         f = open(fn)
         try:
-            handle_file(fn, f, dst)
+            handle_file(fn, f, dst, preproc)
         finally:
             f.close()
 
 
-def main(dst='build/', *sources):
-    return run(os.path.realpath(dst), sources)
+def main(dst='build/', preproc=False, *sources):
+    run(os.path.realpath(dst), str(preproc).lower() == 'true', sources)
 
 
 if __name__ == '__main__':

@@ -4,6 +4,8 @@
     ~~~~~~~~~~~~~~~~~~~~~~~
 """
 import os
+import sys
+import re
 from codecs import open
 from jinja import Environment, FileSystemLoader
 from jinja.filters import stringfilter
@@ -11,6 +13,11 @@ from pygments import highlight
 from pygments.lexers import get_lexer_by_name
 from pygments.formatters import HtmlFormatter
 
+_data_re = re.compile(
+    r'<!-- TITLE -->(?P<page_title>.*?)<!-- ENDTITLE -->.*?'
+    r'<!-- TOC -->(?P<page_toc>.*?)<!-- ENDTOC -->.*?'
+    r'<!-- BODY -->(?P<page_body>.*?)<!-- ENDBODY -->(?sm)'
+)
 
 formatter = HtmlFormatter(cssclass='syntax', encoding=None, style='pastie')
 
@@ -30,6 +37,7 @@ def get_files(folder):
             yield fn
 
 
+# generate static stuff
 for filename in get_files('.'):
     root = './' + ''.join(['../' for _ in os.path.dirname(filename).
                            split(os.path.sep)[1:]])
@@ -37,11 +45,42 @@ for filename in get_files('.'):
     t = env.get_template(filename)
     f = open(filename[:-5] + '.html', 'w', 'utf-8')
     f.write(t.render(
-        file_id=filename[2:-5],
         root=root
     ))
     f.close()
+    print filename
 
+# generate pygments stylesheet
 f = file('static/pygments.css', 'w')
 f.write(formatter.get_style_defs('.syntax'))
 f.close()
+
+# generate documentation
+os.system(sys.executable + ' ../docs/generate.py documentation true')
+
+# render documentation with documentation template
+tmpl = env.get_template('documentation/item.tmpl')
+
+for filename in os.listdir('documentation'):
+    if not filename.endswith('.html'):
+        continue
+    filename = 'documentation/' + filename
+    f = open(filename, 'r', 'utf-8')
+    try:
+        data = f.read()
+    finally:
+        f.close()
+    match = _data_re.search(data)
+    if match is None:
+        continue
+    data = match.groupdict()
+    data['page_toc'] = data['page_toc'].strip()
+    if data['page_toc'].count('</li') < 2:
+        data['page_toc'] = ''
+    f = open(filename, 'w', 'utf-8')
+    f.write(tmpl.render(
+        root='./../',
+        **data
+    ))
+    f.close()
+    print 'postprocessed', filename
