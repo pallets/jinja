@@ -14,7 +14,8 @@ setup(
     license = 'BSD',
     author = 'Armin Ronacher',
     author_email = 'armin.ronacher@active-4.com',
-    description = 'A small but fast and easy to use stand-alone template engine written in pure python.',
+    description = 'A small but fast and easy to use stand-alone template '
+                  'engine written in pure python.',
     zip_safe = True,
     classifiers = [
         'Development Status :: 5 - Production/Stable',
@@ -28,7 +29,7 @@ setup(
         'Topic :: Text Processing :: Markup :: HTML'
     ],
     keywords = ['python.templating.engines'],
-    packages = ['jinja'],
+    packages = ['jinja', 'jinja.translators'],
     extras_require = {'plugin': ['setuptools>=0.6a2']},
     entry_points='''
     [python.templating.engines]

@@ -29,6 +29,15 @@ class FilterNotFound(KeyError, TemplateError):
         KeyError.__init__(self, message)
 
 
+class FilterArgumentError(TypeError, TemplateError):
+    """
+    An argument passed to the filter was invalid.
+    """
+
+    def __init__(self, message):
+        TypeError.__init__(self, message)
+
+
 class TestNotFound(KeyError, TemplateError):
     """
     Raised if a test does not exist.

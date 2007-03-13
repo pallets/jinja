@@ -10,8 +10,9 @@
 """
 from random import choice
 from urllib import urlencode, quote
-from jinja.utils import escape
+from jinja.utils import escape, urlize
 from jinja.datastructure import Undefined
+from jinja.exceptions import FilterArgumentError
 
 
 try:
@@ -65,6 +66,14 @@ def do_replace(s, old, new, count=None):
         {{ "aaaaargh"|replace("a", "d'oh, ", 2) }}
             -> d'oh, d'oh, aaargh
     """
+    if not isinstance(old, basestring) or \
+       not isinstance(new, basestring):
+        raise FilterArgumentException('the replace filter requires '
+                                      'string replacement arguments')
+    elif not isinstance(count, (int, long)):
+        raise FilterArgumentException('the count parameter of the '
+                                      'replace filter requires '
+                                      'an integer')
     if count is None:
         return s.replace(old, new)
     return s.replace(old, new, count)
@@ -126,6 +135,46 @@ def do_title(s):
     """
     return s.title()
 do_title = stringfilter(do_title)
+
+
+def do_dictsort(case_sensitive=False, by='key'):
+    """
+    Sort a dict and yield (key, value) pairs. Because python dicts are
+    unsorted you may want to use this function to order them by either
+    key or value:
+
+    .. sourcecode:: jinja
+
+        {% for item in mydict|dictsort %}
+            sort the dict by key, case insensitive
+
+        {% for item in mydict|dicsort(true) %}
+            sort the dict by key, case sensitive
+
+        {% for item in mydict|dictsort(false, 'value') %}
+            sort the dict by key, case insensitive, sorted
+            normally and ordered by value.
+    """
+    if by == 'key':
+        pos = 0
+    elif by == 'value':
+        pos = 1
+    else:
+        raise FilterArgumentError('You can only sort by either '
+                                  '"key" or "value"')
+    def sort_func(value, env):
+        if isinstance(value, basestring):
+            value = env.to_unicode(value)
+            if not case_sensitive:
+                value = value.lower()
+        return value
+
+    def wrapped(env, context, value):
+        items = value.items()
+        items.sort(lambda a, b: cmp(sort_func(a[pos], env),
+                                    sort_func(b[pos], env)))
+        return items
+    return wrapped
 
 
 def do_default(default_value=u'', boolean=False):
@@ -294,6 +343,209 @@ def do_jsonencode():
     return lambda e, c, v: simplejson.dumps(v)
 
 
+def do_filesizeformat():
+    """
+    Format the value like a 'human-readable' file size (i.e. 13 KB, 4.1 MB, 102
+    bytes, etc).
+    """
+    def wrapped(env, context, value):
+        # fail silently
+        try:
+            bytes = float(value)
+        except TypeError:
+            bytes = 0
+
+        if bytes < 1024:
+            return "%d Byte%s" % (bytes, bytes != 1 and 's' or '')
+        elif bytes < 1024 * 1024:
+            return "%.1f KB" % (bytes / 1024)
+        elif bytes < 1024 * 1024 * 1024:
+            return "%.1f MB" % (bytes / (1024 * 1024))
+        return "%.1f GB" % (bytes / (1024 * 1024 * 1024))
+    return wrapped
+
+
+def do_pprint():
+    """
+    Pretty print a variable. Useful for debugging.
+    """
+    def wrapped(env, context, value):
+        from pprint import pformat
+        return pformat(value)
+    return wrapped
+
+
+def do_urlize(value, trim_url_limit=None, nofollow=False):
+    """
+    Converts URLs in plain text into clickable links.
+
+    If you pass the filter an additional integer it will shorten the urls
+    to that number. Also a third argument exists that makes the urls
+    "nofollow":
+
+    .. sourcecode:: jinja
+
+        {{ mytext|urlize(40, True) }}
+            links are shortened to 40 chars and defined with rel="nofollow"
+    """
+    return urlize(value, trim_url_limit, nofollow)
+do_urlize = stringfilter(do_urlize)
+
+
+def do_indent(s, width=4, indentfirst=False):
+    """
+    {{ s|indent[ width[ indentfirst[ usetab]]] }}
+
+    Return a copy of the passed string, each line indented by
+    4 spaces. The first line is not indented. If you want to
+    change the number of spaces or indent the first line too
+    you can pass additional parameters to the filter:
+
+    .. sourcecode:: jinja
+
+        {{ mytext|indent(2, True) }}
+            indent by two spaces and indent the first line too.
+    """
+    indention = ' ' * width
+    if indentfirst:
+        return u'\n'.join([indention + line for line in s.splitlines()])
+    return s.replace('\n', '\n' + indention)
+do_indent = stringfilter(do_indent)
+
+
+def do_truncate(s, length=255, killwords=False, end='...'):
+    """
+    {{ s|truncate[ length[ killwords[ end]]] }}
+
+    Return a truncated copy of the string. The length is specified
+    with the first parameter which defaults to ``255``. If the second
+    parameter is ``true`` the filter will cut the text at length. Otherwise
+    it will try to save the last word. If the text was in fact
+    truncated it will append an ellipsis sign (``"..."``). If you want a
+    different ellipsis sign than ``"..."`` you can specify it using the
+    third parameter.
+
+    .. sourcecode jinja::
+
+        {{ mytext|truncate(300, false, '&raquo;') }}
+            truncate mytext to 300 chars, don't split up words, use a
+            right pointing double arrow as ellipsis sign.
+    """
+    if len(s) <= length:
+        return s
+    elif killwords:
+        return s[:length] + end
+    words = s.split(' ')
+    result = []
+    m = 0
+    for word in words:
+        m += len(word) + 1
+        if m > length:
+            break
+        result.append(word)
+    result.append(end)
+    return u' '.join(result)
+do_truncate = stringfilter(do_truncate)
+
+
+def do_wordwrap(s, pos=79, hard=False):
+    """
+    Return a copy of the string passed to the filter wrapped after
+    ``79`` characters. You can override this default using the first
+    parameter. If you set the second parameter to `true` Jinja will
+    also split words apart (usually a bad idea because it makes
+    reading hard).
+    """
+    if len(s) < pos:
+        return s
+    if hard:
+        return u'\n'.join([s[idx:idx + pos] for idx in
+                          xrange(0, len(s), pos)])
+    # code from http://aspn.activestate.com/ASPN/Cookbook/Python/Recipe/148061
+    return reduce(lambda line, word, pos=pos: u'%s%s%s' %
+                  (line, u' \n'[(len(line)-line.rfind('\n') - 1 +
+                                len(word.split('\n', 1)[0]) >= pos)],
+                   word), s.split(' '))
+do_wordwrap = stringfilter(do_wordwrap)
+
+
+def do_wordcount(s):
+    """
+    Count the words in that string.
+    """
+    return len([x for x in s.split() if x])
+do_wordcount = stringfilter(do_wordcount)
+
+
+def do_textile(s):
+    """
+    Prase the string using textile.
+
+    requires the `PyTextile`_ library.
+
+    .. _PyTextile: http://dealmeida.net/projects/textile/
+    """
+    from textile import textile
+    return textile(s)
+do_textile = stringfilter(do_textile)
+
+
+def do_markdown(s):
+    """
+    Parse the string using markdown.
+
+    requires the `Python-markdown`_ library.
+
+    .. _Python-markdown: http://www.freewisdom.org/projects/python-markdown/
+    """
+    from markdown import markdown
+    return markdown(s)
+do_markdown = stringfilter(do_markdown)
+
+
+def do_rst(s):
+    """
+    Parse the string using the reStructuredText parser from the
+    docutils package.
+
+    requires `docutils`_.
+
+    .. _docutils: from http://docutils.sourceforge.net/
+    """
+    try:
+        from docutils.core import publish_parts
+        parts = publish_parts(source=s, writer_name='html4css1')
+        return parts['fragment']
+    except:
+        return s
+do_rst = stringfilter(do_rst)
+
+
+def do_int():
+    """
+    Convert the value into an integer.
+    """
+    def wrapped(env, context, value):
+        return int(value)
+    return wrapped
+
+
+def do_float():
+    """
+    Convert the value into a floating point number.
+    """
+    def wrapped(env, context, value):
+        return float(value)
+    return wrapped
+
+
+def do_string():
+    """
+    Convert the value into an string.
+    """
+    return lambda e, c, v: e.to_unicode(v)
+
+
 FILTERS = {
     'replace':              do_replace,
     'upper':                do_upper,
@@ -306,6 +558,7 @@ FILTERS = {
     'default':              do_default,
     'join':                 do_join,
     'count':                do_count,
+    'dictsort':             do_dictsort,
     'length':               do_count,
     'reverse':              do_reverse,
     'center':               do_center,
@@ -315,5 +568,17 @@ FILTERS = {
     'last':                 do_last,
     'random':               do_random,
     'urlencode':            do_urlencode,
-    'jsonencode':           do_jsonencode
+    'jsonencode':           do_jsonencode,
+    'filesizeformat':       do_filesizeformat,
+    'pprint':               do_pprint,
+    'indent':               do_indent,
+    'truncate':             do_truncate,
+    'wordwrap':             do_wordwrap,
+    'wordcount':            do_wordcount,
+    'textile':              do_textile,
+    'markdown':             do_markdown,
+    'rst':                  do_rst,
+    'int':                  do_int,
+    'float':                do_float,
+    'string':               do_string
 }
