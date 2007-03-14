@@ -580,5 +580,6 @@ FILTERS = {
     'rst':                  do_rst,
     'int':                  do_int,
     'float':                do_float,
-    'string':               do_string
+    'string':               do_string,
+    'urlize':               do_urlize
 }
