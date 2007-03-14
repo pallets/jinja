@@ -25,3 +25,5 @@ Welcome in the Jinja documentation.
   - `Syntax Reference <designerdoc.txt>`_
 
   - `Differences To Django <fromdjango.txt>`_
+
+  - `Recipies <recipies.txt>`_

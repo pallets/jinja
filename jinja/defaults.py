@@ -10,10 +10,10 @@
 """
 from jinja.filters import FILTERS as DEFAULT_FILTERS
 from jinja.tests import TESTS as DEFAULT_TESTS
-from jinja.utils import debug_context
+from jinja.utils import debug_context, safe_range
 
 
 DEFAULT_NAMESPACE = {
-    'range':                range,
+    'range':                safe_range,
     'debug':                debug_context
 }

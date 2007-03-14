@@ -314,7 +314,7 @@ class PythonTranslator(Translator):
         # add translation helpers if required
         if self.require_translations:
             lines.append(
-                '    translator = context.get_translator()\n'
+                '    translator = environment.get_translator(context)\n'
                 '    def translate(s, p=None, n=None, r=None):\n'
                 '        if p is None:\n'
                 '            return translator.gettext(s) % (r or {})\n'
@@ -716,8 +716,8 @@ class PythonTranslator(Translator):
             else:
                 args.append(self.handle_node(arg))
         if not (args or kwargs or star_args or dstar_args):
-            return 'call_function_simple(%s)' % self.handle_node(node.node)
-        return 'call_function(%s, %s, {%s}, %s, %s)' % (
+            return 'call_function_simple(%s, context)' % self.handle_node(node.node)
+        return 'call_function(%s, context, %s, {%s}, %s, %s)' % (
             self.handle_node(node.node),
             _to_tuple(args),
             ', '.join(['%r: %s' % i for i in kwargs.iteritems()]),

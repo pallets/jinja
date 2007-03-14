@@ -23,6 +23,9 @@ try:
 except ImportError:
     deque = None
 
+#: number of maximal range items
+MAX_RANGE = 1000000
+
 _debug_info_re = re.compile(r'^\s*\# DEBUG\(filename=(.*?), lineno=(.*?)\)$')
 
 _escape_pairs = {
@@ -118,14 +121,30 @@ def find_translations(environment, source):
         queue.extend(node.getChildNodes())
 
 
-def debug_context():
+def debug_context(env, context):
     """
     Use this function in templates to get a printed context.
-    Use this only in templates because it touches the stack.
     """
-    context = sys._getframe(2).f_locals['context']
     from pprint import pformat
     return pformat(context.to_dict())
+debug_context.jinja_context_callable = True
+
+
+def safe_range(start, stop=None, step=None):
+    """
+    "Safe" form of range that does not generate too large lists.
+    """
+    # this also works with None since None is always smaller than
+    # any other value.
+    if start > MAX_RANGE:
+        start = MAX_RANGE
+    if stop > MAX_RANGE:
+        stop = MAX_RANGE
+    if step is None:
+        step = 1
+    if stop is None:
+        return range(0, start, step)
+    return range(start, stop, step)
 
 
 # python2.4 and lower has a bug regarding joining of broken generators

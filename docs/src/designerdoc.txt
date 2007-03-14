@@ -493,6 +493,48 @@ template but outside of a visible block (thus outside of any block) will be
 available in all blocks below. This allows you to use `include` statements to
 load often used macros at once.
 
+Undefined Variables
+===================
+
+If you have already worked with python you probably know about the fact that
+undefined variables raise an exception. This is different in Jinja. There is a
+special value called `undefined` that represents values that do not exist.
+
+This special variable works complete different from any variables you maybe
+know. If you print it using ``{{ variable }}`` it will not appear because it's
+literally empty. If you try to iterate over it, it will work. But no items
+are returned. Comparing this value to any other value results in `false`.
+Even if you compare it to itself:
+
+.. sourcecode:: jinja
+
+    {{ undefined == undefined }}
+        will return false. Not even undefined is undefined :)
+        Use `is defined` / `is not defined`:
+
+    {{ undefined is not defined }}
+        will return true.
+
+There are also some additional rules regarding this special value. Any
+mathematical operators (``+``, ``-``, ``*``, ``/``) return the operand
+as result:
+
+.. sourcecode:: jinja
+
+    {{ undefined + "foo" }}
+        returns "foo"
+
+    {{ undefined - 42 }}
+        returns 42. Note: not -42!
+
+In any expression `undefined` evaluates to `false`. It has no length, all
+attribute calls return undefined, calling too:
+
+.. sourcecode:: jinja
+
+    {{ undefined.attribute().attribute_too[42] }}
+        still returns `undefined`.
+
 Internationalization
 ====================
 

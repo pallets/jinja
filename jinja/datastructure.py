@@ -18,6 +18,22 @@ except NameError:
 from jinja.exceptions import TemplateRuntimeError
 
 
+def contextcallable(f):
+    """
+    Mark a function context callable.
+    """
+    f.jinja_context_callable = True
+    return f
+
+
+def unsafe(f):
+    """
+    Mark function as unsafe.
+    """
+    f.jinja_unsafe_call = True
+    return f
+
+
 class UndefinedType(object):
     """
     An object that does not exist.
@@ -62,7 +78,13 @@ class UndefinedType(object):
         return 0
 
     def __float__(self):
-        return 1
+        return 0.0
+
+    def __eq__(self, other):
+        return False
+
+    def __ne__(self, other):
+        return True
 
     def __call__(self, *args, **kwargs):
         return self
@@ -120,10 +142,6 @@ class Context(object):
 
         # cache object used for filters and tests
         self.cache = {}
-
-    def get_translator(self):
-        """Return the translator for i18n."""
-        return FakeTranslator()
 
     def pop(self):
         """Pop the last layer from the stack and return it."""

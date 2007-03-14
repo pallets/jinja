@@ -12,7 +12,7 @@ import re
 from jinja.lexer import Lexer
 from jinja.parser import Parser
 from jinja.loaders import LoaderWrapper
-from jinja.datastructure import Undefined, Context, Markup
+from jinja.datastructure import Undefined, Context, Markup, FakeTranslator
 from jinja.utils import escape
 from jinja.exceptions import FilterNotFound, TestNotFound, SecurityException
 from jinja.defaults import DEFAULT_FILTERS, DEFAULT_TESTS, DEFAULT_NAMESPACE
@@ -102,6 +102,16 @@ class Environment(object):
             except UnicodeError:
                 return str(value).decode(self.charset, 'ignore')
 
+    def get_translator(self, context):
+        """
+        Return the translator for i18n.
+
+        A translator is an object that provides the two functions
+        ``gettext(string)`` and ``ngettext(singular, plural, n)``. Note
+        that both of them have to return unicode!
+        """
+        return FakeTranslator()
+
     def apply_filters(self, value, context, filters):
         """
         Apply a list of filters on the variable.
@@ -150,7 +160,7 @@ class Environment(object):
                 node = getattr(node, name)
         return node
 
-    def call_function(self, f, args, kwargs, dyn_args, dyn_kwargs):
+    def call_function(self, f, context, args, kwargs, dyn_args, dyn_kwargs):
         """
         Function call helper. Called for all functions that are passed
         any arguments.
@@ -162,15 +172,20 @@ class Environment(object):
         if getattr(f, 'jinja_unsafe_call', False) or \
            getattr(f, 'alters_data', False):
             raise SecurityException('unsafe function %r called' % f.__name__)
+        if getattr(f, 'jinja_context_callable', False):
+            args = (self, context) + args
         return f(*args, **kwargs)
 
-    def call_function_simple(self, f):
+    def call_function_simple(self, f, context):
         """
-        Function call without arguments.
+        Function call without arguments. Because of the smaller signature and
+        fewer logic here we have a bit of redundant code.
         """
         if getattr(f, 'jinja_unsafe_call', False) or \
            getattr(f, 'alters_data', False):
             raise SecurityException('unsafe function %r called' % f.__name__)
+        if getattr(f, 'jinja_context_callable', False):
+            return f(self, context)
         return f()
 
     def finish_var(self, value):

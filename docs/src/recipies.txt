@@ -1,0 +1,55 @@
+========
+Recipies
+========
+
+Here are some typical recipes for the usage of Jinja templates.
+
+Alternating Rows
+================
+
+If you want to have different styles for each row of a table or
+list you can use the ``cycle`` tag:
+
+.. sourcecode:: html+jinja
+
+    <ul>
+    {% for row in sequence %}
+      <li class="{% cycle 'even', 'odd' %}">{{ row|e }}</li>
+    {% endfor %}
+    </ul>
+
+``cycle`` can take an unlimited amount of strings. Each time this
+tag is encountered the next item from the list is rendered.
+If you pass it just one argument it's meant to be a sequence.
+
+Active Menu Item
+================
+
+Often you want to have a navigation bar with an active navigation
+item. This is really simple to achieve. Because ``set`` tags outside
+of ``blocks`` are global you can do something like this:
+
+**layout.html**:
+
+    .. sourcecode:: html+jinja
+
+        {% set navigation_bar = [
+            ('/', 'index', 'Index'),
+            ('/downloads/', 'downloads', 'Downloads'),
+            ('/about/', 'about', 'About')
+        ] %}
+        ...
+        <ul id="navigation">
+        {% for href, id, caption in navigation_bar %}
+          <li{% if id == active_page %} class="active"{% endif
+          %}><a href="{{ href|e }}">{{ caption|e }}</a>/li>
+        {% endfor %}
+        </ul>
+        ...
+
+**index.html**:
+
+    .. sourcecode:: jinja
+
+        {% extends "layout.html" %}
+        {% set active_page = "index" %}
