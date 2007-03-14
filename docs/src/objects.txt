@@ -1,0 +1,110 @@
+==============
+Global objects
+==============
+
+This section covers the behavior of global objects in the Jinja namespace and
+also the behavior of their attributes.
+
+Functions
+=========
+
+`Filters`_ and `Tests`_ are special kind of functions you cannot call without
+and argument. Global functions are different. Those are really just ordinary
+python functions. You can register them on the global namespace easily:
+
+.. sourcecode:: python
+
+    def my_function():
+        return [1, 2, 3]
+
+    env.globals['my_function'] = my_function
+
+In the template you can not call it like this:
+
+.. sourcecode:: jinja
+
+    {{ my_function() }}
+
+Of couse you can pass any argument to it. But what if you want to access the
+context or environment? In that case you have to decorate a function or mark
+it (both work exactly the same, but the decorator way is probably nicer if you
+have python >= 2.4):
+
+.. sourcecode:: python
+
+    from cgi import escape
+    from pprint import pformat
+    from jinja.datastructure import contextcallable
+
+    @contextcallable
+    def printcontext(env, context):
+        result = []
+        for key, value in context.to_dict():
+            result.append('<tr><th>%s</th><td>%r</td></tr>' %
+                          (escape(unicode(key)), escape(pformat(value))))
+        return '<table>%s</table>' % u'\n'.join(result)
+
+If this function is registered in the environment namespace then and called
+from the template it should return the content of the context as simple html
+template. Of course you can modify the context too. For more informations about
+the context object have a look at the `context object`_ documentation.
+
+Deferred Values
+===============
+
+You can pass functions to the template that are called to provide values at
+first access. Say you want to pass the list of recently written comments to
+all templates. But not necessarily every template will render that. In that
+situation you can create a function that returns that value and wrap it in an
+`Deferred` object. The first time a template accesses the variable then the
+`Deferred` object is resolved:
+
+.. sourcecode:: python
+
+    from jinja.datastructure import Deferred
+    from yourapplication.models import Comments
+
+    def get_recent_comments(env, context, name):
+        # do what ever you want here.
+        return Comments.get_recent(10)
+
+    env.globals['recent_comments'] = Deferred(get_recent_comments)
+
+The function is always called with the same arguments. The first one is the
+current environment, the second the context and the third is the name of the
+variable. In this example ``recent_comments``.
+
+Unsafe Methods / Attributes
+===========================
+
+Because Jinja is sandboxed it provides several ways to prevent unsafe attribute
+access. You can mark both attributes and methods as unsafe:
+
+.. sourcecode:: python
+
+    from jinja.datastructure import unsafe
+
+    class MyModel(...):
+
+        # just give access to a and b. Default is all
+        jinja_allowed_attributes = ['a', 'b']
+
+        def __init__(self, ...):
+            ...
+            self.a = ...
+            self.b = ...
+
+        # python2.4 way of marking methods
+        @unsafe
+        def save(self):
+            """Save the model."""
+
+        # python2.3 way for the same
+        def delete(self):
+            """Delete the model."""
+        delete.jinja_unsafe_call = True
+
+
+.. _Filters: filters.txt
+.. _Tests: tests.txt
+.. _context object: contextenv.txt

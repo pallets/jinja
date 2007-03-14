@@ -60,6 +60,8 @@ Here the possible initialization parameters:
 `filters`                 dict of filters or the default filters if not
                           defined.
 `tests`                   dict of tests of the default tests if not defined.
+`context_class`           the context class this template should use. See
+                          the `context documentation`_ for more details.
 ========================= ==================================================
 
 All of these variables except those marked with a star (*) are modifiable after
@@ -133,6 +135,7 @@ Writing tests is explained in the `test development`_ section.
 
 
 .. _installation: installation.txt
+.. _context documentation: contextenv.txt
 .. _translators: translators.txt
 .. _loader: loaders.txt
 .. _filter development: filters.txt

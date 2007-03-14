@@ -117,7 +117,7 @@ class Deferred(object):
         self.factory = factory
 
     def __call__(self, context, name):
-        return self.factory(context, name)
+        return self.factory(context.environment, context, name)
 
 
 class Markup(unicode):
@@ -191,6 +191,12 @@ class Context(object):
     def __delitem__(self, name):
         if name in self.current:
             del self.current[name]
+
+    def __contains__(self, name):
+        for layer in self._stack:
+            if name in layer:
+                return True
+        return False
 
     def __repr__(self):
         tmp = {}

@@ -16,6 +16,10 @@ Welcome in the Jinja documentation.
 
   - `Test Functions <tests.txt>`_
 
+  - `Global Objects <objects.txt>`_
+
+  - `Context and Environment <contextenv.txt>`_
+
   - `Translators <translators.txt>`_
 
   - `Framework Integration <frameworks.txt>`_

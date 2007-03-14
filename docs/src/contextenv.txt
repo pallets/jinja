@@ -1,0 +1,136 @@
+=======================
+Context and Environment
+=======================
+
+The two central objects in Jinja are the `Environment` and `Context`. Both
+are designed to be subclassed by applications if they need to extend Jinja.
+
+Environment
+===========
+
+The initialization parameters are already covered in the `Quickstart`_ thus
+not repeated here.
+
+But beside those configurable instance variables there are some functions used
+in the template evaluation code you may want to override:
+
+**def** `to_unicode` *(self, value)*:
+
+    Called to convert variables to unicode. Per default this checks if the
+    value is already unicode. If not it's converted to unicode using the
+    charset defined on the environment.
+
+    Also `None` is converted into an empty string per default.
+
+**def** `get_translator` *(self, context)*:
+
+    Return the translator used for i18n. A translator is an object that
+    provides the two functions ``gettext(string)`` and
+    ``ngettext(singular, plural, n)``. Both of those functions have to
+    behave like the `ugettext` and `nugettext` functions described in the
+    python `gettext documentation`_.
+
+    If you don't provide a translator a default one is used to switch
+    between singular and plural forms.
+
+**def** `apply_filters` *(self, value, context, filters)*:
+
+    Now this function is a bit tricky and you usually don't have to override
+    it. It's used to apply filters on a value. The Jinja expression
+    ``{{ foo|escape|replace('a', 'b') }}`` calls the function with the
+    value of `foo` as first parameter, the current context as second and
+    a list of filters as third. The list looks like this:
+
+    .. sourcecode:: python
+
+        [('escape', ()), ('replace', (u'a', u'b'))]
+
+    As you can see the filter `escape` is called without arguments whereas
+    `replace` is called with the two literal strings ``a`` and ``b``, both
+    unicode. The filters for the names are stored on ``self.filters`` in a
+    dict. Missing filters should raise a `FilterNotFound` exception.
+
+**def** `perform_test` *(self, context, testname, args, value, invert)*:
+
+    Like `apply_filters` you usually don't override this one. It's the
+    callback function for tests (``foo is bar`` / ``foo is not bar``).
+
+    The first parameter is the current contex, the second the name of
+    the test to perform. the third a tuple of arguments, the fourth is
+    the value to test. The last one is `True` if the test was performed
+    with the `is not` operator, `False` if with the `is` operator.
+
+    Missing tests should raise a `TestNotFound` exception.
+
+**def** `get_attribute` *(self, obj, attributes)*:
+
+    Get `attributes` from the object provided. The default implementation
+    performs security tests for each attribute.
+
+**def** `call_function` *(self, f, context, args, kwargs, dyn_args, dyn_kwargs)*:
+    
+    Call a function `f` with the arguments `args`, `kwargs`, `dyn_args` and
+    `dyn_kwargs` where `args` is a tuple and `kwargs` a dict. If `dyn_args`
+    is not `None` you have to add it to the arguments, if `dyn_kwargs` is
+    not `None` you have to update the `kwargs` with it.
+
+    The default implementation performs some security checks.
+
+**def** `call_function_simple` *(self, f, context)*:
+
+    Like `call_function` but without arguments.
+
+**def** `finish_var` *(self, value)*:
+
+    Postprocess a variable before it's sent to the template.
+    
+.. admonition:: Note
+
+    The Enviornment class is defined in `jinja.environment.Environment`
+    but imported into the `jinja` package because it's often used.
+
+Context
+=======
+
+Jinja wraps the variables passed to the template in a special class called a
+context. This context supports variables on multiple layers and lazy (deferred)
+objects. Often your application has a request object, database connection
+object or something similar you want to access in filters, functions etc.
+
+Beacause of that you can easily subclass a context to add additional variables
+or to change the way it behaves.
+
+**def** `pop` *(self)*:
+
+    Pop the outermost layer and return it.
+
+**def** `push` *(self, data=None)*:
+
+    Push a dict to the stack or an empty layer.
+
+    Has to return the pushed object.
+
+**def** `to_dict` *(self)*:
+
+    Flatten the context and convert it into a dict.
+
+**def** `__getitem__` *(self, name)*:
+
+    Resolve an item. Per default this also resolves `Deferred` objects.
+
+**def** `__setitem__` *(self, name, value)*:
+
+    Set an item in the outermost layer.
+
+**def** `__delitem__` *(self, name)*:
+
+    Delete an item in the outermost layer. Do not raise exceptions if
+    the value does not exist.
+
+**def** `__contains__` *(self, name)*:
+
+    Return `True` if `name` exists in the context.
+
+
+.. _Quickstart: devintro.txt
+.. _gettext documentation: http://docs.python.org/lib/module-gettext.html
