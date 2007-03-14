@@ -174,7 +174,7 @@ def buffereater(f):
     return wrapped
 
 
-def raise_template_exception(template, exception, filename, lineno, context):
+def raise_template_exception(exception, filename, lineno, context):
     """
     Raise an exception "in a template". Return a traceback
     object.
@@ -188,7 +188,8 @@ def raise_template_exception(template, exception, filename, lineno, context):
     globals = {
         '__name__':                 filename,
         '__file__':                 filename,
-        '__loader__':               TracebackLoader(template),
+        '__loader__':               TracebackLoader(context.environment,
+                                                    filename),
         '__exception_to_raise__':   exception
     }
     try:
@@ -204,7 +205,7 @@ def translate_exception(template, exc_type, exc_value, traceback, context):
     """
     sourcelines = template.translated_source.splitlines()
     startpos = traceback.tb_lineno - 1
-    args = None
+    filename = None
     # looks like we loaded the template from string. we cannot
     # do anything here.
     if startpos > len(sourcelines):
@@ -213,15 +214,21 @@ def translate_exception(template, exc_type, exc_value, traceback, context):
     while startpos > 0:
         m = _debug_info_re.search(sourcelines[startpos])
         if m is not None:
-            args = m.groups()
+            filename, lineno = m.groups()
+            if filename == 'None':
+                filename = ''
+            if lineno == 'None':
+                lineno = 0
+            else:
+                lineno = int(lineno)
             break
         startpos -= 1
 
     # no traceback information found, reraise unchanged
-    if args is None:
+    if filename is None:
         return traceback
-    return raise_template_exception(template, exc_value, args[0],
-                                    int(args[1] or 0), context)
+    return raise_template_exception(exc_value, filename,
+                                    lineno, context)
 
 
 class TracebackLoader(object):
@@ -229,11 +236,12 @@ class TracebackLoader(object):
     Fake importer that just returns the source of a template.
     """
 
-    def __init__(self, template):
-        self.template = template
+    def __init__(self, environment, filename):
+        self.loader = environment.loader
+        self.filename = filename
 
     def get_source(self, impname):
-        return self.template.source
+        return self.loader.get_source(self.filename)
 
 
 class CacheDict(object):

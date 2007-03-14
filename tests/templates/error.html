@@ -1,6 +1,6 @@
 <ul>
 <meta http-equiv="Content-Type" content="" />
 {% for item in items %}
-  {{ item + "this will break the application" }}
+  {% include "included_error.html" %}
 {% endfor %}
 </ul>

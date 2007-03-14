@@ -39,11 +39,6 @@ class Template(object):
         self.translated_source = translated_source
         self.generate_func = None
 
-    def source(self):
-        """The original sourcecode for this template."""
-        return self.environment.loader.get_source(self.code.co_filename)
-    source = property(source, doc=source.__doc__)
-
     def dump(self, stream=None):
         """Dump the template into python bytecode."""
         if stream is not None:
@@ -175,12 +170,16 @@ class PythonTranslator(Translator):
 
     def nodeinfo(self, node):
         """
-        Return a comment that helds the node informations.
+        Return a comment that helds the node informations or None
+        if there is no need to add a debug comment.
         """
-        return '# DEBUG(filename=%r, lineno=%s)' % (
+        rv = '# DEBUG(filename=%s, lineno=%s)' % (
             node.filename,
             node.lineno
         )
+        if rv != self.last_debug_comment:
+            self.last_debug_comment = rv
+            return rv
 
     def filter(self, s, filter_nodes):
         """
@@ -235,6 +234,7 @@ class PythonTranslator(Translator):
     def reset(self):
         self.indention = 0
         self.last_cycle_id = 0
+        self.last_debug_comment = None
 
     def translate(self):
         self.reset()
@@ -329,8 +329,10 @@ class PythonTranslator(Translator):
         """
         Handle data around nodes.
         """
-        return self.indent(self.nodeinfo(node)) + '\n' + \
-               self.indent('yield %r' % node.text)
+        nodeinfo = self.nodeinfo(node) or ''
+        if nodeinfo:
+            nodeinfo = self.indent(nodeinfo) + '\n'
+        return nodeinfo + self.indent('yield %r' % node.text)
 
     def handle_node_list(self, node):
         """
@@ -339,8 +341,10 @@ class PythonTranslator(Translator):
         """
         buf = [self.handle_node(n) for n in node]
         if buf:
-            return '\n'.join([self.indent(self.nodeinfo(node))] + buf)
-        return ''
+            nodeinfo = self.nodeinfo(node)
+            if nodeinfo:
+                buf = [self.indent(nodeinfo)] + buf
+        return '\n'.join(buf)
 
     def handle_for_loop(self, node):
         """
@@ -349,7 +353,9 @@ class PythonTranslator(Translator):
         """
         buf = []
         write = lambda x: buf.append(self.indent(x))
-        write(self.nodeinfo(node))
+        nodeinfo = self.nodeinfo(node)
+        if nodeinfo:
+            write(nodeinfo)
         write('ctx_push()')
 
         # recursive loops
@@ -370,7 +376,9 @@ class PythonTranslator(Translator):
 
         # handle real loop code
         self.indention += 1
-        buf.append(self.indent(self.nodeinfo(node.body)))
+        nodeinfo = self.nodeinfo(node.body)
+        if nodeinfo:
+            write(nodeinfo)
         buf.append(self.handle_node(node.body))
         self.indention -= 1
 
@@ -378,7 +386,9 @@ class PythonTranslator(Translator):
         if node.else_:
             write('if not context[\'loop\'].iterated:')
             self.indention += 1
-            buf.append(self.indent(self.nodeinfo(node.else_)))
+            nodeinfo = self.nodeinfo(node.else_)
+            if nodeinfo:
+                write(nodeinfo)
             buf.append(self.handle_node(node.else_))
             self.indention -= 1
 
@@ -404,20 +414,26 @@ class PythonTranslator(Translator):
         """
         buf = []
         write = lambda x: buf.append(self.indent(x))
-        write(self.nodeinfo(node))
+        nodeinfo = self.nodeinfo(node)
+        if nodeinfo:
+            write(nodeinfo)
         for idx, (test, body) in enumerate(node.tests):
             write('%sif %s:' % (
                 idx and 'el' or '',
                 self.handle_node(test)
             ))
             self.indention += 1
-            write(self.nodeinfo(node))
+            nodeinfo = self.nodeinfo(body)
+            if nodeinfo:
+                write(nodeinfo)
             buf.append(self.handle_node(body))
             self.indention -= 1
         if node.else_ is not None:
             write('else:')
             self.indention += 1
-            write(self.nodeinfo(node))
+            nodeinfo = self.nodeinfo(node.else_)
+            if nodeinfo:
+                write(nodeinfo)
             buf.append(self.handle_node(node.else_))
             self.indention -= 1
         return '\n'.join(buf)
@@ -433,7 +449,9 @@ class PythonTranslator(Translator):
 
         write('if not %r in context.current:' % name)
         self.indention += 1
-        write(self.nodeinfo(node))
+        nodeinfo = self.nodeinfo(node)
+        if nodeinfo:
+            write(nodeinfo)
         if node.seq.__class__ in (ast.Tuple, ast.List):
             write('context.current[%r] = CycleContext(%s)' % (
                 name,
@@ -459,9 +477,11 @@ class PythonTranslator(Translator):
         """
         Handle a print statement.
         """
-        return self.indent(self.nodeinfo(node)) + '\n' + \
-               self.indent('yield finish_var(%s)' %
-                           self.handle_node(node.variable))
+        nodeinfo = self.nodeinfo(node) or ''
+        if nodeinfo:
+            nodeinfo = self.indent(nodeinfo) + '\n'
+        return nodeinfo + self.indent('yield finish_var(%s)' %
+                                      self.handle_node(node.variable))
 
     def handle_macro(self, node):
         """
@@ -472,7 +492,9 @@ class PythonTranslator(Translator):
 
         write('def macro(*args):')
         self.indention += 1
-        write(self.nodeinfo(node))
+        nodeinfo = self.nodeinfo(node)
+        if nodeinfo:
+            write(nodeinfo)
 
         if node.arguments:
             write('argcount = len(args)')
@@ -488,7 +510,9 @@ class PythonTranslator(Translator):
         else:
             write('ctx_push()')
 
-        write(self.nodeinfo(node.body))
+        nodeinfo = self.nodeinfo(node.body)
+        if nodeinfo:
+            write(nodeinfo)
         buf.append(self.handle_node(node.body))
         write('ctx_pop()')
         write('if False:')
@@ -503,8 +527,10 @@ class PythonTranslator(Translator):
         """
         Handle variable assignments.
         """
-        return self.indent(self.nodeinfo(node)) + '\n' + \
-               self.indent('context[%r] = %s' % (
+        nodeinfo = self.nodeinfo(node) or ''
+        if nodeinfo:
+            nodeinfo = self.indent(nodeinfo) + '\n'
+        return nodeinfo + self.indent('context[%r] = %s' % (
             node.name,
             self.handle_node(node.expr)
         ))
@@ -517,9 +543,10 @@ class PythonTranslator(Translator):
         write = lambda x: buf.append(self.indent(x))
         write('def filtered():')
         self.indention += 1
-        write(self.nodeinfo(node))
         write('ctx_push()')
-        write(self.nodeinfo(node.body))
+        nodeinfo = self.nodeinfo(node.body)
+        if nodeinfo:
+            write(nodeinfo)
         buf.append(self.handle_node(node.body))
         write('ctx_pop()')
         write('if False:')
@@ -543,7 +570,9 @@ class PythonTranslator(Translator):
         write = lambda x: buf.append(self.indent(x))
 
         write('ctx_push()')
-        write(self.nodeinfo(node.body))
+        nodeinfo = self.nodeinfo(node.body)
+        if nodeinfo:
+            write(nodebody)
         buf.append(self.handle_node(node.body))
         write('ctx_pop()')
         return '\n'.join(buf)
@@ -571,8 +600,10 @@ class PythonTranslator(Translator):
             replacements = '{%s}' % ', '.join(replacements)
         else:
             replacements = 'None'
-        return self.indent(self.nodeinfo(node)) + '\n' + \
-               self.indent('yield translate(%r, %r, %r, %s)' % (
+        nodeinfo = self.nodeinfo(node) or ''
+        if nodeinfo:
+            nodeinfo = self.indent(nodeinfo) + '\n'
+        return nodeinfo + self.indent('yield translate(%r, %r, %r, %s)' % (
             node.singular,
             node.plural,
             node.indicator,
