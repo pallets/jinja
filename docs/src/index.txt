@@ -31,3 +31,20 @@ Welcome in the Jinja documentation.
   - `Differences To Django <fromdjango.txt>`_
 
   - `Recipies <recipies.txt>`_
+
+Undocumented So Far
+-------------------
+
+- Debugging Templates
+
+- i18n for Developers
+
+- Writing Custom Loaders
+
+- Jinja in TurboGears / django?
+
+- Changelog / Authors
+
+- Boolean Rules (empty lists evaluate to False etc)
+
+- Slicing
