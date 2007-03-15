@@ -28,6 +28,16 @@ something like this:
     config.init_app(global_conf, app_conf, package='yourproject',
                     template_engine='jinja')
 
+If you load templates using dotted notation the ``'.html'`` to the filename.
+You can override this using ``jinja.exception``. eg:
+
+.. sourcecode:: python
+
+    config.add_template_engine('jinja', {
+        'jinja.environment': ...,
+        'jinja.extension': 'tmpl'
+    })
+
 
 TurboGears
 ----------
@@ -42,12 +52,24 @@ provide the jinja options:
 
     [global]
     tg.defaultview = 'jinja'
-    jinja.loader.searchpath = '/path/to/templates'
+    jinja.init_callback = yourapplication.yourmodule.setup_function
 
-Because of the limitations of the configuration file there is currently no way
-to configure jinja correctly. This problem does not exist with pylons since you
-can pass any python object to the baker configuration system. We're currently
-looking for solutions to this problem.
+Now you have to edit the file `yourapplication.yourmodule` and add a
+`setup_function` callback that creates an environment:
+
+.. sourcecode:: python
+
+    from jinja import Environment, FileSystemLoader
+
+    def setup_function(options):
+        return Environment(loader=FileSystemLoader('path/to/templates'))
+
+This solution isn't the best but currently the only thing you can do. There is
+a discussion about improving the plugin interface so that this can be solved
+in a more elegant way.
+
+Also here exists the same limitation regarding dotted notation, see the
+snipped and information in the pylons section.
 
 
 .. _TurboGears: http://www.turbogears.org/
