@@ -37,12 +37,8 @@ Welcome in the Jinja documentation.
 Undocumented So Far
 -------------------
 
-- Debugging Templates
-
 - i18n for Developers
 
 - Writing Custom Loaders
-
-- Jinja in TurboGears / django?
 
 - Changelog / Authors

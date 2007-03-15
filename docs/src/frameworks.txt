@@ -29,5 +29,26 @@ something like this:
                     template_engine='jinja')
 
 
+TurboGears
+----------
+
+Integrating Jinja into TurboGears works pretty much the same.
+
+Basically all you have to do is to edit the application configuration file at
+``application/config/app.cfg`` and change `global.tg.defaultview` and
+provide the jinja options:
+
+.. sourcecode:: ini
+
+    [global]
+    tg.defaultview = 'jinja'
+    jinja.loader.searchpath = '/path/to/templates'
+
+Because of the limitations of the configuration file there is currently no way
+to configure jinja correctly. This problem does not exist with pylons since you
+can pass any python object to the baker configuration system. We're currently
+looking for solutions to this problem.
+
+
 .. _TurboGears: http://www.turbogears.org/
 .. _pylons: http://www.pylonshq.com/
