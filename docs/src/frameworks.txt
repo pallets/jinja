@@ -38,6 +38,17 @@ You can override this using ``jinja.exception``. eg:
         'jinja.extension': 'tmpl'
     })
 
+Note that you have to use a trailing slash to load templates if you want to
+specify the extension. Otherwise use the dotted notation:
+
+.. sourcecode:: python
+
+    render_template('/index.html')
+    render_template('index')
+    
+    render_template('/modules/userlist.html')
+    render_template('modules.userlist')
+
 
 TurboGears
 ----------

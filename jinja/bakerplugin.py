@@ -48,8 +48,10 @@ class JinjaPlugin(object):
             return self.environment.from_string(template_string)
 
         # Translate TG dot notation to normal / template path
-        if '/' not in templatename and '.' in templatename:
-            templatename = '/' + templatename.replace('.', '/') + '.' + self.extension
+        if templatename.startswith('/'):
+            templatename = templatename[1:]
+        else:
+            templatename = templatename.replace('.', '/') + '.' + self.extension
 
         return self.environment.get_template(templatename)
 
