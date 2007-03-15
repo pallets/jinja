@@ -283,6 +283,51 @@ Note that there is no support for any bit operations or something similar.
   instead of ``not foo is bar`` and ``not foo in bar``. All other expressions
   require a prefix notation: ``not (foo and bar)``.
 
+Boolean Values
+==============
+
+In If-Conditions Jinja performs a boolean check. All empty values (eg: empty
+lists ``[]``, empty dicts ``{}`` etc) evaluate to `false`. Numbers that are
+equal to `0`/`0.00` are considered `false` too. The boolean value of other
+objects depends on the behavior the application developer gave it. Usually
+items are `true`.
+
+Here some examples that should explain it:
+
+.. sourcecode:: jinja
+
+    {% if [] %}
+        will always be false because it's an empty list
+
+    {% if {} %}
+        false too.
+
+    {% if ['foo'] %}
+        this is true. Because the list is not empty.
+
+    {% if "foobar" %}
+        this is also true because the string is not empty.
+
+Slicing
+=======
+
+Some objects support slicing operations. For example lists:
+
+.. sourcecode:: jinja
+
+    {% for item in items[:5] %}
+        This will only iterate over the first 5 items of the list
+
+    {% for item in items[5:10] %}
+        This will only iterate from item 5 to 10.
+
+    {% for item in items[:10:2] %}
+        This will only yield items from start to ten and only returing
+        even items.
+
+For more informations about slicing have a look at the `slicing chapter`_
+in the "Dive into Python" e-book.
+
 Macros
 ======
 
@@ -592,3 +637,5 @@ in the ``trans`` header.
         {% else %}
             one user found.
         {% endif %}
+
+.. _slicing chapter: http://diveintopython.org/native_data_types/lists.html#odbchelper.list.slice

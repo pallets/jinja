@@ -1,0 +1,27 @@
+===================
+Debugging Templates
+===================
+
+In order to keep templates debuggable you have to do some additional work on
+the application side. The traceback module that comes with python currently
+does not support the `__loader__` hook which is used by Jinja to provide
+templates. Although the import system was implemented three Python versions
+ago the default traceback system still doesn't support it.
+
+However most of the extended web development traceback module support it:
+
+-  `Colubrid Debugging Middleware`_
+-  `cgitb`_
+-  `EvalException`_
+
+Note that the django traceback module currently does not provide this. `A
+ticket`_ was filed already so there is hope that this will be fixed.
+
+To enable debugging you have to use one of those debugging systems or
+implement your own one with support for `__loader__`.
+
+
+.. _Colubrid Debugging Middleware: http://trac.pocoo.org/repos/colubrid/trunk/colubrid/debug.py
+.. _cgitb: http://docs.python.org/lib/module-cgitb.html
+.. _EvalException: http://pythonpaste.org/module-paste.evalexception.html
+.. _A ticket: http://code.djangoproject.com/ticket/3734

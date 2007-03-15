@@ -24,6 +24,8 @@ Welcome in the Jinja documentation.
 
   - `Framework Integration <frameworks.txt>`_
 
+  - `Debugging Support <debugging.txt>`_
+
 - Template Designer Documentation:
 
   - `Syntax Reference <designerdoc.txt>`_
@@ -44,7 +46,3 @@ Undocumented So Far
 - Jinja in TurboGears / django?
 
 - Changelog / Authors
-
-- Boolean Rules (empty lists evaluate to False etc)
-
-- Slicing
