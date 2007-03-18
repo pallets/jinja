@@ -15,6 +15,7 @@
 """
 
 CAPITALIZE = '''{{ "foo bar"|capitalize }}'''
+CAPTURE = '''{{ "foo"|capture('bar') }}|{{ bar }}'''
 CENTER = '''{{ "foo"|center(9) }}'''
 DEFAULT = '''{{ missing|default("no") }}|{{ false|default('no') }}|\
 {{ false|default('no', true) }}|{{ given|default("no") }}'''
@@ -29,6 +30,7 @@ FILESIZEFORMAT = '{{ 100|filesizeformat }}|\
 {{ 1000000000000|filesizeformat }}'
 FIRST = '''{{ foo|first }}'''
 FLOAT = '''{{ "42"|float }}|{{ "ajsghasjgd"|float }}|{{ "32.32"|float }}'''
+FORMAT = '''{{ "%s|%s"|format("a", "b") }}'''
 INDENT = '''{{ foo|indent(2) }}|{{ foo|indent(2, true) }}'''
 INT = '''{{ "42"|int }}|{{ "ajsghasjgd"|int }}|{{ "32.32"|int }}'''
 JOIN = '''{{ [1, 2, 3]|join("|") }}'''
@@ -54,6 +56,11 @@ CHAINING = '''{{ ['<foo>', '<bar>']|first|upper|escape }}'''
 def test_capitalize(env):
     tmpl = env.from_string(CAPITALIZE)
     assert tmpl.render() == 'Foo bar'
+
+
+def test_capture(env):
+    tmpl = env.from_string(CAPTURE)
+    assert tmpl.render() == 'foo|foo'
 
 
 def test_center(env):
@@ -96,6 +103,12 @@ def test_float(env):
     tmpl = env.from_string(FLOAT)
     out = tmpl.render()
     assert out == '42.0|0.0|32.32'
+
+
+def test_format(env):
+    tmpl = env.from_string(FORMAT)
+    out = tmpl.render()
+    assert out == 'a|b'
 
 
 def test_indent(env):

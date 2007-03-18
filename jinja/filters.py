@@ -577,6 +577,10 @@ def do_capture(name='captured'):
         {% endfilter %}
         {{ foo }}
     """
+    def wrapped(env, context, value):
+        context[name] = value
+        return value
+    return wrapped
 
 
 FILTERS = {
