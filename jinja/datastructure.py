@@ -49,9 +49,8 @@ class UndefinedType(object):
             raise TypeError('cannot create %r instances' %
                             self.__class__.__name__)
 
-    def __add__(self, other):
-        return other
-    __sub__ = __mul__ = __div__ = __add__
+    __sub__ = __mul__ = __div__ = __rsub__ = __rmul__ = __div__ = __radd__ = \
+    __add__ = lambda self, other: other
 
     def __getitem__(self, arg):
         return self
