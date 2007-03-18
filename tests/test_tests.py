@@ -59,4 +59,3 @@ def test_sequence(env):
 def test_upper(env):
     tmpl = env.from_string(UPPER)
     assert tmpl.render() == 'True|False'
-

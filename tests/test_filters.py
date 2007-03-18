@@ -47,6 +47,8 @@ UPPER = '''{{ "foo"|upper }}'''
 URLENCODE = '''{{ "f#b"|urlencode }}'''
 URLIZE = '''{{ "foo http://www.example.com/ bar"|urlize }}'''
 WORDCOUNT = '''{{ "foo bar baz"|wordcount }}'''
+BLOCK = '''{% filter lower|escape %}<HEHE>{% endfilter %}'''
+CHAINING = '''{{ ['<foo>', '<bar>']|first|upper|escape }}'''
 
 
 def test_capitalize(env):
@@ -189,3 +191,13 @@ def test_urlize(env):
 def test_wordcount(env):
     tmpl = env.from_string(WORDCOUNT)
     assert tmpl.render() == '3'
+
+
+def test_block(env):
+    tmpl = env.from_string(BLOCK)
+    assert tmpl.render() == '&lt;hehe&gt;'
+
+
+def test_chaining(env):
+    tmpl = env.from_string(CHAINING)
+    assert tmpl.render() == '&lt;FOO&gt;'

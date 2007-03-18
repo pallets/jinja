@@ -257,6 +257,7 @@ class PythonTranslator(Translator):
         # root template.
         requirements_todo = []
         parent = None
+        overwrites = {}
 
         while node.extends is not None:
             # handle all requirements but not those from the
@@ -269,7 +270,6 @@ class PythonTranslator(Translator):
             parent = self.environment.loader.parse(node.extends.template,
                                                    node.filename)
             # look up all block nodes and let them override each other
-            overwrites = {}
             for n in get_nodes(nodes.Block, node):
                 overwrites[n.name] = n
             for n in get_nodes(nodes.Block, parent):

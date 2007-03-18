@@ -56,7 +56,8 @@ class UndefinedType(object):
         return self
 
     def __iter__(self):
-        return iter(int, 0)
+        if False:
+            yield None
 
     def __getattr__(self, arg):
         return self
