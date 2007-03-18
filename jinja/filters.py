@@ -548,6 +548,37 @@ def do_string():
     return lambda e, c, v: e.to_unicode(v)
 
 
+def do_format(*args):
+    """
+    Apply python string formatting on an object:
+
+    .. sourcecode:: jinja
+
+        {{ "%s - %s"|format("Hello?", "Foo!") }}
+            -> Hello? - Foo!
+
+    Note that you cannot use the mapping syntax (``%(name)s``)
+    like in python.
+    """
+    def wrapped(env, context, value):
+        return env.to_unicode(value) % args
+    return wrapped
+
+
+def do_capture(name='captured'):
+    """
+    Store the value in a variable called ``captured`` or a variable
+    with the name provided. Useful for filter blocks:
+
+    .. sourcecode:: jinja
+
+        {% filter capture('foo') %}
+            ....
+        {% endfilter %}
+        {{ foo }}
+    """
+
+
 FILTERS = {
     'replace':              do_replace,
     'upper':                do_upper,
@@ -582,5 +613,7 @@ FILTERS = {
     'int':                  do_int,
     'float':                do_float,
     'string':               do_string,
-    'urlize':               do_urlize
+    'urlize':               do_urlize,
+    'format':               do_format,
+    'capture':              do_capture
 }
