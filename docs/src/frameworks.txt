@@ -2,8 +2,8 @@
 Framework Integration
 =====================
 
-Jinja registers itself in the baker template plugin system. If your framework
-supports baker (currently `TurboGears`_ and `pylons`_) you can add it very
+Jinja registers itself in the buffet template plugin system. If your framework
+supports buffet (currently `TurboGears`_ and `pylons`_) you can add it very
 easily.
 
 Pylons

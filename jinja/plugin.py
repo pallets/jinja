@@ -1,14 +1,15 @@
 # -*- coding: utf-8 -*-
 """
-    jinja.bakerplugin
-    ~~~~~~~~~~~~~~~~~
+    jinja.plugin
+    ~~~~~~~~~~~~
 
-    Provide a bridge to baker. Baker is used by some frameworks (namely
+    Provide a bridge to buffet. Buffet is used by some frameworks (namely
     CherryPy, TurboGears and Pylons) to load templates.
 
     :copyright: 2007 by Armin Ronacher.
     :license: BSD, see LICENSE for more details.
 """
+
 from jinja import Environment
 
 
