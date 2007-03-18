@@ -109,16 +109,6 @@ def do_escape(s, attribute=False):
 do_escape = stringfilter(do_escape)
 
 
-def do_addslashes(s):
-    """
-    Add backslashes in front of special characters to s. This method
-    might be useful if you try to fill javascript strings. Also have
-    a look at the `jsonencode` filter.
-    """
-    return s.encode('utf-8').encode('string-escape').decode('utf-8')
-do_addslashes = stringfilter(do_addslashes)
-
-
 def do_capitalize(s):
     """
     Capitalize a value. The first character will be uppercase, all others
@@ -196,11 +186,10 @@ def do_default(default_value=u'', boolean=False):
         {{ ''|default('the string was empty', true) }}
     """
     def wrapped(env, context, value):
-        if (boolean and not v) or v in (Undefined, None):
+        if (boolean and not value) or value in (Undefined, None):
             return default_value
-        return v
+        return value
     return wrapped
-do_default = stringfilter(do_default)
 
 
 def do_join(d=u''):
@@ -521,21 +510,34 @@ def do_rst(s):
 do_rst = stringfilter(do_rst)
 
 
-def do_int():
+def do_int(default=0):
     """
-    Convert the value into an integer.
+    Convert the value into an integer. If the
+    conversion doesn't work it will return ``0``. You can
+    override this default using the first parameter.
     """
     def wrapped(env, context, value):
-        return int(value)
+        try:
+            return int(value)
+        except (TypeError, ValueError):
+            try:
+                return int(float(value))
+            except (TypeError, ValueError):
+                return default
     return wrapped
 
 
-def do_float():
+def do_float(default=0.0):
     """
-    Convert the value into a floating point number.
+    Convert the value into a floating point number. If the
+    conversion doesn't work it will return ``0.0``. You can
+    override this default using the first parameter.
     """
     def wrapped(env, context, value):
-        return float(value)
+        try:
+            return float(value)
+        except (TypeError, ValueError):
+            return default
     return wrapped
 
 
@@ -552,7 +554,6 @@ FILTERS = {
     'lower':                do_lower,
     'escape':               do_escape,
     'e':                    do_escape,
-    'addslashes':           do_addslashes,
     'capitalize':           do_capitalize,
     'title':                do_title,
     'default':              do_default,

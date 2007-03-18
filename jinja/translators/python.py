@@ -304,12 +304,13 @@ class PythonTranslator(Translator):
         ]
 
         # we have requirements? add them here.
+        body_lines = []
         if requirements:
             for n in requirements:
-                lines.append(self.handle_node(n))
+                body_lines.append(self.handle_node(n))
 
         # the template body
-        body_lines = [self.handle_node(n) for n in node]
+        body_lines.extend([self.handle_node(n) for n in node])
 
         # add translation helpers if required
         if self.require_translations:
@@ -379,7 +380,7 @@ class PythonTranslator(Translator):
         nodeinfo = self.nodeinfo(node.body)
         if nodeinfo:
             write(nodeinfo)
-        buf.append(self.handle_node(node.body))
+        buf.append(self.handle_node(node.body) or self.indent('pass'))
         self.indention -= 1
 
         # else part of loop
@@ -389,7 +390,7 @@ class PythonTranslator(Translator):
             nodeinfo = self.nodeinfo(node.else_)
             if nodeinfo:
                 write(nodeinfo)
-            buf.append(self.handle_node(node.else_))
+            buf.append(self.handle_node(node.else_) or self.indent('pass'))
             self.indention -= 1
 
         # call recursive for loop!

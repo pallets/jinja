@@ -244,13 +244,16 @@ class LoopContext(object):
     iterated = property(lambda s: s._stack[-1]['index'] > -1)
     index0 = property(lambda s: s._stack[-1]['index'])
     index = property(lambda s: s._stack[-1]['index'] + 1)
-    revindex0 = property(lambda s: s._stack[-1]['length'] - s._stack[-1]['index'] - 1)
-    revindex = property(lambda s: s._stack[-1]['length'] - s._stack[-1]['index'])
+    revindex0 = property(lambda s: s._stack[-1]['length'] -
+                                   s._stack[-1]['index'] - 1)
+    revindex = property(lambda s: s._stack[-1]['length'] -
+                                  s._stack[-1]['index'])
     length = property(lambda s: s._stack[-1]['length'])
-    even = property(lambda s: s._stack[-1]['index'] % 2 == 0)
-    odd = property(lambda s: s._stack[-1]['index'] % 2 == 1)
+    even = property(lambda s: s._stack[-1]['index'] % 2 == 1)
+    odd = property(lambda s: s._stack[-1]['index'] % 2 == 0)
     first = property(lambda s: s._stack[-1]['index'] == 0)
-    last = property(lambda s: s._stack[-1]['index'] == s._stack[-1]['length'] - 1)
+    last = property(lambda s: s._stack[-1]['index'] ==
+                              s._stack[-1]['length'] - 1)
 
     def __iter__(self):
         s = self._stack[-1]

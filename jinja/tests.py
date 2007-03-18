@@ -12,7 +12,7 @@ import re
 from jinja.datastructure import Undefined
 
 
-number_re = re.compile(r'^-?\d+(\.\d+)$')
+number_re = re.compile(r'^-?\d+(\.\d+)?$')
 
 regex_type = type(number_re)
 
@@ -87,31 +87,29 @@ def test_sequence():
 
 
 def test_matching(regex):
-    """
-    Test if the variable matches the regular expression
-    given. If the regular expression is a string additional
-    slashes are automatically added, if it's a compiled regex
-    it's used without any modifications:
+    r"""
+    Test if the variable matches the regular expression given. Note that
+    you have to escape special chars using *two* backslashes, these are
+    *not* raw strings.
 
     .. sourcecode:: jinja
 
-        {% if var is matching('\d+$') %}
+        {% if var is matching('^\\d+$') %}
             var looks like a number
         {% else %}
             var doesn't really look like a number
         {% endif %}
     """
     if isinstance(regex, unicode):
-        regex = re.compile(regex.encode('unicode-escape'), re.U)
-    elif isinstance(regex, unicode):
-        regex = re.compile(regex.encode('string-escape'))
+        regex = re.compile(regex, re.U)
+    elif isinstance(regex, str):
+        regex = re.compile(regex)
     elif type(regex) is not regex_type:
         regex = None
     def wrapped(environment, context, value):
         if regex is None:
             return False
-        else:
-            return regex.match(value)
+        return regex.search(value) is not None
     return wrapped
 
 TESTS = {
