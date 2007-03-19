@@ -66,7 +66,7 @@ It works basically the same, just that there are two more things to implement:
                 True,       # use memory caching
                 40,         # for up to 40 templates
                 '/tmp',     # additionally save the compiled templates in /tmp
-                True        # and reload cached templates automaticall if changed
+                True        # and reload cached templates automatically if changed
             )
 
         def get_source(self, environment, name, parent):
