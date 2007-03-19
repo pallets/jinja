@@ -13,22 +13,21 @@ Developing Loaders
 ==================
 
 Template loaders are just normal Python classes that have to provide some
-functions used to load and translate templates.
+functions used to load and translate templates. Because some of the tasks
+a loader has to do are redundant there are some classes that make loader
+development easier.
 
-Because some of the tasks a loader has to do are redundant there are mixin
-classes that make loader development easier.
-
-Here the implementation of a simple loader based on the `LoaderMixin` from
+Here the implementation of a simple loader based on the `BaseLoader` from
 `jinja.loaders`:
 
 .. sourcecode:: python
 
     import codecs
     from os.path import join
-    from jinja.loaders import LoaderMixin
+    from jinja.loaders import BaseLoader
     from jinja.exceptions import TemplateNotFound
 
-    class SimpleLoader(LoaderMixin):
+    class SimpleLoader(BaseLoader):
         
         def __init__(self, path):
             self.path = path
@@ -44,21 +43,21 @@ Here the implementation of a simple loader based on the `LoaderMixin` from
                 f.close()
 
 The functions `load` and `parse` which are a requirement for a loader are
-added automatically by the `LoaderMixin`.
+added automatically by the `BaseLoader`.
 
-Additionally to the `LoaderMixin` there is a second mixin called
+Additionally to the `BaseLoader` there is a mixin class called
 `CachedLoaderMixin` that implements memory and disk caching of templates.
-
-It works basically the same, just that there are two more things to implement:
+Note that you have to give it a higher priority in the MRO than the
+`BaseLoader` which means that's the first base class when inheriting from it:
 
 .. sourcecode:: python
 
     import codecs
     from os.path import join, getmtime
-    from jinja.loaders import CachedLoaderMixin
+    from jinja.loaders import BaseLoaderCachedLoaderMixin
     from jinja.exceptions import TemplateNotFound
 
-    class CachedLoader(CachedLoaderMixin):
+    class CachedLoader(CachedLoaderMixin, BaseLoader):
         
         def __init__(self, path):
             self.path = path

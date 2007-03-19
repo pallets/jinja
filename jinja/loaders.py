@@ -89,16 +89,16 @@ class LoaderWrapper(object):
         return self.loader is not None
 
 
-class LoaderMixin(object):
+class BaseLoader(object):
     """
     Use this class to implement loaders.
 
-    Just mixin this class and implement a method called `get_source`
-    with the signature (`environment`, `name`, `parent`) that returns
-    sourcecode for the template.
+    Just inherit from this class and implement a method called
+    `get_source` with the signature (`environment`, `name`, `parent`)
+    that returns sourcecode for the template.
 
     For more complex loaders you probably want to override `load` to
-    or not use the `LoaderMixin` at all.
+    or not use the `BaseLoader` at all.
     """
 
     def parse(self, environment, name, parent):
@@ -116,9 +116,9 @@ class LoaderMixin(object):
         return translator.process(environment, ast)
 
 
-class CachedLoaderMixin(LoaderMixin):
+class CachedLoaderMixin(object):
     """
-    Works like the loader mixin just that it supports caching.
+    Mixin this class to implement simple memory and disk caching.
     """
 
     def __init__(self, use_memcache, cache_size, cache_folder, auto_reload):
@@ -135,6 +135,13 @@ class CachedLoaderMixin(LoaderMixin):
         self.__lock = Lock()
 
     def load(self, environment, name, translator):
+        """
+        Load and translate a template. First we check if there is a
+        cached version of this template in the memory cache. If this is
+        not the cache check for a compiled template in the disk cache
+        folder. And if none of this is the case we translate the temlate
+        using the `LoaderMixin.load` function, cache and return it.
+        """
         self.__lock.acquire()
         try:
             # caching is only possible for the python translator. skip
@@ -177,8 +184,8 @@ class CachedLoaderMixin(LoaderMixin):
 
                     # no template so far, parse, translate and compile it
                     elif tmpl is None:
-                        tmpl = LoaderMixin.load(self, environment,
-                                                name, translator)
+                        tmpl = super(CachedLoaderMixin, self).load(
+                                     environment, name, translator)
 
                     # save the compiled template
                     f = file(cache_fn, 'wb')
@@ -196,12 +203,13 @@ class CachedLoaderMixin(LoaderMixin):
 
             # if we reach this point we don't have caching enabled or translate
             # to something else than python
-            return LoaderMixin.load(self, environment, name, translator)
+            return super(CachedLoaderMixin, self).load(
+                         environment, name, translator)
         finally:
             self.__lock.release()
 
 
-class FileSystemLoader(CachedLoaderMixin):
+class FileSystemLoader(CachedLoaderMixin, BaseLoader):
     """
     Loads templates from the filesystem:
 
@@ -256,7 +264,7 @@ class FileSystemLoader(CachedLoaderMixin):
         return path.getmtime(get_template_filename(self.searchpath, name))
 
 
-class PackageLoader(CachedLoaderMixin):
+class PackageLoader(CachedLoaderMixin, BaseLoader):
     """
     Loads templates from python packages using setuptools.
 
@@ -319,3 +327,25 @@ class PackageLoader(CachedLoaderMixin):
         name = '/'.join([self.package_path] + [p for p in name.split('/')
                         if p and p[0] != '.'])
         return path.getmtime(resource_filename(name))
+
+
+class DictLoader(BaseLoader):
+    """
+    Load templates from a given dict:
+
+    .. sourcecode:: python
+
+        from jinja import Environment, DictLoader
+        e = Environment(loader=DictLoader(dict(
+            layout='...',
+            index='{% extends layout %}...'
+        )))
+    """
+
+    def __init__(self, templates):
+        self.templates = templates
+
+    def get_source(self, environment, name, parent):
+        if name in self.templates:
+            return self.templates[name]
+        raise TemplateNotFound(name)

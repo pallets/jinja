@@ -9,5 +9,4 @@
 from jinja.environment import Environment
 from jinja.loaders import *
 
-
 from_string = Environment().from_string
