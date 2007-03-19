@@ -25,7 +25,7 @@ except ImportError:
     resource_exists = resource_string = resource_filename = None
 
 
-__all__ = ['FileSystemLoader', 'PackageLoader']
+__all__ = ['FileSystemLoader', 'PackageLoader', 'DictLoader']
 
 
 def get_template_filename(searchpath, name):
