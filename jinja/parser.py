@@ -480,7 +480,7 @@ class Parser(object):
             # here the only token we should get is "data". all other
             # tokens just exist in block or variable sections. (if the
             # tokenizer is not brocken)
-            elif token == 'data':
+            elif token in 'data':
                 result.append(nodes.Text(lineno, data))
 
             # so this should be unreachable code

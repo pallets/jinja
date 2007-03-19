@@ -90,6 +90,10 @@ class Lexer(object):
         # global parsing rules
         self.rules = {
             'root': [
+                (c('(%s\s*raw\s%s)(.*?)(%s\s*endraw\s*%s)' % (
+                    (e(environment.block_start_string),
+                     e(environment.block_end_string)) * 2)),
+                   (None, 'data', None), None),
                 (c('(.*?)(?:%s)' % '|'.join([
                     '(?P<%s_begin>%s)' % (n, e(r)) for n, r in root_tag_rules
                 ])), ('data', '#bygroup'), '#bygroup'),
@@ -150,7 +154,7 @@ class Lexer(object):
                         for idx, token in enumerate(tokens):
                             # hidden group
                             if token is None:
-                                g += m.group(idx)
+                                g = m.group(idx)
                                 if g:
                                     lineno += g.count('\n')
                                 continue

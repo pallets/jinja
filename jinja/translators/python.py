@@ -173,6 +173,8 @@ class PythonTranslator(Translator):
         Return a comment that helds the node informations or None
         if there is no need to add a debug comment.
         """
+        if node.filename is None:
+            return
         rv = '# DEBUG(filename=%s, lineno=%s)' % (
             node.filename,
             node.lineno

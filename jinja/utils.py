@@ -203,17 +203,16 @@ def translate_exception(template, exc_type, exc_value, traceback, context):
         if m is not None:
             filename, lineno = m.groups()
             if filename == 'None':
-                filename = ''
-            if lineno == 'None':
-                lineno = 0
-            else:
+                filename = None
+            if lineno != 'None':
                 lineno = int(lineno)
             break
         startpos -= 1
 
     # no traceback information found, reraise unchanged
-    if filename is None:
+    if not filename:
         return traceback
+
     return raise_template_exception(exc_value, filename,
                                     lineno, context)
 
@@ -317,17 +316,10 @@ class CacheDict(object):
             self._queue = []
             pop = self._queue.pop
             self._popleft = lambda: pop(0)
+
         # alias all queue methods for faster lookup
         self._pop = self._queue.pop
-
-        # XXX: Is this good? Didn't find another sollution
-        def remove_by_value(value):
-            for i, v in enumerate(self._queue):
-                if v == value:
-                    self._queue.__delitem__(i)
-                    break
-
-        self._remove = remove_by_value
+        self._remove = self._queue.remove
         self._append = self._queue.append
 
     def copy(self):

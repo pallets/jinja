@@ -119,6 +119,23 @@ These tests are especially useful when used in `if` conditions.
 
 [[list_of_tests]]
 
+Global Functions
+================
+
+Test functions and filter functions live in their own namespace. Global
+functions not. They behave like normal objects in the context. Beside the
+functions added by the application or framewhere there are two functions
+available per default:
+
+`range`
+    
+    Works like the python `range function`_ just that it doesn't support
+    ranges greater than ``1000000``.
+
+`debug`
+
+    Function that outputs the contents of the context.
+
 Loops
 =====
 
@@ -136,7 +153,7 @@ normal Python `for` loop and works pretty much the same:
     {% endfor %}
     </ul>
 
-*Important difference from Python:* the optional ``else`` block is only
+*Important* Contrary to Python is the optional ``else`` block only
 executed if there was no iteration because the sequence was empty.
 
 Inside of a `for` loop block you can access some special variables:
@@ -580,6 +597,31 @@ attribute calls return undefined, calling too:
     {{ undefined.attribute().attribute_too[42] }}
         still returns `undefined`.
 
+Escaping
+========
+
+Sometimes you might want to add Jinja syntax elements into the template
+without executing them. In that case you have quite a few possibilities.
+
+For small parts this might be a good way:
+
+.. sourcecode:: jinja
+
+    {{ "{{ foo }} is variable syntax and {% foo %} is block syntax" }}
+
+When you have multiple elements you can use the ``raw`` block:
+
+.. sourcecode:: jinja
+
+    {% raw %}
+        Filtering blocks works like this in Jinja:
+        {% filter escape %}
+            <html>
+              <code>goes here</code>
+            </html>
+        {% endfilter %}
+    {% endraw %}
+
 Internationalization
 ====================
 
@@ -619,9 +661,10 @@ number that is used to determine the correct singular or plural form. If you
 don't have the indicator variable on position 1 you have to tell the `pluralize`
 tag the correct variable name.
 
-Inside translatable blocks you cannot use blocks or expressions. The variable
-print syntax (``{{ variablename }}``) can just be used to insert the variables defined
-in the ``trans`` header.
+Inside translatable blocks you cannot use blocks or expressions (however you can
+still use the ``raw`` block which will work as expected). The variable
+print syntax (``{{ variablename }}``) is the only way to insert the variables
+defined in the ``trans`` header. Filters must be applied in the header.
 
 .. admonition:: note
 
@@ -639,3 +682,4 @@ in the ``trans`` header.
         {% endif %}
 
 .. _slicing chapter: http://diveintopython.org/native_data_types/lists.html#odbchelper.list.slice
+.. _range function: http://docs.python.org/tut/node6.html#SECTION006300000000000000000
