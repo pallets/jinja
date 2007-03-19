@@ -308,17 +308,16 @@ class PackageLoader(CachedLoaderMixin, BaseLoader):
         self.package_path = package_path
         # if we have an loader we probably retrieved it from an egg
         # file. In that case don't use the auto_reload!
-        if auto_reload:
-            package = __import__(package_name, '', '', [''])
-            if package.__loader__ is not None:
-                auto_reload = False
+        if auto_reload and getattr(__import__(package_name, '', '', ['']),
+                                   '__loader__', None) is not None:
+            auto_reload = False
         CachedLoaderMixin.__init__(self, use_memcache, memcache_size,
                                    cache_folder, auto_reload)
 
     def get_source(self, environment, name, parent):
         name = '/'.join([self.package_path] + [p for p in name.split('/')
-                        if p and p[0] != '.'])
-        if not resource_exists(self.package, name):
+                        if p != '..'])
+        if not resource_exists(self.package_name, name):
             raise TemplateNotFound(name)
         contents = resource_string(self.package_name, name)
         return contents.decode(environment.template_charset)
@@ -326,7 +325,7 @@ class PackageLoader(CachedLoaderMixin, BaseLoader):
     def check_source_changed(self, environment, name):
         name = '/'.join([self.package_path] + [p for p in name.split('/')
                         if p and p[0] != '.'])
-        return path.getmtime(resource_filename(name))
+        return path.getmtime(resource_filename(self.package_name, name))
 
 
 class DictLoader(BaseLoader):

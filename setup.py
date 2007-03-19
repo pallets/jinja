@@ -30,9 +30,5 @@ setup(
     ],
     keywords = ['python.templating.engines'],
     packages = ['jinja', 'jinja.translators'],
-    extras_require = {'plugin': ['setuptools>=0.6a2']},
-    entry_points='''
-    [python.templating.engines]
-    jinja = jinja.plugin:JinjaPlugin[plugin]
-    '''
+    extras_require = {'plugin': ['setuptools>=0.6a2']}
 )

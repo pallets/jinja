@@ -10,6 +10,11 @@ import re
 from jinja.datastructure import TokenStream
 from jinja.exceptions import TemplateSyntaxError
 
+try:
+    set
+except NameError:
+    from sets import Set as set
+
 
 # static regular expressions
 whitespace_re = re.compile(r'\s+(?m)')
@@ -28,6 +33,13 @@ operator_re = re.compile('(%s)' % '|'.join(
     '.', ':', ',', '|', '==', '<', '>', '<=', '>=', '!=', '=',
     ur'or\b', ur'and\b', ur'not\b', ur'in\b', ur'is'
 ]))
+
+# set of names that are keywords in python but not in jinja. the lexer
+# appends three trailing underscores, the parser removes them again later
+escaped_names = set(['with', 'as', 'import', 'from', 'class', 'def',
+                     'try', 'except', 'exec', 'global', 'assert',
+                     'break', 'continue', 'lambda', 'return', 'raise',
+                     'yield', 'while', 'pass', 'finally'])
 
 
 class Failure(object):
@@ -104,8 +116,15 @@ class Lexer(object):
         tuples. Wrap the generator returned by this function in a
         `TokenStream` to get real token instances and be able to push tokens
         back to the stream. That's for example done by the parser.
+
+        Additionally some names like "class" are escaped
         """
-        return TokenStream(self.tokeniter(source))
+        def filter():
+            for lineno, token, value in self.tokeniter(source):
+                if token == 'name' and value in escaped_names:
+                    value += '___'
+                yield lineno, token, value
+        return TokenStream(filter())
 
     def tokeniter(self, source):
         """

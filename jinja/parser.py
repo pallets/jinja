@@ -12,6 +12,7 @@ import re
 from compiler import ast, parse
 from compiler.misc import set_filename
 from jinja import nodes
+from jinja.lexer import escaped_names
 from jinja.datastructure import TokenStream
 from jinja.exceptions import TemplateSyntaxError
 try:
@@ -396,9 +397,19 @@ class Parser(object):
 
     def parse(self):
         """
-        Parse the template and return a Template node.
+        Parse the template and return a Template node. Also unescape the
+        names escaped by the lexer (unused python keywords) and set the
+        filename attributes for all nodes in the tree.
         """
         body = self.subparse(None)
+        todo = [body]
+        while todo:
+            node = todo.pop()
+            if node.__class__ in (ast.AssName, ast.Name) and \
+               node.name.endswith('___') and node.name[:-3] in escaped_names:
+                node.name = node.name[:-3]
+            node.filename = self.filename
+            todo.extend(node.getChildNodes())
         return nodes.Template(self.filename, body, self.extends)
 
     def subparse(self, test, drop_needle=False):

@@ -2,60 +2,6 @@
 Framework Integration
 =====================
 
-Jinja registers itself in the buffet template plugin system. If your framework
-supports buffet (currently `TurboGears`_ and `pylons`_) you can add it very
-easily.
-
-Pylons
-------
-
-Edit ``yourproject/config/middleware.py`` and add the following lines to
-`config.init_app...`:
-
-.. sourcecode:: python
-
-    from jinja import Environment, FileSystemLoader
-
-    config.add_template_engine('jinja', {
-        'jinja.environment': Environment(loader=FileSystemLoader('path/to/templates'))
-    })
-
-To make Jinja the default template engine change the `init_app` call to
-something like this:
-
-.. sourcecode:: python
-
-    config.init_app(global_conf, app_conf, package='yourproject',
-                    template_engine='jinja')
-
-If you load templates using dotted notation the ``'.html'`` to the filename.
-You can override this using ``jinja.exception``. eg:
-
-.. sourcecode:: python
-
-    config.add_template_engine('jinja', {
-        'jinja.environment': ...,
-        'jinja.extension': 'tmpl'
-    })
-
-Note that you have to use a trailing slash to load templates if you want to
-specify the extension. Otherwise use the dotted notation:
-
-.. sourcecode:: python
-
-    render_template('/index.html')
-    render_template('index')
-    
-    render_template('/modules/userlist.html')
-    render_template('modules.userlist')
-
-
-TurboGears
-----------
-
-The TurboGears template plugin interface is broken by design and
-there is currently no way to embed Jinja templates in TurboGears.
-
-
-.. _TurboGears: http://www.turbogears.org/
-.. _pylons: http://www.pylonshq.com/
+Because the buffet template interface does not support more complex usage
+cases there is currently no built in framework support. This however will
+hopefully change before the Jinja release.

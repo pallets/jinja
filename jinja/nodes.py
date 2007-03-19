@@ -9,7 +9,6 @@
     :license: BSD, see LICENSE for more details.
 """
 from compiler import ast
-from compiler.misc import set_filename
 
 
 def inc_lineno(offset, tree):
@@ -94,7 +93,7 @@ class Template(NodeList):
             body = (body,)
         NodeList.__init__(self, 1, body)
         self.extends = extends
-        set_filename(filename, self)
+        self.filename = filename
 
     def get_items(self):
         if self.extends is not None:

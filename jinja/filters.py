@@ -404,8 +404,6 @@ do_indent = stringfilter(do_indent)
 
 def do_truncate(s, length=255, killwords=False, end='...'):
     """
-    {{ s|truncate[ length[ killwords[ end]]] }}
-
     Return a truncated copy of the string. The length is specified
     with the first parameter which defaults to ``255``. If the second
     parameter is ``true`` the filter will cut the text at length. Otherwise
