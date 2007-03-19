@@ -87,7 +87,7 @@ def urlize(text, trim_url_limit=None, nofollow=False):
             if middle.startswith('www.') or (
                 '@' not in middle and
                 not middle.startswith('http://') and
-                len(middle) > 0 and 
+                len(middle) > 0 and
                 middle[0] in string.letters + string.digits and (
                     middle.endswith('.org') or
                     middle.endswith('.net') or
@@ -255,7 +255,7 @@ class CacheDict(object):
         >>> cache['C'] = 2
         >>> len(cache)
         3
-    
+
     If we now access 'A' again it has a higher priority than B::
 
         >>> cache['A']
@@ -301,7 +301,15 @@ class CacheDict(object):
             self._popleft = lambda: pop(0)
         # alias all queue methods for faster lookup
         self._pop = self._queue.pop
-        self._remove = self._queue.remove
+
+        # XXX: Is this good? Didn't find another sollution
+        def remove_by_value(value):
+            for i, v in enumerate(self._queue):
+                if v == value:
+                    self._queue.__delitem__(i)
+                    break
+
+        self._remove = remove_by_value
         self._append = self._queue.append
 
     def copy(self):
