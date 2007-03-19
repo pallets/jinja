@@ -33,6 +33,13 @@ in the template evaluation code you may want to override:
     If you don't provide a translator a default one is used to switch
     between singular and plural forms.
 
+    Have a look at the `i18n`_ section for more information.
+
+**def** `get_translations` *(self, name)*:
+
+    Get the translations for the template `name`. Only works if a loader
+    is present. See the `i18n`_ section for more details.
+
 **def** `apply_filters` *(self, value, context, filters)*:
 
     Now this function is a bit tricky and you usually don't have to override
@@ -132,5 +139,6 @@ or to change the way it behaves.
     Return `True` if `name` exists in the context.
 
 
+.. _i18n: i18n.txt
 .. _Quickstart: devintro.txt
 .. _gettext documentation: http://docs.python.org/lib/module-gettext.html

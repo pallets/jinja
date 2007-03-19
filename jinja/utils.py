@@ -15,6 +15,7 @@ import re
 import sys
 import string
 from types import MethodType, FunctionType
+from compiler.ast import CallFunc, Name, Const
 from jinja.nodes import Trans
 from jinja.datastructure import Markup
 
@@ -105,20 +106,6 @@ def urlize(text, trim_url_limit=None, nofollow=False):
             if lead + middle + trail != word:
                 words[i] = lead + middle + trail
     return u''.join(words)
-
-
-def find_translations(environment, source):
-    """
-    Find all translatable strings in a template and yield
-    them as (lineno, singular, plural) tuples. If a plural
-    section does not exist it will be None.
-    """
-    queue = [environment.parse(source)]
-    while queue:
-        node = queue.pop()
-        if node.__class__ is Trans:
-            yield node.lineno, node.singular, node.plural
-        queue.extend(node.getChildNodes())
 
 
 def debug_context(env, context):
@@ -229,6 +216,37 @@ def translate_exception(template, exc_type, exc_value, traceback, context):
         return traceback
     return raise_template_exception(exc_value, filename,
                                     lineno, context)
+
+
+def collect_translations(ast):
+    """
+    Collect all translatable strings for the given ast.
+    """
+    todo = [ast]
+    result = []
+    while todo:
+        node = todo.pop()
+        if node.__class__ is Trans:
+            result.append((node.lineno, node.singular, node.plural))
+        elif node.__class__ is CallFunc and \
+             node.node.__class__ is Name and \
+             node.node.name == '_':
+            if len(node.args) in (1, 3):
+                args = []
+                for arg in node.args:
+                    if not arg.__class__ is Const:
+                        break
+                    args.append(arg.value)
+                else:
+                    if len(args) == 1:
+                        singular = args[0]
+                        plural = None
+                    else:
+                        singular, plural, _ = args
+                    result.append((node.lineno, singular, plural))
+        todo.extend(node.getChildNodes())
+    result.sort(lambda a, b: cmp(a[0], b[0]))
+    return result
 
 
 class TracebackLoader(object):

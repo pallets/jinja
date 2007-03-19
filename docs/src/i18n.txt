@@ -1,0 +1,72 @@
+====================
+Internationalization
+====================
+
+Jinja includes support for internationalized templates. Because usually the
+application includes i18n/l10n code too there is no script to collect
+translatable strings and no default translation interface. A simple
+implementation wouldn't fit into every application so there are a few things
+you have to do.
+
+
+Writing A Translator
+====================
+
+The most important thing is writing a translator and subclassing the
+Environment so that Jinja knows about the translator. Then you have to
+think of how to resolve the current language. You probably use Jinja in a
+multithreaded environment where each thread (request) might want to have
+a different language. The best way is putting the current language into
+the context, this can work automatically if you create a helper function
+for template rendering. But that's up to you.
+
+However. For many web applications this might be a way:
+
+.. sourcecode:: python
+
+    from jinja import Environment
+    from myapplication import get_translator
+
+    class ApplicationTranslator(object):
+
+        def __init__(self, language):
+            self.language = language
+            self.translator = get_translator(language)
+
+        def gettext(self, string):
+            return self.translator.ugettext(string)
+
+        def ngettext(self, singular, plural, n):
+            return self.translator.ungettext(singuarl, plural, n)
+
+
+    class ApplicationEnvironment(Environment):
+
+        def get_translator(self, context):
+            return ApplicationTranslator(context['LANGUAGE'])
+
+
+    env = ApplicationEnvironment()
+    tmpl = env.get_template('index.html')
+    tmpl.render(LANGUAGE='de_DE')
+
+
+Collecting Translations
+=======================
+
+The next step is to collect the translations. Every Jinja environment
+provides a function called `get_translations` which collects all
+translatable strings from an template.
+
+Example:
+
+.. sourcecode:: pycon
+
+    >>> env.get_translations('index.html')
+    [(1, u'foo', None), (2, u'Foo', None), (3, u'%d Foo', u'%d Foos')]
+
+The first item in the tuple is the linenumer, the second one is the
+singular form and the third is the plural form if given.
+
+Because Jinja is not bound to gettext you can now use these strings to
+create translation files for any translation system.

@@ -13,7 +13,7 @@ from jinja.lexer import Lexer
 from jinja.parser import Parser
 from jinja.loaders import LoaderWrapper
 from jinja.datastructure import Undefined, Context, Markup, FakeTranslator
-from jinja.utils import escape
+from jinja.utils import escape, collect_translations
 from jinja.exceptions import FilterNotFound, TestNotFound, SecurityException
 from jinja.defaults import DEFAULT_FILTERS, DEFAULT_TESTS, DEFAULT_NAMESPACE
 
@@ -111,6 +111,14 @@ class Environment(object):
         that both of them have to return unicode!
         """
         return FakeTranslator()
+
+    def get_translations(self, name):
+        """
+        Load template `name` and return all translatable strings (note that
+        that it really just returns the strings form this template, not from
+        the parent or any included templates!)
+        """
+        return collect_translations(self.loader.parse(name))
 
     def apply_filters(self, value, context, filters):
         """
