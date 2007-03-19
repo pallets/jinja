@@ -42,6 +42,7 @@ RANDOM = '''{{ seq|random }}'''
 REVERSE = '''{{ "foobar"|reverse }}|{{ [1, 2, 3]|reverse }}'''
 STRING = '''{{ range(10)|string }}'''
 TITLE = '''{{ "foo bar"|title }}'''
+TRIM = '''{{ "      foo       "|trim }}'''
 TRUNCATE = '''{{ data|truncate(15, true, ">>>") }}|\
 {{ data|truncate(15, false, ">>>") }}|\
 {{ smalldata|truncate(15) }}'''
@@ -176,6 +177,11 @@ def test_string(env):
 def test_title(env):
     tmpl = env.from_string(TITLE)
     assert tmpl.render() == "Foo Bar"
+
+
+def test_truncate(env):
+    tmpl = env.from_string(TRUNCATE)
+    assert tmpl.render() == 'foo'
 
 
 def test_truncate(env):

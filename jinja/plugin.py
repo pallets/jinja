@@ -3,8 +3,9 @@
     jinja.plugin
     ~~~~~~~~~~~~
 
-    Provide a bridge to buffet. Buffet is used by some frameworks (namely
-    CherryPy, TurboGears and Pylons) to load templates.
+    This module proides a bridge to buffed so that you can use Jinja
+    in pylons. Note that this doesn't work with turbogears because their
+    buffet implementation is broken.
 
     :copyright: 2007 by Armin Ronacher.
     :license: BSD, see LICENSE for more details.

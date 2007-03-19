@@ -565,7 +565,15 @@ def do_format(*args):
     return wrapped
 
 
-def do_capture(name='captured'):
+def do_trim(value):
+    """
+    Strip leading and trailing whitespace.
+    """
+    return value.strip()
+do_trim = stringfilter(do_trim)
+
+
+def do_capture(name='captured', clean=False):
     """
     Store the value in a variable called ``captured`` or a variable
     with the name provided. Useful for filter blocks:
@@ -573,12 +581,27 @@ def do_capture(name='captured'):
     .. sourcecode:: jinja
 
         {% filter capture('foo') %}
-            ....
+            ...
+        {% endfilter %}
+        {{ foo }}
+
+    This will output "..." two times. One time from the filter block
+    and one time from the variable. If you don't want the filter to
+    output something you can use it in `clean` mode:
+
+    .. sourcecode:: jinja
+
+        {% filter capture('foo', True) %}
+            ...
         {% endfilter %}
         {{ foo }}
     """
+    if not isinstance(name, unicode):
+        raise FilterArgumentError('You can only capture into variables')
     def wrapped(env, context, value):
         context[name] = value
+        if clean:
+            return Undefined
         return value
     return wrapped
 
@@ -619,5 +642,6 @@ FILTERS = {
     'string':               do_string,
     'urlize':               do_urlize,
     'format':               do_format,
-    'capture':              do_capture
+    'capture':              do_capture,
+    'trim':                 do_trim
 }

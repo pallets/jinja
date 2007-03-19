@@ -33,6 +33,6 @@ setup(
     extras_require = {'plugin': ['setuptools>=0.6a2']},
     entry_points='''
     [python.templating.engines]
-    jinja = jinja.bakerplugin:JinjaPlugin[plugin]
+    jinja = jinja.plugin:JinjaPlugin[plugin]
     '''
 )

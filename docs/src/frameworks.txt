@@ -53,34 +53,8 @@ specify the extension. Otherwise use the dotted notation:
 TurboGears
 ----------
 
-Integrating Jinja into TurboGears works pretty much the same.
-
-Basically all you have to do is to edit the application configuration file at
-``application/config/app.cfg`` and change `global.tg.defaultview` and
-provide the jinja options:
-
-.. sourcecode:: ini
-
-    [global]
-    tg.defaultview = 'jinja'
-    jinja.init_callback = yourapplication.yourmodule.setup_function
-
-Now you have to edit the file `yourapplication.yourmodule` and add a
-`setup_function` callback that creates an environment:
-
-.. sourcecode:: python
-
-    from jinja import Environment, FileSystemLoader
-
-    def setup_function(options):
-        return Environment(loader=FileSystemLoader('path/to/templates'))
-
-This solution isn't the best but currently the only thing you can do. There is
-a discussion about improving the plugin interface so that this can be solved
-in a more elegant way.
-
-Also here exists the same limitation regarding dotted notation, see the
-snipped and information in the pylons section.
+The TurboGears template plugin interface is broken by design and
+there is currently no way to embed Jinja templates in TurboGears.
 
 
 .. _TurboGears: http://www.turbogears.org/
