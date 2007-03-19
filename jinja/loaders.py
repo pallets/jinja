@@ -18,9 +18,14 @@ from jinja.parser import Parser
 from jinja.translators.python import PythonTranslator, Template
 from jinja.exceptions import TemplateNotFound
 from jinja.utils import CacheDict
+try:
+    from pkg_resources import resource_exists, resource_string, \
+                              resource_filename
+except ImportError:
+    resource_exists = resource_string = resource_filename = None
 
 
-__all__ = ['FileSystemLoader']
+__all__ = ['FileSystemLoader', 'PackageLoader']
 
 
 def get_template_filename(searchpath, name):
@@ -31,7 +36,7 @@ def get_template_filename(searchpath, name):
                      if p and p[0] != '.']))
 
 
-def get_template_cachename(cachepath, name):
+def get_cachename(cachepath, name):
     """
     Return the filename for a cached file.
     """
@@ -84,7 +89,119 @@ class LoaderWrapper(object):
         return self.loader is not None
 
 
-class FileSystemLoader(object):
+class LoaderMixin(object):
+    """
+    Use this class to implement loaders.
+
+    Just mixin this class and implement a method called `get_source`
+    with the signature (`environment`, `name`, `parent`) that returns
+    sourcecode for the template.
+
+    For more complex loaders you probably want to override `load` to
+    or not use the `LoaderMixin` at all.
+    """
+
+    def parse(self, environment, name, parent):
+        """
+        Load and parse a template
+        """
+        source = self.get_source(environment, name, parent)
+        return Parser(environment, source, name).parse()
+
+    def load(self, environment, name, translator):
+        """
+        Load and translate a template
+        """
+        ast = self.parse(environment, name, None)
+        return translator.process(environment, ast)
+
+
+class CachedLoaderMixin(LoaderMixin):
+    """
+    Works like the loader mixin just that it supports caching.
+    """
+
+    def __init__(self, use_memcache, cache_size, cache_folder, auto_reload):
+        if use_memcache:
+            self.__memcache = CacheDict(cache_size)
+        else:
+            self.__memcache = None
+        self.__cache_folder = cache_folder
+        if not hasattr(self, 'check_source_changed'):
+            self.__auto_reload = False
+        else:
+            self.__auto_reload = auto_reload
+        self.__times = {}
+        self.__lock = Lock()
+
+    def load(self, environment, name, translator):
+        self.__lock.acquire()
+        try:
+            # caching is only possible for the python translator. skip
+            # all other translators
+            if translator is PythonTranslator:
+                tmpl = None
+
+                # auto reload enabled? check for the last change of
+                # the template
+                if self.__auto_reload:
+                    last_change = self.check_source_changed(environment, name)
+                else:
+                    last_change = None
+
+                # check if we have something in the memory cache and the
+                # memory cache is enabled.
+                if self.__memcache is not None and name in self.__memcache:
+                    tmpl = self.__memcache[name]
+                    if last_change is not None and \
+                       last_change > self.__times[name]:
+                        tmpl = None
+
+                # if diskcache is enabled look for an already compiled
+                # template.
+                if self.__cache_folder is not None:
+                    cache_fn = get_cachename(self.__cache_folder, name)
+
+                    # there is an up to date compiled template
+                    if tmpl is not None and last_change is None:
+                        try:
+                            cache_time = path.getmtime(cache_fn)
+                        except OSError:
+                            cache_time = 0
+                        if last_change >= cache_time:
+                            f = file(cache_fn, 'rb')
+                            try:
+                                tmpl = Template.load(environment, f)
+                            finally:
+                                f.close()
+
+                    # no template so far, parse, translate and compile it
+                    elif tmpl is None:
+                        tmpl = LoaderMixin.load(self, environment,
+                                                name, translator)
+
+                    # save the compiled template
+                    f = file(cache_fn, 'wb')
+                    try:
+                        tmpl.dump(f)
+                    finally:
+                        f.close()
+
+                # if memcaching is enabled push the template
+                if tmpl is not None:
+                    if self.__memcache is not None:
+                        self.__times[name] = time.time()
+                        self.__memcache[name] = tmpl
+                    return tmpl
+
+            # if we reach this point we don't have caching enabled or translate
+            # to something else than python
+            return LoaderMixin.load(self, environment, name, translator)
+        finally:
+            self.__lock.release()
+
+
+class FileSystemLoader(CachedLoaderMixin):
     """
     Loads templates from the filesystem:
 
@@ -121,20 +238,10 @@ class FileSystemLoader(object):
     def __init__(self, searchpath, use_memcache=False, memcache_size=40,
                  cache_folder=None, auto_reload=True):
         self.searchpath = searchpath
-        self.use_memcache = use_memcache
-        if use_memcache:
-            self.memcache = CacheDict(memcache_size)
-        else:
-            self.memcache = None
-        self.cache_folder = cache_folder
-        self.auto_reload = auto_reload
-        self._times = {}
-        self._lock = Lock()
+        CachedLoaderMixin.__init__(self, use_memcache, memcache_size,
+                                   cache_folder, auto_reload)
 
     def get_source(self, environment, name, parent):
-        """
-        Get the source code of a template.
-        """
         filename = get_template_filename(self.searchpath, name)
         if path.exists(filename):
             f = codecs.open(filename, 'r', environment.template_charset)
@@ -145,74 +252,70 @@ class FileSystemLoader(object):
         else:
             raise TemplateNotFound(name)
 
-    def parse(self, environment, name, parent):
-        """
-        Load and parse a template
-        """
-        source = self.get_source(environment, name, parent)
-        return Parser(environment, source, name).parse()
+    def check_source_changed(self, environment, name):
+        return path.getmtime(get_template_filename(self.searchpath, name))
 
-    def load(self, environment, name, translator):
-        """
-        Load, parse and translate a template.
-        """
-        self._lock.acquire()
-        try:
-            # caching is only possible for the python translator. skip
-            # all other translators
-            if translator is PythonTranslator:
-                tmpl = None
 
-                # auto reload enabled? check for the last change of the template
-                if self.auto_reload:
-                    last_change = path.getmtime(get_template_filename(self.searchpath, name))
-                else:
-                    last_change = None
+class PackageLoader(CachedLoaderMixin):
+    """
+    Loads templates from python packages using setuptools.
 
-                # check if we have something in the memory cache and the
-                # memory cache is enabled.
-                if self.use_memcache and name in self.memcache:
-                    tmpl = self.memcache[name]
-                    if last_change is not None and last_change > self._times[name]:
-                        tmpl = None
+    .. sourcecode:: python
 
-                # if diskcache is enabled look for an already compiled template
-                if self.cache_folder is not None:
-                    cache_filename = get_template_cachename(self.cache_folder, name)
+        from jinja import Environment, PackageLoader
+        e = Environment(loader=PackageLoader('yourapp', 'template/path'))
 
-                    # there is a up to date compiled template
-                    if tmpl is not None and last_change is None:
-                        try:
-                            cache_time = path.getmtime(cache_filename)
-                        except OSError:
-                            cache_time = 0
-                        if last_change >= cache_time:
-                            f = file(cache_filename, 'rb')
-                            try:
-                                tmpl = Template.load(environment, f)
-                            finally:
-                                f.close()
+    You can pass the following keyword arguments to the loader on
+    initialisation:
 
-                    # no template so far, parse, translate and compile it
-                    elif tmpl is None:
-                        tmpl = translator.process(environment, self.parse(environment, name, None))
+    =================== =================================================
+    ``package_name``    Name of the package containing the templates.
+    ``package_path``    Path of the templates inside the package.
+    ``use_memcache``    Set this to ``True`` to enable memory caching.
+                        This is usually a good idea in production mode,
+                        but disable it during development since it won't
+                        reload template changes automatically.
+                        This only works in persistent environments like
+                        FastCGI.
+    ``memcache_size``   Number of template instance you want to cache.
+                        Defaults to ``40``.
+    ``cache_folder``    Set this to an existing directory to enable
+                        caching of templates on the file system. Note
+                        that this only affects templates transformed
+                        into python code. Default is ``None`` which means
+                        that caching is disabled.
+    ``auto_reload``     Set this to `False` for a slightly better
+                        performance. In that case Jinja won't check for
+                        template changes on the filesystem. If the
+                        templates are inside of an egg file this won't
+                        have an effect.
+    =================== =================================================
+    """
 
-                    # save the compiled template
-                    f = file(cache_filename, 'wb')
-                    try:
-                        tmpl.dump(f)
-                    finally:
-                        f.close()
+    def __init__(self, package_name, package_path, use_memcache=False,
+                 memcache_size=40, cache_folder=None, auto_reload=True):
+        if resource_filename is None:
+            raise ImportError('setuptools not found')
+        self.package_name = package_name
+        self.package_path = package_path
+        # if we have an loader we probably retrieved it from an egg
+        # file. In that case don't use the auto_reload!
+        if auto_reload:
+            package = __import__(package_name, '', '', [''])
+            if package.__loader__ is not None:
+                auto_reload = False
+        CachedLoaderMixin.__init__(self, use_memcache, memcache_size,
+                                   cache_folder, auto_reload)
 
-                # if memcaching is enabled push the template
-                if tmpl is not None:
-                    if self.use_memcache:
-                        self._times[name] = time.time()
-                        self.memcache[name] = tmpl
-                    return tmpl
+    def get_source(self, environment, name, parent):
+        name = '/'.join([self.package_path] + [p for p in name.split('/')
+                        if p and p[0] != '.'])
+        if not resource_exists(self.package, name):
+            raise TemplateNotFound(name)
+        contents = resource_string(self.package_name, name)
+        return contents.decode(environment.template_charset)
 
-            # if we reach this point we don't have caching enabled or translate
-            # to something else than python
-            return translator.process(environment, self.parse(environment, name, None))
-        finally:
-            self._lock.release()
+    def check_source_changed(self, environment, name):
+        name = '/'.join([self.package_path] + [p for p in name.split('/')
+                        if p and p[0] != '.'])
+        return path.getmtime(resource_filename(name))

@@ -13,31 +13,28 @@ Developing Loaders
 ==================
 
 Template loaders are just normal Python classes that have to provide some
-functions used to load and translate templates. Here is a simple loader implementation
-you can use as the base for your own loader:
+functions used to load and translate templates.
+
+Because some of the tasks a loader has to do are redundant there are mixin
+classes that make loader development easier.
+
+Here the implementation of a simple loader based on the `LoaderMixin` from
+`jinja.loaders`:
 
 .. sourcecode:: python
 
+    import codecs
     from os.path import join
-    from jinja.parser import Parser
+    from jinja.loaders import LoaderMixin
     from jinja.exceptions import TemplateNotFound
 
-    class SimpleLoader(object):
-        """
-        Slimmed down version of the included `FileSystemLoader`.
-        """
-
-        def __init__(self, searchpath):
-            self.searchpath = searchpath
+    class SimpleLoader(LoaderMixin):
+        
+        def __init__(self, path):
+            self.path = path
 
         def get_source(self, environment, name, parent):
-            """
-            The get_source function is unused at the moment. However, future
-            versions of jinja will use this function for the debugging
-            system. It also works as helper functions for `parse` and
-            `load`.
-            """
-            filename = join(self.searchpath, name)
+            filename = join(self.path, name)
             if not path.exists(filename):
                 raise TemplateNotFound(name)
             f = codecs.open(filename, 'r', environment.template_charset)
@@ -46,23 +43,44 @@ you can use as the base for your own loader:
             finally:
                 f.close()
 
-        def parse(self, environment, name, parent):
-            """
-            Load and parse a template and return the syntax tree.
-            """
-            source = self.get_source(environment, name, parent)
-            return Parser(environment, source, name).parse()
+The functions `load` and `parse` which are a requirement for a loader are
+added automatically by the `LoaderMixin`.
 
-        def load(self, environment, name, translator):
-            """
-            Parse and translate a template. Currently only translation to
-            python code is possible, later Jinja versions however will
-            support translating templates to javascript too.
-            """
-            return translator.process(environment, self.parse(environment, name, None))
+Additionally to the `LoaderMixin` there is a second mixin called
+`CachedLoaderMixin` that implements memory and disk caching of templates.
 
+It works basically the same, just that there are two more things to implement:
 
-.. admonition:: Note
+.. sourcecode:: python
 
-    Once a loader is bound to an environment, you have to omit the environment
-    argument for the public functions `get_source`, `parse` and `load`.
+    import codecs
+    from os.path import join, getmtime
+    from jinja.loaders import CachedLoaderMixin
+    from jinja.exceptions import TemplateNotFound
+
+    class CachedLoader(CachedLoaderMixin):
+        
+        def __init__(self, path):
+            self.path = path
+            CachedLoaderMixin.__init__(
+                True,       # use memory caching
+                40,         # for up to 40 templates
+                '/tmp',     # additionally save the compiled templates in /tmp
+                True        # and reload cached templates automaticall if changed
+            )
+
+        def get_source(self, environment, name, parent):
+            filename = join(self.path, name)
+            if not path.exists(filename):
+                raise TemplateNotFound(name)
+            f = codecs.open(filename, 'r', environment.template_charset)
+            try:
+                return f.read()
+            finally:
+                f.close()
+
+        def check_source_changed(self, environment, name):
+            return getmtime(join(self.path, name))
+
+You don't have to provide the `check_source_changed` method. If it doesn't
+exist the option `auto_reload` won't have an effect.
