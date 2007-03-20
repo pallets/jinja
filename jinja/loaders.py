@@ -25,7 +25,7 @@ except ImportError:
     resource_exists = resource_string = resource_filename = None
 
 
-__all__ = ['FileSystemLoader', 'PackageLoader', 'DictLoader']
+__all__ = ['FileSystemLoader', 'PackageLoader', 'DictLoader', 'ChoiceLoader']
 
 
 def get_template_filename(searchpath, name):
@@ -261,7 +261,10 @@ class FileSystemLoader(CachedLoaderMixin, BaseLoader):
             raise TemplateNotFound(name)
 
     def check_source_changed(self, environment, name):
-        return path.getmtime(get_template_filename(self.searchpath, name))
+        filename = get_template_filename(self.searchpath, name)
+        if path.exists(filename):
+            return path.getmtime(filename)
+        return 0
 
 
 class PackageLoader(CachedLoaderMixin, BaseLoader):
@@ -323,9 +326,11 @@ class PackageLoader(CachedLoaderMixin, BaseLoader):
         return contents.decode(environment.template_charset)
 
     def check_source_changed(self, environment, name):
-        name = '/'.join([self.package_path] + [p for p in name.split('/')
-                        if p and p[0] != '.'])
-        return path.getmtime(resource_filename(self.package_name, name))
+        fn = resource_filename(self.package_name, '/'.join([self.package_path] +
+                               [p for p in name.split('/') if p and p[0] != '.']))
+        if resource_exists(self.package_name, fn):
+            return path.getmtime(fn)
+        return 0
 
 
 class DictLoader(BaseLoader):
@@ -337,7 +342,7 @@ class DictLoader(BaseLoader):
         from jinja import Environment, DictLoader
         e = Environment(loader=DictLoader(dict(
             layout='...',
-            index='{% extends layout %}...'
+            index='{% extends 'layout' %}...'
         )))
     """
 
@@ -347,4 +352,45 @@ class DictLoader(BaseLoader):
     def get_source(self, environment, name, parent):
         if name in self.templates:
             return self.templates[name]
+        raise TemplateNotFound(name)
+
+
+class ChoiceLoader(object):
+    """
+    A loader that tries multiple loaders in the order they are given to
+    the `ChoiceLoader`:
+
+    .. sourcecode:: python
+
+        from jinja import ChoiceLoader, FileSystemLoader
+        loader1 = FileSystemLoader("templates1")
+        loader2 = FileSystemLoader("templates2")
+        loader = ChoiceLoader([loader1, loader2])
+    """
+
+    def __init__(self, loaders):
+        self.loaders = list(loaders)
+
+    def get_source(self, environment, name, parent):
+        for loader in self.loaders:
+            try:
+                return loader.get_source(environment, name, parent)
+            except TemplateNotFound:
+                continue
+        raise TemplateNotFound(name)
+
+    def parse(self, environment, name, parent):
+        for loader in self.loaders:
+            try:
+                return loader.parse(environment, name, parent)
+            except TemplateNotFound:
+                continue
+        raise TemplateNotFound(name)
+
+    def load(self, environment, name, translator):
+        for loader in self.loaders:
+            try:
+                return loader.load(environment, name, translator)
+            except TemplateNotFound:
+                continue
         raise TemplateNotFound(name)
