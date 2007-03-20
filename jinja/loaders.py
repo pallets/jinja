@@ -361,11 +361,39 @@ class FunctionLoader(CachedLoaderMixin, BaseLoader):
                         load. If it returns a string or unicode object
                         it's used to load a template. If the return
                         value is None it's considered missing.
+    ``getmtime_func``   Function used to check if templates requires
+                        reloading. Has to return the UNIX timestamp of
+                        the last template change or 0 if this template
+                        does not exist or requires updates at any cost.
+    ``use_memcache``    Set this to ``True`` to enable memory caching.
+                        This is usually a good idea in production mode,
+                        but disable it during development since it won't
+                        reload template changes automatically.
+                        This only works in persistent environments like
+                        FastCGI.
+    ``memcache_size``   Number of template instance you want to cache.
+                        Defaults to ``40``.
+    ``cache_folder``    Set this to an existing directory to enable
+                        caching of templates on the file system. Note
+                        that this only affects templates transformed
+                        into python code. Default is ``None`` which means
+                        that caching is disabled.
+    ``auto_reload``     Set this to `False` for a slightly better
+                        performance. In that case of `getmtime_func`
+                        not being provided this won't have an effect.
     =================== =================================================
     """
 
-    def __init__(self, loader_func):
+    def __init__(self, loader_func, getmtime_func=None, use_memcache=False,
+                 memcache_size=40, cache_folder=None, auto_reload=True):
+        # when changing the signature also check the jinja.plugin function
+        # loader instantiation.
         self.loader_func = loader_func
+        self.getmtime_func = getmtime_func
+        if auto_reload and getmtime_func is None:
+            auto_reload = False
+        CachedLoaderMixin.__init__(self, use_memcache, memcache_size,
+                                   cache_folder, auto_reload)
 
     def get_source(self, environment, name, parent):
         rv = self.loader_func(name)
@@ -374,6 +402,9 @@ class FunctionLoader(CachedLoaderMixin, BaseLoader):
         if isinstance(rv, str):
             return rv.decode(environment.template_charset)
         return rv
+
+    def check_source_changed(self, environment, name):
+        return self.getmtime_func(name)
 
 
 class DictLoader(BaseLoader):
