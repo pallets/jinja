@@ -164,7 +164,7 @@ def buffereater(f):
 def raise_template_exception(exception, filename, lineno, context):
     """
     Raise an exception "in a template". Return a traceback
-    object.
+    object. This is used for runtime debugging, not compile time.
     """
     # some traceback systems allow to skip frames
     __traceback_hide__ = True

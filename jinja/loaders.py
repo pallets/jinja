@@ -25,7 +25,8 @@ except ImportError:
     resource_exists = resource_string = resource_filename = None
 
 
-__all__ = ['FileSystemLoader', 'PackageLoader', 'DictLoader', 'ChoiceLoader']
+__all__ = ['FileSystemLoader', 'PackageLoader', 'DictLoader', 'ChoiceLoader',
+           'FunctionLoader']
 
 
 def get_template_filename(searchpath, name):
@@ -331,6 +332,48 @@ class PackageLoader(CachedLoaderMixin, BaseLoader):
         if resource_exists(self.package_name, fn):
             return path.getmtime(fn)
         return 0
+
+
+class FunctionLoader(CachedLoaderMixin, BaseLoader):
+    """
+    Loads templates by calling a function which has to return a string
+    or `None` if an error occoured.
+
+    .. sourcecode:: python
+
+        from jinja import Environment, FunctionLoader
+
+        def my_load_func(template_name):
+            if template_name == 'foo':
+                return '...'
+
+        e = Environment(loader=FunctionLoader(my_load_func))
+
+    Because the interface is limited there is no way to cache such
+    templates. Usually you should try to use a loader with a more
+    solid backend.
+
+    You can pass the following keyword arguments to the loader on
+    initialisation:
+
+    =================== =================================================
+    ``loader_func``     Function that takes the name of the template to
+                        load. If it returns a string or unicode object
+                        it's used to load a template. If the return
+                        value is None it's considered missing.
+    =================== =================================================
+    """
+
+    def __init__(self, loader_func):
+        self.loader_func = loader_func
+
+    def get_source(self, environment, name, parent):
+        rv = self.loader_func(name)
+        if rv is None:
+            raise TemplateNotFound(name)
+        if isinstance(rv, str):
+            return rv.decode(environment.template_charset)
+        return rv
 
 
 class DictLoader(BaseLoader):
