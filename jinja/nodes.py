@@ -3,7 +3,7 @@
     jinja.nodes
     ~~~~~~~~~~~
 
-    Additional nodes for jinja. Look like nodes from the ast.
+    Additional nodes for Jinja. Look like nodes from the ast.
 
     :copyright: 2007 by Armin Ronacher.
     :license: BSD, see LICENSE for more details.
@@ -39,7 +39,7 @@ def get_nodes(nodetype, tree):
 
 class Node(ast.Node):
     """
-    jinja node.
+    Jinja node.
     """
 
     def get_items(self):
@@ -96,9 +96,7 @@ class Template(NodeList):
         self.filename = filename
 
     def get_items(self):
-        if self.extends is not None:
-            return [self.extends]
-        return []
+        return self.extends is not None and [self.extends] or []
 
     def __repr__(self):
         return 'Template(%r, %r, %r)' % (
@@ -248,10 +246,10 @@ class Filter(Node):
         self.filters = filters
 
     def get_items(self):
-        return [self.body, self.filters]
+        return [self.body] + list(self.filters)
 
     def __repr__(self):
-        return 'Filter(%r)' % (
+        return 'Filter(%r, %r)' % (
             self.body,
             self.filters
         )

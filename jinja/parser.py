@@ -12,7 +12,6 @@ import re
 from compiler import ast, parse
 from compiler.misc import set_filename
 from jinja import nodes
-from jinja.lexer import escaped_names
 from jinja.datastructure import TokenStream
 from jinja.exceptions import TemplateSyntaxError
 try:
@@ -116,7 +115,8 @@ class Parser(object):
             else_ = None
         self.close_remaining_block()
 
-        return nodes.ForLoop(lineno, ast.assign, ast.list, body, else_, bool(recursive))
+        return nodes.ForLoop(lineno, ast.assign, ast.list, body, else_,
+                             bool(recursive))
 
     def handle_if_directive(self, lineno, gen):
         """
@@ -163,7 +163,12 @@ class Parser(object):
         except (StopIteration, ValueError):
             raise TemplateSyntaxError('invalid syntax for set', lineno)
         ast = self.parse_python(lineno, gen, '(%s)')
-        return nodes.Set(lineno, str(name[2]), ast.expr)
+        # disallow keywords
+        if not name[2].endswith('_'):
+            raise TemplateSyntaxError('illegal use of keyword %r '
+                                      'as identifier in set statement.' %
+                                      name[2], lineno)
+        return nodes.Set(lineno, str(name[2][:-1]), ast.expr)
 
     def handle_filter_directive(self, lineno, gen):
         """
@@ -200,7 +205,14 @@ class Parser(object):
         if macro_name[1] != 'name':
             raise TemplateSyntaxError('expected \'name\', got %r' %
                                       macro_name[1], lineno)
-        ast = self.parse_python(lineno, gen, 'def %s(%%s):pass' % str(macro_name[2]))
+        # disallow keywords as identifiers
+        elif not macro_name[2].endswith('_'):
+            raise TemplateSyntaxError('illegal use of keyword %r '
+                                      'as macro name.' % macro_name[2],
+                                      lineno)
+
+        ast = self.parse_python(lineno, gen, 'def %s(%%s):pass' %
+                                str(macro_name[2][:-1]))
         body = self.subparse(end_of_macro, True)
         self.close_remaining_block()
 
@@ -209,7 +221,14 @@ class Parser(object):
                                       'not allowed.', lineno)
         if ast.argnames:
             defaults = [None] * (len(ast.argnames) - len(ast.defaults)) + ast.defaults
-            args = zip(ast.argnames, defaults)
+            args = []
+            for idx, argname in enumerate(ast.argnames):
+                # disallow keywords as argument names
+                if not argname.endswith('_'):
+                    raise TemplateSyntaxError('illegal use of keyword %r '
+                                              'as macro argument.' % argname,
+                                              lineno)
+                args.append((argname[:-1], defaults[idx]))
         else:
             args = None
         return nodes.Macro(lineno, ast.name, args, body)
@@ -225,20 +244,26 @@ class Parser(object):
         if block_name[1] != 'name':
             raise TemplateSyntaxError('expected \'name\', got %r' %
                                       block_name[1], lineno)
+        # disallow keywords
+        if not block_name[2].endswith('_'):
+            raise TemplateSyntaxError('illegal use of keyword %r '
+                                      'as block name.' % block_name[2],
+                                      lineno)
+        name = block_name[2][:-1]
         if tokens:
             raise TemplateSyntaxError('block got too many arguments, '
                                       'requires one.', lineno)
 
         # check if this block does not exist by now.
-        if block_name[2] in self.blocks:
+        if name in self.blocks:
             raise TemplateSyntaxError('block %r defined twice' %
-                                       block_name[2], lineno)
-        self.blocks.add(block_name[2])
+                                       name, lineno)
+        self.blocks.add(name)
 
         # now parse the body and attach it to the block
         body = self.subparse(end_of_block_tag, True)
         self.close_remaining_block()
-        return nodes.Block(lineno, block_name[2], body)
+        return nodes.Block(lineno, name, body)
 
     def handle_extends_directive(self, lineno, gen):
         """
@@ -299,9 +324,15 @@ class Parser(object):
                     if arg.__class__ is not ast.Keyword:
                         raise TemplateSyntaxError('translation tags need explicit '
                                                   'names for values.', lineno)
+                    # argument name doesn't end with "_"? that's a keyword then
+                    if not arg.name.endswith('_'):
+                        raise TemplateSyntaxError('illegal use of keyword %r '
+                                                  'as identifier.' % arg.name,
+                                                  lineno)
+                    # remove the last "_" before writing
                     if first_var is None:
-                        first_var = arg.name
-                    replacements[arg.name] = arg.expr
+                        first_var = arg.name[:-1]
+                    replacements[arg.name[:-1]] = arg.expr
 
             # look for endtrans/pluralize
             buf = singular = []
@@ -315,7 +346,18 @@ class Parser(object):
                 # nested variables
                 elif token == 'variable_begin':
                     _, variable_token, variable_name = self.tokenstream.next()
-                    if variable_token != 'name' or variable_name not in replacements:
+                    if variable_token != 'name':
+                        raise TemplateSyntaxError('can only use variable not '
+                                                  'constants or expressions '
+                                                  'in translation variable '
+                                                  'blocks.', lineno)
+                    # plural name without trailing "_"? that's a keyword
+                    if not variable_name.endswith('_'):
+                        raise TemplateSyntaxError('illegal use of keyword '
+                                                  '%r as identifier in trans '
+                                                  'block.' % variable_name, lineno)
+                    variable_name = variable_name[:-1]
+                    if variable_name not in replacements:
                         raise TemplateSyntaxError('unregistered translation '
                                                   'variable %r.' % variable_name,
                                                   lineno)
@@ -341,6 +383,12 @@ class Parser(object):
                         if plural_token == 'block_end':
                             indicator = first_var
                         elif plural_token == 'name':
+                            # plural name without trailing "_"? that's a keyword
+                            if not plural_name.endswith('_'):
+                                raise TemplateSyntaxError('illegal use of keyword '
+                                                          '%r as identifier.' %
+                                                          plural_name, lineno)
+                            plural_name = plural_name[:-1]
                             if plural_name not in replacements:
                                 raise TemplateSyntaxError('unknown tranlsation '
                                                           'variable %r' %
@@ -405,9 +453,20 @@ class Parser(object):
         todo = [body]
         while todo:
             node = todo.pop()
-            if node.__class__ in (ast.AssName, ast.Name) and \
-               node.name.endswith('___') and node.name[:-3] in escaped_names:
-                node.name = node.name[:-3]
+            # all names excluding keywords have an trailing underline.
+            # if we find a name without trailing underline that's a keyword
+            # and this code raises an error. else strip the underline again
+            if node.__class__ in (ast.AssName, ast.Name):
+                if not node.name.endswith('_'):
+                    raise TemplateSyntaxError('illegal use of keyword %r '
+                                              'as identifier.' % node.name,
+                                              node.lineno)
+                node.name = node.name[:-1]
+            elif node.__class__ is ast.Getattr:
+                if not node.attrname.endswith('_'):
+                    raise TemplateSyntaxError('illegal use of keyword %r '
+                                              'as attribute name.' % node.name)
+                node.attrname = node.attrname[:-1]
             node.filename = self.filename
             todo.extend(node.getChildNodes())
         return nodes.Template(self.filename, body, self.extends)

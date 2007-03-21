@@ -19,6 +19,8 @@ package_loader = loaders.PackageLoader('loaderres', 'templates')
 
 filesystem_loader = loaders.FileSystemLoader('loaderres/templates')
 
+function_loader = loaders.FunctionLoader({'justfunction.html': 'FOO'}.get)
+
 choice_loader = loaders.ChoiceLoader([dict_loader, package_loader])
 
 
@@ -64,6 +66,18 @@ def test_choice_loader():
     assert tmpl.render().strip() == 'FOO'
     tmpl = env.get_template('test.html')
     assert tmpl.render().strip() == 'BAR'
+    try:
+        env.get_template('missing.html')
+    except TemplateNotFound:
+        pass
+    else:
+        raise AssertionError('expected template exception')
+
+
+def test_function_loader():
+    env = Environment(loader=function_loader)
+    tmpl = env.get_template('justfunction.html')
+    assert tmpl.render().strip() == 'FOO'
     try:
         env.get_template('missing.html')
     except TemplateNotFound:

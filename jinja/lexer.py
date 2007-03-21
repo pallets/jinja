@@ -34,12 +34,12 @@ operator_re = re.compile('(%s)' % '|'.join(
     ur'or\b', ur'and\b', ur'not\b', ur'in\b', ur'is'
 ]))
 
-# set of names that are keywords in python but not in jinja. the lexer
-# appends three trailing underscores, the parser removes them again later
-escaped_names = set(['with', 'as', 'import', 'from', 'class', 'def',
-                     'try', 'except', 'exec', 'global', 'assert',
-                     'break', 'continue', 'lambda', 'return', 'raise',
-                     'yield', 'while', 'pass', 'finally'])
+# set of used keywords
+keywords = set(['and', 'block', 'cycle', 'elif', 'else', 'endblock',
+                'endfilter', 'endfor', 'endif', 'endmacro', 'endraw',
+                'endtrans', 'extends', 'filter', 'for', 'if', 'in',
+                'include', 'is', 'macro', 'not', 'or', 'pluralize', 'raw',
+                'recursive', 'set', 'trans'])
 
 
 class Failure(object):
@@ -121,12 +121,12 @@ class Lexer(object):
         `TokenStream` to get real token instances and be able to push tokens
         back to the stream. That's for example done by the parser.
 
-        Additionally some names like "class" are escaped
+        Additionally non keywords are escaped.
         """
         def filter():
             for lineno, token, value in self.tokeniter(source):
-                if token == 'name' and value in escaped_names:
-                    value += '___'
+                if token == 'name' and value not in keywords:
+                    value += '_'
                 yield lineno, token, value
         return TokenStream(filter())
 

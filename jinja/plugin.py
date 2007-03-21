@@ -11,7 +11,7 @@
     :license: BSD, see LICENSE for more details.
 """
 from jinja.environment import Environment
-from jinja.loaders import FunctionLoader
+from jinja.loaders import FunctionLoader, FileSystemLoader, PackageLoader
 from jinja.exceptions import TemplateNotFound
 
 
@@ -30,6 +30,12 @@ def jinja_plugin_factory(options):
     ``environment``     If this is provided it must be the only
                         configuration value and it's used as jinja
                         environment.
+    ``searchpath``      If provided a new file system loader with this
+                        search path is instanciated.
+    ``package``         Name of the python package containing the
+                        templates. If this and ``package_path`` is
+                        defined a `PackageLoader` is used.
+    ``package_path``    Path to the templates inside of a package.
     ``loader_func``     Function that takes the name of the template to
                         load. If it returns a string or unicode object
                         it's used to load a template. If the return
@@ -68,7 +74,16 @@ def jinja_plugin_factory(options):
         memcache_size = options.pop('memcache_size', 40)
         cache_folder = options.pop('cache_folder', None)
         auto_reload = options.pop('auto_reload', True)
-        if loader_func is not None:
+        if 'searchpath' in options:
+            options['loader'] = FileSystemLoader(options.pop('searchpath'),
+                                                 use_memcache, memcache_size,
+                                                 cache_folder, auto_reload)
+        elif 'package' in options:
+            options['loader'] = PackageLoader(options.pop('package'),
+                                              options.pop('package_path', ''),
+                                              use_memcache, memcache_size,
+                                              cache_folder, auto_reload)
+        elif loader_func is not None:
             options['loader'] = FunctionLoader(loader_func, getmtime_func,
                                                use_memcache, memcache_size,
                                                cache_folder, auto_reload)
@@ -82,6 +97,6 @@ def jinja_plugin_factory(options):
                 tmpl = env.get_template(template)
             except TemplateNotFound:
                 return
-        return (tmpl.render(**values),)
+        return tmpl.render(**values)
 
     return render_function

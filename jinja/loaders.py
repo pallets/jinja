@@ -175,8 +175,8 @@ class CachedLoaderMixin(object):
                         try:
                             cache_time = path.getmtime(cache_fn)
                         except OSError:
-                            cache_time = 0
-                        if last_change >= cache_time:
+                            cache_time = -1
+                        if cache_time == -1 or last_change >= cache_time:
                             f = file(cache_fn, 'rb')
                             try:
                                 tmpl = Template.load(environment, f)
@@ -265,7 +265,7 @@ class FileSystemLoader(CachedLoaderMixin, BaseLoader):
         filename = get_template_filename(self.searchpath, name)
         if path.exists(filename):
             return path.getmtime(filename)
-        return 0
+        return -1
 
 
 class PackageLoader(CachedLoaderMixin, BaseLoader):
@@ -331,7 +331,7 @@ class PackageLoader(CachedLoaderMixin, BaseLoader):
                                [p for p in name.split('/') if p and p[0] != '.']))
         if resource_exists(self.package_name, fn):
             return path.getmtime(fn)
-        return 0
+        return -1
 
 
 class FunctionLoader(CachedLoaderMixin, BaseLoader):
@@ -363,7 +363,7 @@ class FunctionLoader(CachedLoaderMixin, BaseLoader):
                         value is None it's considered missing.
     ``getmtime_func``   Function used to check if templates requires
                         reloading. Has to return the UNIX timestamp of
-                        the last template change or 0 if this template
+                        the last template change or ``-1`` if this template
                         does not exist or requires updates at any cost.
     ``use_memcache``    Set this to ``True`` to enable memory caching.
                         This is usually a good idea in production mode,

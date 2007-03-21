@@ -575,7 +575,7 @@ class PythonTranslator(Translator):
         write('ctx_push()')
         nodeinfo = self.nodeinfo(node.body)
         if nodeinfo:
-            write(nodebody)
+            write(nodeinfo)
         buf.append(self.handle_node(node.body))
         write('ctx_pop()')
         return '\n'.join(buf)

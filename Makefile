@@ -10,3 +10,9 @@
 
 test:
 	@(cd tests; py.test $(TESTS))
+
+documentation:
+	@(cd docs; ./generate.py)
+
+webpage:
+	@(cd www; ./generate.py)

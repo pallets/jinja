@@ -622,6 +622,34 @@ When you have multiple elements you can use the ``raw`` block:
         {% endfilter %}
     {% endraw %}
 
+Reserved Keywords
+=================
+
+Jinja has some keywords you cannot use a variable names. This limitation
+exists to make look coherent. Syntax highlighters won't mess things up and
+you will don't have unexpected output.
+
+The following keywords exist and cannot be used as identifiers:
+
+    `and`, `block`, `cycle`, `elif`, `else`, `endblock`, `endfilter`,
+    `endfor`, `endif`, `endmacro`, `endraw`, `endtrans`, `extends`, `filter`,
+    `for`, `if`, `in`, `include`, `is`, `macro`, `not`, `or`, `pluralize`,
+    `raw`, `recursive`, `set`, `trans`
+
+If you want to use such a name you have to prefix or suffix it or use
+alternative names:
+
+.. sourcecode:: jinja
+
+    {% for macro_ in macros %}
+        {{ macro_('foo') }}
+    {% endfor %}
+
+If future Jinja releases add new keywords those will be "light" keywords which
+means that they won't raise an error for several releases but yield warnings
+on the application side. But it's very unlikely that new keywords will be
+added.
+
 Internationalization
 ====================
 
