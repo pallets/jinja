@@ -16,8 +16,8 @@ from os import path
 from threading import Lock
 from jinja.parser import Parser
 from jinja.translators.python import PythonTranslator, Template
-from jinja.exceptions import TemplateNotFound
-from jinja.utils import CacheDict
+from jinja.exceptions import TemplateNotFound, TemplateSyntaxError
+from jinja.utils import CacheDict, raise_syntax_error
 try:
     from pkg_resources import resource_exists, resource_string, \
                               resource_filename
@@ -48,6 +48,7 @@ def get_cachename(cachepath, name):
 class LoaderWrapper(object):
     """
     Wraps a loader so that it's bound to an environment.
+    Also handles template syntax errors.
     """
 
     def __init__(self, environment, loader):
@@ -79,7 +80,11 @@ class LoaderWrapper(object):
         """
         # just ascii chars are allowed as template names
         name = str(name)
-        return self.loader.load(self.environment, name, translator)
+        try:
+            return self.loader.load(self.environment, name, translator)
+        except TemplateSyntaxError, e:
+            __traceback_hide__ = True
+            raise_syntax_error(e, self.environment)
 
     def _loader_missing(self, *args, **kwargs):
         """Helper method that overrides all other methods if no

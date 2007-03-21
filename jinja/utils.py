@@ -17,7 +17,7 @@ import string
 from types import MethodType, FunctionType
 from compiler.ast import CallFunc, Name, Const
 from jinja.nodes import Trans
-from jinja.datastructure import Markup
+from jinja.datastructure import Markup, Context
 
 try:
     from collections import deque
@@ -161,29 +161,32 @@ def buffereater(f):
     return wrapped
 
 
-def raise_template_exception(exception, filename, lineno, context):
+def fake_template_exception(exception, filename, lineno, context_or_env):
     """
     Raise an exception "in a template". Return a traceback
     object. This is used for runtime debugging, not compile time.
     """
     # some traceback systems allow to skip frames
     __traceback_hide__ = True
+    if isinstance(context_or_env, Context):
+        env = context_or_env.environment
+        namespace = context_or_env.to_dict()
+    else:
+        env = context_or_env
+        namespace = {}
 
     offset = '\n' * (lineno - 1)
     code = compile(offset + 'raise __exception_to_raise__', filename, 'exec')
-    namespace = context.to_dict()
     globals = {
         '__name__':                 filename,
         '__file__':                 filename,
-        '__loader__':               TracebackLoader(context.environment,
-                                                    filename),
+        '__loader__':               TracebackLoader(env, filename),
         '__exception_to_raise__':   exception
     }
     try:
         exec code in globals, namespace
     except:
-        traceback = sys.exc_info()[2]
-    return traceback
+        return sys.exc_info()
 
 
 def translate_exception(template, exc_type, exc_value, traceback, context):
@@ -213,8 +216,20 @@ def translate_exception(template, exc_type, exc_value, traceback, context):
     if not filename:
         return traceback
 
-    return raise_template_exception(exc_value, filename,
-                                    lineno, context)
+    return fake_template_exception(exc_value, filename,
+                                   lineno, context)[2]
+
+
+def raise_syntax_error(exception, env):
+    """
+    This method raises an exception that includes more debugging
+    informations so that debugging works better. Unlike
+    `translate_exception` this method raises the exception with
+    the traceback.
+    """
+    exc_info = fake_template_exception(exception, exception.filename,
+                                       exception.lineno, env)
+    raise exc_info[0], exc_info[1], exc_info[2]
 
 
 def collect_translations(ast):

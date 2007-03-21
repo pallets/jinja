@@ -70,9 +70,10 @@ class TemplateSyntaxError(SyntaxError, TemplateError):
     Raised to tell the user that there is a problem with the template.
     """
 
-    def __init__(self, message, lineno):
+    def __init__(self, message, lineno, filename):
         SyntaxError.__init__(self, message)
         self.lineno = lineno
+        self.filename = filename
 
 
 class TemplateRuntimeError(TemplateError):

@@ -15,7 +15,7 @@ try:
 except NameError:
     from sets import Set as set
 
-from jinja.exceptions import TemplateRuntimeError
+from jinja.exceptions import TemplateSyntaxError, TemplateRuntimeError
 
 
 def contextcallable(f):
@@ -360,7 +360,7 @@ class TokenStream(object):
                 else:
                     yield token
         except StopIteration:
-            raise IndexError('end of stream reached')
+            raise TemplateSyntaxError('end of stream reached')
 
     def drop_until(self, test, drop_needle=False):
         """Fetch tokens until a function matches and drop all

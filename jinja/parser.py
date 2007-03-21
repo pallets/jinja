@@ -71,6 +71,7 @@ class Parser(object):
         self.blocks = set()
 
         self.directives = {
+            'raw':          self.handle_raw_directive,
             'for':          self.handle_for_directive,
             'if':           self.handle_if_directive,
             'cycle':        self.handle_cycle_directive,
@@ -83,6 +84,21 @@ class Parser(object):
             'include':      self.handle_include_directive,
             'trans':        self.handle_trans_directive
         }
+
+    def handle_raw_directive(self, lineno, gen):
+        """
+        Handle fake raw directive. (real raw directives are handled by
+        the lexer. But if there are arguments to raw or the end tag
+        is missing the parser tries to resolve this directive. In that
+        case present the user a useful error message.
+        """
+        args = list(gen)
+        if args:
+            raise TemplateSyntaxError('raw directive does not support '
+                                      'any arguments.', lineno,
+                                      self.filename)
+        raise TemplateSyntaxError('missing end tag for raw directive.',
+                                  lineno, self.filename)
 
     def handle_for_directive(self, lineno, gen):
         """
@@ -161,13 +177,14 @@ class Parser(object):
             if name[1] != 'name' or gen.next()[1:] != ('operator', '='):
                 raise ValueError()
         except (StopIteration, ValueError):
-            raise TemplateSyntaxError('invalid syntax for set', lineno)
+            raise TemplateSyntaxError('invalid syntax for set', lineno,
+                                      self.filename)
         ast = self.parse_python(lineno, gen, '(%s)')
         # disallow keywords
         if not name[2].endswith('_'):
             raise TemplateSyntaxError('illegal use of keyword %r '
                                       'as identifier in set statement.' %
-                                      name[2], lineno)
+                                      name[2], lineno, self.filename)
         return nodes.Set(lineno, str(name[2][:-1]), ast.expr)
 
     def handle_filter_directive(self, lineno, gen):
@@ -191,7 +208,8 @@ class Parser(object):
         if len(arguments) != 1:
             raise TemplateSyntaxError('invalid argument count for print; '
                                       'print requires exactly one argument, '
-                                      'got %d.' % len(arguments), lineno)
+                                      'got %d.' % len(arguments), lineno,
+                                      self.filename)
         return nodes.Print(lineno, arguments[0])
 
     def handle_macro_directive(self, lineno, gen):
@@ -201,15 +219,17 @@ class Parser(object):
         try:
             macro_name = gen.next()
         except StopIteration:
-            raise TemplateSyntaxError('macro requires a name', lineno)
+            raise TemplateSyntaxError('macro requires a name', lineno,
+                                      self.filename)
         if macro_name[1] != 'name':
             raise TemplateSyntaxError('expected \'name\', got %r' %
-                                      macro_name[1], lineno)
+                                      macro_name[1], lineno,
+                                      self.filename)
         # disallow keywords as identifiers
         elif not macro_name[2].endswith('_'):
             raise TemplateSyntaxError('illegal use of keyword %r '
                                       'as macro name.' % macro_name[2],
-                                      lineno)
+                                      lineno, self.filename)
 
         ast = self.parse_python(lineno, gen, 'def %s(%%s):pass' %
                                 str(macro_name[2][:-1]))
@@ -218,16 +238,18 @@ class Parser(object):
 
         if ast.varargs or ast.kwargs:
             raise TemplateSyntaxError('variable length macro signature '
-                                      'not allowed.', lineno)
+                                      'not allowed.', lineno,
+                                      self.filename)
         if ast.argnames:
-            defaults = [None] * (len(ast.argnames) - len(ast.defaults)) + ast.defaults
+            defaults = [None] * (len(ast.argnames) - len(ast.defaults)) + \
+                       ast.defaults
             args = []
             for idx, argname in enumerate(ast.argnames):
                 # disallow keywords as argument names
                 if not argname.endswith('_'):
                     raise TemplateSyntaxError('illegal use of keyword %r '
                                               'as macro argument.' % argname,
-                                              lineno)
+                                              lineno, self.filename)
                 args.append((argname[:-1], defaults[idx]))
         else:
             args = None
@@ -239,25 +261,27 @@ class Parser(object):
         """
         tokens = list(gen)
         if not tokens:
-            raise TemplateSyntaxError('block requires a name', lineno)
+            raise TemplateSyntaxError('block requires a name', lineno,
+                                      self.filename)
         block_name = tokens.pop(0)
         if block_name[1] != 'name':
             raise TemplateSyntaxError('expected \'name\', got %r' %
-                                      block_name[1], lineno)
+                                      block_name[1], lineno, seilf.filename)
         # disallow keywords
         if not block_name[2].endswith('_'):
             raise TemplateSyntaxError('illegal use of keyword %r '
                                       'as block name.' % block_name[2],
-                                      lineno)
+                                      lineno, self.filename)
         name = block_name[2][:-1]
         if tokens:
             raise TemplateSyntaxError('block got too many arguments, '
-                                      'requires one.', lineno)
+                                      'requires one.', lineno,
+                                      self.filename)
 
         # check if this block does not exist by now.
         if name in self.blocks:
             raise TemplateSyntaxError('block %r defined twice' %
-                                       name, lineno)
+                                       name, lineno, self.filename)
         self.blocks.add(name)
 
         # now parse the body and attach it to the block
@@ -271,7 +295,8 @@ class Parser(object):
         """
         tokens = list(gen)
         if len(tokens) != 1 or tokens[0][1] != 'string':
-            raise TemplateSyntaxError('extends requires a string', lineno)
+            raise TemplateSyntaxError('extends requires a string', lineno,
+                                      self.filename)
         if self.extends is not None:
             raise TemplateSyntaxError('extends called twice', lineno)
         self.extends = nodes.Extends(lineno, tokens[0][2][1:-1])
@@ -282,7 +307,8 @@ class Parser(object):
         """
         tokens = list(gen)
         if len(tokens) != 1 or tokens[0][1] != 'string':
-            raise TemplateSyntaxError('include requires a string', lineno)
+            raise TemplateSyntaxError('include requires a string', lineno,
+                                      self.filename)
         return nodes.Include(lineno, tokens[0][2][1:-1])
 
     def handle_trans_directive(self, lineno, gen):
@@ -306,10 +332,11 @@ class Parser(object):
                         gen.next()
                     except StopIteration:
                         #XXX: what about escapes?
-                        return nodes.Trans(lineno, data[1:-1], None, None, None)
+                        return nodes.Trans(lineno, data[1:-1], None,
+                                           None, None)
                     raise TemplateSyntaxError('string based translations '
                                               'require at most one argument.',
-                                              lineno)
+                                              lineno, self.filename)
                 # create a new generator with the popped item as first one
                 def wrapgen(oldgen):
                     yield lineno, token, data
@@ -320,15 +347,17 @@ class Parser(object):
                 # block based translations
                 first_var = None
                 replacements = {}
-                for arg in self.parse_python(lineno, gen, '_trans(%s)').expr.args:
+                for arg in self.parse_python(lineno, gen,
+                                             '_trans(%s)').expr.args:
                     if arg.__class__ is not ast.Keyword:
-                        raise TemplateSyntaxError('translation tags need explicit '
-                                                  'names for values.', lineno)
-                    # argument name doesn't end with "_"? that's a keyword then
+                        raise TemplateSyntaxError('translation tags need expl'
+                                                  'icit names for values.',
+                                                  lineno, self.filename)
+                    # disallow keywords
                     if not arg.name.endswith('_'):
                         raise TemplateSyntaxError('illegal use of keyword %r '
                                                   'as identifier.' % arg.name,
-                                                  lineno)
+                                                  lineno, self.filename)
                     # remove the last "_" before writing
                     if first_var is None:
                         first_var = arg.name[:-1]
@@ -350,58 +379,73 @@ class Parser(object):
                         raise TemplateSyntaxError('can only use variable not '
                                                   'constants or expressions '
                                                   'in translation variable '
-                                                  'blocks.', lineno)
+                                                  'blocks.', lineno,
+                                                  self.filename)
                     # plural name without trailing "_"? that's a keyword
                     if not variable_name.endswith('_'):
                         raise TemplateSyntaxError('illegal use of keyword '
                                                   '%r as identifier in trans '
-                                                  'block.' % variable_name, lineno)
+                                                  'block.' % variable_name,
+                                                  lineno, self.filename)
                     variable_name = variable_name[:-1]
                     if variable_name not in replacements:
                         raise TemplateSyntaxError('unregistered translation '
-                                                  'variable %r.' % variable_name,
-                                                  lineno)
+                                                  'variable %r.' %
+                                                  variable_name, lineno,
+                                                  self.filename)
                     if self.tokenstream.next()[1] != 'variable_end':
-                        raise TemplateSyntaxError('you cannot use variable expressions '
-                                                  'inside trans tags. apply filters '
-                                                  'in the trans header.', lineno)
+                        raise TemplateSyntaxError('you cannot use variable '
+                                                  'expressions inside trans '
+                                                  'tags. apply filters '
+                                                  'in the trans header.',
+                                                  lineno, self.filename)
                     buf.append('%%(%s)s' % variable_name)
                 # nested blocks are not supported, just look for end blocks
                 elif token == 'block_begin':
                     _, block_token, block_name = self.tokenstream.next()
                     if block_token != 'name' or \
                        block_name not in ('pluralize', 'endtrans'):
-                        raise TemplateSyntaxError('blocks in translatable sections '
-                                                  'are not supported', lineno)
+                        raise TemplateSyntaxError('blocks in translatable '
+                                                  'sections are not '
+                                                  'supported', lineno,
+                                                  self.filename)
                     # pluralize
                     if block_name == 'pluralize':
                         if plural is not None:
-                            raise TemplateSyntaxError('translation blocks support '
-                                                      'at most one plural block',
-                                                      lineno)
+                            raise TemplateSyntaxError('translation blocks '
+                                                      'support at most one '
+                                                      'plural block',
+                                                      lineno, self.filename)
                         _, plural_token, plural_name = self.tokenstream.next()
                         if plural_token == 'block_end':
                             indicator = first_var
                         elif plural_token == 'name':
-                            # plural name without trailing "_"? that's a keyword
+                            # disallow keywords
                             if not plural_name.endswith('_'):
-                                raise TemplateSyntaxError('illegal use of keyword '
-                                                          '%r as identifier.' %
-                                                          plural_name, lineno)
+                                raise TemplateSyntaxError('illegal use of '
+                                                          'keyword %r as '
+                                                          'identifier.' %
+                                                          plural_name,
+                                                          lineno,
+                                                          self.filename)
                             plural_name = plural_name[:-1]
                             if plural_name not in replacements:
-                                raise TemplateSyntaxError('unknown tranlsation '
+                                raise TemplateSyntaxError('unregistered '
+                                                          'translation '
                                                           'variable %r' %
-                                                          plural_name, lineno)
+                                                          plural_name, lineno,
+                                                          self.filename)
                             elif self.tokenstream.next()[1] != 'block_end':
                                 raise TemplateSyntaxError('pluralize takes '
                                                           'at most one '
-                                                          'argument', lineno)
+                                                          'argument', lineno,
+                                                          self.filename)
                             indicator = plural_name
                         else:
                             raise TemplateSyntaxError('pluralize requires no '
-                                                      'argument or a variable '
-                                                      'name.')
+                                                      'argument or a variable'
+                                                      ' name.', lineno,
+                                                      self.filename)
                         plural = buf = []
                     # end translation
                     elif block_name == 'endtrans':
@@ -413,12 +457,13 @@ class Parser(object):
 
         except StopIteration:
             raise TemplateSyntaxError('unexpected end of translation section',
-                                      self.tokenstream.last[0])
+                                      self.tokenstream.last[0], self.filename)
 
         singular = u''.join(singular)
         if plural is not None:
             plural = u''.join(plural)
-        return nodes.Trans(flineno, singular, plural, indicator, replacements or None)
+        return nodes.Trans(flineno, singular, plural, indicator,
+                           replacements or None)
 
 
     def parse_python(self, lineno, gen, template):
@@ -433,12 +478,15 @@ class Parser(object):
                 tokens.append('u' + t_data)
             else:
                 tokens.append(t_data)
-        source = '\xef\xbb\xbf' + (template % (u' '.join(tokens)).encode('utf-8'))
+        source = '\xef\xbb\xbf' + (template % (u' '.join(tokens)).
+                                   encode('utf-8'))
         try:
             ast = parse(source, 'exec')
         except SyntaxError, e:
-            raise TemplateSyntaxError('invalid syntax', lineno + e.lineno)
-        assert len(ast.node.nodes) == 1, 'get %d nodes, 1 expected' % len(ast.node.nodes)
+            raise TemplateSyntaxError('invalid syntax', lineno + e.lineno,
+                                      self.filename)
+        assert len(ast.node.nodes) == 1, 'get %d nodes, 1 expected' %\
+                                         len(ast.node.nodes)
         result = ast.node.nodes[0]
         nodes.inc_lineno(lineno, result)
         return result
@@ -460,12 +508,14 @@ class Parser(object):
                 if not node.name.endswith('_'):
                     raise TemplateSyntaxError('illegal use of keyword %r '
                                               'as identifier.' % node.name,
-                                              node.lineno)
+                                              node.lineno, self.filename)
                 node.name = node.name[:-1]
             elif node.__class__ is ast.Getattr:
                 if not node.attrname.endswith('_'):
                     raise TemplateSyntaxError('illegal use of keyword %r '
-                                              'as attribute name.' % node.name)
+                                              'as attribute name.' %
+                                              node.name, node.lineno,
+                                              self.filename)
                 node.attrname = node.attrname[:-1]
             node.filename = self.filename
             todo.extend(node.getChildNodes())
@@ -482,7 +532,8 @@ class Parser(object):
         block tag. Variable tags are *not* aliases for {% print %} in
         that case.
 
-        If drop_needle is True the needle_token is removed from the tokenstream.
+        If drop_needle is True the needle_token is removed from the
+        tokenstream.
         """
         def finish():
             """Helper function to remove unused nodelists."""
@@ -510,12 +561,14 @@ class Parser(object):
                 try:
                     lineno, token, data = gen.next()
                 except StopIteration:
-                    raise TemplateSyntaxError('unexpected end of block', lineno)
+                    raise TemplateSyntaxError('unexpected end of block',
+                                              lineno, self.filename)
 
                 # first token *must* be a name token
                 if token != 'name':
                     raise TemplateSyntaxError('unexpected %r token (%r)' % (
-                                              token, data), lineno)
+                                              token, data), lineno,
+                                              self.filename)
 
                 # if a test function is passed to subparse we check if we
                 # reached the end of such a requested block.
@@ -530,7 +583,8 @@ class Parser(object):
                 if data in self.directives:
                     node = self.directives[data](lineno, gen)
                 else:
-                    raise TemplateSyntaxError('unknown directive %r' % data, lineno)
+                    raise TemplateSyntaxError('unknown directive %r' % data,
+                                              lineno, self.filename)
                 # some tags like the extends tag do not output nodes.
                 # so just skip that.
                 if node is not None:
@@ -544,11 +598,13 @@ class Parser(object):
 
             # so this should be unreachable code
             else:
-                raise AssertionError('unexpected token %r (%r)' % (token, data))
+                raise AssertionError('unexpected token %r (%r)' % (token,
+                                                                   data))
 
         # still here and a test function is provided? raise and error
         if test is not None:
-            raise TemplateSyntaxError('unexpected end of template', lineno)
+            raise TemplateSyntaxError('unexpected end of template', lineno,
+                                      self.filename)
         return finish()
 
     def close_remaining_block(self):
@@ -562,6 +618,8 @@ class Parser(object):
         try:
             lineno, token, data = self.tokenstream.next()
         except StopIteration:
-            raise TemplateSyntaxError('missing closing tag', lineno)
+            raise TemplateSyntaxError('missing closing tag', lineno,
+                                      self.filename)
         if token != 'block_end':
-            raise TemplateSyntaxError('expected close tag, found %r' % token, lineno)
+            raise TemplateSyntaxError('expected close tag, found %r' % token,
+                                      lineno, self.filename)
