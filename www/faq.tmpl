@@ -42,4 +42,44 @@
     python constructs have a look at mako. If you want sandboxed templates
     you probably want to check out Jinja.
   </p>
+  <h2>Differences to Django</h2>
+  <p>
+    While the Jinja default syntax looks pretty much like Django the rest of
+    the template engine works completely different. Jinja was designed to be
+    used without Django and to support Python expressions.
+  </p>
+  <p>Features that Jinja has in common with Django</p>
+  <ul>
+    <li>filter functions</li>
+    <li>block based template inheritance</li>
+    <li>the <tt>{% cycle %}</tt> and <tt>{% filter %}</li> tag</li>
+    <li>being sandboxed</li>
+    <li>similar default syntax</li>
+  </ul>
+  <p>Differences to Django</p>
+  <ul>
+    <li>advanced lexer that allows escaping of tags</li>
+    <li>generation of bytecode for faster template execution</li>
+    <li>definition of macros (often recurring tasks like rendering
+        dialog boxes, form elements etc.)</li>
+    <li>raw blocks</li>
+    <li>uncoupled internationalization support</li>
+    <li>expression support in any tag</li>
+    <li>abbility of modifying the context from the template
+        by using the <tt>{% set %}</li> tag.</li>
+    <li>support for function calling with arguments</li>
+    <li>filters can be called with a variable argument count</li>
+    <li>full unicode support</li>
+    <li>deferred objects (objects that are resolved on first
+        access, not on context instanciation)</li>
+    <li>Missing support for <tt>{{ block.super }}</tt></li>
+    <li>Support for recursing by using recursing for loops
+        or self calling macros.</li>
+    <li>If blocks have support for multiple elif statements</li>
+    <li>for loops have an optional else block executed if
+        there was no iteration.</li>
+    <li>test functions like <tt>is even</tt> etc.</li>
+    <li>block delimiters are exchangeable.</il>
+    <li>no implicit function calling</li>
+  </ul>
 <% endblock %>

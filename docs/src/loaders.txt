@@ -82,9 +82,10 @@ Note that you have to give it a higher priority in the MRO than the
             fn = join(self.path, name)
             if exists(fn):
                 return getmtime(fn)
-            return 0
+            return -1
 
 You don't have to provide the `check_source_changed` method. If it doesn't
 exist the option `auto_reload` won't have an effect. Also note that the
 `check_source_changed` method must not raise an exception if the template
-does not exist but return ``0``.
+does not exist but return ``-1``. The return value ``-1`` is considered
+"always reload" whereas ``0`` means "do not reload".
