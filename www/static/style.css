@@ -116,19 +116,13 @@ div.admonition p {
     background-color: white;
     background-image: url(watermark.png);
     padding: 10px;
-    margin: 25px 25px 0 25px;
-    border: 4px solid #ddd;
-    border-bottom: none;
 }
 
 #footer {
-    margin: 0 25px 25px 25px;
-    border: 4px solid #ddd;
-    border-top: none;
-    background-color: #fff;
-    color: #999;
-    text-align: right;
-    padding: 0 20px 20px 0;
+    color: #fff;
+    text-align: center;
+    font-size: 14px;
+    padding: 10px 20px 10px 20px;
 }
 
 #contentwrapper {
@@ -137,22 +131,30 @@ div.admonition p {
 }
 
 #header {
-    height: 80px;
-    background-color: #eee;
-    background-image: url(jinjabanner.png);
-    background-repeat: no-repeat;
-    border-bottom: 4px solid #ccc;
+    padding: 10px;
+    border-top: 6px solid #d20000;
+    background-color: #888;
+    background-image: url(headerbg.png);
+    background-position: top left;
 }
 
 #header h1 {
+    margin: 0;
+    padding: 0;
+    height: 80px;
+    background-image: url(jinjabanner.png);
+    background-repeat: no-repeat;
+}
+
+#header h1 span {
     display: none;
 }
 
 #navigation {
-    background-color: #fff;
     border: 1px solid #ccc;
-    border-right: none;
-    margin: 50px 29px 10px 10px;
+    background-color: #555;
+    font-family: 'Trebuchet MS', 'Arial', sans-serif;
+    margin: -60px 29px 10px 10px;
     padding: 0;
     float: right;
     list-style: none;
@@ -160,14 +162,16 @@ div.admonition p {
 }
 
 #navigation li {
+    float: left;
     margin: 0;
+    padding: 0;
 }
 
 #navigation li a {
     display: block;
     text-decoration: none;
     padding: 5px 10px 5px 10px;
-    color: #333;
+    color: #eee;
 }
 
 #navigation li a:hover {
@@ -189,15 +193,21 @@ div.admonition p {
     color: #fff;
 }
 
+#contentwrapper h1,
+#contentwrapper h2,
+#contentwrapper h3 {
+    font-family: 'Trebuchet MS', 'Arial', sans-serif;
+}
+
 #contentwrapper h1 {
     color: #b41717;
-    font-size: 26px;
+    font-size: 28px;
     margin: 20px 0 0 -5px;
 }
 
 #contentwrapper h2 {
     color: #444;
-    font-size: 20px;
+    font-size: 22px;
     margin: 20px 0 0 0;
 }
 

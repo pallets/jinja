@@ -1,0 +1,17 @@
+#header, #footer, #navigation {
+    display: none;
+}
+
+#contentwrapper, #content {
+    max-width: 100%;
+    padding: 0;
+}
+
+a {
+    color: inherit;
+    text-decoration: inherit;
+}
+
+#contentwrapper h1 {
+    margin-left: 0;
+}
