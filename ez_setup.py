@@ -14,7 +14,7 @@ the appropriate options to ``use_setuptools()``.
 This file can also be run as a script to install or upgrade setuptools.
 """
 import sys
-DEFAULT_VERSION = "0.6b3"
+DEFAULT_VERSION = "0.6c5"
 DEFAULT_URL     = "http://cheeseshop.python.org/packages/%s/s/setuptools/" % sys.version[:3]
 
 md5_data = {
@@ -24,8 +24,21 @@ md5_data = {
     'setuptools-0.6b2-py2.4.egg': '4996a8d169d2be661fa32a6e52e4f82a',
     'setuptools-0.6b3-py2.3.egg': 'bb31c0fc7399a63579975cad9f5a0618',
     'setuptools-0.6b3-py2.4.egg': '38a8c6b3d6ecd22247f179f7da669fac',
-    'setuptools-0.6b3dev_r46791-py2.3.egg': 'e765a29566575ffac5d81cdf0c6f8db9',
-    'setuptools-0.6b3dev_r46791-py2.4.egg': 'd249c022ed029ad60d134bd998adc880',
+    'setuptools-0.6b4-py2.3.egg': '62045a24ed4e1ebc77fe039aa4e6f7e5',
+    'setuptools-0.6b4-py2.4.egg': '4cb2a185d228dacffb2d17f103b3b1c4',
+    'setuptools-0.6c1-py2.3.egg': 'b3f2b5539d65cb7f74ad79127f1a908c',
+    'setuptools-0.6c1-py2.4.egg': 'b45adeda0667d2d2ffe14009364f2a4b',
+    'setuptools-0.6c2-py2.3.egg': 'f0064bf6aa2b7d0f3ba0b43f20817c27',
+    'setuptools-0.6c2-py2.4.egg': '616192eec35f47e8ea16cd6a122b7277',
+    'setuptools-0.6c3-py2.3.egg': 'f181fa125dfe85a259c9cd6f1d7b78fa',
+    'setuptools-0.6c3-py2.4.egg': 'e0ed74682c998bfb73bf803a50e7b71e',
+    'setuptools-0.6c3-py2.5.egg': 'abef16fdd61955514841c7c6bd98965e',
+    'setuptools-0.6c4-py2.3.egg': 'b0b9131acab32022bfac7f44c5d7971f',
+    'setuptools-0.6c4-py2.4.egg': '2a1f9656d4fbf3c97bf946c0a124e6e2',
+    'setuptools-0.6c4-py2.5.egg': '8f5a052e32cdb9c72bcf4b5526f28afc',
+    'setuptools-0.6c5-py2.3.egg': 'ee9fd80965da04f2f3e6b3576e9d8167',
+    'setuptools-0.6c5-py2.4.egg': 'afe2adf1c01701ee841761f5bcd8aa64',
+    'setuptools-0.6c5-py2.5.egg': 'a8d3f61494ccaa8714dfed37bccd3d5d',
 }
 
 import sys, os
@@ -75,13 +88,13 @@ def use_setuptools(
     try:
         pkg_resources.require("setuptools>="+version)
 
-    except pkg_resources.VersionConflict:
+    except pkg_resources.VersionConflict, e:
         # XXX could we install in a subprocess here?
         print >>sys.stderr, (
             "The required version of setuptools (>=%s) is not available, and\n"
             "can't be installed while this script is running. Please install\n"
-            " a more recent version first."
-        ) % version
+            " a more recent version first.\n\n(Currently using %r)"
+        ) % (version, e.args[0])
         sys.exit(2)
 
 def download_setuptools(
@@ -137,15 +150,15 @@ def main(argv, version=DEFAULT_VERSION):
     try:
         import setuptools
     except ImportError:
-        import tempfile, shutil
-        tmpdir = tempfile.mkdtemp(prefix="easy_install-")
+        egg = None
         try:
-            egg = download_setuptools(version, to_dir=tmpdir, delay=0)
+            egg = download_setuptools(version, delay=0)
             sys.path.insert(0,egg)
             from setuptools.command.easy_install import main
             return main(list(argv)+[egg])   # we're done here
         finally:
-            shutil.rmtree(tmpdir)
+            if egg and os.path.exists(egg):
+                os.unlink(egg)
     else:
         if setuptools.__version__ == '0.0.1':
             # tell the user to uninstall obsolete version

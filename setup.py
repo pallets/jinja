@@ -46,12 +46,11 @@ the application.
 .. _jinja webpage: http://jinja.pocoo.org/
 .. _documentation: http://jinja.pocoo.org/documentation/index.html
 """
-try:
-    import ez_setup
-    ez_setup.use_setuptools()
-except ImportError:
-    pass
+import os
+import ez_setup
+ez_setup.use_setuptools()
 from setuptools import setup
+
 
 setup(
     name = 'Jinja',
@@ -77,5 +76,10 @@ setup(
     ],
     keywords = ['python.templating.engines'],
     packages = ['jinja', 'jinja.translators'],
-    extras_require = {'plugin': ['setuptools>=0.6a2']},
+    data_files = [
+        ('docs', os.listdir('docs/build')),
+        ('docs/txt', os.listdir('docs/src'))
+    ],
+    platforms = 'any',
+    extras_require = {'plugin': ['setuptools>=0.6a2']}
 )
