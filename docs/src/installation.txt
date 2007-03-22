@@ -58,7 +58,7 @@ in your Python installation's site-packages directory. Every time the command
 is run, the sources are updated from Subversion.
 
 
-.. _download page: http://jinja.pocoo.org/download/
+.. _download page: http://jinja.pocoo.org/download.html
 .. _setuptools: http://peak.telecommunity.com/DevCenter/setuptools
 .. _easy_install: http://peak.telecommunity.com/DevCenter/EasyInstall
 .. _Subversion: http://subversion.tigris.org/

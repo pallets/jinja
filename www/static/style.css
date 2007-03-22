@@ -3,7 +3,7 @@
  */
 
 body {
-    background-color: #333;
+    background-color: #222;
     margin: 0;
     padding: 0;
     font-family: 'Georgia', serif;
@@ -125,9 +125,13 @@ div.admonition p {
     padding: 10px 20px 10px 20px;
 }
 
+#footer a {
+    color: #fff;
+}
+
 #contentwrapper {
     max-width: 700px;
-    padding: 0 10px 0 20px;
+    padding: 0 10px 20px 20px;
 }
 
 #header {
@@ -195,14 +199,21 @@ div.admonition p {
 
 #contentwrapper h1,
 #contentwrapper h2,
-#contentwrapper h3 {
+#contentwrapper h3,
+#contentwrapper h4 {
     font-family: 'Trebuchet MS', 'Arial', sans-serif;
+}
+
+#contentwrapper h2 a,
+#contentwrapper h3 a,
+#contentwrapper h4 a {
+    color: #333;
 }
 
 #contentwrapper h1 {
     color: #b41717;
     font-size: 28px;
-    margin: 20px 0 0 -5px;
+    margin: 20px 0 0 -8px;
 }
 
 #contentwrapper h2 {

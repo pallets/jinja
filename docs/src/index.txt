@@ -35,3 +35,5 @@ Welcome in the Jinja documentation.
   - `Differences To Django <fromdjango.txt>`_
 
   - `Recipies <recipies.txt>`_
+
+There is also support via IRC on the ``#pocoo`` channel on `irc.freenode.net`.
