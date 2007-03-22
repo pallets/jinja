@@ -52,6 +52,15 @@ ez_setup.use_setuptools()
 from setuptools import setup
 
 
+def list_files(path):
+    for fn in os.listdir(path):
+        if fn.startswith('.'):
+            continue
+        fn = os.path.join(path, fn)
+        if os.path.isfile(fn):
+            yield fn
+
+
 setup(
     name = 'Jinja',
     version = '1.0',
@@ -62,7 +71,9 @@ setup(
     description = 'A small but fast and easy to use stand-alone template '
                   'engine written in pure python.',
     long_description = __doc__,
-    zip_safe = True,
+    # jinja is egg safe. But because we distribute the documentation
+    # in form of html and txt files it's a better idea to extract the files
+    zip_safe = False,
     classifiers = [
         'Development Status :: 5 - Production/Stable',
         'Environment :: Web Environment',
@@ -77,8 +88,8 @@ setup(
     keywords = ['python.templating.engines'],
     packages = ['jinja', 'jinja.translators'],
     data_files = [
-        ('docs', os.listdir('docs/build')),
-        ('docs/txt', os.listdir('docs/src'))
+        ('docs', list_files('docs/build')),
+        ('docs/txt', list_files('docs/src'))
     ],
     platforms = 'any',
     extras_require = {'plugin': ['setuptools>=0.6a2']}
