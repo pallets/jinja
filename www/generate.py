@@ -13,6 +13,7 @@ from pygments import highlight
 from pygments.lexers import get_lexer_by_name
 from pygments.formatters import HtmlFormatter
 
+
 _data_re = re.compile(
     r'<!-- TITLE -->(?P<page_title>.*?)<!-- ENDTITLE -->.*?'
     r'<!-- TOC -->(?P<page_toc>.*?)<!-- ENDTOC -->.*?'

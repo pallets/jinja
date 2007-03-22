@@ -1,8 +1,8 @@
 <% set navigation = [
-  ('index', 'Index'),
-  ('faq', 'FAQ'),
-  ('documentation', 'Documentation'),
-  ('download', 'Download')
+  ('index.html', 'index', 'Index'),
+  ('faq.html', 'faq', 'FAQ'),
+  ('documentation/index.html', 'documentation', 'Documentation'),
+  ('download.html', 'download', 'Download')
 ] %>
 <!DOCTYPE html PUBLIC "-//W3C//DTD XHTML Frameset//EN"
   "http://www.w3.org/TR/xhtml1/DTD/xhtml1-frameset.dtd">
@@ -19,23 +19,11 @@
       <h1>Jinja</h1>
     </div>
     <ul id="navigation">
-    <% for id, caption in navigation %>
+    <% for href, id, caption in navigation %>
       <li<% if id == active_page %> class="active"<% endif
-        %>><a href="<%= root %><%= id|escape %>.html"><%= caption|escape
-        %></a></li>
+        %>><a href="<%= (root + href)|escape %>"><%= caption|escape %></a></li>
     <% endfor %>
     </ul>
-    <% if trace %>
-    <div id="trace">
-    <% for href, caption in trace %>
-      <% if loop.last %>
-        <%= caption %>
-      <% else %>
-        <a href="<%= href|escape %>"><%= caption %></a> &raquo;
-      <% endif %>
-    <% endfor %>
-    </div>
-    <% endif %>
     <div id="content">
       <div id="contentwrapper">
         <% block content %><% endblock %>

@@ -583,8 +583,9 @@ class Parser(object):
                 if data in self.directives:
                     node = self.directives[data](lineno, gen)
                 else:
-                    raise TemplateSyntaxError('unknown directive %r' % data,
-                                              lineno, self.filename)
+                    raise TemplateSyntaxError('unknown directive %r' %
+                                              str(data), lineno,
+                                              self.filename)
                 # some tags like the extends tag do not output nodes.
                 # so just skip that.
                 if node is not None:

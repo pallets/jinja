@@ -52,7 +52,7 @@
   <ul>
     <li>filter functions</li>
     <li>block based template inheritance</li>
-    <li>the <tt>{% cycle %}</tt> and <tt>{% filter %}</li> tag</li>
+    <li>the <tt>{% cycle %}</tt> and <tt>{% filter %}</tt> tag</li>
     <li>being sandboxed</li>
     <li>similar default syntax</li>
   </ul>
@@ -66,7 +66,7 @@
     <li>uncoupled internationalization support</li>
     <li>expression support in any tag</li>
     <li>abbility of modifying the context from the template
-        by using the <tt>{% set %}</li> tag.</li>
+        by using the <tt>{% set %}</tt> tag.</li>
     <li>support for function calling with arguments</li>
     <li>filters can be called with a variable argument count</li>
     <li>full unicode support</li>
@@ -81,5 +81,24 @@
     <li>test functions like <tt>is even</tt> etc.</li>
     <li>block delimiters are exchangeable.</il>
     <li>no implicit function calling</li>
+    <li><tt>{% endblock %}</tt> doesn't support the optional name argument</li>
+    <li><tt>{% ifchanged %}</tt> is not implemented because of performance
+        reasons. If there's enough interest an implementation might be added</li>
+    <li><tt>{% templatetag %}</tt> is not implemented because Jinja supports
+        escaping via <tt>{% raw %}</tt> or the variable syntax</li>
+    <li><tt>{% comment %}</tt> is not implemented, rather use
+        <tt>{# ... #}</tt> for commenting out stuff.</li>
+    <li><tt>{% now %}</tt> is not implemented because Jinja doesn't handle
+        l10n. Datetime specific stuff should be provided by the application.</li>
+    <li><tt>{% load %}</tt>, loading components for Jinja works from the
+        application side. Template designers don't have to import stuff on
+        their own.</li>
+    <li><tt>{% debug %}</tt> is not implemented. You can use the global
+        function <tt>debug()</tt>.</li>
+    <li>custom tags are not supported. Most of the stuff that is
+        possible with django template tags is possible with either functions,
+        filters, tests or a combination of them.</li>
+    <li>using keywords like <tt>endfor</tt> as identifer raises an
+        exception.</li>
   </ul>
 <% endblock %>
