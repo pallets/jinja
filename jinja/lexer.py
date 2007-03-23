@@ -23,7 +23,7 @@ string_re = re.compile(r"('([^'\\]*(?:\\.[^'\\]*)*)'"
                        r'|"([^"\\]*(?:\\.[^"\\]*)*)")(?ms)')
 number_re = re.compile(r'\d+(\.\d+)*')
 
-operator_re = re.compile('(%s)' % '|'.join(
+operator_re = re.compile('(%s)' % '|'.join([
     isinstance(x, unicode) and str(x) or re.escape(x) for x in [
     # math operators
     '+', '-', '*', '/', '%',
@@ -32,7 +32,7 @@ operator_re = re.compile('(%s)' % '|'.join(
     # attribute access and comparison / logical operators
     '.', ':', ',', '|', '==', '<', '>', '<=', '>=', '!=', '=',
     ur'or\b', ur'and\b', ur'not\b', ur'in\b', ur'is'
-]))
+]]))
 
 # set of used keywords
 keywords = set(['and', 'block', 'cycle', 'elif', 'else', 'endblock',
