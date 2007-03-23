@@ -284,7 +284,7 @@ class PythonTranslator(Translator):
         requirements = []
         for req in requirements_todo:
             for n in req:
-                if n.__class__ in (nodes.Set, nodes.Macro):
+                if n.__class__ in (nodes.Set, nodes.Macro, nodes.Include):
                     requirements.append(n)
 
         # bootstrapping code
