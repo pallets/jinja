@@ -582,7 +582,16 @@ class Parser(object):
                 # template syntax error.
                 if data in self.directives:
                     node = self.directives[data](lineno, gen)
+                # directive or endtag found, give a proper error message
+                elif data in self.directives or \
+                     not data.endswith('_') and data.startswith('end'):
+                    raise TemplateSyntaxError('unexpected directive %r' %
+                                              str(data), lineno,
+                                              self.filename)
+                # keyword or unknown name with trailing slash
                 else:
+                    if data.endswith('_'):
+                        data = data[:-1]
                     raise TemplateSyntaxError('unknown directive %r' %
                                               str(data), lineno,
                                               self.filename)

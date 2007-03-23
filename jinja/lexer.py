@@ -133,9 +133,10 @@ class Lexer(object):
     def tokeniter(self, source):
         """
         This method tokenizes the text and returns the tokens in a generator.
-        Normally it's a better idea to use the `tokenize` function which
-        returns a `TokenStream` but in some situations it can be useful
-        to use this function since it can be marginally faster.
+        Use this method if you just want to tokenize a template. The output
+        you get is not compatible with the input the jinja parser wants. The
+        parser uses the `tokenize` function with returns a `TokenStream` with
+        some escaped tokens.
         """
         source = type(source)('\n').join(source.splitlines())
         pos = 0
