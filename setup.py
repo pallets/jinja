@@ -92,8 +92,8 @@ setup(
     keywords = ['python.templating.engines'],
     packages = ['jinja', 'jinja.translators'],
     data_files = [
-        ('docs', list_files('docs/build')),
-        ('docs/txt', list_files('docs/src'))
+        ('docs', list(list_files('docs/build'))),
+        ('docs/txt', list(list_files('docs/src')))
     ],
     platforms = 'any',
     extras_require = {'plugin': ['setuptools>=0.6a2']}

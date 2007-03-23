@@ -17,7 +17,6 @@ You can install the most recent Jinja version using `easy_install`_::
 This will install a Jinja egg in your Python installation's site-packages
 directory.
 
-
 From the tarball release
 -------------------------
 
@@ -30,7 +29,6 @@ Note that the last command will automatically download and install
 internet connection.
 
 This will install Jinja into your Python installation's site-packages directory.
-
 
 Installing the development version
 ==================================
@@ -56,6 +54,17 @@ If you just want the latest features and use them
 This will install a Jinja egg containing the latest Subversion trunk code
 in your Python installation's site-packages directory. Every time the command
 is run, the sources are updated from Subversion.
+
+Documentation
+=============
+
+The egg builds include a documentation which is available in the ``docs`` folder
+of the egg. If you're running linux you will find the documentation here::
+
+    file:///usr/lib/python2.X/site-packages/Jinja-Y.Z-py2.X.egg/docs/index.html
+
+where ``X``, ``Y`` and ``Z`` must be replaced by the python / jinja version
+number.
 
 
 .. _download page: http://jinja.pocoo.org/download.html

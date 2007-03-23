@@ -17,5 +17,5 @@ documentation:
 webpage:
 	@(cd ../www; ./generate.py)
 
-release:
-	@(python2.3 setup.py release bdist_egg; python2.4 setup.py release bdist_egg; python2.5 setup.py release bdist_egg sdist)
+release: documentation
+	@(python2.3 setup.py release bdist_egg upload; python2.4 setup.py release bdist_egg upload; python2.5 setup.py release bdist_egg sdist upload)
