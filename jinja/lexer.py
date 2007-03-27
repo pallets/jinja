@@ -67,7 +67,7 @@ class Lexer(object):
         c = lambda x: re.compile(x, re.M | re.S)
         e = re.escape
 
-        # parsing rules for tags
+        # lexing rules for tags
         tag_rules = [
             (whitespace_re, None, None),
             (number_re, 'number', None),
@@ -87,31 +87,68 @@ class Lexer(object):
         ]
         root_tag_rules.sort(lambda a, b: cmp(len(b[1]), len(a[1])))
 
-        # global parsing rules
+        # block suffix if trimming is enabled
+        block_suffix_re = environment.trim_blocks and '\\n?' or ''
+
+        # global lexing rules
         self.rules = {
             'root': [
-                (c('(%s\s*raw\s%s)(.*?)(%s\s*endraw\s*%s)' % (
-                    (e(environment.block_start_string),
-                     e(environment.block_end_string)) * 2)),
-                   (None, 'data', None), None),
+                # raw directive with whitespace rule
+                (c('(\s*%s\-\sraw\s\-?%s)' % (
+                    e(environment.block_start_string),
+                    e(environment.block_end_string)
+                )), (None,), 'raw'),
+                # raw directive without whitespace rule
+                (c('(%s\sraw\s\-?%s)' % (
+                    e(environment.block_start_string),
+                    e(environment.block_end_string)
+                )), (None,), 'raw'),
+                # directives with dropped leading whitespace
+                (c('(.*?)(?:%s)' % '|'.join([
+                    '(?P<%s_begin>\s*%s\-)' % (n, e(r)) for n, r in root_tag_rules
+                ])), ('data', '#bygroup'), '#bygroup'),
+                # directives with normal semantics
                 (c('(.*?)(?:%s)' % '|'.join([
                     '(?P<%s_begin>%s)' % (n, e(r)) for n, r in root_tag_rules
                 ])), ('data', '#bygroup'), '#bygroup'),
+                # data
                 (c('.+'), 'data', None)
             ],
+            # comments
             'comment_begin': [
                 (c(r'(.*?)(%s)' % e(environment.comment_end_string)),
                  ('comment', 'comment_end'), '#pop'),
                 (c('(.)'), (Failure('Missing end of comment tag'),), None)
             ],
+            # directives
             'block_begin': [
-                (c(e(environment.block_end_string) +
-                  (environment.trim_blocks and '\\n?' or '')), 'block_end', '#pop')
+                # block end with dropping whitespace rule
+                (c('\-%s\s*' % e(environment.block_end_string)), 'block_end', '#pop'),
+                # regular block end
+                (c(e(environment.block_end_string) + block_suffix_re),
+                 'block_end', '#pop')
             ] + tag_rules,
+            # variables
             'variable_begin': [
                 (c(e(environment.variable_end_string)), 'variable_end',
                  '#pop')
-            ] + tag_rules
+            ] + tag_rules,
+            # raw block
+            'raw': [
+                # with whitespace rule
+                (c('(.*?)(%s\-?\s*endraw\s*\-%s%s\s*)' % (
+                    environment.block_start_string,
+                    environment.block_end_string,
+                    block_suffix_re
+                )), ('data', None), '#pop'),
+                # without whitespace rule
+                (c('(.*?)(%s\-?\s*endraw\s*%s%s)' % (
+                    environment.block_start_string,
+                    environment.block_end_string,
+                    block_suffix_re
+                )), ('data', None), '#pop'),
+                (c('(.)'), (Failure('Missing end of raw directive'),), None)
+            ]
         }
 
     def tokenize(self, source):
