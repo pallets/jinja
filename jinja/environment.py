@@ -13,8 +13,8 @@ from jinja.lexer import Lexer
 from jinja.parser import Parser
 from jinja.loaders import LoaderWrapper
 from jinja.datastructure import Undefined, Markup, Context, FakeTranslator
-from jinja.utils import escape, collect_translations
-from jinja.exceptions import FilterNotFound, TestNotFound
+from jinja.utils import escape, collect_translations, get_attribute
+from jinja.exceptions import FilterNotFound, TestNotFound, SecurityException
 from jinja.defaults import DEFAULT_FILTERS, DEFAULT_TESTS, DEFAULT_NAMESPACE
 
 
@@ -164,14 +164,10 @@ class Environment(object):
         try:
             return obj[name]
         except (TypeError, KeyError, IndexError):
-            if name[:2] == name[-2:] == '__':
-                return Undefined
-            if not hasattr(obj, name):
-                return Undefined
-            r = getattr(obj, 'jinja_allowed_attributes', None)
-            if r is not None and name not in r:
-                return Undefined
-            return getattr(obj, name)
+            try:
+                return get_attribute(obj, name)
+            except (AttributeError, SecurityException):
+                pass
         return Undefined
 
     def call_function(self, f, context, args, kwargs, dyn_args, dyn_kwargs):

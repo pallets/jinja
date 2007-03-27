@@ -17,8 +17,6 @@ class TemplateError(RuntimeError):
 class SecurityException(TemplateError):
     """
     Raise if the template designer tried to do something dangerous.
-
-    Not used any more. exists for backwards compatibility.
     """
 
 

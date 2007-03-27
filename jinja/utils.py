@@ -19,6 +19,7 @@ from types import MethodType, FunctionType
 from compiler.ast import CallFunc, Name, Const
 from jinja.nodes import Trans
 from jinja.datastructure import Context, TemplateData
+from jinja.exceptions import SecurityException
 
 try:
     from collections import deque
@@ -103,6 +104,24 @@ def from_string(source):
         from jinja.environment import Environment
         _from_string_env = Environment()
     return _from_string_env.from_string(source)
+
+
+def get_attribute(obj, name):
+    """
+    Return the attribute from name. Raise either `AttributeError`
+    or `SecurityException` if something goes wrong.
+    """
+    if not isinstance(name, basestring):
+        raise AttributeError(name)
+    if name[:2] == name[-2:] == '__' or name[:2] == '::':
+        raise SecurityException('not allowed to access internal attributes')
+    if (obj.__class__ is FunctionType and name.startswith('func_') or
+        obj.__class__ is MethodType and name.startswith('im_')):
+        raise SecurityException('not allowed to access function attributes')
+    r = getattr(obj, 'jinja_allowed_attributes', None)
+    if r is not None and name not in r:
+        raise SecurityException('not allowed attribute accessed')
+    return getattr(obj, name)
 
 
 def debug_context(env, context):

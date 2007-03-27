@@ -240,9 +240,7 @@ class PythonTranslator(Translator):
 
     def translate(self):
         self.reset()
-        rv = self.handle_node(self.node)
-        print rv
-        return rv
+        return self.handle_node(self.node)
 
     # -- jinja nodes
 
