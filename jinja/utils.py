@@ -14,10 +14,11 @@
 import re
 import sys
 import string
+import cgi
 from types import MethodType, FunctionType
 from compiler.ast import CallFunc, Name, Const
 from jinja.nodes import Trans
-from jinja.datastructure import Markup, Context
+from jinja.datastructure import Context, TemplateData
 
 try:
     from collections import deque
@@ -28,18 +29,6 @@ except ImportError:
 MAX_RANGE = 1000000
 
 _debug_info_re = re.compile(r'^\s*\# DEBUG\(filename=(.*?), lineno=(.*?)\)$')
-
-_escape_pairs = {
-    '&':            '&amp;',
-    '<':            '&lt;',
-    '>':            '&gt;',
-    '"':            '&quot;'
-}
-
-_escape_res = (
-    re.compile('(&|<|>|")'),
-    re.compile('(&|<|>)')
-)
 
 _integer_re = re.compile('^(\d+)$')
 
@@ -54,13 +43,10 @@ _punctuation_re = re.compile(
 
 _simple_email_re = re.compile(r'^\S+@[a-zA-Z0-9._-]+\.[a-zA-Z0-9._-]+$')
 
+#: used by from_string as cache
+_from_string_env = None
 
-def escape(x, attribute=False):
-    """
-    Escape an object x.
-    """
-    return Markup(_escape_res[not attribute].sub(lambda m:
-                  _escape_pairs[m.group()], x))
+escape = cgi.escape
 
 
 def urlize(text, trim_url_limit=None, nofollow=False):
@@ -106,6 +92,17 @@ def urlize(text, trim_url_limit=None, nofollow=False):
             if lead + middle + trail != word:
                 words[i] = lead + middle + trail
     return u''.join(words)
+
+
+def from_string(source):
+    """
+    Create a template from the template source.
+    """
+    global _from_string_env
+    if _from_string_env is None:
+        from jinja.environment import Environment
+        _from_string_env = Environment()
+    return _from_string_env.from_string(source)
 
 
 def debug_context(env, context):
@@ -157,7 +154,7 @@ def buffereater(f):
     (macros, filter sections etc)
     """
     def wrapped(*args, **kwargs):
-        return capture_generator(f(*args, **kwargs))
+        return TemplateData(capture_generator(f(*args, **kwargs)))
     return wrapped
 
 

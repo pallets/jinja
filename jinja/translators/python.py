@@ -204,8 +204,8 @@ class PythonTranslator(Translator):
                                                   n.lineno)
                     args.append(self.handle_node(arg))
                 if n.star_args is not None or n.dstar_args is not None:
-                    raise TemplateSynaxError('*args / **kwargs is not supported '
-                                             'for filters', n.lineno)
+                    raise TemplateSyntaxError('*args / **kwargs is not supported '
+                                              'for filters', n.lineno)
                 filters.append('(%r, %s)' % (
                     n.node.name,
                     _to_tuple(args)
@@ -240,7 +240,9 @@ class PythonTranslator(Translator):
 
     def translate(self):
         self.reset()
-        return self.handle_node(self.node)
+        rv = self.handle_node(self.node)
+        print rv
+        return rv
 
     # -- jinja nodes
 
@@ -467,9 +469,9 @@ class PythonTranslator(Translator):
         self.indention -= 1
 
         if hardcoded:
-            write('yield finish_var(context.current[%r].cycle())' % name)
+            write('yield finish_var(context.current[%r].cycle(), context)' % name)
         else:
-            write('yield finish_var(context.current[%r].cycle(%s))' % (
+            write('yield finish_var(context.current[%r].cycle(%s), context)' % (
                 name,
                 self.handle_node(node.seq)
             ))
@@ -483,7 +485,7 @@ class PythonTranslator(Translator):
         nodeinfo = self.nodeinfo(node) or ''
         if nodeinfo:
             nodeinfo = self.indent(nodeinfo) + '\n'
-        return nodeinfo + self.indent('yield finish_var(%s)' %
+        return nodeinfo + self.indent('yield finish_var(%s, context)' %
                                       self.handle_node(node.variable))
 
     def handle_macro(self, node):
@@ -656,8 +658,8 @@ class PythonTranslator(Translator):
                                                   n.lineno)
                     args.append(self.handle_node(arg))
                 if n.star_args is not None or n.dstar_args is not None:
-                    raise TemplateSynaxError('*args / **kwargs is not supported '
-                                             'for tests', n.lineno)
+                    raise TemplateSyntaxError('*args / **kwargs is not supported '
+                                              'for tests', n.lineno)
             else:
                 raise TemplateSyntaxError('is operator requires a test name'
                                           ' as operand', node.lineno)
@@ -698,27 +700,18 @@ class PythonTranslator(Translator):
                 self.handle_node(node.expr),
                 self.handle_node(node.subs[0])
             )
-        return 'get_attribute(%s, (%s,))' % (
+        return 'get_attribute(%s, %s)' % (
             self.handle_node(node.expr),
             self.handle_node(node.subs[0])
         )
 
     def handle_getattr(self, node):
         """
-        Handle hardcoded attribute access. foo.bar
+        Handle hardcoded attribute access.
         """
-        expr = node.expr
-
-        # chain getattrs for speed reasons
-        path = [repr(node.attrname)]
-        while node.expr.__class__ is ast.Getattr:
-            node = node.expr
-            path.append(repr(node.attrname))
-        path.reverse()
-
-        return 'get_attribute(%s, %s)' % (
+        return 'get_attribute(%s, %r)' % (
             self.handle_node(node.expr),
-            _to_tuple(path)
+            node.attrname
         )
 
     def handle_ass_tuple(self, node):

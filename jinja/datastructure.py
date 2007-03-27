@@ -16,6 +16,9 @@ except NameError:
     from sets import Set as set
 
 from jinja.exceptions import TemplateSyntaxError, TemplateRuntimeError
+from cgi import escape
+
+_known_safe_types = set([int, long, float])
 
 
 def contextcallable(f):
@@ -122,12 +125,18 @@ class Deferred(object):
 
 class Markup(unicode):
     """
-    Mark a string as safe for XML. If the environment uses the
-    auto_escape option values marked as `Markup` aren't escaped.
+    Compatibility for Pylons and probably some other frameworks.
     """
 
-    def __repr__(self):
-        return 'Markup(%s)' % unicode.__repr__(self)
+    def __html__(self):
+        return unicode(self)
+
+
+class TemplateData(Markup):
+    """
+    Subclass of unicode to mark objects that are coming from the
+    template. The autoescape filter can use that.
+    """
 
 
 class Context(object):

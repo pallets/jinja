@@ -25,6 +25,7 @@ except ImportError:
     resource_exists = resource_string = resource_filename = None
 
 
+#: when updating this, update the listing in the jinja package too
 __all__ = ['FileSystemLoader', 'PackageLoader', 'DictLoader', 'ChoiceLoader',
            'FunctionLoader']
 

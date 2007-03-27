@@ -266,7 +266,7 @@ class Parser(object):
         block_name = tokens.pop(0)
         if block_name[1] != 'name':
             raise TemplateSyntaxError('expected \'name\', got %r' %
-                                      block_name[1], lineno, seilf.filename)
+                                      block_name[1], lineno, self.filename)
         # disallow keywords
         if not block_name[2].endswith('_'):
             raise TemplateSyntaxError('illegal use of keyword %r '

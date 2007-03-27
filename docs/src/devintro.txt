@@ -51,6 +51,18 @@ Here the possible initialization parameters:
                           escaping methods. If you don't want to escape a
                           string you have to wrap it in a ``Markup``
                           object from the ``jinja.datastructure`` module.
+                          If `auto_escape` is ``True`` there will be also
+                          a ``Markup`` object in the template namespace
+                          to define partial html fragments. Note that we do
+                          not recomment this feature, see also the comment
+                          below.
+`default_filters`         list of tuples in the form (``filter_name``,
+                          ``arguments``) where ``filter_name`` is the
+                          name of a registered filter and ``arguments``
+                          a tuple with the filter arguments. The filters
+                          specified here will always be applied when
+                          printing data to the template.
+                          *new in jinja 1.1*
 `template_charset`        The charset of the templates. Defaults
                           to ``'utf-8'``.
 `charset`                 Charset of all string input data. Defaults
@@ -86,6 +98,22 @@ addition to the initialization values:
 
 There are also some internal functions on the environment used by the template
 evaluation code to keep it sandboxed.
+
+Automatic Escaping
+==================
+
+Jinja provides a way for automatic escaping, but we do not recommend using it.
+Because Jinja was designed as multi purpose template engine there are some
+issues with automatic escaping. For example filters don't deal with markup
+data. Also you can easily bypass the automatic escaping so it's not something
+you can expect to "just work". Also there is a huge overhead when escaping
+everything.
+
+The best idea is to think about which data already contains html, which will
+probably contain (eg: every user input, etc) etc. And live with self escaping.
+
+That's usually a much better idea.
+
 
 Loading Templates From Files
 ============================

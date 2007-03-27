@@ -57,6 +57,9 @@ in the template evaluation code you may want to override:
     unicode. The filters for the names are stored on ``self.filters`` in a
     dict. Missing filters should raise a `FilterNotFound` exception.
 
+    **Warning** this is a jinja internal method. The actual implementation
+    and function signature might change.
+
 **def** `perform_test` *(self, context, testname, args, value, invert)*:
 
     Like `apply_filters` you usually don't override this one. It's the
@@ -69,10 +72,16 @@ in the template evaluation code you may want to override:
 
     Missing tests should raise a `TestNotFound` exception.
 
-**def** `get_attribute` *(self, obj, attributes)*:
+    **Warning** this is a jinja internal method. The actual implementation
+    and function signature might change.
 
-    Get `attributes` from the object provided. The default implementation
-    performs security tests for each attribute.
+**def** `get_attribute` *(self, obj, attribute)*:
+
+    Get `attribute` from the object provided. The default implementation
+    performs security tests.
+
+    **Warning** this is a jinja internal method. The actual implementation
+    and function signature might change.
 
 **def** `call_function` *(self, f, context, args, kwargs, dyn_args, dyn_kwargs)*:
     
@@ -83,13 +92,22 @@ in the template evaluation code you may want to override:
 
     The default implementation performs some security checks.
 
+    **Warning** this is a jinja internal method. The actual implementation
+    and function signature might change.
+
 **def** `call_function_simple` *(self, f, context)*:
 
     Like `call_function` but without arguments.
 
-**def** `finish_var` *(self, value)*:
+    **Warning** this is a jinja internal method. The actual implementation
+    and function signature might change.
+
+**def** `finish_var` *(self, value, ctx)*:
 
     Postprocess a variable before it's sent to the template.
+
+    **Warning** this is a jinja internal method. The actual implementation
+    and function signature might change.
     
 .. admonition:: Note
 

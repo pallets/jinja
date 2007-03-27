@@ -10,8 +10,8 @@
 """
 from random import choice
 from urllib import urlencode, quote
-from jinja.utils import escape, urlize
-from jinja.datastructure import Undefined
+from jinja.utils import urlize, escape
+from jinja.datastructure import Undefined, Markup, TemplateData
 from jinja.exceptions import FilterArgumentError
 
 
@@ -68,12 +68,12 @@ def do_replace(s, old, new, count=None):
     """
     if not isinstance(old, basestring) or \
        not isinstance(new, basestring):
-        raise FilterArgumentException('the replace filter requires '
-                                      'string replacement arguments')
+        raise FilterArgumentError('the replace filter requires '
+                                  'string replacement arguments')
     elif not isinstance(count, (int, long)):
-        raise FilterArgumentException('the count parameter of the '
-                                      'replace filter requires '
-                                      'an integer')
+        raise FilterArgumentError('the count parameter of the '
+                                   'replace filter requires '
+                                   'an integer')
     if count is None:
         return s.replace(old, new)
     return s.replace(old, new, count)
@@ -96,7 +96,7 @@ def do_lower(s):
 do_lower = stringfilter(do_lower)
 
 
-def do_escape(s, attribute=False):
+def do_escape(attribute=False):
     """
     XML escape ``&``, ``<``, and ``>`` in a string of data. If the
     optional parameter is `true` this filter will also convert
@@ -105,8 +105,13 @@ def do_escape(s, attribute=False):
 
     This method will have no effect it the value is already escaped.
     """
-    return escape(s, attribute)
-do_escape = stringfilter(do_escape)
+    def wrapped(env, context, s):
+        if isinstance(s, TemplateData):
+            return s
+        elif hasattr(s, '__html__'):
+            return s.__html__()
+        return escape(env.to_unicode(s), attribute)
+    return wrapped
 
 
 def do_capitalize(s):
