@@ -680,7 +680,7 @@ are automatically removed. This of course works for other tags too:
 
 Note that you must not use a whitespace between the tag and the minus sign:
 
-.. sourceode:: jinja
+.. sourcecode:: jinja
 
     valid:
         {%- if foo -%}...{% endif %}
