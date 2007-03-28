@@ -93,58 +93,51 @@ class Lexer(object):
         # global lexing rules
         self.rules = {
             'root': [
-                # raw directive with whitespace rule
-                (c('(\s*%s\-\sraw\s\-?%s)' % (
+                # raw directive
+                (c('((?:\s*%s\-|%s)\s*raw\s*(?:\-%s\s*|%s%s))' % (
                     e(environment.block_start_string),
-                    e(environment.block_end_string)
-                )), (None,), 'raw'),
-                # raw directive without whitespace rule
-                (c('(%s\sraw\s\-?%s)' % (
                     e(environment.block_start_string),
-                    e(environment.block_end_string)
+                    e(environment.block_end_string),
+                    e(environment.block_end_string),
+                    block_suffix_re
                 )), (None,), 'raw'),
-                # directives with dropped leading whitespace
+                # normal directives
                 (c('(.*?)(?:%s)' % '|'.join([
-                    '(?P<%s_begin>\s*%s\-)' % (n, e(r)) for n, r in root_tag_rules
-                ])), ('data', '#bygroup'), '#bygroup'),
-                # directives with normal semantics
-                (c('(.*?)(?:%s)' % '|'.join([
-                    '(?P<%s_begin>%s)' % (n, e(r)) for n, r in root_tag_rules
+                    '(?P<%s_begin>\s*%s\-|%s)' % (n, e(r), e(r))
+                   for n, r in root_tag_rules
                 ])), ('data', '#bygroup'), '#bygroup'),
                 # data
                 (c('.+'), 'data', None)
             ],
             # comments
             'comment_begin': [
-                (c(r'(.*?)(%s)' % e(environment.comment_end_string)),
-                 ('comment', 'comment_end'), '#pop'),
+                (c(r'(.*?)(\-%s\s*|%s)' % (
+                    e(environment.comment_end_string),
+                    e(environment.comment_end_string)
+                )), ('comment', 'comment_end'), '#pop'),
                 (c('(.)'), (Failure('Missing end of comment tag'),), None)
             ],
             # directives
             'block_begin': [
-                # block end with dropping whitespace rule
-                (c('\-%s\s*' % e(environment.block_end_string)), 'block_end', '#pop'),
-                # regular block end
-                (c(e(environment.block_end_string) + block_suffix_re),
-                 'block_end', '#pop')
+                (c('\-%s\s*|%s' % (
+                    e(environment.block_end_string),
+                    e(environment.block_end_string)
+                )), 'block_end', '#pop'),
             ] + tag_rules,
             # variables
             'variable_begin': [
-                (c(e(environment.variable_end_string)), 'variable_end',
-                 '#pop')
+                (c('\-%s\s*|%s' % (
+                    e(environment.variable_end_string),
+                    e(environment.variable_end_string)
+                )), 'variable_end', '#pop')
             ] + tag_rules,
             # raw block
             'raw': [
-                # with whitespace rule
-                (c('(.*?)(%s\-?\s*endraw\s*\-%s%s\s*)' % (
-                    environment.block_start_string,
-                    environment.block_end_string,
-                    block_suffix_re
-                )), ('data', None), '#pop'),
-                # without whitespace rule
-                (c('(.*?)(%s\-?\s*endraw\s*%s%s)' % (
-                    environment.block_start_string,
-                    environment.block_end_string,
+                (c('(.*?)((?:\s*%s\-|%s)\s*endraw\s*(?:\-%s\s*|%s%s))' % (
+                    e(environment.block_start_string),
+                    e(environment.block_start_string),
+                    e(environment.block_end_string),
+                    e(environment.block_end_string),
                     block_suffix_re
                 )), ('data', None), '#pop'),
                 (c('(.)'), (Failure('Missing end of raw directive'),), None)
