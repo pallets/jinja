@@ -650,6 +650,45 @@ means that they won't raise an error for several releases but yield warnings
 on the application side. But it's very unlikely that new keywords will be
 added.
 
+Whitespace
+==========
+
+If the Jinja environment was created with ``trim_blocks`` set to true the
+first newline after a template tag is removed automatically (php like
+processing).
+
+Starting with `Jinja 1.1` you can also handle some whitespace rules in the
+template. If you put an minus sign (`-`) to the start or end of an block
+(for example a `for` tag) or a comment, variable element you can remove
+the whitespaces after that block or before that block:
+
+.. sourcecode:: jinja
+
+    {% for item in seq -%}
+        {{ item }}
+    {%- endfor %}
+
+This will yield all elements without whitespace between them because they
+are automatically removed. This of course works for other tags too:
+
+.. sourcecode:: jinja
+
+    {% for user in userlist -%}
+        {{ user|e -}}
+        {% if not loop.last %},{% endif %}
+    {%- endfor %}
+
+Note that you must not use a whitespace between the tag and the minus sign:
+
+.. sourceode:: jinja
+
+    valid:
+        {%- if foo -%}...{% endif %}
+
+    invalid:
+
+        {% - if foo - %}...{% endif %}
+
 Internationalization
 ====================
 
