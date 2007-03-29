@@ -316,6 +316,26 @@ class CycleContext(object):
         return seq[self.lineno]
 
 
+class BlockContext(object):
+    """
+    Helper class for ``{{ super() }}``.
+    """
+    jinja_allowed_attributes = ['name']
+
+    def __init__(self, name, stack, level, context):
+        self.name = name
+        self.context = context
+        if len(stack) > level:
+            self.block = stack[level]
+        else:
+            self.block = None
+
+    def __call__(self):
+        if self.block is None:
+            raise TemplateRuntimeError('no super block for %r' % self.name)
+        return self.block(self.context)
+
+
 class TokenStream(object):
     """
     A token stream works like a normal generator just that

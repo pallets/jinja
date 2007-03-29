@@ -272,6 +272,14 @@ class Block(Node):
         assert node.__class__ is Block
         self.__dict__.update(node.__dict__)
 
+    def clone(self):
+        """
+        Create an independent clone of this node.
+        """
+        rv = Block(None, None, None)
+        rv.__dict__.update(self.__dict__)
+        return rv
+
     def get_items(self):
         return [self.name, self.body]
 

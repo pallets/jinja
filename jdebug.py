@@ -8,6 +8,8 @@
     :copyright: 2006 by Armin Ronacher.
     :license: BSD, see LICENSE for more details.
 """
+import os
+import sys
 from jinja import Environment
 from jinja.parser import Parser
 from jinja.lexer import Lexer
@@ -18,6 +20,18 @@ __all__ = ['e', 't', 'p', 'l']
 
 e = Environment()
 t = e.from_string
+
+
+if os.environ.get('JDEBUG_SOURCEPRINT'):
+    original_translate = PythonTranslator.translate
+
+    def debug_translate(self):
+        rv = original_translate(self)
+        sys.stderr.write('## GENERATED SOURCE:\n%s\n' % rv)
+        return rv
+
+    PythonTranslator.translate = debug_translate
+
 
 def p(x):
     print PythonTranslator(e, Parser(e, x).parse()).translate()

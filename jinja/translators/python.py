@@ -168,7 +168,7 @@ class PythonTranslator(Translator):
         """
         return (' ' * (self.indention * 4)) + text
 
-    def nodeinfo(self, node):
+    def nodeinfo(self, node, force=False):
         """
         Return a comment that helds the node informations or None
         if there is no need to add a debug comment.
@@ -179,7 +179,7 @@ class PythonTranslator(Translator):
             node.filename,
             node.lineno
         )
-        if rv != self.last_debug_comment:
+        if force or rv != self.last_debug_comment:
             self.last_debug_comment = rv
             return rv
 
@@ -260,6 +260,7 @@ class PythonTranslator(Translator):
         requirements_todo = []
         parent = None
         overwrites = {}
+        blocks = {}
 
         while node.extends is not None:
             # handle all requirements but not those from the
@@ -271,11 +272,17 @@ class PythonTranslator(Translator):
             # load the template we inherit from and add not known blocks
             parent = self.environment.loader.parse(node.extends.template,
                                                    node.filename)
-            # look up all block nodes and let them override each other
+            # look up all block nodes in the current template and
+            # add them to the override dict
             for n in get_nodes(nodes.Block, node):
                 overwrites[n.name] = n
+            # handle direct overrides
             for n in get_nodes(nodes.Block, parent):
+                # an overwritten block for the parent template. handle that
+                # override in the template and register it in the deferred
+                # block dict.
                 if n.name in overwrites:
+                    blocks.setdefault(n.name, []).append(n.clone())
                     n.replace(overwrites[n.name])
             # make the parent node the new node
             node = parent
@@ -287,22 +294,26 @@ class PythonTranslator(Translator):
                 if n.__class__ in (nodes.Set, nodes.Macro, nodes.Include):
                     requirements.append(n)
 
+        # aliases boilerplate
+        aliases = ['%s = environment.%s' % (item, item) for item in
+                   ['get_attribute', 'perform_test', 'apply_filters',
+                    'call_function', 'call_function_simple', 'finish_var']]
+
         # bootstrapping code
         lines = [
             'from __future__ import division\n'
-            'from jinja.datastructure import Undefined, LoopContext, CycleContext\n'
+            'from jinja.datastructure import Undefined, LoopContext, '
+            'CycleContext, BlockContext\n'
             'from jinja.utils import buffereater\n'
+            '%s\n'
             '__name__ = %r\n\n'
             'def generate(context):\n'
             '    assert environment is context.environment\n'
-            '    get_attribute = environment.get_attribute\n'
-            '    perform_test = environment.perform_test\n'
-            '    apply_filters = environment.apply_filters\n'
-            '    call_function = environment.call_function\n'
-            '    call_function_simple = environment.call_function_simple\n'
-            '    finish_var = environment.finish_var\n'
             '    ctx_push = context.push\n'
-            '    ctx_pop = context.pop\n' % node.filename
+            '    ctx_pop = context.pop' % (
+                '\n'.join(aliases),
+                node.filename
+            )
         ]
 
         # we have requirements? add them here.
@@ -323,8 +334,39 @@ class PythonTranslator(Translator):
                 '            return translator.gettext(s) % (r or {})\n'
                 '        return translator.ngettext(s, p, r[n]) % (r or {})'
             )
+
+        # add body lines and "generator hook"
         lines.extend(body_lines)
         lines.append('    if False:\n        yield None')
+
+        # add the missing blocks
+        if blocks:
+            block_items = blocks.items()
+            block_items.sort()
+            dict_lines = []
+            for name, items in block_items:
+                tmp = []
+                for idx, item in enumerate(items):
+                    # ensure that the indention is correct
+                    self.indention = 1
+                    func_name = 'block_%s_%s' % (name, idx)
+                    lines.extend([
+                        '\ndef %s(context):' % func_name,
+                        '    ctx_push = context.push',
+                        '    ctx_pop = context.pop',
+                        '    if False:',
+                        '        yield None'
+                    ])
+                    nodeinfo = self.nodeinfo(item, True)
+                    if nodeinfo:
+                        lines.append(self.indent(nodeinfo))
+                    lines.append(self.handle_block(item, idx + 1))
+                    tmp.append('buffereater(%s)' % func_name)
+                dict_lines.append('    %r: %s' % (
+                    str(name),
+                    _to_tuple(tmp)
+                ))
+            lines.append('\nblocks = {\n%s\n}' % ',\n'.join(dict_lines))
 
         return '\n'.join(lines)
 
@@ -346,7 +388,7 @@ class PythonTranslator(Translator):
         if buf:
             nodeinfo = self.nodeinfo(node)
             if nodeinfo:
-                buf = [self.indent(nodeinfo)] + buf
+                buf.insert(0, self.indent(nodeinfo))
         return '\n'.join(buf)
 
     def handle_for_loop(self, node):
@@ -559,7 +601,7 @@ class PythonTranslator(Translator):
         write('yield %s' % self.filter('u\'\'.join(filtered())', node.filters))
         return '\n'.join(buf)
 
-    def handle_block(self, node):
+    def handle_block(self, node, level=0):
         """
         Handle blocks in the sourcecode. We only use them to
         call the current block implementation that is stored somewhere
@@ -572,7 +614,11 @@ class PythonTranslator(Translator):
         buf = []
         write = lambda x: buf.append(self.indent(x))
 
-        write('ctx_push()')
+        write('ctx_push({\'super\': BlockContext(%r, blocks[%r], %r, context)})' % (
+            str(node.name),
+            str(node.name),
+            level
+        ))
         nodeinfo = self.nodeinfo(node.body)
         if nodeinfo:
             write(nodeinfo)
