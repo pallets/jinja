@@ -9,6 +9,7 @@
     :license: BSD, see LICENSE for more details.
 """
 from compiler import ast
+from copy import copy
 
 
 def inc_lineno(offset, tree):
@@ -276,9 +277,7 @@ class Block(Node):
         """
         Create an independent clone of this node.
         """
-        rv = Block(None, None, None)
-        rv.__dict__.update(self.__dict__)
-        return rv
+        return copy(self)
 
     def get_items(self):
         return [self.name, self.body]

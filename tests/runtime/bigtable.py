@@ -10,6 +10,7 @@
 import cgi
 import sys
 import timeit
+import jdebug
 from StringIO import StringIO
 
 from genshi.builder import tag
@@ -49,21 +50,20 @@ if have_django:
     django_tmpl = DjangoTemplate("""
 <table>
 {% for row in table %}
-<tr>{% for col in row.values %}{{ col|escape }}{% endfor %}</tr>
+<tr>{% for col in row.values %}{{ col }}{% endfor %}</tr>
 {% endfor %}
 </table>
 """)
 
 jinja_tmpl = Environment().from_string('''
 <table>
-{% for row in table %}
-<tr>{% for col in row.values() %}{{ col|escape }}{% endfor %}</tr>
+{% for row in table -%}
+<tr>{% for col in row.values() %}{{ col }}{% endfor %}</tr>
 {% endfor %}
 </table>
 ''')
 
 cheetah_tmpl = CheetahTemplate('''
-# filter escape
 <table>
 #for $row in $table
 <tr>
@@ -81,7 +81,7 @@ if have_mako:
 % for row in table:
 <tr>
 % for col in row.values():
-    ${col|h}
+    ${col}
 % endfor
 </tr>
 % endfor
@@ -137,10 +137,11 @@ if __name__ == '__main__':
     which = [arg for arg in sys.argv[1:] if arg[0] != '-']
 
     if '-p' in sys.argv:
-        import hotshot, hotshot.stats
-        prof = hotshot.Profile("template.prof")
-        benchtime = prof.runcall(run, which, number=1)
-        stats = hotshot.stats.load("template.prof")
+        from cProfile import Profile
+        from pstats import Stats
+        p = Profile()
+        p.runcall(test_jinja)
+        stats = Stats(p)
         stats.strip_dirs()
         stats.sort_stats('time', 'calls')
         stats.print_stats()

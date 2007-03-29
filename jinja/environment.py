@@ -207,7 +207,6 @@ class Environment(object):
         if value is Undefined or value is None:
             return u''
         val = self.to_unicode(value)
-        # apply default filters
         if self.default_filters:
             val = self.apply_filters(val, ctx, self.default_filters)
         return val

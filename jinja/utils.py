@@ -151,20 +151,12 @@ def safe_range(start, stop=None, step=None):
 
 
 # python2.4 and lower has a bug regarding joining of broken generators
-if sys.hexversion < (2, 5):
-    def capture_generator(gen):
-        """
-        Concatenate the generator output.
-        """
-        return u''.join(tuple(gen))
+if sys.version_info < (2, 5):
+    capture_generator = lambda gen: u''.join(tuple(gen))
 
 # this should be faster and used in python2.5 and higher
 else:
-    def capture_generator(gen):
-        """
-        Concatenate the generator output
-        """
-        return u''.join(gen)
+    capture_generator = u''.join
 
 
 def buffereater(f):

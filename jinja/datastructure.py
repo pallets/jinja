@@ -176,7 +176,6 @@ class Context(object):
         return result
 
     def __getitem__(self, name):
-        # don't give access to jinja internal variables
         if name.startswith('::'):
             return Undefined
         # because the stack is usually quite small we better use [::-1]
@@ -184,7 +183,7 @@ class Context(object):
         for d in self._stack[::-1]:
             if name in d:
                 rv = d[name]
-                if isinstance(rv, Deferred):
+                if rv.__class__ is Deferred:
                     rv = rv(self, name)
                     # never touch the globals!
                     if d is self.globals:
