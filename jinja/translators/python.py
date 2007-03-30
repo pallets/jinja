@@ -352,31 +352,30 @@ class PythonTranslator(Translator):
         lines.append('    if False:\n        yield None')
 
         # add the missing blocks
-        if blocks:
-            block_items = blocks.items()
-            block_items.sort()
-            dict_lines = []
-            for name, items in block_items:
-                tmp = []
-                for idx, item in enumerate(items):
-                    # ensure that the indention is correct
-                    self.indention = 1
-                    func_name = 'block_%s_%s' % (name, idx)
-                    lines.extend([
-                        '\ndef %s(context):' % func_name,
-                        '    ctx_push = context.push',
-                        '    ctx_pop = context.pop',
-                        '    if False:',
-                        '        yield None'
-                    ])
-                    lines.append(self.indent(self.nodeinfo(item, True)))
-                    lines.append(self.handle_block(item, idx + 1))
-                    tmp.append('buffereater(%s)' % func_name)
-                dict_lines.append('    %r: %s' % (
-                    str(name),
-                    _to_tuple(tmp)
-                ))
-            lines.append('\nblocks = {\n%s\n}' % ',\n'.join(dict_lines))
+        block_items = blocks.items()
+        block_items.sort()
+        dict_lines = []
+        for name, items in block_items:
+            tmp = []
+            for idx, item in enumerate(items):
+                # ensure that the indention is correct
+                self.indention = 1
+                func_name = 'block_%s_%s' % (name, idx)
+                lines.extend([
+                    '\ndef %s(context):' % func_name,
+                    '    ctx_push = context.push',
+                    '    ctx_pop = context.pop',
+                    '    if False:',
+                    '        yield None'
+                ])
+                lines.append(self.indent(self.nodeinfo(item, True)))
+                lines.append(self.handle_block(item, idx + 1))
+                tmp.append('buffereater(%s)' % func_name)
+            dict_lines.append('    %r: %s' % (
+                str(name),
+                _to_tuple(tmp)
+            ))
+        lines.append('\nblocks = {\n%s\n}' % ',\n'.join(dict_lines))
 
         # now get the real source lines and map the debugging symbols
         debug_mapping = []
