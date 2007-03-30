@@ -14,7 +14,8 @@ from jinja.parser import Parser
 from jinja.loaders import LoaderWrapper
 from jinja.datastructure import Undefined, Markup, Context, FakeTranslator
 from jinja.utils import escape, collect_translations, get_attribute
-from jinja.exceptions import FilterNotFound, TestNotFound, SecurityException
+from jinja.exceptions import FilterNotFound, TestNotFound, \
+     SecurityException, TemplateSyntaxError
 from jinja.defaults import DEFAULT_FILTERS, DEFAULT_TESTS, DEFAULT_NAMESPACE
 
 
@@ -87,10 +88,18 @@ class Environment(object):
         """Load a template from a string."""
         from jinja.parser import Parser
         from jinja.translators.python import PythonTranslator
-        rv = PythonTranslator.process(self, Parser(self, source).parse())
-        # attach the source for debugging
-        rv._source = source
-        return rv
+        try:
+            rv = PythonTranslator.process(self, Parser(self, source).parse())
+        except TemplateSyntaxError, e:
+            # if errors occour raise a better traceback
+            from jinja.utils import raise_syntax_error
+            __traceback_hide__ = True
+            raise_syntax_error(e, self, source)
+        else:
+            # everything went well. attach the source and return it
+            # attach the source for debugging
+            rv._source = source
+            return rv
 
     def get_template(self, filename):
         """Load a template from a filename. Only works

@@ -32,6 +32,8 @@ e = Environment(loader=DictLoader({
       <li><a href="runtime_error">runtime error</a></li>
       <li><a href="nested_syntax_error">nested syntax error</a></li>
       <li><a href="nested_runtime_error">nested runtime error</a></li>
+      <li><a href="syntax_from_string">a syntax error from string</a></li>
+      <li><a href="runtime_from_string">runtime error from a string</a></li>
     </ul>
   </body>
 </html>
@@ -59,13 +61,22 @@ This is an included template
 {% raw %}just some foo'''
 }))
 
+FAILING_STRING_TEMPLATE = '{{ 1 / 0 }}'
+BROKEN_STRING_TEMPLATE = '{% if foo %}...{% endfor %}'
+
 
 def test(environ, start_response):
+    path = environ.get('PATH_INFO' or '/')
     try:
-        tmpl = e.get_template(environ.get('PATH_INFO') or '/')
+        tmpl = e.get_template(path)
     except TemplateNotFound:
-        start_response('404 NOT FOUND', [('Content-Type', 'text/plain')])
-        return ['NOT FOUND']
+        if path == '/syntax_from_string':
+            tmpl = e.from_string(BROKEN_STRING_TEMPLATE)
+        elif path == '/runtime_from_string':
+            tmpl = e.from_string(FAILING_STRING_TEMPLATE)
+        else:
+            start_response('404 NOT FOUND', [('Content-Type', 'text/plain')])
+            return ['NOT FOUND']
     start_response('200 OK', [('Content-Type', 'text/html; charset=utf-8')])
     return [tmpl.render().encode('utf-8')]
 

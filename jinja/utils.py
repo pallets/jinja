@@ -222,7 +222,7 @@ def buffereater(f):
     return wrapped
 
 
-def fake_template_exception(exception, filename, lineno, template,
+def fake_template_exception(exception, filename, lineno, source,
                             context_or_env):
     """
     Raise an exception "in a template". Return a traceback
@@ -238,11 +238,12 @@ def fake_template_exception(exception, filename, lineno, template,
         namespace = {}
 
     offset = '\n' * (lineno - 1)
-    code = compile(offset + 'raise __exception_to_raise__', filename, 'exec')
+    code = compile(offset + 'raise __exception_to_raise__',
+                   filename or '<template>', 'exec')
     globals = {
         '__name__':                 filename,
         '__file__':                 filename,
-        '__loader__':               TracebackLoader(env, template, filename),
+        '__loader__':               TracebackLoader(env, source, filename),
         '__exception_to_raise__':   exception
     }
     try:
@@ -264,10 +265,10 @@ def translate_exception(template, exc_type, exc_value, traceback, context):
         return traceback
 
     return fake_template_exception(exc_value, tmpl_filename, tmpl_line,
-                                   template, context)[2]
+                                   template._source, context)[2]
 
 
-def raise_syntax_error(exception, env):
+def raise_syntax_error(exception, env, source=None):
     """
     This method raises an exception that includes more debugging
     informations so that debugging works better. Unlike
@@ -275,7 +276,7 @@ def raise_syntax_error(exception, env):
     the traceback.
     """
     exc_info = fake_template_exception(exception, exception.filename,
-                                       exception.lineno, None, env)
+                                       exception.lineno, source, env)
     raise exc_info[0], exc_info[1], exc_info[2]
 
 
@@ -315,19 +316,19 @@ class TracebackLoader(object):
     Fake importer that just returns the source of a template.
     """
 
-    def __init__(self, environment, template, filename):
+    def __init__(self, environment, source, filename):
         self.loader = environment.loader
-        self.template = template
+        self.source = source
         self.filename = filename
 
     def get_source(self, impname):
-        if self.loader is not None:
+        if self.source is not None:
+            return self.source
+        elif self.loader is not None:
             try:
                 return self.loader.get_source(self.filename)
             except TemplateNotFound:
                 pass
-        if self.template is not None:
-            return self.template._source or ''
         return ''
 
 

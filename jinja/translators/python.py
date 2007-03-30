@@ -389,9 +389,8 @@ class PythonTranslator(Translator):
             if m is not None:
                 d = m.groupdict()
                 this = (d['filename'] or None, int(d['lineno']))
-                # if there is no filename in this debug symbol
                 # if it's the same as the line before we ignore it
-                if this[0] and this != last:
+                if this != last:
                     debug_mapping.append((idx - offset,) + this)
                     last = this
                 # for each debug symbol the line number and so the offset
