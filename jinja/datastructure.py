@@ -328,21 +328,17 @@ class SuperBlock(object):
             self.stack = blocks[name]
             self.level = level
         else:
-            self.stack is None
-            if len(stack) > level:
-                self.block = stack[level]
+            self.stack = None
 
     def __call__(self, offset=1):
-        level = self.level + (offset - 1)
-        if level < len(self.stack):
-            return self.stack[level](self.context)
+        if self.stack is not None:
+            level = self.level + (offset - 1)
+            if level < len(self.stack):
+                return self.stack[level](self.context)
         raise TemplateRuntimeError('no super block for %r' % self.name)
 
     def __repr__(self):
-        return '<SuperBlock %r (%spossible)>' % (
-            self.name,
-            self.stack is None and 'im' or ''
-        )
+        return '<SuperBlock %r>' % self.name
 
 
 class TokenStream(object):
