@@ -1,6 +1,7 @@
+import jdebug
+import sys
 from jinja import Environment, DictLoader
 from jinja.exceptions import TemplateNotFound
-from colubrid.debug import DebuggedApplication
 from wsgiref.simple_server import make_server
 
 e = Environment(loader=DictLoader({
@@ -68,4 +69,7 @@ def test(environ, start_response):
     start_response('200 OK', [('Content-Type', 'text/html; charset=utf-8')])
     return [tmpl.render().encode('utf-8')]
 
-make_server("localhost", 7000, DebuggedApplication(test)).serve_forever()
+if __name__ == '__main__':
+    from colubrid.debug import DebuggedApplication
+    app = DebuggedApplication(test)
+    make_server("localhost", 7000, app).serve_forever()

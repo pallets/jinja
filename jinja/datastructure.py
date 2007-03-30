@@ -295,7 +295,7 @@ class CycleContext(object):
     """
 
     def __init__(self, seq=None):
-        self.lineno = -1
+        self.pos = -1
         # bind the correct helper function based on the constructor signature
         if seq is not None:
             self.seq = seq
@@ -306,33 +306,43 @@ class CycleContext(object):
 
     def cycle_static(self):
         """Helper function for static cycling."""
-        self.lineno = (self.lineno + 1) % self.length
-        return self.seq[self.lineno]
+        self.pos = (self.pos + 1) % self.length
+        return self.seq[self.pos]
 
     def cycle_dynamic(self, seq):
         """Helper function for dynamic cycling."""
-        self.lineno = (self.lineno + 1) % len(seq)
-        return seq[self.lineno]
+        self.pos = pos = (self.pos + 1) % len(seq)
+        return seq[pos]
 
 
-class BlockContext(object):
+class SuperBlock(object):
     """
     Helper class for ``{{ super() }}``.
     """
     jinja_allowed_attributes = ['name']
 
-    def __init__(self, name, stack, level, context):
+    def __init__(self, name, blocks, level, context):
         self.name = name
         self.context = context
-        if len(stack) > level:
-            self.block = stack[level]
+        if name in blocks:
+            self.stack = blocks[name]
+            self.level = level
         else:
-            self.block = None
+            self.stack is None
+            if len(stack) > level:
+                self.block = stack[level]
 
-    def __call__(self):
-        if self.block is None:
-            raise TemplateRuntimeError('no super block for %r' % self.name)
-        return self.block(self.context)
+    def __call__(self, offset=1):
+        level = self.level + (offset - 1)
+        if level < len(self.stack):
+            return self.stack[level](self.context)
+        raise TemplateRuntimeError('no super block for %r' % self.name)
+
+    def __repr__(self):
+        return '<SuperBlock %r (%spossible)>' % (
+            self.name,
+            self.stack is None and 'im' or ''
+        )
 
 
 class TokenStream(object):

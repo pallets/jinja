@@ -10,10 +10,11 @@
 """
 from jinja.filters import FILTERS as DEFAULT_FILTERS
 from jinja.tests import TESTS as DEFAULT_TESTS
-from jinja.utils import debug_context, safe_range
+from jinja.utils import debug_context, safe_range, generate_lorem_ipsum
 
 
 DEFAULT_NAMESPACE = {
     'range':                safe_range,
-    'debug':                debug_context
+    'debug':                debug_context,
+    'lipsum':               generate_lorem_ipsum
 }

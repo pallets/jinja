@@ -87,7 +87,10 @@ class Environment(object):
         """Load a template from a string."""
         from jinja.parser import Parser
         from jinja.translators.python import PythonTranslator
-        return PythonTranslator.process(self, Parser(self, source).parse())
+        rv = PythonTranslator.process(self, Parser(self, source).parse())
+        # attach the source for debugging
+        rv._source = source
+        return rv
 
     def get_template(self, filename):
         """Load a template from a filename. Only works

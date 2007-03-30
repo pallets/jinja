@@ -19,7 +19,7 @@ from types import MethodType, FunctionType
 from compiler.ast import CallFunc, Name, Const
 from jinja.nodes import Trans
 from jinja.datastructure import Context, TemplateData
-from jinja.exceptions import SecurityException
+from jinja.exceptions import SecurityException, TemplateNotFound
 
 try:
     from collections import deque
@@ -28,8 +28,6 @@ except ImportError:
 
 #: number of maximal range items
 MAX_RANGE = 1000000
-
-_debug_info_re = re.compile(r'^\s*\# DEBUG\(filename=(.*?), lineno=(.*?)\)$')
 
 _integer_re = re.compile('^(\d+)$')
 
@@ -150,13 +148,68 @@ def safe_range(start, stop=None, step=None):
     return range(start, stop, step)
 
 
+def generate_lorem_ipsum(n=5, html=True, min=20, max=100):
+    """
+    Generate some lorem impsum for the template.
+    """
+    from jinja.constants import LOREM_IPSUM_WORDS
+    from random import choice, random, randrange
+    words = LOREM_IPSUM_WORDS.split()
+    result = []
+
+    for _ in xrange(n):
+        next_capitalized = True
+        last_comma = last_fullstop = 0
+        word = None
+        last = None
+        p = []
+
+        # each paragraph contains out of 20 to 100 words.
+        for idx, _ in enumerate(xrange(randrange(min, max))):
+            while True:
+                word = choice(words)
+                if word != last:
+                    last = word
+                    break
+            if next_capitalized:
+                word = word.capitalize()
+                next_capitalized = False
+            # add commas
+            if idx - randrange(3, 8) > last_comma:
+                last_comma = idx
+                last_fullstop += 2
+                word += ','
+            # add end of sentences
+            if idx - randrange(10, 20) > last_fullstop:
+                last_comma = last_fullstop = idx
+                word += '.'
+                next_capitalized = True
+            p.append(word)
+
+        # ensure that the paragraph ends with a dot.
+        p = u' '.join(p)
+        if p.endswith(','):
+            p = p[:-1] + '.'
+        elif not p.endswith('.'):
+            p += '.'
+        result.append(p)
+
+    if not html:
+        return u'\n\n'.join(result)
+    return u'\n'.join([u'<p>%s</p>' % escape(x) for x in result])
+
+
 # python2.4 and lower has a bug regarding joining of broken generators
+# because of the runtime debugging system we have to keep track of the
+# number of frames to skip. that's what RUNTIME_EXCEPTION_OFFSET is for.
 if sys.version_info < (2, 5):
     capture_generator = lambda gen: u''.join(tuple(gen))
+    RUNTIME_EXCEPTION_OFFSET = 2
 
 # this should be faster and used in python2.5 and higher
 else:
     capture_generator = u''.join
+    RUNTIME_EXCEPTION_OFFSET = 1
 
 
 def buffereater(f):
@@ -169,7 +222,8 @@ def buffereater(f):
     return wrapped
 
 
-def fake_template_exception(exception, filename, lineno, context_or_env):
+def fake_template_exception(exception, filename, lineno, template,
+                            context_or_env):
     """
     Raise an exception "in a template". Return a traceback
     object. This is used for runtime debugging, not compile time.
@@ -188,7 +242,7 @@ def fake_template_exception(exception, filename, lineno, context_or_env):
     globals = {
         '__name__':                 filename,
         '__file__':                 filename,
-        '__loader__':               TracebackLoader(env, filename),
+        '__loader__':               TracebackLoader(env, template, filename),
         '__exception_to_raise__':   exception
     }
     try:
@@ -201,31 +255,16 @@ def translate_exception(template, exc_type, exc_value, traceback, context):
     """
     Translate an exception and return the new traceback.
     """
-    sourcelines = template.translated_source.splitlines()
-    startpos = traceback.tb_lineno - 1
-    filename = None
-    # looks like we loaded the template from string. we cannot
-    # do anything here.
-    if startpos > len(sourcelines):
-        return traceback
-
-    while startpos > 0:
-        m = _debug_info_re.search(sourcelines[startpos])
-        if m is not None:
-            filename, lineno = m.groups()
-            if filename == 'None':
-                filename = None
-            if lineno != 'None':
-                lineno = int(lineno)
+    error_line = traceback.tb_lineno
+    for code_line, tmpl_filename, tmpl_line in template._debug_info[::-1]:
+        if code_line <= error_line:
             break
-        startpos -= 1
-
-    # no traceback information found, reraise unchanged
-    if not filename:
+    else:
+        # no debug symbol found. give up
         return traceback
 
-    return fake_template_exception(exc_value, filename,
-                                   lineno, context)[2]
+    return fake_template_exception(exc_value, tmpl_filename, tmpl_line,
+                                   template, context)[2]
 
 
 def raise_syntax_error(exception, env):
@@ -236,7 +275,7 @@ def raise_syntax_error(exception, env):
     the traceback.
     """
     exc_info = fake_template_exception(exception, exception.filename,
-                                       exception.lineno, env)
+                                       exception.lineno, None, env)
     raise exc_info[0], exc_info[1], exc_info[2]
 
 
@@ -276,12 +315,20 @@ class TracebackLoader(object):
     Fake importer that just returns the source of a template.
     """
 
-    def __init__(self, environment, filename):
+    def __init__(self, environment, template, filename):
         self.loader = environment.loader
+        self.template = template
         self.filename = filename
 
     def get_source(self, impname):
-        return self.loader.get_source(self.filename)
+        if self.loader is not None:
+            try:
+                return self.loader.get_source(self.filename)
+            except TemplateNotFound:
+                pass
+        if self.template is not None:
+            return self.template._source or ''
+        return ''
 
 
 class CacheDict(object):

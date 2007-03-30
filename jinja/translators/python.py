@@ -8,6 +8,7 @@
     :copyright: 2007 by Armin Ronacher.
     :license: BSD, see LICENSE for more details.
 """
+import re
 import sys
 from compiler import ast
 from jinja import nodes
@@ -15,7 +16,13 @@ from jinja.nodes import get_nodes
 from jinja.parser import Parser
 from jinja.exceptions import TemplateSyntaxError
 from jinja.translators import Translator
-from jinja.utils import translate_exception, capture_generator
+from jinja.utils import translate_exception, capture_generator, \
+     RUNTIME_EXCEPTION_OFFSET
+
+
+#: regular expression for the debug symbols
+_debug_re = re.compile(r'^\s*\# DEBUG\(filename=(?P<filename>.*?), '
+                       r'lineno=(?P<lineno>\d+)\)$')
 
 
 def _to_tuple(args):
@@ -33,48 +40,60 @@ class Template(object):
     Represents a finished template.
     """
 
-    def __init__(self, environment, code, translated_source=None):
+    def __init__(self, environment, code):
         self.environment = environment
         self.code = code
-        self.translated_source = translated_source
         self.generate_func = None
+        #: holds debug information
+        self._debug_info = None
+        #: unused in loader environments but used when a template
+        #: is loaded from a string in order to be able to debug those too
+        self._source = None
 
     def dump(self, stream=None):
         """Dump the template into python bytecode."""
         if stream is not None:
             from marshal import dump
-            dump((self.code, self.translated_source), stream)
+            dump(self.code, stream)
         else:
             from marshal import dumps
-            return dumps((self.code, self.translated_source))
+            return dumps(self.code)
 
     def load(environment, data):
         """Load the template from python bytecode."""
         if isinstance(data, basestring):
             from marshal import loads
-            code, src = loads(data)
+            code = loads(data)
         else:
             from marshal import load
-            code, src = load(data)
-        return Template(environment, code, src)
+            code = load(data)
+        return Template(environment, code)
     load = staticmethod(load)
 
     def render(self, *args, **kwargs):
         """Render a template."""
+        # if there is no generation function we execute the code
+        # in a new namespace and save the generation function and
+        # debug information.
         if self.generate_func is None:
             ns = {'environment': self.environment}
             exec self.code in ns
             self.generate_func = ns['generate']
+            self._debug_info = ns['debug_info']
         ctx = self.environment.context_class(self.environment, *args, **kwargs)
         try:
             return capture_generator(self.generate_func(ctx))
         except:
+            # debugging system:
+            # on any exception we first get the current exception information
+            # and skip the internal frames (currently either one (python2.5)
+            # or two (python2.4 and lower)). After that we call a function
+            # that creates a new traceback that is easier to debug.
             exc_type, exc_value, traceback = sys.exc_info()
-            # translate the exception, We skip two frames. One
-            # frame that is the "capture_generator" frame, and another
-            # one which is the frame of this function
+            for _ in xrange(RUNTIME_EXCEPTION_OFFSET):
+                traceback = traceback.tb_next
             traceback = translate_exception(self, exc_type, exc_value,
-                                            traceback.tb_next.tb_next, ctx)
+                                            traceback, ctx)
             raise exc_type, exc_value, traceback
 
 
@@ -156,8 +175,7 @@ class PythonTranslator(Translator):
         filename = node.filename or '<template>'
         source = translator.translate()
         return Template(environment,
-                        compile(source, filename, 'exec'),
-                        source)
+                        compile(source, filename, 'exec'))
     process = staticmethod(process)
 
     # -- private helper methods
@@ -173,15 +191,10 @@ class PythonTranslator(Translator):
         Return a comment that helds the node informations or None
         if there is no need to add a debug comment.
         """
-        if node.filename is None:
-            return
-        rv = '# DEBUG(filename=%s, lineno=%s)' % (
-            node.filename,
+        return '# DEBUG(filename=%s, lineno=%s)' % (
+            node.filename or '',
             node.lineno
         )
-        if force or rv != self.last_debug_comment:
-            self.last_debug_comment = rv
-            return rv
 
     def filter(self, s, filter_nodes):
         """
@@ -236,7 +249,6 @@ class PythonTranslator(Translator):
     def reset(self):
         self.indention = 0
         self.last_cycle_id = 0
-        self.last_debug_comment = None
 
     def translate(self):
         self.reset()
@@ -303,7 +315,7 @@ class PythonTranslator(Translator):
         lines = [
             'from __future__ import division\n'
             'from jinja.datastructure import Undefined, LoopContext, '
-            'CycleContext, BlockContext\n'
+            'CycleContext, SuperBlock\n'
             'from jinja.utils import buffereater\n'
             '%s\n'
             '__name__ = %r\n\n'
@@ -357,9 +369,7 @@ class PythonTranslator(Translator):
                         '    if False:',
                         '        yield None'
                     ])
-                    nodeinfo = self.nodeinfo(item, True)
-                    if nodeinfo:
-                        lines.append(self.indent(nodeinfo))
+                    lines.append(self.indent(self.nodeinfo(item, True)))
                     lines.append(self.handle_block(item, idx + 1))
                     tmp.append('buffereater(%s)' % func_name)
                 dict_lines.append('    %r: %s' % (
@@ -368,28 +378,46 @@ class PythonTranslator(Translator):
                 ))
             lines.append('\nblocks = {\n%s\n}' % ',\n'.join(dict_lines))
 
-        return '\n'.join(lines)
+        # now get the real source lines and map the debugging symbols
+        debug_mapping = []
+        last = None
+        offset = -1
+        sourcelines = ('\n'.join(lines)).splitlines()
+        result = []
+
+        for idx, line in enumerate(sourcelines):
+            m = _debug_re.search(line)
+            if m is not None:
+                d = m.groupdict()
+                this = (d['filename'] or None, int(d['lineno']))
+                # if there is no filename in this debug symbol
+                # if it's the same as the line before we ignore it
+                if this[0] and this != last:
+                    debug_mapping.append((idx - offset,) + this)
+                    last = this
+                # for each debug symbol the line number and so the offset
+                # changes by one.
+                offset += 1
+            else:
+                result.append(line)
+
+        result.append('\ndebug_info = %r' % debug_mapping)
+        return '\n'.join(result)
 
     def handle_template_text(self, node):
         """
         Handle data around nodes.
         """
-        nodeinfo = self.nodeinfo(node) or ''
-        if nodeinfo:
-            nodeinfo = self.indent(nodeinfo) + '\n'
-        return nodeinfo + self.indent('yield %r' % node.text)
+        return self.indent(self.nodeinfo(node)) + '\n' +\
+               self.indent('yield %r' % node.text)
 
     def handle_node_list(self, node):
         """
         In some situations we might have a node list. It's just
         a collection of multiple statements.
         """
-        buf = [self.handle_node(n) for n in node]
-        if buf:
-            nodeinfo = self.nodeinfo(node)
-            if nodeinfo:
-                buf.insert(0, self.indent(nodeinfo))
-        return '\n'.join(buf)
+        return '\n'.join([self.indent(self.nodeinfo(node))] +
+                         [self.handle_node(n) for n in node])
 
     def handle_for_loop(self, node):
         """
@@ -398,9 +426,7 @@ class PythonTranslator(Translator):
         """
         buf = []
         write = lambda x: buf.append(self.indent(x))
-        nodeinfo = self.nodeinfo(node)
-        if nodeinfo:
-            write(nodeinfo)
+        write(self.nodeinfo(node))
         write('ctx_push()')
 
         # recursive loops
@@ -421,9 +447,7 @@ class PythonTranslator(Translator):
 
         # handle real loop code
         self.indention += 1
-        nodeinfo = self.nodeinfo(node.body)
-        if nodeinfo:
-            write(nodeinfo)
+        write(self.nodeinfo(node.body))
         buf.append(self.handle_node(node.body) or self.indent('pass'))
         self.indention -= 1
 
@@ -431,9 +455,7 @@ class PythonTranslator(Translator):
         if node.else_:
             write('if not context[\'loop\'].iterated:')
             self.indention += 1
-            nodeinfo = self.nodeinfo(node.else_)
-            if nodeinfo:
-                write(nodeinfo)
+            write(self.nodeinfo(node.else_))
             buf.append(self.handle_node(node.else_) or self.indent('pass'))
             self.indention -= 1
 
@@ -459,26 +481,20 @@ class PythonTranslator(Translator):
         """
         buf = []
         write = lambda x: buf.append(self.indent(x))
-        nodeinfo = self.nodeinfo(node)
-        if nodeinfo:
-            write(nodeinfo)
+        write(self.nodeinfo(node))
         for idx, (test, body) in enumerate(node.tests):
             write('%sif %s:' % (
                 idx and 'el' or '',
                 self.handle_node(test)
             ))
             self.indention += 1
-            nodeinfo = self.nodeinfo(body)
-            if nodeinfo:
-                write(nodeinfo)
+            write(self.nodeinfo(body))
             buf.append(self.handle_node(body))
             self.indention -= 1
         if node.else_ is not None:
             write('else:')
             self.indention += 1
-            nodeinfo = self.nodeinfo(node.else_)
-            if nodeinfo:
-                write(nodeinfo)
+            write(self.nodeinfo(node.else_))
             buf.append(self.handle_node(node.else_))
             self.indention -= 1
         return '\n'.join(buf)
@@ -494,9 +510,7 @@ class PythonTranslator(Translator):
 
         write('if not %r in context.current:' % name)
         self.indention += 1
-        nodeinfo = self.nodeinfo(node)
-        if nodeinfo:
-            write(nodeinfo)
+        write(self.nodeinfo(node))
         if node.seq.__class__ in (ast.Tuple, ast.List):
             write('context.current[%r] = CycleContext(%s)' % (
                 name,
@@ -522,11 +536,9 @@ class PythonTranslator(Translator):
         """
         Handle a print statement.
         """
-        nodeinfo = self.nodeinfo(node) or ''
-        if nodeinfo:
-            nodeinfo = self.indent(nodeinfo) + '\n'
-        return nodeinfo + self.indent('yield finish_var(%s, context)' %
-                                      self.handle_node(node.variable))
+        return self.indent(self.nodeinfo(node)) + '\n' +\
+               self.indent('yield finish_var(%s, context)' %
+                           self.handle_node(node.variable))
 
     def handle_macro(self, node):
         """
@@ -537,9 +549,7 @@ class PythonTranslator(Translator):
 
         write('def macro(*args):')
         self.indention += 1
-        nodeinfo = self.nodeinfo(node)
-        if nodeinfo:
-            write(nodeinfo)
+        write(self.nodeinfo(node))
 
         if node.arguments:
             write('argcount = len(args)')
@@ -555,9 +565,7 @@ class PythonTranslator(Translator):
         else:
             write('ctx_push()')
 
-        nodeinfo = self.nodeinfo(node.body)
-        if nodeinfo:
-            write(nodeinfo)
+        write(self.nodeinfo(node.body))
         buf.append(self.handle_node(node.body))
         write('ctx_pop()')
         write('if False:')
@@ -572,10 +580,8 @@ class PythonTranslator(Translator):
         """
         Handle variable assignments.
         """
-        nodeinfo = self.nodeinfo(node) or ''
-        if nodeinfo:
-            nodeinfo = self.indent(nodeinfo) + '\n'
-        return nodeinfo + self.indent('context[%r] = %s' % (
+        return self.indent(self.nodeinfo(node)) + '\n' + \
+               self.indent('context[%r] = %s' % (
             node.name,
             self.handle_node(node.expr)
         ))
@@ -589,9 +595,7 @@ class PythonTranslator(Translator):
         write('def filtered():')
         self.indention += 1
         write('ctx_push()')
-        nodeinfo = self.nodeinfo(node.body)
-        if nodeinfo:
-            write(nodeinfo)
+        write(self.nodeinfo(node.body))
         buf.append(self.handle_node(node.body))
         write('ctx_pop()')
         write('if False:')
@@ -614,14 +618,12 @@ class PythonTranslator(Translator):
         buf = []
         write = lambda x: buf.append(self.indent(x))
 
-        write('ctx_push({\'super\': BlockContext(%r, blocks[%r], %r, context)})' % (
-            str(node.name),
+        write(self.nodeinfo(node))
+        write('ctx_push({\'super\': SuperBlock(%r, blocks, %r, context)})' % (
             str(node.name),
             level
         ))
-        nodeinfo = self.nodeinfo(node.body)
-        if nodeinfo:
-            write(nodeinfo)
+        write(self.nodeinfo(node.body))
         buf.append(self.handle_node(node.body))
         write('ctx_pop()')
         return '\n'.join(buf)
@@ -649,10 +651,8 @@ class PythonTranslator(Translator):
             replacements = '{%s}' % ', '.join(replacements)
         else:
             replacements = 'None'
-        nodeinfo = self.nodeinfo(node) or ''
-        if nodeinfo:
-            nodeinfo = self.indent(nodeinfo) + '\n'
-        return nodeinfo + self.indent('yield translate(%r, %r, %r, %s)' % (
+        return self.indent(self.nodeinfo(node)) + '\n' +\
+               self.indent('yield translate(%r, %r, %r, %s)' % (
             node.singular,
             node.plural,
             node.indicator,

@@ -136,6 +136,28 @@ available per default:
 
     Function that outputs the contents of the context.
 
+`lipsum`
+
+    Generate some paragraphs of random text:
+
+    .. sourcecode:: jinja
+
+        {{ lipsum(5) }}
+            five html paragraphs
+
+        {{ lipsum(2, False) }}
+            two ascii only paragraphs
+
+    Per default a paragraph is between 20 and 100 words long. You can
+    override this default with the third and fourth parameter:
+
+    .. sourcecode:: jinja
+
+        {{ lipsum(10, True, 50, 200) }}
+            generate 10 HTML paragraphs between 50 and 200 words.
+
+    *new in Jinja 1.1*
+
 Loops
 =====
 
@@ -474,6 +496,25 @@ value from the parent template is used instead.
     also defines the content that fills the hole in the *parent*. If there were
     two similarly-named ``{% block %}`` tags in a template, that template's
     parent wouldn't know which one of the blocks' content to use.
+
+Super Blocks
+============
+
+Starting with `Jinja 1.1` it's possible to render the contents of the parent
+block. By calling it you get the results of the parent block back. If you want
+to get the data of the parent you can give it an offset:
+
+.. sourcecode:: jinja
+
+    {{ super() }}
+        return the parent data
+
+    {{ super(1) }}
+        the same as above
+
+    {{ super(2) }}
+        return the data of the second parent block
+
 
 Template Inclusion
 ==================

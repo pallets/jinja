@@ -33,8 +33,8 @@ if os.environ.get('JDEBUG_SOURCEPRINT'):
     PythonTranslator.translate = debug_translate
 
 
-def p(x):
-    print PythonTranslator(e, Parser(e, x).parse()).translate()
+def p(x, f=None):
+    print PythonTranslator(e, Parser(e, x, f).parse()).translate()
 
 def l(x):
     for item in e.lexer.tokenize(x):
