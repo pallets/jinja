@@ -1,0 +1,29 @@
+Jinja Changelog
+===============
+
+Version 1.1
+-----------
+(codename to be selected, release date unknown)
+
+- blocks now support ``{{ super() }}`` to render the parent output.
+
+- debugging system improved, smaller filesize for the cached files.
+
+- added whitespace management system for the template designer.
+
+- some small bugfixes.
+
+- improved security system regarding function calls.
+
+- added `lipsum` function
+
+- strings without unicode characters are processed as binary strings now
+  to workaround problems with `datetime.strftime` which only accepts
+  binary strings.
+
+
+Version 1.0
+-----------
+(released Mar 23, 2007)
+
+- Initial release
