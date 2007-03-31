@@ -446,7 +446,10 @@ class PythonTranslator(Translator):
         # handle real loop code
         self.indention += 1
         write(self.nodeinfo(node.body))
-        buf.append(self.handle_node(node.body) or self.indent('pass'))
+        if node.body:
+            buf.append(self.handle_node(node.body))
+        else:
+            write('pass')
         self.indention -= 1
 
         # else part of loop

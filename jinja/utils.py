@@ -29,8 +29,6 @@ except ImportError:
 #: number of maximal range items
 MAX_RANGE = 1000000
 
-_integer_re = re.compile('^(\d+)$')
-
 _word_split_re = re.compile(r'(\s+)')
 
 _punctuation_re = re.compile(
@@ -199,7 +197,43 @@ def generate_lorem_ipsum(n=5, html=True, min=20, max=100):
     return u'\n'.join([u'<p>%s</p>' % escape(x) for x in result])
 
 
-# python2.4 and lower has a bug regarding joining of broken generators
+def watch_changes(env, context, iterable, *attributes):
+    """
+    Wise replacement for ``{% ifchanged %}``.
+    """
+    # find the attributes to watch
+    if attributes:
+        tests = []
+        tmp = []
+        for attribute in attributes:
+            if isinstance(attribute, (str, unicode, int, long, bool)):
+                tmp.append(attribute)
+            else:
+                tests.append(tuple(attribute))
+        if tmp:
+            tests.append(tuple(attribute))
+        last = tuple([object() for x in tests])
+    # or no attributes if we watch the object itself
+    else:
+        tests = None
+        last = object()
+
+    # iterate trough it and keep check the attributes or values
+    for item in iterable:
+        if tests is None:
+            cur = item
+        else:
+            cur = tuple([env.get_attributes(item, x) for x in tests])
+        if cur != last:
+            changed = True
+            last = cur
+        else:
+            changed = False
+        yield changed, item
+watch_changes.jinja_context_callable = True
+
+
+# python2.4 and lower has a bug regarding joining of broken generators.
 # because of the runtime debugging system we have to keep track of the
 # number of frames to skip. that's what RUNTIME_EXCEPTION_OFFSET is for.
 if sys.version_info < (2, 5):

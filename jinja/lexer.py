@@ -111,17 +111,19 @@ class Lexer(object):
             ],
             # comments
             'comment_begin': [
-                (c(r'(.*?)(\-%s\s*|%s)' % (
+                (c(r'(.*?)((?:\-%s\s*|%s)%s)' % (
                     e(environment.comment_end_string),
-                    e(environment.comment_end_string)
+                    e(environment.comment_end_string),
+                    block_suffix_re
                 )), ('comment', 'comment_end'), '#pop'),
                 (c('(.)'), (Failure('Missing end of comment tag'),), None)
             ],
             # directives
             'block_begin': [
-                (c('\-%s\s*|%s' % (
+                (c('(?:\-%s\s*|%s)%s' % (
                     e(environment.block_end_string),
-                    e(environment.block_end_string)
+                    e(environment.block_end_string),
+                    block_suffix_re
                 )), 'block_end', '#pop'),
             ] + tag_rules,
             # variables

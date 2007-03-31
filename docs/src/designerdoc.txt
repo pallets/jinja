@@ -158,6 +158,56 @@ available per default:
 
     *new in Jinja 1.1*
 
+`watchchanges`
+
+    Jinja does not provide an django like ``{% ifchanged %}`` tag. As
+    replacement for this tag there is a special function in the namespace
+    called `watchchanges`.
+
+    You can use it like this:
+
+    .. sourcecode:: html+jinja
+
+        {% for changed, article in watchchanges(articles, 'date', 'day') %}
+            {% if changed %}<h3>{{ articles.date.day }}</h3>{% endif %}
+            <h4>{{ article.title|e }}</h4>
+            <p>{{ article.body|e }}</p>
+        {% endif %}
+
+    For each iteration `watchchanges` will check the given attribute. If it
+    changed to the former iteration the first yielded item (in this example
+    it's called `changed`) will be `true`, else `false`.
+
+    In this example `articles` is a list of articles for the template with
+    an attribute called `date.day` which represents the current day. To only
+    add a new day headline if the day has changed `watchchanges` is now told
+    to check `articles.date.days`.
+
+    If you want to observe more than one attribute you can provide pairs:
+
+    .. sourcecode:: html+jinja
+
+        {% for changed, item in watchchanges(foo, ('a', 'b'), ('a', 'c')) %}
+            ...
+        {% endfor %}
+
+    Note that if you want to watch two first level attributes you have to
+    either use the list syntax `[]` or add a colon:
+
+    .. sourcecode:: html+jinja
+
+        {% for changed, item in watchchanges(foo, ['a'], ('b',)) %}
+            ...
+        {% endfor %}
+
+    otherwise Jinja cannot differ between a pair of parentheses to group
+    expressions or the sequence syntax.
+
+    If you don't provide any arguments the value of the variable itself
+    is checked.
+
+    *new in Jinja 1.1*
+
 Loops
 =====
 

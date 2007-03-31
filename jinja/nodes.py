@@ -100,10 +100,10 @@ class Template(NodeList):
         return self.extends is not None and [self.extends] or []
 
     def __repr__(self):
-        return 'Template(%r, %r, %r)' % (
+        return 'Template(%r, %r, %s)' % (
             self.filename,
             self.extends,
-            NodeList.__repr__(self)
+            list.__repr__(self)
         )
 
 

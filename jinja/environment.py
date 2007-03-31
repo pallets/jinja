@@ -182,6 +182,16 @@ class Environment(object):
                 pass
         return Undefined
 
+    def get_attributes(self, obj, attributes):
+        """
+        Get some attributes from an object. If attributes is an
+        empty sequence the object is returned as it.
+        """
+        get = self.get_attribute
+        for name in attributes:
+            obj = get(obj, name)
+        return obj
+
     def call_function(self, f, context, args, kwargs, dyn_args, dyn_kwargs):
         """
         Function call helper. Called for all functions that are passed

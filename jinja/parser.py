@@ -475,9 +475,17 @@ class Parser(object):
         tokens = []
         for t_lineno, t_token, t_data in gen:
             if t_token == 'string':
-                tokens.append('u' + t_data)
-            else:
-                tokens.append(t_data)
+                # because some libraries have problems with unicode
+                # objects we do some lazy unicode processing here.
+                # if a string is ASCII only we yield it as string
+                # in other cases as unicode. This works around
+                # problems with datetimeobj.strftime()
+                try:
+                    str(t_data)
+                except UnicodeError:
+                    tokens.append('u' + t_data)
+                    continue
+            tokens.append(t_data)
         source = '\xef\xbb\xbf' + (template % (u' '.join(tokens)).
                                    encode('utf-8'))
         try:
