@@ -21,9 +21,9 @@ from jinja.nodes import Trans
 from jinja.datastructure import Context, TemplateData
 from jinja.exceptions import SecurityException, TemplateNotFound
 
-try:
+if sys.version_info >= (2, 5):
     from collections import deque
-except ImportError:
+else:
     deque = None
 
 #: number of maximal range items
@@ -416,7 +416,7 @@ class CacheDict(object):
         if deque is not None:
             self._queue = deque()
             self._popleft = self._queue.popleft
-        # python2.3, just use a list
+        # python2.3/2.4, just use a list
         else:
             self._queue = []
             pop = self._queue.pop
