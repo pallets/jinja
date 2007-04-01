@@ -599,7 +599,7 @@ def do_capture(name='captured', clean=False):
         {% endfilter %}
         {{ foo }}
     """
-    if not isinstance(name, unicode):
+    if not isinstance(name, basestring):
         raise FilterArgumentError('You can only capture into variables')
     def wrapped(env, context, value):
         context[name] = value
