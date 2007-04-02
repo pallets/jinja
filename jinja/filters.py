@@ -70,12 +70,12 @@ def do_replace(s, old, new, count=None):
        not isinstance(new, basestring):
         raise FilterArgumentError('the replace filter requires '
                                   'string replacement arguments')
-    elif not isinstance(count, (int, long)):
+    if count is None:
+        return s.replace(old, new)
+    if not isinstance(count, (int, long)):
         raise FilterArgumentError('the count parameter of the '
                                    'replace filter requires '
                                    'an integer')
-    if count is None:
-        return s.replace(old, new)
     return s.replace(old, new, count)
 do_replace = stringfilter(do_replace)
 
