@@ -21,6 +21,10 @@ Version 1.1
   to workaround problems with `datetime.strftime` which only accepts
   binary strings.
 
+- developer friendly traceback is now toggleable
+
+- silent variable name failure is now toggleable
+
 
 Version 1.0
 -----------

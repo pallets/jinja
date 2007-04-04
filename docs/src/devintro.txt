@@ -74,6 +74,16 @@ Here the possible initialization parameters:
 `tests`                   dict of tests of the default tests if not defined.
 `context_class`           the context class this template should use. See
                           the `context documentation`_ for more details.
+`silent`                  set this to `False` if you want to receive errors
+                          for missing template variables or attributes.
+                          Defaults to `False`. *new in Jinja 1.1*
+`friendly_traceback`      Set this to `False` to disable the developer
+                          friendly traceback rewriting. Whenever an
+                          runtime or syntax error occours jinja will try
+                          to make a developer friendly traceback that shows
+                          the error in the template line. This however can
+                          be annoying when debugging broken functions which
+                          are called from the template. *new in Jinja 1.1*
 ========================= ==================================================
 
 All of these variables except those marked with a star (*) are modifiable after

@@ -15,7 +15,7 @@ from jinja.loaders import LoaderWrapper
 from jinja.datastructure import Undefined, Markup, Context, FakeTranslator
 from jinja.utils import escape, collect_translations, get_attribute
 from jinja.exceptions import FilterNotFound, TestNotFound, \
-     SecurityException, TemplateSyntaxError
+     SecurityException, TemplateSyntaxError, TemplateRuntimeError
 from jinja.defaults import DEFAULT_FILTERS, DEFAULT_TESTS, DEFAULT_NAMESPACE
 
 
@@ -40,7 +40,9 @@ class Environment(object):
                  loader=None,
                  filters=None,
                  tests=None,
-                 context_class=Context):
+                 context_class=Context,
+                 silent=True,
+                 friendly_traceback=True):
 
         # lexer / parser information
         self.block_start_string = block_start_string
@@ -59,6 +61,8 @@ class Environment(object):
         self.tests = tests is None and DEFAULT_TESTS.copy() or tests
         self.default_filters = default_filters or []
         self.context_class = context_class
+        self.silent = silent
+        self.friendly_traceback = friendly_traceback
 
         # global namespace
         self.globals = namespace is None and DEFAULT_NAMESPACE.copy() \
@@ -91,7 +95,9 @@ class Environment(object):
         try:
             rv = PythonTranslator.process(self, Parser(self, source).parse())
         except TemplateSyntaxError, e:
-            # if errors occour raise a better traceback
+            # on syntax errors rewrite the traceback if wanted
+            if not self.friendly_traceback:
+                raise
             from jinja.utils import raise_syntax_error
             __traceback_hide__ = True
             raise_syntax_error(e, self, source)
@@ -180,7 +186,10 @@ class Environment(object):
                 return get_attribute(obj, name)
             except (AttributeError, SecurityException):
                 pass
-        return Undefined
+        if self.silent:
+            return Undefined
+        raise TemplateRuntimeError('attribute %r or object %r not defined' % (
+            name, obj))
 
     def get_attributes(self, obj, attributes):
         """

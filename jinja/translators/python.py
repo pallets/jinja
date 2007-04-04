@@ -84,6 +84,8 @@ class Template(object):
         try:
             return capture_generator(self.generate_func(ctx))
         except:
+            if not self.environment.friendly_traceback:
+                raise
             # debugging system:
             # on any exception we first get the current exception information
             # and skip the internal frames (currently either one (python2.5)

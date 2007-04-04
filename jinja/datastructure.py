@@ -176,22 +176,23 @@ class Context(object):
         return result
 
     def __getitem__(self, name):
-        if name.startswith('::'):
+        if not name.startswith('::'):
+            # because the stack is usually quite small we better use [::-1]
+            # which is faster than reversed() somehow.
+            for d in self._stack[::-1]:
+                if name in d:
+                    rv = d[name]
+                    if rv.__class__ is Deferred:
+                        rv = rv(self, name)
+                        # never touch the globals!
+                        if d is self.globals:
+                            self.initial[name] = rv
+                        else:
+                            d[name] = rv
+                    return rv
+        if self.environment.silent:
             return Undefined
-        # because the stack is usually quite small we better use [::-1]
-        # which is faster than reversed() somehow.
-        for d in self._stack[::-1]:
-            if name in d:
-                rv = d[name]
-                if rv.__class__ is Deferred:
-                    rv = rv(self, name)
-                    # never touch the globals!
-                    if d is self.globals:
-                        self.initial[name] = rv
-                    else:
-                        d[name] = rv
-                return rv
-        return Undefined
+        raise TemplateRuntimeError('%r is not defined' % name)
 
     def __setitem__(self, name, value):
         self.current[name] = value

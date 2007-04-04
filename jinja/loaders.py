@@ -84,6 +84,8 @@ class LoaderWrapper(object):
         try:
             return self.loader.load(self.environment, name, translator)
         except TemplateSyntaxError, e:
+            if not self.environment.friendly_traceback:
+                raise
             __traceback_hide__ = True
             raise_syntax_error(e, self.environment)
 

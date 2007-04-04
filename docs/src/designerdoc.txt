@@ -688,6 +688,14 @@ attribute calls return undefined, calling too:
     {{ undefined.attribute().attribute_too[42] }}
         still returns `undefined`.
 
+Starting with Jinja 1.1 it's possible to control the `undefined` behavior
+in the Jinja environment, thus on the application side. If you receive
+a `TemplateRuntimeError` when operating on an undefined variable the
+environment was created with `silent` disabled.
+
+In a non silent environment the error you get tells you the line number
+and the name of the variable / attribute which could not be found.
+
 Escaping
 ========
 
