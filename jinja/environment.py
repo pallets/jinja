@@ -181,7 +181,7 @@ class Environment(object):
         """
         try:
             return obj[name]
-        except (TypeError, KeyError, IndexError):
+        except (TypeError, KeyError, IndexError, AttributeError):
             try:
                 return get_attribute(obj, name)
             except (AttributeError, SecurityException):
