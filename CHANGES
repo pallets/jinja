@@ -8,6 +8,7 @@ Version 1.1
 - blocks now support ``{{ super() }}`` to render the parent output.
 
 - debugging system improved, smaller filesize for the cached files.
+  Debugging works now well for any module using linecache.
 
 - added whitespace management system for the template designer.
 
