@@ -21,6 +21,9 @@ from jinja.nodes import Trans
 from jinja.datastructure import Context, TemplateData
 from jinja.exceptions import SecurityException, TemplateNotFound
 
+#: the python2.4 version of deque is missing the remove method
+#: because a for loop with a lookup for the missing value written
+#: in python is slower we just use deque if we have python2.5 or higher
 if sys.version_info >= (2, 5):
     from collections import deque
 else:
@@ -316,7 +319,10 @@ def raise_syntax_error(exception, env, source=None):
 
 def collect_translations(ast):
     """
-    Collect all translatable strings for the given ast.
+    Collect all translatable strings for the given ast. The
+    return value is a list of tuples in the form ``(lineno, singular,
+    plural)``. If a translation doesn't require a plural form the
+    third item is `None`.
     """
     todo = [ast]
     result = []
@@ -428,23 +434,36 @@ class CacheDict(object):
         self._append = self._queue.append
 
     def copy(self):
+        """
+        Return an shallow copy of the instance.
+        """
         rv = CacheDict(self.capacity)
         rv._mapping.update(self._mapping)
         rv._queue = self._queue[:]
         return rv
 
     def get(self, key, default=None):
+        """
+        Return an item from the cache dict or `default`
+        """
         if key in self:
             return self[key]
         return default
 
     def setdefault(self, key, default=None):
+        """
+        Set `default` if the key is not in the cache otherwise
+        leave unchanged. Return the value of this key.
+        """
         if key in self:
             return self[key]
         self[key] = default
         return default
 
     def clear(self):
+        """
+        Clear the cache dict.
+        """
         self._mapping.clear()
         try:
             self._queue.clear()
@@ -452,9 +471,15 @@ class CacheDict(object):
             del self._queue[:]
 
     def __contains__(self, key):
+        """
+        Check if a key exists in this cache dict.
+        """
         return key in self._mapping
 
     def __len__(self):
+        """
+        Return the current size of the cache dict.
+        """
         return len(self._mapping)
 
     def __repr__(self):
@@ -464,6 +489,12 @@ class CacheDict(object):
         )
 
     def __getitem__(self, key):
+        """
+        Get an item from the cache dict. Moves the item up so that
+        it has the highest priority then.
+
+        Raise an `KeyError` if it does not exist.
+        """
         rv = self._mapping[key]
         if self._queue[-1] != key:
             self._remove(key)
@@ -471,6 +502,10 @@ class CacheDict(object):
         return rv
 
     def __setitem__(self, key, value):
+        """
+        Sets the value for an item. Moves the item up so that it
+        has the highest priority then.
+        """
         if key in self._mapping:
             self._remove(key)
         elif len(self._mapping) == self.capacity:
@@ -479,16 +514,38 @@ class CacheDict(object):
         self._mapping[key] = value
 
     def __delitem__(self, key):
+        """
+        Remove an item from the cache dict.
+        Raise an `KeyError` if it does not exist.
+        """
         del self._mapping[key]
         self._remove(key)
 
     def __iter__(self):
+        """
+        Iterate over all values in the cache dict, ordered by
+        the most recent usage.
+        """
         try:
             return reversed(self._queue)
         except NameError:
             return iter(self._queue[::-1])
 
     def __reversed__(self):
+        """
+        Iterate over the values in the cache dict, oldest items
+        coming first.
+        """
         return iter(self._queue)
 
     __copy__ = copy
+
+    def __deepcopy__(self):
+        """
+        Return a deep copy of the cache dict.
+        """
+        from copy import deepcopy
+        rv = CacheDict(self.capacity)
+        rv._mapping = deepcopy(self._mapping)
+        rv._queue = deepcopy(self._queue)
+        return rv

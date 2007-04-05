@@ -3,6 +3,22 @@
     jinja.lexer
     ~~~~~~~~~~~
 
+    This module implements a Jinja / Python combination lexer. The
+    `Lexer` class provided by this module is used to do some preprocessing
+    for Jinja.
+
+    On the one hand it filters out invalid operators like the bitshift
+    operators we don't allow in templates. On the other hand it separates
+    template code and python code in expressions.
+
+    Because of some limitations in the compiler package which are just
+    natural but annoying for Jinja, the lexer also "escapes" non names that
+    are not keywords. The Jinja parser then removes those escaping marks
+    again.
+
+    This is required in order to make "class" and some other python keywords
+    we don't use valid identifiers.
+
     :copyright: 2007 by Armin Ronacher.
     :license: BSD, see LICENSE for more details.
 """
@@ -14,6 +30,9 @@ try:
     set
 except NameError:
     from sets import Set as set
+
+
+__all__ = ['Lexer', 'Failure', 'keywords']
 
 
 # static regular expressions
@@ -155,12 +174,12 @@ class Lexer(object):
 
         Additionally non keywords are escaped.
         """
-        def filter():
+        def generate():
             for lineno, token, value in self.tokeniter(source):
                 if token == 'name' and value not in keywords:
                     value += '_'
                 yield lineno, token, value
-        return TokenStream(filter())
+        return TokenStream(generate())
 
     def tokeniter(self, source):
         """
@@ -170,7 +189,7 @@ class Lexer(object):
         parser uses the `tokenize` function with returns a `TokenStream` with
         some escaped tokens.
         """
-        source = type(source)('\n').join(source.splitlines())
+        source = '\n'.join(source.splitlines())
         pos = 0
         lineno = 1
         stack = ['root']

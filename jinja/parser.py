@@ -5,6 +5,12 @@
 
     Implements the template parser.
 
+    The Jinja template parser is not a real parser but a combination of the
+    python compiler package and some postprocessing. The tokens yielded by
+    the lexer are used to separate template data and expressions. The
+    expression tokens are then converted into strings again and processed
+    by the python parser.
+
     :copyright: 2007 by Armin Ronacher.
     :license: BSD, see LICENSE for more details.
 """
@@ -20,6 +26,9 @@ except NameError:
     from sets import Set as set
 
 
+__all__ = ['Parser']
+
+
 # callback functions for the subparse method
 end_of_block = lambda p, t, d: t == 'block_end'
 end_of_variable = lambda p, t, d: t == 'variable_end'
@@ -32,24 +41,6 @@ end_of_filter = lambda p, t, d: t == 'name' and d == 'endfilter'
 end_of_macro = lambda p, t, d: t == 'name' and d == 'endmacro'
 end_of_block_tag = lambda p, t, d: t == 'name' and d == 'endblock'
 end_of_trans = lambda p, t, d: t == 'name' and d == 'endtrans'
-
-
-string_inc_re = re.compile(r'(?:[^\d]*(\d+)[^\d]*)+')
-
-
-def inc_string(s):
-    """
-    Increment a string
-    """
-    m = string_inc_re.search(s)
-    if m:
-        next = str(int(m.group(1)) + 1)
-        start, end = m.span(1)
-        s = s[:max(end - len(next), start)] + next + s[end:]
-    else:
-        name, ext = s.rsplit('.', 1)
-        return '%s2.%s' % (name, ext)
-    return s
 
 
 class Parser(object):
@@ -67,7 +58,10 @@ class Parser(object):
         self.filename = filename
         self.tokenstream = environment.lexer.tokenize(source)
 
+        #: if this template has a parent template it's stored here
+        #: after parsing
         self.extends = None
+        #: set for blocks in order to keep them unique
         self.blocks = set()
 
         self.directives = {

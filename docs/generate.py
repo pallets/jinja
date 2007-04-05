@@ -101,6 +101,13 @@ def generate_list_of_loaders():
 
     return '\n\n'.join(result)
 
+def generate_environment_doc():
+    from jinja.environment import Environment
+    return '%s\n\n%s' % (
+        inspect.getdoc(Environment),
+        inspect.getdoc(Environment.__init__)
+    )
+
 e = Environment()
 
 PYGMENTS_FORMATTER = HtmlFormatter(style='pastie', cssclass='syntax')
@@ -108,6 +115,7 @@ PYGMENTS_FORMATTER = HtmlFormatter(style='pastie', cssclass='syntax')
 LIST_OF_FILTERS = generate_list_of_filters()
 LIST_OF_TESTS = generate_list_of_tests()
 LIST_OF_LOADERS = generate_list_of_loaders()
+ENVIRONMENT_DOC = generate_environment_doc()
 
 FULL_TEMPLATE = e.from_string('''\
 <!DOCTYPE html PUBLIC "-//W3C//DTD HTML 4.01//EN"
@@ -229,7 +237,8 @@ def generate_documentation(data, link_style):
     writer = DocumentationWriter(link_style)
     data = data.replace('[[list_of_filters]]', LIST_OF_FILTERS)\
                .replace('[[list_of_tests]]', LIST_OF_TESTS)\
-               .replace('[[list_of_loaders]]', LIST_OF_LOADERS)
+               .replace('[[list_of_loaders]]', LIST_OF_LOADERS)\
+               .replace('[[environment_doc]]', ENVIRONMENT_DOC)
     parts = publish_parts(
         data,
         writer=writer,

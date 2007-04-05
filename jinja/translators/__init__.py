@@ -3,8 +3,7 @@
     jinja.translators
     ~~~~~~~~~~~~~~~~~
 
-    The submodules of this module provide translators for the jinja ast
-    which basically just is the python ast with a few more nodes.
+    The submodules of this module provide translators for the jinja ast.
 
     :copyright: 2007 by Armin Ronacher.
     :license: BSD, see LICENSE for more details.

@@ -19,9 +19,16 @@ from jinja.exceptions import FilterNotFound, TestNotFound, \
 from jinja.defaults import DEFAULT_FILTERS, DEFAULT_TESTS, DEFAULT_NAMESPACE
 
 
+__all__ = ['Environment']
+
+
 class Environment(object):
     """
     The jinja environment.
+
+    The core component of Jinja is the `Environment`. It contains
+    important shared variables like configuration, filters, tests,
+    globals and others.
     """
 
     def __init__(self,
@@ -43,6 +50,70 @@ class Environment(object):
                  context_class=Context,
                  silent=True,
                  friendly_traceback=True):
+        """
+        Here the possible initialization parameters:
+
+        ========================= ============================================
+        `block_start_string` *    the string marking the begin of a block.
+                                  this defaults to ``'{%'``.
+        `block_end_string` *      the string marking the end of a block.
+                                  defaults to ``'%}'``.
+        `variable_start_string` * the string marking the begin of a print
+                                  statement. defaults to ``'{{'``.
+        `comment_start_string` *  the string marking the begin of a
+                                  comment. defaults to ``'{#'``.
+        `comment_end_string` *    the string marking the end of a comment.
+                                  defaults to ``'#}'``.
+        `trim_blocks` *           If this is set to ``True`` the first newline
+                                  after a block is removed (block, not
+                                  variable tag!). Defaults to ``False``.
+        `auto_escape`             If this is set to ``True`` Jinja will
+                                  automatically escape all variables using xml
+                                  escaping methods. If you don't want to
+                                  escape a string you have to wrap it in a
+                                  ``Markup`` object from the
+                                  ``jinja.datastructure`` module. If
+                                  `auto_escape` is ``True`` there will be also
+                                  a ``Markup`` object in the template
+                                  namespace to define partial html fragments.
+                                  Note that we do not recomment this feature.
+        `default_filters`         list of tuples in the form (``filter_name``,
+                                  ``arguments``) where ``filter_name`` is the
+                                  name of a registered filter and
+                                  ``arguments`` a tuple with the filter
+                                  arguments. The filters specified here will
+                                  always be applied when printing data to the
+                                  template. *new in Jinja 1.1*
+        `template_charset`        The charset of the templates. Defaults
+                                  to ``'utf-8'``.
+        `charset`                 Charset of all string input data. Defaults
+                                  to ``'utf-8'``.
+        `namespace`               Global namespace for all templates.
+        `loader`                  Specify a template loader.
+        `filters`                 dict of filters or the default filters if
+                                  not defined.
+        `tests`                   dict of tests of the default tests if not
+                                  defined.
+        `context_class`           the context class this template should use.
+                                  See the `Context` documentation for more
+                                  details.
+        `silent`                  set this to `False` if you want to receive
+                                  errors for missing template variables or
+                                  attributes. Defaults to `False`. *new in
+                                  Jinja 1.1*
+        `friendly_traceback`      Set this to `False` to disable the developer
+                                  friendly traceback rewriting. Whenever an
+                                  runtime or syntax error occours jinja will
+                                  try to make a developer friendly traceback
+                                  that shows the error in the template line.
+                                  This however can be annoying when debugging
+                                  broken functions that are called from the
+                                  template. *new in Jinja 1.1*
+        ========================= ============================================
+
+        All of these variables except those marked with a star (*) are
+        modifiable after environment initialization.
+        """
 
         # lexer / parser information
         self.block_start_string = block_start_string
@@ -81,15 +152,25 @@ class Environment(object):
         Get or set the template loader.
         """
         self._loader = LoaderWrapper(self, value)
-    loader = property(lambda s: s._loader, loader, loader.__doc__)
+    loader = property(lambda s: s._loader, loader, doc=loader.__doc__)
 
     def parse(self, source, filename=None):
-        """Function that creates a new parser and parses the source."""
+        """
+        Parse the sourcecode and return the abstract syntax tree. This tree
+        of nodes is used by the `translators`_ to convert the template into
+        executable source- or bytecode.
+
+        .. _translators: translators.txt
+        """
         parser = Parser(self, source, filename)
         return parser.parse()
 
     def from_string(self, source):
-        """Load a template from a string."""
+        """
+        Load and parse a template source and translate it into eval-able
+        Python code. This code is wrapped within a `Template` class that
+        allows you to render it.
+        """
         from jinja.parser import Parser
         from jinja.translators.python import PythonTranslator
         try:
@@ -108,8 +189,10 @@ class Environment(object):
             return rv
 
     def get_template(self, filename):
-        """Load a template from a filename. Only works
-        if a proper loader is set."""
+        """
+        Load a template from a loader. If the template does not exist, you
+        will get a `TemplateNotFound` exception.
+        """
         return self._loader.load(filename)
 
     def to_unicode(self, value):

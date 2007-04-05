@@ -5,6 +5,17 @@
 
     This module translates a jinja ast into python code.
 
+    This translator tries hard to keep Jinja sandboxed. All security
+    relevant calls are wrapped by methods defined in the environment.
+    This affects:
+
+    - method calls
+    - attribute access
+    - name resolution
+
+    It also adds debug symbols used by the traceback toolkit implemented
+    in `jinja.utils`.
+
     :copyright: 2007 by Armin Ronacher.
     :license: BSD, see LICENSE for more details.
 """
@@ -108,6 +119,10 @@ class PythonTranslator(Translator):
         self.environment = environment
         self.node = node
 
+        #: mapping to constants in the environment that are not
+        #: converted to context lookups. this should improve
+        #: performance and avoid accidentally screwing things up
+        #: by rebinding essential constants.
         self.constants = {
             'true':                 'True',
             'false':                'False',
@@ -115,6 +130,11 @@ class PythonTranslator(Translator):
             'undefined':            'Undefined'
         }
 
+        #: bind the nodes to the callback functions. There are
+        #: some missing! A few are specified in the `unhandled`
+        #: mapping in order to disallow their usage, some of them
+        #: will not appear in the jinja parser output because
+        #: they are filtered out.
         self.handlers = {
             # jinja nodes
             nodes.Template:         self.handle_template,
@@ -130,7 +150,7 @@ class PythonTranslator(Translator):
             nodes.Block:            self.handle_block,
             nodes.Include:          self.handle_include,
             nodes.Trans:            self.handle_trans,
-            # used python nodes
+            # python nodes
             ast.Name:               self.handle_name,
             ast.AssName:            self.handle_name,
             ast.Compare:            self.handle_compare,
@@ -158,33 +178,43 @@ class PythonTranslator(Translator):
             ast.Sliceobj:           self.handle_sliceobj
         }
 
+        #: mapping of unsupported syntax elements.
+        #: the value represents the feature name that appears
+        #: in the exception.
         self.unsupported = {
             ast.ListComp:           'list comprehensions',
             ast.From:               'imports',
             ast.Import:             'imports',
         }
+
+        #: because of python2.3 compatibility add generator
+        #: expressions only to the list of unused features
+        #: if it exists.
         if hasattr(ast, 'GenExpr'):
             self.unsupported.update({
                 ast.GenExpr:        'generator expressions'
             })
 
-        self.require_translations = False
-
     # -- public methods
 
     def process(environment, node):
+        """
+        The only public method. Creates a translator instance,
+        translates the code and returns it in form of an
+        `Template` instance.
+        """
         translator = PythonTranslator(environment, node)
         filename = node.filename or '<template>'
         source = translator.translate()
-        return Template(environment,
-                        compile(source, filename, 'exec'))
+        return Template(environment, compile(source, filename, 'exec'))
     process = staticmethod(process)
 
     # -- private helper methods
 
     def indent(self, text):
         """
-        Indent the current text.
+        Indent the current text. This does only indent the
+        first line.
         """
         return (' ' * (self.indention * 4)) + text
 
@@ -236,7 +266,9 @@ class PythonTranslator(Translator):
 
     def handle_node(self, node):
         """
-        Handle one node
+        Handle one node. Resolves the correct callback functions defined
+        in the callback mapping. This also raises the `TemplateSyntaxError`
+        for unsupported syntax elements such as list comprehensions.
         """
         if node.__class__ in self.handlers:
             out = self.handlers[node.__class__](node)
@@ -249,10 +281,19 @@ class PythonTranslator(Translator):
         return out
 
     def reset(self):
+        """
+        Reset translation variables such as indention, cycle id
+        or the require_translations flag.
+        """
         self.indention = 0
         self.last_cycle_id = 0
+        self.require_translations = False
 
     def translate(self):
+        """
+        Translate the node defined in the constructor after
+        resetting the translator.
+        """
         self.reset()
         return self.handle_node(self.node)
 
@@ -377,6 +418,9 @@ class PythonTranslator(Translator):
                 str(name),
                 _to_tuple(tmp)
             ))
+
+        # blocks must always be defined. even if it's empty. some
+        # features depend on it
         lines.append('\nblocks = {\n%s\n}' % ',\n'.join(dict_lines))
 
         # now get the real source lines and map the debugging symbols
@@ -439,8 +483,8 @@ class PythonTranslator(Translator):
 
         # simple loops
         else:
-            write('context[\'loop\'] = loop = LoopContext(%s, context[\'loop\'], None)' %
-                  self.handle_node(node.seq))
+            write('context[\'loop\'] = loop = LoopContext(%s, '
+                  'context[\'loop\'], None)' % self.handle_node(node.seq))
             write('for %s in loop:' %
                 self.handle_node(node.item)
             )
@@ -469,7 +513,8 @@ class PythonTranslator(Translator):
             self.indention += 1
             write('yield None')
             self.indention -= 2
-            write('context[\'loop\'] = LoopContext(None, context[\'loop\'], buffereater(forloop))')
+            write('context[\'loop\'] = LoopContext(None, context[\'loop\'], '
+                  'buffereater(forloop))')
             write('for item in forloop(%s):' % self.handle_node(node.seq))
             self.indention += 1
             write('yield item')
@@ -526,9 +571,11 @@ class PythonTranslator(Translator):
         self.indention -= 1
 
         if hardcoded:
-            write('yield finish_var(context.current[%r].cycle(), context)' % name)
+            write('yield finish_var(context.current[%r].cycle(), '
+                  'context)' % name)
         else:
-            write('yield finish_var(context.current[%r].cycle(%s), context)' % (
+            write('yield finish_var(context.current[%r].cycle(%s), '
+                  'context)' % (
                 name,
                 self.handle_node(node.seq)
             ))
@@ -558,7 +605,8 @@ class PythonTranslator(Translator):
             write('argcount = len(args)')
             tmp = []
             for idx, (name, n) in enumerate(node.arguments):
-                tmp.append('\'%s\': (argcount > %d and (args[%d],) or (%s,))[0]' % (
+                tmp.append('\'%s\': (argcount > %d and (args[%d],) '
+                           'or (%s,))[0]' % (
                     name,
                     idx,
                     idx,
@@ -575,7 +623,8 @@ class PythonTranslator(Translator):
         self.indention += 1
         write('yield False')
         self.indention -= 2
-        buf.append(self.indent('context[%r] = buffereater(macro)' % node.name))
+        buf.append(self.indent('context[%r] = buffereater(macro)' %
+                               node.name))
 
         return '\n'.join(buf)
 
@@ -605,7 +654,8 @@ class PythonTranslator(Translator):
         self.indention += 1
         write('yield None')
         self.indention -= 2
-        write('yield %s' % self.filter('u\'\'.join(filtered())', node.filters))
+        write('yield %s' % self.filter('u\'\'.join(filtered())',
+                                       node.filters))
         return '\n'.join(buf)
 
     def handle_block(self, node, level=0):
@@ -790,7 +840,8 @@ class PythonTranslator(Translator):
             else:
                 args.append(self.handle_node(arg))
         if not (args or kwargs or star_args or dstar_args):
-            return 'call_function_simple(%s, context)' % self.handle_node(node.node)
+            return 'call_function_simple(%s, context)' % \
+                   self.handle_node(node.node)
         return 'call_function(%s, context, %s, {%s}, %s, %s)' % (
             self.handle_node(node.node),
             _to_tuple(args),

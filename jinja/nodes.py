@@ -3,7 +3,11 @@
     jinja.nodes
     ~~~~~~~~~~~
 
-    Additional nodes for Jinja. Look like nodes from the ast.
+    This module implements additional nodes derived from the ast base node.
+
+    It also provides some node tree helper functions like `in_lineno` and
+    `get_nodes` used by the parser and translator in order to normalize
+    python and jinja nodes.
 
     :copyright: 2007 by Armin Ronacher.
     :license: BSD, see LICENSE for more details.

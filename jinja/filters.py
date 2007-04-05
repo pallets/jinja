@@ -269,7 +269,9 @@ def do_first():
         try:
             return iter(seq).next()
         except StopIteration:
-            return Undefined
+            if env.silent:
+                return Undefined
+            raise TemplateRuntimeError('%r is empty' % seq)
     return wrapped
 
 
@@ -280,8 +282,10 @@ def do_last():
     def wrapped(env, context, seq):
         try:
             return iter(_reversed(seq)).next()
-        except (TypeError, StopIteration):
-            return Undefined
+        except StopIteration:
+            if env.silent:
+                return Undefined
+            raise TemplateRuntimeError('%r is empty' % seq)
     return wrapped
 
 
@@ -292,8 +296,10 @@ def do_random():
     def wrapped(env, context, seq):
         try:
             return choice(seq)
-        except:
-            return Undefined
+        except IndexError:
+            if env.silent:
+                return Undefined
+            raise TemplateRuntimeError('%r is empty' % seq)
     return wrapped
 
 

@@ -15,7 +15,7 @@ Version 1.1
 
 - improved security system regarding function calls.
 
-- added `lipsum` function
+- added `lipsum` function to generate random text.
 
 - strings without unicode characters are processed as binary strings now
   to workaround problems with `datetime.strftime` which only accepts
@@ -24,6 +24,12 @@ Version 1.1
 - developer friendly traceback is now toggleable
 
 - silent variable name failure is now toggleable
+
+- fixed issue with old-style classes not implementing `__getitem__`
+  (thanks to Axel Böhm for discovering that bug)
+
+- added a bunch of new docstrings to the Jinja classes. Makes fun now to
+  use pydoc :-)
 
 
 Version 1.0

@@ -27,67 +27,7 @@ a look at the `installation`_ page for troubleshooting.
 The Environment
 ===============
 
-The core component of Jinja is the `Environment`. It contains important shared
-variables like configuration, filters, tests, globals and other stuff.
-
-Here the possible initialization parameters:
-
-========================= ==================================================
-`block_start_string` *    the string marking the begin of a block. this
-                          defaults to ``'{%'``.
-`block_end_string` *      the string marking the end of a block. defaults
-                          to ``'%}'``.
-`variable_start_string` * the string marking the begin of a print
-                          statement. defaults to ``'{{'``.
-`comment_start_string` *  the string marking the begin of a
-                          comment. defaults to ``'{#'``.
-`comment_end_string` *    the string marking the end of a comment.
-                          defaults to ``'#}'``.
-`trim_blocks` *           If this is set to ``True`` the first newline
-                          after a block is removed (block, not
-                          variable tag!). Defaults to ``False``.
-`auto_escape`             If this is set to ``True`` Jinja will
-                          automatically escape all variables using xml
-                          escaping methods. If you don't want to escape a
-                          string you have to wrap it in a ``Markup``
-                          object from the ``jinja.datastructure`` module.
-                          If `auto_escape` is ``True`` there will be also
-                          a ``Markup`` object in the template namespace
-                          to define partial html fragments. Note that we do
-                          not recomment this feature, see also the comment
-                          below.
-`default_filters`         list of tuples in the form (``filter_name``,
-                          ``arguments``) where ``filter_name`` is the
-                          name of a registered filter and ``arguments``
-                          a tuple with the filter arguments. The filters
-                          specified here will always be applied when
-                          printing data to the template.
-                          *new in jinja 1.1*
-`template_charset`        The charset of the templates. Defaults
-                          to ``'utf-8'``.
-`charset`                 Charset of all string input data. Defaults
-                          to ``'utf-8'``.
-`namespace`               Global namespace for all templates.
-`loader`                  Specify a template loader.
-`filters`                 dict of filters or the default filters if not
-                          defined.
-`tests`                   dict of tests of the default tests if not defined.
-`context_class`           the context class this template should use. See
-                          the `context documentation`_ for more details.
-`silent`                  set this to `False` if you want to receive errors
-                          for missing template variables or attributes.
-                          Defaults to `False`. *new in Jinja 1.1*
-`friendly_traceback`      Set this to `False` to disable the developer
-                          friendly traceback rewriting. Whenever an
-                          runtime or syntax error occours jinja will try
-                          to make a developer friendly traceback that shows
-                          the error in the template line. This however can
-                          be annoying when debugging broken functions which
-                          are called from the template. *new in Jinja 1.1*
-========================= ==================================================
-
-All of these variables except those marked with a star (*) are modifiable after
-environment initialization.
+[[environment_doc]]
 
 The environment provides the following useful functions and properties in
 addition to the initialization values:
@@ -174,7 +114,7 @@ Writing tests is explained in the `test development`_ section.
 
 .. _installation: installation.txt
 .. _context documentation: contextenv.txt
-.. _translators: translators.txt
 .. _loader: loaders.txt
+.. _translators: translators.txt
 .. _filter development: filters.txt
 .. _test development: tests.txt

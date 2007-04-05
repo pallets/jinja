@@ -44,56 +44,83 @@ class UndefinedType(object):
     __slots__ = ()
 
     def __init__(self):
-        try:
-            Undefined
-        except NameError:
-            pass
-        else:
-            raise TypeError('cannot create %r instances' %
-                            self.__class__.__name__)
+        raise TypeError('cannot create %r instances' %
+                        self.__class__.__name__)
 
-    __sub__ = __mul__ = __div__ = __rsub__ = __rmul__ = __div__ = __radd__ = \
-    __add__ = lambda self, other: other
+    def __add__(self, other):
+        """Any operator returns the operand."""
+        return other
+    __sub__ = __mul__ = __div__ = __rsub__ = __rmul__ = __div__ = __mod__ =\
+    __radd__ = __rmod__ = __add__
 
     def __getitem__(self, arg):
+        """Getting any item returns `Undefined`"""
         return self
 
     def __iter__(self):
+        """Iterating over `Undefined` returns an empty iterator."""
         if False:
             yield None
 
     def __getattr__(self, arg):
+        """Getting any attribute returns `Undefined`"""
         return self
 
     def __nonzero__(self):
+        """`Undefined` is considered boolean `False`"""
         return False
 
     def __len__(self):
+        """`Undefined` is an empty sequence"""
         return 0
 
     def __str__(self):
+        """The string representation is empty."""
         return ''
 
     def __unicode__(self):
+        """The unicode representation is empty."""
         return u''
 
+    def __repr__(self):
+        """The representation is ``'Undefined'``"""
+        return 'Undefined'
+
     def __int__(self):
+        """Converting `Undefined` to an integer ends up in ``0``"""
         return 0
 
     def __float__(self):
+        """Converting `Undefined` to an float ends up in ``0.0``"""
         return 0.0
 
     def __eq__(self, other):
+        """`Undefined` is not equal to anything else."""
         return False
 
     def __ne__(self, other):
+        """`Undefined` is not equal to anything else."""
         return True
 
     def __call__(self, *args, **kwargs):
+        """Calling `Undefined` returns `Undefined`"""
         return self
 
+    def __copy__(self):
+        """Return a copy."""
+        return self
 
-Undefined = UndefinedType()
+    def __deepcopy__(self, memo):
+        """Return a deepcopy."""
+        return self
+
+    def __reduce__(self):
+        """Helper for pickle."""
+        return 'Undefined'
+
+
+#: the singleton instance of UndefinedType
+Undefined = object.__new__(UndefinedType)
 
 
 class FakeTranslator(object):
@@ -102,9 +129,15 @@ class FakeTranslator(object):
     """
 
     def gettext(self, s):
+        """
+        Translate a singular string.
+        """
         return s
 
     def ngettext(self, s, p, n):
+        """
+        Translate a plural string.
+        """
         if n == 1:
             return s
         return p
@@ -153,20 +186,26 @@ class Context(object):
         self.cache = {}
 
     def pop(self):
-        """Pop the last layer from the stack and return it."""
+        """
+        Pop the last layer from the stack and return it.
+        """
         rv = self._stack.pop()
         self.current = self._stack[-1]
         return rv
 
     def push(self, data=None):
-        """Push a new dict or empty layer to the stack and return that layer"""
+        """
+        Push a new dict or empty layer to the stack and return that layer
+        """
         data = data or {}
         self._stack.append(data)
         self.current = self._stack[-1]
         return data
 
     def to_dict(self):
-        """Convert the context into a dict. This skips the globals."""
+        """
+        Convert the context into a dict. This skips the globals.
+        """
         result = {}
         for layer in self._stack[1:]:
             for key, value in layer.iteritems():
@@ -176,6 +215,10 @@ class Context(object):
         return result
 
     def __getitem__(self, name):
+        """
+        Resolve one item. Restrict the access to internal variables
+        such as ``'::cycle1'``. Resolve deferreds.
+        """
         if not name.startswith('::'):
             # because the stack is usually quite small we better use [::-1]
             # which is faster than reversed() somehow.
@@ -195,24 +238,32 @@ class Context(object):
         raise TemplateRuntimeError('%r is not defined' % name)
 
     def __setitem__(self, name, value):
+        """
+        Set a variable in the outermost layer.
+        """
         self.current[name] = value
 
     def __delitem__(self, name):
+        """
+        Delete an variable in the outermost layer.
+        """
         if name in self.current:
             del self.current[name]
 
     def __contains__(self, name):
+        """
+        Check if the context contains a given variable.
+        """
         for layer in self._stack:
             if name in layer:
                 return True
         return False
 
     def __repr__(self):
-        tmp = {}
-        for d in self._stack:
-            for key, value in d.iteritems():
-                tmp[key] = value
-        return 'Context(%s)' % repr(tmp)
+        """
+        String representation of the context.
+        """
+        return 'Context(%r)' % self.to_dict()
 
 
 class LoopContext(object):
@@ -349,11 +400,12 @@ class TokenStream(object):
     """
 
     def __init__(self, generator):
-        self._generator = generator
+        self._next = generator.next
         self._pushed = []
         self.last = (1, 'initial', '')
 
     def __iter__(self):
+        """Return self in order to mark this is iterator."""
         return self
 
     def __nonzero__(self):
@@ -373,7 +425,7 @@ class TokenStream(object):
         if self._pushed:
             rv = self._pushed.pop()
         else:
-            rv = self._generator.next()
+            rv = self._next()
         self.last = rv
         return rv
 

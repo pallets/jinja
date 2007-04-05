@@ -14,6 +14,9 @@ from jinja.utils import debug_context, safe_range, generate_lorem_ipsum, \
      watch_changes
 
 
+__all__ = ['DEFAULT_FILTERS', 'DEFAULT_TESTS', 'DEFAULT_NAMESPACE']
+
+
 DEFAULT_NAMESPACE = {
     'range':                safe_range,
     'debug':                debug_context,
