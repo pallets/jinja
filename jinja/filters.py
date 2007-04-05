@@ -105,12 +105,15 @@ def do_escape(attribute=False):
 
     This method will have no effect it the value is already escaped.
     """
+    #: because filters are cached we can make a local alias to
+    #: speed things up a bit
+    e = escape
     def wrapped(env, context, s):
         if isinstance(s, TemplateData):
             return s
         elif hasattr(s, '__html__'):
             return s.__html__()
-        return escape(env.to_unicode(s), attribute)
+        return e(env.to_unicode(s), attribute)
     return wrapped
 
 

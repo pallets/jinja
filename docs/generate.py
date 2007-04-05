@@ -258,7 +258,8 @@ def handle_file(filename, fp, dst, preproc):
     now = datetime.now()
     title = os.path.basename(filename)[:-4]
     content = fp.read()
-    parts = generate_documentation(content, (lambda x: './%s.html' % x))
+    suffix = not preproc and '.html' or ''
+    parts = generate_documentation(content, (lambda x: './%s%s' % (x, suffix)))
     result = file(os.path.join(dst, title + '.html'), 'w')
     c = dict(parts)
     c['style'] = PYGMENTS_FORMATTER.get_style_defs('.syntax')

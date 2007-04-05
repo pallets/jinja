@@ -16,9 +16,6 @@ except NameError:
     from sets import Set as set
 
 from jinja.exceptions import TemplateSyntaxError, TemplateRuntimeError
-from cgi import escape
-
-_known_safe_types = set([int, long, float])
 
 
 def contextcallable(f):
@@ -159,6 +156,9 @@ class Deferred(object):
 class Markup(unicode):
     """
     Compatibility for Pylons and probably some other frameworks.
+
+    It's only used in Jinja environments with `auto_escape` set
+    to true.
     """
 
     def __html__(self):

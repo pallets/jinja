@@ -50,7 +50,7 @@ operator_re = re.compile('(%s)' % '|'.join([
     '[', ']', '(', ')', '{', '}',
     # attribute access and comparison / logical operators
     '.', ':', ',', '|', '==', '<', '>', '<=', '>=', '!=', '=',
-    ur'or\b', ur'and\b', ur'not\b', ur'in\b', ur'is'
+    ur'or\b', ur'and\b', ur'not\b', ur'in\b', ur'is\b'
 ]]))
 
 # set of used keywords

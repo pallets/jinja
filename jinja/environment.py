@@ -13,7 +13,7 @@ from jinja.lexer import Lexer
 from jinja.parser import Parser
 from jinja.loaders import LoaderWrapper
 from jinja.datastructure import Undefined, Markup, Context, FakeTranslator
-from jinja.utils import escape, collect_translations, get_attribute
+from jinja.utils import collect_translations, get_attribute
 from jinja.exceptions import FilterNotFound, TestNotFound, \
      SecurityException, TemplateSyntaxError, TemplateRuntimeError
 from jinja.defaults import DEFAULT_FILTERS, DEFAULT_TESTS, DEFAULT_NAMESPACE
