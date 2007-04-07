@@ -191,13 +191,19 @@ class CachedLoaderMixin(object):
                     try:
                         cache_time = path.getmtime(cache_fn)
                     except OSError:
-                        cache_time = -1
-                if last_change is None or last_change <= cache_time:
-                    f = file(cache_fn, 'rb')
+                        cache_time = 0
+                if last_change is None or (cache_time and
+                   last_change <= cache_time):
                     try:
-                        tmpl = Template.load(environment, f)
-                    finally:
-                        f.close()
+                        f = file(cache_fn, 'rb')
+                    except IOError:
+                        tmpl = None
+                        save_to_disk = True
+                    else:
+                        try:
+                            tmpl = Template.load(environment, f)
+                        finally:
+                            f.close()
                 else:
                     save_to_disk = True
 
