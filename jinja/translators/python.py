@@ -32,16 +32,16 @@ from jinja.utils import translate_exception, capture_generator, \
      RUNTIME_EXCEPTION_OFFSET
 
 
+#: regular expression for the debug symbols
+_debug_re = re.compile(r'^\s*\# DEBUG\(filename=(?P<filename>.*?), '
+                       r'lineno=(?P<lineno>\d+)\)$')
+
+
 try:
     GeneratorExit
 except NameError:
     class GeneratorExit(Exception):
-        pass
-
-
-#: regular expression for the debug symbols
-_debug_re = re.compile(r'^\s*\# DEBUG\(filename=(?P<filename>.*?), '
-                       r'lineno=(?P<lineno>\d+)\)$')
+        """For python2.3/python2.4 compatibility"""
 
 
 def _to_tuple(args):
@@ -91,47 +91,51 @@ class Template(object):
 
     def render(self, *args, **kwargs):
         """Render a template."""
-        return capture_generator(self._generate(*args, **kwargs))
+        ctx = self._prepare(*args, **kwargs)
+        try:
+            return capture_generator(self.generate_func(ctx))
+        except:
+            self._debug(ctx, *sys.exc_info())
 
     def stream(self, *args, **kwargs):
         """Render a template as stream."""
-        return TemplateStream(self._generate(*args, **kwargs))
+        def proxy(ctx):
+            try:
+                for item in self.generate_func(ctx):
+                    yield item
+            except GeneratorExit:
+                return
+            except:
+                self._debug(ctx, *sys.exc_info())
+        return TemplateStream(proxy(self._prepare(*args, **kwargs)))
 
-    def _generate(self, *args, **kwargs):
-        """Template generation helper"""
+    def _prepare(self, *args, **kwargs):
+        """Prepare the template execution."""
         # if there is no generation function we execute the code
         # in a new namespace and save the generation function and
         # debug information.
+        env = self.environment
         if self.generate_func is None:
-            ns = {'environment': self.environment}
+            ns = {'environment': env}
             exec self.code in ns
             self.generate_func = ns['generate']
             self._debug_info = ns['debug_info']
-        ctx = self.environment.context_class(self.environment, *args, **kwargs)
-        try:
-            for item in self.generate_func(ctx):
-                yield item
-        except:
-            if not self.environment.friendly_traceback:
-                raise
+        return env.context_class(env, *args, **kwargs)
+
+    def _debug(self, ctx, exc_type, exc_value, traceback):
+        """Debugging Helper"""
+        # just modify traceback if we have that feature enabled
+        if self.environment.friendly_traceback:
             # debugging system:
-            # on any exception we first get the current exception information
-            # and skip the internal frames (currently either one (python2.5)
-            # or two (python2.4 and lower)). After that we call a function
-            # that creates a new traceback that is easier to debug.
-            exc_type, exc_value, traceback = sys.exc_info()
-
-            # if an exception is a GeneratorExit we just reraise it. If we
-            # run on top of python2.3 or python2.4 a fake GeneratorExit
-            # class is added for this module so that we don't get a NameError
-            if exc_type is GeneratorExit:
-                raise
-
+            # on any exception we first skip the internal frames (currently
+            # either one (python2.5) or two (python2.4 and lower)). After that
+            # we call a function that creates a new traceback that is easier
+            # to debug.
             for _ in xrange(RUNTIME_EXCEPTION_OFFSET):
                 traceback = traceback.tb_next
             traceback = translate_exception(self, exc_type, exc_value,
                                             traceback, ctx)
-            raise exc_type, exc_value, traceback
+        raise exc_type, exc_value, traceback
 
 
 class PythonTranslator(Translator):

@@ -155,65 +155,71 @@ class CachedLoaderMixin(object):
         try:
             # caching is only possible for the python translator. skip
             # all other translators
-            if translator is PythonTranslator:
-                tmpl = None
+            if translator is not PythonTranslator:
+                return super(CachedLoaderMixin, self).load(
+                             environment, name, translator)
 
-                # auto reload enabled? check for the last change of
-                # the template
-                if self.__auto_reload:
-                    last_change = self.check_source_changed(environment, name)
-                else:
-                    last_change = None
+            tmpl = None
+            save_to_disk = False
+            push_to_memory = False
 
-                # check if we have something in the memory cache and the
-                # memory cache is enabled.
-                if self.__memcache is not None and name in self.__memcache:
+            # auto reload enabled? check for the last change of
+            # the template
+            if self.__auto_reload:
+                last_change = self.check_source_changed(environment, name)
+            else:
+                last_change = None
+
+            # check if we have something in the memory cache and the
+            # memory cache is enabled.
+            if self.__memcache is not None:
+                if name in self.__memcache:
                     tmpl = self.__memcache[name]
+                    # if auto reload is enabled check if the template changed
                     if last_change is not None and \
                        last_change > self.__times[name]:
                         tmpl = None
+                        push_to_memory = True
+                else:
+                    push_to_memory = True
 
-                # if diskcache is enabled look for an already compiled
-                # template.
-                if self.__cache_folder is not None:
-                    cache_fn = get_cachename(self.__cache_folder, name)
-
-                    # there is an up to date compiled template
-                    if tmpl is not None and last_change is None:
-                        try:
-                            cache_time = path.getmtime(cache_fn)
-                        except OSError:
-                            cache_time = -1
-                        if cache_time == -1 or last_change >= cache_time:
-                            f = file(cache_fn, 'rb')
-                            try:
-                                tmpl = Template.load(environment, f)
-                            finally:
-                                f.close()
-
-                    # no template so far, parse, translate and compile it
-                    elif tmpl is None:
-                        tmpl = super(CachedLoaderMixin, self).load(
-                                     environment, name, translator)
-
-                    # save the compiled template
-                    f = file(cache_fn, 'wb')
+            # mem cache disabled or not cached by now
+            # try to load if from the disk cache
+            if tmpl is None and self.__cache_folder is not None:
+                cache_fn = get_cachename(self.__cache_folder, name)
+                if last_change is not None:
                     try:
-                        tmpl.dump(f)
+                        cache_time = path.getmtime(cache_fn)
+                    except OSError:
+                        cache_time = -1
+                if last_change is None or last_change <= cache_time:
+                    f = file(cache_fn, 'rb')
+                    try:
+                        tmpl = Template.load(environment, f)
                     finally:
                         f.close()
+                else:
+                    save_to_disk = True
 
-                # if memcaching is enabled push the template
-                if tmpl is not None:
-                    if self.__memcache is not None:
-                        self.__times[name] = time.time()
-                        self.__memcache[name] = tmpl
-                    return tmpl
+            # if we still have no template we load, parse and translate it.
+            if tmpl is None:
+                tmpl = super(CachedLoaderMixin, self).load(
+                             environment, name, translator)
 
-            # if we reach this point we don't have caching enabled or translate
-            # to something else than python
-            return super(CachedLoaderMixin, self).load(
-                         environment, name, translator)
+            # save the compiled template on the disk if enabled
+            if save_to_disk:
+                f = file(cache_fn, 'wb')
+                try:
+                    tmpl.dump(f)
+                finally:
+                    f.close()
+
+            # if memcaching is enabled and the template not loaded
+            # we add that there.
+            if push_to_memory:
+                self.__times[name] = time.time()
+                self.__memcache[name] = tmpl
+            return tmpl
         finally:
             self.__lock.release()
 
