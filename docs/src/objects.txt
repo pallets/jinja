@@ -109,6 +109,20 @@ access. You can mark both attributes and methods as unsafe:
         delete.jinja_unsafe_call = True
 
 
+Bypassing Automatic Filtering
+=============================
+
+With Jinja 1.1 it's possible to assign filters to any variable printed. Of
+course there are ways to bypass that in order to make sure an object does
+not get escaped etc.
+
+In order to disable automatic filtering for an object you have to make
+sure that it's either an subclass of `unicode` or implements a
+`__unicode__` method. `__str__` will work too as long as the return value
+only contains ASCII values. Additionally you have to add an attribute to
+that object named `jinja_no_finalization` and set that to `True`.
+
+
 .. _Filters: filters.txt
 .. _Tests: tests.txt
 .. _context object: contextenv.txt

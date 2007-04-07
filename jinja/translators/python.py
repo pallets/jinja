@@ -27,8 +27,16 @@ from jinja.nodes import get_nodes
 from jinja.parser import Parser
 from jinja.exceptions import TemplateSyntaxError
 from jinja.translators import Translator
+from jinja.datastructure import TemplateStream
 from jinja.utils import translate_exception, capture_generator, \
      RUNTIME_EXCEPTION_OFFSET
+
+
+try:
+    GeneratorExit
+except NameError:
+    class GeneratorExit(Exception):
+        pass
 
 
 #: regular expression for the debug symbols
@@ -83,6 +91,14 @@ class Template(object):
 
     def render(self, *args, **kwargs):
         """Render a template."""
+        return capture_generator(self._generate(*args, **kwargs))
+
+    def stream(self, *args, **kwargs):
+        """Render a template as stream."""
+        return TemplateStream(self._generate(*args, **kwargs))
+
+    def _generate(self, *args, **kwargs):
+        """Template generation helper"""
         # if there is no generation function we execute the code
         # in a new namespace and save the generation function and
         # debug information.
@@ -93,7 +109,8 @@ class Template(object):
             self._debug_info = ns['debug_info']
         ctx = self.environment.context_class(self.environment, *args, **kwargs)
         try:
-            return capture_generator(self.generate_func(ctx))
+            for item in self.generate_func(ctx):
+                yield item
         except:
             if not self.environment.friendly_traceback:
                 raise
@@ -103,6 +120,13 @@ class Template(object):
             # or two (python2.4 and lower)). After that we call a function
             # that creates a new traceback that is easier to debug.
             exc_type, exc_value, traceback = sys.exc_info()
+
+            # if an exception is a GeneratorExit we just reraise it. If we
+            # run on top of python2.3 or python2.4 a fake GeneratorExit
+            # class is added for this module so that we don't get a NameError
+            if exc_type is GeneratorExit:
+                raise
+
             for _ in xrange(RUNTIME_EXCEPTION_OFFSET):
                 traceback = traceback.tb_next
             traceback = translate_exception(self, exc_type, exc_value,

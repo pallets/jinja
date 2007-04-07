@@ -24,7 +24,7 @@ __all__ = ['Environment']
 
 class Environment(object):
     """
-    The jinja environment.
+    The Jinja environment.
 
     The core component of Jinja is the `Environment`. It contains
     important shared variables like configuration, filters, tests,
@@ -320,6 +320,8 @@ class Environment(object):
         """
         if value is Undefined or value is None:
             return u''
+        elif getattr(value, 'jinja_no_finalization', False):
+            return value
         val = self.to_unicode(value)
         if self.default_filters:
             val = self.apply_filters(val, ctx, self.default_filters)

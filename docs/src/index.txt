@@ -18,6 +18,8 @@ Welcome in the Jinja documentation.
 
   - `Global Objects <objects.txt>`_
 
+  - `Streaming Interface <streaming.txt>`_
+
   - `Context and Environment <contextenv.txt>`_
 
   - `Translators <translators.txt>`_

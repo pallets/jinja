@@ -208,6 +208,25 @@ available per default:
 
     *new in Jinja 1.1*
 
+`flush`
+    
+    Jinja 1.1 includes a new stream interface which can be used to speed
+    up the generation of big templates by streaming them to the client.
+    Per default Jinja flushes after 40 actions automatically. If you
+    want to force a flush at a special point you can use `flush()` to
+    do so. (eg, end of a loop iteration etc)
+
+    .. sourcecode:: jinja
+
+        {% for items in seq %}
+          {% for item in items %}
+            <li>{{ item|e }}</li>
+          {% endfor %}
+          {{ flush() }}
+        {% endfor %}
+
+    *new in Jinja 1.1*
+
 Loops
 =====
 

@@ -172,6 +172,14 @@ class TemplateData(Markup):
     """
 
 
+class Flush(TemplateData):
+    """
+    After a string marked as Flush the stream will stop buffering.
+    """
+
+    jinja_no_finalization = True
+
+
 class Context(object):
     """
     Dict like object.
@@ -458,3 +466,52 @@ class TokenStream(object):
     def push(self, lineno, token, data):
         """Push an yielded token back to the stream."""
         self._pushed.append((lineno, token, data))
+
+
+class TemplateStream(object):
+    """
+    Pass it a template generator and it will buffer a few items
+    before yielding them as one item. Useful when working with WSGI
+    because a Jinja template yields far too many items per default.
+
+    The `TemplateStream` class looks for the invisble `Flush`
+    markers sent by the template to find out when it should stop
+    buffering.
+    """
+
+    def __init__(self, gen):
+        self._next = gen.next
+        self._threshold = None
+        self.threshold = 40
+
+    def __iter__(self):
+        return self
+
+    def started(self):
+        return self._threshold is not None
+    started = property(started)
+
+    def next(self):
+        if self._threshold is None:
+            self._threshold = t = self.threshold
+            del self.threshold
+        else:
+            t = self._threshold
+        buf = []
+        size = 0
+        push = buf.append
+        next = self._next
+
+        try:
+            while True:
+                item = next()
+                if item:
+                    push(item)
+                    size += 1
+                if (size and item.__class__ is Flush) or size >= t:
+                    raise StopIteration()
+        except StopIteration:
+            pass
+        if not size:
+            raise StopIteration()
+        return u''.join(buf)

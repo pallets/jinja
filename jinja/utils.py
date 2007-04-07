@@ -18,7 +18,7 @@ import cgi
 from types import MethodType, FunctionType
 from compiler.ast import CallFunc, Name, Const
 from jinja.nodes import Trans
-from jinja.datastructure import Context, TemplateData
+from jinja.datastructure import Context, Flush
 from jinja.exceptions import SecurityException, TemplateNotFound
 
 #: the python2.4 version of deque is missing the remove method
@@ -200,6 +200,13 @@ def generate_lorem_ipsum(n=5, html=True, min=20, max=100):
     return u'\n'.join([u'<p>%s</p>' % escape(x) for x in result])
 
 
+def flush():
+    """
+    Yield a flush marker.
+    """
+    return Flush()
+
+
 def watch_changes(env, context, iterable, *attributes):
     """
     Wise replacement for ``{% ifchanged %}``.
@@ -255,7 +262,7 @@ def buffereater(f):
     (macros, filter sections etc)
     """
     def wrapped(*args, **kwargs):
-        return TemplateData(capture_generator(f(*args, **kwargs)))
+        return Flush(capture_generator(f(*args, **kwargs)))
     return wrapped
 
 
