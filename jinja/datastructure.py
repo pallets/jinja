@@ -182,13 +182,16 @@ class Flush(TemplateData):
 
 class Context(object):
     """
-    Dict like object.
+    Dict like object containing the variables for the template.
     """
 
     def __init__(self, _environment_, *args, **kwargs):
         self.environment = _environment_
         self._stack = [_environment_.globals, dict(*args, **kwargs), {}]
         self.globals, self.initial, self.current = self._stack
+
+        # translator function added by the environment rendering function
+        self.translate_func = None
 
         # cache object used for filters and tests
         self.cache = {}

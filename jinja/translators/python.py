@@ -416,7 +416,8 @@ class PythonTranslator(Translator):
                 '    def translate(s, p=None, n=None, r=None):\n'
                 '        if p is None:\n'
                 '            return translator.gettext(s) % (r or {})\n'
-                '        return translator.ngettext(s, p, r[n]) % (r or {})'
+                '        return translator.ngettext(s, p, r[n]) % (r or {})\n'
+                '    context.translate_func = translate'
             )
 
         # add body lines and "generator hook"
@@ -585,7 +586,7 @@ class PythonTranslator(Translator):
         buf = []
         write = lambda x: buf.append(self.indent(x))
 
-        write('if not %r in context.current:' % name)
+        write('if %r not in context.current:' % name)
         self.indention += 1
         write(self.nodeinfo(node))
         if node.seq.__class__ in (ast.Tuple, ast.List):
@@ -683,7 +684,7 @@ class PythonTranslator(Translator):
         self.indention += 1
         write('yield None')
         self.indention -= 2
-        write('yield %s' % self.filter('u\'\'.join(filtered())',
+        write('yield %s' % self.filter('buffereater(filtered)()',
                                        node.filters))
         return '\n'.join(buf)
 
@@ -734,7 +735,7 @@ class PythonTranslator(Translator):
         else:
             replacements = 'None'
         return self.indent(self.nodeinfo(node)) + '\n' +\
-               self.indent('yield translate(%r, %r, %r, %s)' % (
+               self.indent('yield context.translate_func(%r, %r, %r, %s)' % (
             node.singular,
             node.plural,
             node.indicator,
@@ -751,7 +752,7 @@ class PythonTranslator(Translator):
             return self.constants[node.name]
         elif node.name == '_':
             self.require_translations = True
-            return 'translate'
+            return 'context.translate_func'
         return 'context[%r]' % node.name
 
     def handle_compare(self, node):

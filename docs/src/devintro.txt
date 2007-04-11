@@ -24,6 +24,26 @@ This example should output the following string after execution::
 If you receive an error, check if you have a typo in your code. If not, have
 a look at the `installation`_ page for troubleshooting.
 
+Basically the important method on a template is the `render` method. It
+takes either a dict or keyword arguments. All keyword arguments appear
+in the template as variables.
+
+So these two snippets do the same:
+
+.. sourcecode:: python
+
+    tmpl.render(
+        knights='we say nih',
+        spam='and eggs'
+    )
+
+.. sourcecode:: python
+
+    tmpl.render({
+        'knights':  'we say nih',
+        'spam':     'and eggs'
+    })
+
 The Environment
 ===============
 

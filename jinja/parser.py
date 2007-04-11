@@ -474,6 +474,8 @@ class Parser(object):
                 # if a string is ASCII only we yield it as string
                 # in other cases as unicode. This works around
                 # problems with datetimeobj.strftime()
+                # also escape newlines in strings
+                t_data = t_data.replace('\n', '\\n')
                 try:
                     str(t_data)
                 except UnicodeError:

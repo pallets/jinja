@@ -88,9 +88,9 @@ with the arguments ``'foo'`` and ``'bar'``, and pass the result to the filter
 
 .. admonition:: note
 
-    Filters have a pretty low priority. If you want to add fitered values
-    you have to put them into parentheses. The same applies if you want to access
-    attributes:
+    The filter operator has a pretty low priority. If you want to add fitered
+    values you have to put them into parentheses. The same applies if you want
+    to access attributes or return values:
 
     .. sourcecode:: jinja
 
@@ -103,6 +103,19 @@ with the arguments ``'foo'`` and ``'bar'``, and pass the result to the filter
             {{ (foo|filter).attribute }}
         wrong:
             {{ foo|filter.attribute }}
+
+*new in Jinja 1.1*:
+
+Because the application can provide additional filters you can get a documentation
+of all the provided filters by calling ``debug.filters()``:
+
+.. sourcecode:: jinja
+
+    {{ debug.filters() }}
+        -> returns a plain text representation of all the filters
+
+    {{ debug.filters(False) }}
+        -> same as above but without the builtin ones.
 
 Tests
 =====
@@ -368,7 +381,8 @@ can use expressions. In expressions you can use any of the following operators:
     ``/``   divide the left operand by the right one.
             ``{{ 1 / 2 }}`` would return ``0.5``.
     ``//``  divide the left operand by the right one and return a truncated
-            integer result: ``{{ 20 // 7 }}`` is ``2``.
+            integer result: ``{{ 20 // 7 }}`` is ``2``. (*new in
+	    Jinja 1.1*)
     ``*``   multiply the left operand with the right one.
             ``{{ 2 * 2 }}`` would return ``4``.
     ``**``  raise the left operand to the power of the right

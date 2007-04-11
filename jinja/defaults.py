@@ -10,7 +10,7 @@
 """
 from jinja.filters import FILTERS as DEFAULT_FILTERS
 from jinja.tests import TESTS as DEFAULT_TESTS
-from jinja.utils import debug_context, safe_range, generate_lorem_ipsum, \
+from jinja.utils import debug_helper, safe_range, generate_lorem_ipsum, \
      watch_changes, flush
 
 
@@ -19,7 +19,7 @@ __all__ = ['DEFAULT_FILTERS', 'DEFAULT_TESTS', 'DEFAULT_NAMESPACE']
 
 DEFAULT_NAMESPACE = {
     'range':                safe_range,
-    'debug':                debug_context,
+    'debug':                debug_helper,
     'lipsum':               generate_lorem_ipsum,
     'watchchanges':         watch_changes,
     'flush':                flush

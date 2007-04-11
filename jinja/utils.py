@@ -29,6 +29,11 @@ if sys.version_info >= (2, 5):
 else:
     deque = None
 
+try:
+    set
+except NameError:
+    from sets import Set as set
+
 #: number of maximal range items
 MAX_RANGE = 1000000
 
@@ -121,15 +126,6 @@ def get_attribute(obj, name):
     if r is not None and name not in r:
         raise SecurityException('not allowed attribute accessed')
     return getattr(obj, name)
-
-
-def debug_context(env, context):
-    """
-    Use this function in templates to get a printed context.
-    """
-    from pprint import pformat
-    return pformat(context.to_dict())
-debug_context.jinja_context_callable = True
 
 
 def safe_range(start, stop=None, step=None):
@@ -368,6 +364,48 @@ def collect_translations(ast):
         todo.extend(node.getChildNodes())
     result.sort(lambda a, b: cmp(a[0], b[0]))
     return result
+
+
+class DebugHelper(object):
+    """
+    Debugging Helper. Available in the template as "debug".
+    """
+    jinja_context_callable = True
+    jinja_allowed_attributes = ['filters']
+
+    def __init__(self):
+        raise TypeError('cannot create %r instances' %
+                        self.__class__.__name__)
+
+    def __call__(self, env, context):
+        """Print a nice representation of the context."""
+        from pprint import pformat
+        return pformat(context.to_dict())
+
+    def filters(self, env, context, builtins=True):
+        """List the filters."""
+        from inspect import getdoc
+        strip = set()
+        if not builtins:
+            from jinja.defaults import DEFAULT_FILTERS
+            strip = set(DEFAULT_FILTERS.values())
+        filters = env.filters.items()
+        filters.sort(lambda a, b: cmp(a[0].lower(), b[0].lower()))
+        result = []
+        for name, f in filters:
+            if f in strip:
+                continue
+            doc = '\n'.join('    ' + x for x in (getdoc(f) or '').splitlines())
+            result.append('`%s`\n\n%s' % (name, doc))
+        return '\n\n'.join(result)
+    filters.jinja_context_callable = True
+
+    def __str__(self):
+        print 'use debug() for debugging the context'
+
+
+#: the singleton instance of `DebugHelper`
+debug_helper = object.__new__(DebugHelper)
 
 
 class TracebackLoader(object):

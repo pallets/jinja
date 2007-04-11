@@ -32,6 +32,9 @@ Version 1.1
 - added a bunch of new docstrings to the Jinja classes. Makes fun now to
   use pydoc :-)
 
+- fixed severe memcaching bug. Formerly it wasn't possible to use memcaching
+  without enabling disk cache.
+
 
 Version 1.0
 -----------
