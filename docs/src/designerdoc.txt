@@ -367,6 +367,8 @@ can use expressions. In expressions you can use any of the following operators:
             ``{{ 1 - 1 }}`` would return ``0``.
     ``/``   divide the left operand by the right one.
             ``{{ 1 / 2 }}`` would return ``0.5``.
+    ``//``  divide the left operand by the right one and return a truncated
+            integer result: ``{{ 20 // 7 }}`` is ``2``.
     ``*``   multiply the left operand with the right one.
             ``{{ 2 * 2 }}`` would return ``4``.
     ``**``  raise the left operand to the power of the right
