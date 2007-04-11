@@ -371,6 +371,8 @@ can use expressions. In expressions you can use any of the following operators:
             ``{{ 2 * 2 }}`` would return ``4``.
     ``**``  raise the left operand to the power of the right
             operand. ``{{ 2**3 }}`` would return ``8``.
+    ``%``   calculate the remainder of an integer division between the
+            left and right operand: ``{{ 11 % 7 }}`` is ``4``.
     ``in``  perform sequence membership test. ``{{ 1 in [1,2,3] }}`` would
             return true.
     ``is``  perform a test on the value. See the section about
