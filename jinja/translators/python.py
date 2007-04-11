@@ -191,6 +191,7 @@ class PythonTranslator(Translator):
             ast.Add:                self.handle_add,
             ast.Sub:                self.handle_sub,
             ast.Div:                self.handle_div,
+            ast.FloorDiv:           self.handle_floor_div,
             ast.Mul:                self.handle_mul,
             ast.Mod:                self.handle_mod,
             ast.UnaryAdd:           self.handle_unary_add,
@@ -901,6 +902,15 @@ class PythonTranslator(Translator):
         Divide two items.
         """
         return '(%s / %s)' % (
+            self.handle_node(node.left),
+            self.handle_node(node.right)
+        )
+
+    def handle_floor_div(self, node):
+        """
+        Divide two items, return truncated result.
+        """
+        return '(%s // %s)' % (
             self.handle_node(node.left),
             self.handle_node(node.right)
         )

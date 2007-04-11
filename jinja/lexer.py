@@ -45,7 +45,7 @@ number_re = re.compile(r'\d+(\.\d+)*')
 operator_re = re.compile('(%s)' % '|'.join([
     isinstance(x, unicode) and str(x) or re.escape(x) for x in [
     # math operators
-    '+', '-', '*', '/', '%',
+    '+', '-', '*', '//', '/', '%',
     # braces and parenthesis
     '[', ']', '(', ')', '{', '}',
     # attribute access and comparison / logical operators
