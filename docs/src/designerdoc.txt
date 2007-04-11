@@ -382,7 +382,7 @@ can use expressions. In expressions you can use any of the following operators:
             ``{{ 1 / 2 }}`` would return ``0.5``.
     ``//``  divide the left operand by the right one and return a truncated
             integer result: ``{{ 20 // 7 }}`` is ``2``. (*new in
-	    Jinja 1.1*)
+	        Jinja 1.1*)
     ``*``   multiply the left operand with the right one.
             ``{{ 2 * 2 }}`` would return ``4``.
     ``**``  raise the left operand to the power of the right
@@ -785,6 +785,30 @@ If future Jinja releases add new keywords those will be "light" keywords which
 means that they won't raise an error for several releases but yield warnings
 on the application side. But it's very unlikely that new keywords will be
 added.
+
+Global Constants
+================
+
+Jinja provides some special variables which cannot be overridden in templates.
+Those are not affected by the variable lookup:
+
+    `_`, `true`, `false`, `none`, `undefined`
+
+You cannot use those names for your own variables or macros. It's however no
+problem to have blocks with that name.
+
+**Notice** due to a bug in Jinja 1.0 it was possible to override `_`, `true`,
+`false`, `none` and `undefined` from the template by either using `{% set %}`
+or in a for loop. While overriding `true`, `false` etc just caused nothing
+overriding the translation marker `_` would crash the translation interface.
+If you want to use `_` for unpacking in for loops (eg. skipping items) you
+have to give it a proper name:
+
+.. sourcecode:: jinja
+
+    {% for key, ignore in mydict|dictsort %}
+        {{ key|e }}
+    {% endfor %}
 
 Whitespace
 ==========

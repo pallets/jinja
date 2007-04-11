@@ -180,7 +180,7 @@ class PythonTranslator(Translator):
             nodes.Trans:            self.handle_trans,
             # python nodes
             ast.Name:               self.handle_name,
-            ast.AssName:            self.handle_name,
+            ast.AssName:            self.handle_assign_name,
             ast.Compare:            self.handle_compare,
             ast.Const:              self.handle_const,
             ast.Subscript:          self.handle_subscript,
@@ -269,17 +269,20 @@ class PythonTranslator(Translator):
                     raise TemplateSyntaxError('invalid filter. filter must '
                                               'be a hardcoded function name '
                                               'from the filter namespace',
-                                              n.lineno)
+                                              n.lineno,
+                                              n.filename)
                 args = []
                 for arg in n.args:
                     if arg.__class__ is ast.Keyword:
                         raise TemplateSyntaxError('keyword arguments for '
                                                   'filters are not supported.',
-                                                  n.lineno)
+                                                  n.lineno,
+                                                  n.filename)
                     args.append(self.handle_node(arg))
                 if n.star_args is not None or n.dstar_args is not None:
                     raise TemplateSyntaxError('*args / **kwargs is not supported '
-                                              'for filters', n.lineno)
+                                              'for filters', n.lineno,
+                                              n.filename)
                 filters.append('(%r, %s)' % (
                     n.node.name,
                     _to_tuple(args)
@@ -290,7 +293,7 @@ class PythonTranslator(Translator):
                 raise TemplateSyntaxError('invalid filter. filter must be a '
                                           'hardcoded function name from the '
                                           'filter namespace',
-                                          n.lineno)
+                                          n.lineno, n.filename)
         return 'apply_filters(%s, context, %s)' % (s, _to_tuple(filters))
 
     def handle_node(self, node):
@@ -304,7 +307,7 @@ class PythonTranslator(Translator):
         elif node.__class__ in self.unsupported:
             raise TemplateSyntaxError('unsupported syntax element %r found.'
                                       % self.unsupported[node.__class__],
-                                      node.lineno)
+                                      node.lineno, node.filename)
         else:
             raise AssertionError('unhandled node %r' % node.__class__)
         return out
@@ -624,6 +627,16 @@ class PythonTranslator(Translator):
         """
         Handle macro declarations.
         """
+        # sanity check for name
+        if node.name == '_' or \
+           node.name in self.constants:
+            raise TemplateSyntaxError('cannot override %r' % node.name,
+                                      node.lineno, node.filename)
+        if node.name in self.constants:
+            raise TemplateSyntaxError('you cannot name a macro %r',
+                                      node.lineno,
+                                      node.filename)
+
         buf = []
         write = lambda x: buf.append(self.indent(x))
 
@@ -662,6 +675,9 @@ class PythonTranslator(Translator):
         """
         Handle variable assignments.
         """
+        if node.name == '_' or node.name in self.constants:
+            raise TemplateSyntaxError('cannot override %r' % node.name,
+                                      node.lineno, node.filename)
         return self.indent(self.nodeinfo(node)) + '\n' + \
                self.indent('context[%r] = %s' % (
             node.name,
@@ -744,6 +760,16 @@ class PythonTranslator(Translator):
 
     # -- python nodes
 
+    def handle_assign_name(self, node):
+        """
+        Handle name assignments.
+        """
+        if node.name == '_' or \
+           node.name in self.constants:
+            raise TemplateSyntaxError('cannot override %r' % node.name,
+                                      node.lineno, node.filename)
+        return 'context[%r]' % node.name
+
     def handle_name(self, node):
         """
         Handle name assignments and name retreivement.
@@ -765,7 +791,8 @@ class PythonTranslator(Translator):
         if node.ops[0][0] in ('is', 'is not'):
             if len(node.ops) > 1:
                 raise TemplateSyntaxError('is operator must not be chained',
-                                          node.lineno)
+                                          node.lineno,
+                                          node.filename)
             elif node.ops[0][1].__class__ is ast.Name:
                 args = []
                 name = node.ops[0][1].name
@@ -775,21 +802,25 @@ class PythonTranslator(Translator):
                     raise TemplateSyntaxError('invalid test. test must '
                                               'be a hardcoded function name '
                                               'from the test namespace',
-                                              n.lineno)
+                                              n.lineno,
+                                              n.filename)
                 name = n.node.name
                 args = []
                 for arg in n.args:
                     if arg.__class__ is ast.Keyword:
                         raise TemplateSyntaxError('keyword arguments for '
                                                   'tests are not supported.',
-                                                  n.lineno)
+                                                  n.lineno,
+                                                  n.filename)
                     args.append(self.handle_node(arg))
                 if n.star_args is not None or n.dstar_args is not None:
                     raise TemplateSyntaxError('*args / **kwargs is not supported '
-                                              'for tests', n.lineno)
+                                              'for tests', n.lineno,
+                                              n.filename)
             else:
                 raise TemplateSyntaxError('is operator requires a test name'
-                                          ' as operand', node.lineno)
+                                          ' as operand', node.lineno,
+                                          node.filename)
             return 'perform_test(context, %r, %s, %s, %s)' % (
                     name,
                     _to_tuple(args),
@@ -803,7 +834,7 @@ class PythonTranslator(Translator):
         for op, n in node.ops:
             if op in ('is', 'is not'):
                 raise TemplateSyntaxError('is operator must not be chained',
-                                          node.lineno)
+                                          node.lineno, node.filename)
             buf.append(op)
             buf.append(self.handle_node(n))
         return ' '.join(buf)
@@ -820,7 +851,8 @@ class PythonTranslator(Translator):
         """
         if len(node.subs) != 1:
             raise TemplateSyntaxError('attribute access requires one argument',
-                                      node.lineno)
+                                      node.lineno,
+                                      node.filename)
         assert node.flags != 'OP_DELETE', 'wtf? do we support that?'
         if node.subs[0].__class__ is ast.Sliceobj:
             return '%s[%s]' % (
