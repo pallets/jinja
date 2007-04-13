@@ -35,6 +35,10 @@ Version 1.1
 - fixed severe memcaching bug. Formerly it wasn't possible to use memcaching
   without enabling disk cache.
 
+- fixed a bug that allowed users to override the special names `_`, `true` etc.
+
+- added `batch` and `slice` filters
+
 
 Version 1.0
 -----------

@@ -30,7 +30,7 @@ Welcome in the Jinja documentation.
 
   - `Internationalization <i18n.txt>`_
 
-  - `Recipies <devrecipies.txt>`_
+  - `Developer Recipies <devrecipies.txt>`_
 
 - Template Designer Documentation:
 
@@ -38,6 +38,6 @@ Welcome in the Jinja documentation.
 
   - `Differences To Django <fromdjango.txt>`_
 
-  - `Recipies <recipies.txt>`_
+  - `Designer Recipies <recipies.txt>`_
 
 There is also support via IRC on the ``#pocoo`` channel on `irc.freenode.net`.

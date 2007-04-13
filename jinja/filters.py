@@ -618,6 +618,83 @@ def do_capture(name='captured', clean=False):
     return wrapped
 
 
+def do_slice(slices, fill_with=None):
+    """
+    Slice an iterator and return a list of lists containing
+    those items. Useful if you want to create a div containing
+    three div tags that represent columns:
+
+    .. sourcecode:: jinja
+
+        <div class="columwrapper">
+          {%- for column in items|slice(3) %}
+            <ul class="column-{{ loop.index }}">
+            {%- for item in column %}
+              <li>{{ item }}</li>
+            {%- endfor %}
+            </ul>
+          {%- endfor %}
+        </div>
+
+    *New in Jinja 1.1*
+    """
+    def wrapped(env, context, value):
+        result = []
+        seq = list(value)
+        length = len(seq)
+        items_per_slice = length // slices
+        slices_with_extra = length % slices
+        offset = 0
+        for slice_number in xrange(slices):
+            start = offset + slice_number * items_per_slice
+            if slice_number < slices_with_extra:
+                offset += 1
+            end = offset + (slice_number + 1) * items_per_slice
+            tmp = seq[start:end]
+            if fill_with is not None and slice_number >= slices_with_extra:
+                tmp.append(fill_with)
+            result.append(tmp)
+        return result
+    return wrapped
+
+
+def do_batch(linecount, fill_with=None):
+    """
+    A filter that batches items. It works pretty much like `slice`
+    just the other way round. It returns a list of lists with the
+    given number of items. If you provide a second parameter this
+    is used to fill missing items. See this example:
+
+    .. sourcecode:: jinja
+
+        <table>
+        {%- for row in items|batch(3, '&nbsp;') %}
+          <tr>
+          {%- for column in row %}
+            <tr>{{ column }}</td>
+          {%- endfor %}
+          </tr>
+        {%- endfor %}
+        </table>
+
+    *New in Jinja 1.1*
+    """
+    def wrapped(env, context, value):
+        result = []
+        tmp = []
+        for item in value:
+            if len(tmp) == linecount:
+                result.append(tmp)
+                tmp = []
+            tmp.append(item)
+        if tmp:
+            if fill_with is not None and len(tmp) < linecount:
+                tmp += [fill_with] * (linecount - len(tmp))
+            result.append(tmp)
+        return result
+    return wrapped
+
+
 FILTERS = {
     'replace':              do_replace,
     'upper':                do_upper,
@@ -655,5 +732,7 @@ FILTERS = {
     'urlize':               do_urlize,
     'format':               do_format,
     'capture':              do_capture,
-    'trim':                 do_trim
+    'trim':                 do_trim,
+    'slice':                do_slice,
+    'batch':                do_batch
 }
