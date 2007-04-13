@@ -624,7 +624,7 @@ def do_slice(slices, fill_with=None):
     those items. Useful if you want to create a div containing
     three div tags that represent columns:
 
-    .. sourcecode:: jinja
+    .. sourcecode:: html+jinja
 
         <div class="columwrapper">
           {%- for column in items|slice(3) %}
@@ -665,7 +665,7 @@ def do_batch(linecount, fill_with=None):
     given number of items. If you provide a second parameter this
     is used to fill missing items. See this example:
 
-    .. sourcecode:: jinja
+    .. sourcecode:: html+jinja
 
         <table>
         {%- for row in items|batch(3, '&nbsp;') %}
