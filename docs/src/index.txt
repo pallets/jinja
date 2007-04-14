@@ -40,4 +40,6 @@ Welcome in the Jinja documentation.
 
   - `Designer Recipies <recipies.txt>`_
 
+- `Changelog <changelog.txt>`_
+
 There is also support via IRC on the ``#pocoo`` channel on `irc.freenode.net`.

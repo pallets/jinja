@@ -116,6 +116,8 @@ LIST_OF_FILTERS = generate_list_of_filters()
 LIST_OF_TESTS = generate_list_of_tests()
 LIST_OF_LOADERS = generate_list_of_loaders()
 ENVIRONMENT_DOC = generate_environment_doc()
+CHANGELOG = file(os.path.join(os.path.dirname(__file__), os.pardir, 'CHANGES'))\
+            .read().decode('utf-8')
 
 FULL_TEMPLATE = e.from_string('''\
 <!DOCTYPE html PUBLIC "-//W3C//DTD HTML 4.01//EN"
@@ -238,7 +240,8 @@ def generate_documentation(data, link_style):
     data = data.replace('[[list_of_filters]]', LIST_OF_FILTERS)\
                .replace('[[list_of_tests]]', LIST_OF_TESTS)\
                .replace('[[list_of_loaders]]', LIST_OF_LOADERS)\
-               .replace('[[environment_doc]]', ENVIRONMENT_DOC)
+               .replace('[[environment_doc]]', ENVIRONMENT_DOC)\
+               .replace('[[changelog]]', CHANGELOG)
     parts = publish_parts(
         data,
         writer=writer,

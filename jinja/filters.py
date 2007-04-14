@@ -712,6 +712,8 @@ def do_batch(linecount, fill_with=None):
 def do_sum():
     """
     Sum up the given sequence of numbers.
+
+    *new in Jinja 1.1*
     """
     def wrapped(env, context, value):
         return sum(value)
@@ -721,6 +723,8 @@ def do_sum():
 def do_abs():
     """
     Return the absolute value of a number.
+
+    *new in Jinja 1.1*
     """
     def wrapped(env, context, value):
         return abs(value)
@@ -745,6 +749,8 @@ def do_round(precision=0, method='common'):
             -> 43
         {{ 42.55|round(1, 'floor') }}
             -> 42.5
+
+    *new in Jinja 1.1*
     """
     if not method in ('common', 'ceil', 'floor'):
         raise FilterArgumentError('method must be common, ceil or floor')
