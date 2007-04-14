@@ -37,7 +37,9 @@ Version 1.1
 
 - fixed a bug that allowed users to override the special names `_`, `true` etc.
 
-- added `batch` and `slice` filters
+- added `batch` and `slice` filters for batching or slicing sequences
+
+- added `sum`, `abs` and `round` filters. This fixes #238
 
 
 Version 1.0

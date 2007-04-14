@@ -636,7 +636,10 @@ def do_slice(slices, fill_with=None):
           {%- endfor %}
         </div>
 
-    *New in Jinja 1.1*
+    If you pass it a second argument it's used to fill missing
+    values on the last iteration.
+
+    *new in Jinja 1.1*
     """
     def wrapped(env, context, value):
         result = []
@@ -677,7 +680,7 @@ def do_batch(linecount, fill_with=None):
         {%- endfor %}
         </table>
 
-    *New in Jinja 1.1*
+    *new in Jinja 1.1*
     """
     def wrapped(env, context, value):
         result = []
@@ -692,6 +695,57 @@ def do_batch(linecount, fill_with=None):
                 tmp += [fill_with] * (linecount - len(tmp))
             result.append(tmp)
         return result
+    return wrapped
+
+
+def do_sum():
+    """
+    Sum up the given sequence of numbers.
+    """
+    def wrapped(env, context, value):
+        return sum(value)
+    return wrapped
+
+
+def do_abs():
+    """
+    Return the absolute value of a number.
+    """
+    def wrapped(env, context, value):
+        return abs(value)
+    return wrapped
+
+
+def do_round(precision=0, method='common'):
+    """
+    Round the number to a given precision. The first
+    parameter specifies the precision (default is ``0``), the
+    second the rounding method:
+
+    - ``'common'`` rounds either up or down
+    - ``'ceil'`` always rounds up
+    - ``'floor'`` always rounds down
+
+    If you don't specify a method ``'common'`` is used.
+
+    .. sourcecode:: jinja
+
+        {{ 42.55|round }}
+            -> 43
+        {{ 42.55|round(1, 'floor') }}
+            -> 42.5
+    """
+    if not method in ('common', 'ceil', 'floor'):
+        raise FilterArgumentError('method must be common, ceil or floor')
+    if precision < 0:
+        raise FilterArgumentError('precision must be a postive integer '
+                                  'or zero.')
+    def wrapped(env, context, value):
+        if method == 'common':
+            return round(value, precision)
+        import math
+        func = getattr(math, method)
+        return func(value * 10 * precision) / (10 * precision)
     return wrapped
 
 
@@ -734,5 +788,8 @@ FILTERS = {
     'capture':              do_capture,
     'trim':                 do_trim,
     'slice':                do_slice,
-    'batch':                do_batch
+    'batch':                do_batch,
+    'sum':                  do_sum,
+    'abs':                  do_abs,
+    'round':                do_round
 }
