@@ -10,6 +10,9 @@ Version 1.1
 - debugging system improved, smaller filesize for the cached files.
   Debugging works now well for any module using linecache.
 
+- ``{{ debug() }}`` can now be used to get a list of filters and
+  tags.
+
 - added whitespace management system for the template designer.
 
 - some small bugfixes.

@@ -132,6 +132,20 @@ These tests are especially useful when used in `if` conditions.
 
 [[list_of_tests]]
 
+*new in Jinja 1.1*:
+
+Because the application can provide additional tests you can get a documentation
+of all the provided tests by calling ``debug.tests()``:
+
+.. sourcecode:: jinja
+
+    {{ debug.tests() }}
+        -> returns a plain text representation of all the tests
+
+    {{ debug.tests(False) }}
+        -> same as above but without the builtin ones.
+
+
 Global Functions
 ================
 

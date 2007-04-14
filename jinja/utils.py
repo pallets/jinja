@@ -400,6 +400,24 @@ class DebugHelper(object):
         return '\n\n'.join(result)
     filters.jinja_context_callable = True
 
+    def tests(self, env, context, builtins=True):
+        """List the tests."""
+        from inspect import getdoc
+        strip = set()
+        if not builtins:
+            from jinja.defaults import DEFAULT_TESTS
+            strip = set(DEFAULT_TESTS.values())
+        tests = env.tests.items()
+        tests.sort(lambda a, b: cmp(a[0].lower(), b[0].lower()))
+        result = []
+        for name, f in tests:
+            if f in strip:
+                continue
+            doc = '\n'.join('    ' + x for x in (getdoc(f) or '').splitlines())
+            result.append('`%s`\n\n%s' % (name, doc))
+        return '\n\n'.join(result)
+    tests.jinja_context_callable = True
+
     def __str__(self):
         print 'use debug() for debugging the context'
 
