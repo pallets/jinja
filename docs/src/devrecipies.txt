@@ -1,0 +1,38 @@
+=======================
+Recipies For Developers
+=======================
+
+Here some recipies for application developers.
+
+
+Automagic Template Variables
+============================
+
+Python allows some magic stack manipulation which can be used to
+pass variables to templates automatically. It's not a recommended
+way to pass variables to templates but it can be useful for some
+small generation scripts etc.
+
+Just subclass the environment and add an `autorender` function like
+this:
+
+.. sourcecode:: python
+
+    import sys
+    from jinja import Environment
+
+    class AutoEnvironment(Environment):
+
+        def autorender(self):
+            return self.render(sys._getframe(1).f_locals)
+
+You can use it now like this:
+
+.. sourcecode:: python
+
+    foo_tmpl = env.get_template('foo.html')
+
+    def foo():
+        seq = range(10)
+        foo = "blub"
+        return foo_tmpl.autorender()
