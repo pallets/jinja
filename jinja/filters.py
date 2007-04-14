@@ -8,6 +8,7 @@
     :copyright: 2007 by Armin Ronacher.
     :license: BSD, see LICENSE for more details.
 """
+import re
 from random import choice
 from urllib import urlencode, quote
 from jinja.utils import urlize, escape
@@ -618,6 +619,16 @@ def do_capture(name='captured', clean=False):
     return wrapped
 
 
+def do_striptags(value, rex=re.compile(r'<[^>]+>')):
+    """
+    Strip SGML/XML tags and replace adjacent whitespace by one space.
+    
+    *new in Jinja 1.1*
+    """
+    return ' '.join(rex.sub('', value).split())
+do_striptags = stringfilter(do_striptags)
+
+
 def do_slice(slices, fill_with=None):
     """
     Slice an iterator and return a list of lists containing
@@ -787,6 +798,7 @@ FILTERS = {
     'format':               do_format,
     'capture':              do_capture,
     'trim':                 do_trim,
+    'striptags':            do_striptags,
     'slice':                do_slice,
     'batch':                do_batch,
     'sum':                  do_sum,

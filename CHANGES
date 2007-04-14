@@ -41,6 +41,8 @@ Version 1.1
 
 - added `sum`, `abs` and `round` filters. This fixes #238
 
+- added `striptags` filter.
+
 
 Version 1.0
 -----------
