@@ -127,7 +127,7 @@ def do_xmlattr():
     .. sourcecode:: html+jinja
 
         <ul {{ {'class': 'my_list', 'missing': None,
-               'id': 'list-%d'}|format(variable) }}>
+                'id': 'list-%d'|format(variable)} }}>
         ...
         </ul>
 
