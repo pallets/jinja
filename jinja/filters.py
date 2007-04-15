@@ -124,7 +124,7 @@ def do_xmlattr():
     All values that are neither `none` nor `undefined` are automatically
     escaped:
 
-    .. sourcecode:: html
+    .. sourcecode:: html+jinja
 
         <ul{{ {'class': 'my_list', 'missing': None,
                'id': 'list-%d'|format(variable) }}>
@@ -132,6 +132,8 @@ def do_xmlattr():
         </ul>
 
     Results in something like this:
+
+    .. sourcecode:: html
 
         <ul class="my_list" id="list-42">
         ...
