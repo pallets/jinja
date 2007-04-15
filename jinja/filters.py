@@ -118,6 +118,42 @@ def do_escape(attribute=False):
     return wrapped
 
 
+def do_xmlattr():
+    """
+    Create an SGML/XML attribute string based on the items in a dict.
+    All values that are neither `none` nor `undefined` are automatically
+    escaped:
+
+    .. sourcecode:: html
+
+        <ul{{ {'class': 'my_list', 'missing': None,
+               'id': 'list-%d'|format(variable) }}>
+        ...
+        </ul>
+
+    Results in something like this:
+
+        <ul class="my_list" id="list-42">
+        ...
+        </ul>
+
+    *New in Jinja 1.1*
+    """
+    e = escape
+    def wrapped(env, context, d):
+        if not hasattr(d, 'iteritems'):
+            raise TypeError('a dict is required')
+        result = []
+        for key, value in d.iteritems():
+            if value not in (None, Undefined):
+                result.append(u'%s="%s"' % (
+                    e(env.to_unicode(key)),
+                    e(env.to_unicode(value), True)
+                ))
+        return u' '.join(result)
+    return wrapped
+
+
 def do_capitalize(s):
     """
     Capitalize a value. The first character will be uppercase, all others
@@ -772,6 +808,7 @@ FILTERS = {
     'lower':                do_lower,
     'escape':               do_escape,
     'e':                    do_escape,
+    'xmlattr':              do_xmlattr,
     'capitalize':           do_capitalize,
     'title':                do_title,
     'default':              do_default,

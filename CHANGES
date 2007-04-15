@@ -44,7 +44,7 @@ Version 1.1
 
 - added `sum`, `abs` and `round` filters. This fixes #238
 
-- added `striptags` filter.
+- added `striptags` and `xmlattr` filters for easier SGML/XML processing
 
 
 Version 1.0
