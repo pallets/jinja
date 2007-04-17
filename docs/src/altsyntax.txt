@@ -1,0 +1,81 @@
+==================
+Alternative Syntax
+==================
+
+Jinja allows some syntax customization for the block delimiters. Depending on
+the Jinja release more or less combinations are possible. The idea of an
+customizable syntax is that you can update existing templates from other
+template engines and programming languages easier and that you can replace
+the django like default delimiters which are not everybody's favorite.
+
+
+Configuring The Environment
+===========================
+
+For syntax configuration there are six arguments in the environment which
+are the first six for convenience. Thus those two snippets do the same:
+
+.. sourcecode:: python
+
+    env = Environment(
+         block_start_string='{%',
+         block_end_string='%}',
+         variable_start_string='{{',
+         variable_end_string='}}',
+         comment_start_string='{#',
+         comment_end_string='#}',
+    )
+
+    env = Environment('{%', '%}', '{{', '}}', '{#', '#]')
+
+
+Ruby Like Syntax
+----------------
+
+Here an example configuration for Ruby-like syntax:
+
+.. sourcecode:: python
+
+    env = Environment('<%', '%>', '<%=', '%>', '<%#', '%>')
+
+An example template then looks like this:
+
+.. sourcecode:: rhtml
+
+    <%# example eruby like configuration for jinja %>
+    <ul>
+    <% for item in seq %>
+      <li><%= item %></li>
+    <% endfor %>
+    </ul>
+
+
+SGML Comment Syntax
+-------------------
+
+Here an example configuration that uses SGML comments to hide the
+processing instructions. This can be useful if you work with an WYSIWYG
+designer:
+
+.. sourcecode:: python
+
+    env = Environment('<!--', '-->', '${', '}', '<!--#', '-->')
+
+.. sourcecode:: html
+
+    <!--# example eruby like configuration for jinja -->
+    <ul>
+    <!-- for item in seq -->
+      <li>${item}</li>
+    <!-- endfor -->
+    </ul>
+
+
+Parenthesis Balancing
+---------------------
+
+Starting with Jinja 1.1 it's possible to use the block delimiter as a token
+in the expression. That means that you can use small delimiters like single
+braces or parenthesis. So if you want to have your variables to look like
+``${expr}`` and you still want to use dicts in such expressions you need
+Jinja 1.1 or higher.
