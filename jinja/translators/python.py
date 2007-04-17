@@ -314,12 +314,10 @@ class PythonTranslator(Translator):
 
     def reset(self):
         """
-        Reset translation variables such as indention, cycle id
-        or the require_translations flag.
+        Reset translation variables such as indention or cycle id
         """
         self.indention = 0
         self.last_cycle_id = 0
-        self.require_translations = False
 
     def translate(self):
         """
@@ -412,17 +410,6 @@ class PythonTranslator(Translator):
         # the template body
         body_lines.extend([self.handle_node(n) for n in node])
 
-        # add translation helpers if required
-        if self.require_translations:
-            lines.append(
-                '    translator = environment.get_translator(context)\n'
-                '    def translate(s, p=None, n=None, r=None):\n'
-                '        if p is None:\n'
-                '            return translator.gettext(s) % (r or {})\n'
-                '        return translator.ngettext(s, p, r[n]) % (r or {})\n'
-                '    context.translate_func = translate'
-            )
-
         # add body lines and "generator hook"
         lines.extend(body_lines)
         lines.append('    if False:\n        yield None')
@@ -492,9 +479,13 @@ class PythonTranslator(Translator):
         """
         In some situations we might have a node list. It's just
         a collection of multiple statements.
+
+        If the nodelist was empty it will return an empty string
         """
-        return '\n'.join([self.indent(self.nodeinfo(node))] +
-                         [self.handle_node(n) for n in node])
+        body = '\n'.join([self.handle_node(n) for n in node])
+        if body:
+            return self.indent(self.nodeinfo(node)) + '\n' + body
+        return ''
 
     def handle_for_loop(self, node):
         """
@@ -570,13 +561,13 @@ class PythonTranslator(Translator):
             ))
             self.indention += 1
             write(self.nodeinfo(body))
-            buf.append(self.handle_node(body))
+            buf.append(self.handle_node(body) or self.indent('pass'))
             self.indention -= 1
         if node.else_ is not None:
             write('else:')
             self.indention += 1
             write(self.nodeinfo(node.else_))
-            buf.append(self.handle_node(node.else_))
+            buf.append(self.handle_node(node.else_) or self.indent('pass'))
             self.indention -= 1
         return '\n'.join(buf)
 
@@ -739,7 +730,6 @@ class PythonTranslator(Translator):
         """
         Handle translations.
         """
-        self.require_translations = True
         if node.replacements:
             replacements = []
             for name, n in node.replacements.iteritems():
@@ -777,7 +767,6 @@ class PythonTranslator(Translator):
         if node.name in self.constants:
             return self.constants[node.name]
         elif node.name == '_':
-            self.require_translations = True
             return 'context.translate_func'
         return 'context[%r]' % node.name
 

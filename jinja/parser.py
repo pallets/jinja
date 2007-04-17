@@ -18,7 +18,7 @@ import re
 from compiler import ast, parse
 from compiler.misc import set_filename
 from jinja import nodes
-from jinja.datastructure import TokenStream
+from jinja.datastructure import TokenStream, StateTest
 from jinja.exceptions import TemplateSyntaxError
 try:
     set
@@ -29,18 +29,20 @@ except NameError:
 __all__ = ['Parser']
 
 
-# callback functions for the subparse method
-end_of_block = lambda p, t, d: t == 'block_end'
-end_of_variable = lambda p, t, d: t == 'variable_end'
-end_of_comment = lambda p, t, d: t == 'comment_end'
-switch_for = lambda p, t, d: t == 'name' and d in ('else', 'endfor')
-end_of_for = lambda p, t, d: t == 'name' and d == 'endfor'
-switch_if = lambda p, t, d: t == 'name' and d in ('else', 'elif', 'endif')
-end_of_if = lambda p, t, d: t == 'name' and d == 'endif'
-end_of_filter = lambda p, t, d: t == 'name' and d == 'endfilter'
-end_of_macro = lambda p, t, d: t == 'name' and d == 'endmacro'
-end_of_block_tag = lambda p, t, d: t == 'name' and d == 'endblock'
-end_of_trans = lambda p, t, d: t == 'name' and d == 'endtrans'
+# general callback functions for the parser
+end_of_block = StateTest.expect_token('block_end', 'end of block tag')
+end_of_variable = StateTest.expect_token('variable_end', 'end of variable')
+end_of_comment = StateTest.expect_token('comment_end', 'end of comment')
+
+# internal tag callbacks
+switch_for = StateTest.expect_name('else', 'endfor')
+end_of_for = StateTest.expect_name('endfor')
+switch_if = StateTest.expect_name('else', 'elif', 'endif')
+end_of_if = StateTest.expect_name('endif')
+end_of_filter = StateTest.expect_name('endfilter')
+end_of_macro = StateTest.expect_name('endmacro')
+end_of_block_tag = StateTest.expect_name('endblock')
+end_of_trans = StateTest.expect_name('endtrans')
 
 
 class Parser(object):
@@ -54,9 +56,10 @@ class Parser(object):
         self.environment = environment
         if isinstance(source, str):
             source = source.decode(environment.template_charset, 'ignore')
+        if isinstance(filename, unicode):
+            filename = filename.encode('utf-8')
         self.source = source
         self.filename = filename
-        self.tokenstream = environment.lexer.tokenize(source)
 
         #: if this template has a parent template it's stored here
         #: after parsing
@@ -64,6 +67,7 @@ class Parser(object):
         #: set for blocks in order to keep them unique
         self.blocks = set()
 
+        #: mapping of directives that require special treatment
         self.directives = {
             'raw':          self.handle_raw_directive,
             'for':          self.handle_for_directive,
@@ -78,6 +82,15 @@ class Parser(object):
             'include':      self.handle_include_directive,
             'trans':        self.handle_trans_directive
         }
+
+        #: set of directives that are only available in a certain
+        #: context.
+        self.context_directives = set(['elif', 'else', 'endblock',
+            'endfilter', 'endfor', 'endif', 'endmacro', 'endraw',
+            'endtrans', 'pluralize'
+        ])
+
+        self.tokenstream = environment.lexer.tokenize(source, filename)
 
     def handle_raw_directive(self, lineno, gen):
         """
@@ -343,19 +356,23 @@ class Parser(object):
                 replacements = {}
                 for arg in self.parse_python(lineno, gen,
                                              '_trans(%s)').expr.args:
-                    if arg.__class__ is not ast.Keyword:
+                    if arg.__class__ not in (ast.Keyword, ast.Name):
                         raise TemplateSyntaxError('translation tags need expl'
                                                   'icit names for values.',
                                                   lineno, self.filename)
                     # disallow keywords
                     if not arg.name.endswith('_'):
-                        raise TemplateSyntaxError('illegal use of keyword %r '
-                                                  'as identifier.' % arg.name,
-                                                  lineno, self.filename)
+                        raise TemplateSyntaxError("illegal use of keyword '%s"
+                                                  '\' as identifier.' %
+                                                  arg.name, lineno,
+                                                  self.filename)
                     # remove the last "_" before writing
+                    name = arg.name[:-1]
                     if first_var is None:
-                        first_var = arg.name[:-1]
-                    replacements[arg.name[:-1]] = arg.expr
+                        first_var = name
+                    # if it's a keyword use the expression as value,
+                    # otherwise just reuse the name node.
+                    replacements[name] = getattr(arg, 'expr', arg)
 
             # look for endtrans/pluralize
             buf = singular = []
@@ -378,13 +395,14 @@ class Parser(object):
                     # plural name without trailing "_"? that's a keyword
                     if not variable_name.endswith('_'):
                         raise TemplateSyntaxError('illegal use of keyword '
-                                                  '%r as identifier in trans '
-                                                  'block.' % variable_name,
+                                                  "'%s' as identifier in "
+                                                  'trans block.' %
+                                                  variable_name,
                                                   lineno, self.filename)
                     variable_name = variable_name[:-1]
                     if variable_name not in replacements:
                         raise TemplateSyntaxError('unregistered translation '
-                                                  'variable %r.' %
+                                                  "variable '%s'." %
                                                   variable_name, lineno,
                                                   self.filename)
                     if self.tokenstream.next()[1] != 'variable_end':
@@ -399,9 +417,36 @@ class Parser(object):
                     _, block_token, block_name = self.tokenstream.next()
                     if block_token != 'name' or \
                        block_name not in ('pluralize', 'endtrans'):
-                        raise TemplateSyntaxError('blocks in translatable '
-                                                  'sections are not '
-                                                  'supported', lineno,
+                        # if we have a block name check if it's a real
+                        # directive or a not existing one (which probably
+                        # is a typo)
+                        if block_token == 'name':
+                            # if this block is a context directive the
+                            # designer has probably misspelled endtrans
+                            # with endfor or something like that. raise
+                            # a nicer error message
+                            if block_name in self.context_directives:
+                                raise TemplateSyntaxError('unexpected directi'
+                                                          "ve '%s' found" %
+                                                          block_name, lineno,
+                                                          self.filename)
+                            # if's not a directive, probably misspelled
+                            # endtrans. Raise the "unknown directive"
+                            # exception rather than the "not allowed"
+                            if block_name not in self.directives:
+                                if block_name.endswith('_'):
+                                    block_name = block_name[:-1]
+                                raise TemplateSyntaxError('unknown directive'
+                                                          "'%s'" % block_name,
+                                                          lineno,
+                                                          self.filename)
+                        # if it's indeed a known directive we better
+                        # raise an exception informing the user about
+                        # the fact that we don't support blocks in
+                        # translatable sections.
+                        raise TemplateSyntaxError('directives in translatable'
+                                                  ' sections are not '
+                                                  'allowed', lineno,
                                                   self.filename)
                     # pluralize
                     if block_name == 'pluralize':
@@ -417,7 +462,7 @@ class Parser(object):
                             # disallow keywords
                             if not plural_name.endswith('_'):
                                 raise TemplateSyntaxError('illegal use of '
-                                                          'keyword %r as '
+                                                          "keyword '%s' as "
                                                           'identifier.' %
                                                           plural_name,
                                                           lineno,
@@ -426,7 +471,7 @@ class Parser(object):
                             if plural_name not in replacements:
                                 raise TemplateSyntaxError('unregistered '
                                                           'translation '
-                                                          'variable %r' %
+                                                          "variable '%s'" %
                                                           plural_name, lineno,
                                                           self.filename)
                             elif self.tokenstream.next()[1] != 'block_end':
@@ -487,9 +532,10 @@ class Parser(object):
         try:
             ast = parse(source, 'exec')
         except SyntaxError, e:
-            raise TemplateSyntaxError('invalid syntax', lineno + e.lineno,
+            raise TemplateSyntaxError('invalid syntax in expression',
+                                      lineno + (e.lineno or 0),
                                       self.filename)
-        assert len(ast.node.nodes) == 1, 'get %d nodes, 1 expected' %\
+        assert len(ast.node.nodes) == 1, 'get %d nodes, 1 expected' % \
                                          len(ast.node.nodes)
         result = ast.node.nodes[0]
         nodes.inc_lineno(lineno, result)
@@ -508,7 +554,7 @@ class Parser(object):
             # all names excluding keywords have an trailing underline.
             # if we find a name without trailing underline that's a keyword
             # and this code raises an error. else strip the underline again
-            if node.__class__ in (ast.AssName, ast.Name):
+            if node.__class__ in (ast.AssName, ast.Name, ast.Keyword):
                 if not node.name.endswith('_'):
                     raise TemplateSyntaxError('illegal use of keyword %r '
                                               'as identifier.' % node.name,
@@ -586,9 +632,8 @@ class Parser(object):
                 # template syntax error.
                 if data in self.directives:
                     node = self.directives[data](lineno, gen)
-                # directive or endtag found, give a proper error message
-                elif data in self.directives or \
-                     not data.endswith('_') and data.startswith('end'):
+                # context depending directive found
+                elif data in self.context_directives:
                     raise TemplateSyntaxError('unexpected directive %r' %
                                               str(data), lineno,
                                               self.filename)
@@ -617,8 +662,14 @@ class Parser(object):
 
         # still here and a test function is provided? raise and error
         if test is not None:
-            raise TemplateSyntaxError('unexpected end of template', lineno,
-                                      self.filename)
+            # if the callback is a state test lambda wrapper we
+            # can use the `error_message` property to get the error
+            if isinstance(test, StateTest):
+                msg = ': ' + test.error_message
+            else:
+                msg = ''
+            raise TemplateSyntaxError('unexpected end of template' + msg,
+                                      lineno, self.filename)
         return finish()
 
     def close_remaining_block(self):
@@ -628,12 +679,14 @@ class Parser(object):
         the stream. If the next token isn't the block end we throw an
         error.
         """
-        lineno = self.tokenstream.last[0]
+        lineno, _, tagname = self.tokenstream.last
         try:
             lineno, token, data = self.tokenstream.next()
         except StopIteration:
             raise TemplateSyntaxError('missing closing tag', lineno,
                                       self.filename)
         if token != 'block_end':
-            raise TemplateSyntaxError('expected close tag, found %r' % token,
-                                      lineno, self.filename)
+            print token, data, list(self.tokenstream)
+            raise TemplateSyntaxError('expected empty %s-directive but '
+                                      'found additional arguments.' %
+                                      tagname, lineno, self.filename)

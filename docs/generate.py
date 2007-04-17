@@ -246,7 +246,7 @@ def generate_documentation(data, link_style):
         data,
         writer=writer,
         settings_overrides={
-            'initial_header_level': 3,
+            'initial_header_level': 2,
             'field_name_limit': 50,
         }
     )

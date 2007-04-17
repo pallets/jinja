@@ -13,6 +13,11 @@ Version 1.1
 - ``{{ debug() }}`` can now be used to get a list of filters and
   tags.
 
+- the template lexer keeps not track of brace, parenthesis and
+  bracket balance in order to not break variable tags apart if they
+  are configured to look like this: ``${expr}``. This also fixes
+  the problem with nested dicts in variable expressions.
+
 - added whitespace management system for the template designer.
 
 - some small bugfixes.
@@ -24,6 +29,8 @@ Version 1.1
 - strings without unicode characters are processed as binary strings now
   to workaround problems with `datetime.strftime` which only accepts
   binary strings.
+
+- it's now possible to use newlines in string literals
 
 - developer friendly traceback is now toggleable
 
@@ -45,6 +52,17 @@ Version 1.1
 - added `sum`, `abs` and `round` filters. This fixes #238
 
 - added `striptags` and `xmlattr` filters for easier SGML/XML processing
+
+- the trans tag does not need explicit naming for variables with the same
+  name any more. You can now use ``{% trans foo %}`` instead of the verbose
+  version ``{% trans foo=foo %}``.
+
+- reimplemented Buffet plugin so that it works at least for pylons
+
+- added `Environment.get_translations_for_string`
+
+- fixed a bug in the parser that didn't unescape keyword arguments. (thanks
+  to Alexey Melchakov for reporting)
 
 
 Version 1.0

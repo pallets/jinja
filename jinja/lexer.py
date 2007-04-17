@@ -25,6 +25,7 @@
 import re
 from jinja.datastructure import TokenStream
 from jinja.exceptions import TemplateSyntaxError
+from weakref import WeakValueDictionary
 
 try:
     set
@@ -33,6 +34,11 @@ except NameError:
 
 
 __all__ = ['Lexer', 'Failure', 'keywords']
+
+
+# cache for the lexers. Exists in order to be able to have multiple
+# environments with the same lexer
+_lexer_cache = WeakValueDictionary()
 
 
 # static regular expressions
@@ -75,11 +81,41 @@ class Failure(object):
         raise self.error_class(self.message, lineno)
 
 
+class LexerMeta(type):
+    """
+    Metaclass for the lexer that caches instances for
+    the same configuration in a weak value dictionary.
+    """
+
+    def __call__(cls, environment):
+        key = hash((environment.block_start_string,
+                    environment.block_end_string,
+                    environment.variable_start_string,
+                    environment.variable_end_string,
+                    environment.comment_start_string,
+                    environment.comment_end_string,
+                    environment.trim_blocks))
+
+        # use the cached lexer if possible
+        if key in _lexer_cache:
+            return _lexer_cache[key]
+
+        # create a new lexer and cache it
+        lexer = type.__call__(cls, environment)
+        _lexer_cache[key] = lexer
+        return lexer
+
+
 class Lexer(object):
     """
     Class that implements a lexer for a given environment. Automatically
     created by the environment class, usually you don't have to do that.
+
+    Note that the lexer is not automatically bound to an environment.
+    Multiple environments can share the same lexer.
     """
+
+    __metaclass__ = LexerMeta
 
     def __init__(self, environment):
         # shortcuts
@@ -137,7 +173,7 @@ class Lexer(object):
                 )), ('comment', 'comment_end'), '#pop'),
                 (c('(.)'), (Failure('Missing end of comment tag'),), None)
             ],
-            # directives
+            # blocks
             'block_begin': [
                 (c('(?:\-%s\s*|%s)%s' % (
                     e(environment.block_end_string),
@@ -165,7 +201,7 @@ class Lexer(object):
             ]
         }
 
-    def tokenize(self, source):
+    def tokenize(self, source, filename=None):
         """
         Simple tokenize function that yields ``(position, type, contents)``
         tuples. Wrap the generator returned by this function in a
@@ -175,13 +211,13 @@ class Lexer(object):
         Additionally non keywords are escaped.
         """
         def generate():
-            for lineno, token, value in self.tokeniter(source):
+            for lineno, token, value in self.tokeniter(source, filename):
                 if token == 'name' and value not in keywords:
                     value += '_'
                 yield lineno, token, value
-        return TokenStream(generate())
+        return TokenStream(generate(), filename)
 
-    def tokeniter(self, source):
+    def tokeniter(self, source, filename=None):
         """
         This method tokenizes the text and returns the tokens in a generator.
         Use this method if you just want to tokenize a template. The output
@@ -196,84 +232,115 @@ class Lexer(object):
         statetokens = self.rules['root']
         source_length = len(source)
 
+        balancing_stack = []
+
         while True:
             # tokenizer loop
             for regex, tokens, new_state in statetokens:
                 m = regex.match(source, pos)
-                if m:
-                    # tuples support more options
-                    if isinstance(tokens, tuple):
-                        for idx, token in enumerate(tokens):
-                            # hidden group
-                            if token is None:
-                                g = m.group(idx)
-                                if g:
-                                    lineno += g.count('\n')
-                                continue
-                            # failure group
-                            elif isinstance(token, Failure):
-                                raise token(m.start(idx + 1))
-                            # bygroup is a bit more complex, in that case we
-                            # yield for the current token the first named
-                            # group that matched
-                            elif token == '#bygroup':
-                                for key, value in m.groupdict().iteritems():
-                                    if value is not None:
-                                        yield lineno, key, value
-                                        lineno += value.count('\n')
-                                        break
-                                else:
-                                    raise RuntimeError('%r wanted to resolve '
-                                                       'the token dynamically'
-                                                       ' but no group matched'
-                                                       % regex)
-                            # normal group
-                            else:
-                                data = m.group(idx + 1)
-                                if data:
-                                    yield lineno, token, data
-                                lineno += data.count('\n')
-                    # strings as token just are yielded as it, but just
-                    # if the data is not empty
-                    else:
-                        data = m.group()
-                        if tokens is not None:
-                            if data:
-                                yield lineno, tokens, data
-                        lineno += data.count('\n')
-                    # fetch new position into new variable so that we can check
-                    # if there is a internal parsing error which would result
-                    # in an infinite loop
-                    pos2 = m.end()
-                    # handle state changes
-                    if new_state is not None:
-                        # remove the uppermost state
-                        if new_state == '#pop':
-                            stack.pop()
-                        # resolve the new state by group checking
-                        elif new_state == '#bygroup':
+                # if no match we try again with the next rule
+                if not m:
+                    continue
+
+                # we only match blocks and variables if brances / parentheses
+                # are balanced. continue parsing with the lower rule which
+                # is the operator rule. do this only if the end tags look
+                # like operators
+                if balancing_stack and \
+                   tokens in ('variable_end', 'block_end'):
+                    continue
+
+                # tuples support more options
+                if isinstance(tokens, tuple):
+                    for idx, token in enumerate(tokens):
+                        # hidden group
+                        if token is None:
+                            g = m.group(idx)
+                            if g:
+                                lineno += g.count('\n')
+                            continue
+                        # failure group
+                        elif isinstance(token, Failure):
+                            raise token(m.start(idx + 1))
+                        # bygroup is a bit more complex, in that case we
+                        # yield for the current token the first named
+                        # group that matched
+                        elif token == '#bygroup':
                             for key, value in m.groupdict().iteritems():
                                 if value is not None:
-                                    stack.append(key)
+                                    yield lineno, key, value
+                                    lineno += value.count('\n')
                                     break
                             else:
-                                raise RuntimeError('%r wanted to resolve the '
-                                                   'new state dynamically but'
-                                                   ' no group matched' %
-                                                   regex)
-                        # direct state name given
+                                raise RuntimeError('%r wanted to resolve '
+                                                   'the token dynamically'
+                                                   ' but no group matched'
+                                                   % regex)
+                        # normal group
                         else:
-                            stack.append(new_state)
-                        statetokens = self.rules[stack[-1]]
-                    # we are still at the same position and no stack change.
-                    # this means a loop without break condition, avoid that and
-                    # raise error
-                    elif pos2 == pos:
-                        raise RuntimeError('%r yielded empty string without '
-                                           'stack change' % regex)
-                    # publish new function and start again
-                    pos = pos2
-                    break
+                            data = m.group(idx + 1)
+                            if data:
+                                yield lineno, token, data
+                            lineno += data.count('\n')
+
+                # strings as token just are yielded as it, but just
+                # if the data is not empty
+                else:
+                    data = m.group()
+                    # update brace/parentheses balance
+                    if tokens == 'operator':
+                        if data == '{':
+                            balancing_stack.append('}')
+                        elif data == '(':
+                            balancing_stack.append(')')
+                        elif data == '[':
+                            balancing_stack.append(']')
+                        elif data in ('}', ')', ']'):
+                            if not balancing_stack or \
+                               balancing_stack.pop() != data:
+                                raise TemplateSyntaxError('unexpected EOF '
+                                                          'while lexing',
+                                                          lineno, filename)
+                    # yield items
+                    if tokens is not None:
+                        if data:
+                            yield lineno, tokens, data
+                    lineno += data.count('\n')
+
+                # fetch new position into new variable so that we can check
+                # if there is a internal parsing error which would result
+                # in an infinite loop
+                pos2 = m.end()
+
+                # handle state changes
+                if new_state is not None:
+                    # remove the uppermost state
+                    if new_state == '#pop':
+                        stack.pop()
+                    # resolve the new state by group checking
+                    elif new_state == '#bygroup':
+                        for key, value in m.groupdict().iteritems():
+                            if value is not None:
+                                stack.append(key)
+                                break
+                        else:
+                            raise RuntimeError('%r wanted to resolve the '
+                                               'new state dynamically but'
+                                               ' no group matched' %
+                                               regex)
+                    # direct state name given
+                    else:
+                        stack.append(new_state)
+                    statetokens = self.rules[stack[-1]]
+                # we are still at the same position and no stack change.
+                # this means a loop without break condition, avoid that and
+                # raise error
+                elif pos2 == pos:
+                    raise RuntimeError('%r yielded empty string without '
+                                       'stack change' % regex)
+                # publish new function and start again
+                pos = pos2
+                break
             # if loop terminated without break we havn't found a single match
             # either we are at the end of the file or we have a problem
             else:
@@ -282,4 +349,5 @@ class Lexer(object):
                     return
                 # something went wrong
                 raise TemplateSyntaxError('unexpected char %r at %d' %
-                                          (source[pos], pos), lineno)
+                                          (source[pos], pos), lineno,
+                                          filename)

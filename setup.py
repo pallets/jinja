@@ -47,5 +47,9 @@ setup(
         ('docs/txt', list(list_files('docs/src')))
     ],
     platforms = 'any',
+    entry_points='''
+    [python.templating.engines]
+    jinja = jinja.plugin:BuffetPlugin
+    ''',
     extras_require = {'plugin': ['setuptools>=0.6a2']}
 )

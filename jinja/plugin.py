@@ -3,7 +3,11 @@
     jinja.plugin
     ~~~~~~~~~~~~
 
-    Support for the `GeneralTemplateInterface`__.
+    Support for the `GeneralTemplateInterface`__ and the Buffet interface.
+
+    Do not use this module on your own. We don't recommend those interfaces!
+    If you are able to, you should really use Jinja without those abstraction
+    layers.
 
     __ http://trac.pocoo.org/wiki/GeneralTemplateInterface
 
@@ -13,6 +17,61 @@
 from jinja.environment import Environment
 from jinja.loaders import FunctionLoader, FileSystemLoader, PackageLoader
 from jinja.exceptions import TemplateNotFound
+
+
+class BuffetPlugin(object):
+    """
+    Implements the Jinja buffet plugin. Well. It works for pylons and should
+    work for TurboGears too if their plugin system would work.
+    """
+
+    def __init__(self, extra_vars_func=None, options=None):
+        if 'jinja.environment' in options:
+            self.env = options['jinja.environment']
+        else:
+            opt = {}
+            for key, value in options.iteritems():
+                if key.startswith('jinja.') and key != 'jinja.extension':
+                    opt[key[6:]] = value
+            loader_func = opt.pop('loader_func', None)
+            getmtime_func = opt.pop('getmtime_func', None)
+            use_memcache = opt.pop('use_memcache', False)
+            memcache_size = opt.pop('memcache_size', 40)
+            cache_folder = opt.pop('cache_folder', None)
+            auto_reload = opt.pop('auto_reload', True)
+            if 'searchpath' in options:
+                opt['loader'] = FileSystemLoader(opt.pop('searchpath'),
+                                                 use_memcache, memcache_size,
+                                                 cache_folder, auto_reload)
+            elif 'package' in options:
+                opt['loader'] = PackageLoader(opt.pop('package'),
+                                              opt.pop('package_path', ''),
+                                              use_memcache, memcache_size,
+                                              cache_folder, auto_reload)
+            elif loader_func is not None:
+                opt['loader'] = FunctionLoader(loader_func, getmtime_func,
+                                               use_memcache, memcache_size,
+                                               cache_folder, auto_reload)
+            self.env = Environment(**opt)
+
+        self.extra_vars_func = extra_vars_func
+        self.extension = options.pop('jinja.extension', 'html')
+
+    def load_template(self, templatename, template_string=None):
+        if template_string is not None:
+            return self.env.from_string(template_string)
+        if templatename.startswith('!'):
+            jinja_name = templatename[1:]
+        else:
+            jinja_name = templatename.replace('.', '/') + '.' + self.extension
+        return self.env.get_template(jinja_name)
+
+    def render(self, info, format='html', fragment=False, template=None):
+        if isinstance(template, basestring):
+            template = self.load_template(template)
+        if self.extra_vars_func:
+            info.update(self.extra_vars_func())
+        return template.render(info)
 
 
 def jinja_plugin_factory(options):

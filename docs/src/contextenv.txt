@@ -40,6 +40,12 @@ in the template evaluation code you may want to override:
     Get the translations for the template `name`. Only works if a loader
     is present. See the `i18n`_ section for more details.
 
+**def** `get_translations_for_string` *(self, string)*:
+
+    Get the translations for the string `string`. This works also if no
+    loader is present and can be used to lookup translation strings from
+    templates that are loaded from dynamic resources like databases.
+
 **def** `apply_filters` *(self, value, context, filters)*:
 
     Now this function is a bit tricky and you usually don't have to override
@@ -57,7 +63,7 @@ in the template evaluation code you may want to override:
     unicode. The filters for the names are stored on ``self.filters`` in a
     dict. Missing filters should raise a `FilterNotFound` exception.
 
-    **Warning** this is a jinja internal method. The actual implementation
+    **Warning** this is a Jinja internal method. The actual implementation
     and function signature might change.
 
 **def** `perform_test` *(self, context, testname, args, value, invert)*:
@@ -72,7 +78,7 @@ in the template evaluation code you may want to override:
 
     Missing tests should raise a `TestNotFound` exception.
 
-    **Warning** this is a jinja internal method. The actual implementation
+    **Warning** this is a Jinja internal method. The actual implementation
     and function signature might change.
 
 **def** `get_attribute` *(self, obj, attribute)*:
@@ -80,8 +86,13 @@ in the template evaluation code you may want to override:
     Get `attribute` from the object provided. The default implementation
     performs security tests.
 
-    **Warning** this is a jinja internal method. The actual implementation
+    **Warning** this is a Jinja internal method. The actual implementation
     and function signature might change.
+
+**def** `get_attributes` *(self, obj, attributes)*:
+
+    Get some attributes from the object. If `attributes` is an empty
+    sequence the object itself is returned unchanged.
 
 **def** `call_function` *(self, f, context, args, kwargs, dyn_args, dyn_kwargs)*:
     
@@ -92,21 +103,21 @@ in the template evaluation code you may want to override:
 
     The default implementation performs some security checks.
 
-    **Warning** this is a jinja internal method. The actual implementation
+    **Warning** this is a Jinja internal method. The actual implementation
     and function signature might change.
 
 **def** `call_function_simple` *(self, f, context)*:
 
     Like `call_function` but without arguments.
 
-    **Warning** this is a jinja internal method. The actual implementation
+    **Warning** this is a Jinja internal method. The actual implementation
     and function signature might change.
 
 **def** `finish_var` *(self, value, ctx)*:
 
     Postprocess a variable before it's sent to the template.
 
-    **Warning** this is a jinja internal method. The actual implementation
+    **Warning** this is a Jinja internal method. The actual implementation
     and function signature might change.
     
 .. admonition:: Note

@@ -112,6 +112,7 @@ def test_matching(regex):
         return regex.search(value) is not None
     return wrapped
 
+
 TESTS = {
     'odd':              test_odd,
     'even':             test_even,

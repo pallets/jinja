@@ -660,7 +660,7 @@ def do_capture(name='captured', clean=False):
 def do_striptags(value, rex=re.compile(r'<[^>]+>')):
     """
     Strip SGML/XML tags and replace adjacent whitespace by one space.
-    
+
     *new in Jinja 1.1*
     """
     return ' '.join(rex.sub('', value).split())
@@ -800,7 +800,10 @@ def do_round(precision=0, method='common'):
             return round(value, precision)
         import math
         func = getattr(math, method)
-        return func(value * 10 * precision) / (10 * precision)
+        if precision:
+            return func(value * 10 * precision) / (10 * precision)
+        else:
+            return func(value)
     return wrapped
 
 

@@ -189,12 +189,24 @@ class Context(object):
         self.environment = _environment_
         self._stack = [_environment_.globals, dict(*args, **kwargs), {}]
         self.globals, self.initial, self.current = self._stack
-
-        # translator function added by the environment rendering function
-        self.translate_func = None
+        self._translate_func = None
 
         # cache object used for filters and tests
         self.cache = {}
+
+    def translate_func(self):
+        """
+        Return the translator for this context.
+        """
+        if self._translate_func is None:
+            translator = self.environment.get_translator(self)
+            def translate(s, p=None, n=None, r=None):
+                if p is None:
+                    return translator.gettext(s) % (r or {})
+                return translator.ngettext(s, p, r[n]) % (r or {})
+            self._translate_func = translate
+        return self._translate_func
+    translate_func = property(translate_func, doc=translate_func.__doc__)
 
     def pop(self):
         """
@@ -404,16 +416,55 @@ class SuperBlock(object):
         return '<SuperBlock %r>' % self.name
 
 
+class StateTest(object):
+    """
+    Wrapper class for basic lambdas in order to simplify
+    debugging in the parser. It also provides static helper
+    functions that replace some lambda expressions
+    """
+
+    def __init__(self, func, error_message):
+        self.func = func
+        self.error_message = error_message
+
+    def __call__(self, p, t, d):
+        return self.func(p, t, d)
+
+    def expect_token(token_name, error_message=None):
+        """Scans until a token types is found."""
+        return StateTest(lambda p, t, d: t == token_name, 'expected ' +
+                         (error_message or token_name))
+    expect_token = staticmethod(expect_token)
+
+    def expect_name(*names):
+        """Scans until one of the given names is found."""
+        if len(names) == 1:
+            name = names[0]
+            return StateTest(lambda p, t, d: t == 'name' and d == name,
+                             "expected '%s'" % name)
+        else:
+            return StateTest(lambda p, t, d: t == 'name' and d in names,
+                             'expected one of %s' % ','.join(["'%s'" % name
+                             for name in names]))
+    expect_name = staticmethod(expect_name)
+
+
 class TokenStream(object):
     """
     A token stream works like a normal generator just that
     it supports pushing tokens back to the stream.
     """
 
-    def __init__(self, generator):
+    def __init__(self, generator, filename):
         self._next = generator.next
         self._pushed = []
         self.last = (1, 'initial', '')
+        self.filename = filename
+
+    def bound(self):
+        """Return True if the token stream is bound to a parser."""
+        return self.parser is not None
+    bound = property(bound, doc=bound.__doc__)
 
     def __iter__(self):
         """Return self in order to mark this is iterator."""
@@ -458,7 +509,12 @@ class TokenStream(object):
                 else:
                     yield token
         except StopIteration:
-            raise TemplateSyntaxError('end of stream reached')
+            if isinstance(test, StateTest):
+                msg = ': ' + test.error_message
+            else:
+                msg = ''
+            raise TemplateSyntaxError('end of stream' + msg,
+                                      self.last[0], self.filename)
 
     def drop_until(self, test, drop_needle=False):
         """Fetch tokens until a function matches and drop all

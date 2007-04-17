@@ -30,6 +30,8 @@ Welcome in the Jinja documentation.
 
   - `Internationalization <i18n.txt>`_
 
+  - `Alternative Syntax <altsyntax.txt>`_
+
   - `Developer Recipies <devrecipies.txt>`_
 
 - Template Designer Documentation:

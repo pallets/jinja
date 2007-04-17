@@ -922,5 +922,19 @@ defined in the ``trans`` header. Filters must be applied in the header.
             one user found.
         {% endif %}
 
+*New in Jinja 1.1*: It's now possible to use the marker name as implicit
+default:
+
+.. sourcecode:: jinja
+
+    instead of this version:
+
+        {% trans username=username %}Hello {{ username }}!{% endtrans %}
+
+    you can now write this:
+
+        {% trans username %}Hello {{ username }}!{% endtrans %}
+
+
 .. _slicing chapter: http://diveintopython.org/native_data_types/lists.html#odbchelper.list.slice
 .. _range function: http://docs.python.org/tut/node6.html#SECTION006300000000000000000

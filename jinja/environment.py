@@ -136,8 +136,10 @@ class Environment(object):
         self.friendly_traceback = friendly_traceback
 
         # global namespace
-        self.globals = namespace is None and DEFAULT_NAMESPACE.copy() \
-                       or namespace
+        if namespace is None:
+            self.globals = DEFAULT_NAMESPACE.copy()
+        else:
+            self.globals = namespace
 
         # jinja 1.0 compatibility
         if auto_escape:
@@ -226,6 +228,13 @@ class Environment(object):
         the parent or any included templates!)
         """
         return collect_translations(self.loader.parse(name))
+
+    def get_translations_for_string(self, string):
+        """
+        Like `get_translations`, but the translations are loaded from a
+        normal string that represents the template.
+        """
+        return collect_translations(self.parse(string))
 
     def apply_filters(self, value, context, filters):
         """

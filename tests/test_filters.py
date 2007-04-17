@@ -22,7 +22,10 @@ DEFAULT = '''{{ missing|default("no") }}|{{ false|default('no') }}|\
 DICTSORT = '''{{ foo|dictsort }}|\
 {{ foo|dictsort(true) }}|\
 {{ foo|dictsort(false, 'value') }}'''
+BATCH = '''{{ foo|batch(3) }}|{{ foo|batch(3, 'X') }}'''
+SLICE = '''{{ foo|slice(3) }}|{{ foo|slice(3, 'X') }}'''
 ESCAPE = '''{{ '<">&'|escape }}|{{ '<">&'|escape(true) }}'''
+STRIPTAGS = '''{{ foo|striptags }}'''
 FILESIZEFORMAT = '{{ 100|filesizeformat }}|\
 {{ 1000|filesizeformat }}|\
 {{ 1000000|filesizeformat }}|\
@@ -52,6 +55,12 @@ URLIZE = '''{{ "foo http://www.example.com/ bar"|urlize }}'''
 WORDCOUNT = '''{{ "foo bar baz"|wordcount }}'''
 BLOCK = '''{% filter lower|escape %}<HEHE>{% endfilter %}'''
 CHAINING = '''{{ ['<foo>', '<bar>']|first|upper|escape }}'''
+SUM = '''{{ [1, 2, 3, 4, 5, 6]|sum }}'''
+ABS = '''{{ -1|abs }}|{{ 1|abs }}'''
+ROUND = '''{{ 2.7|round }}|{{ 2.1|round }}|\
+{{ 2.1234|round(2, 'floor') }}|{{ 2.1|round(0, 'ceil') }}'''
+XMLATTR = '''{{ {'foo': 42, 'bar': 23, 'fish': none,
+'spam': missing, 'blub:blub': '<?>'}|xmlattr }}'''
 
 
 def test_capitalize(env):
@@ -82,10 +91,31 @@ def test_dictsort(env):
                    "[('a', 0), ('b', 1), ('c', 2), ('A', 3)]")
 
 
+def test_batch(env):
+    tmpl = env.from_string(BATCH)
+    out = tmpl.render(foo=range(10))
+    assert out == ("[[0, 1, 2], [3, 4, 5], [6, 7, 8], [9]]|"
+                   "[[0, 1, 2], [3, 4, 5], [6, 7, 8], [9, 'X', 'X']]")
+
+
+def test_slice(env):
+    tmpl = env.from_string(SLICE)
+    out = tmpl.render(foo=range(10))
+    assert out == ("[[0, 1, 2, 3], [4, 5, 6], [7, 8, 9]]|"
+                   "[[0, 1, 2, 3], [4, 5, 6, 'X'], [7, 8, 9, 'X']]")
+
+
 def test_escape(env):
     tmpl = env.from_string(ESCAPE)
     out = tmpl.render()
     assert out == '&lt;"&gt;&amp;|&lt;&quot;&gt;&amp;'
+
+
+def test_striptags(env):
+    tmpl = env.from_string(STRIPTAGS)
+    out = tmpl.render(foo='  <p>just a small   \n <a href="#">'
+                      'example</a> link</p>\n<p>to a webpage</p>')
+    assert out == 'just a small example link to a webpage'
 
 
 def test_filesizeformat(env):
@@ -220,3 +250,27 @@ def test_block(env):
 def test_chaining(env):
     tmpl = env.from_string(CHAINING)
     assert tmpl.render() == '&lt;FOO&gt;'
+
+
+def test_sum(env):
+    tmpl = env.from_string(SUM)
+    assert tmpl.render() == '21'
+
+
+def test_abs(env):
+    tmpl = env.from_string(ABS)
+    return tmpl.render() == '1|1'
+
+
+def test_round(env):
+    tmpl = env.from_string(ROUND)
+    return tmpl.render() == '3.0|2.0|2.1|3.0'
+
+
+def test_xmlattr(env):
+    tmpl = env.from_string(XMLATTR)
+    out = tmpl.render().split()
+    assert len(out) == 3
+    assert 'foo="42"' in out
+    assert 'bar="23"' in out
+    assert 'blub:blub="&lt;?&gt;"' in out

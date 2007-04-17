@@ -70,3 +70,8 @@ singular form and the third is the plural form if given.
 
 Because Jinja is not bound to gettext you can now use these strings to
 create translation files for any translation system.
+
+*New in Jinja 1.1* You can now extract translations from strings according
+to the current envrionment settings too by using the environment method
+`get_translations_for_string` which takes a string containing a template
+as only argument. The return value is the same as for `get_translations`.

@@ -6,7 +6,7 @@
     :copyright: 2007 by Armin Ronacher.
     :license: BSD, see LICENSE for more details.
 """
-
+from jinja import Environment, DictLoader
 
 LAYOUTTEMPLATE = '''\
 |{% block block1 %}block 1 from layout{% endblock %}
@@ -34,7 +34,6 @@ LEVEL4TEMPLATE = '''\
 {% extends "level3" %}
 {% block block3 %}block 3 from level4{% endblock %}
 '''
-
 
 def test_layout(env):
     tmpl = env.get_template('layout')
@@ -64,3 +63,17 @@ def test_level4(env):
     tmpl = env.get_template('level4')
     assert tmpl.render() == ('|block 1 from level1|block 5 from '
                              'level3|block 3 from level4|')
+
+
+def test_super():
+    env = Environment(loader=DictLoader({
+        'a': '{% block intro %}INTRO{% endblock %}|'
+             'BEFORE|{% block data %}INNER{% endblock %}|AFTER',
+        'b': '{% extends "a" %}{% block data %}({{ '
+             'super() }}){% endblock %}',
+        'c': '{% extends "b" %}{% block intro %}--{{ '
+             'super() }}--{% endblock %}\n{% block data '
+             '%}[{{ super() }}]{% endblock %}'
+    }))
+    tmpl = env.get_template('c')
+    assert tmpl.render() == '--INTRO--|BEFORE|[(INNER)]|AFTER'

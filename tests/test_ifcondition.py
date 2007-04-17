@@ -10,6 +10,7 @@
 SIMPLE = '''{% if true %}...{% endif %}'''
 ELIF = '''{% if false %}XXX{% elif true %}...{% else %}XXX{% endif %}'''
 ELSE = '''{% if false %}XXX{% else %}...{% endif %}'''
+EMPTY = '''[{% if true %}{% else %}{% endif %}]'''
 
 
 def test_simple(env):
@@ -25,3 +26,8 @@ def test_elif(env):
 def test_else(env):
     tmpl = env.from_string(ELSE)
     assert tmpl.render() == '...'
+
+
+def test_empty(env):
+    tmpl = env.from_string(EMPTY)
+    assert tmpl.render() == '[]'
