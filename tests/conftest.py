@@ -36,7 +36,7 @@ class GlobalLoader(object):
 
 
 loader = GlobalLoader(globals())
-simple_env = Environment(trim_blocks=True, loader=loader)
+simple_env = Environment(trim_blocks=True, friendly_traceback=False, loader=loader)
 
 
 class Module(py.test.collect.Module):

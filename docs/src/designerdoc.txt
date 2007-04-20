@@ -784,7 +784,7 @@ The following keywords exist and cannot be used as identifiers:
     `and`, `block`, `cycle`, `elif`, `else`, `endblock`, `endfilter`,
     `endfor`, `endif`, `endmacro`, `endraw`, `endtrans`, `extends`, `filter`,
     `for`, `if`, `in`, `include`, `is`, `macro`, `not`, `or`, `pluralize`,
-    `raw`, `recursive`, `set`, `trans`
+    `print`, `raw`, `recursive`, `set`, `trans`
 
 If you want to use such a name you have to prefix or suffix it or use
 alternative names:

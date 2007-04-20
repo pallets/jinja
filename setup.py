@@ -3,7 +3,10 @@ import jinja
 import os
 import ez_setup
 ez_setup.use_setuptools()
-from setuptools import setup
+
+from distutils.command.build_ext import build_ext
+from distutils.errors import CCompilerError
+from setuptools import setup, Extension, Feature
 from inspect import getdoc
 
 
@@ -14,6 +17,22 @@ def list_files(path):
         fn = os.path.join(path, fn)
         if os.path.isfile(fn):
             yield fn
+
+
+class optional_build_ext(build_ext):
+
+    def build_extension(self, ext):
+        try:
+            build_ext.build_extension(self, ext)
+        except CCompilerError, e:
+            print '=' * 79
+            print 'INFORMATION'
+            print '  the speedup extension could not be compiled, jinja will'
+            print '  fall back to the native python classes.'
+            print '=' * 79
+
+
+
 
 
 setup(
@@ -51,5 +70,13 @@ setup(
     [python.templating.engines]
     jinja = jinja.plugin:BuffetPlugin
     ''',
-    extras_require = {'plugin': ['setuptools>=0.6a2']}
+    extras_require = {'plugin': ['setuptools>=0.6a2']},
+    features = {'speedups': Feature(
+        'optional C-speed enhancements',
+        standard = True,
+        ext_modules = [
+            Extension('jinja._speedups', ['jinja/_speedups.c'])
+        ]
+    )},
+    cmdclass = {'build_ext': optional_build_ext}
 )

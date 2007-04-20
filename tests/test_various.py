@@ -34,6 +34,8 @@ UNPACKING = '''{% for a, b, c in [[1, 2, 3]] %}{{ a }}|{{ b }}|{{ c }}{% endfor 
 
 RAW = '''{% raw %}{{ FOO }} and {% BAR %}{% endraw %}'''
 
+CALL = '''{{ foo('a', c='d', e='f', *['b'], **{'g': 'h'}) }}'''
+
 
 def test_keywords(env):
     env.from_string(KEYWORDS)
@@ -59,3 +61,11 @@ def test_cache_dict():
     d["d"] = 4
     assert len(d) == 3
     assert 'a' in d and 'c' in d and 'd' in d and 'b' not in d
+
+
+def test_call():
+    from jinja import Environment
+    env = Environment()
+    env.globals['foo'] = lambda a, b, c, e, g: a + b + c + e + g
+    tmpl = env.from_string(CALL)
+    assert tmpl.render() == 'abdfh'

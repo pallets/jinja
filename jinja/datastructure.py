@@ -180,23 +180,48 @@ class Flush(TemplateData):
     jinja_no_finalization = True
 
 
-class Context(object):
+# import these here because those modules import Deferred and Undefined
+# from this module.
+try:
+    # try to use the c implementation of the base context if available
+    from jinja._speedups import BaseContext
+except ImportError:
+    # if there is no c implementation we go with a native python one
+    from jinja._native import BaseContext
+
+
+class Context(BaseContext):
     """
     Dict like object containing the variables for the template.
     """
 
     def __init__(self, _environment_, *args, **kwargs):
-        self.environment = _environment_
-        self._stack = [_environment_.globals, dict(*args, **kwargs), {}]
-        self.globals, self.initial, self.current = self._stack
-        self._translate_func = None
+        super(Context, self).__init__(_environment_.silent,
+                                      _environment_.globals,
+                                      dict(*args, **kwargs))
 
-        # cache object used for filters and tests
+        self._translate_func = None
         self.cache = {}
+        self.environment = _environment_
+
+    def to_dict(self):
+        """
+        Convert the context into a dict. This skips the globals.
+        """
+        result = {}
+        for layer in self.stack[1:]:
+            for key, value in layer.iteritems():
+                if key.startswith('::'):
+                    continue
+                result[key] = value
+        return result
 
     def translate_func(self):
         """
-        Return the translator for this context.
+        Return a translation function for this context. It takes
+        4 parameters. The singular string, the optional plural one,
+        the indicator number which is used to select the correct
+        plural form and a dict with values which should be inserted.
         """
         if self._translate_func is None:
             translator = self.environment.get_translator(self)
@@ -207,80 +232,6 @@ class Context(object):
             self._translate_func = translate
         return self._translate_func
     translate_func = property(translate_func, doc=translate_func.__doc__)
-
-    def pop(self):
-        """
-        Pop the last layer from the stack and return it.
-        """
-        rv = self._stack.pop()
-        self.current = self._stack[-1]
-        return rv
-
-    def push(self, data=None):
-        """
-        Push a new dict or empty layer to the stack and return that layer
-        """
-        data = data or {}
-        self._stack.append(data)
-        self.current = self._stack[-1]
-        return data
-
-    def to_dict(self):
-        """
-        Convert the context into a dict. This skips the globals.
-        """
-        result = {}
-        for layer in self._stack[1:]:
-            for key, value in layer.iteritems():
-                if key.startswith('::'):
-                    continue
-                result[key] = value
-        return result
-
-    def __getitem__(self, name):
-        """
-        Resolve one item. Restrict the access to internal variables
-        such as ``'::cycle1'``. Resolve deferreds.
-        """
-        if not name.startswith('::'):
-            # because the stack is usually quite small we better use [::-1]
-            # which is faster than reversed() somehow.
-            for d in self._stack[::-1]:
-                if name in d:
-                    rv = d[name]
-                    if rv.__class__ is Deferred:
-                        rv = rv(self, name)
-                        # never touch the globals!
-                        if d is self.globals:
-                            self.initial[name] = rv
-                        else:
-                            d[name] = rv
-                    return rv
-        if self.environment.silent:
-            return Undefined
-        raise TemplateRuntimeError('%r is not defined' % name)
-
-    def __setitem__(self, name, value):
-        """
-        Set a variable in the outermost layer.
-        """
-        self.current[name] = value
-
-    def __delitem__(self, name):
-        """
-        Delete an variable in the outermost layer.
-        """
-        if name in self.current:
-            del self.current[name]
-
-    def __contains__(self, name):
-        """
-        Check if the context contains a given variable.
-        """
-        for layer in self._stack:
-            if name in layer:
-                return True
-        return False
 
     def __repr__(self):
         """

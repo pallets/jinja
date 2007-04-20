@@ -35,10 +35,11 @@ def test_simple(env):
 
 
 def test_kwargs_failure(env):
+    from jinja.exceptions import TemplateRuntimeError
     tmpl = env.from_string(KWARGSFAILURE)
     try:
         tmpl.render()
-    except TypeError, e:
+    except TemplateRuntimeError, e:
         pass
     else:
         raise AssertionError('kwargs failure test failed')

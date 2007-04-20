@@ -57,6 +57,11 @@ addition to the initialization values:
                             syntax tree. This tree of nodes is used by the
                             `translators`_ to convert the template into
                             executable source- or bytecode.
+``lex(source, filename)``   Tokenize the given sourcecode and return a
+                            generator of tuples in the form
+                            ``(lineno, token, value)``. The filename is just
+                            used in the exceptions raised.
+                            **New in Jinja 1.1**
 ``from_string(source)``     Load and parse a template source and translate it
                             into eval-able Python code. This code is wrapped
                             within a `Template` class that allows you to

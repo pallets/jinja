@@ -74,6 +74,8 @@ The function is always called with the same arguments. The first one is the
 current environment, the second the context and the third is the name of the
 variable. In this example ``recent_comments``.
 
+The value is cached until rendering/streaming finished.
+
 Unsafe Methods / Attributes
 ===========================
 

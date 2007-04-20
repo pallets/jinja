@@ -167,6 +167,17 @@ class Environment(object):
         parser = Parser(self, source, filename)
         return parser.parse()
 
+    def lex(self, source, filename=None):
+        """
+        Lex the given sourcecode and return a generator that yields tokens.
+        The stream returned is not usable for Jinja but can be used if
+        Jinja templates should be processed by other tools (for example
+        syntax highlighting etc)
+
+        The tuples are returned in the form ``(lineno, token, value)``.
+        """
+        return self.lexer.tokeniter(source, filename)
+
     def from_string(self, source):
         """
         Load and parse a template source and translate it into eval-able
@@ -300,7 +311,7 @@ class Environment(object):
         """
         if dyn_args is not None:
             args += tuple(dyn_args)
-        elif dyn_kwargs is not None:
+        if dyn_kwargs is not None:
             kwargs.update(dyn_kwargs)
         if getattr(f, 'jinja_unsafe_call', False) or \
            getattr(f, 'alters_data', False):

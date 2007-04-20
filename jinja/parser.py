@@ -41,6 +41,7 @@ switch_if = StateTest.expect_name('else', 'elif', 'endif')
 end_of_if = StateTest.expect_name('endif')
 end_of_filter = StateTest.expect_name('endfilter')
 end_of_macro = StateTest.expect_name('endmacro')
+end_of_call = StateTest.expect_name('endcall')
 end_of_block_tag = StateTest.expect_name('endblock')
 end_of_trans = StateTest.expect_name('endtrans')
 
@@ -77,6 +78,7 @@ class Parser(object):
             'filter':       self.handle_filter_directive,
             'print':        self.handle_print_directive,
             'macro':        self.handle_macro_directive,
+            'call':         self.handle_call_directive,
             'block':        self.handle_block_directive,
             'extends':      self.handle_extends_directive,
             'include':      self.handle_include_directive,
@@ -262,6 +264,19 @@ class Parser(object):
             args = None
         return nodes.Macro(lineno, ast.name, args, body)
 
+    def handle_call_directive(self, lineno, gen):
+        """
+        Handle {% call foo() %}...{% endcall %}
+        """
+        expr = self.parse_python(lineno, gen, '(%s)').expr
+        if expr.__class__ is not ast.CallFunc:
+            raise TemplateSyntaxError('call requires a function or macro '
+                                      'call as only argument.', lineno,
+                                      self.filename)
+        body = self.subparse(end_of_call, True)
+        self.close_remaining_block()
+        return nodes.Call(lineno, expr, body)
+
     def handle_block_directive(self, lineno, gen):
         """
         Handle block directives used for inheritance.
@@ -305,7 +320,8 @@ class Parser(object):
             raise TemplateSyntaxError('extends requires a string', lineno,
                                       self.filename)
         if self.extends is not None:
-            raise TemplateSyntaxError('extends called twice', lineno)
+            raise TemplateSyntaxError('extends called twice', lineno,
+                                      self.filename)
         self.extends = nodes.Extends(lineno, tokens[0][2][1:-1])
 
     def handle_include_directive(self, lineno, gen):
@@ -313,10 +329,13 @@ class Parser(object):
         Handle the include directive used for template inclusion.
         """
         tokens = list(gen)
-        if len(tokens) != 1 or tokens[0][1] != 'string':
-            raise TemplateSyntaxError('include requires a string', lineno,
-                                      self.filename)
-        return nodes.Include(lineno, tokens[0][2][1:-1])
+        # hardcoded include (faster because copied into the bytecode)
+        if len(tokens) == 1 and tokens[0][1] == 'string':
+            return nodes.Include(lineno, str(tokens[0][2][1:-1]))
+        raise TemplateSyntaxError('invalid syntax for include '
+                                  'directive. Requires a hardcoded '
+                                  'string', lineno,
+                                  self.filename)
 
     def handle_trans_directive(self, lineno, gen):
         """
@@ -338,8 +357,9 @@ class Parser(object):
                     try:
                         gen.next()
                     except StopIteration:
-                        #XXX: what about escapes?
-                        return nodes.Trans(lineno, data[1:-1], None,
+                        # XXX: this looks fishy
+                        data = data[1:-1].encode('utf-8').decode('string-escape')
+                        return nodes.Trans(lineno, data.decode('utf-8'), None,
                                            None, None)
                     raise TemplateSyntaxError('string based translations '
                                               'require at most one argument.',
@@ -560,6 +580,7 @@ class Parser(object):
                                               'as identifier.' % node.name,
                                               node.lineno, self.filename)
                 node.name = node.name[:-1]
+            # same for attributes
             elif node.__class__ is ast.Getattr:
                 if not node.attrname.endswith('_'):
                     raise TemplateSyntaxError('illegal use of keyword %r '
@@ -567,6 +588,18 @@ class Parser(object):
                                               node.name, node.lineno,
                                               self.filename)
                 node.attrname = node.attrname[:-1]
+            # if we have a ForLoop we ensure that nobody patches existing
+            # object using "for foo.bar in seq"
+            elif node.__class__ is nodes.ForLoop:
+                def check(node):
+                    if node.__class__ not in (ast.AssName, ast.AssTuple):
+                        raise TemplateSyntaxError('can\'t assign to '
+                                                  'expression.', node.lineno,
+                                                  self.filename)
+                    for n in node.getChildNodes():
+                        check(n)
+                check(node.item)
+            # now set the filename and continue working on the childnodes
             node.filename = self.filename
             todo.extend(node.getChildNodes())
         return nodes.Template(self.filename, body, self.extends)

@@ -2,7 +2,8 @@
 TODO List for Jinja
 ===================
 
--   Requirements in Jinja (blocks and set directives) outside of renderable
-    blocks should become part of the module not the generate function.
-
 -   Improve the context lookup (maybe with an optional C extension)
+
+-   `include` and `extends` should work with dynamic data too. In order to
+    support this the blocks should be stored as importable functions in the
+    generated source.

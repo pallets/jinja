@@ -51,7 +51,7 @@ number_re = re.compile(r'\d+(\.\d+)*')
 operator_re = re.compile('(%s)' % '|'.join([
     isinstance(x, unicode) and str(x) or re.escape(x) for x in [
     # math operators
-    '+', '-', '*', '//', '/', '%',
+    '+', '-', '**', '*', '//', '/', '%',
     # braces and parenthesis
     '[', ']', '(', ')', '{', '}',
     # attribute access and comparison / logical operators
@@ -64,7 +64,7 @@ keywords = set(['and', 'block', 'cycle', 'elif', 'else', 'endblock',
                 'endfilter', 'endfor', 'endif', 'endmacro', 'endraw',
                 'endtrans', 'extends', 'filter', 'for', 'if', 'in',
                 'include', 'is', 'macro', 'not', 'or', 'pluralize', 'raw',
-                'recursive', 'set', 'trans'])
+                'recursive', 'set', 'trans', 'print', 'call', 'endcall'])
 
 
 class Failure(object):

@@ -220,6 +220,26 @@ class Macro(Node):
         )
 
 
+class Call(Node):
+    """
+    A node that represents am extended macro call.
+    """
+
+    def __init__(self, lineno, expr, body):
+        self.lineno = lineno
+        self.expr = expr
+        self.body = body
+
+    def get_items(self):
+        return [self.expr, self.body]
+
+    def __repr__(self):
+        return 'Call(%r, %r)' % (
+            self.expr,
+            self.body
+        )
+
+
 class Set(Node):
     """
     Allow defining own variables.
@@ -322,7 +342,9 @@ class Include(Node):
         return [self.template]
 
     def __repr__(self):
-        return 'Include(%r)' % self.template
+        return 'Include(%r)' % (
+            self.template
+        )
 
 
 class Trans(Node):

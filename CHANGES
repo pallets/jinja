@@ -22,7 +22,8 @@ Version 1.1
 
 - some small bugfixes.
 
-- improved security system regarding function calls.
+- improved security system regarding function calls and variable
+  assignment in for loops.
 
 - added `lipsum` function to generate random text.
 
@@ -63,6 +64,9 @@ Version 1.1
 
 - fixed a bug in the parser that didn't unescape keyword arguments. (thanks
   to Alexey Melchakov for reporting)
+
+- You can now use the environment to just tokenize a template. This can
+  be useful for syntax highlighting or other purposes.
 
 
 Version 1.0

@@ -44,6 +44,12 @@ except NameError:
         """For python2.3/python2.4 compatibility"""
 
 
+try:
+    set
+except NameError:
+    from sets import Set as set
+
+
 def _to_tuple(args):
     """
     Return a tuple repr without nested repr.
@@ -173,6 +179,7 @@ class PythonTranslator(Translator):
             nodes.Cycle:            self.handle_cycle,
             nodes.Print:            self.handle_print,
             nodes.Macro:            self.handle_macro,
+            nodes.Call:             self.handle_call,
             nodes.Set:              self.handle_set,
             nodes.Filter:           self.handle_filter,
             nodes.Block:            self.handle_block,
@@ -386,10 +393,13 @@ class PythonTranslator(Translator):
 
         # bootstrapping code
         lines = [
+            '# Essential imports\n'
             'from __future__ import division\n'
             'from jinja.datastructure import Undefined, LoopContext, '
             'CycleContext, SuperBlock\n'
             'from jinja.utils import buffereater\n'
+            'from jinja.exceptions import TemplateRuntimeError\n\n'
+            '# Local aliases for some speedup\n'
             '%s\n'
             '__name__ = %r\n\n'
             'def generate(context):\n'
@@ -412,7 +422,7 @@ class PythonTranslator(Translator):
 
         # add body lines and "generator hook"
         lines.extend(body_lines)
-        lines.append('    if False:\n        yield None')
+        lines.append('    if 0: yield None')
 
         # add the missing blocks
         block_items = blocks.items()
@@ -428,8 +438,7 @@ class PythonTranslator(Translator):
                     '\ndef %s(context):' % func_name,
                     '    ctx_push = context.push',
                     '    ctx_pop = context.pop',
-                    '    if False:',
-                    '        yield None'
+                    '    if 0: yield None'
                 ])
                 lines.append(self.indent(self.nodeinfo(item, True)))
                 lines.append(self.handle_block(item, idx + 1))
@@ -441,10 +450,15 @@ class PythonTranslator(Translator):
 
         # blocks must always be defined. even if it's empty. some
         # features depend on it
-        lines.append('\nblocks = {\n%s\n}' % ',\n'.join(dict_lines))
+        lines.append('\n# Block mapping and debug information')
+        if dict_lines:
+            lines.append('blocks = {\n%s\n}' % ',\n'.join(dict_lines))
+        else:
+            lines.append('blocks = {}')
 
         # now get the real source lines and map the debugging symbols
         debug_mapping = []
+        file_mapping = {}
         last = None
         offset = -1
         sourcelines = ('\n'.join(lines)).splitlines()
@@ -454,10 +468,16 @@ class PythonTranslator(Translator):
             m = _debug_re.search(line)
             if m is not None:
                 d = m.groupdict()
-                this = (d['filename'] or None, int(d['lineno']))
+                filename = d['filename'] or None
+                if filename in file_mapping:
+                    file_id = file_mapping[filename]
+                else:
+                    file_id = file_mapping[filename] = 'F%d' % \
+                                                       len(file_mapping)
+                this = (file_id, int(d['lineno']))
                 # if it's the same as the line before we ignore it
                 if this != last:
-                    debug_mapping.append((idx - offset,) + this)
+                    debug_mapping.append('(%r, %s, %r)' % ((idx - offset,) + this))
                     last = this
                 # for each debug symbol the line number and so the offset
                 # changes by one.
@@ -465,15 +485,26 @@ class PythonTranslator(Translator):
             else:
                 result.append(line)
 
-        result.append('\ndebug_info = %r' % debug_mapping)
+        # now print file mapping and debug info
+        file_mapping = file_mapping.items()
+        file_mapping.sort(lambda a, b: cmp(a[1], b[1]))
+        for filename, file_id in file_mapping:
+            result.append('%s = %r' % (file_id, filename))
+        result.append('debug_info = [%s]' % ', '.join(debug_mapping))
         return '\n'.join(result)
 
     def handle_template_text(self, node):
         """
         Handle data around nodes.
         """
+        # if we have a ascii only string we go with the
+        # bytestring. otherwise we go with the unicode object
+        try:
+            data = str(node.text)
+        except UnicodeError:
+            data = node.text
         return self.indent(self.nodeinfo(node)) + '\n' +\
-               self.indent('yield %r' % node.text)
+               self.indent('yield %r' % data)
 
     def handle_node_list(self, node):
         """
@@ -533,10 +564,8 @@ class PythonTranslator(Translator):
         # call recursive for loop!
         if node.recursive:
             write('context[\'loop\'].pop()')
-            write('if False:')
-            self.indention += 1
-            write('yield None')
-            self.indention -= 2
+            write('if 0: yield None')
+            self.indention -= 1
             write('context[\'loop\'] = LoopContext(None, context[\'loop\'], '
                   'buffereater(forloop))')
             write('for item in forloop(%s):' % self.handle_node(node.seq))
@@ -631,34 +660,64 @@ class PythonTranslator(Translator):
         buf = []
         write = lambda x: buf.append(self.indent(x))
 
-        write('def macro(*args):')
+        write('def macro(*args, **kw):')
         self.indention += 1
         write(self.nodeinfo(node))
 
+        # collect macro arguments
+        arg_items = []
+        caller_overridden = False
         if node.arguments:
             write('argcount = len(args)')
-            tmp = []
             for idx, (name, n) in enumerate(node.arguments):
-                tmp.append('\'%s\': (argcount > %d and (args[%d],) '
+                arg_items.append('\'%s\': (argcount > %d and (args[%d],) '
                            'or (%s,))[0]' % (
                     name,
                     idx,
                     idx,
                     n is None and 'Undefined' or self.handle_node(n)
                 ))
-            write('ctx_push({%s})' % ', '.join(tmp))
+                if name == 'caller':
+                    caller_overridden = True
+        if caller_overridden:
+            write('kw.pop(\'caller\', None)')
         else:
-            write('ctx_push()')
+            arg_items.append('\'caller\': kw.pop(\'caller\', Undefined)')
+        write('ctx_push({%s})' % ', '.join(arg_items))
+
+        # disallow any keyword arguments
+        write('if kw:')
+        self.indention += 1
+        write('raise TemplateRuntimeError(\'%s got an unexpected keyword '
+              'argument %%r\' %% iter(kw).next())' % node.name)
+        self.indention -= 1
 
         write(self.nodeinfo(node.body))
         buf.append(self.handle_node(node.body))
         write('ctx_pop()')
-        write('if False:')
-        self.indention += 1
-        write('yield False')
-        self.indention -= 2
+        write('if 0: yield None')
+        self.indention -= 1
         buf.append(self.indent('context[%r] = buffereater(macro)' %
                                node.name))
+
+        return '\n'.join(buf)
+
+    def handle_call(self, node):
+        """
+        Handle extended macro calls.
+        """
+        buf = []
+        write = lambda x: buf.append(self.indent(x))
+
+        write('def call(**kwargs):')
+        self.indention += 1
+        write('ctx_push(kwargs)')
+        buf.append(self.handle_node(node.body))
+        write('ctx_pop()')
+        write('if 0: yield None')
+        self.indention -= 1
+        write('yield ' + self.handle_call_func(node.expr,
+              {'caller': 'buffereater(call)'}))
 
         return '\n'.join(buf)
 
@@ -687,10 +746,8 @@ class PythonTranslator(Translator):
         write(self.nodeinfo(node.body))
         buf.append(self.handle_node(node.body))
         write('ctx_pop()')
-        write('if False:')
-        self.indention += 1
-        write('yield None')
-        self.indention -= 2
+        write('if 0: yield None')
+        self.indention -= 1
         write('yield %s' % self.filter('buffereater(filtered)()',
                                        node.filters))
         return '\n'.join(buf)
@@ -874,7 +931,7 @@ class PythonTranslator(Translator):
         """
         return self.filter(self.handle_node(node.nodes[0]), node.nodes[1:])
 
-    def handle_call_func(self, node):
+    def handle_call_func(self, node, extra_kwargs=None):
         """
         Handle function calls.
         """
@@ -890,7 +947,9 @@ class PythonTranslator(Translator):
                 kwargs[arg.name] = self.handle_node(arg.expr)
             else:
                 args.append(self.handle_node(arg))
-        if not (args or kwargs or star_args or dstar_args):
+        if extra_kwargs:
+            kwargs.update(extra_kwargs) 
+        if not (args or kwargs or star_args or dstar_args or extra_kwargs):
             return 'call_function_simple(%s, context)' % \
                    self.handle_node(node.node)
         return 'call_function(%s, context, %s, {%s}, %s, %s)' % (

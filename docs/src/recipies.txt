@@ -169,3 +169,16 @@ Or if you use the `capture` filter in `clean` mode:
         <div class="head">{{ title }}</div>
       </body>
     </html>
+
+
+Vim Syntax Highlighting
+=======================
+
+Because of the similar syntax to django you can use the django highlighting
+plugin for jinja too. There is however a Jinja syntax highlighting plugin
+too which supports all of the syntax elements.
+
+You can download it from the vim webpage: `jinja.vim`_
+
+
+.. _jinja.vim: http://www.vim.org/scripts/script.php?script_id=1856

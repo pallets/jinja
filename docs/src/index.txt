@@ -6,41 +6,54 @@ Welcome in the Jinja documentation.
 
 - `Installing Jinja <installation.txt>`_
 
-- Application Developer Documentation:
+- **Application Developer Documentation**:
 
-  - `Quickstart <devintro.txt>`_
+  - `Quickstart <devintro.txt>`_ - getting started with Jinja
 
-  - `Template Loaders <loaders.txt>`_
+  - `Template Loaders <loaders.txt>`_ - documentation for the different
+    loader types and how to write custom ones.
 
-  - `Filter Functions <filters.txt>`_
+  - `Filter Functions <filters.txt>`_ - information about how to write
+    custom filter functions.
 
-  - `Test Functions <tests.txt>`_
+  - `Test Functions <tests.txt>`_ - information about how to write
+    custom test functions.
 
-  - `Global Objects <objects.txt>`_
+  - `Global Objects <objects.txt>`_ - information about the special global
+    namespace in Jinja templates.
 
-  - `Streaming Interface <streaming.txt>`_
+  - `Streaming Interface <streaming.txt>`_ - using Jinja for big templates
+    by streaming the output.
 
-  - `Context and Environment <contextenv.txt>`_
+  - `Internationalization <i18n.txt>`_ - how to internationalize applications
+    using Jinja templates.
 
-  - `Translators <translators.txt>`_
+  - `Alternative Syntax <altsyntax.txt>`_ - changing the default Jinja
+    block / variable / comment delimiters.
 
-  - `Framework Integration <frameworks.txt>`_
+  - `API Documentation <api.txt>`_ - API documentation for public Jinja
+    objects like `Environment`.
 
-  - `Debugging Support <debugging.txt>`_
+  - `Translators <translators.txt>`_ - explanation about the Jinja template
+    translation interface.
 
-  - `Internationalization <i18n.txt>`_
+  - `Framework Integration <frameworks.txt>`_ - integrating Jinja into
+    python frameworks.
 
-  - `Alternative Syntax <altsyntax.txt>`_
+  - `Debugging Support <debugging.txt>`_ - debugging Jinja templates.
 
-  - `Developer Recipies <devrecipies.txt>`_
+  - `Developer Recipies <devrecipies.txt>`_ - tips and tricks for application
+    developers.
 
-- Template Designer Documentation:
+- **Template Designer Documentation**:
 
-  - `Syntax Reference <designerdoc.txt>`_
+  - `Syntax Reference <designerdoc.txt>`_ - the designer documentation. Put
+    this under your pillow.
 
-  - `Differences To Django <fromdjango.txt>`_
+  - `Differences To Django <fromdjango.txt>`_ - coming from django? Then this
+    document is for you.
 
-  - `Designer Recipies <recipies.txt>`_
+  - `Designer Recipies <recipies.txt>`_ - various tips and tricks for designers.
 
 - `Changelog <changelog.txt>`_
 
