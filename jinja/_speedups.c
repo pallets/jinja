@@ -21,8 +21,7 @@
 #include <structmember.h>
 
 /* Set by init_constants to real values */
-static PyObject *Undefined, *TemplateRuntimeError, *FilterNotFound;
-static PyTypeObject *DeferredType;
+static PyObject *Undefined, *Deferred, *TemplateRuntimeError;
 
 /**
  * Internal struct used by BaseContext to store the
@@ -61,10 +60,8 @@ init_constants(void)
 		return 0;
 	}
 	Undefined = PyObject_GetAttrString(datastructure, "Undefined");
-	PyObject *deferred = PyObject_GetAttrString(datastructure, "Deferred");
-	DeferredType = deferred->ob_type;
+	Deferred = PyObject_GetAttrString(datastructure, "Deferred");
 	TemplateRuntimeError = PyObject_GetAttrString(exceptions, "TemplateRuntimeError");
-	FilterNotFound = PyObject_GetAttrString(exceptions, "FilterNotFound");
 	Py_DECREF(datastructure);
 	Py_DECREF(exceptions);
 	return 1;
@@ -272,10 +269,10 @@ BaseContext_getitem(BaseContext *self, PyObject *item)
 			continue;
 		}
 		Py_INCREF(result);
-		if (PyObject_TypeCheck(result, DeferredType)) {
+		if (PyObject_IsInstance(result, Deferred)) {
 			PyObject *args = PyTuple_New(2);
-			if (!args || !PyTuple_SetItem(args, 0, (PyObject*)self) ||
-			    !PyTuple_SetItem(args, 1, item))
+			if (!args || PyTuple_SetItem(args, 0, (PyObject*)self) ||
+			    PyTuple_SetItem(args, 1, item))
 				return NULL;
 
 			PyObject *resolved = PyObject_CallObject(result, args);

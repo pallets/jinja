@@ -14,6 +14,7 @@
     :license: BSD, see LICENSE for more details.
 """
 from jinja.datastructure import Deferred, Undefined
+from jinja.exceptions import TemplateRuntimeError
 
 
 class BaseContext(object):

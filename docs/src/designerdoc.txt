@@ -982,7 +982,7 @@ change.
 
         {% call makelist([1, 2, 3, 4, 5, 6]) -%}
           [[{{ item }}]]
-        {% endcall %}
+        {%- endcall %}
 
     This will then produce this output:
 
