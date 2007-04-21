@@ -412,7 +412,7 @@ BaseContext_contains(BaseContext *self, PyObject *item)
 		return 0;
 
 	name = PyString_AS_STRING(item);
-	if (strlen(name) >= 2 && name[0] == ':' && name[1] == ':')
+	if (name[0] && name[0] == ':' && name[1] == ':')
 		return 0;
 
 	while (current) {
