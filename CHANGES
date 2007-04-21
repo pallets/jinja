@@ -68,6 +68,10 @@ Version 1.1
 - You can now use the environment to just tokenize a template. This can
   be useful for syntax highlighting or other purposes.
 
+- added optional c-implementation of the context baseclass.
+
+- implemented `{% call %}` - unsure if this makes it into the final release.
+
 
 Version 1.0
 -----------

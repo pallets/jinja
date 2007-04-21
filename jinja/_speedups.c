@@ -6,6 +6,13 @@
  * Context baseclass. If this extension is not compiled the datastructure
  * module implements a class in python.
  *
+ * Note that if you change semantics here you have to edit the _native.py
+ * to in order to support those changes for jinja setups without the
+ * speedup module too.
+ *
+ * TODO:
+ * 	- implement a cgi.escape replacement in this module
+ *
  * :copyright: 2007 by Armin Ronacher.
  * :license: BSD, see LICENSE for more details.
  */
@@ -13,14 +20,22 @@
 #include <Python.h>
 #include <structmember.h>
 
-static PyObject *Undefined, *TemplateRuntimeError;
+/* Set by init_constants to real values */
+static PyObject *Undefined, *TemplateRuntimeError, *FilterNotFound;
 static PyTypeObject *DeferredType;
 
+/**
+ * Internal struct used by BaseContext to store the
+ * stacked namespaces.
+ */
 struct StackLayer {
 	PyObject *dict;			/* current value, a dict */
 	struct StackLayer *prev;	/* lower struct layer or NULL */
 };
 
+/**
+ * BaseContext python class.
+ */
 typedef struct {
 	PyObject_HEAD
 	struct StackLayer *globals;	/* the dict for the globals */
@@ -30,6 +45,10 @@ typedef struct {
 	int silent;			/* boolean value for silent failure */
 } BaseContext;
 
+/**
+ * Called by init_speedups in order to retrieve references
+ * to some exceptions and classes defined in jinja python modules
+ */
 static int
 init_constants(void)
 {
@@ -45,11 +64,17 @@ init_constants(void)
 	PyObject *deferred = PyObject_GetAttrString(datastructure, "Deferred");
 	DeferredType = deferred->ob_type;
 	TemplateRuntimeError = PyObject_GetAttrString(exceptions, "TemplateRuntimeError");
+	FilterNotFound = PyObject_GetAttrString(exceptions, "FilterNotFound");
 	Py_DECREF(datastructure);
 	Py_DECREF(exceptions);
 	return 1;
 }
 
+/**
+ * Deallocator for BaseContext.
+ *
+ * Frees the memory for the stack layers before freeing the object.
+ */
 static void
 BaseContext_dealloc(BaseContext *self)
 {
@@ -64,6 +89,15 @@ BaseContext_dealloc(BaseContext *self)
 	self->ob_type->tp_free((PyObject*)self);
 }
 
+/**
+ * Initializes the BaseContext.
+ *
+ * Like the native python class it takes a flag telling the context
+ * to either fail silently with Undefined or raising a TemplateRuntimeError.
+ * The other two arguments are the global namespace and the initial
+ * namespace which usually contains the values passed to the render
+ * function of the template. Both must be dicts.
+ */
 static int
 BaseContext_init(BaseContext *self, PyObject *args, PyObject *kwds)
 {
@@ -94,13 +128,15 @@ BaseContext_init(BaseContext *self, PyObject *args, PyObject *kwds)
 	self->current->dict = PyDict_New();
 	if (!self->current->dict)
 		return -1;
-	Py_INCREF(self->current->dict);
 	self->current->prev = self->initial;
 
 	self->stacksize = 3;
 	return 0;
 }
 
+/**
+ * Pop the highest layer from the stack and return it
+ */
 static PyObject*
 BaseContext_pop(BaseContext *self)
 {
@@ -116,6 +152,11 @@ BaseContext_pop(BaseContext *self)
 	return result;
 }
 
+/**
+ * Push a new layer to the stack and return it. If no parameter
+ * is provided an empty dict is created. Otherwise the dict passed
+ * to it is used as new layer.
+ */
 static PyObject*
 BaseContext_push(BaseContext *self, PyObject *args)
 {
@@ -133,7 +174,7 @@ BaseContext_push(BaseContext *self, PyObject *args)
 	}
 	else
 		Py_INCREF(value);
-	struct StackLayer *new = malloc(sizeof(struct StackLayer));
+	struct StackLayer *new = PyMem_Malloc(sizeof(struct StackLayer));
 	new->dict = value;
 	new->prev = self->current;
 	self->current = new;
@@ -142,6 +183,10 @@ BaseContext_push(BaseContext *self, PyObject *args)
 	return value;
 }
 
+/**
+ * Getter that creates a list representation of the internal
+ * stack. Used for compatibility with the native python implementation.
+ */
 static PyObject*
 BaseContext_getstack(BaseContext *self, void *closure)
 {
@@ -151,14 +196,17 @@ BaseContext_getstack(BaseContext *self, void *closure)
 	struct StackLayer *current = self->current;
 	int idx = 0;
 	while (current) {
-		PyList_SetItem(result, idx++, current->dict);
 		Py_INCREF(current->dict);
+		PyList_SetItem(result, idx++, current->dict);
 		current = current->prev;
 	}
 	PyList_Reverse(result);
 	return result;
 }
 
+/**
+ * Getter that returns a reference to the current layer in the context.
+ */
 static PyObject*
 BaseContext_getcurrent(BaseContext *self, void *closure)
 {
@@ -166,6 +214,9 @@ BaseContext_getcurrent(BaseContext *self, void *closure)
 	return self->current->dict;
 }
 
+/**
+ * Getter that returns a reference to the initial layer in the context.
+ */
 static PyObject*
 BaseContext_getinitial(BaseContext *self, void *closure)
 {
@@ -173,6 +224,9 @@ BaseContext_getinitial(BaseContext *self, void *closure)
 	return self->initial->dict;
 }
 
+/**
+ * Getter that returns a reference to the global layer in the context.
+ */
 static PyObject*
 BaseContext_getglobals(BaseContext *self, void *closure)
 {
@@ -180,6 +234,10 @@ BaseContext_getglobals(BaseContext *self, void *closure)
 	return self->globals->dict;
 }
 
+/**
+ * Generic setter that just raises an exception to notify the user
+ * that the attribute is read-only.
+ */
 static int
 BaseContext_readonly(BaseContext *self, PyObject *value, void *closure)
 {
@@ -187,20 +245,23 @@ BaseContext_readonly(BaseContext *self, PyObject *value, void *closure)
 	return -1;
 }
 
+/**
+ * Implements the context lookup.
+ *
+ * This works exactly like the native implementation but a lot
+ * faster. It disallows access to internal names (names that start
+ * with "::") and resolves Deferred values.
+ */
 static PyObject*
 BaseContext_getitem(BaseContext *self, PyObject *item)
 {
-	if (!PyString_Check(item)) {
-		Py_INCREF(Py_False);
-		return Py_False;
-	}
+	if (!PyString_Check(item))
+		goto missing;
 
 	/* disallow access to internal jinja values */
 	char *name = PyString_AS_STRING(item);
-	if (strlen(name) >= 2 && name[0] == ':' && name[1] == ':') {
-		Py_INCREF(Py_False);
-		return Py_False;
-	}
+	if (name[0] == ':' && name[1] == ':')
+		goto missing;
 
 	PyObject *result;
 	struct StackLayer *current = self->current;
@@ -235,6 +296,7 @@ BaseContext_getitem(BaseContext *self, PyObject *item)
 		return result;
 	}
 
+missing:
 	if (self->silent) {
 		Py_INCREF(Undefined);
 		return Undefined;
@@ -243,6 +305,9 @@ BaseContext_getitem(BaseContext *self, PyObject *item)
 	return NULL;
 }
 
+/**
+ * Check if the context contains a given value.
+ */
 static int
 BaseContext_contains(BaseContext *self, PyObject *item)
 {
@@ -265,6 +330,9 @@ BaseContext_contains(BaseContext *self, PyObject *item)
 	return 0;
 }
 
+/**
+ * Set an value in the highest layer or delete one.
+ */
 static int
 BaseContext_setitem(BaseContext *self, PyObject *item, PyObject *value)
 {
@@ -274,11 +342,15 @@ BaseContext_setitem(BaseContext *self, PyObject *item, PyObject *value)
 	return PyDict_SetItemString(self->current->dict, name, value);
 }
 
+/**
+ * Size of the stack.
+ */
 static PyObject*
 BaseContext_length(BaseContext *self)
 {
 	return PyInt_FromLong(self->stacksize);
 }
+
 
 static PyGetSetDef BaseContext_getsetters[] = {
 	{"stack", (getter)BaseContext_getstack, (setter)BaseContext_readonly,
@@ -298,9 +370,12 @@ static PyMemberDef BaseContext_members[] = {
 
 static PyMethodDef BaseContext_methods[] = {
 	{"pop", (PyCFunction)BaseContext_pop, METH_NOARGS,
-	 "Pop the highest layer from the stack"},
+	 "ctx.pop() -> dict\n\n"
+	 "Pop the last layer from the stack and return it."},
 	{"push", (PyCFunction)BaseContext_push, METH_VARARGS,
-	 "Push one layer to the stack"},
+	 "ctx.push([layer]) -> layer\n\n"
+	 "Push one layer to the stack. Layer must be a dict "
+	 "or omitted."},
 	{NULL}				/* Sentinel */
 };
 

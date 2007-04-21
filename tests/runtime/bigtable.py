@@ -27,6 +27,12 @@ try:
 except ImportError:
     have_django = False
 
+try:
+    from kid import Template as KidTemplate
+    have_kid = True
+except ImportError:
+    have_kid = False
+
 from Cheetah.Template import Template as CheetahTemplate
 
 try:
@@ -46,11 +52,20 @@ genshi_tmpl = MarkupTemplate("""
 </table>
 """)
 
+if have_kid:
+    kid_tmpl = KidTemplate("""
+<table xmlns:py="http://purl.org/kid/ns#">
+<tr py:for="row in table">
+<td py:for="c in row.values()" py:content="c"/>
+</tr>
+</table>
+""")
+
 if have_django:
     django_tmpl = DjangoTemplate("""
 <table>
 {% for row in table %}
-<tr>{% for col in row.values %}{{ col }}{% endfor %}</tr>
+<tr>{% for col in row.values %}<td>{{ col }}</td>{% endfor %}</tr>
 {% endfor %}
 </table>
 """)
@@ -58,7 +73,7 @@ if have_django:
 jinja_tmpl = Environment().from_string('''
 <table>
 {% for row in table -%}
-<tr>{% for col in row.values() %}{{ col }}{% endfor %}</tr>
+<tr>{% for col in row.values() %}<td>{{ col }}</td>{% endfor %}</tr>
 {% endfor %}
 </table>
 ''')
@@ -68,7 +83,7 @@ cheetah_tmpl = CheetahTemplate('''
 #for $row in $table
 <tr>
 #for $col in $row.values()
-$col
+<td>$col</td>
 #end for
 </tr>
 #end for
@@ -81,7 +96,7 @@ if have_mako:
 % for row in table:
 <tr>
 % for col in row.values():
-    ${col}
+    <td>${col}</td>
 % endfor
 </tr>
 % endfor
@@ -104,6 +119,13 @@ def test_genshi():
     stream = genshi_tmpl.generate(table=table)
     stream.render('html', strip_whitespace=False)
 
+def test_kid():
+    """Kid Templates"""
+    if not have_kid:
+        return
+    kid_tmpl.table = table
+    kid_tmpl.serialize(output="html")
+
 def test_cheetah():
     """Cheetah Templates"""
     cheetah_tmpl.respond()
@@ -116,7 +138,8 @@ def test_mako():
 
 
 def run(which=None, number=10):
-    tests = ['test_django', 'test_jinja', 'test_genshi', 'test_cheetah', 'test_mako']
+    tests = ['test_django', 'test_jinja', 'test_kid', 'test_genshi',
+             'test_cheetah', 'test_mako']
 
     if which:
         tests = filter(lambda n: n[5:] in which, tests)

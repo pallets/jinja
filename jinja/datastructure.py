@@ -195,14 +195,14 @@ class Context(BaseContext):
     Dict like object containing the variables for the template.
     """
 
-    def __init__(self, _environment_, *args, **kwargs):
-        super(Context, self).__init__(_environment_.silent,
-                                      _environment_.globals,
-                                      dict(*args, **kwargs))
-
+    def __init__(self, *args, **kwargs):
+        environment = args[0]
+        super(Context, self).__init__(environment.silent,
+                                      environment.globals,
+                                      dict(*args[1:], **kwargs))
         self._translate_func = None
         self.cache = {}
-        self.environment = _environment_
+        self.environment = environment
 
     def to_dict(self):
         """

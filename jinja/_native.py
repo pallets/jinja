@@ -6,6 +6,10 @@
     This module implements the native base classes in case of not
     having a jinja with the _speedups module compiled.
 
+    Note that if you change semantics here you have to edit the
+    _speedups.c file to in order to support those changes for jinja
+    setups with enabled speedup module.
+
     :copyright: 2007 by Armin Ronacher.
     :license: BSD, see LICENSE for more details.
 """
@@ -15,7 +19,7 @@ from jinja.datastructure import Deferred, Undefined
 class BaseContext(object):
 
     def __init__(self, silent, globals, initial):
-        self.silent = silent
+        self._silent = silent
         self.current = current = {}
         self.stack = [globals, initial, current]
         self.globals = globals
@@ -31,7 +35,7 @@ class BaseContext(object):
 
     def push(self, data=None):
         """
-        Push a new dict or empty layer to the stack and return that layer
+        Push one layer to the stack. Layer must be a dict or omitted.
         """
         data = data or {}
         self.stack.append(data)
@@ -58,7 +62,7 @@ class BaseContext(object):
                         else:
                             d[name] = rv
                     return rv
-        if self.silent:
+        if self._silent:
             return Undefined
         raise TemplateRuntimeError('%r is not defined' % name)
 
