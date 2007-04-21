@@ -10,9 +10,6 @@
  * to in order to support those changes for jinja setups without the
  * speedup module too.
  *
- * TODO:
- * 	- implement a cgi.escape replacement in this module
- *
  * :copyright: 2007 by Armin Ronacher.
  * :license: BSD, see LICENSE for more details.
  */
@@ -90,6 +87,7 @@ escape(PyObject *self, PyObject *args)
 	int quotes = 0;
 	PyObject *text = NULL;
 
+	/* XXX: "b" is "tiny int", not bool. */
 	if (!PyArg_ParseTuple(args, "O|b", &text, &quotes))
 		return NULL;
 	in = (PyUnicodeObject*)PyObject_Unicode(text);
@@ -98,7 +96,7 @@ escape(PyObject *self, PyObject *args)
 
 	/* First we need to figure out how long the escaped string will be */
 	len = 0;
-	for (i = 0;i < in->length; i++) {
+	for (i = 0; i < in->length; i++) {
 		switch (in->str[i]) {
 			case '&':
 				len += 5;
@@ -116,17 +114,17 @@ escape(PyObject *self, PyObject *args)
 	}
 
 	/* Do we need to escape anything at all? */
-	if (len == in->length) {
-		Py_INCREF(in);
+	if (len == in->length)
 		return (PyObject*)in;
-	}
+
 	out = (PyUnicodeObject*)PyUnicode_FromUnicode(NULL, len);
 	if (!out) {
+		Py_DECREF(in);
 		return NULL;
 	}
 
 	outp = out->str;
-	for (i = 0;i < in->length; i++) {
+	for (i = 0; i < in->length; i++) {
 		switch (in->str[i]) {
 			case '&':
 				Py_UNICODE_COPY(outp, amp, 5);
@@ -153,6 +151,7 @@ escape(PyObject *self, PyObject *args)
 		};
 	}
 
+	Py_DECREF(in);
 	return (PyObject*)out;
 }
 
@@ -194,27 +193,31 @@ BaseContext_init(BaseContext *self, PyObject *args, PyObject *kwds)
 					 &silent, &globals, &initial))
 		return -1;
 	if (!PyDict_Check(globals) || !PyDict_Check(initial)) {
-		PyErr_SetString(PyExc_TypeError, "stack layers must be a dicts.");
+		PyErr_SetString(PyExc_TypeError, "stack layers must be dicts.");
 		return -1;
 	}
 
 	self->silent = PyObject_IsTrue(silent);
-
-	self->globals = PyMem_Malloc(sizeof(struct StackLayer));
-	self->globals->dict = globals;
-	Py_INCREF(globals);
-	self->globals->prev = NULL;
-
-	self->initial = PyMem_Malloc(sizeof(struct StackLayer));
-	self->initial->dict = initial;
-	Py_INCREF(initial);
-	self->initial->prev = self->globals;
+	if (self->silent == -1)
+		return -1;
 
 	self->current = PyMem_Malloc(sizeof(struct StackLayer));
+	self->current->prev = NULL;
 	self->current->dict = PyDict_New();
 	if (!self->current->dict)
 		return -1;
+
+	self->initial = PyMem_Malloc(sizeof(struct StackLayer));
+	self->initial->prev = NULL;
+	self->initial->dict = initial;
+	Py_INCREF(initial);
 	self->current->prev = self->initial;
+
+	self->globals = PyMem_Malloc(sizeof(struct StackLayer));
+	self->globals->prev = NULL;
+	self->globals->dict = globals;
+	Py_INCREF(globals);
+	self->initial->prev = self->globals;
 
 	self->stacksize = 3;
 	return 0;
@@ -226,15 +229,19 @@ BaseContext_init(BaseContext *self, PyObject *args, PyObject *kwds)
 static PyObject*
 BaseContext_pop(BaseContext *self)
 {
+	PyObject *result;
+	struct StackLayer *tmp = self->current;
+
 	if (self->stacksize <= 3) {
 		PyErr_SetString(PyExc_IndexError, "stack too small.");
 		return NULL;
 	}
-	PyObject *result = self->current->dict;
-	struct StackLayer *tmp = self->current;
+	result = self->current->dict;
+	assert(result);
 	self->current = tmp->prev;
 	PyMem_Free(tmp);
 	self->stacksize--;
+	/* Took the reference to result from the struct. */
 	return result;
 }
 
@@ -247,6 +254,8 @@ static PyObject*
 BaseContext_push(BaseContext *self, PyObject *args)
 {
 	PyObject *value = NULL;
+	struct StackLayer *new;
+
 	if (!PyArg_ParseTuple(args, "|O:push", &value))
 		return NULL;
 	if (!value) {
@@ -260,7 +269,11 @@ BaseContext_push(BaseContext *self, PyObject *args)
 	}
 	else
 		Py_INCREF(value);
-	struct StackLayer *new = PyMem_Malloc(sizeof(struct StackLayer));
+	new = PyMem_Malloc(sizeof(struct StackLayer));
+	if (!new) {
+		Py_DECREF(value);
+		return NULL;
+	}
 	new->dict = value;
 	new->prev = self->current;
 	self->current = new;
@@ -276,14 +289,14 @@ BaseContext_push(BaseContext *self, PyObject *args)
 static PyObject*
 BaseContext_getstack(BaseContext *self, void *closure)
 {
+	int idx = 0;
+	struct StackLayer *current = self->current;
 	PyObject *result = PyList_New(self->stacksize);
 	if (!result)
 		return NULL;
-	struct StackLayer *current = self->current;
-	int idx = 0;
 	while (current) {
 		Py_INCREF(current->dict);
-		PyList_SetItem(result, idx++, current->dict);
+		PyList_SET_ITEM(result, idx++, current->dict);
 		current = current->prev;
 	}
 	PyList_Reverse(result);
@@ -321,17 +334,6 @@ BaseContext_getglobals(BaseContext *self, void *closure)
 }
 
 /**
- * Generic setter that just raises an exception to notify the user
- * that the attribute is read-only.
- */
-static int
-BaseContext_readonly(BaseContext *self, PyObject *value, void *closure)
-{
-	PyErr_SetString(PyExc_AttributeError, "can't set attribute");
-	return -1;
-}
-
-/**
  * Implements the context lookup.
  *
  * This works exactly like the native implementation but a lot
@@ -341,44 +343,47 @@ BaseContext_readonly(BaseContext *self, PyObject *value, void *closure)
 static PyObject*
 BaseContext_getitem(BaseContext *self, PyObject *item)
 {
+	PyObject *result;
+	char *name = NULL;
+	int isdeferred;
+	struct StackLayer *current = self->current;
+	
 	if (!PyString_Check(item))
 		goto missing;
 
 	/* disallow access to internal jinja values */
-	char *name = PyString_AS_STRING(item);
-	if (name[0] == ':' && name[1] == ':')
+	name = PyString_AS_STRING(item);
+	if (name[0] && name[0] == ':' && name[1] == ':')
 		goto missing;
 
-	PyObject *result;
-	struct StackLayer *current = self->current;
 	while (current) {
-		result = PyDict_GetItemString(current->dict, name);
+		/* GetItemString just builds a new string from "name" again... */
+		result = PyDict_GetItem(current->dict, item);
 		if (!result) {
 			current = current->prev;
 			continue;
 		}
-		Py_INCREF(result);
-		if (PyObject_IsInstance(result, Deferred)) {
-			PyObject *args = PyTuple_New(2);
-			if (!args || PyTuple_SetItem(args, 0, (PyObject*)self) ||
-			    PyTuple_SetItem(args, 1, item))
-				return NULL;
-
-			PyObject *resolved = PyObject_CallObject(result, args);
+		isdeferred = PyObject_IsInstance(result, Deferred);
+		if (isdeferred == -1)
+			return NULL;
+		else if (isdeferred) {
+			PyObject *namespace;
+			PyObject *resolved = PyObject_CallFunctionObjArgs(
+						result, self, item, NULL);
 			if (!resolved)
 				return NULL;
 
 			/* never touch the globals */
-			Py_DECREF(result);
-			Py_INCREF(resolved);
-			PyObject *namespace;
 			if (current == self->globals)
 				namespace = self->initial->dict;
 			else
 				namespace = current->dict;
-			PyDict_SetItemString(namespace, name, resolved);
+			if (PyDict_SetItem(namespace, item, resolved) < 0)
+				return NULL;
+			Py_INCREF(resolved);
 			return resolved;
 		}
+		Py_INCREF(result);
 		return result;
 	}
 
@@ -387,7 +392,10 @@ missing:
 		Py_INCREF(Undefined);
 		return Undefined;
 	}
-	PyErr_Format(TemplateRuntimeError, "'%s' is not defined", name);
+	if (name)
+		PyErr_Format(TemplateRuntimeError, "'%s' is not defined", name);
+	else
+		PyErr_SetString(TemplateRuntimeError, "value is not a string");
 	return NULL;
 }
 
@@ -397,16 +405,19 @@ missing:
 static int
 BaseContext_contains(BaseContext *self, PyObject *item)
 {
+	char *name;
+	struct StackLayer *current = self->current;
+
 	if (!PyString_Check(item))
 		return 0;
 
-	char *name = PyString_AS_STRING(item);
+	name = PyString_AS_STRING(item);
 	if (strlen(name) >= 2 && name[0] == ':' && name[1] == ':')
 		return 0;
 
-	struct StackLayer *current = self->current;
 	while (current) {
-		if (!PyMapping_HasKeyString(current->dict, name)) {
+		/* XXX: for 2.4 and newer, use PyDict_Contains */
+		if (!PyMapping_HasKey(current->dict, item)) {
 			current = current->prev;
 			continue;
 		}
@@ -422,10 +433,13 @@ BaseContext_contains(BaseContext *self, PyObject *item)
 static int
 BaseContext_setitem(BaseContext *self, PyObject *item, PyObject *value)
 {
-	char *name = PyString_AS_STRING(item);
+	if (!PyString_Check(item)) {
+		PyErr_SetString(PyExc_TypeError, "expected string argument");
+		return -1;
+	}
 	if (!value)
-		return PyDict_DelItemString(self->current->dict, name);
-	return PyDict_SetItemString(self->current->dict, name, value);
+		return PyDict_DelItem(self->current->dict, item);
+	return PyDict_SetItem(self->current->dict, item, value);
 }
 
 /**
@@ -439,18 +453,14 @@ BaseContext_length(BaseContext *self)
 
 
 static PyGetSetDef BaseContext_getsetters[] = {
-	{"stack", (getter)BaseContext_getstack, (setter)BaseContext_readonly,
+	{"stack", (getter)BaseContext_getstack, NULL,
 	 "a read only copy of the internal stack", NULL},
-	{"current", (getter)BaseContext_getcurrent, (setter)BaseContext_readonly,
+	{"current", (getter)BaseContext_getcurrent, NULL,
 	 "reference to the current layer on the stack", NULL},
-	{"initial", (getter)BaseContext_getinitial, (setter)BaseContext_readonly,
+	{"initial", (getter)BaseContext_getinitial, NULL,
 	 "reference to the initial layer on the stack", NULL},
-	{"globals", (getter)BaseContext_getglobals, (setter)BaseContext_readonly,
+	{"globals", (getter)BaseContext_getglobals, NULL,
 	 "reference to the global layer on the stack", NULL},
-	{NULL}				/* Sentinel */
-};
-
-static PyMemberDef BaseContext_members[] = {
 	{NULL}				/* Sentinel */
 };
 
@@ -473,7 +483,7 @@ static PySequenceMethods BaseContext_as_sequence[] = {
 	0,				/* sq_slice */
 	0,				/* sq_ass_item */
 	0,				/* sq_ass_slice */
-	BaseContext_contains,		/* sq_contains */
+	(objobjproc)BaseContext_contains,		/* sq_contains */
 	0,				/* sq_inplace_concat */
 	0				/* sq_inplace_repeat */
 };
@@ -497,8 +507,8 @@ static PyTypeObject BaseContextType = {
 	0,				/* tp_compare */
 	0,				/* tp_repr */
 	0,				/* tp_as_number */
-	&BaseContext_as_sequence,	/* tp_as_sequence */
-	&BaseContext_as_mapping,	/* tp_as_mapping */
+	BaseContext_as_sequence,	/* tp_as_sequence */
+	BaseContext_as_mapping,		/* tp_as_mapping */
 	0,				/* tp_hash */
 	0,				/* tp_call */
 	0,				/* tp_str */
@@ -514,7 +524,7 @@ static PyTypeObject BaseContextType = {
 	0,				/* tp_iter */
 	0,				/* tp_iternext */
 	BaseContext_methods,		/* tp_methods */
-	BaseContext_members,		/* tp_members */
+	0,				/* tp_members */
 	BaseContext_getsetters,		/* tp_getset */
 	0,				/* tp_base */
 	0,				/* tp_dict */
