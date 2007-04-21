@@ -14,7 +14,6 @@
 import re
 import sys
 import string
-import cgi
 from types import MethodType, FunctionType
 from compiler.ast import CallFunc, Name, Const
 from jinja.nodes import Trans
@@ -50,9 +49,6 @@ _simple_email_re = re.compile(r'^\S+@[a-zA-Z0-9._-]+\.[a-zA-Z0-9._-]+$')
 
 #: used by from_string as cache
 _from_string_env = None
-
-escape = cgi.escape
-
 
 def urlize(text, trim_url_limit=None, nofollow=False):
     """
@@ -646,3 +642,12 @@ class CacheDict(object):
         rv._mapping = deepcopy(self._mapping)
         rv._queue = deepcopy(self._queue)
         return rv
+
+
+# escaping function. Use this only if you escape unicode
+# objects. in all other cases it's likely that the cgi.escape
+# function performs better.
+try:
+    from jinja._speedups import escape
+except ImportError:
+    from cgi import escape

@@ -23,6 +23,8 @@ class BaseContext(object):
         self._silent = silent
         self.current = current = {}
         self.stack = [globals, initial, current]
+        self._push = self.stack.append
+        self._pop = self.stack.pop
         self.globals = globals
         self.initial = initial
 
@@ -30,7 +32,7 @@ class BaseContext(object):
         """
         Pop the last layer from the stack and return it.
         """
-        rv = self.stack.pop()
+        rv = self._pop()
         self.current = self.stack[-1]
         return rv
 
@@ -39,7 +41,7 @@ class BaseContext(object):
         Push one layer to the stack. Layer must be a dict or omitted.
         """
         data = data or {}
-        self.stack.append(data)
+        self._push(data)
         self.current = self.stack[-1]
         return data
 

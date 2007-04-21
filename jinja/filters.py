@@ -114,7 +114,10 @@ def do_escape(attribute=False):
             return s
         elif hasattr(s, '__html__'):
             return s.__html__()
-        return e(env.to_unicode(s), attribute)
+        #: small speedup
+        if s.__class__ is not unicode:
+            s = env.to_unicode(s)
+        return e(s, attribute)
     return wrapped
 
 

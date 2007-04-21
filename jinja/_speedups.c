@@ -22,6 +22,7 @@
 
 /* Set by init_constants to real values */
 static PyObject *Undefined, *Deferred, *TemplateRuntimeError;
+static Py_UNICODE *amp, *lt, *gt, *qt;
 
 /**
  * Internal struct used by BaseContext to store the
@@ -62,9 +63,97 @@ init_constants(void)
 	Undefined = PyObject_GetAttrString(datastructure, "Undefined");
 	Deferred = PyObject_GetAttrString(datastructure, "Deferred");
 	TemplateRuntimeError = PyObject_GetAttrString(exceptions, "TemplateRuntimeError");
+
+	amp = ((PyUnicodeObject*)PyUnicode_DecodeASCII("&amp;", 5, NULL))->str;
+	lt = ((PyUnicodeObject*)PyUnicode_DecodeASCII("&lt;", 4, NULL))->str;
+	gt = ((PyUnicodeObject*)PyUnicode_DecodeASCII("&gt;", 4, NULL))->str;
+	qt = ((PyUnicodeObject*)PyUnicode_DecodeASCII("&#34;", 5, NULL))->str;
+
 	Py_DECREF(datastructure);
 	Py_DECREF(exceptions);
 	return 1;
+}
+
+/**
+ * SGML/XML escape something.
+ *
+ * XXX: this is awefully slow for non unicode objects because they
+ * 	get converted to unicode first.
+ */
+static PyObject*
+escape(PyObject *self, PyObject *args)
+{
+	PyUnicodeObject *in, *out;
+	Py_UNICODE *outp;
+	int i, len;
+
+	int quotes = 0;
+	PyObject *text = NULL;
+
+	if (!PyArg_ParseTuple(args, "O|b", &text, &quotes))
+		return NULL;
+	in = (PyUnicodeObject*)PyObject_Unicode(text);
+	if (!in)
+		return NULL;
+
+	/* First we need to figure out how long the escaped string will be */
+	len = 0;
+	for (i = 0;i < in->length; i++) {
+		switch (in->str[i]) {
+			case '&':
+				len += 5;
+				break;
+			case '"':
+				len += quotes ? 5 : 1;
+				break;
+			case '<':
+			case '>':
+				len += 4;
+				break;
+			default:
+				len++;
+		}
+	}
+
+	/* Do we need to escape anything at all? */
+	if (len == in->length) {
+		Py_INCREF(in);
+		return (PyObject*)in;
+	}
+	out = (PyUnicodeObject*)PyUnicode_FromUnicode(NULL, len);
+	if (!out) {
+		return NULL;
+	}
+
+	outp = out->str;
+	for (i = 0;i < in->length; i++) {
+		switch (in->str[i]) {
+			case '&':
+				Py_UNICODE_COPY(outp, amp, 5);
+				outp += 5;
+				break;
+			case '"':
+				if (quotes) {
+					Py_UNICODE_COPY(outp, qt, 5);
+					outp += 5;
+				}
+				else
+					*outp++ = in->str[i];
+				break;
+			case '<':
+				Py_UNICODE_COPY(outp, lt, 4);
+				outp += 4;
+				break;
+			case '>':
+				Py_UNICODE_COPY(outp, gt, 4);
+				outp += 4;
+				break;
+			default:
+				*outp++ = in->str[i];
+		};
+	}
+
+	return (PyObject*)out;
 }
 
 /**
@@ -438,6 +527,9 @@ static PyTypeObject BaseContextType = {
 };
 
 static PyMethodDef module_methods[] = {
+	{"escape", (PyCFunction)escape, METH_VARARGS,
+	 "escape(s, quotes=False) -> string\n\n"
+	 "SGML/XML a string."},
 	{NULL, NULL, 0, NULL}		/* Sentinel */
 };
 

@@ -197,7 +197,8 @@ class Environment(object):
             raise_syntax_error(e, self, source)
         else:
             # everything went well. attach the source and return it
-            # attach the source for debugging
+            # the attached source is used by the traceback system for
+            # debugging porposes
             rv._source = source
             return rv
 
@@ -251,14 +252,15 @@ class Environment(object):
         """
         Apply a list of filters on the variable.
         """
+        cache = context.cache
         for key in filters:
-            if key in context.cache:
-                func = context.cache[key]
+            if key in cache:
+                func = cache[key]
             else:
                 filtername, args = key
                 if filtername not in self.filters:
                     raise FilterNotFound(filtername)
-                context.cache[key] = func = self.filters[filtername](*args)
+                cache[key] = func = self.filters[filtername](*args)
             value = func(self, context, value)
         return value
 
