@@ -64,7 +64,7 @@ init_constants(void)
 	amp = ((PyUnicodeObject*)PyUnicode_DecodeASCII("&amp;", 5, NULL))->str;
 	lt = ((PyUnicodeObject*)PyUnicode_DecodeASCII("&lt;", 4, NULL))->str;
 	gt = ((PyUnicodeObject*)PyUnicode_DecodeASCII("&gt;", 4, NULL))->str;
-	qt = ((PyUnicodeObject*)PyUnicode_DecodeASCII("&#34;", 5, NULL))->str;
+	qt = ((PyUnicodeObject*)PyUnicode_DecodeASCII("&quot;", 6, NULL))->str;
 
 	Py_DECREF(datastructure);
 	Py_DECREF(exceptions);
@@ -84,12 +84,11 @@ escape(PyObject *self, PyObject *args)
 	Py_UNICODE *outp;
 	int i, len;
 
-	int quotes = 0;
-	PyObject *text = NULL;
+	PyObject *text = NULL, *use_quotes = NULL;
 
-	/* XXX: "b" is "tiny int", not bool. */
-	if (!PyArg_ParseTuple(args, "O|b", &text, &quotes))
+	if (!PyArg_ParseTuple(args, "O|O", &text, &use_quotes))
 		return NULL;
+	int quotes = use_quotes && PyObject_IsTrue(use_quotes);
 	in = (PyUnicodeObject*)PyObject_Unicode(text);
 	if (!in)
 		return NULL;
@@ -102,7 +101,7 @@ escape(PyObject *self, PyObject *args)
 				len += 5;
 				break;
 			case '"':
-				len += quotes ? 5 : 1;
+				len += quotes ? 6 : 1;
 				break;
 			case '<':
 			case '>':
@@ -132,8 +131,8 @@ escape(PyObject *self, PyObject *args)
 				break;
 			case '"':
 				if (quotes) {
-					Py_UNICODE_COPY(outp, qt, 5);
-					outp += 5;
+					Py_UNICODE_COPY(outp, qt, 6);
+					outp += 6;
 				}
 				else
 					*outp++ = in->str[i];
