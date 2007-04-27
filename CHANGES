@@ -35,7 +35,8 @@ Version 1.1
 
 - developer friendly traceback is now toggleable
 
-- silent variable name failure is now toggleable
+- the variable failure is now pluggable by replacing the undefined
+  singleton for an environment instance
 
 - fixed issue with old-style classes not implementing `__getitem__`
   (thanks to Axel Böhm for discovering that bug)
@@ -68,9 +69,17 @@ Version 1.1
 - You can now use the environment to just tokenize a template. This can
   be useful for syntax highlighting or other purposes.
 
-- added optional c-implementation of the context baseclass.
+- added optional C-implementation of the context baseclass.
+
+- you can now use optional parentheses around macro defintions. Thus it's
+  possible to write ``{% macro foo(a, b, c) %}`` instead of ``{% macro
+  foo a, b, c %}``.
+
+- additional macro arguments now end up in `varargs`.
 
 - implemented `{% call %}` - unsure if this makes it into the final release.
+
+- it's not possible to stream templates.
 
 
 Version 1.0

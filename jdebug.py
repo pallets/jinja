@@ -33,9 +33,20 @@ if os.environ.get('JDEBUG_SOURCEPRINT'):
     PythonTranslator.translate = debug_translate
 
 
-def p(x, f=None):
+def p(x=None, f=None):
+    if x is None and f is not None:
+        x = e.loader.get_source(f)
     print PythonTranslator(e, Parser(e, x, f).parse()).translate()
 
 def l(x):
     for item in e.lexer.tokenize(x):
         print '%5s  %-20s  %r' % item
+
+if __name__ == '__main__':
+    if len(sys.argv) > 1:
+        from jinja import FileSystemLoader
+        e.loader = FileSystemLoader(sys.argv[1])
+    if len(sys.argv) > 2:
+        p(f=sys.argv[2])
+    else:
+        p(sys.stdin.read())

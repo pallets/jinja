@@ -74,6 +74,22 @@ addition to the initialization values:
 There are also some internal functions on the environment used by the template
 evaluation code to keep it sandboxed.
 
+Undefined Values
+================
+
+If a template designer tries to access a not defined value the return value
+will be the `undefined_singleton` specified in the environment. The default
+one is the `SilentUndefined` which fails in no case. Additionally there is
+a special undefined type called the `ComplainingUndefined` which is located
+in the `jinja.datastructure` module. It will raise exceptions when compared
+with other types, or when rendered.
+
+Theoretically you can provide your own singleton by subclassing
+`AbstractUndefindedType` and creating an instance of it using `make_undefined`
+(both located in `jinja.datastructure`) but those two types should cover
+the basic use cases. The `Undefined` object in that module exists for
+backwards compatibility and is an alias for `SilentUndefined`.
+
 Automatic Escaping
 ==================
 

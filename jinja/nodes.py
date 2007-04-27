@@ -73,6 +73,28 @@ class Text(Node):
         return 'Text(%r)' % (self.text,)
 
 
+class DynamicText(Node):
+    """
+    Note that represents normal text with string formattings.
+    Those are used for texts that contain variables. The attribute
+    `variables` contains a list of Print tags and nothing else.
+    """
+
+    def __init__(self, lineno, format_string, variables):
+        self.lineno = lineno
+        self.format_string = format_string
+        self.variables = variables
+
+    def get_items(self):
+        return [self.format_string] + list(self.variables)
+
+    def __repr__(self):
+        return 'DynamicText(%r, %r)' % (
+            self.text,
+            self.variables
+        )
+
+
 class NodeList(list, Node):
     """
     A node that stores multiple childnodes.

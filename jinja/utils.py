@@ -17,17 +17,19 @@ import string
 from types import MethodType, FunctionType
 from compiler.ast import CallFunc, Name, Const
 from jinja.nodes import Trans
-from jinja.datastructure import Context, Flush
+from jinja.datastructure import Context
 from jinja.exceptions import SecurityException, TemplateNotFound
 
-#: the python2.4 version of deque is missing the remove method
-#: because a for loop with a lookup for the missing value written
-#: in python is slower we just use deque if we have python2.5 or higher
-if sys.version_info >= (2, 5):
+# the python2.4 version of deque is missing the remove method
+# because a for loop with a lookup for the missing value written
+# in python is slower we just use deque if we have python2.5 or higher
+try:
     from collections import deque
-else:
+    deque.remove
+except (ImportError, AttributeError):
     deque = None
 
+# support for python 2.3/2.4
 try:
     set
 except NameError:
@@ -49,6 +51,17 @@ _simple_email_re = re.compile(r'^\S+@[a-zA-Z0-9._-]+\.[a-zA-Z0-9._-]+$')
 
 #: used by from_string as cache
 _from_string_env = None
+
+
+def escape(s, quote=None):
+    """
+    SGML/XML escape an unicode object.
+    """
+    s = s.replace("&", "&amp;").replace("<", "&lt;").replace(">", "&gt;")
+    if not quote:
+        return s
+    return s.replace('"', "&quot;")
+
 
 def urlize(text, trim_url_limit=None, nofollow=False):
     """
@@ -192,13 +205,6 @@ def generate_lorem_ipsum(n=5, html=True, min=20, max=100):
     return u'\n'.join([u'<p>%s</p>' % escape(x) for x in result])
 
 
-def flush():
-    """
-    Yield a flush marker.
-    """
-    return Flush()
-
-
 def watch_changes(env, context, iterable, *attributes):
     """
     Wise replacement for ``{% ifchanged %}``.
@@ -238,14 +244,20 @@ watch_changes.jinja_context_callable = True
 # python2.4 and lower has a bug regarding joining of broken generators.
 # because of the runtime debugging system we have to keep track of the
 # number of frames to skip. that's what RUNTIME_EXCEPTION_OFFSET is for.
-if sys.version_info < (2, 5):
-    capture_generator = lambda gen: u''.join(tuple(gen))
-    RUNTIME_EXCEPTION_OFFSET = 2
-
-# this should be faster and used in python2.5 and higher
-else:
-    capture_generator = u''.join
-    RUNTIME_EXCEPTION_OFFSET = 1
+try:
+    _test_singleton = object()
+    def _test_gen_bug():
+        raise TypeError(_test_singleton)
+        yield None
+    ''.join(_test_gen_bug())
+except TypeError, e:
+    if e.args and e.args[0] is _test_singleton:
+        capture_generator = u''.join
+        RUNTIME_EXCEPTION_OFFSET = 1
+    else:
+        capture_generator = lambda gen: u''.join(tuple(gen))
+        RUNTIME_EXCEPTION_OFFSET = 2
+del _test_singleton, _test_gen_bug
 
 
 def buffereater(f):
@@ -254,8 +266,16 @@ def buffereater(f):
     (macros, filter sections etc)
     """
     def wrapped(*args, **kwargs):
-        return Flush(capture_generator(f(*args, **kwargs)))
+        return capture_generator(f(*args, **kwargs))
     return wrapped
+
+
+def empty_block(context):
+    """
+    An empty callable that just returns an empty decorator.
+    Used to represent empty blocks.
+    """
+    if 0: yield None
 
 
 def fake_template_exception(exception, filename, lineno, source,
@@ -642,12 +662,3 @@ class CacheDict(object):
         rv._mapping = deepcopy(self._mapping)
         rv._queue = deepcopy(self._queue)
         return rv
-
-
-# escaping function. Use this only if you escape unicode
-# objects. in all other cases it's likely that the cgi.escape
-# function performs better.
-try:
-    from jinja._speedups import escape
-except ImportError:
-    from cgi import escape

@@ -12,7 +12,7 @@ import re
 from random import choice
 from urllib import urlencode, quote
 from jinja.utils import urlize, escape
-from jinja.datastructure import Undefined, Markup, TemplateData
+from jinja.datastructure import Markup, TemplateData
 from jinja.exceptions import FilterArgumentError
 
 
@@ -114,7 +114,8 @@ def do_escape(attribute=False):
             return s
         elif hasattr(s, '__html__'):
             return s.__html__()
-        #: small speedup
+        #: small speedup, do not convert to unicode if we already
+        #: have an unicode object.
         if s.__class__ is not unicode:
             s = env.to_unicode(s)
         return e(s, attribute)
@@ -150,7 +151,7 @@ def do_xmlattr():
             raise TypeError('a dict is required')
         result = []
         for key, value in d.iteritems():
-            if value not in (None, Undefined):
+            if value not in (None, env.undefined_singleton):
                 result.append(u'%s="%s"' % (
                     e(env.to_unicode(key)),
                     e(env.to_unicode(value), True)
@@ -236,7 +237,7 @@ def do_default(default_value=u'', boolean=False):
         {{ ''|default('the string was empty', true) }}
     """
     def wrapped(env, context, value):
-        if (boolean and not value) or value in (Undefined, None):
+        if (boolean and not value) or value in (env.undefined_singleton, None):
             return default_value
         return value
     return wrapped
@@ -314,9 +315,7 @@ def do_first():
         try:
             return iter(seq).next()
         except StopIteration:
-            if env.silent:
-                return Undefined
-            raise TemplateRuntimeError('%r is empty' % seq)
+            return env.undefined_singleton[0]
     return wrapped
 
 
@@ -328,9 +327,7 @@ def do_last():
         try:
             return iter(_reversed(seq)).next()
         except StopIteration:
-            if env.silent:
-                return Undefined
-            raise TemplateRuntimeError('%r is empty' % seq)
+            return env.undefined_singleton[-1]
     return wrapped
 
 
@@ -342,9 +339,7 @@ def do_random():
         try:
             return choice(seq)
         except IndexError:
-            if env.silent:
-                return Undefined
-            raise TemplateRuntimeError('%r is empty' % seq)
+            return env.undefined_singleton[0]
     return wrapped
 
 
@@ -655,7 +650,7 @@ def do_capture(name='captured', clean=False):
     def wrapped(env, context, value):
         context[name] = value
         if clean:
-            return Undefined
+            return TemplateData()
         return value
     return wrapped
 

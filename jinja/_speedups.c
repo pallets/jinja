@@ -18,8 +18,7 @@
 #include <structmember.h>
 
 /* Set by init_constants to real values */
-static PyObject *Undefined, *Deferred, *TemplateRuntimeError;
-static Py_UNICODE *amp, *lt, *gt, *qt;
+static PyObject *Deferred;
 
 /**
  * Internal struct used by BaseContext to store the
@@ -39,7 +38,7 @@ typedef struct {
 	struct StackLayer *initial;	/* initial values */
 	struct StackLayer *current;	/* current values */
 	long stacksize;			/* current size of the stack */
-	int silent;			/* boolean value for silent failure */
+	PyObject *undefined_singleton;	/* the singleton returned on missing values */
 } BaseContext;
 
 /**
@@ -52,106 +51,9 @@ init_constants(void)
 	PyObject *datastructure = PyImport_ImportModule("jinja.datastructure");
 	if (!datastructure)
 		return 0;
-	PyObject *exceptions = PyImport_ImportModule("jinja.exceptions");
-	if (!exceptions) {
-		Py_DECREF(datastructure);
-		return 0;
-	}
-	Undefined = PyObject_GetAttrString(datastructure, "Undefined");
 	Deferred = PyObject_GetAttrString(datastructure, "Deferred");
-	TemplateRuntimeError = PyObject_GetAttrString(exceptions, "TemplateRuntimeError");
-
-	amp = ((PyUnicodeObject*)PyUnicode_DecodeASCII("&amp;", 5, NULL))->str;
-	lt = ((PyUnicodeObject*)PyUnicode_DecodeASCII("&lt;", 4, NULL))->str;
-	gt = ((PyUnicodeObject*)PyUnicode_DecodeASCII("&gt;", 4, NULL))->str;
-	qt = ((PyUnicodeObject*)PyUnicode_DecodeASCII("&quot;", 6, NULL))->str;
-
 	Py_DECREF(datastructure);
-	Py_DECREF(exceptions);
 	return 1;
-}
-
-/**
- * SGML/XML escape something.
- *
- * XXX: this is awefully slow for non unicode objects because they
- * 	get converted to unicode first.
- */
-static PyObject*
-escape(PyObject *self, PyObject *args)
-{
-	PyUnicodeObject *in, *out;
-	Py_UNICODE *outp;
-	int i, len;
-
-	PyObject *text = NULL, *use_quotes = NULL;
-
-	if (!PyArg_ParseTuple(args, "O|O", &text, &use_quotes))
-		return NULL;
-	int quotes = use_quotes && PyObject_IsTrue(use_quotes);
-	in = (PyUnicodeObject*)PyObject_Unicode(text);
-	if (!in)
-		return NULL;
-
-	/* First we need to figure out how long the escaped string will be */
-	len = 0;
-	for (i = 0; i < in->length; i++) {
-		switch (in->str[i]) {
-			case '&':
-				len += 5;
-				break;
-			case '"':
-				len += quotes ? 6 : 1;
-				break;
-			case '<':
-			case '>':
-				len += 4;
-				break;
-			default:
-				len++;
-		}
-	}
-
-	/* Do we need to escape anything at all? */
-	if (len == in->length)
-		return (PyObject*)in;
-
-	out = (PyUnicodeObject*)PyUnicode_FromUnicode(NULL, len);
-	if (!out) {
-		Py_DECREF(in);
-		return NULL;
-	}
-
-	outp = out->str;
-	for (i = 0; i < in->length; i++) {
-		switch (in->str[i]) {
-			case '&':
-				Py_UNICODE_COPY(outp, amp, 5);
-				outp += 5;
-				break;
-			case '"':
-				if (quotes) {
-					Py_UNICODE_COPY(outp, qt, 6);
-					outp += 6;
-				}
-				else
-					*outp++ = in->str[i];
-				break;
-			case '<':
-				Py_UNICODE_COPY(outp, lt, 4);
-				outp += 4;
-				break;
-			case '>':
-				Py_UNICODE_COPY(outp, gt, 4);
-				outp += 4;
-				break;
-			default:
-				*outp++ = in->str[i];
-		};
-	}
-
-	Py_DECREF(in);
-	return (PyObject*)out;
 }
 
 /**
@@ -176,8 +78,8 @@ BaseContext_dealloc(BaseContext *self)
 /**
  * Initializes the BaseContext.
  *
- * Like the native python class it takes a flag telling the context
- * to either fail silently with Undefined or raising a TemplateRuntimeError.
+ * Like the native python class it takes a reference to the undefined
+ * singleton which will be used for undefined values.
  * The other two arguments are the global namespace and the initial
  * namespace which usually contains the values passed to the render
  * function of the template. Both must be dicts.
@@ -185,20 +87,14 @@ BaseContext_dealloc(BaseContext *self)
 static int
 BaseContext_init(BaseContext *self, PyObject *args, PyObject *kwds)
 {
-	PyObject *silent = NULL, *globals = NULL, *initial = NULL;
+	PyObject *undefined = NULL, *globals = NULL, *initial = NULL;
 
-	static char *kwlist[] = {"silent", "globals", "initial", NULL};
-	if (!PyArg_ParseTupleAndKeywords(args, kwds, "OOO", kwlist,
-					 &silent, &globals, &initial))
+	if (!PyArg_ParseTuple(args, "OOO", &undefined, &globals, &initial))
 		return -1;
 	if (!PyDict_Check(globals) || !PyDict_Check(initial)) {
 		PyErr_SetString(PyExc_TypeError, "stack layers must be dicts.");
 		return -1;
 	}
-
-	self->silent = PyObject_IsTrue(silent);
-	if (self->silent == -1)
-		return -1;
 
 	self->current = PyMem_Malloc(sizeof(struct StackLayer));
 	self->current->prev = NULL;
@@ -217,6 +113,9 @@ BaseContext_init(BaseContext *self, PyObject *args, PyObject *kwds)
 	self->globals->dict = globals;
 	Py_INCREF(globals);
 	self->initial->prev = self->globals;
+
+	self->undefined_singleton = undefined;
+	Py_INCREF(undefined);
 
 	self->stacksize = 3;
 	return 0;
@@ -347,7 +246,13 @@ BaseContext_getitem(BaseContext *self, PyObject *item)
 	int isdeferred;
 	struct StackLayer *current = self->current;
 	
-	if (!PyString_Check(item))
+	/* allow unicode keys as long as they are ascii keys */
+	if (PyUnicode_CheckExact(item)) {
+		item = PyUnicode_AsASCIIString(item);
+		if (!item)
+			goto missing;
+	}
+	else if (!PyString_Check(item))
 		goto missing;
 
 	/* disallow access to internal jinja values */
@@ -387,15 +292,8 @@ BaseContext_getitem(BaseContext *self, PyObject *item)
 	}
 
 missing:
-	if (self->silent) {
-		Py_INCREF(Undefined);
-		return Undefined;
-	}
-	if (name)
-		PyErr_Format(TemplateRuntimeError, "'%s' is not defined", name);
-	else
-		PyErr_SetString(TemplateRuntimeError, "value is not a string");
-	return NULL;
+	Py_INCREF(self->undefined_singleton);
+	return self->undefined_singleton;
 }
 
 /**
@@ -407,7 +305,13 @@ BaseContext_contains(BaseContext *self, PyObject *item)
 	char *name;
 	struct StackLayer *current = self->current;
 
-	if (!PyString_Check(item))
+	/* allow unicode objects as keys as long as they are ASCII */
+	if (PyUnicode_CheckExact(item)) {
+		item = PyUnicode_AsASCIIString(item);
+		if (!item)
+			return 0;
+	}
+	else if (!PyString_Check(item))
 		return 0;
 
 	name = PyString_AS_STRING(item);
@@ -432,13 +336,23 @@ BaseContext_contains(BaseContext *self, PyObject *item)
 static int
 BaseContext_setitem(BaseContext *self, PyObject *item, PyObject *value)
 {
-	if (!PyString_Check(item)) {
-		PyErr_SetString(PyExc_TypeError, "expected string argument");
-		return -1;
+	/* allow unicode objects as keys as long as they are ASCII */
+	if (PyUnicode_CheckExact(item)) {
+		item = PyUnicode_AsASCIIString(item);
+		if (!item) {
+			PyErr_Clear();
+			goto error;
+		}
 	}
+	else if (!PyString_Check(item))
+		goto error;
 	if (!value)
 		return PyDict_DelItem(self->current->dict, item);
 	return PyDict_SetItem(self->current->dict, item, value);
+
+error:
+	PyErr_SetString(PyExc_TypeError, "expected string argument");
+	return -1;
 }
 
 /**
@@ -536,9 +450,6 @@ static PyTypeObject BaseContextType = {
 };
 
 static PyMethodDef module_methods[] = {
-	{"escape", (PyCFunction)escape, METH_VARARGS,
-	 "escape(s, quotes=False) -> string\n\n"
-	 "SGML/XML a string."},
 	{NULL, NULL, 0, NULL}		/* Sentinel */
 };
 

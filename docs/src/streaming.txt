@@ -10,91 +10,65 @@ If you for example generate a file with a couple of megabytes you may want
 to pass the stream to the WSGI interface in order to keep the amount of
 memory used low and deliver the output to the browser as fast as possible.
 
-The streaming works quite simple. Whenever an item is returned by the
-internal generator it's passed to a `TemplateStream` which buffers 40 events
-before yielding them. Because WSGI usually slows down on too many flushings
-this is the integrated solution for this problem. The template designer
-can further control that behavior by placing a ``{{ flush() }}`` call in
-the template. Whenever the `TemplateStream` encounters an object marked as
-flushable it stops buffering and yields the item.
-
-Note that some constructs are not part of the stream. For example blocks
-that are rendered using ``{{ super() }}`` are yielded as one flushable item.
-
-This restriction exists because template designers may want to operate on
-the return value of a macro, block etc.
-
-The following constructs yield their subcontents as one event: ``blocks``
-that are not the current one (eg, blocks called using ``{{ super() }}``),
-macros, filtered sections.
-
-The TemplateStream
-==================
-
-You can get a new `TemplateStream` by calling the `stream()` function on
-a template like you would do for rendering. The `TemplateStream` behaves
-like a normal generator/iterator. However, as long as the stream is not
-started you can modify the buffer threshold. Once the stream started
-streaming it looses the `threshold` attribute.
-
-Explicit flushing:
+The streaming interface is straightforward. Instead of using `render()` you
+can call `stream()` which does pretty much the same but doesn't return a
+string but a `TemplateStream`:
 
 .. sourcecode:: pycon
 
-    >>> tmpl = evironment.from_string("<ul>{% for item in seq %}"
-    ... "<li>{{ item }}</li>{{ flush() }}{% endfor %}</ul>")
-    >>> s = tmpl.stream(seq=range(3))
-    >>> s.next()
-    u'<ul><li>0</li>'
-    >>> s.next()
-    u'<li>1</li>'
-    >>> s.next()
-    u'<li>2</li>'
-    >>> s.next()
-    u'</ul>'
-    >>> 
+    >>> tmpl = env.from_string("<ul>{% for item in seq %}\n  <li>{{ loop.index "
+    ...                        "}} - {{ item }}</li>\n{%- endfor %}</ul>")
+    >>> stream = tmpl.stream(seq=range(4))
+    >>> stream.next()
+    '<ul>'
+    >>> stream.next()
+    u'\n  <li>1 - 0</li>'
+    >>> stream.next()
+    u'\n  <li>2 - 1</li>'
+    >>> stream.next()
+    u'\n  <li>3 - 2</li>'
+    >>> stream.next()
+    u'\n  <li>4 - 3</li>'
+    >>> stream.next()
+    '</ul>'
 
-Implicit flushing after 6 events:
+As you can see each iteration is threated as template event here. But also
+other tags trigger events. Basically every tag yields one event, the
+`print` tag too. The only exception is the variable substitution syntax which
+is inserted into the template text data.
 
-.. sourcecode:: pycon
-
-    >>> tmpl = environment.from_string("<ul>{% for item in seq %}"
-    ... "<li>{{ item }}</li>{% endfor %}</ul>")
-    >>> s = tmpl.stream(seq=range(6))
-    >>> s.threshold = 6
-    >>> s.next()
-    u'<ul><li>0</li><li>1'
-    >>> s.next()
-    u'</li><li>2</li><li>3'
-    >>> s.next()
-    u'</li><li>4</li><li>5'
-    >>> s.next()
-    u'</li></ul>'
-
-General `TemplateStream` behavior:
+Because some protocols like `WSGI` flush after each iteration if passed as
+response iterable it's better to buffer some events internally. You can do
+this by enable buffering using `enable_buffering` and passing it the buffer
+size which must be greater than one:
 
 .. sourcecode:: pycon
 
-    >>> s = tmpl.stream(seq=range(6))
-    >>> s.started
+    >>> stream.enable_buffering(size=3)
+    >>> stream.next()
+    u'<ul>\n  <li>1 - 0</li>\n  <li>2 - 1</li>'
+    >>> stream.next()
+    u'\n  <li>3 - 2</li>\n  <li>4 - 3</li></ul>'
+
+This will buffer 3 events before yielding. Disabling buffering works using the
+`disable_buffering` method. You can enable and disable buffering on the fly also
+if you have already iterated over that stream. To check if you are in buffered
+or unbuffered mode you can use the `.buffered` property:
+
+.. sourcecode:: pycon
+
+    >>> stream.buffered
     False
-    >>> s.threshold
-    40
-    >>> s.next()
-    u'<ul><li>0</li><li>1</li><li>2</li><li>3</li><li>4</li><li>5</li></ul>'
-    >>> s.started
+    >>> stream.enable_buffering(20)
+    >>> stream.buffered
     True
-    >>> s.threshold
-    Traceback (most recent call last):
-      File "<stdin>", line 1, in <module>
-    AttributeError: 'TemplateStream' object has no attribute 'threshold'
+    >>> stream.disable_buffering()
+    >>> stream.buffered
+    False
 
+.. admonition:: Note
 
-Stream Control
-==============
+    Jinja uses buffering internally for some constructs like macros. A macro
+    call is yielded as one event, independently of the internal structure.
 
-The stream control is designed so that it's completely transparent. When used
-in non stream mode the invisible flush tokens disappear. In order to flush
-the stream after calling a specific function all you have to do is to wrap
-the return value in a `jinja.datastructure.Flush` object. This however
-bypasses the automatic filtering system and converts the value to unicode.
+    The same applies to recursive for loops and `{% filter %}` tags.

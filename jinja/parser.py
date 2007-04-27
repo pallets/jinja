@@ -87,9 +87,9 @@ class Parser(object):
 
         #: set of directives that are only available in a certain
         #: context.
-        self.context_directives = set(['elif', 'else', 'endblock',
-            'endfilter', 'endfor', 'endif', 'endmacro', 'endraw',
-            'endtrans', 'pluralize'
+        self.context_directives = set([
+            'elif', 'else', 'endblock', 'endfilter', 'endfor', 'endif',
+            'endmacro', 'endraw', 'endtrans', 'pluralize'
         ])
 
         self.tokenstream = environment.lexer.tokenize(source, filename)
@@ -223,7 +223,8 @@ class Parser(object):
 
     def handle_macro_directive(self, lineno, gen):
         """
-        Handle {% macro foo bar, baz %}.
+        Handle {% macro foo bar, baz %} as well as
+        {% macro foo(bar, baz) %}.
         """
         try:
             macro_name = gen.next()
@@ -240,7 +241,13 @@ class Parser(object):
                                       'as macro name.' % macro_name[2],
                                       lineno, self.filename)
 
-        ast = self.parse_python(lineno, gen, 'def %s(%%s):pass' %
+        # make the punctuation around arguments optional
+        arg_list = list(gen)
+        if arg_list and arg_list[0][1:] == ('operator', '(') and \
+                        arg_list[-1][1:] == ('operator', ')'):
+            arg_list = arg_list[1:-1]
+
+        ast = self.parse_python(lineno, arg_list, 'def %s(%%s):pass' %
                                 str(macro_name[2][:-1]))
         body = self.subparse(end_of_macro, True)
         self.close_remaining_block()
@@ -620,12 +627,42 @@ class Parser(object):
         """
         def finish():
             """Helper function to remove unused nodelists."""
+            if data_buffer:
+                flush_data_buffer()
             if len(result) == 1:
                 return result[0]
             return result
 
+        def flush_data_buffer():
+            """Helper function to write the contents of the buffer
+            to the result nodelist."""
+            format_string = []
+            insertions = []
+            for item in data_buffer:
+                if item[0] == 'variable':
+                    p = self.handle_print_directive(*item[1:])
+                    format_string.append('%s')
+                    insertions.append(p)
+                else:
+                    format_string.append(item[2].replace('%', '%%'))
+            # if we do not have insertions yield it as text node
+            if not insertions:
+                result.append(nodes.Text(data_buffer[0][1],
+                              (u''.join(format_string)).replace('%%', '%')))
+            # if we do not have any text data we yield some variable nodes
+            elif len(insertions) == len(format_string):
+                result.extend(insertions)
+            # otherwise we go with a dynamic text node
+            else:
+                result.append(nodes.DynamicText(data_buffer[0][1],
+                                                u''.join(format_string),
+                                                insertions))
+            # clear the buffer
+            del data_buffer[:]
+
         lineno = self.tokenstream.last[0]
         result = nodes.NodeList(lineno)
+        data_buffer = []
         for lineno, token, data in self.tokenstream:
             # comments
             if token == 'comment_begin':
@@ -635,11 +672,16 @@ class Parser(object):
             # parse everything till the end of it.
             elif token == 'variable_begin':
                 gen = self.tokenstream.fetch_until(end_of_variable, True)
-                result.append(self.directives['print'](lineno, gen))
+                data_buffer.append(('variable', lineno, tuple(gen)))
 
             # this token marks the start of a block. like for variables
             # just parse everything until the end of the block
             elif token == 'block_begin':
+                # if we have something in the buffer we write the
+                # data back
+                if data_buffer:
+                    flush_data_buffer()
+
                 gen = self.tokenstream.fetch_until(end_of_block, True)
                 try:
                     lineno, token, data = gen.next()
@@ -686,7 +728,7 @@ class Parser(object):
             # tokens just exist in block or variable sections. (if the
             # tokenizer is not brocken)
             elif token in 'data':
-                result.append(nodes.Text(lineno, data))
+                data_buffer.append(('text', lineno, data))
 
             # so this should be unreachable code
             else:

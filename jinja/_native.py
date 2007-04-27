@@ -14,13 +14,12 @@
     :license: BSD, see LICENSE for more details.
 """
 from jinja.datastructure import Deferred, Undefined
-from jinja.exceptions import TemplateRuntimeError
 
 
 class BaseContext(object):
 
-    def __init__(self, silent, globals, initial):
-        self._silent = silent
+    def __init__(self, undefined_singleton, globals, initial):
+        self._undefined_singleton = undefined_singleton
         self.current = current = {}
         self.stack = [globals, initial, current]
         self._push = self.stack.append
@@ -65,9 +64,7 @@ class BaseContext(object):
                         else:
                             d[name] = rv
                     return rv
-        if self._silent:
-            return Undefined
-        raise TemplateRuntimeError('%r is not defined' % name)
+        return self._undefined_singleton
 
     def __setitem__(self, name, value):
         """

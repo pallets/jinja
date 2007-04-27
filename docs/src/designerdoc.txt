@@ -235,25 +235,6 @@ available per default:
 
     *new in Jinja 1.1*
 
-`flush`
-    
-    Jinja 1.1 includes a new stream interface which can be used to speed
-    up the generation of big templates by streaming them to the client.
-    Per default Jinja flushes after 40 actions automatically. If you
-    want to force a flush at a special point you can use `flush()` to
-    do so. (eg, end of a loop iteration etc)
-
-    .. sourcecode:: jinja
-
-        {% for items in seq %}
-          {% for item in items %}
-            <li>{{ item|e }}</li>
-          {% endfor %}
-          {{ flush() }}
-        {% endfor %}
-
-    *new in Jinja 1.1*
-
 Loops
 =====
 
@@ -504,6 +485,38 @@ You can also specify more than one value:
 
     {{ show_dialog('Warning', 'something went wrong i guess') }}
 
+*Improvements in Jinja 1.1*:
+
+    Starting with Jinja 1.1 it's possible to use optional parentheses
+    around the macro arguments:
+
+    .. sourcecode:: html+jinja
+
+        {% macro foo(a, b) %}
+            ...
+        {% endmacro %}
+
+    Additionally extra arguments passed to the macro end up in the
+    special variable `varargs`. So you can have a macro like this:
+
+    .. sourcecode:: html+jinja
+
+        {% macro make_list() %}
+          {% if varargs %}
+          <ul>
+            {% for item in varargs %}
+            <li>{{ item|e }}</li>
+            {% endfor %}
+          </ul>
+          {% endif %}
+        {% endmacro %}
+
+        {{ make_list("John", "Jane", "Marcus", "Heinrich") }}
+
+    If a macro parameter is called `varargs` the additional extra
+    arguments are not accessible.
+
+
 Inheritance
 ===========
 
@@ -691,11 +704,84 @@ The variable ``angryname`` just exists inside the macro, not outside it.
 
 Defined macros appear on the context as variables. Because of this, they are
 affected by the scoping too. A macro defined inside of a macro is just available
-in those two macros (the macro itself and the macro it's defined in). For `set`
-and `macro` two additional rules exist: If a macro is defined in an extended
-template but outside of a visible block (thus outside of any block) will be
-available in all blocks below. This allows you to use `include` statements to
-load often used macros at once.
+in those two macros (the macro itself and the macro it's defined in).
+
+Template Globals
+================
+
+A special threatment exists for template code outside of visible blocks in
+child templates. This code will be executed **before** the layout template
+code. Thus it can be used to propagate values back to the layout template or
+import macros from templates for rendering.
+
+Such code can output data but it won't appear in the final rendering. So no
+additional whitespace will pollute the template.
+
+Because this code is executed before the actual layout template code it's
+possible that the layout code overrides some of those variables. Usually
+this is not a problem because of different variable names but it can be
+a problem if you plan to specify default values.
+
+In that case you have to test if the variable is not defined before setting
+it:
+
+.. sourcecode:: jinja
+
+    {% if not page_title %}
+      {% set page_title = 'Default Page Title' %}
+    {% endif %}
+
+You can of course also use the `|default` filter.
+
+.. admonition:: Explanation
+
+    This template stored as `a.html`:
+
+    .. sourcecode:: html+jinja
+
+        <title>{{ title|default('Untitled') }}</title>
+        <body>{% block body %}{% endblock %}
+
+    ...and this child template stored as `b.html`:
+
+    .. sourcecode:: html+jinja
+
+        {% extends 'a.html' %}
+        {% include 'macros.tmpl' %}
+        {% set title = 'My Page' %}
+        {% block body %}{{ wrap(42) }}{% endblock %}
+
+    ...and this code in `macros.tmpl`:
+
+    .. sourcecode:: html+jinja
+
+        {% macro wrap(text) %}
+          [{{ text }}]
+        {% endmacro %}
+
+    ..will translate to something with the same semantics as this (just
+    that the value is not stored in a variable):
+
+    .. sourcecode:: html+jinja
+
+        {% filter capture('captured', true) %}
+          {% macro wrap(text) %}
+            [{{ text }}]
+          {% endmacro %}
+          {% set title='My Page' %}
+        {% endfilter %}
+        <title>{{ title|default('Untitled') }}</title>
+        <body>
+          {{ wrap(42) }}
+        </body>
+
+.. admonition:: Note
+
+    This implementation was improved in Jinja 1.1. In Jinja 1.0 blocks that
+    were not top-level were not propagated to the layout template. This made
+    it impossible to use conditional expressions for inclusion in non root
+    templates.
+
 
 Undefined Variables
 ===================
@@ -704,48 +790,53 @@ If you have already worked with python you probably know about the fact that
 undefined variables raise an exception. This is different in Jinja. There is a
 special value called `undefined` that represents values that do not exist.
 
-This special variable works complete different from any variables you maybe
-know. If you print it using ``{{ variable }}`` it will not appear because it's
-literally empty. If you try to iterate over it, it will work. But no items
-are returned. Comparing this value to any other value results in `false`.
-Even if you compare it to itself:
+Depending on the configuration it will behave different.
+
+In order to check if a value is defined you can use the `defined` test:
 
 .. sourcecode:: jinja
 
-    {{ undefined == undefined }}
-        will return false. Not even undefined is undefined :)
-        Use `is defined` / `is not defined`:
+    {{ myvariable is not defined }}
+        will return true if the variable does not exist.
 
-    {{ undefined is not defined }}
-        will return true.
+`SilentUndefined`:
 
-There are also some additional rules regarding this special value. Any
-mathematical operators (``+``, ``-``, ``*``, ``/``) return the operand
-as result:
+    The silent `undefined` is the default behavior. The `undefined` object works
+    complete different from any variables you maybe know. If you print it
+    using ``{{ variable }}`` it will not appear because it's literally empty.
+    If you try to iterate over it, it will work. But no items are returned.
 
-.. sourcecode:: jinja
+    In order to check if a value is defined you can use the `defined` test:
 
-    {{ undefined + "foo" }}
-        returns "foo"
+    There are also some additional rules regarding this special value. Any
+    mathematical operators (``+``, ``-``, ``*``, ``/``) return the operand
+    as result:
 
-    {{ undefined - 42 }}
-        returns 42. Note: not -42!
+    .. sourcecode:: jinja
 
-In any expression `undefined` evaluates to `false`. It has no length, all
-attribute calls return undefined, calling too:
+        {{ undefined + "foo" }}
+            returns "foo"
 
-.. sourcecode:: jinja
+        {{ undefined - 42 }}
+            returns 42. Note: not -42!
 
-    {{ undefined.attribute().attribute_too[42] }}
-        still returns `undefined`.
+    In any expression `undefined` evaluates to `false`. It has no length, all
+    attribute calls return undefined, calling too:
 
-Starting with Jinja 1.1 it's possible to control the `undefined` behavior
-in the Jinja environment, thus on the application side. If you receive
-a `TemplateRuntimeError` when operating on an undefined variable the
-environment was created with `silent` disabled.
+    .. sourcecode:: jinja
 
-In a non silent environment the error you get tells you the line number
-and the name of the variable / attribute which could not be found.
+        {{ undefined.attribute().attribute_too[42] }}
+            still returns `undefined`.
+
+`ComplainingUndefined`:
+
+    Starting with Jinja 1.1 it's possible to replace the default undefined
+    object with different values. The other common undefined object which
+    comes with Jinja is the `ComplainingUndefined` object.
+
+    It raises exceptions as soon as you either render it or want to iterate
+    over it or try to access attributes etc.
+    
 
 Escaping
 ========
@@ -957,9 +1048,8 @@ change.
           </div>
         {% endmacro %}
 
-    Called the normal way `caller` will be undefined and thus return nothing
-    in silent mode or raise an exception in non silent. But if you call it
-    with the new `{% call %}` tag you can pass it some data:
+    Called the normal way `caller` will be undefined, but if you call it
+    using the new `{% call %}` tag you can pass it some data:
 
     .. sourcecode:: html+jinja
 

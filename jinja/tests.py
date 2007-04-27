@@ -9,7 +9,6 @@
     :license: BSD, see LICENSE for more details.
 """
 import re
-from jinja.datastructure import Undefined
 
 
 number_re = re.compile(r'^-?\d+(\.\d+)?$')
@@ -45,7 +44,7 @@ def test_defined():
 
     See also the ``default`` filter.
     """
-    return lambda e, c, v: v is not Undefined
+    return lambda e, c, v: v is not e.undefined_singleton
 
 
 def test_lower():

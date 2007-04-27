@@ -1,0 +1,315 @@
+=======================
+Context and Environment
+=======================
+
+The two central objects in Jinja are the `Environment` and `Context`. Both
+are designed to be subclassed by applications if they need to extend Jinja.
+
+Environment
+===========
+
+The initialization parameters are already covered in the `Quickstart`_ thus
+not repeated here.
+
+But beside those configurable instance variables there are some functions used
+in the template evaluation code you may want to override:
+
+**def** `parse` *(source, filename)*:
+
+    Parse the sourcecode and return the abstract syntax tree. This tree of
+    nodes is used by the `translators`_ to convert the template into
+    executable source- or bytecode.
+
+**def** `lex` *(source, filename)*:
+
+    Tokenize the given sourcecode and return a generator of tuples in the
+    form ``(lineno, token, value)``. The filename is just used in the
+    exceptions raised.
+    
+    **New in Jinja 1.1**
+
+**def** `from_string` *(source)*:
+
+    Load and parse a template source and translate it into eval-able Python
+    code. This code is wrapped within a `Template` class that allows you to
+    render it.
+
+**def** `get_template` *(name)*:
+
+    Load a template from a loader. If the template does not exist, you will
+    get a `jinja.exceptions.TemplateNotFound` exception.
+
+**def** `to_unicode` *(self, value)*:
+
+    Called to convert variables to unicode. Per default this checks if the
+    value is already unicode. If not it's converted to unicode using the
+    charset defined on the environment.
+
+    Also `None` is converted into an empty string per default.
+
+**def** `get_translator` *(self, context)*:
+
+    Return the translator used for i18n. A translator is an object that
+    provides the two functions ``gettext(string)`` and
+    ``ngettext(singular, plural, n)``. Both of those functions have to
+    behave like the `ugettext` and `nugettext` functions described in the
+    python `gettext documentation`_.
+
+    If you don't provide a translator a default one is used to switch
+    between singular and plural forms.
+
+    Have a look at the `i18n`_ section for more information.
+
+**def** `get_translations` *(self, name)*:
+
+    Get the translations for the template `name`. Only works if a loader
+    is present. See the `i18n`_ section for more details.
+
+**def** `get_translations_for_string` *(self, string)*:
+
+    Get the translations for the string `string`. This works also if no
+    loader is present and can be used to lookup translation strings from
+    templates that are loaded from dynamic resources like databases.
+
+**def** `apply_filters` *(self, value, context, filters)*:
+
+    Now this function is a bit tricky and you usually don't have to override
+    it. It's used to apply filters on a value. The Jinja expression
+    ``{{ foo|escape|replace('a', 'b') }}`` calls the function with the
+    value of `foo` as first parameter, the current context as second and
+    a list of filters as third. The list looks like this:
+
+    .. sourcecode:: python
+
+        [('escape', ()), ('replace', (u'a', u'b'))]
+
+    As you can see the filter `escape` is called without arguments whereas
+    `replace` is called with the two literal strings ``a`` and ``b``, both
+    unicode. The filters for the names are stored on ``self.filters`` in a
+    dict. Missing filters should raise a `FilterNotFound` exception.
+
+    **Warning** this is a Jinja internal method. The actual implementation
+    and function signature might change.
+
+**def** `perform_test` *(self, context, testname, args, value, invert)*:
+
+    Like `apply_filters` you usually don't override this one. It's the
+    callback function for tests (``foo is bar`` / ``foo is not bar``).
+
+    The first parameter is the current contex, the second the name of
+    the test to perform. the third a tuple of arguments, the fourth is
+    the value to test. The last one is `True` if the test was performed
+    with the `is not` operator, `False` if with the `is` operator.
+
+    Missing tests should raise a `TestNotFound` exception.
+
+    **Warning** this is a Jinja internal method. The actual implementation
+    and function signature might change.
+
+**def** `get_attribute` *(self, obj, attribute)*:
+
+    Get `attribute` from the object provided. The default implementation
+    performs security tests.
+
+    **Warning** this is a Jinja internal method. The actual implementation
+    and function signature might change.
+
+**def** `get_attributes` *(self, obj, attributes)*:
+
+    Get some attributes from the object. If `attributes` is an empty
+    sequence the object itself is returned unchanged.
+
+**def** `call_function` *(self, f, context, args, kwargs, dyn_args, dyn_kwargs)*:
+    
+    Call a function `f` with the arguments `args`, `kwargs`, `dyn_args` and
+    `dyn_kwargs` where `args` is a tuple and `kwargs` a dict. If `dyn_args`
+    is not `None` you have to add it to the arguments, if `dyn_kwargs` is
+    not `None` you have to update the `kwargs` with it.
+
+    The default implementation performs some security checks.
+
+    **Warning** this is a Jinja internal method. The actual implementation
+    and function signature might change.
+
+**def** `call_function_simple` *(self, f, context)*:
+
+    Like `call_function` but without arguments.
+
+    **Warning** this is a Jinja internal method. The actual implementation
+    and function signature might change.
+
+**def** `finish_var` *(self, value, ctx)*:
+
+    Postprocess a variable before it's sent to the template.
+
+    **Warning** this is a Jinja internal method. The actual implementation
+    and function signature might change.
+    
+.. admonition:: Note
+
+    The Enviornment class is defined in `jinja.environment.Environment`
+    but imported into the `jinja` package because it's often used.
+
+Context
+=======
+
+Jinja wraps the variables passed to the template in a special class called a
+context. This context supports variables on multiple layers and lazy (deferred)
+objects. Often your application has a request object, database connection
+object or something similar you want to access in filters, functions etc.
+
+The default context object is defined in `jinja.datastructure`. If you want
+to provide your own context object always subclass the default one. This
+ensures that the class continues working after Jinja upgrades.
+
+Beacause of that you can easily subclass a context to add additional variables
+or to change the way it behaves.
+
+**def** `pop` *(self)*:
+
+    Pop the outermost layer and return it.
+
+**def** `push` *(self, data=None)*:
+
+    Push a dict to the stack or an empty layer.
+
+    Has to return the pushed object.
+
+**def** `to_dict` *(self)*:
+
+    Flatten the context and convert it into a dict.
+
+**def** `__getitem__` *(self, name)*:
+
+    Resolve an item. Per default this also resolves `Deferred` objects.
+
+**def** `__setitem__` *(self, name, value)*:
+
+    Set an item in the outermost layer.
+
+**def** `__delitem__` *(self, name)*:
+
+    Delete an item in the outermost layer. Do not raise exceptions if
+    the value does not exist.
+
+**def** `__contains__` *(self, name)*:
+
+    Return `True` if `name` exists in the context.
+
+**attribute** `cache`:
+
+    The cache is a dict which can be used by filters, test functions
+    and global objects to cache data. It's also used by the environment
+    to cache often used tests and filters.
+
+**attribute** `translate_func`:
+
+    This property is created on first access and returns a translation
+    function used by the rendering process to translate strings with the
+    translator defined on the environment.
+
+.. admonition:: Note
+
+    The context uses a stack of dicts internally to represent the
+    layers of variables. It contains at least 3 levels available on
+    the context with some attributes. Those are:
+
+    `globals`:
+        
+        The reference to the global namespace of the environment.
+        It's the lowest namespace on the stack and thus immutable
+
+    `initial`:
+
+        The initial namespace. Contains the values passed to the
+        context in the render function. It also contains the resolved
+        deferred values for bot the `initial` and the `globals`
+        namespace.
+
+    `current`:
+
+        The reference to the current active namespace. When the
+        context is initialized this automatically points to an
+        empty namespace.
+
+    The number of layers on the stack are theoretically unlimited.
+    Some elements in the template language like loops, blocks,
+    macros and others push and pop the layer on entering and leaving
+    the section.
+
+    This is done in order to keep the namespace clean.
+
+    Note that since Jinja 1.1 the context object is a subclass of the
+    `BaseContext`, a much simpler class that just implements a stack
+    like namespace for python. If the `_speedups` extension was
+    compiled for jinja the base class will be
+    `jinja._speedups.BaseContext` otherwise `jinja._native.BaseContext`.
+
+    Since you cannot reproduce completely the same semantics in python
+    and the C API there are some things you should keep in mind:
+
+    -   The `stack` attribute of the context maps to the real layers
+        on the stack, thus you can modify the items but the list as
+        such is meant to be read only.
+
+    -   `globals`, `current` and `initial` are read only attributes that
+        map to layers on the stack which you can of course modify.
+
+
+Exceptions
+==========
+
+During parsing and evaluation Jinja raises a couple of Jinja specific
+exceptions. All of those exceptions are defined in the `jinja.exceptions`
+module and are subclasses of the `TemplateError` class defined there.
+
+Here a list of exceptions that could occur:
+
+`SecurityException`:
+
+    An exception that is raised if the template tried to access something
+    it should not access. In the default configuration this exception
+    will get caught in the Jinja rendering process and silenced.
+
+    If however the environment is configured to not silently fail it
+    could happen that this exception reaches the application.
+
+`FilterNotFound`:
+
+    Raised if the template tried to apply a filter that does not exist.
+    Since this exception is a subclass of `KeyError` too you can catch
+    it this way too.
+
+`FilterArgumentError`:
+
+    Raised if the filter received an argument that it couldn't handle.
+    It's a subclass of `TypeError` too so you can catch it this way too.
+
+`TestNotFound`:
+
+    Raised if the template tried to perform a test that does not exist.
+    Since this exception is a subclass of `KeyError` too you can catch
+    it this way too.
+
+`TestArgumentError`:
+
+    Raised if a test function received an argument that it couldn't handle.
+    It's a subclass of `TypeError` too so you can catch it this way too.
+
+`TemplateNotFound`:
+
+    Raised if a template does not exist. Subclass of `IOError` too.
+
+`TemplateSyntaxError`:
+
+    Subclass of `SyntaxError` and used to indicate an syntax error.
+
+`TemplateRuntimeError`:
+
+    Generic runtime error exception which can occour at various places.
+
+
+.. _i18n: i18n.txt
+.. _translators: translators.txt
+.. _Quickstart: devintro.txt
+.. _gettext documentation: http://docs.python.org/lib/module-gettext.html

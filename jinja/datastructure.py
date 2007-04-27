@@ -34,15 +34,52 @@ def unsafe(f):
     return f
 
 
-class UndefinedType(object):
+def make_undefined(implementation):
     """
-    An object that does not exist.
+    Creates an undefined singleton based on a given implementation.
+    It performs some tests that make sure the undefined type implements
+    everything it should.
+    """
+    self = object.__new__(implementation)
+    self.__reduce__()
+    return self
+
+
+class AbstractUndefinedType(object):
+    """
+    Base class for any undefined type.
     """
     __slots__ = ()
 
     def __init__(self):
         raise TypeError('cannot create %r instances' %
                         self.__class__.__name__)
+
+    def __setattr__(self, name, value):
+        raise AttributeError('%r object has no attribute %r' % (
+            self.__class__.__name__,
+            name
+        ))
+
+    def __eq__(self, other):
+        return self is other
+
+    def __ne__(self, other):
+        return self is not other
+
+    def __copy__(self):
+        return self
+    __deepcopy__ = __copy__
+
+    def __reduce__(self):
+        raise TypeError('undefined objects have to provide a __reduce__')
+
+
+class SilentUndefinedType(AbstractUndefinedType):
+    """
+    An object that does not exist.
+    """
+    __slots__ = ()
 
     def __add__(self, other):
         """Any operator returns the operand."""
@@ -79,10 +116,6 @@ class UndefinedType(object):
         """The unicode representation is empty."""
         return u''
 
-    def __repr__(self):
-        """The representation is ``'Undefined'``"""
-        return 'Undefined'
-
     def __int__(self):
         """Converting `Undefined` to an integer ends up in ``0``"""
         return 0
@@ -91,33 +124,54 @@ class UndefinedType(object):
         """Converting `Undefined` to an float ends up in ``0.0``"""
         return 0.0
 
-    def __eq__(self, other):
-        """`Undefined` is not equal to anything else."""
-        return False
-
-    def __ne__(self, other):
-        """`Undefined` is not equal to anything else."""
-        return True
-
     def __call__(self, *args, **kwargs):
         """Calling `Undefined` returns `Undefined`"""
         return self
 
-    def __copy__(self):
-        """Return a copy."""
-        return self
+    def __reduce__(self):
+        """Helper for pickle."""
+        return 'SilentUndefined'
 
-    def __deepcopy__(self, memo):
-        """Return a deepcopy."""
-        return self
+
+class ComplainingUndefinedType(AbstractUndefinedType):
+    """
+    An object that does not exist.
+    """
+    __slots__ = ()
+
+    def __iter__(self):
+        """Iterating over `Undefined` returns an empty iterator."""
+        if False:
+            yield None
+
+    def __nonzero__(self):
+        """`Undefined` is considered boolean `False`"""
+        return False
+
+    def __str__(self):
+        """The string representation raises an error."""
+        raise TemplateRuntimeError('Undefined object rendered')
+
+    def __unicode__(self):
+        """The unicode representation raises an error."""
+        self.__str__()
+
+    def __call__(self, *args, **kwargs):
+        """Calling `Undefined` returns `Undefined`"""
+        raise TemplateRuntimeError('Undefined object called')
 
     def __reduce__(self):
         """Helper for pickle."""
-        return 'Undefined'
+        return 'ComplainingUndefined'
 
 
-#: the singleton instance of UndefinedType
-Undefined = object.__new__(UndefinedType)
+#: the singleton instances for the undefined objects
+SilentUndefined = make_undefined(SilentUndefinedType)
+ComplainingUndefined = make_undefined(ComplainingUndefinedType)
+
+#: jinja 1.0 compatibility
+Undefined = SilentUndefined
+UndefinedType = SilentUndefinedType
 
 
 class FakeTranslator(object):
@@ -172,14 +226,6 @@ class TemplateData(Markup):
     """
 
 
-class Flush(TemplateData):
-    """
-    After a string marked as Flush the stream will stop buffering.
-    """
-
-    jinja_no_finalization = True
-
-
 # import these here because those modules import Deferred and Undefined
 # from this module.
 try:
@@ -197,7 +243,7 @@ class Context(BaseContext):
 
     def __init__(self, *args, **kwargs):
         environment = args[0]
-        super(Context, self).__init__(environment.silent,
+        super(Context, self).__init__(environment.undefined_singleton,
                                       environment.globals,
                                       dict(*args[1:], **kwargs))
         self._translate_func = None
@@ -480,48 +526,53 @@ class TokenStream(object):
 
 class TemplateStream(object):
     """
-    Pass it a template generator and it will buffer a few items
-    before yielding them as one item. Useful when working with WSGI
-    because a Jinja template yields far too many items per default.
-
-    The `TemplateStream` class looks for the invisble `Flush`
-    markers sent by the template to find out when it should stop
-    buffering.
+    Wraps a genererator for outputing template streams.
     """
 
     def __init__(self, gen):
-        self._next = gen.next
-        self._threshold = None
-        self.threshold = 40
+        self._gen = gen
+        self._next = gen._next
+        self.buffered = False
+
+    def disable_buffering(self):
+        """
+        Disable the output buffering.
+        """
+        self._next = self._gen.next
+        self.buffered = False
+
+    def enable_buffering(self, size=5):
+        """
+        Enable buffering. Buffer `size` items before
+        yielding them.
+        """
+        if size <= 1:
+            raise ValueError('buffer size too small')
+        self.buffered = True
+
+        def buffering_next():
+            buf = []
+            c_size = 0
+            push = buf.append
+            next = self._gen.next
+
+            try:
+                while True:
+                    item = next()
+                    if item:
+                        push(item)
+                        c_size += 1
+                    if c_size >= size:
+                        raise StopIteration()
+            except StopIteration:
+                if not size:
+                    raise
+            return u''.join(buf)
+
+        self._next = buffering_next
 
     def __iter__(self):
         return self
 
-    def started(self):
-        return self._threshold is not None
-    started = property(started)
-
     def next(self):
-        if self._threshold is None:
-            self._threshold = t = self.threshold
-            del self.threshold
-        else:
-            t = self._threshold
-        buf = []
-        size = 0
-        push = buf.append
-        next = self._next
-
-        try:
-            while True:
-                item = next()
-                if item:
-                    push(item)
-                    size += 1
-                if (size and item.__class__ is Flush) or size >= t:
-                    raise StopIteration()
-        except StopIteration:
-            pass
-        if not size:
-            raise StopIteration()
-        return u''.join(buf)
+        return self._next()
