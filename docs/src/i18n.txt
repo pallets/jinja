@@ -50,6 +50,10 @@ However. For many web applications this might be a way:
     tmpl = env.get_template('index.html')
     tmpl.render(LANGUAGE='de_DE')
 
+This example assumes that you use gettext and have a gettext
+`Translations` object which is returned by the `get_translator`
+function.
+
 
 Collecting Translations
 =======================

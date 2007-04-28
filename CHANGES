@@ -81,6 +81,8 @@ Version 1.1
 
 - it's not possible to stream templates.
 
+- fixed a corner case when defining a block inside of a condition
+
 
 Version 1.0
 -----------

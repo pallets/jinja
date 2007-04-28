@@ -611,6 +611,50 @@ value from the parent template is used instead.
     two similarly-named ``{% block %}`` tags in a template, that template's
     parent wouldn't know which one of the blocks' content to use.
 
+How Inheritance Works Internally
+--------------------------------
+
+Inheritance in Jinja is straighforward. If a template contains a
+``{% extends %}`` tag it's considered being a child template, otherwise it's
+a layout template. In a layout template you can place blocks basically
+everywhere. In a child template blocks can only be located either top level
+or inside of another block.
+
+Data outside of a block in a child template is executed before the layout
+template is rendered, thus you can use it to propagate data to the whole
+inheritance chain. Having a block in an invalid position you will receive
+an syntax error. Here some examples:
+
+**impossible**:
+
+    .. sourcecode:: jinja
+
+        {% extends 'master.html' %}
+        {% if some_condition %}
+          {% block body %}
+            ...
+          {% endblock %}
+        {% endif %}
+
+    This can't work because template inheritance works at translation /
+    compilation time not at template executation.
+
+**possible**:
+
+    .. sourcecode:: jinja
+
+        {% extends 'master.html' %}
+        {% block body %}
+          {% if some_condition %}
+            {% block myblock %}
+              ...
+            {% endblock %}
+          {% endblock %}
+        {% endblock %}
+
+    This can work although it probably makes no sense in this specific case.
+    However the condition is handled at runtime because it's in a valid block
+    and defines a new block subtemplates can override.
 
 Super Blocks
 ============

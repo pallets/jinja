@@ -574,40 +574,62 @@ class Parser(object):
         filename attributes for all nodes in the tree.
         """
         body = self.subparse(None)
-        todo = [body]
-        while todo:
-            node = todo.pop()
-            # all names excluding keywords have an trailing underline.
-            # if we find a name without trailing underline that's a keyword
-            # and this code raises an error. else strip the underline again
-            if node.__class__ in (ast.AssName, ast.Name, ast.Keyword):
-                if not node.name.endswith('_'):
-                    raise TemplateSyntaxError('illegal use of keyword %r '
-                                              'as identifier.' % node.name,
-                                              node.lineno, self.filename)
-                node.name = node.name[:-1]
-            # same for attributes
-            elif node.__class__ is ast.Getattr:
-                if not node.attrname.endswith('_'):
-                    raise TemplateSyntaxError('illegal use of keyword %r '
-                                              'as attribute name.' %
-                                              node.name, node.lineno,
-                                              self.filename)
-                node.attrname = node.attrname[:-1]
-            # if we have a ForLoop we ensure that nobody patches existing
-            # object using "for foo.bar in seq"
-            elif node.__class__ is nodes.ForLoop:
-                def check(node):
-                    if node.__class__ not in (ast.AssName, ast.AssTuple):
-                        raise TemplateSyntaxError('can\'t assign to '
-                                                  'expression.', node.lineno,
+        def walk(nodes_, stack):
+            for node in nodes_:
+                # all names excluding keywords have an trailing underline.
+                # if we find a name without trailing underline that's a
+                # keyword and this code raises an error. else strip the
+                # underline again
+                if node.__class__ in (ast.AssName, ast.Name, ast.Keyword):
+                    if not node.name.endswith('_'):
+                        raise TemplateSyntaxError('illegal use of keyword %r '
+                                                  'as identifier.' %
+                                                  node.name, node.lineno,
                                                   self.filename)
-                    for n in node.getChildNodes():
-                        check(n)
-                check(node.item)
-            # now set the filename and continue working on the childnodes
-            node.filename = self.filename
-            todo.extend(node.getChildNodes())
+                    node.name = node.name[:-1]
+                # same for attributes
+                elif node.__class__ is ast.Getattr:
+                    if not node.attrname.endswith('_'):
+                        raise TemplateSyntaxError('illegal use of keyword %r '
+                                                  'as attribute name.' %
+                                                  node.name, node.lineno,
+                                                  self.filename)
+                    node.attrname = node.attrname[:-1]
+                # if we have a ForLoop we ensure that nobody patches existing
+                # object using "for foo.bar in seq"
+                elif node.__class__ is nodes.ForLoop:
+                    def check(node):
+                        if node.__class__ not in (ast.AssName, ast.AssTuple):
+                            raise TemplateSyntaxError('can\'t assign to '
+                                                      'expression.',
+                                                      node.lineno,
+                                                      self.filename)
+                        for n in node.getChildNodes():
+                            check(n)
+                    check(node.item)
+                # ensure that in child templates block are either top level
+                # or located inside of another block tag.
+                elif self.extends is not None and \
+                     node.__class__ is nodes.Block:
+                    if stack[-1] is not body:
+                        for n in stack:
+                            if n.__class__ is nodes.Block:
+                                break
+                        else:
+                            raise TemplateSyntaxError('misplaced block %r, '
+                                                      'blocks in child '
+                                                      'templates must be '
+                                                      'either top level or '
+                                                      'located in a block '
+                                                      'tag.' % node.name,
+                                                      node.lineno,
+                                                      self.filename)
+                # now set the filename and continue working on the childnodes
+                node.filename = self.filename
+                stack.append(node)
+                walk(node.getChildNodes(), stack)
+                stack.pop()
+        walk([body], [body])
         return nodes.Template(self.filename, body, self.extends)
 
     def subparse(self, test, drop_needle=False):
