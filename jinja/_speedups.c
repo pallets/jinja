@@ -403,7 +403,7 @@ static PySequenceMethods BaseContext_as_sequence[] = {
 
 static PyMappingMethods BaseContext_as_mapping[] = {
 #if Py_VERSION_HEX < 0x02050000
-	(inquiry)BaseContext_length
+	(inquiry)BaseContext_length,
 #else
 	(lenfunc)BaseContext_length,
 #endif
