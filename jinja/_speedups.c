@@ -355,15 +355,6 @@ error:
 	return -1;
 }
 
-/**
- * Size of the stack.
- */
-static PyObject*
-BaseContext_length(BaseContext *self)
-{
-	return PyInt_FromLong(self->stacksize);
-}
-
 
 static PyGetSetDef BaseContext_getsetters[] = {
 	{"stack", (getter)BaseContext_getstack, NULL,
@@ -402,11 +393,7 @@ static PySequenceMethods BaseContext_as_sequence[] = {
 };
 
 static PyMappingMethods BaseContext_as_mapping[] = {
-#if Py_VERSION_HEX < 0x02050000
-	(inquiry)BaseContext_length,
-#else
-	(lenfunc)BaseContext_length,
-#endif
+	NULL,
 	(binaryfunc)BaseContext_getitem,
 	(objobjargproc)BaseContext_setitem
 };

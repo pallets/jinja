@@ -87,9 +87,3 @@ class BaseContext(object):
             if name in layer:
                 return True
         return False
-
-    def __len__(self):
-        """
-        Size of the stack.
-        """
-        return len(self.stack)
