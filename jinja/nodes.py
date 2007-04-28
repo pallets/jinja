@@ -30,16 +30,40 @@ def inc_lineno(offset, tree):
         todo.extend(node.getChildNodes())
 
 
-def get_nodes(nodetype, tree):
+def get_nodes(nodetype, tree, exclude_root=True):
     """
-    Get all nodes from nodetype in the tree.
+    Get all nodes from nodetype in the tree excluding the
+    node passed if `exclude_root` is `True` (default).
     """
-    todo = [tree]
+    if exclude_root:
+        todo = tree.getChildNodes()
+    else:
+        todo = [tree]
     while todo:
         node = todo.pop()
         if node.__class__ is nodetype:
             yield node
         todo.extend(node.getChildNodes())
+
+
+def get_nodes_parentinfo(nodetype, tree):
+    """
+    Like `get_nodes` but it yields tuples in the form ``(parent, node)``.
+    If a node is a direct ancestor of `tree` parent will be `None`.
+
+    Always excludes the root node.
+    """
+    todo = [tree]
+    while todo:
+        node = todo.pop()
+        if node is tree:
+            parent = None
+        else:
+            parent = node
+        for child in node.getChildNodes():
+            if child.__class__ is nodetype:
+                yield parent, child
+            todo.append(child)
 
 
 class Node(ast.Node):
@@ -90,7 +114,7 @@ class DynamicText(Node):
 
     def __repr__(self):
         return 'DynamicText(%r, %r)' % (
-            self.text,
+            self.format_string,
             self.variables
         )
 

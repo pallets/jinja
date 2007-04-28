@@ -611,6 +611,7 @@ value from the parent template is used instead.
     two similarly-named ``{% block %}`` tags in a template, that template's
     parent wouldn't know which one of the blocks' content to use.
 
+
 Super Blocks
 ============
 

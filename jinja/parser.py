@@ -531,7 +531,6 @@ class Parser(object):
         return nodes.Trans(flineno, singular, plural, indicator,
                            replacements or None)
 
-
     def parse_python(self, lineno, gen, template):
         """
         Convert the passed generator into a flat string representing

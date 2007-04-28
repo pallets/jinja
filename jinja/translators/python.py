@@ -231,9 +231,7 @@ class PythonTranslator(Translator):
         #: the value represents the feature name that appears
         #: in the exception.
         self.unsupported = {
-            ast.ListComp:           'list comprehensions',
-            ast.From:               'imports',
-            ast.Import:             'imports',
+            ast.ListComp:           'list comprehensions'
         }
 
         #: because of python2.3 compatibility add generator
@@ -408,7 +406,7 @@ class PythonTranslator(Translator):
             parent = self.environment.loader.parse(node.extends.template,
                                                    node.filename)
             # look up all block nodes in the current template and
-            # add them to the override dict
+            # add them to the override dict.
             for n in get_nodes(nodes.Block, node):
                 overwrites[n.name] = n
             # handle direct overrides

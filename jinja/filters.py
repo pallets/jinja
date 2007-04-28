@@ -122,7 +122,7 @@ def do_escape(attribute=False):
     return wrapped
 
 
-def do_xmlattr():
+def do_xmlattr(autospace=False):
     """
     Create an SGML/XML attribute string based on the items in a dict.
     All values that are neither `none` nor `undefined` are automatically
@@ -130,7 +130,7 @@ def do_xmlattr():
 
     .. sourcecode:: html+jinja
 
-        <ul {{ {'class': 'my_list', 'missing': None,
+        <ul{{ {'class': 'my_list', 'missing': None,
                 'id': 'list-%d'|format(variable)}|xmlattr }}>
         ...
         </ul>
@@ -142,6 +142,10 @@ def do_xmlattr():
         <ul class="my_list" id="list-42">
         ...
         </ul>
+
+    As you can see it automatically appends a space in front of the item
+    if the filter returned something. You can disable this by passing
+    `false` as only argument to the filter.
 
     *New in Jinja 1.1*
     """
@@ -156,7 +160,10 @@ def do_xmlattr():
                     e(env.to_unicode(key)),
                     e(env.to_unicode(value), True)
                 ))
-        return u' '.join(result)
+        rv = u' '.join(result)
+        if autospace:
+            rv = ' ' + rv
+        return rv
     return wrapped
 
 
@@ -315,7 +322,7 @@ def do_first():
         try:
             return iter(seq).next()
         except StopIteration:
-            return env.undefined_singleton[0]
+            return env.undefined_singleton
     return wrapped
 
 
@@ -327,7 +334,7 @@ def do_last():
         try:
             return iter(_reversed(seq)).next()
         except StopIteration:
-            return env.undefined_singleton[-1]
+            return env.undefined_singleton
     return wrapped
 
 
@@ -339,7 +346,7 @@ def do_random():
         try:
             return choice(seq)
         except IndexError:
-            return env.undefined_singleton[0]
+            return env.undefined_singleton
     return wrapped
 
 
