@@ -47,8 +47,22 @@ Welcome in the Jinja documentation.
 
 - **Template Designer Documentation**:
 
-  - `Syntax Reference <designerdoc.txt>`_ - the designer documentation. Put
-    this under your pillow.
+  - `Syntax Reference <designerdoc.txt>`_ - quick overview over the Jinja
+    syntax elements.
+
+  - `Template Inheritance <inheritance.txt>`_ - template inheritance howto.
+
+  - `Filters, Tests and Helper Functions <builtins.txt>`_ - list of filters
+    and test/helper functions.
+
+  - `Whitespace and Escaping <escaping.txt>`_ - how to escape markup and
+    control whitespace.
+
+  - `Scopes and Variable Behavior <scopes.txt>`_ - behavior of undefined
+    variables and scoping rules.
+
+  - `Template Internationalization <templatei18n.txt>`_ - how to internationalize
+    Jinja templates.
 
   - `Differences To Django <fromdjango.txt>`_ - coming from django? Then this
     document is for you.

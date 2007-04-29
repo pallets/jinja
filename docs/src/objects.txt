@@ -90,9 +90,8 @@ access. You can mark both attributes and methods as unsafe:
 
         # just give access to a and b. Default is all
         # note that this also disallows the functions from below.
-        # if you use jinja_allowed_attributes you don't have to
-        # do the code below because methods are threaded as attributes
-        # too.
+        # if you use jinja_allowed_attributes you don't have add the
+        # code below since methods are treated as attributes too.
         jinja_allowed_attributes = ['a', 'b']
 
         def __init__(self, ...):
