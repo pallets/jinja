@@ -29,6 +29,17 @@ ARGUMENTS = '''\
 {{ m() }}|{{ m('a') }}|{{ m('a', 'b') }}|{{ m(1, 2, 3) }}\
 '''
 
+PARENTHESES = '''\
+{% macro foo(a, b) %}{{ a }}|{{ b }}{% endmacro %}\
+{{ foo(1, 2) }}\
+'''
+
+VARARGS = '''\
+{% macro test %}{{ varargs|join('|') }}{% endmacro %}\
+{{ test(1, 2, 3) }}\
+'''
+
+
 def test_simple(env):
     tmpl = env.from_string(SIMPLE)
     assert tmpl.render() == 'Hello Peter!'
@@ -53,3 +64,13 @@ def test_scoping(env):
 def test_arguments(env):
     tmpl = env.from_string(ARGUMENTS)
     assert tmpl.render() == '||c|d|a||c|d|a|b|c|d|1|2|3|d'
+
+
+def test_parentheses(env):
+    tmpl = env.from_string(PARENTHESES)
+    assert tmpl.render() == '1|2'
+
+
+def test_varargs(env):
+    tmpl = env.from_string(VARARGS)
+    assert tmpl.render() == '1|2|3'

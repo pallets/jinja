@@ -7,6 +7,7 @@
     :license: BSD, see LICENSE for more details.
 """
 from jinja import Environment, DictLoader
+from jinja.exceptions import TemplateSyntaxError
 
 LAYOUTTEMPLATE = '''\
 |{% block block1 %}block 1 from layout{% endblock %}
@@ -33,6 +34,26 @@ LEVEL3TEMPLATE = '''\
 LEVEL4TEMPLATE = '''\
 {% extends "level3" %}
 {% block block3 %}block 3 from level4{% endblock %}
+'''
+
+BROKENTEMPLATE = '''\
+{% extends "layout" %}
+{% if false %}
+  {% block block1 %}
+    this is broken
+  {% endblock %}
+{% endif %}
+'''
+
+WORKINGTEMPLATE = '''\
+{% extends "layout" %}
+{% block block1 %}
+  {% if false %}
+    {% block block2 %}
+      this should workd
+    {% endblock %}
+  {% endif %}
+{% endblock %}
 '''
 
 def test_layout(env):
@@ -77,3 +98,16 @@ def test_super():
     }))
     tmpl = env.get_template('c')
     assert tmpl.render() == '--INTRO--|BEFORE|[(INNER)]|AFTER'
+
+
+def test_broken(env):
+    try:
+        tmpl = env.get_template('broken')
+    except TemplateSyntaxError:
+        pass
+    else:
+        raise RuntimeError('no syntax error occured')
+
+
+def test_working(env):
+    tmpl = env.get_template('working')

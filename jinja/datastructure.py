@@ -139,10 +139,13 @@ class ComplainingUndefinedType(AbstractUndefinedType):
     """
     __slots__ = ()
 
+    def __len__(self):
+        """Getting the length raises error."""
+        raise TemplateRuntimeError('Operated on undefined object')
+
     def __iter__(self):
-        """Iterating over `Undefined` returns an empty iterator."""
-        if False:
-            yield None
+        """Iterating over `Undefined` raises an error."""
+        raise TemplateRuntimeError('Iterated over undefined object')
 
     def __nonzero__(self):
         """`Undefined` is considered boolean `False`"""
