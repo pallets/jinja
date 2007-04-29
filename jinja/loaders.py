@@ -38,12 +38,13 @@ def get_template_filename(searchpath, name):
                      if p and p[0] != '.']))
 
 
-def get_cachename(cachepath, name):
+def get_cachename(cachepath, name, salt=None):
     """
     Return the filename for a cached file.
     """
     return path.join(cachepath, 'jinja_%s.cache' %
-                     sha.new('jinja(%s)tmpl' % name).hexdigest())
+                     sha.new('jinja(%s|%s)tmpl' %
+                             (name, salt or '')).hexdigest())
 
 
 class LoaderWrapper(object):
@@ -130,7 +131,8 @@ class CachedLoaderMixin(object):
     Mixin this class to implement simple memory and disk caching.
     """
 
-    def __init__(self, use_memcache, cache_size, cache_folder, auto_reload):
+    def __init__(self, use_memcache, cache_size, cache_folder, auto_reload,
+                 cache_salt=None):
         if use_memcache:
             self.__memcache = CacheDict(cache_size)
         else:
@@ -140,6 +142,7 @@ class CachedLoaderMixin(object):
             self.__auto_reload = False
         else:
             self.__auto_reload = auto_reload
+        self.__salt = cache_salt
         self.__times = {}
         self.__lock = Lock()
 
@@ -186,7 +189,7 @@ class CachedLoaderMixin(object):
             # mem cache disabled or not cached by now
             # try to load if from the disk cache
             if tmpl is None and self.__cache_folder is not None:
-                cache_fn = get_cachename(self.__cache_folder, name)
+                cache_fn = get_cachename(self.__cache_folder, name, self.__salt)
                 if last_change is not None:
                     try:
                         cache_time = path.getmtime(cache_fn)
@@ -261,14 +264,20 @@ class FileSystemLoader(CachedLoaderMixin, BaseLoader):
     ``auto_reload``     Set this to `False` for a slightly better
                         performance. In that case Jinja won't check for
                         template changes on the filesystem.
+    ``cache_salt``      Optional unique number to not confuse the
+                        caching system when caching more than one
+                        template loader in the same folder. Defaults
+                        to the searchpath. *New in Jinja 1.1*
     =================== =================================================
     """
 
     def __init__(self, searchpath, use_memcache=False, memcache_size=40,
-                 cache_folder=None, auto_reload=True):
+                 cache_folder=None, auto_reload=True, cache_salt=None):
+        if cache_salt is None:
+            cache_salt = searchpath
         self.searchpath = searchpath
         CachedLoaderMixin.__init__(self, use_memcache, memcache_size,
-                                   cache_folder, auto_reload)
+                                   cache_folder, auto_reload, cache_salt)
 
     def get_source(self, environment, name, parent):
         filename = get_template_filename(self.searchpath, name)
@@ -321,22 +330,30 @@ class PackageLoader(CachedLoaderMixin, BaseLoader):
                         template changes on the filesystem. If the
                         templates are inside of an egg file this won't
                         have an effect.
+    ``cache_salt``      Optional unique number to not confuse the
+                        caching system when caching more than one
+                        template loader in the same folder. Defaults
+                        to ``package_name + '/' + package_path``.
+                        *New in Jinja 1.1*
     =================== =================================================
     """
 
     def __init__(self, package_name, package_path, use_memcache=False,
-                 memcache_size=40, cache_folder=None, auto_reload=True):
+                 memcache_size=40, cache_folder=None, auto_reload=True,
+                 cache_salt=None):
         if resource_filename is None:
             raise ImportError('setuptools not found')
         self.package_name = package_name
         self.package_path = package_path
+        if cache_salt is None:
+            cache_salt = package_name + '/' + package_path
         # if we have an loader we probably retrieved it from an egg
         # file. In that case don't use the auto_reload!
         if auto_reload and getattr(__import__(package_name, '', '', ['']),
                                    '__loader__', None) is not None:
             auto_reload = False
         CachedLoaderMixin.__init__(self, use_memcache, memcache_size,
-                                   cache_folder, auto_reload)
+                                   cache_folder, auto_reload, cache_salt)
 
     def get_source(self, environment, name, parent):
         name = '/'.join([self.package_path] + [p for p in name.split('/')
@@ -401,11 +418,15 @@ class FunctionLoader(CachedLoaderMixin, BaseLoader):
     ``auto_reload``     Set this to `False` for a slightly better
                         performance. In that case of `getmtime_func`
                         not being provided this won't have an effect.
+    ``cache_salt``      Optional unique number to not confuse the
+                        caching system when caching more than one
+                        template loader in the same folder.
     =================== =================================================
     """
 
     def __init__(self, loader_func, getmtime_func=None, use_memcache=False,
-                 memcache_size=40, cache_folder=None, auto_reload=True):
+                 memcache_size=40, cache_folder=None, auto_reload=True,
+                 cache_salt=None):
         # when changing the signature also check the jinja.plugin function
         # loader instantiation.
         self.loader_func = loader_func
@@ -413,7 +434,7 @@ class FunctionLoader(CachedLoaderMixin, BaseLoader):
         if auto_reload and getmtime_func is None:
             auto_reload = False
         CachedLoaderMixin.__init__(self, use_memcache, memcache_size,
-                                   cache_folder, auto_reload)
+                                   cache_folder, auto_reload, cache_salt)
 
     def get_source(self, environment, name, parent):
         rv = self.loader_func(name)

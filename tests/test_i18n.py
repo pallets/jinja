@@ -14,7 +14,8 @@ templates = {
     'child.html': '{% extends "master.html" %}{% block body %}'
                   '{% trans "watch out" %}{% endblock %}',
     'plural.html': '{% trans user_count %}One user online{% pluralize %}'
-                   '{{ user_count }} users online{% endtrans %}'
+                   '{{ user_count }} users online{% endtrans %}',
+    'stringformat.html': '{{ _("User: %d")|format(user_count) }}'
 }
 
 
@@ -23,7 +24,8 @@ languages = {
         'missing':                      'fehlend',
         'watch out':                    'pass auf',
         'One user online':              'Ein Benutzer online',
-        '%(user_count)s users online':  '%(user_count)s Benutzer online'
+        '%(user_count)s users online':  '%(user_count)s Benutzer online',
+        'User: %d':                     'Benutzer: %d'
     }
 }
 
@@ -77,3 +79,8 @@ def test_trans_plural():
     tmpl = i18n_env.get_template('plural.html')
     assert tmpl.render(LANGUAGE='de', user_count=1) == 'Ein Benutzer online'
     assert tmpl.render(LANGUAGE='de', user_count=2) == '2 Benutzer online'
+
+
+def test_trans_stringformatting():
+    tmpl = i18n_env.get_template('stringformat.html')
+    assert tmpl.render(LANGUAGE='de', user_count=5) == 'Benutzer: 5'

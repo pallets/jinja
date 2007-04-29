@@ -276,8 +276,15 @@ class Context(BaseContext):
             translator = self.environment.get_translator(self)
             def translate(s, p=None, n=None, r=None):
                 if p is None:
-                    return translator.gettext(s) % (r or {})
-                return translator.ngettext(s, p, r[n]) % (r or {})
+                    s = translator.gettext(s)
+                else:
+                    s = translator.ngettext(s, p, r[n])
+                # apply replacement substitution only if replacements
+                # are given. This is the case for {% trans %}...{% endtras %}
+                # but for the "_()" syntax and a trans tag without a body.
+                if r is not None:
+                    s %= r
+                return s
             self._translate_func = translate
         return self._translate_func
     translate_func = property(translate_func, doc=translate_func.__doc__)

@@ -83,6 +83,12 @@ Version 1.1
 
 - fixed a corner case when defining a block inside of a condition
 
+- the cached loader mixin is now able to cache multiple templates from
+  different loaders in the same cache folder.
+
+- Translatable strings returned by ``_()`` will leave their string formatting
+  signs untouched. Thanks to Stefan Ebner for reporting.
+
 
 Version 1.0
 -----------
