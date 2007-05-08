@@ -273,9 +273,9 @@ class FileSystemLoader(CachedLoaderMixin, BaseLoader):
 
     def __init__(self, searchpath, use_memcache=False, memcache_size=40,
                  cache_folder=None, auto_reload=True, cache_salt=None):
+        self.searchpath = path.abspath(searchpath)
         if cache_salt is None:
-            cache_salt = searchpath
-        self.searchpath = searchpath
+            cache_salt = self.searchpath
         CachedLoaderMixin.__init__(self, use_memcache, memcache_size,
                                    cache_folder, auto_reload, cache_salt)
 
