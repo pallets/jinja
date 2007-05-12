@@ -614,10 +614,31 @@ def do_format(*args):
             -> Hello? - Foo!
 
     Note that you cannot use the mapping syntax (``%(name)s``)
-    like in python.
+    like in python. Use `|dformat` for that.
     """
     def wrapped(env, context, value):
         return env.to_unicode(value) % args
+    return wrapped
+
+
+def do_dformat(d):
+    """
+    Apply python mapping string formatting on an object:
+
+    .. sourcecode:: jinja
+
+        {{ "Hello %(username)s!"|dformat({'username': 'John Doe'}) }}
+            -> Hello John Doe!
+
+    This is useful when adding variables to translateable
+    string expressions.
+
+    *New in Jinja 1.1*
+    """
+    if not isinstance(d, dict):
+        raise FilterArgumentError('dict required')
+    def wrapped(env, context, value):
+        return env.to_unicode(value) % d
     return wrapped
 
 
@@ -849,6 +870,7 @@ FILTERS = {
     'string':               do_string,
     'urlize':               do_urlize,
     'format':               do_format,
+    'dformat':              do_dformat,
     'capture':              do_capture,
     'trim':                 do_trim,
     'striptags':            do_striptags,

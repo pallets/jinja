@@ -16,6 +16,17 @@ for translators using the `trans` tag or the special underscore function:
     {{ _("This is a translatable string") }}
 
 The latter one is useful if you want translatable arguments for filters etc.
+If you want to use the ``_()`` syntax in an expression and have variables in
+the string you can add a substituation marker (``%s``) and use the `|format`
+filter to fill the slot:
+
+.. sourcecode:: jinja
+
+    {{ _('Hello %s!')|format(username) }}
+
+If you have more than one substitution variable consider using the
+``{% trans %}`` tags or the `|dformat` filter, the latter however is new
+in Jinja 1.1.
 
 If you want to have plural forms too, use the `pluralize` block:
 

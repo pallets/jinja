@@ -17,7 +17,7 @@
    version="1.0"
    sodipodi:docbase="/home/blackbird/Development/jinja/trunk/artwork"
    sodipodi:docname="jinjalogo.svg"
-   inkscape:export-filename="/home/blackbird/Development/jinja/trunk/docs/jinjalogo.png"
+   inkscape:export-filename="/home/blackbird/Development/jinja/www/static/jinjabanner.png"
    inkscape:export-xdpi="60"
    inkscape:export-ydpi="60">
   <defs
@@ -75,7 +75,7 @@
      height="120px"
      showguides="true"
      inkscape:guide-bbox="true"
-     inkscape:window-width="1400"
+     inkscape:window-width="1396"
      inkscape:window-height="975"
      inkscape:window-x="0"
      inkscape:window-y="24" />

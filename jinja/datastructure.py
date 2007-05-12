@@ -267,26 +267,32 @@ class Context(BaseContext):
 
     def translate_func(self):
         """
-        Return a translation function for this context. It takes
+        The translation function for this context. It takes
         4 parameters. The singular string, the optional plural one,
-        the indicator number which is used to select the correct
-        plural form and a dict with values which should be inserted.
+        The name of the variable in the replacements dict and the
+        replacements dict. This is only used by the i18n system
+        internally the simplified version (just one argument) is
+        available in the template for the user too.
         """
-        if self._translate_func is None:
-            translator = self.environment.get_translator(self)
-            def translate(s, p=None, n=None, r=None):
-                if p is None:
-                    s = translator.gettext(s)
-                else:
-                    s = translator.ngettext(s, p, r[n])
-                # apply replacement substitution only if replacements
-                # are given. This is the case for {% trans %}...{% endtras %}
-                # but for the "_()" syntax and a trans tag without a body.
-                if r is not None:
-                    s %= r
-                return s
-            self._translate_func = translate
-        return self._translate_func
+        if self._translate_func is not None:
+            return self._translate_func
+        translator = self.environment.get_translator(self)
+        gettext = translator.gettext
+        ngettext = translator.ngettext
+        def translate(s, p=None, n=None, r=None):
+            if p is None:
+                s = gettext(s)
+            else:
+                s = ngettext(s, p, r[n])
+            # apply replacement substitution only if replacements
+            # are given. This is the case for {% trans %}...{% endtrans %}
+            # but for the "_()" syntax and a trans tag without a body.
+            if r is not None:
+                return s % r
+            return s
+        translate.__doc__ = Context.translate_func.__doc__
+        self._translate_func = translate
+        return translate
     translate_func = property(translate_func, doc=translate_func.__doc__)
 
     def __repr__(self):

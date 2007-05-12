@@ -302,20 +302,19 @@ class Parser(object):
                                       'as block name.' % block_name[2],
                                       lineno, self.filename)
         name = block_name[2][:-1]
-        if tokens:
-            raise TemplateSyntaxError('block got too many arguments, '
-                                      'requires one.', lineno,
-                                      self.filename)
-
         # check if this block does not exist by now.
         if name in self.blocks:
             raise TemplateSyntaxError('block %r defined twice' %
                                        name, lineno, self.filename)
         self.blocks.add(name)
 
-        # now parse the body and attach it to the block
-        body = self.subparse(end_of_block_tag, True)
-        self.close_remaining_block()
+        if tokens:
+            body = nodes.NodeList(lineno, [nodes.Print(lineno,
+                   self.parse_python(lineno, tokens, '(%s)').expr)])
+        else:
+            # otherwise parse the body and attach it to the block
+            body = self.subparse(end_of_block_tag, True)
+            self.close_remaining_block()
         return nodes.Block(lineno, name, body)
 
     def handle_extends_directive(self, lineno, gen):

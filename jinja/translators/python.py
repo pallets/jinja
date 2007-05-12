@@ -485,7 +485,7 @@ class PythonTranslator(Translator):
         if self.used_data_structures:
             lines.append('from jinja.datastructure import %s' % ', '.
                          join(self.used_data_structures))
-        lines.extend([
+        lines.append(
             '\n# Aliases for some speedup\n'
             '%s\n\n'
             '# Name for disabled debugging\n'
@@ -502,7 +502,7 @@ class PythonTranslator(Translator):
                 ]),
                 outer_filename
             )
-        ])
+        )
 
         # the template body
         if requirements:

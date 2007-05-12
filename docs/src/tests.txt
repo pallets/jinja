@@ -26,5 +26,5 @@ Now you have to register that test on an environment:
 
     env.tests['even'] = is_even
 
-.. _designer documentation: designerdoc.txt
+.. _designer documentation: builtins.txt
 .. _filter documentation: filters.txt

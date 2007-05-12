@@ -89,6 +89,11 @@ Version 1.1
 - Translatable strings returned by ``_()`` will leave their string formatting
   signs untouched. Thanks to Stefan Ebner for reporting.
 
+- ``{% block name "data" %}`` is now an alias for
+  ``{% block name %}data{% endblock %}``. Note that the second argument can
+  be an expression. As soon as you specify an expression as second argument
+  the closing tag has to be omitted.
+
 
 Version 1.0
 -----------

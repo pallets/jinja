@@ -155,3 +155,18 @@ to get the data of the parent you can give it an offset:
 
     {{ super(2) }}
         return the data of the second parent block
+
+Block Shortcuts
+===============
+
+With Jinja 1.1 onwards it's possible to have a shortcut syntax for blocks
+with few content. The following constructs do the same:
+
+.. sourcecode:: jinja
+
+    {% block title %}{{ page_title }}{% endblock %}
+
+    {% block title page_title %}
+
+Note that as soon as you specify a second argument it's threated as
+short block and Jinja won't look for an closing tag.
