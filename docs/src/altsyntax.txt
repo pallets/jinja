@@ -79,3 +79,27 @@ in the expression. That means that you can use small delimiters like single
 braces or parenthesis. So if you want to have your variables to look like
 ``${expr}`` and you still want to use dicts in such expressions you need
 Jinja 1.1 or higher.
+
+
+Block / Variable Tag Unification
+--------------------------------
+
+If variable end and start tags are `None` or look the same as block tags and
+you're running Jinja 1.1 or later the parser will switch into the
+`no_comment_block` mode. In that mode it will try to match something as block
+first and continue treating it as variable block if there is no known
+directive for that name. Example:
+
+.. sourcecode:: python
+
+    env = Environment('{', '}', None, None, '{*', '*}')
+
+This now allows smarty like templates:
+
+.. sourcecode:: smarty
+
+    {if something == 42}
+        Something is the answer to all questions and stuff like that.
+    {else}
+        Something is {something}.
+    {endif}

@@ -18,6 +18,10 @@ Version 1.1
   are configured to look like this: ``${expr}``. This also fixes
   the problem with nested dicts in variable expressions.
 
+- it's now possible to configure the variable blocks to look the
+  same as the block delimiters. Thus you can set the syntax to something
+  like ``{ / }`` for both blocks and variables.
+
 - added whitespace management system for the template designer.
 
 - some small bugfixes.

@@ -92,6 +92,9 @@ class Parser(object):
             'endmacro', 'endraw', 'endtrans', 'pluralize'
         ])
 
+        #: get the `no_variable_block` flag
+        self.no_variable_block = self.environment.lexer.no_variable_block
+
         self.tokenstream = environment.lexer.tokenize(source, filename)
 
     def handle_raw_directive(self, lineno, gen):
@@ -347,6 +350,38 @@ class Parser(object):
         """
         Handle translatable sections.
         """
+        def process_variable(lineno, token, name):
+            if token != 'name':
+                raise TemplateSyntaxError('can only use variable not '
+                                          'constants or expressions '
+                                          'in translation variable '
+                                          'blocks.', lineno,
+                                          self.filename)
+            # plural name without trailing "_"? that's a keyword
+            if not name.endswith('_'):
+                raise TemplateSyntaxError('illegal use of keyword '
+                                          "'%s' as identifier in "
+                                          'trans block.' %
+                                          name, lineno, self.filename)
+            name = name[:-1]
+            if name not in replacements:
+                raise TemplateSyntaxError('unregistered translation '
+                                          "variable '%s'." %
+                                          name, lineno,
+                                          self.filename)
+            # check that we don't have an expression here, thus the
+            # next token *must* be a variable_end token (or a
+            # block_end token when in no_variable_block mode)
+            next_token = self.tokenstream.next()[1]
+            if next_token != 'variable_end' and not \
+               (self.no_variable_block and next_token == 'block_end'):
+                raise TemplateSyntaxError('you cannot use variable '
+                                          'expressions inside trans '
+                                          'tags. apply filters '
+                                          'in the trans header.',
+                                          lineno, self.filename)
+            buf.append('%%(%s)s' % name)
+
         # save the initial line number for the resulting node
         flineno = lineno
         try:
@@ -411,33 +446,7 @@ class Parser(object):
                     self.tokenstream.drop_until(end_of_comment, True)
                 # nested variables
                 elif token == 'variable_begin':
-                    _, variable_token, variable_name = self.tokenstream.next()
-                    if variable_token != 'name':
-                        raise TemplateSyntaxError('can only use variable not '
-                                                  'constants or expressions '
-                                                  'in translation variable '
-                                                  'blocks.', lineno,
-                                                  self.filename)
-                    # plural name without trailing "_"? that's a keyword
-                    if not variable_name.endswith('_'):
-                        raise TemplateSyntaxError('illegal use of keyword '
-                                                  "'%s' as identifier in "
-                                                  'trans block.' %
-                                                  variable_name,
-                                                  lineno, self.filename)
-                    variable_name = variable_name[:-1]
-                    if variable_name not in replacements:
-                        raise TemplateSyntaxError('unregistered translation '
-                                                  "variable '%s'." %
-                                                  variable_name, lineno,
-                                                  self.filename)
-                    if self.tokenstream.next()[1] != 'variable_end':
-                        raise TemplateSyntaxError('you cannot use variable '
-                                                  'expressions inside trans '
-                                                  'tags. apply filters '
-                                                  'in the trans header.',
-                                                  lineno, self.filename)
-                    buf.append('%%(%s)s' % variable_name)
+                    process_variable(*self.tokenstream.next())
                 # nested blocks are not supported, just look for end blocks
                 elif token == 'block_begin':
                     _, block_token, block_name = self.tokenstream.next()
@@ -461,11 +470,23 @@ class Parser(object):
                             # exception rather than the "not allowed"
                             if block_name not in self.directives:
                                 if block_name.endswith('_'):
+                                    # if we don't have a variable block we
+                                    # have to process this as variable.
+                                    if self.no_variable_block:
+                                        process_variable(_, block_token,
+                                                         block_name)
+                                        continue
                                     block_name = block_name[:-1]
                                 raise TemplateSyntaxError('unknown directive'
                                                           "'%s'" % block_name,
                                                           lineno,
                                                           self.filename)
+                        # we have something different and are in the
+                        # special no_variable_block mode. process this
+                        # as variable
+                        elif self.no_variable_block:
+                            process_variable(_, block_token, block_name)
+                            continue
                         # if it's indeed a known directive we better
                         # raise an exception informing the user about
                         # the fact that we don't support blocks in
@@ -680,6 +701,9 @@ class Parser(object):
             # clear the buffer
             del data_buffer[:]
 
+        def process_variable(gen):
+            data_buffer.append(('variable', lineno, tuple(gen)))
+
         lineno = self.tokenstream.last[0]
         result = nodes.NodeList(lineno)
         data_buffer = []
@@ -692,7 +716,7 @@ class Parser(object):
             # parse everything till the end of it.
             elif token == 'variable_begin':
                 gen = self.tokenstream.fetch_until(end_of_variable, True)
-                data_buffer.append(('variable', lineno, tuple(gen)))
+                process_variable(gen)
 
             # this token marks the start of a block. like for variables
             # just parse everything until the end of the block
@@ -702,6 +726,7 @@ class Parser(object):
                 if data_buffer:
                     flush_data_buffer()
 
+                node = None
                 gen = self.tokenstream.fetch_until(end_of_block, True)
                 try:
                     lineno, token, data = gen.next()
@@ -711,9 +736,15 @@ class Parser(object):
 
                 # first token *must* be a name token
                 if token != 'name':
-                    raise TemplateSyntaxError('unexpected %r token (%r)' % (
-                                              token, data), lineno,
-                                              self.filename)
+                    # well, not always. if we have a lexer without variable
+                    # blocks configured we process these tokens as variable
+                    # block.
+                    if self.no_variable_block:
+                        process_variable([(lineno, token, data)] + list(gen))
+                    else:
+                        raise TemplateSyntaxError('unexpected %r token (%r)' %
+                                                  (token, data), lineno,
+                                                  self.filename)
 
                 # if a test function is passed to subparse we check if we
                 # reached the end of such a requested block.
@@ -734,7 +765,21 @@ class Parser(object):
                                               self.filename)
                 # keyword or unknown name with trailing slash
                 else:
+                    # non name token in no_variable_block mode.
+                    if token != 'name' and self.no_variable_block:
+                        process_variable([(lineno, token, data)] +
+                                             list(gen))
+                        continue
                     if data.endswith('_'):
+                        # it was a non keyword identifier and we have
+                        # no variable tag. sounds like we should process
+                        # this as variable tag
+                        if self.no_variable_block:
+                            process_variable([(lineno, token, data)] +
+                                             list(gen))
+                            continue
+                        # otherwise strip the trailing underscore for the
+                        # exception that is raised
                         data = data[:-1]
                     raise TemplateSyntaxError('unknown directive %r' %
                                               str(data), lineno,
