@@ -116,8 +116,6 @@ class Parser(object):
         """
         Handle a for directive and return a ForLoop node
         """
-        #XXX: maybe we could make the "recurse" part optional by using
-        #     a static analysis later.
         recursive = []
         def wrapgen():
             """Wrap the generator to check if we have a recursive for loop."""
@@ -353,21 +351,18 @@ class Parser(object):
         def process_variable(lineno, token, name):
             if token != 'name':
                 raise TemplateSyntaxError('can only use variable not '
-                                          'constants or expressions '
-                                          'in translation variable '
-                                          'blocks.', lineno,
-                                          self.filename)
+                                          'constants or expressions in '
+                                          'translation variable blocks.',
+                                          lineno, self.filename)
             # plural name without trailing "_"? that's a keyword
             if not name.endswith('_'):
-                raise TemplateSyntaxError('illegal use of keyword '
-                                          "'%s' as identifier in "
-                                          'trans block.' %
-                                          name, lineno, self.filename)
+                raise TemplateSyntaxError('illegal use of keyword \'%s\' as'
+                                          'identifier in translatable block.'
+                                          % name, lineno, self.filename)
             name = name[:-1]
             if name not in replacements:
-                raise TemplateSyntaxError('unregistered translation '
-                                          "variable '%s'." %
-                                          name, lineno,
+                raise TemplateSyntaxError('unregistered translation variable'
+                                          " '%s'." % name, lineno,
                                           self.filename)
             # check that we don't have an expression here, thus the
             # next token *must* be a variable_end token (or a
@@ -376,10 +371,10 @@ class Parser(object):
             if next_token != 'variable_end' and not \
                (self.no_variable_block and next_token == 'block_end'):
                 raise TemplateSyntaxError('you cannot use variable '
-                                          'expressions inside trans '
-                                          'tags. apply filters '
-                                          'in the trans header.',
-                                          lineno, self.filename)
+                                          'expressions inside translatable '
+                                          'tags. apply filters in the'
+                                          'trans header.', lineno,
+                                          self.filename)
             buf.append('%%(%s)s' % name)
 
         # save the initial line number for the resulting node
