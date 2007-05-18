@@ -96,11 +96,11 @@ value from the parent template is used instead.
 How Inheritance Works Internally
 ================================
 
-Inheritance in Jinja is straighforward. If a template contains a
+Inheritance in Jinja is straightforward. If a template contains an
 ``{% extends %}`` tag it's considered being a child template, otherwise it's
 a layout template. In a layout template you can place blocks basically
-everywhere. In a child template blocks can only be located either top level
-or inside of another block.
+everywhere. In a child template blocks can only be located either at the
+top level or inside another block.
 
 Data outside of a block in a child template is executed before the layout
 template is rendered, thus you can use it to propagate data to the whole
@@ -119,7 +119,7 @@ an syntax error. Here some examples:
         {% endif %}
 
     This can't work because template inheritance works at translation /
-    compilation time not at template executation.
+    compilation time not at template execution.
 
 **possible**:
 
