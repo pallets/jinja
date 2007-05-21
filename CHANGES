@@ -99,6 +99,10 @@ Version 1.1
   be an expression. As soon as you specify an expression as second argument
   the closing tag has to be omitted.
 
+- It's now possible to iterate over iterators additionally to sequences.
+  If the iterator is inifite it will crash however, so makes sure you don't
+  pass something like that to a template!
+
 
 Version 1.0
 -----------

@@ -17,6 +17,7 @@ CONTEXTVARS = '''{% for item in seq %}\
 CYCLING = '''{% for item in seq %}{% cycle '<1>', '<2>' %}{% endfor %}\
 {% for item in seq %}{% cycle through %}{% endfor %}'''
 SCOPE = '''{% for item in seq %}{% endfor %}{{ item }}'''
+VARLEN = '''{% for item in iter %}{{ item }}{% endfor %}'''
 
 
 def test_simple(env):
@@ -63,3 +64,12 @@ def test_scope(env):
     tmpl = env.from_string(SCOPE)
     output = tmpl.render(seq=range(10))
     assert not output
+
+
+def test_varlen(env):
+    def inner():
+        for item in range(5):
+            yield item
+    tmpl = env.from_string(VARLEN)
+    output = tmpl.render(iter=inner())
+    assert output == '01234'

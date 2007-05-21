@@ -326,10 +326,17 @@ class LoopContext(object):
         """
         if seq in (Undefined, None):
             seq = ()
+            length = 0
+        else:
+            try:
+                length = len(seq)
+            except TypeError:
+                seq = list(seq)
+                length = len(seq)
         self._stack.append({
             'index':            -1,
             'seq':              seq,
-            'length':           len(seq)
+            'length':           length
         })
         return self
 
