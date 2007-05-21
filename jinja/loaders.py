@@ -62,6 +62,12 @@ class LoaderWrapper(object):
         else:
             self.available = True
 
+    def __getattr__(self, name):
+        """
+        Not found attributes are redirected to the loader
+        """
+        return getattr(self.loader, name)
+
     def get_source(self, name, parent=None):
         """Retrieve the sourcecode of a template."""
         # just ascii chars are allowed as template names
@@ -336,6 +342,12 @@ class PackageLoader(CachedLoaderMixin, BaseLoader):
                         to ``package_name + '/' + package_path``.
                         *New in Jinja 1.1*
     =================== =================================================
+
+    Important note: If you're using an application that is inside of an
+    egg never set `auto_reload` to `True`. The egg resource manager will
+    automatically export files to the file system and touch them so that
+    you not only end up with additional temporary files but also an automatic
+    reload each time you load a template.
     """
 
     def __init__(self, package_name, package_path, use_memcache=False,
@@ -347,11 +359,6 @@ class PackageLoader(CachedLoaderMixin, BaseLoader):
         self.package_path = package_path
         if cache_salt is None:
             cache_salt = package_name + '/' + package_path
-        # if we have an loader we probably retrieved it from an egg
-        # file. In that case don't use the auto_reload!
-        if auto_reload and getattr(__import__(package_name, '', '', ['']),
-                                   '__loader__', None) is not None:
-            auto_reload = False
         CachedLoaderMixin.__init__(self, use_memcache, memcache_size,
                                    cache_folder, auto_reload, cache_salt)
 

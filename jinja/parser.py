@@ -41,7 +41,7 @@ switch_if = StateTest.expect_name('else', 'elif', 'endif')
 end_of_if = StateTest.expect_name('endif')
 end_of_filter = StateTest.expect_name('endfilter')
 end_of_macro = StateTest.expect_name('endmacro')
-end_of_call = StateTest.expect_name('endcall')
+end_of_call = StateTest.expect_name('endcall_')
 end_of_block_tag = StateTest.expect_name('endblock')
 end_of_trans = StateTest.expect_name('endtrans')
 
@@ -54,6 +54,8 @@ class Parser(object):
     """
 
     def __init__(self, environment, source, filename=None):
+        #XXX: with Jinja 1.3 call becomes a keyword. Add it also
+        #     to the lexer.py file.
         self.environment = environment
         if isinstance(source, str):
             source = source.decode(environment.template_charset, 'ignore')
@@ -78,7 +80,7 @@ class Parser(object):
             'filter':       self.handle_filter_directive,
             'print':        self.handle_print_directive,
             'macro':        self.handle_macro_directive,
-            'call':         self.handle_call_directive,
+            'call_':        self.handle_call_directive,
             'block':        self.handle_block_directive,
             'extends':      self.handle_extends_directive,
             'include':      self.handle_include_directive,

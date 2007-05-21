@@ -49,6 +49,30 @@ from the template it should return the content of the context as simple html
 template. Of course you can modify the context too. For more informations about
 the context object have a look at the `context object`_ documentation.
 
+The new ``{% call %}`` tag that exists with Jinja 1.1 onwards can not only
+be used with Jinja macros but also with Python functions. If a template
+designers uses the ``{% call %}`` tag to call a function provided by the
+application Jinja will call this function with a keyword argument called
+`caller` which points to a `function`. If you call this function (optionally
+with keyword arguments that appear in the context) you get a string back
+that was the content of that block. This should explain this:
+
+.. sourcecode:: python
+
+    def make_dialog(title, caller=None):
+        body = ''
+        if caller:
+            body = caller(title=title)
+        return '<div class="dialog"><h2>%s</h2>%s</div>' % (title, body)
+
+This can be used like this in the template now:
+
+.. sourcecode:: html+jinja
+
+    {% call make_dialog('Dialog Title') %}
+        This is the body of the dialog entitled "{{ title }}".
+    {% endcall %}
+
 Deferred Values
 ===============
 

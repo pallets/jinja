@@ -14,6 +14,20 @@
     :license: BSD, see LICENSE for more details.
 """
 from jinja.datastructure import Deferred, Undefined
+try:
+    from collections import deque
+except ImportError:
+    class deque(list):
+        """
+        Minimal subclass of list that provides the deque
+        interface used by the native `BaseContext`.
+        """
+
+        def appendleft(self, item):
+            list.insert(self, 0, item)
+
+        def popleft(self):
+            return list.pop(self, 0)
 
 
 class BaseContext(object):
@@ -21,27 +35,33 @@ class BaseContext(object):
     def __init__(self, undefined_singleton, globals, initial):
         self._undefined_singleton = undefined_singleton
         self.current = current = {}
-        self.stack = [globals, initial, current]
-        self._push = self.stack.append
-        self._pop = self.stack.pop
+        self._stack = deque([current, initial, globals])
         self.globals = globals
         self.initial = initial
+
+        self._push = self._stack.appendleft
+        self._pop = self._stack.popleft
+
+    def stack(self):
+        return list(self._stack)[::-1]
+    stack = property(stack)
 
     def pop(self):
         """
         Pop the last layer from the stack and return it.
         """
         rv = self._pop()
-        self.current = self.stack[-1]
+        self.current = self._stack[0]
         return rv
 
     def push(self, data=None):
         """
-        Push one layer to the stack. Layer must be a dict or omitted.
+        Push one layer to the stack and return it. Layer must be
+        a dict or omitted.
         """
         data = data or {}
         self._push(data)
-        self.current = self.stack[-1]
+        self.current = self._stack[0]
         return data
 
     def __getitem__(self, name):
@@ -50,10 +70,7 @@ class BaseContext(object):
         such as ``'::cycle1'``. Resolve deferreds.
         """
         if not name.startswith('::'):
-            # because the stack is usually quite small we better
-            # use [::-1] which is faster than reversed() in such
-            # a situation.
-            for d in self.stack[::-1]:
+            for d in self._stack:
                 if name in d:
                     rv = d[name]
                     if rv.__class__ is Deferred:
@@ -83,7 +100,7 @@ class BaseContext(object):
         """
         Check if the context contains a given variable.
         """
-        for layer in self.stack:
+        for layer in self._stack:
             if name in layer:
                 return True
         return False

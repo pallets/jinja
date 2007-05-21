@@ -260,7 +260,7 @@ def generate_documentation(data, link_style):
 def handle_file(filename, fp, dst, preproc):
     now = datetime.now()
     title = os.path.basename(filename)[:-4]
-    content = fp.read()
+    content = fp.read().decode('utf-8')
     suffix = not preproc and '.html' or ''
     parts = generate_documentation(content, (lambda x: './%s%s' % (x, suffix)))
     result = file(os.path.join(dst, title + '.html'), 'w')

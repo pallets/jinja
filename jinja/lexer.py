@@ -64,7 +64,7 @@ keywords = set(['and', 'block', 'cycle', 'elif', 'else', 'endblock',
                 'endfilter', 'endfor', 'endif', 'endmacro', 'endraw',
                 'endtrans', 'extends', 'filter', 'for', 'if', 'in',
                 'include', 'is', 'macro', 'not', 'or', 'pluralize', 'raw',
-                'recursive', 'set', 'trans', 'print', 'call', 'endcall'])
+                'recursive', 'set', 'trans', 'print'])
 
 
 class Failure(object):

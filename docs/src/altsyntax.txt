@@ -46,7 +46,7 @@ An example template then looks like this:
     <ul>
     <% for item in seq %>
       <li><%= item %></li>
-    <% endfor %>
+    <% end‭for %>
     </ul>
 
 
@@ -82,7 +82,7 @@ Jinja 1.1 or higher.
 
 
 Block / Variable Tag Unification
---------------------------------
+================================
 
 If variable end and start tags are `None` or look the same as block tags and
 you're running Jinja 1.1 or later the parser will switch into the
@@ -103,3 +103,6 @@ This now allows smarty like templates:
     {else}
         Something is {something}.
     {endif}
+
+This feature however can cause strange looking templates because there is no
+visible difference between blocks and variables.

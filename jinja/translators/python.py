@@ -423,11 +423,7 @@ class PythonTranslator(Translator):
 
         # handle requirements code
         if requirements:
-            requirement_lines = [
-                'def bootstrap(context):',
-                '    ctx_push = context.push',
-                '    ctx_pop = context.pop'
-            ]
+            requirement_lines = ['def bootstrap(context):']
             has_requirements = False
             for n in requirements:
                 requirement_lines.append(self.handle_node(n))
@@ -452,8 +448,6 @@ class PythonTranslator(Translator):
                 if data:
                     block_lines.extend([
                         'def %s(context):' % func_name,
-                        '    ctx_push = context.push',
-                        '    ctx_pop = context.pop',
                         self.indent(self.nodeinfo(item, True)),
                         data,
                         '    if 0: yield None\n'
@@ -491,9 +485,7 @@ class PythonTranslator(Translator):
             '# Name for disabled debugging\n'
             '__name__ = %r\n\n'
             'def generate(context):\n'
-            '    assert environment is context.environment\n'
-            '    ctx_push = context.push\n'
-            '    ctx_pop = context.pop' % (
+            '    assert environment is context.environment' % (
                 '\n'.join([
                     '%s = environment.%s' % (item, item) for item in
                     ['get_attribute', 'perform_test', 'apply_filters',
@@ -570,14 +562,8 @@ class PythonTranslator(Translator):
         """
         Handle data around nodes.
         """
-        # if we have a ascii only string we go with the
-        # bytestring. otherwise we go with the unicode object
-        try:
-            data = str(node.text)
-        except UnicodeError:
-            data = node.text
         return self.indent(self.nodeinfo(node)) + '\n' +\
-               self.indent('yield %r' % data)
+               self.indent('yield %r' % node.text)
 
     def handle_dynamic_text(self, node):
         """
@@ -620,7 +606,7 @@ class PythonTranslator(Translator):
         buf = []
         write = lambda x: buf.append(self.indent(x))
         write(self.nodeinfo(node))
-        write('ctx_push()')
+        write('context.push()')
 
         # recursive loops
         if node.recursive:
@@ -668,7 +654,7 @@ class PythonTranslator(Translator):
             write('yield item')
             self.indention -= 1
 
-        write('ctx_pop()')
+        write('context.pop()')
         return '\n'.join(buf)
 
     def handle_if_condition(self, node):
@@ -801,7 +787,7 @@ class PythonTranslator(Translator):
         if varargs_init:
             arg_items.append(varargs_init)
 
-        write('ctx_push({%s})' % ',\n          '.join([
+        write('context.push({%s})' % ',\n              '.join([
             idx and self.indent(item) or item for idx, item
             in enumerate(arg_items)
         ]))
@@ -818,7 +804,7 @@ class PythonTranslator(Translator):
         data = self.handle_node(node.body)
         if data:
             buf.append(data)
-        write('ctx_pop()')
+        write('context.pop()')
         write('if 0: yield None')
         self.indention -= 1
         buf.append(self.indent('context[%r] = buffereater(macro)' %
@@ -836,11 +822,11 @@ class PythonTranslator(Translator):
 
         write('def call(**kwargs):')
         self.indention += 1
-        write('ctx_push(kwargs)')
+        write('context.push(kwargs)')
         data = self.handle_node(node.body)
         if data:
             buf.append(data)
-        write('ctx_pop()')
+        write('context.pop()')
         write('if 0: yield None')
         self.indention -= 1
         write('yield ' + self.handle_call_func(node.expr,
@@ -870,12 +856,12 @@ class PythonTranslator(Translator):
         write = lambda x: buf.append(self.indent(x))
         write('def filtered():')
         self.indention += 1
-        write('ctx_push()')
+        write('context.push()')
         write(self.nodeinfo(node.body))
         data = self.handle_node(node.body)
         if data:
             buf.append(data)
-        write('ctx_pop()')
+        write('context.pop()')
         write('if 0: yield None')
         self.indention -= 1
         write('yield %s' % self.filter('buffereater(filtered)()',
@@ -898,13 +884,13 @@ class PythonTranslator(Translator):
         write = lambda x: buf.append(self.indent(x))
 
         write(self.nodeinfo(node))
-        write('ctx_push({\'super\': SuperBlock(%r, blocks, %r, context)})' % (
+        write('context.push({\'super\': SuperBlock(%r, blocks, %r, context)})' % (
             str(node.name),
             level
         ))
         write(self.nodeinfo(node.body))
         buf.append(rv)
-        write('ctx_pop()')
+        write('context.pop()')
         return '\n'.join(buf)
 
     def handle_include(self, node):

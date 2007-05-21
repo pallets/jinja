@@ -13,8 +13,12 @@ import timeit
 import jdebug
 from StringIO import StringIO
 
-from genshi.builder import tag
-from genshi.template import MarkupTemplate
+try:
+    from genshi.builder import tag
+    from genshi.template import MarkupTemplate
+    have_genshi = True
+except ImportError:
+    have_genshi = False
 
 from jinja import Environment
 
@@ -33,7 +37,11 @@ try:
 except ImportError:
     have_kid = False
 
-from Cheetah.Template import Template as CheetahTemplate
+try:
+    from Cheetah.Template import Template as CheetahTemplate
+    have_cheetah = True
+except ImportError:
+    have_cheetah = False
 
 try:
     from mako.template import Template as MakoTemplate
@@ -44,7 +52,8 @@ except ImportError:
 table = [dict(zip('abcdefghij', map(unicode,range(1, 11))))
           for x in range(1000)]
 
-genshi_tmpl = MarkupTemplate("""
+if have_genshi:
+    genshi_tmpl = MarkupTemplate("""
 <table xmlns:py="http://genshi.edgewall.org/">
 <tr py:for="row in table">
 <td py:for="c in row.values()" py:content="c"/>
@@ -78,7 +87,8 @@ jinja_tmpl = Environment().from_string('''
 </table>
 ''')
 
-cheetah_tmpl = CheetahTemplate('''
+if have_cheetah:
+    cheetah_tmpl = CheetahTemplate('''
 <table>
 #for $row in $table
 <tr>
@@ -116,6 +126,8 @@ def test_jinja():
 
 def test_genshi():
     """Genshi Templates"""
+    if not have_genshi:
+        return
     stream = genshi_tmpl.generate(table=table)
     stream.render('html', strip_whitespace=False)
 
@@ -128,6 +140,8 @@ def test_kid():
 
 def test_cheetah():
     """Cheetah Templates"""
+    if not have_cheetah:
+        return
     cheetah_tmpl.respond()
 
 def test_mako():

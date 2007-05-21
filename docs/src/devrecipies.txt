@@ -23,16 +23,17 @@ this:
 
     class AutoEnvironment(Environment):
 
-        def autorender(self):
-            return self.render(sys._getframe(1).f_locals)
+        def autorender(self, template):
+            tmpl = self.get_template(template)
+            return tmpl.render(sys._getframe(1).f_locals)
 
 You can use it now like this:
 
 .. sourcecode:: python
 
-    foo_tmpl = env.get_template('foo.html')
-
     def foo():
         seq = range(10)
         foo = "blub"
-        return foo_tmpl.autorender()
+        return env.autorender('foo.html')
+
+In the template you can now access the local variables `seq` and `foo`.

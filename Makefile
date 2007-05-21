@@ -11,6 +11,9 @@
 test:
 	@(cd tests; py.test $(TESTS))
 
+test-coverage:
+	@(cd tests; py.test -C $(TESTS))
+
 documentation:
 	@(cd docs; ./generate.py)
 

@@ -7,6 +7,8 @@
     :license: BSD, see LICENSE for more details.
 """
 
+import time
+import tempfile
 from jinja import Environment, loaders
 from jinja.exceptions import TemplateNotFound
 
@@ -22,6 +24,10 @@ filesystem_loader = loaders.FileSystemLoader('loaderres/templates')
 function_loader = loaders.FunctionLoader({'justfunction.html': 'FOO'}.get)
 
 choice_loader = loaders.ChoiceLoader([dict_loader, package_loader])
+
+
+class FakeLoader(loaders.BaseLoader):
+    local_attr = 42
 
 
 def test_dict_loader():
@@ -84,3 +90,57 @@ def test_function_loader():
         pass
     else:
         raise AssertionError('expected template exception')
+
+
+def test_loader_redirect():
+    env = Environment(loader=FakeLoader())
+    assert env.loader.local_attr == 42
+    assert env.loader.get_source
+    assert env.loader.load
+
+
+class MemcacheTestingLoader(loaders.CachedLoaderMixin, loaders.BaseLoader):
+
+    def __init__(self, enable):
+        loaders.CachedLoaderMixin.__init__(self, enable, 40, None, True, 'foo')
+        self.times = {}
+        self.idx = 0
+
+    def touch(self, name):
+        self.times[name] = time.time()
+
+    def get_source(self, environment, name, parent):
+        self.touch(name)
+        self.idx += 1
+        return 'Template %s (%d)' % (name, self.idx)
+
+    def check_source_changed(self, environment, name):
+        if name in self.times:
+            return self.times[name]
+        return -1
+
+
+memcache_env = Environment(loader=MemcacheTestingLoader(True))
+no_memcache_env = Environment(loader=MemcacheTestingLoader(False))
+
+
+test_memcaching = r'''
+>>> not_caching = MODULE.no_memcache_env.loader
+>>> caching = MODULE.memcache_env.loader
+>>> touch = caching.touch
+
+>>> tmpl1 = not_caching.load('test.html')
+>>> tmpl2 = not_caching.load('test.html')
+>>> tmpl1 == tmpl2
+False
+
+>>> tmpl1 = caching.load('test.html')
+>>> tmpl2 = caching.load('test.html')
+>>> tmpl1 == tmpl2
+True
+
+>>> touch('test.html')
+>>> tmpl2 = caching.load('test.html')
+>>> tmpl1 == tmpl2
+False
+'''

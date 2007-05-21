@@ -419,7 +419,11 @@ The following keywords exist and cannot be used as identifiers:
     `and`, `block`, `cycle`, `elif`, `else`, `endblock`, `endfilter`,
     `endfor`, `endif`, `endmacro`, `endraw`, `endtrans`, `extends`, `filter`,
     `for`, `if`, `in`, `include`, `is`, `macro`, `not`, `or`, `pluralize`,
-    `print`, `raw`, `recursive`, `set`, `trans`
+    `print`, `raw`, `recursive`, `set`, `trans`, `call`*, `endcall`*,
+
+keywords marked with `*` can be used until Jinja 1.3 as identifiers because
+they were introduced after the Jinja 1.0 release and can cause backwards
+compatiblity problems otherwise. You should not use them any more.
 
 If you want to use such a name you have to prefix or suffix it or use
 alternative names:
@@ -429,11 +433,6 @@ alternative names:
     {% for macro_ in macros %}
         {{ macro_('foo') }}
     {% endfor %}
-
-If future Jinja releases add new keywords those will be "light" keywords which
-means that they won't raise an error for several releases but yield warnings
-on the application side. But it's very unlikely that new keywords will be
-added.
 
 
 Bleeding Edge

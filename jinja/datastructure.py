@@ -547,7 +547,7 @@ class TemplateStream(object):
 
     def __init__(self, gen):
         self._gen = gen
-        self._next = gen._next
+        self._next = gen.next
         self.buffered = False
 
     def disable_buffering(self):

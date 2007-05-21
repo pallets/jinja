@@ -81,7 +81,8 @@ Version 1.1
 
 - additional macro arguments now end up in `varargs`.
 
-- implemented `{% call %}` - unsure if this makes it into the final release.
+- implemented the `{% call %}` block. `call` and `endcall` can still be used
+  as identifiers until Jinja 1.3
 
 - it's not possible to stream templates.
 
