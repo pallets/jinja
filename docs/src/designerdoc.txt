@@ -419,9 +419,9 @@ The following keywords exist and cannot be used as identifiers:
     `and`, `block`, `cycle`, `elif`, `else`, `endblock`, `endfilter`,
     `endfor`, `endif`, `endmacro`, `endraw`, `endtrans`, `extends`, `filter`,
     `for`, `if`, `in`, `include`, `is`, `macro`, `not`, `or`, `pluralize`,
-    `print`, `raw`, `recursive`, `set`, `trans`, `call`*, `endcall`*,
+    `print`, `raw`, `recursive`, `set`, `trans`, `call` *, `endcall` *
 
-keywords marked with `*` can be used until Jinja 1.3 as identifiers because
+keywords marked with a star (*) can be used until Jinja 1.3 as identifiers because
 they were introduced after the Jinja 1.0 release and can cause backwards
 compatiblity problems otherwise. You should not use them any more.
 
