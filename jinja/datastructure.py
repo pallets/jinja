@@ -324,7 +324,10 @@ class LoopContext(object):
         Push a sequence to the loop stack. This is used by the
         recursive for loop.
         """
-        if seq in (Undefined, None):
+        # iteration over None is catched, but we don't catch iteration
+        # over undefined because that behavior is handled in the
+        # undefined singleton
+        if seq is None:
             seq = ()
             length = 0
         else:
