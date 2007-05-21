@@ -54,4 +54,8 @@ The wrapped function is created internally by the decorator, any positional
 arguments are forwarded to the filter function. The first argument is always
 the value already converted into a string.
 
+If you're using Jinja with django and want to use the django filters in Jinja
+have a look at the `developer recipies`_ page.
+
 .. _designer documentation: builtins.txt
+.. _developer recipies: devrecipies.txt

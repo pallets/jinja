@@ -4,7 +4,6 @@ Recipies For Developers
 
 Here some recipies for application developers.
 
-
 Automagic Template Variables
 ============================
 
@@ -37,3 +36,40 @@ You can use it now like this:
         return env.autorender('foo.html')
 
 In the template you can now access the local variables `seq` and `foo`.
+
+Using Django Filters with Jinja
+===============================
+
+If you use Jinja in django and want to use some of the filters that
+are part of the django core you can use this snippet:
+
+.. sourcecode:: python
+
+    def convert_django_filter(f):
+        def filter_factory(*args):
+            def wrapped(env, ctx, value):
+                return f(value, *args)
+            return wrapped
+        return filter_factory
+
+You can now convert django filters for jinja using `convert_filter`. *Note*:
+Django only supports one filter argument. Because of this limitation you
+shouldn't pass it more arguments than it accepts. Because django uses some
+introspection to find out if a filter accepts an argument weird things can
+happen if you call it with an incompatible argument count.
+
+You can now register django filters for a jinja environment:
+
+.. sourcecode:: python
+
+    from django.template.defaultfilters import date
+    env.filters['date'] = convert_django_filter(date)
+
+And use it:
+
+.. sourcecode:: jinja
+
+    {{ entry.pub_date|date }}
+
+Also keep in mind that Jinja knows about keywords, thus you cannot have a filter
+that is called `pluralize` for example.
