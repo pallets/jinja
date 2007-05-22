@@ -241,6 +241,17 @@ def watch_changes(env, context, iterable, *attributes):
 watch_changes.jinja_context_callable = True
 
 
+def render_included(env, context, template_name):
+    """
+    Works like djangos {% include %} tag. It doesn't include the
+    template but load it independently and renders it to a string.
+    """
+    #XXX: ignores parent completely!
+    tmpl = env.get_template(template_name)
+    return tmpl.render(context.to_dict())
+render_included.jinja_context_callable = True
+
+
 # python2.4 and lower has a bug regarding joining of broken generators.
 # because of the runtime debugging system we have to keep track of the
 # number of frames to skip. that's what RUNTIME_EXCEPTION_OFFSET is for.
