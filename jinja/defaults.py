@@ -22,5 +22,5 @@ DEFAULT_NAMESPACE = {
     'debug':                debug_helper,
     'lipsum':               generate_lorem_ipsum,
     'watchchanges':         watch_changes,
-    'renderincluded':       render_included
+    'rendertemplate':       render_included
 }

@@ -366,7 +366,13 @@ load macros, `include` works better than `extends`:
 If you define a macro called ``my_helper`` in ``myhelpers.html``, you can now
 use it from the template as shown above.
 
-Because of the
+Please keep in mind that include does not render the template indenpendently
+but includes the processing instructions into the current template. Thus if the
+included template contains a ``{% extends %}`` tag it also affects the current
+template.
+
+This is intended because it makes it possible to include macros from other
+templates.
 
 Filtering Blocks
 ================
