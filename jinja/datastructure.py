@@ -316,7 +316,7 @@ class LoopContext(object):
         self.loop_function = loop_function
         self.parent = parent
         self._stack = []
-        if seq is not None:
+        if loop_function is None:
             self.push(seq)
 
     def push(self, seq):
