@@ -1,6 +1,7 @@
 # -*- coding: utf-8 -*-
 import jinja
 import os
+import sys
 import ez_setup
 ez_setup.use_setuptools()
 
@@ -27,12 +28,19 @@ class optional_build_ext(build_ext):
         except CCompilerError, e:
             print '=' * 79
             print 'INFORMATION'
-            print '  the speedup extension could not be compiled, jinja will'
+            print '  the speedup extension could not be compiled, Jinja will'
             print '  fall back to the native python classes.'
             print '=' * 79
-
-
-
+        except:
+            e = sys.exc_info()[1]
+            print '=' * 79
+            print 'WARNING'
+            print '  could not compile optional speedup extension. This is'
+            print '  is not a real problem because Jinja provides a native'
+            print '  implementation of those classes but for best performance'
+            print '  you could try to reinstall Jinja after fixing this'
+            print '  problem: %s' % e
+            print '=' * 79
 
 
 setup(
