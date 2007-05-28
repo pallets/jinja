@@ -18,11 +18,6 @@ from jinja.parser import Parser
 from jinja.translators.python import PythonTranslator, Template
 from jinja.exceptions import TemplateNotFound, TemplateSyntaxError
 from jinja.utils import CacheDict, raise_syntax_error
-try:
-    from pkg_resources import resource_exists, resource_string, \
-                              resource_filename
-except ImportError:
-    resource_exists = resource_string = resource_filename = None
 
 
 #: when updating this, update the listing in the jinja package too
@@ -130,6 +125,12 @@ class BaseLoader(object):
         """
         ast = self.parse(environment, name, None)
         return translator.process(environment, ast)
+
+    def get_source(self, environment, name, parent):
+        """
+        Override this method to get the source for a template.
+        """
+        raise TemplateNotFound(name)
 
 
 class CachedLoaderMixin(object):
@@ -353,8 +354,10 @@ class PackageLoader(CachedLoaderMixin, BaseLoader):
     def __init__(self, package_name, package_path, use_memcache=False,
                  memcache_size=40, cache_folder=None, auto_reload=True,
                  cache_salt=None):
-        if resource_filename is None:
-            raise ImportError('setuptools not found')
+        try:
+            import pkg_resources
+        except ImportError:
+            raise RuntimeError('setuptools not installed')
         self.package_name = package_name
         self.package_path = package_path
         if cache_salt is None:
@@ -363,6 +366,7 @@ class PackageLoader(CachedLoaderMixin, BaseLoader):
                                    cache_folder, auto_reload, cache_salt)
 
     def get_source(self, environment, name, parent):
+        from pkg_resources import resource_exists, resource_string
         name = '/'.join([self.package_path] + [p for p in name.split('/')
                         if p != '..'])
         if not resource_exists(self.package_name, name):
@@ -371,6 +375,7 @@ class PackageLoader(CachedLoaderMixin, BaseLoader):
         return contents.decode(environment.template_charset)
 
     def check_source_changed(self, environment, name):
+        from pkg_resources import resource_exists, resource_filename
         fn = resource_filename(self.package_name, '/'.join([self.package_path] +
                                [p for p in name.split('/') if p and p[0] != '.']))
         if resource_exists(self.package_name, fn):

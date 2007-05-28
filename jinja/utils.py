@@ -17,7 +17,6 @@ import string
 from types import MethodType, FunctionType
 from compiler.ast import CallFunc, Name, Const
 from jinja.nodes import Trans
-from jinja.datastructure import Context
 from jinja.exceptions import SecurityException, TemplateNotFound
 
 # the python2.4 version of deque is missing the remove method
@@ -27,11 +26,34 @@ try:
     from collections import deque
     deque.remove
 except (ImportError, AttributeError):
-    deque = None
+    class deque(list):
+        """
+        Minimal subclass of list that provides the deque
+        interface used by the native `BaseContext` and the
+        `CacheDict`
+        """
+        def appendleft(self, item):
+            list.insert(self, 0, item)
+        def popleft(self):
+            return list.pop(self, 0)
+        def clear(self):
+            del self[:]
+
+# support for a working reversed()
+try:
+    reversed = reversed
+except NameError:
+    def reversed(iterable):
+        if hasattr(iterable, '__reversed__'):
+            return iterable.__reversed__()
+        try:
+            return iter(iterable[::-1])
+        except TypeError:
+            return iter(tuple(iterable)[::-1])
 
 # support for python 2.3/2.4
 try:
-    set
+    set = set
 except NameError:
     from sets import Set as set
 
@@ -276,9 +298,7 @@ def buffereater(f):
     Used by the python translator to capture output of substreams.
     (macros, filter sections etc)
     """
-    def wrapped(*args, **kwargs):
-        return capture_generator(f(*args, **kwargs))
-    return wrapped
+    return lambda *a, **kw: capture_generator(f(*a, **kw))
 
 
 def empty_block(context):
@@ -297,6 +317,8 @@ def fake_template_exception(exception, filename, lineno, source,
     """
     # some traceback systems allow to skip frames
     __traceback_hide__ = True
+
+    from jinja.datastructure import Context
     if isinstance(context_or_env, Context):
         env = context_or_env.environment
         namespace = context_or_env.to_dict()
@@ -541,18 +563,10 @@ class CacheDict(object):
     def __init__(self, capacity):
         self.capacity = capacity
         self._mapping = {}
-
-        # use a deque here if possible
-        if deque is not None:
-            self._queue = deque()
-            self._popleft = self._queue.popleft
-        # python2.3/2.4, just use a list
-        else:
-            self._queue = []
-            pop = self._queue.pop
-            self._popleft = lambda: pop(0)
+        self._queue = deque()
 
         # alias all queue methods for faster lookup
+        self._popleft = self._queue.popleft
         self._pop = self._queue.pop
         self._remove = self._queue.remove
         self._append = self._queue.append
@@ -589,10 +603,7 @@ class CacheDict(object):
         Clear the cache dict.
         """
         self._mapping.clear()
-        try:
-            self._queue.clear()
-        except AttributeError:
-            del self._queue[:]
+        self._queue.clear()
 
     def __contains__(self, key):
         """
@@ -650,10 +661,7 @@ class CacheDict(object):
         Iterate over all values in the cache dict, ordered by
         the most recent usage.
         """
-        try:
-            return reversed(self._queue)
-        except NameError:
-            return iter(self._queue[::-1])
+        return reversed(self._queue)
 
     def __reversed__(self):
         """

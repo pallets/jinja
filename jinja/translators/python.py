@@ -43,7 +43,7 @@ from jinja.parser import Parser
 from jinja.exceptions import TemplateSyntaxError
 from jinja.translators import Translator
 from jinja.datastructure import TemplateStream
-from jinja.utils import translate_exception, capture_generator, \
+from jinja.utils import set, translate_exception, capture_generator, \
      RUNTIME_EXCEPTION_OFFSET
 
 
@@ -51,15 +51,9 @@ from jinja.utils import translate_exception, capture_generator, \
 _debug_re = re.compile(r'^\s*\# DEBUG\(filename=(?P<filename>.*?), '
                        r'lineno=(?P<lineno>\d+)\)$')
 
-# For Python2.3 compatibiilty
+# For Python versions without generator exit exceptions
 try:
-    set
-except NameError:
-    from sets import Set as set
-
-# For Python 2.3/2.4 compatibility
-try:
-    GeneratorExit
+    GeneratorExit = GeneratorExit
 except NameError:
     class GeneratorExit(Exception):
         pass
@@ -424,7 +418,6 @@ class PythonTranslator(Translator):
         # handle requirements code
         if requirements:
             requirement_lines = ['def bootstrap(context):']
-            has_requirements = False
             for n in requirements:
                 requirement_lines.append(self.handle_node(n))
             requirement_lines.append('    if 0: yield None\n')
@@ -463,12 +456,6 @@ class PythonTranslator(Translator):
                 str(name),
                 self.to_tuple(tmp)
             ))
-
-        # aliases boilerplate
-        aliases = ['%s = environment.%s' % (item, item) for item in
-                   ['get_attribute', 'perform_test', 'apply_filters',
-                    'call_function', 'call_function_simple', 'finish_var',
-                    'undefined_singleton'] if item in self.used_shortcuts]
 
         # bootstrapping code
         lines = ['# Essential imports', 'from __future__ import division']

@@ -20,5 +20,8 @@ documentation:
 webpage:
 	@(cd ../www; ./generate.py)
 
+pylint:
+	@pylint --rcfile scripts/pylintrc jinja
+
 release: documentation
 	@(python2.3 setup.py release bdist_egg upload; python2.4 setup.py release bdist_egg upload; python2.5 setup.py release bdist_egg sdist upload)

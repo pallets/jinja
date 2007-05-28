@@ -14,16 +14,11 @@
     :copyright: 2007 by Armin Ronacher.
     :license: BSD, see LICENSE for more details.
 """
-import re
 from compiler import ast, parse
-from compiler.misc import set_filename
 from jinja import nodes
-from jinja.datastructure import TokenStream, StateTest
+from jinja.datastructure import StateTest
 from jinja.exceptions import TemplateSyntaxError
-try:
-    set
-except NameError:
-    from sets import Set as set
+from jinja.utils import set
 
 
 __all__ = ['Parser']

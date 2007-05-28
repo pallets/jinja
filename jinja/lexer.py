@@ -25,12 +25,8 @@
 import re
 from jinja.datastructure import TokenStream
 from jinja.exceptions import TemplateSyntaxError
+from jinja.utils import set
 from weakref import WeakValueDictionary
-
-try:
-    set
-except NameError:
-    from sets import Set as set
 
 
 __all__ = ['Lexer', 'Failure', 'keywords']

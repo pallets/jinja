@@ -13,21 +13,8 @@
     :copyright: 2007 by Armin Ronacher.
     :license: BSD, see LICENSE for more details.
 """
-from jinja.datastructure import Deferred, Undefined
-try:
-    from collections import deque
-except ImportError:
-    class deque(list):
-        """
-        Minimal subclass of list that provides the deque
-        interface used by the native `BaseContext`.
-        """
-
-        def appendleft(self, item):
-            list.insert(self, 0, item)
-
-        def popleft(self):
-            return list.pop(self, 0)
+from jinja.datastructure import Deferred
+from jinja.utils import deque
 
 
 class BaseContext(object):

@@ -12,7 +12,6 @@ import re
 
 
 number_re = re.compile(r'^-?\d+(\.\d+)?$')
-
 regex_type = type(number_re)
 
 

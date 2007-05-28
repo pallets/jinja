@@ -11,24 +11,9 @@
 import re
 from random import choice
 from urllib import urlencode, quote
-from jinja.utils import urlize, escape
-from jinja.datastructure import Markup, TemplateData
+from jinja.utils import urlize, escape, reversed
+from jinja.datastructure import TemplateData
 from jinja.exceptions import FilterArgumentError
-
-
-try:
-    _reversed = reversed
-except NameError:
-    # python2.3 compatibility hack for the do_reverse function
-    def _reversed(seq):
-        try:
-            return seq[::-1]
-        except:
-            try:
-                return list(seq)[::-1]
-            except:
-                raise TypeError('argument to _reversed must '
-                                'be a sequence')
 
 
 def stringfilter(f):
@@ -332,7 +317,7 @@ def do_last():
     """
     def wrapped(env, context, seq):
         try:
-            return iter(_reversed(seq)).next()
+            return iter(reversed(seq)).next()
         except StopIteration:
             return env.undefined_singleton
     return wrapped

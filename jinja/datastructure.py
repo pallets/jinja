@@ -9,12 +9,6 @@
     :license: BSD, see LICENSE for more details.
 """
 
-# sets
-try:
-    set
-except NameError:
-    from sets import Set as set
-
 from jinja.exceptions import TemplateSyntaxError, TemplateRuntimeError
 
 
