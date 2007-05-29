@@ -115,6 +115,16 @@ Because nobody implemented this specification so far it's not documented here
 but in the sourcecode of the `plugin module`_. The specification itself is
 explained on the pocoo trac on the `General Template Interface`_ wiki page.
 
+
+Django
+======
+
+Using Jinja in django is straightforward because django has a pretty low
+level response interface. Just have a look at the `developer recipies`_,
+there are some examples for django.
+
+
 .. _Pylons: http://www.pylonshq.com/
 .. _General Template Interface: http://trac.pocoo.org/wiki/GeneralTemplateInterface
 .. _plugin module: http://trac.pocoo.org/browser/jinja/trunk/jinja/plugin.py
+.. _developer recipies: devrecipies.txt

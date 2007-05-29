@@ -47,6 +47,13 @@ def test_raw(env):
     assert tmpl.render() == '{{ FOO }} and {% BAR %}'
 
 
+def test_crazy_raw():
+    from jinja import Environment
+    env = Environment('{', '}', '{', '}')
+    tmpl = env.from_string('{raw}{broken foo}{endraw}')
+    assert tmpl.render() == '{broken foo}'
+
+
 def test_cache_dict():
     from jinja.utils import CacheDict
     d = CacheDict(3)
