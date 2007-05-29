@@ -73,8 +73,8 @@ class Failure(object):
         self.message = message
         self.error_class = cls
 
-    def __call__(self, lineno):
-        raise self.error_class(self.message, lineno)
+    def __call__(self, lineno, filename):
+        raise self.error_class(self.message, lineno, filename)
 
 
 class LexerMeta(type):
@@ -276,7 +276,7 @@ class Lexer(object):
                             continue
                         # failure group
                         elif isinstance(token, Failure):
-                            raise token(m.start(idx + 1))
+                            raise token(lineno, filename)
                         # bygroup is a bit more complex, in that case we
                         # yield for the current token the first named
                         # group that matched
