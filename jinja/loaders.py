@@ -29,8 +29,8 @@ def get_template_filename(searchpath, name):
     """
     Return the filesystem filename wanted.
     """
-    return path.join(searchpath, path.sep.join([p for p in name.split('/')
-                     if p and p[0] != '.']))
+    return path.join(searchpath, *[p for p in name.split('/')
+                     if p and p[0] != '.'])
 
 
 def get_cachename(cachepath, name, salt=None):

@@ -58,6 +58,8 @@ def test_filesystem_loader():
     env = Environment(loader=filesystem_loader)
     tmpl = env.get_template('test.html')
     assert tmpl.render().strip() == 'BAR'
+    tmpl = env.get_template('foo/test.html')
+    assert tmpl.render().strip() == 'FOO'
     try:
         env.get_template('missing.html')
     except TemplateNotFound:
