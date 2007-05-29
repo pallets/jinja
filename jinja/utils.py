@@ -39,7 +39,7 @@ except (ImportError, AttributeError):
         def clear(self):
             del self[:]
 
-# support for a working reversed()
+# support for a working reversed() in 2.3
 try:
     reversed = reversed
 except NameError:
@@ -51,11 +51,24 @@ except NameError:
         except TypeError:
             return iter(tuple(iterable)[::-1])
 
-# support for python 2.3/2.4
+# set support for python 2.3
 try:
     set = set
 except NameError:
     from sets import Set as set
+
+# sorted support (just a simplified version)
+try:
+    sorted = sorted
+except NameError:
+    def sorted(seq, reverse=False):
+        rv = list(seq)
+        rv.sort(reverse=reverse)
+        return rv
+
+#: function types
+callable_types = (FunctionType, MethodType)
+
 
 #: number of maximal range items
 MAX_RANGE = 1000000
@@ -141,6 +154,9 @@ def from_string(source):
     return _from_string_env.from_string(source)
 
 
+#: minor speedup
+_getattr = getattr
+
 def get_attribute(obj, name):
     """
     Return the attribute from name. Raise either `AttributeError`
@@ -148,15 +164,15 @@ def get_attribute(obj, name):
     """
     if not isinstance(name, basestring):
         raise AttributeError(name)
-    if name[:2] == name[-2:] == '__' or name[:2] == '::':
+    if name[:2] == name[-2:] == '__':
         raise SecurityException('not allowed to access internal attributes')
-    if (obj.__class__ is FunctionType and name.startswith('func_') or
-        obj.__class__ is MethodType and name.startswith('im_')):
+    if obj.__class__ in callable_types and name.startswith('func_') or \
+       name.startswith('im_'):
         raise SecurityException('not allowed to access function attributes')
-    r = getattr(obj, 'jinja_allowed_attributes', None)
+    r = _getattr(obj, 'jinja_allowed_attributes', None)
     if r is not None and name not in r:
-        raise SecurityException('not allowed attribute accessed')
-    return getattr(obj, name)
+        raise SecurityException('disallowed attribute accessed')
+    return _getattr(obj, name)
 
 
 def safe_range(start, stop=None, step=None):

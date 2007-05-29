@@ -61,6 +61,8 @@ ROUND = '''{{ 2.7|round }}|{{ 2.1|round }}|\
 {{ 2.1234|round(2, 'floor') }}|{{ 2.1|round(0, 'ceil') }}'''
 XMLATTR = '''{{ {'foo': 42, 'bar': 23, 'fish': none,
 'spam': missing, 'blub:blub': '<?>'}|xmlattr }}'''
+SORT = '''{{ [2, 3, 1]|sort }}|{{ [2, 3, 1]|sort(true) }}'''
+
 
 
 def test_capitalize(env):
@@ -114,7 +116,8 @@ def test_escape(env):
 def test_striptags(env):
     tmpl = env.from_string(STRIPTAGS)
     out = tmpl.render(foo='  <p>just a small   \n <a href="#">'
-                      'example</a> link</p>\n<p>to a webpage</p>')
+                      'example</a> link</p>\n<p>to a webpage</p> '
+                      '<!-- <p>and some commented stuff</p> -->')
     assert out == 'just a small example link to a webpage'
 
 
@@ -274,3 +277,8 @@ def test_xmlattr(env):
     assert 'foo="42"' in out
     assert 'bar="23"' in out
     assert 'blub:blub="&lt;?&gt;"' in out
+
+
+def test_sort(env):
+    tmpl = env.from_string(SORT)
+    assert tmpl.render() == '[1, 2, 3]|[3, 2, 1]'

@@ -55,7 +55,7 @@ Version 1.1
 
 - added `batch` and `slice` filters for batching or slicing sequences
 
-- added `sum`, `abs` and `round` filters. This fixes #238
+- added `sum`, `abs`, `round` and `sort` filters. This fixes #238
 
 - added `striptags` and `xmlattr` filters for easier SGML/XML processing
 
@@ -102,6 +102,11 @@ Version 1.1
 - It's now possible to iterate over iterators additionally to sequences.
   If the iterator is inifite it will crash however, so makes sure you don't
   pass something like that to a template!
+
+- added `rendetemplate` to render included templates in an isolated
+  environment and get the outout back.
+
+- added `simplefilter` decorator.
 
 
 Version 1.0

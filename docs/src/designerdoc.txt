@@ -351,6 +351,68 @@ You can also specify more than one value:
 For information regarding the visibility of macros have a look at the
 `Scopes and Variable Behavior`_ section.
 
+Extended Macro Call
+===================
+
+*new in Jinja 1.1*
+
+Jinja 1.1 adds a new special tag that you can use to pass some evaluable
+template code to a macro. Here an example macro that uses the features of
+the ``{% call %}`` tag:
+
+.. sourcecode:: html+jinja
+
+    {% macro dialog title %}
+      <div class="dialog">
+        <h3>{{ title }}</h3>
+        <div class="text">
+          {{ caller() }}
+        </div>
+      </div>
+    {% endmacro %}
+
+Called the normal way `caller` will be undefined, but if you call it
+using the new `{% call %}` tag you can pass it some data:
+
+.. sourcecode:: html+jinja
+
+    {% call dialog('Hello World') %}
+        This is an example dialog
+    {% endcall %}
+
+Now the data wrapped will be inserted where you put the `caller` call.
+
+If you pass `caller()` some keyword arguments those are added to the
+namespace of the wrapped template data:
+
+.. sourcecode:: html+jinja
+
+    {% macro makelist items %}
+      <ul>
+      {%- for item in items %}
+        <li>{{ caller(item=item) }}</li>
+      {%- endfor %}
+      </ul>
+    {%- endmacro %}
+
+    {% call makelist([1, 2, 3, 4, 5, 6]) -%}
+      [[{{ item }}]]
+    {%- endcall %}
+
+This will then produce this output:
+
+.. sourcecode:: html
+
+    <ul>
+      <li>[[1]]</li>
+      <li>[[2]]</li>
+      <li>[[3]]</li>
+      <li>[[4]]</li>
+      <li>[[5]]</li>
+      <li>[[6]]</li>
+    </ul>
+
+
 Template Inclusion
 ==================
 
@@ -373,6 +435,10 @@ template.
 
 This is intended because it makes it possible to include macros from other
 templates.
+
+*new in Jinja 1.1* you can now render an included template to a string that is
+evaluated in an indepdendent environment by calling `rendertemplate`. See the
+documentation for this function in the `builtins`_ documentation.
 
 Filtering Blocks
 ================
@@ -442,65 +508,6 @@ alternative names:
     {% endfor %}
 
 
-Bleeding Edge
-=============
-
-Here are some features documented that are new in the SVN version and might
-change.
-
-``{% call %}``:
-
-    A new tag that allows to pass a macro a block with template data:
-
-    .. sourcecode:: html+jinja
-
-        {% macro dialog title %}
-          <div class="dialog">
-            <h3>{{ title }}</h3>
-            <div class="text">
-              {{ caller() }}
-            </div>
-          </div>
-        {% endmacro %}
-
-    Called the normal way `caller` will be undefined, but if you call it
-    using the new `{% call %}` tag you can pass it some data:
-
-    .. sourcecode:: html+jinja
-
-        {% call dialog('Hello World') %}
-            This is an example dialog
-        {% endcall %}
-
-    If you pass `caller()` some keyword arguments those are added to the
-    namespace of the wrapped template data:
-
-    .. sourcecode:: html+jinja
-
-        {% macro makelist items %}
-          <ul>
-          {%- for item in items %}
-            <li>{{ caller(item=item) }}</li>
-          {%- endfor %}
-          </ul>
-        {%- endmacro %}
-
-        {% call makelist([1, 2, 3, 4, 5, 6]) -%}
-          [[{{ item }}]]
-        {%- endcall %}
-
-    This will then produce this output:
-
-    .. sourcecode:: html
-
-        <ul>
-          <li>[[1]]</li>
-          <li>[[2]]</li>
-          <li>[[3]]</li>
-          <li>[[4]]</li>
-          <li>[[5]]</li>
-          <li>[[6]]</li>
-        </ul>
-
 .. _slicing chapter: http://diveintopython.org/native_data_types/lists.html#odbchelper.list.slice
 .. _Scopes and Variable Behavior: scopes.txt
+.. _builtins: builtins.txt

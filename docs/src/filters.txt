@@ -57,5 +57,17 @@ the value already converted into a string.
 If you're using Jinja with django and want to use the django filters in Jinja
 have a look at the `developer recipies`_ page.
 
+*new in Jinja 1.1* additionally to the `stringfilter` decorator there is now
+a similar decorator that works exactly the same but does not convert values
+to unicode:
+
+.. sourcecode:: python
+
+    from jinja.filters import simplefilter
+
+    @simplefilter
+    def do_add(value, to_add):
+        return value + to_add
+
 .. _designer documentation: builtins.txt
 .. _developer recipies: devrecipies.txt

@@ -224,17 +224,17 @@ class PythonTranslator(Translator):
         #: mapping of unsupported syntax elements.
         #: the value represents the feature name that appears
         #: in the exception.
-        self.unsupported = {
-            ast.ListComp:           'list comprehensions'
-        }
+        self.unsupported = {ast.ListComp: 'list comprehension'}
 
         #: because of python2.3 compatibility add generator
         #: expressions only to the list of unused features
         #: if it exists.
         if hasattr(ast, 'GenExpr'):
-            self.unsupported.update({
-                ast.GenExpr:        'generator expressions'
-            })
+            self.unsupported[ast.GenExpr] = 'generator expression'
+
+        #: if expressions are unsupported too (so far)
+        if hasattr(ast, 'IfExp'):
+            self.unsupported[ast.IfExp] = 'inline if expression'
 
     # -- public methods
 

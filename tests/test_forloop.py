@@ -18,6 +18,7 @@ CYCLING = '''{% for item in seq %}{% cycle '<1>', '<2>' %}{% endfor %}\
 {% for item in seq %}{% cycle through %}{% endfor %}'''
 SCOPE = '''{% for item in seq %}{% endfor %}{{ item }}'''
 VARLEN = '''{% for item in iter %}{{ item }}{% endfor %}'''
+NONITER = '''{% for item in none %}...{% endfor %}'''
 
 
 def test_simple(env):
@@ -73,3 +74,8 @@ def test_varlen(env):
     tmpl = env.from_string(VARLEN)
     output = tmpl.render(iter=inner())
     assert output == '01234'
+
+
+def test_noniter(env):
+    tmpl = env.from_string(NONITER)
+    assert not tmpl.render()

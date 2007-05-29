@@ -7,7 +7,7 @@
     :license: BSD, see LICENSE for more details.
 """
 
-KEYWORDS = '''
+KEYWORDS = '''\
 {{ with }}
 {{ as }}
 {{ import }}
@@ -27,13 +27,9 @@ KEYWORDS = '''
 {{ yield }}
 {{ while }}
 {{ pass }}
-{{ finally }}
-'''
-
+{{ finally }}'''
 UNPACKING = '''{% for a, b, c in [[1, 2, 3]] %}{{ a }}|{{ b }}|{{ c }}{% endfor %}'''
-
 RAW = '''{% raw %}{{ FOO }} and {% BAR %}{% endraw %}'''
-
 CALL = '''{{ foo('a', c='d', e='f', *['b'], **{'g': 'h'}) }}'''
 
 
@@ -69,3 +65,15 @@ def test_call():
     env.globals['foo'] = lambda a, b, c, e, g: a + b + c + e + g
     tmpl = env.from_string(CALL)
     assert tmpl.render() == 'abdfh'
+
+
+def test_stringfilter(env):
+    from jinja.filters import stringfilter
+    f = stringfilter(lambda f, x: f + x)
+    assert f('42')(env, None, 23) == '2342'
+
+
+def test_simplefilter(env):
+    from jinja.filters import simplefilter
+    f = simplefilter(lambda f, x: f + x)
+    assert f(42)(env, None, 23) == 65

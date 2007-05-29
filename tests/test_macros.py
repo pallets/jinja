@@ -39,6 +39,22 @@ VARARGS = '''\
 {{ test(1, 2, 3) }}\
 '''
 
+SIMPLECALL = '''\
+{% macro test %}[[{{ caller() }}]]{% endmacro %}\
+{% call test() %}data{% endcall %}\
+'''
+
+COMPLEXCALL = '''\
+{% macro test %}[[{{ caller(data='data') }}]]{% endmacro %}\
+{% call test() %}{{ data }}{% endcall %}\
+'''
+
+CALLERUNDEFINED = '''\
+{% set caller = 42 %}\
+{% macro test() %}{{ caller is not defined }}{% endmacro %}\
+{{ test() }}\
+'''
+
 
 def test_simple(env):
     tmpl = env.from_string(SIMPLE)
@@ -74,3 +90,18 @@ def test_parentheses(env):
 def test_varargs(env):
     tmpl = env.from_string(VARARGS)
     assert tmpl.render() == '1|2|3'
+
+
+def test_simple_call(env):
+    tmpl = env.from_string(SIMPLECALL)
+    assert tmpl.render() == '[[data]]'
+
+
+def test_complex_call(env):
+    tmpl = env.from_string(COMPLEXCALL)
+    assert tmpl.render() == '[[data]]'
+
+
+def test_caller_undefined(env):
+    tmpl = env.from_string(CALLERUNDEFINED)
+    assert tmpl.render() == 'True'

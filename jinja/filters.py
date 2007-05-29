@@ -11,9 +11,12 @@
 import re
 from random import choice
 from urllib import urlencode, quote
-from jinja.utils import urlize, escape, reversed
+from jinja.utils import urlize, escape, reversed, sorted
 from jinja.datastructure import TemplateData
 from jinja.exceptions import FilterArgumentError
+
+
+_striptags_re = re.compile(r'(<!--.*?-->|<[^>]+>)')
 
 
 def stringfilter(f):
@@ -27,6 +30,25 @@ def stringfilter(f):
                 if isinstance(var, str):
                     nargs[idx] = env.to_unicode(var)
             return f(env.to_unicode(value), *nargs)
+        return wrapped
+    try:
+        decorator.__doc__ = f.__doc__
+        decorator.__name__ = f.__name__
+    except:
+        pass
+    return decorator
+
+
+def simplefilter(f):
+    """
+    Decorator for simplifying filters. Filter arguments are passed
+    to the decorated function without environment and context. The
+    source value is the first argument. (like stringfilter but
+    without unicode conversion)
+    """
+    def decorator(*args):
+        def wrapped(env, context, value):
+            return f(value, *args)
         return wrapped
     try:
         decorator.__doc__ = f.__doc__
@@ -128,7 +150,7 @@ def do_xmlattr(autospace=False):
         ...
         </ul>
 
-    As you can see it automatically appends a space in front of the item
+    As you can see it automatically prepends a space in front of the item
     if the filter returned something. You can disable this by passing
     `false` as only argument to the filter.
 
@@ -668,13 +690,13 @@ def do_capture(name='captured', clean=False):
     return wrapped
 
 
-def do_striptags(value, rex=re.compile(r'<[^>]+>')):
+def do_striptags(value):
     """
     Strip SGML/XML tags and replace adjacent whitespace by one space.
 
     *new in Jinja 1.1*
     """
-    return ' '.join(rex.sub('', value).split())
+    return ' '.join(_striptags_re.sub('', value).split())
 do_striptags = stringfilter(do_striptags)
 
 
@@ -818,6 +840,18 @@ def do_round(precision=0, method='common'):
     return wrapped
 
 
+def do_sort(reverse=False):
+    """
+    Sort a sequence. Per default it sorts ascending, if you pass it
+    `True` as first argument it will reverse the sorting.
+
+    *new in Jinja 1.1*
+    """
+    def wrapped(env, context, value):
+        return sorted(value, reverse=reverse)
+    return wrapped
+
+
 FILTERS = {
     'replace':              do_replace,
     'upper':                do_upper,
@@ -863,5 +897,6 @@ FILTERS = {
     'batch':                do_batch,
     'sum':                  do_sum,
     'abs':                  do_abs,
-    'round':                do_round
+    'round':                do_round,
+    'sort':                 do_sort
 }

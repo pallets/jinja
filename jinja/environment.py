@@ -22,6 +22,10 @@ from jinja.defaults import DEFAULT_FILTERS, DEFAULT_TESTS, DEFAULT_NAMESPACE
 __all__ = ['Environment']
 
 
+#: minor speedup
+_getattr = getattr
+
+
 class Environment(object):
     """
     The Jinja environment.
@@ -293,7 +297,7 @@ class Environment(object):
             except (AttributeError, SecurityException):
                 pass
         if obj is self.undefined_singleton:
-            return getattr(self.undefined_singleton, name)
+            return _getattr(obj, name)
         return self.undefined_singleton
 
     def get_attributes(self, obj, attributes):
@@ -315,10 +319,10 @@ class Environment(object):
             args += tuple(dyn_args)
         if dyn_kwargs is not None:
             kwargs.update(dyn_kwargs)
-        if getattr(f, 'jinja_unsafe_call', False) or \
-           getattr(f, 'alters_data', False):
+        if _getattr(f, 'jinja_unsafe_call', False) or \
+           _getattr(f, 'alters_data', False):
             return self.undefined_singleton
-        if getattr(f, 'jinja_context_callable', False):
+        if _getattr(f, 'jinja_context_callable', False):
             args = (self, context) + args
         return f(*args, **kwargs)
 
@@ -327,10 +331,10 @@ class Environment(object):
         Function call without arguments. Because of the smaller signature and
         fewer logic here we have a bit of redundant code.
         """
-        if getattr(f, 'jinja_unsafe_call', False) or \
-           getattr(f, 'alters_data', False):
+        if _getattr(f, 'jinja_unsafe_call', False) or \
+           _getattr(f, 'alters_data', False):
             return self.undefined_singleton
-        if getattr(f, 'jinja_context_callable', False):
+        if _getattr(f, 'jinja_context_callable', False):
             return f(self, context)
         return f()
 
@@ -344,7 +348,7 @@ class Environment(object):
             return u''
         elif value is self.undefined_singleton:
             return unicode(value)
-        elif getattr(value, 'jinja_no_finalization', False):
+        elif _getattr(value, 'jinja_no_finalization', False):
             return value
         val = self.to_unicode(value)
         if self.default_filters:
