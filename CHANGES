@@ -108,6 +108,8 @@ Version 1.1
 
 - added `simplefilter` decorator.
 
+- improved ChoiceLoader error reporting (thanks to Bryan McLemore)
+
 
 Version 1.0
 -----------
