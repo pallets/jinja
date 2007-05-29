@@ -126,6 +126,12 @@ class BaseLoader(object):
         ast = self.parse(environment, name, None)
         return translator.process(environment, ast)
 
+    def get_source(self, environment, name, parent):
+        """
+        Override this method to get the source for a template.
+        """
+        raise TemplateNotFound(name)
+
 
 class CachedLoaderMixin(object):
     """
@@ -361,11 +367,11 @@ class PackageLoader(CachedLoaderMixin, BaseLoader):
 
     def get_source(self, environment, name, parent):
         from pkg_resources import resource_exists, resource_string
-        name = '/'.join([self.package_path] + [p for p in name.split('/')
-                        if p != '..'])
-        if not resource_exists(self.package_name, name):
+        path = '/'.join([self.package_path] + [p for p in name.split('/')
+                         if p != '..'])
+        if not resource_exists(self.package_name, path):
             raise TemplateNotFound(name)
-        contents = resource_string(self.package_name, name)
+        contents = resource_string(self.package_name, path)
         return contents.decode(environment.template_charset)
 
     def check_source_changed(self, environment, name):
@@ -496,7 +502,9 @@ class ChoiceLoader(object):
         for loader in self.loaders:
             try:
                 return loader.get_source(environment, name, parent)
-            except TemplateNotFound:
+            except TemplateNotFound, e:
+                if e.name != name:
+                    raise
                 continue
         raise TemplateNotFound(name)
 
@@ -504,7 +512,9 @@ class ChoiceLoader(object):
         for loader in self.loaders:
             try:
                 return loader.parse(environment, name, parent)
-            except TemplateNotFound:
+            except TemplateNotFound, e:
+                if e.name != name:
+                    raise
                 continue
         raise TemplateNotFound(name)
 
@@ -512,6 +522,8 @@ class ChoiceLoader(object):
         for loader in self.loaders:
             try:
                 return loader.load(environment, name, translator)
-            except TemplateNotFound:
+            except TemplateNotFound, e:
+                if e.name != name:
+                    raise
                 continue
         raise TemplateNotFound(name)

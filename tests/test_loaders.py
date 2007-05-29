@@ -81,6 +81,15 @@ def test_choice_loader():
     else:
         raise AssertionError('expected template exception')
 
+    # this should raise an TemplateNotFound error with the
+    # correct name
+    try:
+        env.get_template('brokenimport.html')
+    except TemplateNotFound, e:
+        assert e.name == 'missing.html'
+    else:
+        raise AssertionError('expected exception')
+
 
 def test_function_loader():
     env = Environment(loader=function_loader)

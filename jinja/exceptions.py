@@ -61,8 +61,9 @@ class TemplateNotFound(IOError, TemplateError):
     Raised if a template does not exist.
     """
 
-    def __init__(self, message):
-        IOError.__init__(self, message)
+    def __init__(self, name):
+        IOError.__init__(self, name)
+        self.name = name
 
 
 class TemplateSyntaxError(SyntaxError, TemplateError):
