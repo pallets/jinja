@@ -126,12 +126,6 @@ class BaseLoader(object):
         ast = self.parse(environment, name, None)
         return translator.process(environment, ast)
 
-    def get_source(self, environment, name, parent):
-        """
-        Override this method to get the source for a template.
-        """
-        raise TemplateNotFound(name)
-
 
 class CachedLoaderMixin(object):
     """
