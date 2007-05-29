@@ -311,10 +311,15 @@ class Lexer(object):
                         elif data == '[':
                             balancing_stack.append(']')
                         elif data in ('}', ')', ']'):
-                            if not balancing_stack or \
-                               balancing_stack.pop() != data:
-                                raise TemplateSyntaxError('unexpected EOF '
-                                                          'while lexing',
+                            if not balancing_stack:
+                                raise TemplateSyntaxError('unexpected "%s"' %
+                                                          data, lineno,
+                                                          filename)
+                            expected_op = balancing_stack.pop()
+                            if expected_op != data:
+                                raise TemplateSyntaxError('unexpected "%s", '
+                                                          'expected "%s"' %
+                                                          (data, expected_op),
                                                           lineno, filename)
                     # yield items
                     if tokens is not None:
