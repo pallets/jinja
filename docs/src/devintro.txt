@@ -90,6 +90,35 @@ Theoretically you can provide your own singleton by subclassing
 the basic use cases. The `Undefined` object in that module exists for
 backwards compatibility and is an alias for `SilentUndefined`.
 
+To create your own undefined singleton do something like this:
+
+.. sourcecode:: jinja
+
+    from jinja.datastructure import AbstractUndefinedType, make_undefined
+
+    class MyUndefinedType(AbstractUndefindedType):
+        __slots__ = ()
+
+        def __iter__(self):
+            return iter(int, 0)
+
+        def __reduce__(self):
+            return 'MyUndefined'
+
+    MyUndefined = make_undefined(MyUndefinedType)
+
+The only thing you have to do is to override `__reduce__` so that it returns
+the name of the singleton instance and create the instance using
+`make_undefined`. Everything else is up to you. Note that currently attributes
+on undefined objects are available in the Jinja layer too which however
+will change in one of the next Jinja versions. So if you put a `foo` attribute
+on your undefined singleton you will be able to do ``{{ undefined.foo }}``
+by now but certainly not in the future.
+
+This limitation currently exists because undefined is treated as normal object
+and thus affected by normal getattr calls.
+
+
 Automatic Escaping
 ==================
 

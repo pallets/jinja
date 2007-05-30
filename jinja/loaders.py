@@ -42,6 +42,13 @@ def get_cachename(cachepath, name, salt=None):
                              (name, salt or '')).hexdigest())
 
 
+
+def _loader_missing(*args, **kwargs):
+    """Helper function for `LoaderWrapper`."""
+    raise RuntimeError('no loader defined')
+
+
+
 class LoaderWrapper(object):
     """
     Wraps a loader so that it's bound to an environment.
@@ -52,7 +59,7 @@ class LoaderWrapper(object):
         self.environment = environment
         self.loader = loader
         if self.loader is None:
-            self.get_source = self.parse = self.load = self._loader_missing
+            self.get_source = self.parse = self.load = _loader_missing
             self.available = False
         else:
             self.available = True
@@ -97,7 +104,7 @@ class LoaderWrapper(object):
         raise RuntimeError('no loader defined')
 
     def __nonzero__(self):
-        return self.loader is not None
+        return self.available
 
 
 class BaseLoader(object):

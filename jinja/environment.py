@@ -8,14 +8,13 @@
     :copyright: 2007 by Armin Ronacher.
     :license: BSD, see LICENSE for more details.
 """
-import re
 from jinja.lexer import Lexer
 from jinja.parser import Parser
 from jinja.loaders import LoaderWrapper
 from jinja.datastructure import SilentUndefined, Markup, Context, FakeTranslator
 from jinja.utils import collect_translations, get_attribute
 from jinja.exceptions import FilterNotFound, TestNotFound, \
-     SecurityException, TemplateSyntaxError, TemplateRuntimeError
+     SecurityException, TemplateSyntaxError
 from jinja.defaults import DEFAULT_FILTERS, DEFAULT_TESTS, DEFAULT_NAMESPACE
 
 
@@ -186,7 +185,6 @@ class Environment(object):
         Python code. This code is wrapped within a `Template` class that
         allows you to render it.
         """
-        from jinja.parser import Parser
         from jinja.translators.python import PythonTranslator
         try:
             rv = PythonTranslator.process(self, Parser(self, source).parse())
