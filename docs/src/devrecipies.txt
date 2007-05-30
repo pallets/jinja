@@ -83,7 +83,7 @@ function similar to the one shipped with django just that it uses Jinja for
 rendering. It applies the context processors on the context and consumes a
 `RequestContext`:
 
-.. sourcecode:: jinja
+.. sourcecode:: python
 
     from django.template.context import get_standard_processors
     from django.http import HttpResponse
@@ -101,3 +101,26 @@ rendering. It applies the context processors on the context and consumes a
         for processor in get_standard_processors():
             context.update(processor(request))
         return HttpResponse(template.render(context))
+
+
+If you want to plug Jinja into the Django i18n system you can use this
+environment class:
+
+.. sourcecode:: python
+
+    from jinja import Environment
+    from django.utils.translation import gettext, ngettext
+
+    class DjangoTranslator(object):
+
+        def __init__(self):
+            self.gettext = gettext
+            self.ngettext = ngettext
+
+    class DjangoEnvironment(Environment):
+
+        def get_translator(self, context):
+            return DjangoTranslator()
+
+Because Django uses gettext internally we can create just assign the
+ngettext and gettext functions directly to the translator class.
