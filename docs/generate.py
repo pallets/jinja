@@ -101,6 +101,30 @@ def generate_list_of_loaders():
 
     return '\n\n'.join(result)
 
+def generate_list_of_baseloaders():
+    from jinja import loaders as loader_module
+
+    result = []
+    loaders = []
+    for item in dir(loader_module):
+        obj = getattr(loader_module, item)
+        try:
+            if issubclass(obj, loader_module.BaseLoader) and \
+               obj.__name__ != 'BaseLoader' and \
+               obj.__name__ not in loader_module.__all__:
+                loaders.append(obj)
+        except TypeError:
+            pass
+    loaders.sort(key=lambda x: x.__name__.lower())
+
+    for loader in loaders:
+        doclines = []
+        for line in inspect.getdoc(loader).splitlines():
+            doclines.append('    ' + line)
+        result.append('`%s`\n%s' % (loader.__name__, '\n'.join(doclines)))
+
+    return '\n\n'.join(result)
+
 def generate_environment_doc():
     from jinja.environment import Environment
     return '%s\n\n%s' % (
@@ -115,6 +139,7 @@ PYGMENTS_FORMATTER = HtmlFormatter(style='pastie', cssclass='syntax')
 LIST_OF_FILTERS = generate_list_of_filters()
 LIST_OF_TESTS = generate_list_of_tests()
 LIST_OF_LOADERS = generate_list_of_loaders()
+LIST_OF_BASELOADERS = generate_list_of_baseloaders()
 ENVIRONMENT_DOC = generate_environment_doc()
 CHANGELOG = file(os.path.join(os.path.dirname(__file__), os.pardir, 'CHANGES'))\
             .read().decode('utf-8')
@@ -240,6 +265,7 @@ def generate_documentation(data, link_style):
     data = data.replace('[[list_of_filters]]', LIST_OF_FILTERS)\
                .replace('[[list_of_tests]]', LIST_OF_TESTS)\
                .replace('[[list_of_loaders]]', LIST_OF_LOADERS)\
+               .replace('[[list_of_baseloaders]]', LIST_OF_BASELOADERS)\
                .replace('[[environment_doc]]', ENVIRONMENT_DOC)\
                .replace('[[changelog]]', CHANGELOG)
     parts = publish_parts(

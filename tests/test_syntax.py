@@ -19,6 +19,7 @@ UNARY = '''{{ +3 }}|{{ -3 }}'''
 COMPARE = '''{{ 1 > 0 }}|{{ 1 >= 1 }}|{{ 2 < 3 }}|{{ 2 == 2 }}|{{ 1 <= 1 }}'''
 LITERALS = '''{{ [] }}|{{ {} }}|{{ '' }}'''
 BOOL = '''{{ true and false }}|{{ false or true }}|{{ not false }}'''
+GROUPING = '''{{ (true and false) or (false and true) and not false }}'''
 
 
 def test_call():
@@ -82,3 +83,8 @@ def test_literals(env):
 def test_bool(env):
     tmpl = env.from_string(BOOL)
     assert tmpl.render() == 'False|True|True'
+
+
+def test_grouping(env):
+    tmpl = env.from_string(GROUPING)
+    assert tmpl.render() == 'False'

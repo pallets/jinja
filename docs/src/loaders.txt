@@ -7,7 +7,20 @@ This part of the documentation explains how to use and write a template loader.
 Builtin Loaders
 ===============
 
+This list contains the builtin loaders you can use without further
+modification:
+
 [[list_of_loaders]]
+
+Loader Baseclasses
+==================
+
+With Jinja 1.1 onwards all the loaders have (except of the uncached) now have
+baseclasses you can use to mix your own caching layer in. This technique is
+explained below. The `BaseLoader` itself is also a loader baseclass but because
+it's the baseclass of each loader it's explained in detail below.
+
+[[list_of_baseloaders]]
 
 Developing Loaders
 ==================
@@ -43,7 +56,13 @@ Here the implementation of a simple loader based on the `BaseLoader` from
                 f.close()
 
 The functions `load` and `parse` which are a requirement for a loader are
-added automatically by the `BaseLoader`.
+added automatically by the `BaseLoader`. Instead of the normal `BaseLoader`
+you can use one of the other base loaders that already come with a proper
+`get_source` method for further modification. Those loaders however are
+new in Jinja 1.1.
+
+CachedLoaderMixin
+-----------------
 
 Additionally to the `BaseLoader` there is a mixin class called
 `CachedLoaderMixin` that implements memory and disk caching of templates.
@@ -91,4 +110,37 @@ You don't have to provide the `check_source_changed` method. If it doesn't
 exist the option `auto_reload` won't have an effect. Also note that the
 `check_source_changed` method must not raise an exception if the template
 does not exist but return ``-1``. The return value ``-1`` is considered
-"always reload" whereas ``0`` means "do not reload".
+"always reload" whereas ``0`` means "do not reload". The default return
+value for not existing templates should be ``-1``.
+
+For the default base classes that come with Jinja 1.1 onwards there exist
+also concrete implementations that support caching. The implementation
+just mixes in the `CachedLoaderMixin`.
+
+MemcachedLoaderMixin
+--------------------
+
+*New in Jinja 1.1*
+
+The `MemcachedLoaderMixin` class adds support for `memcached`_ caching.
+There is only one builtin loader that mixes it in: The
+`MemcachedFileSystemLoader`. If you need other loaders with this mixin
+you can easily subclass one of the existing base loaders. Here an example
+for the `FunctionLoader`:
+
+.. sourcecode:: python
+
+    from jinja.loaders import FunctionLoader, MemcachedLoaderMixin
+
+    class MemcachedFunctionLoader(MemcachedLoaderMixin, FunctionLoader):
+
+        def __init__(self, loader_func):
+            BaseFunctionLoader.__init__(self, loader_func)
+            MemcachedLoaderMixin.__init__(self,
+                True,                   # use memcached
+                60 * 60 * 24 * 7,       # 7 days expiration
+                ['127.0.0.1:11211'],    # the memcached hosts
+                'template/'             # string prefix for the cache keys
+            )
+
+.. _memcached: http://www.danga.com/memcached/

@@ -71,7 +71,6 @@ except NameError:
 #: function types
 callable_types = (FunctionType, MethodType)
 
-
 #: number of maximal range items
 MAX_RANGE = 1000000
 

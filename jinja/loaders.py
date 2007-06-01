@@ -5,7 +5,7 @@
 
     Jinja loader classes.
 
-    :copyright: 2007 by Armin Ronacher.
+    :copyright: 2007 by Armin Ronacher, Bryan McLemore.
     :license: BSD, see LICENSE for more details.
 """
 
@@ -22,7 +22,7 @@ from jinja.utils import CacheDict, raise_syntax_error
 
 #: when updating this, update the listing in the jinja package too
 __all__ = ['FileSystemLoader', 'PackageLoader', 'DictLoader', 'ChoiceLoader',
-           'FunctionLoader']
+           'FunctionLoader', 'MemcachedFileSystemLoader']
 
 
 def get_template_filename(searchpath, name):
@@ -142,7 +142,14 @@ class BaseLoader(object):
 
 class CachedLoaderMixin(object):
     """
-    Mixin this class to implement simple memory and disk caching.
+    Mixin this class to implement simple memory and disk caching. The
+    memcaching just uses a dict in the loader so if you have a global
+    environment or at least a global loader this can speed things up.
+
+    If the memcaching is enabled you can use (with Jinja 1.1 onwards)
+    the `clear_memcache` function to clear the cache.
+
+    For memcached support check the `MemcachedLoaderMixin`.
     """
 
     def __init__(self, use_memcache, cache_size, cache_folder, auto_reload,
@@ -160,13 +167,20 @@ class CachedLoaderMixin(object):
         self.__times = {}
         self.__lock = Lock()
 
+    def clear_memcache(self):
+        """
+        Clears the memcache.
+        """
+        if self.__memcache is not None:
+            self.__memcache.clear()
+
     def load(self, environment, name, translator):
         """
         Load and translate a template. First we check if there is a
         cached version of this template in the memory cache. If this is
         not the cache check for a compiled template in the disk cache
-        folder. And if none of this is the case we translate the temlate
-        using the `LoaderMixin.load` function, cache and return it.
+        folder. And if none of this is the case we translate the temlate,
+        cache and return it.
         """
         self.__lock.acquire()
         try:
@@ -193,8 +207,7 @@ class CachedLoaderMixin(object):
                 if name in self.__memcache:
                     tmpl = self.__memcache[name]
                     # if auto reload is enabled check if the template changed
-                    if last_change is not None and \
-                       last_change > self.__times[name]:
+                    if last_change and last_change > self.__times[name]:
                         tmpl = None
                         push_to_memory = True
                 else:
@@ -247,7 +260,105 @@ class CachedLoaderMixin(object):
             self.__lock.release()
 
 
-class FileSystemLoader(CachedLoaderMixin, BaseLoader):
+class MemcachedLoaderMixin(object):
+    """
+    Uses a memcached server to cache the templates.
+    """
+
+    def __init__(self, use_memcache, memcache_time=60 * 60 * 24 * 7,
+                 memcache_host=None, item_prefix='template/'):
+        try:
+            from memcache import Client
+        except ImportError:
+            raise RuntimeError('the %r loader requires an installed '
+                               'memcache module' % self.__class__.__name__)
+        if memcache_host is None:
+            memcache_host = ['127.0.0.1:11211']
+        if use_memcache:
+            self.__memcache = Client(list(memcache_host))
+            self.__memcache_time = memcache_time
+        else:
+            self.__memcache = None
+        self.__item_prefix = item_prefix
+        self.__lock = Lock()
+
+    def load(self, environment, name, translator):
+        """
+        Load and translate a template. First we check if there is a
+        cached version of this template in the memory cache. If this is
+        not the cache check for a compiled template in the disk cache
+        folder. And if none of this is the case we translate the template,
+        cache and return it.
+        """
+        self.__lock.acquire()
+        try:
+            # caching is only possible for the python translator. skip
+            # all other translators
+            if translator is not PythonTranslator:
+                return super(MemcachedLoaderMixin, self).load(
+                             environment, name, translator)
+            tmpl = None
+            push_to_memory = False
+
+            # check if we have something in the memory cache and the
+            # memory cache is enabled.
+            if self.__memcache is not None:
+                bytecode = self.__memcache.get(self.__item_prefix + name)
+                if bytecode:
+                    tmpl = Template.load(environment, bytecode)
+                else:
+                    push_to_memory = True
+
+            # if we still have no template we load, parse and translate it.
+            if tmpl is None:
+                tmpl = super(MemcachedLoaderMixin, self).load(
+                             environment, name, translator)
+
+            # if memcaching is enabled and the template not loaded
+            # we add that there.
+            if push_to_memory:
+                self.__memcache.set(self.__item_prefix + name, tmpl.dump(),
+                                    self.__memcache_time)
+            return tmpl
+        finally:
+            self.__lock.release()
+
+
+class BaseFileSystemLoader(BaseLoader):
+    """
+    Baseclass for the file system loader that does not do any caching.
+    It exists to avoid redundant code, just don't use it without subclassing.
+
+    How subclassing can work:
+
+    .. sourcecode:: python
+
+        from jinja.loaders import BaseFileSystemLoader
+
+        class MyFileSystemLoader(BaseFileSystemLoader):
+            def __init__(self):
+                BaseFileSystemLoader.__init__(self, '/path/to/templates')
+
+    The base file system loader only takes one parameter beside self which
+    is the path to the templates.
+    """
+
+    def __init__(self, searchpath):
+        self.searchpath = path.abspath(searchpath)
+
+    def get_source(self, environment, name, parent):
+        filename = get_template_filename(self.searchpath, name)
+        if path.exists(filename):
+            f = codecs.open(filename, 'r', environment.template_charset)
+            try:
+                return f.read()
+            finally:
+                f.close()
+        else:
+            raise TemplateNotFound(name)
+
+
+class FileSystemLoader(CachedLoaderMixin, BaseFileSystemLoader):
     """
     Loads templates from the filesystem:
 
@@ -257,7 +368,7 @@ class FileSystemLoader(CachedLoaderMixin, BaseLoader):
         e = Environment(loader=FileSystemLoader('templates/'))
 
     You can pass the following keyword arguments to the loader on
-    initialisation:
+    initialization:
 
     =================== =================================================
     ``searchpath``      String with the path to the templates on the
@@ -287,22 +398,12 @@ class FileSystemLoader(CachedLoaderMixin, BaseLoader):
 
     def __init__(self, searchpath, use_memcache=False, memcache_size=40,
                  cache_folder=None, auto_reload=True, cache_salt=None):
-        self.searchpath = path.abspath(searchpath)
+        BaseFileSystemLoader.__init__(self, searchpath)
+
         if cache_salt is None:
             cache_salt = self.searchpath
         CachedLoaderMixin.__init__(self, use_memcache, memcache_size,
                                    cache_folder, auto_reload, cache_salt)
-
-    def get_source(self, environment, name, parent):
-        filename = get_template_filename(self.searchpath, name)
-        if path.exists(filename):
-            f = codecs.open(filename, 'r', environment.template_charset)
-            try:
-                return f.read()
-            finally:
-                f.close()
-        else:
-            raise TemplateNotFound(name)
 
     def check_source_changed(self, environment, name):
         filename = get_template_filename(self.searchpath, name)
@@ -311,7 +412,84 @@ class FileSystemLoader(CachedLoaderMixin, BaseLoader):
         return -1
 
 
-class PackageLoader(CachedLoaderMixin, BaseLoader):
+class MemcachedFileSystemLoader(MemcachedLoaderMixin, BaseFileSystemLoader):
+    """
+    Loads templates from the filesystem and caches them on a memcached
+    server.
+
+    .. sourcecode:: python
+
+        from jinja import Environment, MemcachedFileSystemLoader
+        e = Environment(loader=MemcachedFileSystemLoader('templates/',
+            memcache_host=['192.168.2.250:11211']
+        ))
+
+    You can pass the following keyword arguments to the loader on
+    initialization:
+
+    =================== =================================================
+    ``searchpath``      String with the path to the templates on the
+                        filesystem.
+    ``use_memcache``    Set this to ``True`` to enable memcached caching.
+                        In that case it behaves like a normal
+                        `FileSystemLoader` with disabled caching.
+    ``memcache_time``   The expire time of a template in the cache.
+    ``memcache_host``   a list of memcached servers.
+    ``item_prefix``     The prefix for the items on the server. Defaults
+                        to ``'template/'``.
+    =================== =================================================
+    """
+
+    def __init__(self, searchpath, use_memcache=True,
+                 memcache_time=60 * 60 * 24 * 7, memcache_host=None,
+                 item_prefix='template/'):
+        BaseFileSystemLoader.__init__(self, searchpath)
+        MemcachedLoaderMixin.__init__(self, use_memcache, memcache_time,
+                                      memcache_host, item_prefix)
+
+
+class BasePackageLoader(BaseLoader):
+    """
+    Baseclass for the package loader that does not do any caching.
+
+    It accepts two parameters: The name of the package and the path relative
+    to the package:
+
+    .. sourcecode:: python
+
+        from jinja.loaders import BasePackageLoader
+
+        class MyPackageLoader(BasePackageLoader):
+            def __init__(self):
+                BasePackageLoader.__init__(self, 'my_package', 'shared/templates')
+
+    The relative path must use slashes as path delimiters, even on Mac OS
+    and Microsoft Windows.
+
+    It uses the `pkg_resources` libraries distributed with setuptools for
+    retrieving the data from the packages. This works for eggs too so you
+    don't have to mark your egg as non zip safe.
+    """
+
+    def __init__(self, package_name, package_path):
+        try:
+            import pkg_resources
+        except ImportError:
+            raise RuntimeError('setuptools not installed')
+        self.package_name = package_name
+        self.package_path = package_path
+
+    def get_source(self, environment, name, parent):
+        from pkg_resources import resource_exists, resource_string
+        path = '/'.join([self.package_path] + [p for p in name.split('/')
+                         if p != '..'])
+        if not resource_exists(self.package_name, path):
+            raise TemplateNotFound(name)
+        contents = resource_string(self.package_name, path)
+        return contents.decode(environment.template_charset)
+
+
+class PackageLoader(CachedLoaderMixin, BasePackageLoader):
     """
     Loads templates from python packages using setuptools.
 
@@ -321,7 +499,7 @@ class PackageLoader(CachedLoaderMixin, BaseLoader):
         e = Environment(loader=PackageLoader('yourapp', 'template/path'))
 
     You can pass the following keyword arguments to the loader on
-    initialisation:
+    initialization:
 
     =================== =================================================
     ``package_name``    Name of the package containing the templates.
@@ -361,25 +539,12 @@ class PackageLoader(CachedLoaderMixin, BaseLoader):
     def __init__(self, package_name, package_path, use_memcache=False,
                  memcache_size=40, cache_folder=None, auto_reload=True,
                  cache_salt=None):
-        try:
-            import pkg_resources
-        except ImportError:
-            raise RuntimeError('setuptools not installed')
-        self.package_name = package_name
-        self.package_path = package_path
+        BasePackageLoader.__init__(self, package_name, package_path)
+
         if cache_salt is None:
             cache_salt = package_name + '/' + package_path
         CachedLoaderMixin.__init__(self, use_memcache, memcache_size,
                                    cache_folder, auto_reload, cache_salt)
-
-    def get_source(self, environment, name, parent):
-        from pkg_resources import resource_exists, resource_string
-        path = '/'.join([self.package_path] + [p for p in name.split('/')
-                         if p != '..'])
-        if not resource_exists(self.package_name, path):
-            raise TemplateNotFound(name)
-        contents = resource_string(self.package_name, path)
-        return contents.decode(environment.template_charset)
 
     def check_source_changed(self, environment, name):
         from pkg_resources import resource_exists, resource_filename
@@ -390,7 +555,38 @@ class PackageLoader(CachedLoaderMixin, BaseLoader):
         return -1
 
 
-class FunctionLoader(CachedLoaderMixin, BaseLoader):
+class BaseFunctionLoader(BaseLoader):
+    """
+    Baseclass for the function loader that doesn't do any caching.
+
+    It just accepts one parameter which is the function which is called
+    with the name of the requested template. If the return value is `None`
+    the loader will raise a `TemplateNotFound` error.
+
+    .. sourcecode:: python
+
+        from jinja.loaders import BaseFunctionLoader
+
+        templates = {...}
+
+        class MyFunctionLoader(BaseFunctionLoader):
+            def __init__(self):
+                BaseFunctionLoader(templates.get)
+    """
+
+    def __init__(self, loader_func):
+        self.loader_func = loader_func
+
+    def get_source(self, environment, name, parent):
+        rv = self.loader_func(name)
+        if rv is None:
+            raise TemplateNotFound(name)
+        if isinstance(rv, str):
+            return rv.decode(environment.template_charset)
+        return rv
+
+
+class FunctionLoader(CachedLoaderMixin, BaseFunctionLoader):
     """
     Loads templates by calling a function which has to return a string
     or `None` if an error occoured.
@@ -410,7 +606,7 @@ class FunctionLoader(CachedLoaderMixin, BaseLoader):
     solid backend.
 
     You can pass the following keyword arguments to the loader on
-    initialisation:
+    initialization:
 
     =================== =================================================
     ``loader_func``     Function that takes the name of the template to
@@ -446,22 +642,14 @@ class FunctionLoader(CachedLoaderMixin, BaseLoader):
     def __init__(self, loader_func, getmtime_func=None, use_memcache=False,
                  memcache_size=40, cache_folder=None, auto_reload=True,
                  cache_salt=None):
+        BaseFunctionLoader.__init__(self, loader_func)
         # when changing the signature also check the jinja.plugin function
         # loader instantiation.
-        self.loader_func = loader_func
         self.getmtime_func = getmtime_func
         if auto_reload and getmtime_func is None:
             auto_reload = False
         CachedLoaderMixin.__init__(self, use_memcache, memcache_size,
                                    cache_folder, auto_reload, cache_salt)
-
-    def get_source(self, environment, name, parent):
-        rv = self.loader_func(name)
-        if rv is None:
-            raise TemplateNotFound(name)
-        if isinstance(rv, str):
-            return rv.decode(environment.template_charset)
-        return rv
 
     def check_source_changed(self, environment, name):
         return self.getmtime_func(name)

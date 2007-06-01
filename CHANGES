@@ -112,6 +112,12 @@ Version 1.1
 
 - fixed extended slicing
 
+- reworked loader layer. All the cached loaders now have "private" non cached
+  baseclasses so that you can easily mix your own caching layers in.
+
+- added `MemcachedLoaderMixin` and `MemcachedFileSystemLoader` contributed
+  by Bryan McLemore.
+
 
 Version 1.0
 -----------
