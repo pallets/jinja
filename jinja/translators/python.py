@@ -1002,8 +1002,8 @@ class PythonTranslator(Translator):
         Handle variable based attribute access foo['bar'].
         """
         if len(node.subs) != 1:
-            raise TemplateSyntaxError('attribute access requires one argument',
-                                      node.lineno,
+            raise TemplateSyntaxError('attribute access requires one '
+                                      'argument', node.lineno,
                                       node.filename)
         assert node.flags != 'OP_DELETE', 'wtf? do we support that?'
         if node.subs[0].__class__ is ast.Sliceobj:
@@ -1209,7 +1209,4 @@ class PythonTranslator(Translator):
         """
         Extended Slice access.
         """
-        args = []
-        for n in node.nodes:
-            args.append(self.handle_node(n))
-        return '[%s]' % ':'.join(args)
+        return '[%s]' % ':'.join([self.handle_node(n) for n in node.nodes])

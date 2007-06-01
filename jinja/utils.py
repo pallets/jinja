@@ -63,7 +63,9 @@ try:
 except NameError:
     def sorted(seq, reverse=False):
         rv = list(seq)
-        rv.sort(reverse=reverse)
+        rv.sort()
+        if reverse:
+            rv.reverse()
         return rv
 
 #: function types
@@ -460,7 +462,7 @@ class DebugHelper(object):
         for name, f in filters:
             if f in strip:
                 continue
-            doc = '\n'.join('    ' + x for x in (getdoc(f) or '').splitlines())
+            doc = '\n'.join(['    ' + x for x in (getdoc(f) or '').splitlines()])
             result.append('`%s`\n\n%s' % (name, doc))
         return '\n\n'.join(result)
     filters.jinja_context_callable = True
@@ -478,7 +480,7 @@ class DebugHelper(object):
         for name, f in tests:
             if f in strip:
                 continue
-            doc = '\n'.join('    ' + x for x in (getdoc(f) or '').splitlines())
+            doc = '\n'.join(['    ' + x for x in (getdoc(f) or '').splitlines()])
             result.append('`%s`\n\n%s' % (name, doc))
         return '\n\n'.join(result)
     tests.jinja_context_callable = True

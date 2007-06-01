@@ -3,7 +3,7 @@ Jinja Changelog
 
 Version 1.1
 -----------
-(codename to be selected, release date unknown)
+(codename: sinka, released Jun 1, 2007)
 
 - blocks now support ``{{ super() }}`` to render the parent output.
 
@@ -110,9 +110,11 @@ Version 1.1
 
 - improved ChoiceLoader error reporting (thanks to Bryan McLemore)
 
+- fixed extended slicing
+
 
 Version 1.0
 -----------
-(released Mar 23, 2007)
+(codename: siyutusan, released Mar 23, 2007)
 
 - Initial release

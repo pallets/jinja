@@ -44,4 +44,8 @@ test_restricted = '''
 Traceback (most recent call last):
     ...
 TemplateSyntaxError: can't assign to expression. (line 1)
+>>> env.from_string("{% for foo, bar.baz in seq %}...{% endfor %}")
+Traceback (most recent call last):
+    ...
+TemplateSyntaxError: can't assign to expression. (line 1)
 '''

@@ -42,7 +42,7 @@ An example template then looks like this:
 
 .. sourcecode:: rhtml
 
-    <%# example eruby like configuration for jinja %>
+    <%# example eruby like configuration for Jinja %>
     <ul>
     <% for item in seq %>
       <li><%= item %></li>
@@ -63,7 +63,7 @@ designer:
 
 .. sourcecode:: html
 
-    <!--# example eruby like configuration for jinja -->
+    <!--# example SGML comment configuration for Jinja -->
     <ul>
     <!-- for item in seq -->
       <li>${item}</li>
@@ -98,6 +98,7 @@ This now allows smarty like templates:
 
 .. sourcecode:: smarty
 
+    {* example smarty-like configuration for Jinja *}
     {if something == 42}
         Something is the answer to all questions and stuff like that.
     {else}

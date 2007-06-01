@@ -6,6 +6,7 @@
     :copyright: 2007 by Armin Ronacher.
     :license: BSD, see LICENSE for more details.
 """
+from jinja.exceptions import TemplateSyntaxError
 
 KEYWORDS = '''\
 {{ with }}
@@ -31,7 +32,11 @@ KEYWORDS = '''\
 LIGHTKW = '''{{ call }}'''
 UNPACKING = '''{% for a, b, c in [[1, 2, 3]] %}{{ a }}|{{ b }}|{{ c }}{% endfor %}'''
 RAW = '''{% raw %}{{ FOO }} and {% BAR %}{% endraw %}'''
-CALL = '''{{ foo('a', c='d', e='f', *['b'], **{'g': 'h'}) }}'''
+CONST = '''{{ true }}|{{ false }}|{{ none }}|{{ undefined }}|\
+{{ none is defined }}|{{ undefined is defined }}'''
+CONSTASS1 = '''{% set true = 42 %}'''
+CONSTASS2 = '''{% for undefined in seq %}{% endfor %}'''
+
 
 def test_keywords(env):
     env.from_string(KEYWORDS)
@@ -70,14 +75,6 @@ def test_cache_dict():
     assert 'a' in d and 'c' in d and 'd' in d and 'b' not in d
 
 
-def test_call():
-    from jinja import Environment
-    env = Environment()
-    env.globals['foo'] = lambda a, b, c, e, g: a + b + c + e + g
-    tmpl = env.from_string(CALL)
-    assert tmpl.render() == 'abdfh'
-
-
 def test_stringfilter(env):
     from jinja.filters import stringfilter
     f = stringfilter(lambda f, x: f + x)
@@ -88,3 +85,18 @@ def test_simplefilter(env):
     from jinja.filters import simplefilter
     f = simplefilter(lambda f, x: f + x)
     assert f(42)(env, None, 23) == 65
+
+
+def test_const(env):
+    tmpl = env.from_string(CONST)
+    assert tmpl.render() == 'True|False|||True|False'
+
+
+def test_const_assign(env):
+    for tmpl in CONSTASS1, CONSTASS2:
+        try:
+            env.from_string(tmpl)
+        except TemplateSyntaxError:
+            pass
+        else:
+            raise AssertionError('expected syntax error')

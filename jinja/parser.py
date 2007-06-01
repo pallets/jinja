@@ -353,7 +353,7 @@ class Parser(object):
                                           lineno, self.filename)
             # plural name without trailing "_"? that's a keyword
             if not name.endswith('_'):
-                raise TemplateSyntaxError('illegal use of keyword \'%s\' as'
+                raise TemplateSyntaxError('illegal use of keyword \'%s\' as '
                                           'identifier in translatable block.'
                                           % name, lineno, self.filename)
             name = name[:-1]
@@ -369,7 +369,7 @@ class Parser(object):
                (self.no_variable_block and next_token == 'block_end'):
                 raise TemplateSyntaxError('you cannot use variable '
                                           'expressions inside translatable '
-                                          'tags. apply filters in the'
+                                          'tags. apply filters in the '
                                           'trans header.', lineno,
                                           self.filename)
             buf.append('%%(%s)s' % name)
@@ -470,7 +470,7 @@ class Parser(object):
                                         continue
                                     block_name = block_name[:-1]
                                 raise TemplateSyntaxError('unknown directive'
-                                                          "'%s'" % block_name,
+                                                          " '%s'" % block_name,
                                                           lineno,
                                                           self.filename)
                         # we have something different and are in the

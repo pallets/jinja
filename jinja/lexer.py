@@ -51,7 +51,7 @@ operator_re = re.compile('(%s)' % '|'.join([
     # braces and parenthesis
     '[', ']', '(', ')', '{', '}',
     # attribute access and comparison / logical operators
-    '.', ':', ',', '|', '==', '<', '>', '<=', '>=', '!=', '=',
+    '.', ':', ',', '|', '==', '<=', '>=', '<', '>', '!=', '=',
     ur'or\b', ur'and\b', ur'not\b', ur'in\b', ur'is\b'
 ]]))
 
@@ -275,7 +275,7 @@ class Lexer(object):
                                 lineno += g.count('\n')
                             continue
                         # failure group
-                        elif isinstance(token, Failure):
+                        elif token.__class__ is Failure:
                             raise token(lineno, filename)
                         # bygroup is a bit more complex, in that case we
                         # yield for the current token the first named

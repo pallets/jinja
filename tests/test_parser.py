@@ -40,6 +40,8 @@ SMARTY_SYNTAX = '''\
     {item}
 {-endfor}'''
 
+BALANCING = '''{{{'foo':'bar'}.foo}}'''
+
 
 def test_no_variable_block():
     env = Environment('{%', '%}', None, None)
@@ -74,3 +76,8 @@ def test_smarty_syntax():
     env = Environment('{', '}', '{', '}', '{*', '*}')
     tmpl = env.from_string(SMARTY_SYNTAX)
     assert tmpl.render(seq=range(5)) == '01234'
+
+
+def test_balancing(env):
+    tmpl = env.from_string(BALANCING)
+    assert tmpl.render() == 'bar'

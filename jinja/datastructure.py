@@ -65,6 +65,9 @@ class AbstractUndefinedType(object):
         return self
     __deepcopy__ = __copy__
 
+    def __repr__(self):
+        return 'Undefined'
+
     def __reduce__(self):
         raise TypeError('undefined objects have to provide a __reduce__')
 
