@@ -28,13 +28,17 @@ KEYWORDS = '''\
 {{ while }}
 {{ pass }}
 {{ finally }}'''
+LIGHTKW = '''{{ call }}'''
 UNPACKING = '''{% for a, b, c in [[1, 2, 3]] %}{{ a }}|{{ b }}|{{ c }}{% endfor %}'''
 RAW = '''{% raw %}{{ FOO }} and {% BAR %}{% endraw %}'''
 CALL = '''{{ foo('a', c='d', e='f', *['b'], **{'g': 'h'}) }}'''
 
-
 def test_keywords(env):
     env.from_string(KEYWORDS)
+
+
+def test_lightkw(env):
+    env.from_string(LIGHTKW)
 
 
 def test_unpacking(env):

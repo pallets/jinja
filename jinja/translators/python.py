@@ -1007,7 +1007,7 @@ class PythonTranslator(Translator):
                                       node.filename)
         assert node.flags != 'OP_DELETE', 'wtf? do we support that?'
         if node.subs[0].__class__ is ast.Sliceobj:
-            return '%s[%s]' % (
+            return '%s%s' % (
                 self.handle_node(node.expr),
                 self.handle_node(node.subs[0])
             )
