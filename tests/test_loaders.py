@@ -21,6 +21,8 @@ package_loader = loaders.PackageLoader('loaderres', 'templates')
 
 filesystem_loader = loaders.FileSystemLoader('loaderres/templates')
 
+memcached_loader = loaders.MemcachedFileSystemLoader('loaderres/templates')
+
 function_loader = loaders.FunctionLoader({'justfunction.html': 'FOO'}.get)
 
 choice_loader = loaders.ChoiceLoader([dict_loader, package_loader])
@@ -56,6 +58,20 @@ def test_package_loader():
 
 def test_filesystem_loader():
     env = Environment(loader=filesystem_loader)
+    tmpl = env.get_template('test.html')
+    assert tmpl.render().strip() == 'BAR'
+    tmpl = env.get_template('foo/test.html')
+    assert tmpl.render().strip() == 'FOO'
+    try:
+        env.get_template('missing.html')
+    except TemplateNotFound:
+        pass
+    else:
+        raise AssertionError('expected template exception')
+
+
+def test_memcached_loader():
+    env = Environment(loader=memcached_loader)
     tmpl = env.get_template('test.html')
     assert tmpl.render().strip() == 'BAR'
     tmpl = env.get_template('foo/test.html')

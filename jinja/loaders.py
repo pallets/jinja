@@ -666,6 +666,8 @@ class DictLoader(BaseLoader):
             layout='...',
             index='{% extends 'layout' %}...'
         )))
+
+    This loader does not have any caching capabilities.
     """
 
     def __init__(self, templates):

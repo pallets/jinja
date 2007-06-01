@@ -73,6 +73,24 @@ loader = GlobalLoader(globals())
 simple_env = Environment(trim_blocks=True, friendly_traceback=False, loader=loader)
 
 
+class MemcacheClient(object):
+    """
+    Helper for the loader test.
+    """
+
+    def __init__(self, hosts):
+        self.cache = {}
+
+    def get(self, name):
+        return self.cache.get(name)
+
+    def set(self, name, data, time):
+        self.cache[name] = data
+
+sys.modules['memcache'] = memcache = type(sys)('memcache')
+memcache.Client = MemcacheClient
+
+
 class Module(py.test.collect.Module):
 
     def __init__(self, *args, **kwargs):
