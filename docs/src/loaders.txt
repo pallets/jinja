@@ -144,7 +144,10 @@ for the `FunctionLoader`:
                 'template/'             # string prefix for the cache keys
             )
 
+This mixin requires the `python-memcached`_ library.
+
 .. _memcached: http://www.danga.com/memcached/
+.. _python-memcached: http://www.tummy.com/Community/software/python-memcached/
 
 How Mixin Classes Work
 ======================

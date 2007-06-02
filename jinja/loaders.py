@@ -263,6 +263,10 @@ class CachedLoaderMixin(object):
 class MemcachedLoaderMixin(object):
     """
     Uses a memcached server to cache the templates.
+
+    Requires the memcache library from tummy__.
+
+    __ http://www.tummy.com/Community/software/python-memcached/
     """
 
     def __init__(self, use_memcache, memcache_time=60 * 60 * 24 * 7,
