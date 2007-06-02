@@ -15,10 +15,11 @@ modification:
 Loader Baseclasses
 ==================
 
-With Jinja 1.1 onwards all the loaders have (except of the uncached) now have
-baseclasses you can use to mix your own caching layer in. This technique is
-explained below. The `BaseLoader` itself is also a loader baseclass but because
-it's the baseclass of each loader it's explained in detail below.
+With Jinja 1.1 onwards all the loaders have (except of the uncached)
+baseclasses. You can use them to mix your own caching layer in. This technique
+is described below. The `BaseLoader` itself is also a loader baseclass but
+because it's the baseclass of all loaders it's covered in the "Developing
+Loaders" section.
 
 [[list_of_baseloaders]]
 
@@ -144,3 +145,97 @@ for the `FunctionLoader`:
             )
 
 .. _memcached: http://www.danga.com/memcached/
+
+How Mixin Classes Work
+======================
+
+The idea of the cached loader mixins is that you override the `load`
+method of the other base class so that it's only called to get the data
+from the loader and put it into a cache and then bypass the original `load`.
+
+This works because mixin classes, as well as the loaders are so called "new
+style classes" with a MRO (method resolution order). So it's possible to
+access the parent without actually knowing the name of it.
+
+Here as small mixin class that stores everything after loading in a
+dict:
+
+.. sourcecode:: python
+
+    class SimpleCacheMixin(object):
+
+        def __init__(self):
+            self.__cache = {}
+
+        def load(self, environment, name, translator):
+            if name in self.__cache:
+                return self.__cache[name]
+            tmpl = super(SimpleCacheMixin, self).load(environment, name,
+                                                      translator)
+            self.__cache[name] = tmpl
+            return tmpl
+
+You can then mix the class in like any other mixin class. Note that
+all non public attributes **must** be prefixed with two underscores to
+enable the name mangling. Otherwise the mixin class could break the
+internal structure of the loader.
+
+The ``super(SimpleCacheMixin, self)`` call returns an object that looks
+up all the attributes you request in all the parent classes. The
+`SimpleCacheMixin` just has the `object` parent which makes it a new
+style class, but as soon as a loader is mixed in it will call the
+`load` method of the loader that is the other parent of the resulting
+class. Here a full example.
+
+Combining Everything
+====================
+
+Here a full example with a custom cache mixin and a custom base loader:
+
+.. sourcecode:: python
+
+    import codecs
+    from os.path import join
+    from jinja.loaders import BaseLoader
+    from jinja.exceptions import TemplateNotFound
+
+    class SimpleBaseLoader(BaseLoader):
+        
+        def __init__(self, path):
+            self.path = path
+
+        def get_source(self, environment, name, parent):
+            filename = join(self.path, name)
+            if not path.exists(filename):
+                raise TemplateNotFound(name)
+            f = codecs.open(filename, 'r', environment.template_charset)
+            try:
+                return f.read()
+            finally:
+                f.close()
+
+
+    class SimpleCacheMixin(object):
+
+        def __init__(self):
+            self.__cache = {}
+
+        def load(self, environment, name, translator):
+            if name in self.__cache:
+                return self.__cache[name]
+            tmpl = super(SimpleCacheMixin, self).load(environment, name,
+                                                      translator)
+            self.__cache[name] = tmpl
+            return tmpl
+
+
+    class SimpleLoader(SimpleBaseLoader, SimpleCacheMixin):
+
+        def __init__(self, path):
+            SimpleBaseLoader.__init__(self, path)
+            SimpleCacheMixin.__init__()
+
+You can of course put all the functionallity into the `SimpleLoader` but then
+you cannot exchange parts of it without rewriting much code. In the example
+above replacing the `SimpleCacheMixin` with a `MemcachedLoaderMixin` is a
+matter of 20 seconds.

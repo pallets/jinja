@@ -73,7 +73,6 @@ setup(
         ('docs', list(list_files('docs/build'))),
         ('docs/txt', list(list_files('docs/src')))
     ],
-    platforms = 'any',
     entry_points='''
     [python.templating.engines]
     jinja = jinja.plugin:BuffetPlugin

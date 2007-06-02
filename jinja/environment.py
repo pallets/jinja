@@ -129,8 +129,12 @@ class Environment(object):
         self.template_charset = template_charset
         self.charset = charset
         self.loader = loader
-        self.filters = filters is None and DEFAULT_FILTERS.copy() or filters
-        self.tests = tests is None and DEFAULT_TESTS.copy() or tests
+        if filters is None:
+            filters = DEFAULT_FILTERS.copy()
+        self.filters = filters
+        if tests is None:
+            tests = DEFAULT_TESTS.copy()
+        self.tests = tests
         self.default_filters = default_filters or []
         self.context_class = context_class
         self.undefined_singleton = undefined_singleton
@@ -138,9 +142,8 @@ class Environment(object):
 
         # global namespace
         if namespace is None:
-            self.globals = DEFAULT_NAMESPACE.copy()
-        else:
-            self.globals = namespace
+            namespace = DEFAULT_NAMESPACE.copy()
+        self.globals = namespace
 
         # jinja 1.0 compatibility
         if auto_escape:
