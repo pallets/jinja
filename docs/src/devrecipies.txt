@@ -98,8 +98,8 @@ rendering. It applies the context processors on the context and consumes a
     def render_to_response(template, context, request=None):
         template = env.get_template(template)
         if request:
-        for processor in get_standard_processors():
-            context.update(processor(request))
+            for processor in get_standard_processors():
+                context.update(processor(request))
         return HttpResponse(template.render(context))
 
 
