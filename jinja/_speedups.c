@@ -257,7 +257,7 @@ BaseContext_getitem(BaseContext *self, PyObject *item)
 
 	/* disallow access to internal jinja values */
 	name = PyString_AS_STRING(item);
-	if (name[0] && name[0] == ':' && name[1] == ':')
+	if (name[0] == ':' && name[1] == ':')
 		goto missing;
 
 	while (current) {
@@ -315,7 +315,7 @@ BaseContext_contains(BaseContext *self, PyObject *item)
 		return 0;
 
 	name = PyString_AS_STRING(item);
-	if (name[0] && name[0] == ':' && name[1] == ':')
+	if (name[0] == ':' && name[1] == ':')
 		return 0;
 
 	while (current) {
