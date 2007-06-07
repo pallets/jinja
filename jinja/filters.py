@@ -538,7 +538,7 @@ def do_textile(s):
     .. _PyTextile: http://dealmeida.net/projects/textile/
     """
     from textile import textile
-    return textile(s)
+    return textile(s.encode('utf-8')).decode('utf-8')
 do_textile = stringfilter(do_textile)
 
 
@@ -551,7 +551,7 @@ def do_markdown(s):
     .. _Python-markdown: http://www.freewisdom.org/projects/python-markdown/
     """
     from markdown import markdown
-    return markdown(s)
+    return markdown(s.encode('utf-8')).decode('utf-8')
 do_markdown = stringfilter(do_markdown)
 
 
@@ -564,12 +564,9 @@ def do_rst(s):
 
     .. _docutils: from http://docutils.sourceforge.net/
     """
-    try:
-        from docutils.core import publish_parts
-        parts = publish_parts(source=s, writer_name='html4css1')
-        return parts['fragment']
-    except:
-        return s
+    from docutils.core import publish_parts
+    parts = publish_parts(source=s, writer_name='html4css1')
+    return parts['fragment']
 do_rst = stringfilter(do_rst)
 
 
