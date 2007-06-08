@@ -39,11 +39,11 @@ class BuffetPlugin(object):
             memcache_size = opt.pop('memcache_size', 40)
             cache_folder = opt.pop('cache_folder', None)
             auto_reload = opt.pop('auto_reload', True)
-            if 'searchpath' in options:
+            if 'searchpath' in opt:
                 opt['loader'] = FileSystemLoader(opt.pop('searchpath'),
                                                  use_memcache, memcache_size,
                                                  cache_folder, auto_reload)
-            elif 'package' in options:
+            elif 'package' in opt:
                 opt['loader'] = PackageLoader(opt.pop('package'),
                                               opt.pop('package_path', ''),
                                               use_memcache, memcache_size,
