@@ -78,12 +78,21 @@ setup(
     jinja = jinja.plugin:BuffetPlugin
     ''',
     extras_require = {'plugin': ['setuptools>=0.6a2']},
-    features = {'speedups': Feature(
-        'optional C-speed enhancements',
-        standard = True,
-        ext_modules = [
-            Extension('jinja._speedups', ['jinja/_speedups.c'])
-        ]
-    )},
+    features = {
+        'speedups': Feature(
+            'optional C-speed enhancements',
+            standard = True,
+            ext_modules = [
+                Extension('jinja._speedups', ['jinja/_speedups.c'])
+            ]
+        ),
+        'extended-debugger': Feature(
+            'extended debugger',
+            standard = True,
+            ext_modules = [
+                Extension('jinja._debugger', ['jinja/_debugger.c'])
+            ]
+        )
+    },
     cmdclass = {'build_ext': optional_build_ext}
 )

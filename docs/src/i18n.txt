@@ -50,9 +50,41 @@ However. For many web applications this might be a way:
     tmpl = env.get_template('index.html')
     tmpl.render(LANGUAGE='de_DE')
 
-This example assumes that you use gettext and have a gettext
-`Translations` object which is returned by the `get_translator`
-function.
+This example assumes that you use gettext and have a gettext `Translations`
+object which is returned by the `get_translator` function. But you don't
+have to use gettext. The only thing Jinja requires is an object with to
+functions/methods on it that return and accept unicode strings:
+``gettext(string)`` that takes a string, translates and returns it, a
+``ngettext(singular, plural, count)`` function that returns the correct plural
+form for `count` items. Because some languages have no or multiple plural
+forms this is necessary.
+
+
+Translator Factory
+==================
+
+With Jinja 1.2 onwards it's possible to use a translator factory
+instead of an enviornment subclass to create a translator for a context.
+A translator factory is passed a context and has to return a translator.
+Because of the way classes work you can also assign a translator class
+that takes a context object as only argument as factory.
+
+Example:
+
+.. sourcecode:: python
+
+    from jinja import Environment
+    from myapplication import get_translator
+
+    def translator_factory(context):
+        return get_translator(context['LANGUAGE'])
+
+    env = ApplicationEnvironment(translator_factory=translator_factory)
+    tmpl = env.get_template('index.html')
+    tmpl.render(LANGUAGE='de_DE')
+
+This example assumes that the translator returned by `get_translator`
+already has a gettext and ngettext function that returns unicode strings.
 
 
 Collecting Translations
@@ -67,7 +99,7 @@ Example:
 .. sourcecode:: pycon
 
     >>> env.get_translations('index.html')
-    [(1, u'foo', None), (2, u'Foo', None), (3, u'%d Foo', u'%d Foos')]
+    [(1, u'foo', None), (2, u'Foo', None), (3, u'%(count)s Foo', u'%(count)s Foos')]
 
 The first item in the tuple is the linenumer, the second one is the
 singular form and the third is the plural form if given.

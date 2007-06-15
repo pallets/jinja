@@ -17,7 +17,7 @@ from threading import Lock
 from jinja.parser import Parser
 from jinja.translators.python import PythonTranslator, Template
 from jinja.exceptions import TemplateNotFound, TemplateSyntaxError
-from jinja.utils import CacheDict, raise_syntax_error
+from jinja.utils import CacheDict
 
 
 #: when updating this, update the listing in the jinja package too
@@ -96,6 +96,7 @@ class LoaderWrapper(object):
             if not self.environment.friendly_traceback:
                 raise
             __traceback_hide__ = True
+            from jinja.debugger import raise_syntax_error
             raise_syntax_error(e, self.environment)
 
     def _loader_missing(self, *args, **kwargs):

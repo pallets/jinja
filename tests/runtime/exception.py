@@ -32,6 +32,7 @@ e = Environment(loader=DictLoader({
       <li><a href="runtime_error">runtime error</a></li>
       <li><a href="nested_syntax_error">nested syntax error</a></li>
       <li><a href="nested_runtime_error">nested runtime error</a></li>
+      <li><a href="code_runtime_error">runtime error in code</a></li>
       <li><a href="syntax_from_string">a syntax error from string</a></li>
       <li><a href="runtime_from_string">runtime error from a string</a></li>
     </ul>
@@ -53,6 +54,10 @@ e = Environment(loader=DictLoader({
 {% include 'syntax_broken' %}
     ''',
 
+    '/code_runtime_error': u'''
+{{ broken() }}
+''',
+
     'runtime_broken': '''\
 This is an included template
 {% set a = 1 / 0 %}''',
@@ -63,6 +68,10 @@ This is an included template
 
 FAILING_STRING_TEMPLATE = '{{ 1 / 0 }}'
 BROKEN_STRING_TEMPLATE = '{% if foo %}...{% endfor %}'
+
+
+def broken():
+    raise RuntimeError("I'm broken")
 
 
 def test(environ, start_response):
@@ -78,9 +87,10 @@ def test(environ, start_response):
             start_response('404 NOT FOUND', [('Content-Type', 'text/plain')])
             return ['NOT FOUND']
     start_response('200 OK', [('Content-Type', 'text/html; charset=utf-8')])
-    return [tmpl.render().encode('utf-8')]
+    return [tmpl.render(broken=broken).encode('utf-8')]
+
 
 if __name__ == '__main__':
-    from colubrid.debug import DebuggedApplication
+    from werkzeug.debug import DebuggedApplication
     app = DebuggedApplication(test)
     make_server("localhost", 7000, app).serve_forever()

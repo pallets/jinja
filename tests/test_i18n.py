@@ -58,6 +58,14 @@ class I18NEnvironment(Environment):
 i18n_env = I18NEnvironment()
 
 
+def test_factory():
+    def factory(context):
+        return SimpleTranslator(context['LANGUAGE'] or 'en')
+    env = Environment(translator_factory=factory)
+    tmpl = env.from_string('{% trans "watch out" %}')
+    assert tmpl.render(LANGUAGE='de') == 'pass auf'
+
+
 def test_get_translations():
     trans = list(i18n_env.get_translations('child.html'))
     assert len(trans) == 1

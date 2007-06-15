@@ -1,6 +1,18 @@
 Jinja Changelog
 ===============
 
+Version 1.2
+-----------
+(codename to be selected, release date unknown)
+
+- environments now have a `translator_factory` parameter that allows
+  to change the translator without subclassing the environment.
+
+- fixed bug in buffet plugin regarding the package loader
+
+- once again improved debugger.
+
+
 Version 1.1
 -----------
 (codename: sinka, released Jun 1, 2007)

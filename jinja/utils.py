@@ -68,6 +68,13 @@ except NameError:
             rv.reverse()
         return rv
 
+# if we have extended debugger support we should really use it
+try:
+    from jinja._tbtools import *
+    has_extended_debugger = True
+except ImportError:
+    has_extended_debugger = False
+
 #: function types
 callable_types = (FunctionType, MethodType)
 
@@ -326,78 +333,6 @@ def empty_block(context):
     if 0: yield None
 
 
-def fake_template_exception(exception, filename, lineno, source,
-                            context_or_env):
-    """
-    Raise an exception "in a template". Return a traceback
-    object. This is used for runtime debugging, not compile time.
-    """
-    # some traceback systems allow to skip frames
-    __traceback_hide__ = True
-
-    from jinja.datastructure import Context
-    if isinstance(context_or_env, Context):
-        env = context_or_env.environment
-        namespace = context_or_env.to_dict()
-    else:
-        env = context_or_env
-        namespace = {}
-
-    # generate an jinja unique filename used so that linecache
-    # gets data that doesn't interferes with other modules
-    if filename is None:
-        from random import randrange
-        vfilename = 'jinja://~%d' % randrange(0, 10000)
-        filename = '<string>'
-    else:
-        vfilename = 'jinja://%s' % filename
-
-    offset = '\n' * (lineno - 1)
-    code = compile(offset + 'raise __exception_to_raise__',
-                   vfilename or '<template>', 'exec')
-
-    loader = TracebackLoader(env, source, filename)
-    loader.update_linecache(vfilename)
-    globals = {
-        '__name__':                 vfilename,
-        '__file__':                 vfilename,
-        '__loader__':               loader,
-        '__exception_to_raise__':   exception
-    }
-    try:
-        exec code in globals, namespace
-    except:
-        return sys.exc_info()
-
-
-def translate_exception(template, exc_type, exc_value, traceback, context):
-    """
-    Translate an exception and return the new traceback.
-    """
-    error_line = traceback.tb_lineno
-    for code_line, tmpl_filename, tmpl_line in template._debug_info[::-1]:
-        if code_line <= error_line:
-            break
-    else:
-        # no debug symbol found. give up
-        return traceback
-
-    return fake_template_exception(exc_value, tmpl_filename, tmpl_line,
-                                   template._source, context)[2]
-
-
-def raise_syntax_error(exception, env, source=None):
-    """
-    This method raises an exception that includes more debugging
-    informations so that debugging works better. Unlike
-    `translate_exception` this method raises the exception with
-    the traceback.
-    """
-    exc_info = fake_template_exception(exception, exception.filename,
-                                       exception.lineno, source, env)
-    raise exc_info[0], exc_info[1], exc_info[2]
-
-
 def collect_translations(ast):
     """
     Collect all translatable strings for the given ast. The
@@ -414,19 +349,8 @@ def collect_translations(ast):
         elif node.__class__ is CallFunc and \
              node.node.__class__ is Name and \
              node.node.name == '_':
-            if len(node.args) in (1, 3):
-                args = []
-                for arg in node.args:
-                    if not arg.__class__ is Const:
-                        break
-                    args.append(arg.value)
-                else:
-                    if len(args) == 1:
-                        singular = args[0]
-                        plural = None
-                    else:
-                        singular, plural, _ = args
-                    result.append((node.lineno, singular, plural))
+            if len(node.args) == 1 and node.args[0].__class__ is Const:
+                result.append((node.lineno, node.args[0].value, None))
         todo.extend(node.getChildNodes())
     result.sort(lambda a, b: cmp(a[0], b[0]))
     return result
@@ -490,49 +414,6 @@ class DebugHelper(object):
 
 #: the singleton instance of `DebugHelper`
 debug_helper = object.__new__(DebugHelper)
-
-
-class TracebackLoader(object):
-    """
-    Fake importer that just returns the source of a template.
-    """
-
-    def __init__(self, environment, source, filename):
-        self.loader = environment.loader
-        self.source = source
-        self.filename = filename
-
-    def update_linecache(self, virtual_filename):
-        """
-        Hacky way to let traceback systems know about the
-        Jinja template sourcecode. Very hackish indeed.
-        """
-        # check for linecache, not every implementation of python
-        # might have such an module.
-        try:
-            from linecache import cache
-        except ImportError:
-            return
-        data = self.get_source(None)
-        cache[virtual_filename] = (
-            len(data),
-            None,
-            data.splitlines(True),
-            virtual_filename
-        )
-
-    def get_source(self, impname):
-        source = ''
-        if self.source is not None:
-            source = self.source
-        elif self.loader is not None:
-            try:
-                source = self.loader.get_source(self.filename)
-            except TemplateNotFound:
-                pass
-        if isinstance(source, unicode):
-            source = source.encode('utf-8')
-        return source
 
 
 class CacheDict(object):

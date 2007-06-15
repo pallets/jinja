@@ -43,8 +43,7 @@ from jinja.parser import Parser
 from jinja.exceptions import TemplateSyntaxError
 from jinja.translators import Translator
 from jinja.datastructure import TemplateStream
-from jinja.utils import set, translate_exception, capture_generator, \
-     RUNTIME_EXCEPTION_OFFSET
+from jinja.utils import set, capture_generator
 
 
 #: regular expression for the debug symbols
@@ -137,16 +136,16 @@ class Template(object):
     def _debug(self, ctx, exc_type, exc_value, traceback):
         """Debugging Helper"""
         # just modify traceback if we have that feature enabled
+        from traceback import print_exception
+        print_exception(exc_type, exc_value, traceback)
+
         if self.environment.friendly_traceback:
-            # debugging system:
-            # on any exception we first skip the internal frames (currently
-            # either one (python2.5) or two (python2.4 and lower)). After that
-            # we call a function that creates a new traceback that is easier
-            # to debug.
-            for _ in xrange(RUNTIME_EXCEPTION_OFFSET):
-                traceback = traceback.tb_next
-            traceback = translate_exception(self, exc_type, exc_value,
-                                            traceback, ctx)
+            # hook the debugger in
+            from jinja.debugger import translate_exception
+            exc_type, exc_value, traceback = translate_exception(
+                self, ctx, exc_type, exc_value, traceback)
+        print_exception(exc_type, exc_value, traceback)
+
         raise exc_type, exc_value, traceback
 
 
