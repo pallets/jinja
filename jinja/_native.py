@@ -34,9 +34,7 @@ class BaseContext(object):
     stack = property(stack)
 
     def pop(self):
-        """
-        Pop the last layer from the stack and return it.
-        """
+        """Pop the last layer from the stack and return it."""
         rv = self._pop()
         self.current = self._stack[0]
         return rv
@@ -71,22 +69,16 @@ class BaseContext(object):
         return self._undefined_singleton
 
     def __setitem__(self, name, value):
-        """
-        Set a variable in the outermost layer.
-        """
+        """Set a variable in the outermost layer."""
         self.current[name] = value
 
     def __delitem__(self, name):
-        """
-        Delete an variable in the outermost layer.
-        """
+        """Delete a variable in the outermost layer."""
         if name in self.current:
             del self.current[name]
 
     def __contains__(self, name):
-        """
-        Check if the context contains a given variable.
-        """
+        """ Check if the context contains a given variable."""
         for layer in self._stack:
             if name in layer:
                 return True
