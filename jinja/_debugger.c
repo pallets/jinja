@@ -26,7 +26,7 @@ tb_set_next(PyObject *self, PyObject *args)
 	PyTracebackObject *tb, *old;
 	PyObject *next;
 
-	if (!PyArg_ParseTuple(args, "O!O:tb_set_next", &tb, PyTraceBack_Type, &next))
+	if (!PyArg_ParseTuple(args, "O!O:tb_set_next", &PyTraceBack_Type, &tb, &next))
 		return NULL;
 	if (next == Py_None) {
 		next = NULL;
