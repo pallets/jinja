@@ -42,7 +42,8 @@ tb_set_next(PyObject *self, PyObject *args)
 	tb->tb_next = (PyTracebackObject *)next;
 	Py_XDECREF(old);
 
-	Py_RETURN_NONE;
+	Py_INCREF(Py_None);
+	return Py_None;
 }
 
 
