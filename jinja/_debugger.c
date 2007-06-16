@@ -20,23 +20,29 @@
 /**
  * set the tb_next attribute of a traceback object
  */
-PyObject*
+static PyObject *
 tb_set_next(PyObject *self, PyObject *args)
 {
-	PyObject *tb, *next;
+	PyTracebackObject *tb, *old;
+	PyObject *next;
 
-	if (!PyArg_ParseTuple(args, "OO", &tb, &next))
+	if (!PyArg_ParseTuple(args, "O!O:tb_set_next", &tb, PyTraceBack_Type, &next))
 		return NULL;
-	if (!(PyTraceBack_Check(tb) && (PyTraceBack_Check(next) ||
-					next == Py_None))) {
-		PyErr_SetString(PyExc_TypeError, "traceback object required.");
+	if (next == Py_None) {
+		next = NULL;
+	} else if (!PyTraceBack_Check(next)) {
+		PyErr_SetString(PyExc_TypeError,
+				"tb_set_next arg 2 must be traceback or None");
 		return NULL;
+	} else {
+		Py_INCREF(next);
 	}
 
-	((PyTracebackObject*)tb)->tb_next = next;
+	old = tb->tb_next;
+	tb->tb_next = (PyTracebackObject *)next;
+	Py_XDECREF(old);
 
-	Py_INCREF(Py_None);
-	return Py_None;
+	Py_RETURN_NONE;
 }
 
 
@@ -52,7 +58,7 @@ static PyMethodDef module_methods[] = {
 PyMODINIT_FUNC
 init_debugger(void)
 {
-	PyObject *module = Py_InitModule3("_debugger", module_methods, "");
+	PyObject *module = Py_InitModule3("jinja._debugger", module_methods, "");
 	if (!module)
 		return;
 }
