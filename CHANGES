@@ -12,6 +12,8 @@ Version 1.2
 
 - once again improved debugger.
 
+- added `groupby` filter.
+
 
 Version 1.1
 -----------

@@ -11,7 +11,7 @@
 import re
 from random import choice
 from urllib import urlencode, quote
-from jinja.utils import urlize, escape, reversed, sorted
+from jinja.utils import urlize, escape, reversed, sorted, groupby
 from jinja.datastructure import TemplateData
 from jinja.exceptions import FilterArgumentError
 
@@ -849,6 +849,39 @@ def do_sort(reverse=False):
     return wrapped
 
 
+def do_groupby(attribute):
+    """
+    Group a sequence of objects by a common attribute.
+
+    If you for example have a list of dicts or objects that represent persons
+    with `gender`, `first_name` and `last_name` attributes and you want to
+    group all users by genders you can do something like the following
+    snippet:
+
+    .. sourcecode:: html+jinja
+
+        <ul>
+        {% for group in persons|groupby('gender') %}
+            <li>{{ group.grouper }}<ul>
+            {% for person in group.list %}
+                <li>{{ person.first_name }} {{ person.last_name }}</li>
+            {% endfor %}</ul></li>
+        {% endfor %}
+        </ul>
+
+    As you can see the item we're grouping by is stored in the `grouper`
+    attribute and the `list` contains all the objects that have this grouper
+    in common.
+    """
+    def wrapped(env, context, value):
+        expr = lambda x: env.get_attribute(x, attribute)
+        return [{
+            'grouper':  a,
+            'list':     list(b)
+        } for a, b in groupby(sorted(value, key=expr), expr)]
+    return wrapped
+
+
 FILTERS = {
     'replace':              do_replace,
     'upper':                do_upper,
@@ -895,5 +928,6 @@ FILTERS = {
     'sum':                  do_sum,
     'abs':                  do_abs,
     'round':                do_round,
-    'sort':                 do_sort
+    'sort':                 do_sort,
+    'groupby':              do_groupby
 }

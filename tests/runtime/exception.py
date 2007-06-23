@@ -54,9 +54,8 @@ e = Environment(loader=DictLoader({
 {% include 'syntax_broken' %}
     ''',
 
-    '/code_runtime_error': u'''
-{{ broken() }}
-''',
+    '/code_runtime_error': u'''We have a runtime error here:
+    {{ broken() }}''',
 
     'runtime_broken': '''\
 This is an included template

@@ -38,8 +38,6 @@
 
 import sys
 from random import randrange
-from opcode import opmap
-from types import CodeType
 
 # if we have extended debugger support we should really use it
 try:
@@ -154,7 +152,8 @@ def raise_syntax_error(exception, env, source=None):
 
 class TracebackLoader(object):
     """
-    Fake importer that just returns the source of a template.
+    Fake importer that just returns the source of a template. It's just used
+    by Jinja interally and you shouldn't use it on your own.
     """
 
     def __init__(self, environment, source, filename):
@@ -168,7 +167,8 @@ class TracebackLoader(object):
         Jinja template sourcecode. Very hackish indeed.
         """
         # check for linecache, not every implementation of python
-        # might have such an module.
+        # might have such an module (this check is pretty senseless
+        # because we depend on cpython anway)
         try:
             from linecache import cache
         except ImportError:
