@@ -19,6 +19,7 @@ SEQUENCE = '''{{ [1, 2, 3] is sequence }}|\
 {{ "foo" is sequence }}|\
 {{ 42 is sequence }}'''
 UPPER = '''{{ "FOO" is upper }}|{{ "foo" is upper }}'''
+SAMEAS = '''{{ foo is sameas(false) }}|{{ 0 is sameas(false) }}'''
 
 
 def test_defined(env):
@@ -59,3 +60,8 @@ def test_sequence(env):
 def test_upper(env):
     tmpl = env.from_string(UPPER)
     assert tmpl.render() == 'True|False'
+
+
+def test_sameas(env):
+    tmpl = env.from_string(SAMEAS)
+    assert tmpl.render(foo=False) == 'True|False'

@@ -111,6 +111,22 @@ def test_matching(regex):
     return wrapped
 
 
+def test_sameas(other):
+    """
+    Check if an object points to the same memory address than another
+    object:
+
+    .. sourcecode:: jinja
+
+        {% if foo.attribute is sameas(false) %}
+            the foo attribute really is the `False` singleton
+        {% endif %}
+
+    *New in Jinja 1.2*
+    """
+    return lambda e, c, v: v is other
+
+
 TESTS = {
     'odd':              test_odd,
     'even':             test_even,
@@ -119,5 +135,6 @@ TESTS = {
     'upper':            test_upper,
     'numeric':          test_numeric,
     'sequence':         test_sequence,
-    'matching':         test_matching
+    'matching':         test_matching,
+    'sameas':           test_sameas
 }

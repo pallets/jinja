@@ -14,6 +14,8 @@ Version 1.2
 
 - added `groupby` filter.
 
+- added `sameas` test function.
+
 
 Version 1.1
 -----------

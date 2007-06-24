@@ -872,6 +872,8 @@ def do_groupby(attribute):
     As you can see the item we're grouping by is stored in the `grouper`
     attribute and the `list` contains all the objects that have this grouper
     in common.
+
+    *New in Jinja 1.2*
     """
     def wrapped(env, context, value):
         expr = lambda x: env.get_attribute(x, attribute)
