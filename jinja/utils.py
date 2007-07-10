@@ -61,9 +61,12 @@ except NameError:
 try:
     sorted = sorted
 except NameError:
-    def sorted(seq, reverse=False):
+    _cmp = cmp
+    def sorted(seq, cmp=None, key=None, reverse=False):
         rv = list(seq)
-        rv.sort()
+        if key is not None:
+            cmp = lambda a, b: _cmp(key(a), key(b))
+        rv.sort(cmp)
         if reverse:
             rv.reverse()
         return rv

@@ -877,12 +877,10 @@ def do_groupby(attribute):
     """
     def wrapped(env, context, value):
         expr = lambda x: env.get_attribute(x, attribute)
-        rv = [{
+        return [{
             'grouper':  a,
             'list':     list(b)
-        } for a, b in groupby(sorted(value, key=expr), expr)]
-        rv.sort()
-        return rv
+        } for a, b in sorted(groupby(sorted(value, key=expr), expr))]
     return wrapped
 
 
