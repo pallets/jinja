@@ -10,6 +10,7 @@
 """
 import re
 from random import choice
+from operator import itemgetter
 from urllib import urlencode, quote
 from jinja.utils import urlize, escape, reversed, sorted, groupby
 from jinja.datastructure import TemplateData
@@ -877,10 +878,11 @@ def do_groupby(attribute):
     """
     def wrapped(env, context, value):
         expr = lambda x: env.get_attribute(x, attribute)
-        return [{
+        return sorted([{
             'grouper':  a,
             'list':     list(b)
-        } for a, b in sorted(groupby(sorted(value, key=expr), expr))]
+        } for a, b in groupby(sorted(value, key=expr), expr)],
+            key=itemgetter('grouper'))
     return wrapped
 
 
