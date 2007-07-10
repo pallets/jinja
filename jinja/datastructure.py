@@ -588,7 +588,7 @@ class TemplateStream(object):
                     if c_size >= size:
                         raise StopIteration()
             except StopIteration:
-                if not size:
+                if not c_size:
                     raise
             return u''.join(buf)
 
