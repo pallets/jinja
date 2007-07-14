@@ -131,7 +131,7 @@ an syntax error. Here some examples:
             {% block myblock %}
               ...
             {% endblock %}
-          {% endblock %}
+          {% endif %}
         {% endblock %}
 
     This can work although it probably makes no sense in this specific case.
