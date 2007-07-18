@@ -563,7 +563,7 @@ def do_rst(s):
 
     requires `docutils`_.
 
-    .. _docutils: from http://docutils.sourceforge.net/
+    .. _docutils: http://docutils.sourceforge.net/
     """
     from docutils.core import publish_parts
     parts = publish_parts(source=s, writer_name='html4css1')
