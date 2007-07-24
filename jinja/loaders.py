@@ -273,7 +273,10 @@ class MemcachedLoaderMixin(object):
     def __init__(self, use_memcache, memcache_time=60 * 60 * 24 * 7,
                  memcache_host=None, item_prefix='template/'):
         try:
-            from memcache import Client
+            try:
+                from cmemcache import Client
+            except ImportError:
+                from memcache import Client
         except ImportError:
             raise RuntimeError('the %r loader requires an installed '
                                'memcache module' % self.__class__.__name__)
