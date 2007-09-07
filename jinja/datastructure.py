@@ -11,6 +11,8 @@
 
 from jinja.exceptions import TemplateSyntaxError, TemplateRuntimeError
 
+_missing = object()
+
 
 def contextcallable(f):
     """
@@ -262,6 +264,16 @@ class Context(BaseContext):
                 result[key] = value
         return result
 
+    def set_nonlocal(self, name, value):
+        """
+        Set a value in an outer scope.
+        """
+        for layer in self.stack[:0:-1]:
+            if name in layer:
+                layer[name] = value
+                return
+        self.current[name] = value
+
     def translate_func(self):
         """
         The translation function for this context. It takes
@@ -443,108 +455,171 @@ class StateTest(object):
     functions that replace some lambda expressions
     """
 
-    def __init__(self, func, error_message):
+    def __init__(self, func, msg):
         self.func = func
-        self.error_message = error_message
+        self.msg = msg
 
-    def __call__(self, p, t, d):
-        return self.func(p, t, d)
+    def __call__(self, token):
+        return self.func(token)
 
-    def expect_token(token_name, error_message=None):
-        """Scans until a token types is found."""
-        return StateTest(lambda p, t, d: t == token_name, 'expected ' +
-                         (error_message or token_name))
+    def expect_token(*types, **kw):
+        """Scans until one of the given tokens is found."""
+        msg = kw.pop('msg', None)
+        if kw:
+            raise TypeError('unexpected keyword argument %r' % iter(kw).next())
+        if len(types) == 1:
+            if msg is None:
+                msg = "expected '%s'" % types[0]
+            return StateTest(lambda t: t.type == types[0], msg)
+        if msg is None:
+            msg = 'expected one of %s' % ', '.join(["'%s'" % type
+                                                    for type in types])
+        return StateTest(lambda t: t.type in types, msg)
     expect_token = staticmethod(expect_token)
 
-    def expect_name(*names):
-        """Scans until one of the given names is found."""
-        if len(names) == 1:
-            name = names[0]
-            return StateTest(lambda p, t, d: t == 'name' and d == name,
-                             "expected '%s'" % name)
-        else:
-            return StateTest(lambda p, t, d: t == 'name' and d in names,
-                             'expected one of %s' % ','.join(["'%s'" % name
-                             for name in names]))
-    expect_name = staticmethod(expect_name)
+
+class Token(object):
+    """
+    Token class.
+    """
+    __slots__ = ('lineno', 'type', 'value')
+
+    def __init__(self, lineno, type, value):
+        self.lineno = lineno
+        self.type = intern(str(type))
+        self.value = value
+
+    def __str__(self):
+        from jinja.lexer import keywords, reverse_operators
+        if self.type in keywords:
+            return self.type
+        elif self.type in reverse_operators:
+            return reverse_operators[self.type]
+        return self.value
+
+    def __repr__(self):
+        return 'Token(%r, %r, %r)' % (
+            self.lineno,
+            self.type,
+            self.value
+        )
+
+
+class TokenStreamIterator(object):
+    """
+    The iterator for tokenstreams. Iterate over the stream
+    until the eof token is reached.
+    """
+
+    def __init__(self, stream):
+        self._stream = stream
+
+    def __iter__(self):
+        return self
+
+    def next(self):
+        token = self._stream.current
+        if token.type == 'eof':
+            raise StopIteration()
+        self._stream.next()
+        return token
 
 
 class TokenStream(object):
     """
-    A token stream works like a normal generator just that
-    it supports pushing tokens back to the stream.
+    A token stream wraps a generator and supports pushing tokens back.
+    It also provides some functions to expect tokens and similar stuff.
     """
 
     def __init__(self, generator, filename):
         self._next = generator.next
         self._pushed = []
-        self.last = (1, 'initial', '')
+        self.current = Token(1, 'initial', '')
         self.filename = filename
+        self.next()
+
+    def __iter__(self):
+        return TokenStreamIterator(self)
 
     def bound(self):
         """Return True if the token stream is bound to a parser."""
         return self.parser is not None
     bound = property(bound, doc=bound.__doc__)
 
-    def __iter__(self):
-        """Return self in order to mark this is iterator."""
-        return self
+    def lineno(self):
+        """The current line number."""
+        return self.current.lineno
+    lineno = property(lineno, doc=lineno.__doc__)
 
     def __nonzero__(self):
         """Are we at the end of the tokenstream?"""
-        if self._pushed:
-            return True
-        try:
-            self.push(self.next())
-        except StopIteration:
-            return False
-        return True
+        return bool(self._pushed) or self.current.type != 'eof'
 
     eos = property(lambda x: not x.__nonzero__(), doc=__nonzero__.__doc__)
 
-    def next(self):
-        """Return the next token from the stream."""
-        if self._pushed:
-            rv = self._pushed.pop()
-        else:
-            rv = self._next()
-        self.last = rv
-        return rv
-
     def look(self):
-        """Pop and push a token, return it."""
-        token = self.next()
-        self.push(*token)
-        return token
+        """See what's the next token."""
+        if self._pushed:
+            return self._pushed[-1]
+        old_token = self.current
+        self.next()
+        new_token = self.current
+        self.current = old_token
+        self.push(new_token)
+        return new_token
 
-    def fetch_until(self, test, drop_needle=False):
-        """Fetch tokens until a function matches."""
+    def push(self, token):
+        """Push a token back to the stream."""
+        self._pushed.append(token)
+
+    def skip(self, n):
+        """Got n tokens ahead."""
+        for x in xrange(n):
+            self.next()
+
+    def next(self):
+        """Go one token ahead."""
+        if self._pushed:
+            self.current = self._pushed.pop()
+        elif self.current.type != 'eof':
+            try:
+                self.current = self._next()
+            except StopIteration:
+                self.close()
+
+    def read_whitespace(self):
+        """Read all the whitespace, up to the next tag."""
+        lineno = self.current.lineno
+        buf = []
+        while self.current.type == 'data' and not \
+              self.current.value.strip():
+            buf.append(self.current.value)
+            self.next()
+        if buf:
+            return Token(lineno, 'data', u''.join(buf))
+
+    def close(self):
+        """Close the stream."""
+        self.current = Token(self.current.lineno, 'eof', '')
+        self._next = None
+
+    def expect(self, token_type, token_value=_missing):
+        """Expect a given token type and return it"""
+        if self.current.type != token_type:
+            raise TemplateSyntaxError("expected token %r, got %r" %
+                                      (token_type, self.current.type),
+                                      self.current.lineno,
+                                      self.filename)
+        elif token_value is not _missing and \
+             self.current.value != token_value:
+            raise TemplateSyntaxError("expected %r, got %r" %
+                                      (token_value, self.current.value),
+                                      self.current.lineno,
+                                      self.filename)
         try:
-            while True:
-                token = self.next()
-                if test(*token):
-                    if not drop_needle:
-                        self.push(*token)
-                    return
-                else:
-                    yield token
-        except StopIteration:
-            if isinstance(test, StateTest):
-                msg = ': ' + test.error_message
-            else:
-                msg = ''
-            raise TemplateSyntaxError('end of stream' + msg,
-                                      self.last[0], self.filename)
-
-    def drop_until(self, test, drop_needle=False):
-        """Fetch tokens until a function matches and drop all
-        tokens."""
-        for token in self.fetch_until(test, drop_needle):
-            pass
-
-    def push(self, lineno, token, data):
-        """Push an yielded token back to the stream."""
-        self._pushed.append((lineno, token, data))
+            return self.current
+        finally:
+            self.next()
 
 
 class TemplateStream(object):

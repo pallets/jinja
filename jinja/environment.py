@@ -52,6 +52,7 @@ class Environment(object):
                  tests=None,
                  context_class=Context,
                  undefined_singleton=SilentUndefined,
+                 disable_regexps=False,
                  friendly_traceback=True,
                  translator_factory=None):
         """
@@ -103,6 +104,7 @@ class Environment(object):
                                   details.
         `undefined_singleton`     The singleton value that is used for missing
                                   variables. *new in Jinja 1.1*
+        `disable_regexps`         Disable support for regular expresssions.
         `friendly_traceback`      Set this to `False` to disable the developer
                                   friendly traceback rewriting. Whenever an
                                   runtime or syntax error occours jinja will
@@ -143,6 +145,7 @@ class Environment(object):
         self.default_filters = default_filters or []
         self.context_class = context_class
         self.undefined_singleton = undefined_singleton
+        self.disable_regexps = disable_regexps
         self.friendly_traceback = friendly_traceback
 
         # global namespace
@@ -198,19 +201,17 @@ class Environment(object):
         """
         from jinja.translators.python import PythonTranslator
         try:
-            rv = PythonTranslator.process(self, Parser(self, source).parse())
+            rv = PythonTranslator.process(self, Parser(self, source).parse(),
+                                          source)
         except TemplateSyntaxError, e:
             # on syntax errors rewrite the traceback if wanted
             if not self.friendly_traceback:
                 raise
             from jinja.debugger import raise_syntax_error
-            __traceback_hide__ = True
+            if __debug__:
+                __traceback_hide__ = True
             raise_syntax_error(e, self, source)
         else:
-            # everything went well. attach the source and return it
-            # the attached source is used by the traceback system for
-            # debugging porposes
-            rv._source = source
             return rv
 
     def get_template(self, filename):
@@ -285,7 +286,7 @@ class Environment(object):
             value = func(self, context, value)
         return value
 
-    def perform_test(self, context, testname, args, value, invert):
+    def perform_test(self, context, testname, args, value):
         """
         Perform a test on a variable.
         """
@@ -301,10 +302,7 @@ class Environment(object):
             if testname not in self.tests:
                 raise TestNotFound(testname)
             context.cache[key] = func = self.tests[testname](*args)
-        rv = func(self, context, value)
-        if invert:
-            return not rv
-        return bool(rv)
+        return not not func(self, context, value)
 
     def get_attribute(self, obj, name):
         """

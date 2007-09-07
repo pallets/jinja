@@ -27,9 +27,11 @@ with the arguments ``'foo'`` and ``'bar'``, and pass the result to the filter
 
 .. admonition:: note
 
-    The filter operator has a pretty low priority. If you want to add fitered
-    values you have to put them into parentheses. The same applies if you want
-    to access attributes or return values:
+    *Jinja 1.0 and 1.1 notice*
+
+    The filter operator has a pretty low priority in Jinja 1.0 and 1.1. If you
+    want to add fitered values you have to put them into parentheses. The same
+    applies if you want to access attributes or return values:
 
     .. sourcecode:: jinja
 
@@ -42,6 +44,9 @@ with the arguments ``'foo'`` and ``'bar'``, and pass the result to the filter
             {{ (foo|filter).attribute }}
         wrong:
             {{ foo|filter.attribute }}
+
+    This changed in Jinja 1.2, from that version one the filter operator has
+    the highest priority so you can do ``foo|filter + bar|filter``.
 
 *new in Jinja 1.1*:
 
@@ -83,6 +88,17 @@ of all the provided tests by calling ``debug.tests()``:
 
     {{ debug.tests(False) }}
         -> same as above but without the builtin ones.
+
+*new in Jinja 1.2*:
+
+If a test function expects one or no argument you can leave out the parentheses.
+Previously this was only possible for text functions without arguments:
+
+.. sourcecode:: jinja
+
+    {{ foo is matching @/\s+/ }}
+        is the same as
+    {{ foo is matching(@/\s+/) }}
 
 
 Global Functions

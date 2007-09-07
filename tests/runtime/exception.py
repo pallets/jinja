@@ -1,5 +1,8 @@
-import jdebug
+import os
 import sys
+sys.path.insert(0, os.path.join(os.path.dirname(__file__), '..', '..'))
+
+import jdebug
 from jinja import Environment, DictLoader
 from jinja.exceptions import TemplateNotFound
 from wsgiref.simple_server import make_server
@@ -35,6 +38,7 @@ e = Environment(loader=DictLoader({
       <li><a href="code_runtime_error">runtime error in code</a></li>
       <li><a href="syntax_from_string">a syntax error from string</a></li>
       <li><a href="runtime_from_string">runtime error from a string</a></li>
+      <li><a href="multiple_templates">multiple templates</a></li>
     </ul>
   </body>
 </html>
@@ -53,17 +57,31 @@ e = Environment(loader=DictLoader({
     '/nested_syntax_error': u'''
 {% include 'syntax_broken' %}
     ''',
-
     '/code_runtime_error': u'''We have a runtime error here:
     {{ broken() }}''',
+    '/multiple_templates': '''\
+{{ fire_multiple_broken() }}
+''',
 
     'runtime_broken': '''\
 This is an included template
 {% set a = 1 / 0 %}''',
     'syntax_broken': '''\
 This is an included template
-{% raw %}just some foo'''
+{% raw %}just some foo''',
+    'multiple_broken': '''\
+Just some context:
+{% include 'macro_broken' %}
+{{ broken() }}
+''',
+    'macro_broken': '''\
+{% macro broken %}
+    {{ 1 / 0 }}
+{% endmacro %}
+'''
 }))
+e.globals['fire_multiple_broken'] = lambda: \
+    e.get_template('multiple_broken').render()
 
 FAILING_STRING_TEMPLATE = '{{ 1 / 0 }}'
 BROKEN_STRING_TEMPLATE = '{% if foo %}...{% endfor %}'
@@ -91,5 +109,5 @@ def test(environ, start_response):
 
 if __name__ == '__main__':
     from werkzeug.debug import DebuggedApplication
-    app = DebuggedApplication(test)
+    app = DebuggedApplication(test, True)
     make_server("localhost", 7000, app).serve_forever()

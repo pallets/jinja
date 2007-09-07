@@ -28,18 +28,18 @@ tb_set_next(PyObject *self, PyObject *args)
 
 	if (!PyArg_ParseTuple(args, "O!O:tb_set_next", &PyTraceBack_Type, &tb, &next))
 		return NULL;
-	if (next == Py_None) {
+	if (next == Py_None)
 		next = NULL;
-	} else if (!PyTraceBack_Check(next)) {
+	else if (!PyTraceBack_Check(next)) {
 		PyErr_SetString(PyExc_TypeError,
 				"tb_set_next arg 2 must be traceback or None");
 		return NULL;
-	} else {
-		Py_INCREF(next);
 	}
+	else
+		Py_INCREF(next);
 
 	old = tb->tb_next;
-	tb->tb_next = (PyTracebackObject *)next;
+	tb->tb_next = (PyTracebackObject*)next;
 	Py_XDECREF(old);
 
 	Py_INCREF(Py_None);

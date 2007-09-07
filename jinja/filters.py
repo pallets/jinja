@@ -12,9 +12,10 @@ import re
 from random import choice
 from operator import itemgetter
 from urllib import urlencode, quote
-from jinja.utils import urlize, escape, reversed, sorted, groupby
+from jinja.utils import urlize, escape, reversed, sorted, groupby, \
+     get_attribute
 from jinja.datastructure import TemplateData
-from jinja.exceptions import FilterArgumentError
+from jinja.exceptions import FilterArgumentError, SecurityException
 
 
 _striptags_re = re.compile(r'(<!--.*?-->|<[^>]+>)')
@@ -886,6 +887,48 @@ def do_groupby(attribute):
     return wrapped
 
 
+def do_getattribute(attribute):
+    """
+    Get one attribute from an object. Normally you don't have to use this
+    filter because the attribute and subscript expressions try to either
+    get an attribute of an object or an item. In some situations it could
+    be that there is an item *and* an attribute with the same name. In that
+    situation only the item is returned, never the attribute.
+
+    .. sourcecode:: jinja
+
+        {{ foo.bar }} -> {{ foo|getattribute('bar') }}
+
+    *New in Jinja 1.2*
+    """
+    def wrapped(env, context, value):
+        try:
+            return get_attribute(value, attribute)
+        except (SecurityException, AttributeError):
+            return env.undefined_singleton
+    return wrapped
+
+
+def do_getitem(key):
+    """
+    This filter basically works like the normal subscript expression but
+    it doesn't fall back to attribute lookup. If an item does not exist for
+    an object undefined is returned.
+
+    .. sourcecode:: jinja
+
+        {{ foo.bar }} -> {{ foo|getitem('bar') }}
+
+    *New in Jinja 1.2*
+    """
+    def wrapped(env, context, value):
+        try:
+            return value[key]
+        except (TypeError, KeyError, IndexError, AttributeError):
+            return env.undefined_singleton
+    return wrapped
+
+
 FILTERS = {
     'replace':              do_replace,
     'upper':                do_upper,
@@ -933,5 +976,7 @@ FILTERS = {
     'abs':                  do_abs,
     'round':                do_round,
     'sort':                 do_sort,
-    'groupby':              do_groupby
+    'groupby':              do_groupby,
+    'getattribute':         do_getattribute,
+    'getitem':              do_getitem
 }

@@ -23,9 +23,10 @@
     :license: BSD, see LICENSE for more details.
 """
 import re
-from jinja.datastructure import TokenStream
+import unicodedata
+from jinja.datastructure import TokenStream, Token
 from jinja.exceptions import TemplateSyntaxError
-from jinja.utils import set
+from jinja.utils import set, sorted
 from weakref import WeakValueDictionary
 
 
@@ -42,25 +43,138 @@ whitespace_re = re.compile(r'\s+(?m)')
 name_re = re.compile(r'[a-zA-Z_][a-zA-Z0-9_]*')
 string_re = re.compile(r"('([^'\\]*(?:\\.[^'\\]*)*)'"
                        r'|"([^"\\]*(?:\\.[^"\\]*)*)")(?ms)')
-number_re = re.compile(r'\d+(\.\d+)*')
+integer_re = re.compile(r'\d+')
+float_re = re.compile(r'\d+\.\d+')
+regex_re = re.compile(r'@/([^/\\]*(?:\\.[^/\\]*)*)*/[a-z]*(?ms)')
 
-operator_re = re.compile('(%s)' % '|'.join([
-    isinstance(x, unicode) and str(x) or re.escape(x) for x in [
-    # math operators
-    '+', '-', '**', '*', '//', '/', '%',
-    # braces and parenthesis
-    '[', ']', '(', ')', '{', '}',
-    # attribute access and comparison / logical operators
-    '.', ':', ',', '|', '==', '<=', '>=', '<', '>', '!=', '=',
-    ur'or\b', ur'and\b', ur'not\b', ur'in\b', ur'is\b'
-]]))
 
 # set of used keywords
 keywords = set(['and', 'block', 'cycle', 'elif', 'else', 'endblock',
                 'endfilter', 'endfor', 'endif', 'endmacro', 'endraw',
                 'endtrans', 'extends', 'filter', 'for', 'if', 'in',
                 'include', 'is', 'macro', 'not', 'or', 'pluralize', 'raw',
-                'recursive', 'set', 'trans', 'print'])
+                'recursive', 'set', 'trans', 'print', 'call', 'endcall'])
+
+# bind operators to token types
+operators = {
+    '+':            'add',
+    '-':            'sub',
+    '/':            'div',
+    '//':           'floordiv',
+    '*':            'mul',
+    '%':            'mod',
+    '**':           'pow',
+    '~':            'tilde',
+    '!':            'bang',
+    '@':            'at',
+    '[':            'lbracket',
+    ']':            'rbracket',
+    '(':            'lparen',
+    ')':            'rparen',
+    '{':            'lbrace',
+    '}':            'rbrace',
+    '==':           'eq',
+    '!=':           'ne',
+    '>':            'gt',
+    '>=':           'gteq',
+    '<':            'lt',
+    '<=':           'lteq',
+    '=':            'assign',
+    '.':            'dot',
+    ':':            'colon',
+    '|':            'pipe',
+    ',':            'comma'
+}
+
+reverse_operators = dict([(v, k) for k, v in operators.iteritems()])
+assert len(operators) == len(reverse_operators), 'operators dropped'
+operator_re = re.compile('(%s)' % '|'.join([re.escape(x) for x in
+                         sorted(operators, key=lambda x: -len(x))]))
+
+
+def unescape_string(lineno, filename, s):
+    r"""
+    Unescape a string. Supported escapes:
+        \a, \n, \r\, \f, \v, \\, \", \', \0
+
+        \x00, \u0000, \U00000000, \N{...}
+
+    Not supported are \101 because imho redundant.
+    """
+    result = []
+    write = result.append
+    simple_escapes = {
+        'a':    '\a',
+        'n':    '\n',
+        'r':    '\r',
+        'f':    '\f',
+        't':    '\t',
+        'v':    '\v',
+        '\\':   '\\',
+        '"':    '"',
+        "'":    "'",
+        '0':    '\x00'
+    }
+    unicode_escapes = {
+        'x':    2,
+        'u':    4,
+        'U':    8
+    }
+    chariter = iter(s)
+    next_char = chariter.next
+
+    try:
+        for char in chariter:
+            if char == '\\':
+                char = next_char()
+                if char in simple_escapes:
+                    write(simple_escapes[char])
+                elif char in unicode_escapes:
+                    seq = [next_char() for x in xrange(unicode_escapes[char])]
+                    try:
+                        write(unichr(int(''.join(seq), 16)))
+                    except ValueError:
+                        raise TemplateSyntaxError('invalid unicode codepoint',
+                                                  lineno, filename)
+                elif char == 'N':
+                    if next_char() != '{':
+                        raise TemplateSyntaxError('no name for codepoint',
+                                                  lineno, filename)
+                    seq = []
+                    while True:
+                        char = next_char()
+                        if char == '}':
+                            break
+                        seq.append(char)
+                    try:
+                        write(unicodedata.lookup(u''.join(seq)))
+                    except KeyError:
+                        raise TemplateSyntaxError('unknown character name',
+                                                  lineno, filename)
+                else:
+                    write('\\' + char)
+            else:
+                write(char)
+    except StopIteration:
+        raise TemplateSyntaxError('invalid string escape', lineno, filename)
+    return u''.join(result)
+
+
+def unescape_regex(s):
+    """
+    Unescape rules for regular expressions.
+    """
+    buffer = []
+    write = buffer.append
+    in_escape = False
+    for char in s:
+        if in_escape:
+            in_escape = False
+            if char not in safe_chars:
+                write('\\' + char)
+                continue
+        write(char)
+    return u''.join(buffer)
 
 
 class Failure(object):
@@ -121,10 +235,12 @@ class Lexer(object):
         # lexing rules for tags
         tag_rules = [
             (whitespace_re, None, None),
-            (number_re, 'number', None),
+            (float_re, 'float', None),
+            (integer_re, 'integer', None),
             (name_re, 'name', None),
-            (operator_re, 'operator', None),
-            (string_re, 'string', None)
+            (string_re, 'string', None),
+            (regex_re, 'regex', None),
+            (operator_re, 'operator', None)
         ]
 
         #: if variables and blocks have the same delimiters we won't
@@ -218,18 +334,45 @@ class Lexer(object):
 
     def tokenize(self, source, filename=None):
         """
-        Simple tokenize function that yields ``(position, type, contents)``
-        tuples. Wrap the generator returned by this function in a
-        `TokenStream` to get real token instances and be able to push tokens
-        back to the stream. That's for example done by the parser.
-
-        Additionally non keywords are escaped.
+        Works like `tokeniter` but returns a tokenstream of tokens and not a
+        generator or token tuples. Additionally all token values are already
+        converted into types and postprocessed. For example keywords are
+        already keyword tokens, not named tokens, comments are removed,
+        integers and floats converted, strings unescaped etc.
         """
         def generate():
             for lineno, token, value in self.tokeniter(source, filename):
-                if token == 'name' and value not in keywords:
-                    value += '_'
-                yield lineno, token, value
+                if token in ('comment_begin', 'comment', 'comment_end'):
+                    continue
+                elif token == 'data':
+                    try:
+                        value = str(value)
+                    except UnicodeError:
+                        pass
+                elif token == 'name':
+                    value = str(value)
+                    if value in keywords:
+                        token = value
+                        value = ''
+                elif token == 'string':
+                    value = unescape_string(lineno, filename, value[1:-1])
+                    try:
+                        value = str(value)
+                    except UnicodeError:
+                        pass
+                elif token == 'regex':
+                    args = value[value.rfind('/') + 1:]
+                    value = unescape_regex(value[2:-(len(args) + 1)])
+                    if args:
+                        value = '(?%s)%s' % (args, value)
+                elif token == 'integer':
+                    value = int(value)
+                elif token == 'float':
+                    value = float(value)
+                elif token == 'operator':
+                    token = operators[value]
+                    value = ''
+                yield Token(lineno, token, value)
         return TokenStream(generate(), filename)
 
     def tokeniter(self, source, filename=None):
@@ -237,8 +380,8 @@ class Lexer(object):
         This method tokenizes the text and returns the tokens in a generator.
         Use this method if you just want to tokenize a template. The output
         you get is not compatible with the input the jinja parser wants. The
-        parser uses the `tokenize` function with returns a `TokenStream` with
-        some escaped tokens.
+        parser uses the `tokenize` function with returns a `TokenStream` and
+        keywords instead of just names.
         """
         source = '\n'.join(source.splitlines())
         pos = 0

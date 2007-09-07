@@ -159,3 +159,26 @@ In order to check if a value is defined you can use the `defined` test:
 
     It raises exceptions as soon as you either render it or want to iterate
     over it or try to access attributes etc.
+
+
+Overriding Variables Of Outer Scopes
+====================================
+
+*New in Jinja 1.2*
+
+Normally you cannot override a variable from an outer scope, you can just hide
+it. There is however a way to override a variable from an outer scope using the
+`set` tag, postfixed with a bang (!):
+
+.. source:: jinja
+
+    {% set last_item = none %}
+    {% for item in seq %}
+        {% set last_item = item! %}
+    {% endfor %}
+
+After the iteration `last_item` will point to the item of the last iteration.
+
+If `last_item` was not defined in the outer scope it wouldn't exist now because
+in that situation `set`, even with a postfixed bang just behaves like setting a
+scope variable.

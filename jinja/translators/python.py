@@ -19,12 +19,6 @@
     Implementation Details
     ======================
 
-    Some of the semantics are handled directly in the translator in order
-    to speed up the parsing process. For example the semantics for the
-    `is` operator are handled here, changing this would require and
-    additional traversing of the node tree in the parser. Thus the actual
-    translation process can raise a `TemplateSyntaxError` too.
-
     It might sound strange but the translator tries to keep the generated
     code readable as much as possible. This simplifies debugging the Jinja
     core a lot. The additional processing overhead is just relevant for
@@ -36,7 +30,6 @@
 """
 import re
 import sys
-from compiler import ast
 from jinja import nodes
 from jinja.nodes import get_nodes
 from jinja.parser import Parser
@@ -74,11 +67,6 @@ class Template(object):
         self.environment = environment
         self.code = code
         self.generate_func = None
-        #: holds debug information
-        self._debug_info = None
-        #: unused in loader environments but used when a template
-        #: is loaded from a string in order to be able to debug those too
-        self._source = None
 
     def dump(self, stream=None):
         """Dump the template into python bytecode."""
@@ -102,6 +90,7 @@ class Template(object):
 
     def render(self, *args, **kwargs):
         """Render a template."""
+        __traceback_hide__ = True
         ctx = self._prepare(*args, **kwargs)
         try:
             return capture_generator(self.generate_func(ctx))
@@ -130,7 +119,6 @@ class Template(object):
             ns = {'environment': env}
             exec self.code in ns
             self.generate_func = ns['generate']
-            self._debug_info = ns['debug_info']
         return env.context_class(env, *args, **kwargs)
 
     def _debug(self, ctx, exc_type, exc_value, traceback):
@@ -154,20 +142,29 @@ class PythonTranslator(Translator):
     Pass this translator a ast tree to get valid python code.
     """
 
-    def __init__(self, environment, node):
+    def __init__(self, environment, node, source):
         self.environment = environment
         self.node = node
+        self.source = source
+        self.closed = False
 
-        #: mapping to constants in the environment that are not
-        #: converted to context lookups. this should improve
-        #: performance and avoid accidentally screwing things up
-        #: by rebinding essential constants.
-        self.constants = {
-            'true':                 'True',
-            'false':                'False',
-            'none':                 'None',
-            'undefined':            'undefined_singleton'
-        }
+        #: current level of indention
+        self.indention = 0
+        #: each {% cycle %} tag has a unique ID which increments
+        #: automatically for each tag.
+        self.last_cycle_id = 0
+        #: set of used shortcuts jinja has to make local automatically
+        self.used_shortcuts = set(['undefined_singleton'])
+        #: set of used datastructures jinja has to import
+        self.used_data_structures = set()
+        #: set of used utils jinja has to import
+        self.used_utils = set()
+        #: flags for runtime error
+        self.require_runtime_error = False
+        #: do wee need a "set" object?
+        self.need_set_import = False
+        #: flag for regular expressions
+        self.compiled_regular_expressions = {}
 
         #: bind the nodes to the callback functions. There are
         #: some missing! A few are specified in the `unhandled`
@@ -175,75 +172,62 @@ class PythonTranslator(Translator):
         #: will not appear in the jinja parser output because
         #: they are filtered out.
         self.handlers = {
-            # jinja nodes
-            nodes.Template:         self.handle_template,
-            nodes.Text:             self.handle_template_text,
-            nodes.DynamicText:      self.handle_dynamic_text,
-            nodes.NodeList:         self.handle_node_list,
-            nodes.ForLoop:          self.handle_for_loop,
-            nodes.IfCondition:      self.handle_if_condition,
-            nodes.Cycle:            self.handle_cycle,
-            nodes.Print:            self.handle_print,
-            nodes.Macro:            self.handle_macro,
-            nodes.Call:             self.handle_call,
-            nodes.Set:              self.handle_set,
-            nodes.Filter:           self.handle_filter,
-            nodes.Block:            self.handle_block,
-            nodes.Include:          self.handle_include,
-            nodes.Trans:            self.handle_trans,
-            # python nodes
-            ast.Name:               self.handle_name,
-            ast.AssName:            self.handle_assign_name,
-            ast.Compare:            self.handle_compare,
-            ast.Const:              self.handle_const,
-            ast.Subscript:          self.handle_subscript,
-            ast.Getattr:            self.handle_getattr,
-            ast.AssTuple:           self.handle_ass_tuple,
-            ast.Bitor:              self.handle_bitor,
-            ast.CallFunc:           self.handle_call_func,
-            ast.Add:                self.handle_add,
-            ast.Sub:                self.handle_sub,
-            ast.Div:                self.handle_div,
-            ast.FloorDiv:           self.handle_floor_div,
-            ast.Mul:                self.handle_mul,
-            ast.Mod:                self.handle_mod,
-            ast.UnaryAdd:           self.handle_unary_add,
-            ast.UnarySub:           self.handle_unary_sub,
-            ast.Power:              self.handle_power,
-            ast.Dict:               self.handle_dict,
-            ast.List:               self.handle_list,
-            ast.Tuple:              self.handle_list,
-            ast.And:                self.handle_and,
-            ast.Or:                 self.handle_or,
-            ast.Not:                self.handle_not,
-            ast.Slice:              self.handle_slice,
-            ast.Sliceobj:           self.handle_sliceobj
+            # block nodes
+            nodes.Template:                 self.handle_template,
+            nodes.Text:                     self.handle_template_text,
+            nodes.NodeList:                 self.handle_node_list,
+            nodes.ForLoop:                  self.handle_for_loop,
+            nodes.IfCondition:              self.handle_if_condition,
+            nodes.Cycle:                    self.handle_cycle,
+            nodes.Print:                    self.handle_print,
+            nodes.Macro:                    self.handle_macro,
+            nodes.Call:                     self.handle_call,
+            nodes.Set:                      self.handle_set,
+            nodes.Filter:                   self.handle_filter,
+            nodes.Block:                    self.handle_block,
+            nodes.Include:                  self.handle_include,
+            nodes.Trans:                    self.handle_trans,
+
+            # expression nodes
+            nodes.NameExpression:           self.handle_name,
+            nodes.CompareExpression:        self.handle_compare,
+            nodes.TestExpression:           self.handle_test,
+            nodes.ConstantExpression:       self.handle_const,
+            nodes.RegexExpression:          self.handle_regex,
+            nodes.SubscriptExpression:      self.handle_subscript,
+            nodes.FilterExpression:         self.handle_filter_expr,
+            nodes.CallExpression:           self.handle_call_expr,
+            nodes.AddExpression:            self.handle_add,
+            nodes.SubExpression:            self.handle_sub,
+            nodes.ConcatExpression:         self.handle_concat,
+            nodes.DivExpression:            self.handle_div,
+            nodes.FloorDivExpression:       self.handle_floor_div,
+            nodes.MulExpression:            self.handle_mul,
+            nodes.ModExpression:            self.handle_mod,
+            nodes.PosExpression:            self.handle_pos,
+            nodes.NegExpression:            self.handle_neg,
+            nodes.PowExpression:            self.handle_pow,
+            nodes.DictExpression:           self.handle_dict,
+            nodes.SetExpression:            self.handle_set_expr,
+            nodes.ListExpression:           self.handle_list,
+            nodes.TupleExpression:          self.handle_tuple,
+            nodes.UndefinedExpression:      self.handle_undefined,
+            nodes.AndExpression:            self.handle_and,
+            nodes.OrExpression:             self.handle_or,
+            nodes.NotExpression:            self.handle_not,
+            nodes.SliceExpression:          self.handle_slice,
+            nodes.ConditionalExpression:    self.handle_conditional_expr
         }
-
-        #: mapping of unsupported syntax elements.
-        #: the value represents the feature name that appears
-        #: in the exception.
-        self.unsupported = {ast.ListComp: 'list comprehension'}
-
-        #: because of python2.3 compatibility add generator
-        #: expressions only to the list of unused features
-        #: if it exists.
-        if hasattr(ast, 'GenExpr'):
-            self.unsupported[ast.GenExpr] = 'generator expression'
-
-        #: if expressions are unsupported too (so far)
-        if hasattr(ast, 'IfExp'):
-            self.unsupported[ast.IfExp] = 'inline if expression'
 
     # -- public methods
 
-    def process(environment, node):
+    def process(environment, node, source=None):
         """
         The only public method. Creates a translator instance,
         translates the code and returns it in form of an
         `Template` instance.
         """
-        translator = PythonTranslator(environment, node)
+        translator = PythonTranslator(environment, node, source)
         filename = node.filename or '<template>'
         source = translator.translate()
         return Template(environment, compile(source, filename, 'exec'))
@@ -277,87 +261,34 @@ class PythonTranslator(Translator):
             node.lineno
         )
 
-    def filter(self, s, filter_nodes):
-        """
-        Apply a filter on an object that already is a python expression.
-        Used to avoid redundant code in bitor and the filter directive.
-        """
-        filters = []
-        for n in filter_nodes:
-            if n.__class__ is ast.CallFunc:
-                if n.node.__class__ is not ast.Name:
-                    raise TemplateSyntaxError('invalid filter. filter must '
-                                              'be a hardcoded function name '
-                                              'from the filter namespace',
-                                              n.lineno,
-                                              n.filename)
-                args = []
-                for arg in n.args:
-                    if arg.__class__ is ast.Keyword:
-                        raise TemplateSyntaxError('keyword arguments for '
-                                                  'filters are not supported.',
-                                                  n.lineno,
-                                                  n.filename)
-                    args.append(self.handle_node(arg))
-                if n.star_args is not None or n.dstar_args is not None:
-                    raise TemplateSyntaxError('*args / **kwargs is not supported '
-                                              'for filters', n.lineno,
-                                              n.filename)
-                filters.append('(%r, %s)' % (
-                    n.node.name,
-                    self.to_tuple(args)
-                ))
-            elif n.__class__ is ast.Name:
-                filters.append('(%r, ())' % n.name)
-            else:
-                raise TemplateSyntaxError('invalid filter. filter must be a '
-                                          'hardcoded function name from the '
-                                          'filter namespace',
-                                          n.lineno, n.filename)
-        self.used_shortcuts.add('apply_filters')
-        return 'apply_filters(%s, context, %s)' % (s, self.to_tuple(filters))
-
     def handle_node(self, node):
         """
         Handle one node. Resolves the correct callback functions defined
-        in the callback mapping. This also raises the `TemplateSyntaxError`
-        for unsupported syntax elements such as list comprehensions.
+        in the callback mapping.
         """
+        if self.closed:
+            raise RuntimeError('translator is closed')
         if node.__class__ in self.handlers:
             out = self.handlers[node.__class__](node)
-        elif node.__class__ in self.unsupported:
-            raise TemplateSyntaxError('unsupported syntax element %r found.'
-                                      % self.unsupported[node.__class__],
-                                      node.lineno, node.filename)
         else:
             raise AssertionError('unhandled node %r' % node.__class__)
         return out
 
-    def reset(self):
+    def close(self):
         """
-        Reset translation variables such as indention or cycle id
+        Clean up stuff.
         """
-        #: current level of indention
-        self.indention = 0
-        #: each {% cycle %} tag has a unique ID which increments
-        #: automatically for each tag.
-        self.last_cycle_id = 0
-        #: set of used shortcuts jinja has to make local automatically
-        self.used_shortcuts = set(['undefined_singleton'])
-        #: set of used datastructures jinja has to import
-        self.used_data_structures = set()
-        #: set of used utils jinja has to import
-        self.used_utils = set()
-        #: flags for runtime error
-        self.require_runtime_error = False
+        self.closed = True
+        self.handlers = self.node = self.environment = None
 
     def translate(self):
         """
-        Translate the node defined in the constructor after
-        resetting the translator.
+        Translate the node defined in the constructor.
         """
-        self.reset()
-        return self.handle_node(self.node)
+        try:
+            return self.handle_node(self.node)
+        finally:
+            self.close()
 
     # -- jinja nodes
 
@@ -391,12 +322,12 @@ class PythonTranslator(Translator):
             # the master layout template is loaded. This can be used
             # for further processing. The output of those nodes does
             # not appear in the final template.
-            requirements += [child for child in node.getChildNodes()
+            requirements += [child for child in node.get_child_nodes()
                              if child.__class__ not in (nodes.Text,
-                             nodes.Block, nodes.Extends)]
+                             nodes.Block)]
 
             # load the template we inherit from and add not known blocks
-            parent = self.environment.loader.parse(node.extends.template,
+            parent = self.environment.loader.parse(node.extends,
                                                    node.filename)
             # look up all block nodes in the current template and
             # add them to the override dict.
@@ -407,7 +338,7 @@ class PythonTranslator(Translator):
                 # an overwritten block for the parent template. handle that
                 # override in the template and register it in the deferred
                 # block dict.
-                if n.name in overwrites and not n in already_registered_block:
+                if n.name in overwrites and n not in already_registered_block:
                     blocks.setdefault(n.name, []).append(n.clone())
                     n.replace(overwrites[n.name])
                     already_registered_block.add(n)
@@ -422,7 +353,7 @@ class PythonTranslator(Translator):
             requirement_lines.append('    if 0: yield None\n')
 
         # handle body in order to get the used shortcuts
-        body_lines = [self.handle_node(n) for n in node]
+        body_code = self.handle_node(node.body)
 
         # same for blocks in callables
         block_lines = []
@@ -465,18 +396,28 @@ class PythonTranslator(Translator):
         if self.used_data_structures:
             lines.append('from jinja.datastructure import %s' % ', '.
                          join(self.used_data_structures))
+        if self.need_set_import:
+            lines.append('from jinja.utils import set')
+
+        # compile regular expressions
+        if self.compiled_regular_expressions:
+            lines.append('import re')
+            lines.append('\n# Compile used regular expressions')
+            for regex, name in self.compiled_regular_expressions.iteritems():
+                lines.append('%s = re.compile(%r)' % (name, regex))
+
         lines.append(
             '\n# Aliases for some speedup\n'
             '%s\n\n'
+            '# Marker for Jinja templates\n'
+            '__jinja_template__ = True\n\n'
             '# Name for disabled debugging\n'
             '__name__ = %r\n\n'
             'def generate(context):\n'
             '    assert environment is context.environment' % (
                 '\n'.join([
                     '%s = environment.%s' % (item, item) for item in
-                    ['get_attribute', 'perform_test', 'apply_filters',
-                     'call_function', 'call_function_simple', 'finish_var',
-                     'undefined_singleton'] if item in self.used_shortcuts
+                    self.used_shortcuts
                 ]),
                 outer_filename
             )
@@ -485,7 +426,7 @@ class PythonTranslator(Translator):
         # the template body
         if requirements:
             lines.append('    for item in bootstrap(context): pass')
-        lines.extend(body_lines)
+        lines.append(body_code)
         lines.append('    if 0: yield None\n')
 
         # now write the bootstrapping (requirements) core if there is one
@@ -536,36 +477,49 @@ class PythonTranslator(Translator):
                 result.append(line)
 
         # now print file mapping and debug info
+        # the debug info:
+        #   debug_info          binds template line numbers to generated
+        #                       source lines. this information is always
+        #                       present and part of the bytecode.
+        #   template_source     only available if loaded from string to
+        #                       get debug source code. Because this is
+        #                       dumped too it's a bad idea to dump templates
+        #                       loaded from a string.
         result.append('\n# Debug Information')
         file_mapping = file_mapping.items()
         file_mapping.sort(lambda a, b: cmp(a[1], b[1]))
         for filename, file_id in file_mapping:
             result.append('%s = %r' % (file_id, filename))
         result.append('debug_info = %s' % self.to_tuple(debug_mapping))
+        result.append('template_source = %r' % self.source)
         return '\n'.join(result)
 
     def handle_template_text(self, node):
         """
         Handle data around nodes.
         """
-        return self.indent(self.nodeinfo(node)) + '\n' +\
-               self.indent('yield %r' % node.text)
+        # special case: no variables
+        if not node.variables:
+            return self.indent(self.nodeinfo(node)) + '\n' + \
+                   self.indent('yield %r' % node.text.replace('%%', '%'))
 
-    def handle_dynamic_text(self, node):
-        """
-        Like `handle_template_text` but for nodes of the type
-        `DynamicText`.
-        """
+        # special case: one variable, no text
+        self.used_shortcuts.add('finish_var')
+        if len(node.variables) == 1 and node.text == '%s':
+            return self.indent(self.nodeinfo(node)) + '\n' + \
+                   self.indent('yield finish_var(%s, context)' %
+                               self.handle_node(node.variables[0]))
+
+        # all other cases
         buf = []
         write = lambda x: buf.append(self.indent(x))
-        self.used_shortcuts.add('finish_var')
 
         write(self.nodeinfo(node))
-        write('yield %r %% (' % node.format_string)
+        write('yield %r %% (' % node.text)
         self.indention += 1
         for var in node.variables:
             write(self.nodeinfo(var))
-            write('finish_var(%s, context)' % self.handle_node(var.variable) + ',')
+            write('finish_var(%s, context)' % self.handle_node(var) + ',')
         self.indention -= 1
         write(')')
 
@@ -680,10 +634,11 @@ class PythonTranslator(Translator):
         write('if %r not in context.current:' % name)
         self.indention += 1
         write(self.nodeinfo(node))
-        if node.seq.__class__ in (ast.Tuple, ast.List):
+        if node.seq.__class__ in (nodes.TupleExpression,
+                                  nodes.ListExpression):
             write('context.current[%r] = CycleContext(%s)' % (
                 name,
-                self.to_tuple([self.handle_node(n) for n in node.seq.nodes])
+                self.to_tuple([self.handle_node(n) for n in node.seq.items])
             ))
             hardcoded = True
         else:
@@ -711,22 +666,12 @@ class PythonTranslator(Translator):
         self.used_shortcuts.add('finish_var')
         return self.indent(self.nodeinfo(node)) + '\n' +\
                self.indent('yield finish_var(%s, context)' %
-                           self.handle_node(node.variable))
+                           self.handle_node(node.expr))
 
     def handle_macro(self, node):
         """
         Handle macro declarations.
         """
-        # sanity check for name
-        if node.name == '_' or \
-           node.name in self.constants:
-            raise TemplateSyntaxError('cannot override %r' % node.name,
-                                      node.lineno, node.filename)
-        if node.name in self.constants:
-            raise TemplateSyntaxError('you cannot name a macro %r',
-                                      node.lineno,
-                                      node.filename)
-
         buf = []
         write = lambda x: buf.append(self.indent(x))
 
@@ -815,7 +760,7 @@ class PythonTranslator(Translator):
         write('context.pop()')
         write('if 0: yield None')
         self.indention -= 1
-        write('yield ' + self.handle_call_func(node.expr,
+        write('yield ' + self.handle_call_expr(node.expr,
               {'caller': 'buffereater(call)'}))
         self.used_utils.add('buffereater')
 
@@ -825,11 +770,12 @@ class PythonTranslator(Translator):
         """
         Handle variable assignments.
         """
-        if node.name == '_' or node.name in self.constants:
-            raise TemplateSyntaxError('cannot override %r' % node.name,
-                                      node.lineno, node.filename)
+        if node.scope_local:
+            tmpl = 'context[%r] = %s'
+        else:
+            tmpl = 'context.set_nonlocal(%r, %s)'
         return self.indent(self.nodeinfo(node)) + '\n' + \
-               self.indent('context[%r] = %s' % (
+               self.indent(tmpl % (
             node.name,
             self.handle_node(node.expr)
         ))
@@ -850,8 +796,13 @@ class PythonTranslator(Translator):
         write('context.pop()')
         write('if 0: yield None')
         self.indention -= 1
-        write('yield %s' % self.filter('buffereater(filtered)()',
-                                       node.filters))
+        self.used_shortcuts.add('apply_filters')
+        write('yield apply_filters(buffereater(filtered)(), context, %s)' %
+            self.to_tuple(['(%r, %s)' % (
+                name,
+                self.to_tuple(map(self.handle_node, args))
+            ) for name, args in node.filters])
+        )
         self.used_utils.add('buffereater')
         return '\n'.join(buf)
 
@@ -885,7 +836,7 @@ class PythonTranslator(Translator):
         """
         tmpl = self.environment.loader.parse(node.template,
                                              node.filename)
-        return self.handle_node_list(tmpl)
+        return self.handle_node(tmpl.body)
 
     def handle_trans(self, node):
         """
@@ -911,23 +862,11 @@ class PythonTranslator(Translator):
 
     # -- python nodes
 
-    def handle_assign_name(self, node):
-        """
-        Handle name assignments.
-        """
-        if node.name == '_' or \
-           node.name in self.constants:
-            raise TemplateSyntaxError('cannot override %r' % node.name,
-                                      node.lineno, node.filename)
-        return 'context[%r]' % node.name
-
     def handle_name(self, node):
         """
         Handle name assignments and name retreivement.
         """
-        if node.name in self.constants:
-            return self.constants[node.name]
-        elif node.name == '_':
+        if node.name == '_':
             return 'context.translate_func'
         return 'context[%r]' % node.name
 
@@ -935,60 +874,33 @@ class PythonTranslator(Translator):
         """
         Any sort of comparison
         """
-        # the semantic for the is operator is different.
-        # for jinja the is operator performs tests and must
-        # be the only operator
-        if node.ops[0][0] in ('is', 'is not'):
-            if len(node.ops) > 1:
-                raise TemplateSyntaxError('is operator must not be chained',
-                                          node.lineno,
-                                          node.filename)
-            elif node.ops[0][1].__class__ is ast.Name:
-                args = []
-                name = node.ops[0][1].name
-            elif node.ops[0][1].__class__ is ast.CallFunc:
-                n = node.ops[0][1]
-                if n.node.__class__ is not ast.Name:
-                    raise TemplateSyntaxError('invalid test. test must '
-                                              'be a hardcoded function name '
-                                              'from the test namespace',
-                                              n.lineno,
-                                              n.filename)
-                name = n.node.name
-                args = []
-                for arg in n.args:
-                    if arg.__class__ is ast.Keyword:
-                        raise TemplateSyntaxError('keyword arguments for '
-                                                  'tests are not supported.',
-                                                  n.lineno,
-                                                  n.filename)
-                    args.append(self.handle_node(arg))
-                if n.star_args is not None or n.dstar_args is not None:
-                    raise TemplateSyntaxError('*args / **kwargs is not supported '
-                                              'for tests', n.lineno,
-                                              n.filename)
-            else:
-                raise TemplateSyntaxError('is operator requires a test name'
-                                          ' as operand', node.lineno,
-                                          node.filename)
-            self.used_shortcuts.add('perform_test')
-            return 'perform_test(context, %r, %s, %s, %s)' % (
-                    name,
-                    self.to_tuple(args),
-                    self.handle_node(node.expr),
-                    node.ops[0][0] == 'is not'
-                )
-
-        # normal operators
+        ops = {
+            'eq':       '==',
+            'ne':       '!=',
+            'lt':       '<',
+            'lteq':     '<=',
+            'gt':       '>',
+            'gteq':     '>=',
+            'in':       'in',
+            'not in':   'not in'
+        }
         buf = []
         buf.append(self.handle_node(node.expr))
         for op, n in node.ops:
-            if op in ('is', 'is not'):
-                raise TemplateSyntaxError('is operator must not be chained',
-                                          node.lineno, node.filename)
-            buf.append(op)
+            buf.append(ops[op])
             buf.append(self.handle_node(n))
         return ' '.join(buf)
+
+    def handle_test(self, node):
+        """
+        Handle test calls.
+        """
+        self.used_shortcuts.add('perform_test')
+        return 'perform_test(context, %r, %s, %s)' % (
+            node.name,
+            self.to_tuple([self.handle_node(n) for n in node.args]),
+            self.handle_node(node.node)
+        )
 
     def handle_const(self, node):
         """
@@ -996,67 +908,69 @@ class PythonTranslator(Translator):
         """
         return repr(node.value)
 
+    def handle_regex(self, node):
+        """
+        Regular expression literals.
+        """
+        if self.environment.disable_regexps:
+            raise TemplateSyntaxError('regular expressions disabled.')
+        if node.value in self.compiled_regular_expressions:
+            return self.compiled_regular_expressions[node.value]
+        name = 'regex_%d' % len(self.compiled_regular_expressions)
+        self.compiled_regular_expressions[node.value] = name
+        return name
+
     def handle_subscript(self, node):
         """
         Handle variable based attribute access foo['bar'].
         """
-        if len(node.subs) != 1:
-            raise TemplateSyntaxError('attribute access requires one '
-                                      'argument', node.lineno,
-                                      node.filename)
-        assert node.flags != 'OP_DELETE', 'wtf? do we support that?'
-        if node.subs[0].__class__ is ast.Sliceobj:
-            return '%s%s' % (
-                self.handle_node(node.expr),
-                self.handle_node(node.subs[0])
-            )
         self.used_shortcuts.add('get_attribute')
+        if node.arg.__class__ is nodes.SliceExpression:
+            rv = self.handle_slice(node.arg, getslice_test=True)
+            if rv is not None:
+                return self.handle_node(node.node) + rv
         return 'get_attribute(%s, %s)' % (
-            self.handle_node(node.expr),
-            self.handle_node(node.subs[0])
+            self.handle_node(node.node),
+            self.handle_node(node.arg)
         )
 
-    def handle_getattr(self, node):
-        """
-        Handle hardcoded attribute access.
-        """
-        self.used_shortcuts.add('get_attribute')
-        return 'get_attribute(%s, %r)' % (
-            self.handle_node(node.expr),
-            node.attrname
-        )
-
-    def handle_ass_tuple(self, node):
+    def handle_tuple(self, node):
         """
         Tuple unpacking loops.
         """
-        return self.to_tuple([self.handle_node(n) for n in node.nodes])
+        return self.to_tuple([self.handle_node(n) for n in node.items])
 
-    def handle_bitor(self, node):
+    def handle_filter_expr(self, node):
         """
         We use the pipe operator for filtering.
         """
-        return self.filter(self.handle_node(node.nodes[0]), node.nodes[1:])
+        self.used_shortcuts.add('apply_filters')
+        return 'apply_filters(%s, context, %s)' % (
+            self.handle_node(node.node),
+            self.to_tuple(['(%r, %s)' % (
+                name,
+                self.to_tuple(map(self.handle_node, args))
+            ) for name, args in node.filters])
+        )
 
-    def handle_call_func(self, node, extra_kwargs=None):
+    def handle_call_expr(self, node, extra_kwargs=None):
         """
         Handle function calls.
         """
         args = []
         kwargs = {}
-        star_args = dstar_args = None
-        if node.star_args is not None:
-            star_args = self.handle_node(node.star_args)
-        if node.dstar_args is not None:
-            dstar_args = self.handle_node(node.dstar_args)
+        dyn_args = dyn_kwargs = None
+        if node.dyn_args is not None:
+            dyn_args = self.handle_node(node.dyn_args)
+        if node.dyn_kwargs is not None:
+            dyn_kwargs = self.handle_node(node.dyn_kwargs)
         for arg in node.args:
-            if arg.__class__ is ast.Keyword:
-                kwargs[arg.name] = self.handle_node(arg.expr)
-            else:
-                args.append(self.handle_node(arg))
+            args.append(self.handle_node(arg))
+        for name, arg in node.kwargs:
+            kwargs[name] = self.handle_node(arg)
         if extra_kwargs:
             kwargs.update(extra_kwargs)
-        if not (args or kwargs or star_args or dstar_args or extra_kwargs):
+        if not (args or kwargs or dyn_args or dyn_kwargs):
             self.used_shortcuts.add('call_function_simple')
             return 'call_function_simple(%s, context)' % \
                    self.handle_node(node.node)
@@ -1065,8 +979,8 @@ class PythonTranslator(Translator):
             self.handle_node(node.node),
             self.to_tuple(args),
             ', '.join(['%r: %s' % i for i in kwargs.iteritems()]),
-            star_args,
-            dstar_args
+            dyn_args,
+            dyn_kwargs
         )
 
     def handle_add(self, node):
@@ -1086,6 +1000,16 @@ class PythonTranslator(Translator):
             self.handle_node(node.left),
             self.handle_node(node.right)
         )
+
+    def handle_concat(self, node):
+        """
+        Convert some objects to unicode and concatenate them.
+        """
+        self.used_shortcuts.add('to_unicode')
+        return "u''.join(%s)" % self.to_tuple([
+            'to_unicode(%s)' % self.handle_node(arg)
+            for arg in node.args
+        ])
 
     def handle_div(self, node):
         """
@@ -1123,19 +1047,19 @@ class PythonTranslator(Translator):
             self.handle_node(node.right)
         )
 
-    def handle_unary_add(self, node):
+    def handle_pos(self, node):
         """
         One of the more or less unused nodes.
         """
-        return '(+%s)' % self.handle_node(node.expr)
+        return '(+%s)' % self.handle_node(node.node)
 
-    def handle_unary_sub(self, node):
+    def handle_neg(self, node):
         """
         Make a number negative.
         """
-        return '(-%s)' % self.handle_node(node.expr)
+        return '(-%s)' % self.handle_node(node.node)
 
-    def handle_power(self, node):
+    def handle_pow(self, node):
         """
         handle foo**bar
         """
@@ -1155,57 +1079,89 @@ class PythonTranslator(Translator):
             ) for key, value in node.items
         ])
 
+    def handle_set_expr(self, node):
+        """
+        Set constructor syntax.
+        """
+        self.need_set_import = True
+        return 'set([%s])' % ', '.join([self.handle_node(n)
+                                        for n in node.items])
+
     def handle_list(self, node):
         """
         We don't know tuples, tuples are lists for jinja.
         """
         return '[%s]' % ', '.join([
-            self.handle_node(n) for n in node.nodes
+            self.handle_node(n) for n in node.items
         ])
+
+    def handle_undefined(self, node):
+        """
+        Return the current undefined literal.
+        """
+        return 'undefined_singleton'
 
     def handle_and(self, node):
         """
         Handle foo and bar.
         """
-        return ' and '.join([
-            self.handle_node(n) for n in node.nodes
-        ])
+        return '(%s and %s)' % (
+            self.handle_node(node.left),
+            self.handle_node(node.right)
+        )
 
     def handle_or(self, node):
         """
         handle foo or bar.
         """
-        return ' or '.join([
-            self.handle_node(n) for n in node.nodes
-        ])
+        return '(%s or %s)' % (
+            self.handle_node(node.left),
+            self.handle_node(node.right)
+        )
 
     def handle_not(self, node):
         """
         handle not operator.
         """
-        return 'not %s' % self.handle_node(node.expr)
+        return '(not %s)' % self.handle_node(node.node)
 
-    def handle_slice(self, node):
+    def handle_slice(self, node, getslice_test=False):
         """
-        Slice access.
+        Slice access. Because of backwards compatibilty to python's
+        `__getslice__` this function takes a second parameter that lets this
+        method return a regular slice bracket call. If a regular slice bracket
+        call that is compatible to __getslice__ is not possible the return
+        value will be `None` so that a regular `get_attribute` wrapping can
+        happen.
         """
-        if node.lower is None:
-            lower = ''
+        if node.start is None:
+            start = not getslice_test and 'None' or ''
         else:
-            lower = self.handle_node(node.lower)
-        if node.upper is None:
-            upper = ''
+            start = self.handle_node(node.start)
+        if node.stop is None:
+            stop = not getslice_test and 'None' or ''
         else:
-            upper = self.handle_node(node.upper)
-        assert node.flags != 'OP_DELETE', 'wtf? shouldn\'t happen'
-        return '%s[%s:%s]' % (
-            self.handle_node(node.expr),
-            lower,
-            upper
-        )
+            stop = self.handle_node(node.stop)
+        if node.step is None:
+            step = 'None'
+        else:
+            if getslice_test:
+                return
+            step = self.handle_node(node.step)
+        if getslice_test:
+            return '[%s:%s]' % (start, stop)
+        return 'slice(%s, %s, %s)' % (start, stop, step)
 
-    def handle_sliceobj(self, node):
+    def handle_conditional_expr(self, node):
         """
-        Extended Slice access.
+        Handle conditional expressions.
         """
-        return '[%s]' % ':'.join([self.handle_node(n) for n in node.nodes])
+        if have_conditional_expr:
+            tmpl = '%(expr1)s if %(test)s else %(expr2)s'
+        else:
+            tmpl = '(%(test)s and (%(expr1)s,) or (%(expr2)s,))[0]'
+        return tmpl % {
+            'test':     self.handle_node(node.test),
+            'expr1':    self.handle_node(node.expr1),
+            'expr2':    self.handle_node(node.expr2)
+        }

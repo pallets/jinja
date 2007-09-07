@@ -7,11 +7,15 @@
 # Author: Jonas Borgström <jonas@edgewall.com>
 # Author: Armin Ronacher <armin.ronacher@active-4.com>
 
-import cgi
+import os
 import sys
+sys.path.insert(0, os.path.join(os.path.dirname(__file__), '..', '..'))
+
+import cgi
 import timeit
 import jdebug
 from StringIO import StringIO
+
 
 try:
     from genshi.builder import tag

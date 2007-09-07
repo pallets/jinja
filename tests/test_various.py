@@ -29,21 +29,22 @@ KEYWORDS = '''\
 {{ while }}
 {{ pass }}
 {{ finally }}'''
-LIGHTKW = '''{{ call }}'''
 UNPACKING = '''{% for a, b, c in [[1, 2, 3]] %}{{ a }}|{{ b }}|{{ c }}{% endfor %}'''
 RAW = '''{% raw %}{{ FOO }} and {% BAR %}{% endraw %}'''
 CONST = '''{{ true }}|{{ false }}|{{ none }}|{{ undefined }}|\
 {{ none is defined }}|{{ undefined is defined }}'''
+LOCALSET = '''{% set foo = 0 %}\
+{% for item in [1, 2] %}{% set foo = 1 %}{% endfor %}\
+{{ foo }}'''
+NONLOCALSET = '''{% set foo = 0 %}\
+{% for item in [1, 2] %}{% set foo = 1! %}{% endfor %}\
+{{ foo }}'''
 CONSTASS1 = '''{% set true = 42 %}'''
 CONSTASS2 = '''{% for undefined in seq %}{% endfor %}'''
 
 
 def test_keywords(env):
     env.from_string(KEYWORDS)
-
-
-def test_lightkw(env):
-    env.from_string(LIGHTKW)
 
 
 def test_unpacking(env):
@@ -100,3 +101,13 @@ def test_const_assign(env):
             pass
         else:
             raise AssertionError('expected syntax error')
+
+
+def test_localset(env):
+    tmpl = env.from_string(LOCALSET)
+    assert tmpl.render() == '0'
+
+
+def test_nonlocalset(env):
+    tmpl = env.from_string(NONLOCALSET)
+    assert tmpl.render() == '1'

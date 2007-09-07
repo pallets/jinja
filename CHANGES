@@ -16,6 +16,69 @@ Version 1.2
 
 - added `sameas` test function.
 
+- standalone parser. Jinja does not use the python parser any more and will
+  continue having the same semantics in any future python versions. This
+  was done in order to simplify updating Jinja to 2.6 and 3.0 and to support
+  non python syntax.
+
+- added support for ``expr1 if test else expr2`` (conditional expressions)
+
+- ``foo.0`` as alias for ``foo[0]`` is possible now. This is mainly for
+  django compatibility.
+
+- the filter operators has a much higher priority now which makes it
+  possible to do ``foo|filter + bar|filter``.
+
+- new AST. the return value of `Environment.parse` is now a Jinja AST and not
+  a Jinja-Python AST. This is also the only backwards incompatible change but
+  should not affect many users because this feature is more or less
+  undocumented and has few use cases.
+
+- tuple syntax returns tuples now and not lists any more.
+
+- the print directive and ``{{ variable }}`` syntax now accepts and implicit
+  tuple like the `for` and `cycle` tags. (``{{ 1, 2 }}`` is an implicit alias
+  for ``{{ (1, 2) }}` like ``{% for a, b in seq %}`` is for
+  ``{% for (a, b) in seq %}``.
+
+- tests called with *one* parameter don't need parentheses. This gives a more
+  natural syntax for the `sameas` test and some others:
+  ``{{ foo is sameas bar }}`` instead of ``{{ foo is sameas(bar) }}``. If you
+  however want to pass more than one argument you have to use parentheses
+  because ``{{ foo is sometest bar, baz }}`` is handled as
+  ``{{ (foo is sometest(bar), baz) }}``, so as tuple expression.
+
+- removed support for octal character definitions in strings such as
+  ``'\14'``, use ``'\x0c'`` now.
+
+- added regular expression literal. ``@/expr/flags`` equals
+  ``re.compile(r'(?flags)expr')``. This is useful for the `matching` test and
+  probably some others.
+
+- added set literal. We do not use python3's {1, 2} syntax because
+  this conflicts with the dict literal. To be compatible with the regex
+  literal we use ``@(1, 2)`` instead.
+
+- fixed bug in `get_attribute` that disallowed retreiving attributes of objects
+  without a `__class__` such as `_sre.SRE_Pattern`.
+
+- addded `django.contrib.jinja` which provides advanced support for django.
+  (thanks Bryan McLemore)
+
+- debugger is now able to rewrite the whole traceback, not only the first
+  frame. (requires the optional debugger c module which is compiled
+  automatically on installation if possible)
+
+- if the set that is postfixed with a bang (!) it acts like the python 3
+  "nonlocal" keyword. This means that you can now override variables
+  defined in the outer scope from within a loop.
+
+- ``foo + bar`` is now a simpler alternative to ``foo|string + bar|string``
+
+- `PackageLoader` can now work without pkg_resources too
+
+- added `getattribute` and `getitem` filter.
+
 
 Version 1.1
 -----------

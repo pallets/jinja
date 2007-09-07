@@ -194,6 +194,31 @@ You can also use comparison operators:
     in some situations it might be a good thing to have the abilities to create
     them.
 
+Literals
+========
+
+For most of the builtin python types, literals exist in Jinja. The following
+table shows which syntax elements are supported:
+
+    ======================= ===================================================
+    ``"text" / 'text'``     work like python's unicode literals (u'text').
+    ``42``                  integer literls.
+    ``42.0``                float literals (exponents are not supported and
+                            before and after the dot digits must be present)
+    ``[1, 'two', none]``    list literal
+    ``(), (1,), (1, 2)``    tuple literals. (tuples work like lists but consume
+                            less memory and are not modifyable.)
+    ``{'foo': 'bar'}``      dictionary literal
+    ``@/expr/flags``        regular expression literals. ``@/expr/flags`` is
+                            equivalent to ``re.compile('(?flags)expr')`` in
+                            python.
+    ``@(1, 2, 3)``          set literal. ``@(1, 2, 3)`` in Jinja is is equal to
+                            ``set([1, 2, 3])`` in python.
+    ``true / false``        corresponds to `True` and `False` in python.
+    ``none``                corresponds to `None` in python.
+    ``undefined``           special Jinja undefined singleton.
+    ======================= ===================================================
+
 Operators
 =========
 
@@ -291,7 +316,7 @@ create a macro from it:
 
     {% macro show_user user %}
       <h1>{{ user.name|e }}</h1>
-      <div class="test">
+      <div class="text">
         {{ user.description }}
       </div>
     {% endmacro %}
@@ -311,7 +336,7 @@ You can also specify more than one value:
     {% macro show_dialog title, text %}
       <div class="dialog">
         <h1>{{ title|e }}</h1>
-        <div class="test">{{ text|e }}</div>
+        <div class="text">{{ text|e }}</div>
       </div>
     {% endmacro %}
 
@@ -491,12 +516,7 @@ The following keywords exist and cannot be used as identifiers:
     `and`, `block`, `cycle`, `elif`, `else`, `endblock`, `endfilter`,
     `endfor`, `endif`, `endmacro`, `endraw`, `endtrans`, `extends`, `filter`,
     `for`, `if`, `in`, `include`, `is`, `macro`, `not`, `or`, `pluralize`,
-    `print`, `raw`, `recursive`, `set`, `trans`, `call` +, `endcall` +
-
-keywords marked with a plus sign can be used until Jinja 1.3 as
-identifiers because they were introduced after the Jinja 1.0 release and
-can cause backwards compatiblity problems otherwise. You should not use
-them any more.
+    `print`, `raw`, `recursive`, `set`, `trans`, `call`, `endcall`
 
 If you want to use such a name you have to prefix or suffix it or use
 alternative names:

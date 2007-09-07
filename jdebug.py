@@ -36,11 +36,13 @@ if os.environ.get('JDEBUG_SOURCEPRINT'):
 def p(x=None, f=None):
     if x is None and f is not None:
         x = e.loader.get_source(f)
-    print PythonTranslator(e, Parser(e, x, f).parse()).translate()
+    print PythonTranslator(e, Parser(e, x, f).parse(), None).translate()
 
 def l(x):
-    for item in e.lexer.tokenize(x):
-        print '%5s  %-20s  %r' % item
+    for token in e.lexer.tokenize(x):
+        print '%5s  %-20s  %r' % (item.lineno,
+                                  item.type,
+                                  item.value)
 
 if __name__ == '__main__':
     if len(sys.argv) > 1:

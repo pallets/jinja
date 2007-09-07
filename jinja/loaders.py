@@ -42,11 +42,9 @@ def get_cachename(cachepath, name, salt=None):
                              (name, salt or '')).hexdigest())
 
 
-
 def _loader_missing(*args, **kwargs):
     """Helper function for `LoaderWrapper`."""
     raise RuntimeError('no loader defined')
-
 
 
 class LoaderWrapper(object):
@@ -476,24 +474,54 @@ class BasePackageLoader(BaseLoader):
 
     It uses the `pkg_resources` libraries distributed with setuptools for
     retrieving the data from the packages. This works for eggs too so you
-    don't have to mark your egg as non zip safe.
+    don't have to mark your egg as non zip safe. If pkg_resources is not
+    available it just falls back to path joining relative to the package.
     """
 
-    def __init__(self, package_name, package_path):
+    def __init__(self, package_name, package_path, force_native=False):
         try:
             import pkg_resources
         except ImportError:
             raise RuntimeError('setuptools not installed')
         self.package_name = package_name
         self.package_path = package_path
+        self.force_native = force_native
+
+    def _get_load_func(self):
+        if hasattr(self, '_load_func'):
+            return self._load_func
+        try:
+            from pkg_resources import resource_exists, resource_string
+            if self.force_native:
+                raise ImportError()
+        except ImportError:
+            basepath = path.dirname(__import__(self.package_name, None, None,
+                                    ['__file__']).__file__)
+            def load_func(name):
+                filename = path.join(basepath, *(
+                    self.package_path.split('/') +
+                    [p for p in name.split('/') if p != '..'])
+                )
+                if path.exists(filename):
+                    f = file(filename)
+                    try:
+                        return f.read()
+                    finally:
+                        f.close()
+        else:
+            def load_func(name):
+                path = '/'.join([self.package_path] + [p for p in name.split('/')
+                         if p != '..'])
+                if resource_exists(self.package_name, path):
+                    return resource_string(self.package_name, path)
+        self._load_func = load_func
+        return load_func
 
     def get_source(self, environment, name, parent):
-        from pkg_resources import resource_exists, resource_string
-        path = '/'.join([self.package_path] + [p for p in name.split('/')
-                         if p != '..'])
-        if not resource_exists(self.package_name, path):
+        load_func = self._get_load_func()
+        contents = load_func(name)
+        if contents is None:
             raise TemplateNotFound(name)
-        contents = resource_string(self.package_name, path)
         return contents.decode(environment.template_charset)
 
 

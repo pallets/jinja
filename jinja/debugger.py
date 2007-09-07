@@ -47,11 +47,11 @@ except ImportError:
     has_extended_debugger = False
 
 # we need the RUNTIME_EXCEPTION_OFFSET to skip the not used frames
-from jinja.utils import RUNTIME_EXCEPTION_OFFSET
+from jinja.utils import reversed, RUNTIME_EXCEPTION_OFFSET
 
 
-def fake_template_exception(exc_type, exc_value, traceback, filename, lineno,
-                            source, context_or_env):
+def fake_template_exception(exc_type, exc_value, tb, filename, lineno,
+                            source, context_or_env, tb_back=None):
     """
     Raise an exception "in a template". Return a traceback
     object. This is used for runtime debugging, not compile time.
@@ -105,14 +105,17 @@ def fake_template_exception(exc_type, exc_value, traceback, filename, lineno,
 
     # if we have an extended debugger we set the tb_next flag so that
     # we don't loose the higher stack items.
-    if has_extended_debugger and traceback is not None:
-        tb_set_next(exc_info[2].tb_next, traceback.tb_next)
+    if has_extended_debugger:
+        if tb_back is not None:
+            tb_set_next(tb_back, exc_info[2])
+        if tb is not None:
+            tb_set_next(exc_info[2].tb_next, tb.tb_next)
 
     # otherwise just return the exc_info from the simple debugger
     return exc_info
 
 
-def translate_exception(template, context, exc_type, exc_value, traceback):
+def translate_exception(template, context, exc_type, exc_value, tb):
     """
     Translate an exception and return the new traceback.
     """
@@ -120,21 +123,35 @@ def translate_exception(template, context, exc_type, exc_value, traceback):
     # step to get the frame of the current template. The frames before
     # are the toolchain used to render that thing.
     for x in xrange(RUNTIME_EXCEPTION_OFFSET):
-        traceback = traceback.tb_next
+        tb = tb.tb_next
 
-    # the next thing we do is matching the current error line against the
-    # debugging table to get the correct source line. If we can't find the
-    # filename and line number we return the traceback object unaltered.
-    error_line = traceback.tb_lineno
-    for code_line, tmpl_filename, tmpl_line in template._debug_info[::-1]:
-        if code_line <= error_line:
-            break
-    else:
-        return traceback
+    result_tb = prev_tb = None
+    initial_tb = tb
 
-    return fake_template_exception(exc_type, exc_value, traceback,
-                                   tmpl_filename, tmpl_line,
-                                   template._source, context)
+    # translate all the jinja frames in this traceback
+    while tb is not None:
+        if tb.tb_frame.f_globals.get('__jinja_template__'):
+            debug_info = tb.tb_frame.f_globals['debug_info']
+
+            # the next thing we do is matching the current error line against the
+            # debugging table to get the correct source line. If we can't find the
+            # filename and line number we return the traceback object unaltered.
+            error_line = tb.tb_lineno
+            for code_line, tmpl_filename, tmpl_line in reversed(debug_info):
+                if code_line <= error_line:
+                    source = tb.tb_frame.f_globals['template_source']
+                    tb = fake_template_exception(exc_type, exc_value, tb,
+                                                 tmpl_filename, tmpl_line,
+                                                 source, context, prev_tb)[-1]
+                    break
+        if result_tb is None:
+            result_tb = tb
+        prev_tb = tb
+        tb = tb.tb_next
+
+    # under some conditions we cannot translate any frame. in that
+    # situation just return the original traceback.
+    return (exc_type, exc_value, result_tb or intial_tb)
 
 
 def raise_syntax_error(exception, env, source=None):

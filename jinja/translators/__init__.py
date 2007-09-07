@@ -15,7 +15,7 @@ class Translator(object):
     Base class of all translators.
     """
 
-    def process(environment, tree):
+    def process(environment, tree, source=None):
         """
         Process the given ast with the rules defined in
         environment and return a translated version of it.

@@ -92,22 +92,25 @@ def test_matching(regex):
 
     .. sourcecode:: jinja
 
-        {% if var is matching('^\\d+$') %}
+        {% if var is matching @/^\d+$/ %}
             var looks like a number
         {% else %}
             var doesn't really look like a number
         {% endif %}
     """
-    if isinstance(regex, unicode):
-        regex = re.compile(regex, re.U)
-    elif isinstance(regex, str):
-        regex = re.compile(regex)
-    elif type(regex) is not regex_type:
-        regex = None
     def wrapped(environment, context, value):
-        if regex is None:
-            return False
-        return regex.search(value) is not None
+        if type(regex) is regex_type:
+            regex_ = regex
+        else:
+            if environment.disable_regexps:
+                raise RuntimeError('regular expressions disabled.')
+            if isinstance(regex, unicode):
+                regex_ = re.compile(regex, re.U)
+            elif isinstance(regex, str):
+                regex_ = re.compile(regex)
+            else:
+                return False
+        return regex_.search(value) is not None
     return wrapped
 
 

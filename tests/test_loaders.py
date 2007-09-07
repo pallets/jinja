@@ -46,14 +46,19 @@ def test_dict_loader():
 
 def test_package_loader():
     env = Environment(loader=package_loader)
-    tmpl = env.get_template('test.html')
-    assert tmpl.render().strip() == 'BAR'
-    try:
-        env.get_template('missing.html')
-    except TemplateNotFound:
-        pass
-    else:
-        raise AssertionError('expected template exception')
+    for x in xrange(2):
+        tmpl = env.get_template('test.html')
+        assert tmpl.render().strip() == 'BAR'
+        try:
+            env.get_template('missing.html')
+        except TemplateNotFound:
+            pass
+        else:
+            raise AssertionError('expected template exception')
+
+        # second run in native mode (no pkg_resources)
+        package_loader.force_native = True
+        del package_loader._load_func
 
 
 def test_filesystem_loader():

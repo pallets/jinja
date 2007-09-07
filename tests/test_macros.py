@@ -55,6 +55,8 @@ CALLERUNDEFINED = '''\
 {{ test() }}\
 '''
 
+INCLUDETEMPLATE = '''{% macro test(foo) %}[{{ foo }}]{% endmacro %}'''
+
 
 def test_simple(env):
     tmpl = env.from_string(SIMPLE)
@@ -105,3 +107,8 @@ def test_complex_call(env):
 def test_caller_undefined(env):
     tmpl = env.from_string(CALLERUNDEFINED)
     assert tmpl.render() == 'True'
+
+
+def test_include(env):
+    tmpl = env.from_string('{% include "include" %}{{ test("foo") }}')
+    assert tmpl.render() == '[foo]'

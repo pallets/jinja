@@ -59,12 +59,12 @@
 
 from jinja.environment import Environment
 from jinja.datastructure import Markup
-from jinja.utils import from_string
 from jinja.plugin import jinja_plugin_factory as template_plugin_factory
 from jinja.loaders import FileSystemLoader, PackageLoader, DictLoader, \
-     ChoiceLoader, FunctionLoader
+     ChoiceLoader, FunctionLoader, MemcachedFileSystemLoader
+from jinja.utils import from_string
 
 
 __all__ = ['Environment', 'Markup', 'FileSystemLoader', 'PackageLoader',
-           'DictLoader', 'ChoiceLoader', 'FunctionLoader', 'from_string',
-           'template_plugin_factory']
+           'DictLoader', 'ChoiceLoader', 'FunctionLoader',
+           'MemcachedFileSystemLoader', 'from_string']

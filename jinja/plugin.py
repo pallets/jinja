@@ -14,6 +14,7 @@
     :copyright: 2007 by Armin Ronacher.
     :license: BSD, see LICENSE for more details.
 """
+from warnings import warn
 from jinja.environment import Environment
 from jinja.loaders import FunctionLoader, FileSystemLoader, PackageLoader
 from jinja.exceptions import TemplateNotFound
@@ -121,6 +122,10 @@ def jinja_plugin_factory(options):
                         not being provided this won't have an effect.
     =================== =================================================
     """
+    warn(DeprecationWarning('general plugin interface implementation '
+                            'deprecated because not an accepted '
+                            'standard.'))
+
     if 'environment' in options:
         env = options['environment']
         if not len(options) == 1:

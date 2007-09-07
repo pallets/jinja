@@ -11,7 +11,8 @@ DEFINED = '''{{ missing is defined }}|{{ true is defined }}'''
 EVEN = '''{{ 1 is even }}|{{ 2 is even }}'''
 LOWER = '''{{ "foo" is lower }}|{{ "FOO" is lower }}'''
 MATCHING = '''{{ "42" is matching('^\\d+$') }}|\
-{{ "foo" is matching('^\\d+$') }}'''
+{{ "foo" is matching('^\\d+$') }}|\
+{{ "foo bar" is matching @/^foo\\s+BAR$/i }}'''
 NUMERIC = '''{{ "43" is numeric }}|{{ "foo" is numeric }}|\
 {{ 42 is numeric }}'''
 ODD = '''{{ 1 is odd }}|{{ 2 is odd }}'''
@@ -20,6 +21,7 @@ SEQUENCE = '''{{ [1, 2, 3] is sequence }}|\
 {{ 42 is sequence }}'''
 UPPER = '''{{ "FOO" is upper }}|{{ "foo" is upper }}'''
 SAMEAS = '''{{ foo is sameas(false) }}|{{ 0 is sameas(false) }}'''
+NOPARENFORARG1 = '''{{ foo is sameas none }}'''
 
 
 def test_defined(env):
@@ -39,7 +41,7 @@ def test_lower(env):
 
 def test_matching(env):
     tmpl = env.from_string(MATCHING)
-    assert tmpl.render() == 'True|False'
+    assert tmpl.render() == 'True|False|True'
 
 
 def test_numeric(env):
@@ -65,3 +67,8 @@ def test_upper(env):
 def test_sameas(env):
     tmpl = env.from_string(SAMEAS)
     assert tmpl.render(foo=False) == 'True|False'
+
+
+def test_no_paren_for_arg1(env):
+    tmpl = env.from_string(NOPARENFORARG1)
+    assert tmpl.render(foo=None) == 'True'

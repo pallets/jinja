@@ -15,8 +15,7 @@ import re
 import sys
 import string
 from types import MethodType, FunctionType
-from compiler.ast import CallFunc, Name, Const
-from jinja.nodes import Trans
+from jinja import nodes
 from jinja.exceptions import SecurityException, TemplateNotFound
 
 # the python2.4 version of deque is missing the remove method
@@ -70,13 +69,6 @@ except NameError:
         if reverse:
             rv.reverse()
         return rv
-
-# if we have extended debugger support we should really use it
-try:
-    from jinja._tbtools import *
-    has_extended_debugger = True
-except ImportError:
-    has_extended_debugger = False
 
 # group by support
 try:
@@ -204,13 +196,19 @@ def get_attribute(obj, name):
         raise AttributeError(name)
     if name[:2] == name[-2:] == '__':
         raise SecurityException('not allowed to access internal attributes')
-    if obj.__class__ in callable_types and name.startswith('func_') or \
-       name.startswith('im_'):
+    if getattr(obj, '__class__', None) in callable_types and \
+       name.startswith('func_') or name.startswith('im_'):
         raise SecurityException('not allowed to access function attributes')
     r = _getattr(obj, 'jinja_allowed_attributes', None)
     if r is not None and name not in r:
         raise SecurityException('disallowed attribute accessed')
-    return _getattr(obj, name)
+
+    # attribute lookups convert unicode strings to ascii bytestrings.
+    # this process could raise an UnicodeEncodeError.
+    try:
+        return _getattr(obj, name)
+    except UnicodeError:
+        raise AttributeError(name)
 
 
 def safe_range(start, stop=None, step=None):
@@ -352,7 +350,10 @@ def buffereater(f):
     Used by the python translator to capture output of substreams.
     (macros, filter sections etc)
     """
-    return lambda *a, **kw: capture_generator(f(*a, **kw))
+    def wrapped(*a, **kw):
+        __traceback_hide__ = True
+        return capture_generator(f(*a, **kw))
+    return wrapped
 
 
 def empty_block(context):
@@ -374,14 +375,16 @@ def collect_translations(ast):
     result = []
     while todo:
         node = todo.pop()
-        if node.__class__ is Trans:
+        if node.__class__ is nodes.Trans:
             result.append((node.lineno, node.singular, node.plural))
-        elif node.__class__ is CallFunc and \
-             node.node.__class__ is Name and \
+        elif node.__class__ is nodes.CallExpression and \
+             node.node.__class__ is nodes.NameExpression and \
              node.node.name == '_':
-            if len(node.args) == 1 and node.args[0].__class__ is Const:
+            if len(node.args) == 1 and not node.kwargs and not node.dyn_args \
+               and not node.dyn_kwargs and \
+               node.args[0].__class__ is nodes.ConstantExpression:
                 result.append((node.lineno, node.args[0].value, None))
-        todo.extend(node.getChildNodes())
+        todo.extend(node.get_child_nodes())
     result.sort(lambda a, b: cmp(a[0], b[0]))
     return result
 
@@ -609,3 +612,12 @@ class CacheDict(object):
         rv._mapping = deepcopy(self._mapping)
         rv._queue = deepcopy(self._queue)
         return rv
+
+
+NAMESPACE = {
+    'range':            safe_range,
+    'debug':            debug_helper,
+    'lipsum':           generate_lorem_ipsum,
+    'watchchanges':     watch_changes,
+    'rendertemplate':   render_included
+}
