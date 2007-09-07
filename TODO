@@ -15,6 +15,7 @@ TODO List for Jinja
     - speed up jinja import
     - add optional zlib compression of template bytecode
     - write more unittests!!!!
+    - release it and update this todo list
 
 1.2:
 
