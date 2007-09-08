@@ -223,6 +223,7 @@ class Parser(object):
             token = self.stream.expect('name')
             args = []
             if self.stream.current.type == 'lparen':
+                self.stream.next()
                 while self.stream.current.type != 'rparen':
                     if args:
                         self.stream.expect('comma')
