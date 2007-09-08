@@ -170,7 +170,7 @@ Normally you cannot override a variable from an outer scope, you can just hide
 it. There is however a way to override a variable from an outer scope using the
 `set` tag, postfixed with a bang (!):
 
-.. source:: jinja
+.. sourcecode:: jinja
 
     {% set last_item = none %}
     {% for item in seq %}
