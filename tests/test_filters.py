@@ -66,6 +66,7 @@ GROUPBY = '''{{ [{'foo': 1, 'bar': 2},
                  {'foo': 2, 'bar': 3},
                  {'foo': 1, 'bar': 1},
                  {'foo': 3, 'bar': 4}]|groupby('foo') }}'''
+FILTERTAG = '''{% filter upper|replace('FOO', 'foo') %}foobar{% endfilter %}'''
 
 
 
@@ -295,3 +296,8 @@ def test_groupby(env):
         "'grouper': 1}, {'list': [{'foo': 2, 'bar': 3}], 'grouper': 2}, "
         "{'list': [{'foo': 3, 'bar': 4}], 'grouper': 3}]"
     )
+
+
+def test_filtertag(env):
+    tmpl = env.from_string(FILTERTAG)
+    assert tmpl.render() == 'fooBAR'
