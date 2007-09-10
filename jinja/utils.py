@@ -215,17 +215,22 @@ def safe_range(start, stop=None, step=None):
     """
     "Safe" form of range that does not generate too large lists.
     """
-    # this also works with None since None is always smaller than
-    # any other value.
-    if start > MAX_RANGE:
-        start = MAX_RANGE
-    if stop > MAX_RANGE:
-        stop = MAX_RANGE
     if step is None:
         step = 1
     if stop is None:
-        return range(0, start, step)
-    return range(start, stop, step)
+        r = xrange(0, start, step)
+    else:
+        r = xrange(start, stop, step)
+    if len(r) > MAX_RANGE:
+        def limit():
+            i = 0
+            for item in r:
+                i += 1
+                yield item
+                if i >= MAX_RANGE:
+                    break
+        return list(limit())
+    return list(r)
 
 
 def generate_lorem_ipsum(n=5, html=True, min=20, max=100):

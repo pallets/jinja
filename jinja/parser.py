@@ -303,7 +303,8 @@ class Parser(object):
         # check if this block does not exist by now.
         if name in self.blocks:
             raise TemplateSyntaxError('block %r defined twice' %
-                                       name, lineno, self.filename)
+                                       name, token.lineno,
+                                       self.filename)
         self.blocks.add(name)
 
         if self.stream.current.type != 'block_end':
