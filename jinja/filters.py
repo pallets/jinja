@@ -375,10 +375,12 @@ def do_urlencode():
         if isinstance(value, dict):
             tmp = {}
             for key, value in value.iteritems():
-                tmp[env.to_unicode(key)] = env.to_unicode(value)
+                key = env.to_unicode(key).encode(env.charset)
+                value = env.to_unicode(value).encode(env.charset)
+                tmp[key] = value
             return urlencode(tmp)
         else:
-            return quote(env.to_unicode(value))
+            return quote(env.to_unicode(value).encode(env.charset))
     return wrapped
 
 
