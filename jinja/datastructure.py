@@ -529,6 +529,11 @@ class TokenStream(object):
     """
     A token stream wraps a generator and supports pushing tokens back.
     It also provides some functions to expect tokens and similar stuff.
+
+    Important note: Do never push more than one token back to the
+                    stream. Although the stream object won't stop you
+                    from doing so, the behavior is undefined. Multiple
+                    pushed tokens are only used internally!
     """
 
     def __init__(self, generator, filename):
@@ -576,6 +581,17 @@ class TokenStream(object):
         """Got n tokens ahead."""
         for x in xrange(n):
             self.next()
+
+    def shift(self, token):
+        """
+        Push one token into the stream.
+        """
+        old_current = self.current
+        self.next()
+        self.push(self.current)
+        self.push(old_current)
+        self.push(token)
+        self.next()
 
     def next(self):
         """Go one token ahead."""

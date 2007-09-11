@@ -1137,7 +1137,7 @@ class Parser(object):
             else:
                 extends = None
                 if leading_whitespace:
-                    self.stream.push(leading_whitespace)
+                    self.stream.shift(leading_whitespace)
 
             body = self.subparse(None)
             def walk(nodelist, stack):
