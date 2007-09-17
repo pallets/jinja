@@ -245,9 +245,12 @@ class Context(BaseContext):
 
     def __init__(self, *args, **kwargs):
         environment = args[0]
+        if not kwargs and len(args) == 2 and isinstance(args[1], dict):
+            base = args[1]
+        else:
+            base = dict(*args[1:], **kwargs)
         super(Context, self).__init__(environment.undefined_singleton,
-                                      environment.globals,
-                                      dict(*args[1:], **kwargs))
+                                      environment.globals, base)
         self._translate_func = None
         self.cache = {}
         self.environment = environment
