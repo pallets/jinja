@@ -81,7 +81,7 @@ class Environment(object):
                                   `auto_escape` is ``True`` there will be also
                                   a ``Markup`` object in the template
                                   namespace to define partial html fragments.
-                                  Note that we do not recomment this feature.
+                                  Note that we do not recommend this feature.
         `default_filters`         list of tuples in the form (``filter_name``,
                                   ``arguments``) where ``filter_name`` is the
                                   name of a registered filter and
