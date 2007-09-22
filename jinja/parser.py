@@ -1108,7 +1108,7 @@ class Parser(object):
                 assert False, "unexpected token %r" % self.stream.current
 
         if test is not None:
-            msg = isinstance(test, StateTest) and ': ' + test.message or ''
+            msg = isinstance(test, StateTest) and ': ' + test.msg or ''
             raise TemplateSyntaxError('unexpected end of stream' + msg,
                                       self.stream.lineno, self.filename)
 
