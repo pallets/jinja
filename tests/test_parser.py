@@ -42,6 +42,11 @@ SMARTY_SYNTAX = '''\
 
 BALANCING = '''{{{'foo':'bar'}.foo}}'''
 
+STARTCOMMENT = '''{# foo comment
+and bar comment #}
+{% macro blub() %}foo{% endmacro %}
+{{ blub() }}'''
+
 
 def test_no_variable_block():
     env = Environment('{%', '%}', None, None)
@@ -81,3 +86,8 @@ def test_smarty_syntax():
 def test_balancing(env):
     tmpl = env.from_string(BALANCING)
     assert tmpl.render() == 'bar'
+
+
+def test_start_comment(env):
+    tmpl = env.from_string(STARTCOMMENT)
+    assert tmpl.render().strip() == 'foo'

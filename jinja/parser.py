@@ -932,12 +932,15 @@ class Parser(object):
         def ensure(expr):
             if not expr:
                 raise TemplateSyntaxError('invalid syntax for function '
-                                          'declaration', token.lineno,
+                                          'call expression', token.lineno,
                                           self.filename)
 
         while self.stream.current.type != 'rparen':
             if require_comma:
                 self.stream.expect('comma')
+                # support for trailing comma
+                if self.stream.current.type == 'rparen':
+                    break
             if self.stream.current.type == 'mul':
                 ensure(dyn_args is None and dyn_kwargs is None)
                 self.stream.next()
