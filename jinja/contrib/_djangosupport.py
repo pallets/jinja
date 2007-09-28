@@ -97,8 +97,8 @@ def render_to_response(template, context={}, request=None,
     """This function will take a few variables and spit out a full webpage."""
     content = render_to_string(template, context, request)
     if mimetype is None:
-        mimetype = settings.DEFUALT_CONTENT_TYPE
-    return HttpResponse(content, content_type)
+        mimetype = settings.DEFAULT_CONTENT_TYPE
+    return HttpResponse(content, mimetype)
 
 
 def render_to_string(template, context={}, request=None):
