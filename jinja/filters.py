@@ -18,7 +18,7 @@ from jinja.datastructure import TemplateData
 from jinja.exceptions import FilterArgumentError, SecurityException
 
 
-_striptags_re = re.compile(r'(<!--.*?-->|<[^>]+>)')
+_striptags_re = re.compile(r'(<!--.*?-->|<[^>]*>)')
 
 
 def stringfilter(f):

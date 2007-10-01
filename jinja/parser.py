@@ -510,7 +510,6 @@ class Parser(object):
                 op = self.stream.current.type
                 self.stream.next()
                 ops.append([op, self.parse_add_expression()])
-                lineno = self.stream.lineno
             elif self.stream.current.type == 'not' and \
                  self.stream.look().type == 'in':
                 self.stream.skip(2)
@@ -519,7 +518,7 @@ class Parser(object):
                 break
         if not ops:
             return expr
-        return nodes.CompareExpression(expr, ops)
+        return nodes.CompareExpression(expr, ops, lineno, self.filename)
 
     def parse_add_expression(self):
         """
