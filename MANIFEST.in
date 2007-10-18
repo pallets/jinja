@@ -1,1 +1,3 @@
 include docs/build/*.html
+include Makefile CHANGES LICENSE AUTHORS TODO ez_setup.py
+recursive-include tests *
