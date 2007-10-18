@@ -322,7 +322,7 @@ class PythonTranslator(Translator):
             # the master layout template is loaded. This can be used
             # for further processing. The output of those nodes does
             # not appear in the final template.
-            requirements += [child for child in node.get_child_nodes()
+            requirements += [child for child in node.body.get_child_nodes()
                              if child.__class__ not in (nodes.Text,
                              nodes.Block)]
 
