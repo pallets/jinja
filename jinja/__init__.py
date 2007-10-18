@@ -43,14 +43,14 @@
     the near future the best idea is to ship a Jinja 0.9 checkout together
     with the application.
 
-    The `Jinja trunk`_ is installable via `easy_install` with ``easy_install
+    The `Jinja tip`_ is installable via `easy_install` with ``easy_install
     Jinja==dev``.
 
     .. _sandboxed: http://en.wikipedia.org/wiki/Sandbox_(computer_security)
     .. _Django: http://www.djangoproject.com/
     .. _jinja webpage: http://jinja.pocoo.org/
     .. _documentation: http://jinja.pocoo.org/documentation/index.html
-    .. _Jinja trunk: http://trac.pocoo.org/repos/jinja/trunk#egg=Jinja-dev
+    .. _Jinja tip: http://dev.pocoo.org/hg/jinja-main/archive/tip.tar.gz#egg=Jinja-dev
 
 
     :copyright: 2007 by Armin Ronacher.

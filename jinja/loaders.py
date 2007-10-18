@@ -10,7 +10,10 @@
 """
 
 import codecs
-import sha
+try:
+    from hashlib import sha1
+except ImportError:
+    from sha import new as sha1
 import time
 from os import path
 from threading import Lock
@@ -38,8 +41,8 @@ def get_cachename(cachepath, name, salt=None):
     Return the filename for a cached file.
     """
     return path.join(cachepath, 'jinja_%s.cache' %
-                     sha.new('jinja(%s|%s)tmpl' %
-                             (name, salt or '')).hexdigest())
+                     sha1('jinja(%s|%s)tmpl' %
+                          (name, salt or '')).hexdigest())
 
 
 def _loader_missing(*args, **kwargs):
