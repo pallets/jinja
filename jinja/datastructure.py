@@ -345,7 +345,7 @@ class LoopContext(object):
         else:
             try:
                 length = len(seq)
-            except TypeError:
+            except (AttributeError, TypeError):
                 seq = list(seq)
                 length = len(seq)
         self._stack.append({
