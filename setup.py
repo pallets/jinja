@@ -6,7 +6,7 @@ import ez_setup
 ez_setup.use_setuptools()
 
 from distutils.command.build_ext import build_ext
-from distutils.errors import CCompilerError
+from distutils.errors import CCompilerError, DistutilsError
 from setuptools import setup, Extension, Feature
 from inspect import getdoc
 
@@ -22,8 +22,17 @@ def list_files(path):
 
 class optional_build_ext(build_ext):
 
+    def run(self):
+        try:
+            build_ext.run(self)
+        except DistutilsError, e:
+            self.compiler = None
+            self._setup_error = e
+
     def build_extension(self, ext):
         try:
+            if self.compiler is None:
+                raise self._setup_error
             build_ext.build_extension(self, ext)
         except CCompilerError, e:
             print '=' * 79

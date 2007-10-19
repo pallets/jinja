@@ -437,7 +437,7 @@ static PyTypeObject BaseContextType = {
 	0,				/* tp_dictoffset */
 	(initproc)BaseContext_init,	/* tp_init */
 	0,				/* tp_alloc */
-	PyType_GenericNew		/* tp_new */
+	0				/* tp_new */
 };
 
 static PyMethodDef module_methods[] = {
@@ -452,6 +452,7 @@ init_speedups(void)
 {
 	PyObject *module;
 
+	BaseContextType.tp_new = (newfunc)PyType_GenericNew;
 	if (PyType_Ready(&BaseContextType) < 0)
 		return;
 
