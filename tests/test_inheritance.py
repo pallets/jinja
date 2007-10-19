@@ -111,3 +111,8 @@ def test_broken(env):
 
 def test_working(env):
     tmpl = env.get_template('working')
+
+
+def test_shortcut(env):
+    tmpl = env.from_string('{% block foo "42" %}')
+    assert tmpl.render() == '42'

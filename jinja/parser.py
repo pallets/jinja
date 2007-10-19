@@ -309,8 +309,9 @@ class Parser(object):
 
         if self.stream.current.type != 'block_end':
             lineno = self.stream.lineno
-            body = nodes.NodeList([self.parse_variable_tag()], lineno,
-                                  self.filename)
+            expr = self.parse_tuple_expression()
+            node = nodes.Print(expr, lineno, self.filename)
+            body = nodes.NodeList([node], lineno, self.filename)
             self.stream.expect('block_end')
         else:
             # otherwise parse the body and attach it to the block
