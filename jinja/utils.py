@@ -350,16 +350,17 @@ except TypeError, e:
 del _test_singleton, _test_gen_bug
 
 
-def pformat(obj):
+def pformat(obj, verbose=False):
     """
     Prettyprint an object.  Either use the `pp` library or the
     builtin `pprint`.
     """
     try:
-        from pp import pp as format
+        from pp import pp
+        return pp(obj, verbose=verbose)
     except ImportError:
-        from pprint import pformat as format
-    return format(obj)
+        from pprint import pformat
+        return pformat(obj)
 
 
 def buffereater(f):
@@ -419,7 +420,7 @@ class DebugHelper(object):
 
     def __call__(self, env, context):
         """Print a nice representation of the context."""
-        return pformat(context.to_dict())
+        return pformat(context.to_dict(), verbose=True)
 
     def filters(self, env, context, builtins=True):
         """List the filters."""

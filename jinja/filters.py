@@ -423,12 +423,15 @@ def do_filesizeformat():
     return wrapped
 
 
-def do_pprint():
+def do_pprint(verbose=False):
     """
     Pretty print a variable. Useful for debugging.
+
+    With Jinja 1.2 onwards you can pass it a parameter.  If this parameter
+    is truthy the output will be more verbose (this requires `pp`)
     """
     def wrapped(env, context, value):
-        return pformat(value)
+        return pformat(value, verbose=verbose)
     return wrapped
 
 
