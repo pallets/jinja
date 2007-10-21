@@ -428,7 +428,7 @@ def do_pprint(verbose=False):
     Pretty print a variable. Useful for debugging.
 
     With Jinja 1.2 onwards you can pass it a parameter.  If this parameter
-    is truthy the output will be more verbose (this requires `pp`)
+    is truthy the output will be more verbose (this requires `pretty`)
     """
     def wrapped(env, context, value):
         return pformat(value, verbose=verbose)

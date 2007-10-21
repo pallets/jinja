@@ -352,12 +352,12 @@ del _test_singleton, _test_gen_bug
 
 def pformat(obj, verbose=False):
     """
-    Prettyprint an object.  Either use the `pp` library or the
+    Prettyprint an object.  Either use the `pretty` library or the
     builtin `pprint`.
     """
     try:
-        from pp import pp
-        return pp(obj, verbose=verbose)
+        from pretty import pretty
+        return pretty(obj, verbose=verbose)
     except ImportError:
         from pprint import pformat
         return pformat(obj)
