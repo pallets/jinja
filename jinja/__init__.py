@@ -68,3 +68,5 @@ from jinja.utils import from_string
 __all__ = ['Environment', 'Markup', 'FileSystemLoader', 'PackageLoader',
            'DictLoader', 'ChoiceLoader', 'FunctionLoader',
            'MemcachedFileSystemLoader', 'from_string']
+
+__version__ = '1.2'
