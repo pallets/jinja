@@ -79,6 +79,8 @@ Version 1.2
 
 - added `getattribute` and `getitem` filter.
 
+- added support for the `pp` library.
+
 
 Version 1.1
 -----------
