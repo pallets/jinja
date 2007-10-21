@@ -313,6 +313,17 @@ class Context(BaseContext):
         """
         return 'Context(%r)' % self.to_dict()
 
+    def __pretty__(self, p, cycle):
+        p.begin_group(9, 'Context({')
+        for idx, (key, value) in enumerate(self.to_dict().iteritems()):
+            if idx:
+                p.text(',')
+                p.breakable()
+            p.pretty(key)
+            p.text(': ')
+            p.pretty(value)
+        p.end_group(9, '})')
+
 
 class LoopContext(object):
     """
