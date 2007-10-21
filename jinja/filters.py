@@ -13,7 +13,7 @@ from random import choice
 from operator import itemgetter
 from urllib import urlencode, quote
 from jinja.utils import urlize, escape, reversed, sorted, groupby, \
-     get_attribute
+     get_attribute, pformat
 from jinja.datastructure import TemplateData
 from jinja.exceptions import FilterArgumentError, SecurityException
 
@@ -428,7 +428,6 @@ def do_pprint():
     Pretty print a variable. Useful for debugging.
     """
     def wrapped(env, context, value):
-        from pprint import pformat
         return pformat(value)
     return wrapped
 
