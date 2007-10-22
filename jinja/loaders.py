@@ -272,19 +272,22 @@ class MemcachedLoaderMixin(object):
     """
 
     def __init__(self, use_memcache, memcache_time=60 * 60 * 24 * 7,
-                 memcache_host=None, item_prefix='template/'):
-        try:
-            try:
-                from cmemcache import Client
-            except ImportError:
-                from memcache import Client
-        except ImportError:
-            raise RuntimeError('the %r loader requires an installed '
-                               'memcache module' % self.__class__.__name__)
+                 memcache_host=None, item_prefix='template/', client=None):
         if memcache_host is None:
             memcache_host = ['127.0.0.1:11211']
         if use_memcache:
-            self.__memcache = Client(list(memcache_host))
+            if client is None:
+                try:
+                    try:
+                        from cmemcache import Client
+                    except ImportError:
+                        from memcache import Client
+                except ImportError:
+                    raise RuntimeError('the %r loader requires an installed '
+                                       'memcache module' %
+                                       self.__class__.__name__)
+                client = Client(list(memcache_host))
+            self.__memcache = client
             self.__memcache_time = memcache_time
         else:
             self.__memcache = None
