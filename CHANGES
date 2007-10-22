@@ -81,6 +81,9 @@ Version 1.2
 
 - added support for the `pretty` library.
 
+- changed the way the `MemcachedLoaderMixin` creates the class so that it's
+  possible to hook your own client in.
+
 
 Version 1.1
 -----------

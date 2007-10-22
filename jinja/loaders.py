@@ -268,6 +268,10 @@ class MemcachedLoaderMixin(object):
 
     Requires the memcache library from tummy__.
 
+    With Jinja 1.2 onwards you can also provide a `client` keyword argument
+    that takes an already instanciated memcache client or memcache client
+    like object.
+
     __ http://www.tummy.com/Community/software/python-memcached/
     """
 
