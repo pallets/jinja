@@ -57,12 +57,10 @@ init_constants(void)
 }
 
 /**
- * Deallocator for BaseContext.
- *
- * Frees the memory for the stack layers before freeing the object.
+ * GC Helper
  */
-static void
-BaseContext_dealloc(BaseContext *self)
+static int
+BaseContext_clear(BaseContext *self)
 {
 	struct StackLayer *current = self->current, *tmp;
 	while (current) {
@@ -72,6 +70,18 @@ BaseContext_dealloc(BaseContext *self)
 		current = tmp->prev;
 		PyMem_Free(tmp);
 	}
+	return 0;
+}
+
+/**
+ * Deallocator for BaseContext.
+ *
+ * Frees the memory for the stack layers before freeing the object.
+ */
+static void
+BaseContext_dealloc(BaseContext *self)
+{
+	BaseContext_clear(self);
 	self->ob_type->tp_free((PyObject*)self);
 }
 
@@ -438,10 +448,11 @@ static PyTypeObject BaseContextType = {
 	0,				/* tp_getattro */
 	0,				/* tp_setattro */
 	0,				/* tp_as_buffer */
-	Py_TPFLAGS_DEFAULT | Py_TPFLAGS_BASETYPE, /*tp_flags*/
+	Py_TPFLAGS_DEFAULT | Py_TPFLAGS_BASETYPE | Py_TPFLAGS_HAVE_GC,
+					/*tp_flags*/
 	"",				/* tp_doc */
 	(traverseproc)BaseContext_traverse, /* tp_traverse */
-	0,				/* tp_clear */
+	(inquiry)BaseContext_clear,	/* tp_clear */
 	0,				/* tp_richcompare */
 	0,				/* tp_weaklistoffset */
 	0,				/* tp_iter */
