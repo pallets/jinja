@@ -1096,9 +1096,9 @@ class Parser(object):
                                                   self.stream.current.type,
                                                   lineno, self.filename)
                     else:
+                        name = self.stream.current.value
                         raise TemplateSyntaxError('unknown directive %r.' %
-                                                  self.stream.current.type,
-                                                  lineno, self.filename)
+                                                  name, lineno, self.filename)
                 else:
                     node = handler()
                     if node is not None:

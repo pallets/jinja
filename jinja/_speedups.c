@@ -440,7 +440,7 @@ static PyTypeObject BaseContextType = {
 	0,				/* tp_as_buffer */
 	Py_TPFLAGS_DEFAULT | Py_TPFLAGS_BASETYPE, /*tp_flags*/
 	"",				/* tp_doc */
-	(traverseproc)BaseContext_traverse,	/* tp_traverse */
+	(traverseproc)BaseContext_traverse, /* tp_traverse */
 	0,				/* tp_clear */
 	0,				/* tp_richcompare */
 	0,				/* tp_weaklistoffset */
