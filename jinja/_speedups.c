@@ -398,7 +398,7 @@ static PyMethodDef BaseContext_methods[] = {
 	{NULL}				/* Sentinel */
 };
 
-static PySequenceMethods BaseContext_as_sequence[] = {
+static PySequenceMethods BaseContext_as_sequence = {
 	0,				/* sq_length */
 	0,				/* sq_concat */
 	0,				/* sq_repeat */
@@ -411,7 +411,7 @@ static PySequenceMethods BaseContext_as_sequence[] = {
 	0				/* sq_inplace_repeat */
 };
 
-static PyMappingMethods BaseContext_as_mapping[] = {
+static PyMappingMethods BaseContext_as_mapping = {
 	NULL,
 	(binaryfunc)BaseContext_getitem,
 	(objobjargproc)BaseContext_setitem
@@ -430,8 +430,8 @@ static PyTypeObject BaseContextType = {
 	0,				/* tp_compare */
 	0,				/* tp_repr */
 	0,				/* tp_as_number */
-	BaseContext_as_sequence,	/* tp_as_sequence */
-	BaseContext_as_mapping,		/* tp_as_mapping */
+	&BaseContext_as_sequence,	/* tp_as_sequence */
+	&BaseContext_as_mapping,	/* tp_as_mapping */
 	0,				/* tp_hash */
 	0,				/* tp_call */
 	0,				/* tp_str */
@@ -440,7 +440,7 @@ static PyTypeObject BaseContextType = {
 	0,				/* tp_as_buffer */
 	Py_TPFLAGS_DEFAULT | Py_TPFLAGS_BASETYPE, /*tp_flags*/
 	"",				/* tp_doc */
-	BaseContext_traverse,		/* tp_traverse */
+	(traverseproc)BaseContext_traverse,	/* tp_traverse */
 	0,				/* tp_clear */
 	0,				/* tp_richcompare */
 	0,				/* tp_weaklistoffset */
