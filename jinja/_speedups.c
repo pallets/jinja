@@ -76,6 +76,25 @@ BaseContext_dealloc(BaseContext *self)
 }
 
 /**
+ * GC Helper
+ */
+static int
+BaseContext_traverse(BaseContext *self, visitproc visit, void *args)
+{
+	int vret;
+	struct StackLayer *layer = self->current;
+
+	while (layer) {
+		vret = visit(layer->dict, args);
+		if (vret != 0)
+			return vret;
+		layer = layer->prev;
+	}
+
+	return 0;
+}
+
+/**
  * Initializes the BaseContext.
  *
  * Like the native python class it takes a reference to the undefined
@@ -387,7 +406,7 @@ static PySequenceMethods BaseContext_as_sequence[] = {
 	0,				/* sq_slice */
 	0,				/* sq_ass_item */
 	0,				/* sq_ass_slice */
-	(objobjproc)BaseContext_contains,		/* sq_contains */
+	(objobjproc)BaseContext_contains,/* sq_contains */
 	0,				/* sq_inplace_concat */
 	0				/* sq_inplace_repeat */
 };
@@ -421,7 +440,7 @@ static PyTypeObject BaseContextType = {
 	0,				/* tp_as_buffer */
 	Py_TPFLAGS_DEFAULT | Py_TPFLAGS_BASETYPE, /*tp_flags*/
 	"",				/* tp_doc */
-	0,				/* tp_traverse */
+	BaseContext_traverse,		/* tp_traverse */
 	0,				/* tp_clear */
 	0,				/* tp_richcompare */
 	0,				/* tp_weaklistoffset */

@@ -314,6 +314,8 @@ class Context(BaseContext):
         return 'Context(%r)' % self.to_dict()
 
     def __pretty__(self, p, cycle):
+        if cycle:
+            return p.text('Context({...})')
         p.begin_group(9, 'Context({')
         for idx, (key, value) in enumerate(self.to_dict().iteritems()):
             if idx:
