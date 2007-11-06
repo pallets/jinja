@@ -70,6 +70,7 @@ BaseContext_clear(BaseContext *self)
 		current = tmp->prev;
 		PyMem_Free(tmp);
 	}
+	self->current = NULL;
 	return 0;
 }
 

@@ -738,7 +738,7 @@ class PythonTranslator(Translator):
         write('context.pop()')
         write('if 0: yield None')
         self.indention -= 1
-        buf.append(self.indent('context[%r] = buffereater(macro)' %
+        buf.append(self.indent('context[%r] = buffereater(macro, True)' %
                                node.name))
         self.used_utils.add('buffereater')
 

@@ -17,6 +17,7 @@ import string
 from types import MethodType, FunctionType
 from jinja import nodes
 from jinja.exceptions import SecurityException, TemplateNotFound
+from jinja.datastructure import TemplateData
 
 # the python2.4 version of deque is missing the remove method
 # because a for loop with a lookup for the missing value written
@@ -363,14 +364,17 @@ def pformat(obj, verbose=False):
         return pformat(obj)
 
 
-def buffereater(f):
+def buffereater(f, template_data=False):
     """
     Used by the python translator to capture output of substreams.
     (macros, filter sections etc)
     """
     def wrapped(*a, **kw):
         __traceback_hide__ = True
-        return capture_generator(f(*a, **kw))
+        rv = capture_generator(f(*a, **kw))
+        if template_data:
+            rv = TemplateData(rv)
+        return rv
     return wrapped
 
 
