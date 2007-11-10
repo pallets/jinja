@@ -19,7 +19,8 @@ from os import path
 from threading import Lock
 from jinja.parser import Parser
 from jinja.translators.python import PythonTranslator, Template
-from jinja.exceptions import TemplateNotFound, TemplateSyntaxError
+from jinja.exceptions import TemplateNotFound, TemplateSyntaxError, \
+     TemplateIncludeError
 from jinja.utils import CacheDict
 
 
@@ -100,6 +101,13 @@ class LoaderWrapper(object):
             from jinja.debugger import raise_syntax_error
             raise_syntax_error(e, self.environment)
 
+    def get_controlled_loader(self):
+        """
+        Return a loader that runs in a controlled environment.  (Keeps
+        track of templates that it loads and is not thread safe).
+        """
+        return ControlledLoader(self.environment, self.loader)
+
     def _loader_missing(self, *args, **kwargs):
         """Helper method that overrides all other methods if no
         loader is defined."""
@@ -107,6 +115,46 @@ class LoaderWrapper(object):
 
     def __nonzero__(self):
         return self.available
+
+
+class ControlledLoader(LoaderWrapper):
+    """
+    Used for template extending and including.
+    """
+
+    def __init__(self, environment, loader):
+        LoaderWrapper.__init__(self, environment, loader)
+        self._stack = []
+
+    def get_controlled_loader(self):
+        raise TypeError('Cannot get new controlled loader from an already '
+                        'controlled loader.')
+
+    def mark_as_processed(self):
+        """Mark the last parsed/sourced/included template as processed."""
+        if not self._stack:
+            raise RuntimeError('No template for marking found')
+        self._stack.pop()
+
+    def _controlled(method):
+        def new_method(self, name, *args, **kw):
+            if name in self._stack:
+                raise TemplateIncludeError('Circular imports/extends '
+                                           'detected.  %r appeared twice.' %
+                                           name)
+            self._stack.append(name)
+            return method(self, name, *args, **kw)
+        try:
+            new_method.__name__ = method.__name__
+            new_method.__doc__ = method.__doc__
+        except AttributeError:
+            pass
+        return new_method
+
+    get_source = _controlled(LoaderWrapper.get_source)
+    parse = _controlled(LoaderWrapper.parse)
+    load = _controlled(LoaderWrapper.load)
+    del _controlled
 
 
 class BaseLoader(object):

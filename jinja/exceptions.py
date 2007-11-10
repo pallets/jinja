@@ -82,3 +82,10 @@ class TemplateRuntimeError(TemplateError):
     Raised by the template engine if a tag encountered an error when
     rendering.
     """
+
+
+class TemplateIncludeError(TemplateError):
+    """
+    Raised by the `ControlledLoader` if recursive includes where
+    detected.
+    """

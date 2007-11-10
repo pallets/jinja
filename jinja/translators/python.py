@@ -144,6 +144,7 @@ class PythonTranslator(Translator):
 
     def __init__(self, environment, node, source):
         self.environment = environment
+        self.loader = environment.loader.get_controlled_loader()
         self.node = node
         self.source = source
         self.closed = False
@@ -278,7 +279,7 @@ class PythonTranslator(Translator):
         Clean up stuff.
         """
         self.closed = True
-        self.handlers = self.node = self.environment = None
+        self.handlers = self.node = self.environment = self.loader = None
 
     def translate(self):
         """
@@ -325,9 +326,14 @@ class PythonTranslator(Translator):
                              if child.__class__ not in (nodes.Text,
                              nodes.Block)]
 
-            # load the template we inherit from and add not known blocks
-            parent = self.environment.loader.parse(node.extends,
-                                                   node.filename)
+            # load the template we inherit from and add not known blocks.
+            # this also marks the templates on the controlled loader but
+            # are never removed.  that's no problem because we don't allow
+            # parents we extend from as includes and the controlled loader
+            # is only used for this templated
+            parent = self.loader.parse(node.extends,
+                                       node.filename)
+
             # look up all block nodes in the current template and
             # add them to the override dict.
             for n in get_nodes(nodes.Block, node):
@@ -492,6 +498,7 @@ class PythonTranslator(Translator):
             result.append('%s = %r' % (file_id, filename))
         result.append('debug_info = %s' % self.to_tuple(debug_mapping))
         result.append('template_source = %r' % self.source)
+
         return '\n'.join(result)
 
     def handle_template_text(self, node):
@@ -834,9 +841,12 @@ class PythonTranslator(Translator):
         """
         Include another template at the current position.
         """
-        tmpl = self.environment.loader.parse(node.template,
-                                             node.filename)
-        return self.handle_node(tmpl.body)
+        tmpl = self.loader.parse(node.template,
+                                 node.filename)
+        try:
+            return self.handle_node(tmpl.body)
+        finally:
+            self.loader.mark_as_processed()
 
     def handle_trans(self, node):
         """
