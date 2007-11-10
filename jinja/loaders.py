@@ -266,13 +266,15 @@ class MemcachedLoaderMixin(object):
     """
     Uses a memcached server to cache the templates.
 
-    Requires the memcache library from tummy__.
+    Requires the memcache library from `tummy`_ or the cmemcache library
+    from `Gijsbert de Haan`_.
 
     With Jinja 1.2 onwards you can also provide a `client` keyword argument
     that takes an already instanciated memcache client or memcache client
     like object.
 
-    __ http://www.tummy.com/Community/software/python-memcached/
+    .. _tummy: http://www.tummy.com/Community/software/python-memcached/
+    .. _Gisjsbert de Haan: http://gijsbert.org/cmemcache/
     """
 
     def __init__(self, use_memcache, memcache_time=60 * 60 * 24 * 7,

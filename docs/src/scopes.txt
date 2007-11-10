@@ -5,6 +5,7 @@ Scopes and Variable Behavior
 This section of the documentation covers the Jinja behavior regarding
 variable visibility.
 
+
 Scopes
 ======
 
@@ -29,6 +30,7 @@ The variable ``angryname`` just exists inside the macro, not outside it.
 Defined macros appear on the context as variables. Because of this, they are
 affected by the scoping too. A macro defined inside of a macro is just available
 in those two macros (the macro itself and the macro it's defined in).
+
 
 Template Globals
 ================
@@ -105,6 +107,7 @@ You can of course also use the `|default` filter.
     were not top-level were not propagated to the layout template. This made
     it impossible to use conditional expressions for inclusion in non root
     templates.
+
 
 Undefined Variables
 ===================

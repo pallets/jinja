@@ -69,7 +69,10 @@ A child template might look like this:
 
 The ``{% extends %}`` tag is the key here. It tells the template engine that
 this template "extends" another template. When the template system evaluates
-this template, first it locates the parent.
+this template, first it locates the parent.  It must be always the first tag
+in a template but whitespace or a comment is allowed before.  This was not
+enforced with Jinja 1.0 and 1.1, it does however raise a syntax error with
+1.2 or later.
 
 The filename of the template depends on the template loader. For example the
 ``FileSystemLoader`` allows you to access other templates by giving the
@@ -92,6 +95,7 @@ value from the parent template is used instead.
     also defines the content that fills the hole in the *parent*. If there were
     two similarly-named ``{% block %}`` tags in a template, that template's
     parent wouldn't know which one of the blocks' content to use.
+
 
 How Inheritance Works Internally
 ================================
@@ -138,6 +142,7 @@ an syntax error. Here some examples:
     However the condition is handled at runtime because it's in a valid block
     and defines a new block subtemplates can override.
 
+
 Super Blocks
 ============
 
@@ -155,6 +160,7 @@ to get the data of the parent you can give it an offset:
 
     {{ super(2) }}
         return the data of the second parent block
+
 
 Block Shortcuts
 ===============

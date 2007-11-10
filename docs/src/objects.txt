@@ -5,6 +5,7 @@ Global objects
 This section covers the behavior of global objects in the Jinja namespace and
 also the behavior of their attributes.
 
+
 Functions
 =========
 

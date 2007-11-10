@@ -67,6 +67,10 @@ this:
         If you have numerical indices you have to use the [] syntax:
     {{ users[0].username }}
 
+*new in Jinja 1.2*: You can now use django like attributes for integer
+indices.  Thus ``{{ foo.0 }}`` is equivalent to ``{{ foo[0] }}``.
+
+
 Loops
 =====
 
@@ -235,6 +239,9 @@ can use expressions. In expressions you can use any of the following operators:
     ``//``  divide the left operand by the right one and return a truncated
             integer result: ``{{ 20 // 7 }}`` is ``2``.
             *added in Jinja 1.1*
+    ``~``   string concatenate a value with another one.  ``{{ foo ~ bar }}``
+            is equivalent to ``{{ foo|string + bar|string }}``.  *added in
+            Jinja 1.1*
     ``*``   multiply the left operand with the right one.
             ``{{ 2 * 2 }}`` would return ``4``.
     ``**``  raise the left operand to the power of the right
@@ -260,6 +267,18 @@ Note that there is no support for any bit operations or something similar.
   using an infix notation too: ``foo is not bar`` and ``foo not in bar``
   instead of ``not foo is bar`` and ``not foo in bar``. All other expressions
   require a prefix notation: ``not (foo and bar)``.
+
+
+With Jinja 1.2 onwards it's possible to replace basic if/else blocks with the
+inline `if` / `else` expression.  The following two examples evaluate to the
+same:
+
+.. source:: jinja
+
+    {{ "something" if expr else "otherthing" }}
+
+    {% if expr %}something{% else %}otherthing{% endif %}
+
 
 Boolean Values
 ==============
@@ -376,6 +395,7 @@ You can also specify more than one value:
 For information regarding the visibility of macros have a look at the
 `Scopes and Variable Behavior`_ section.
 
+
 Extended Macro Call
 ===================
 
@@ -465,6 +485,7 @@ templates.
 evaluated in an indepdendent environment by calling `rendertemplate`. See the
 documentation for this function in the `builtins`_ documentation.
 
+
 Filtering Blocks
 ================
 
@@ -489,6 +510,7 @@ Of course you can chain filters too:
 
 returns ``"&lt;b&gt;some text&lt;/b&gt;"``.
 
+
 Defining Variables
 ==================
 
@@ -504,12 +526,14 @@ This should ouput ``foobar``.
 For information regarding the visibility of variables have a look at the
 `Scopes and Variable Behavior`_ section.
 
+
 Reserved Keywords
 =================
 
 Jinja has some keywords you cannot use a variable names. This limitation
-exists to make look coherent. Syntax highlighters won't mess things up and
-you will don't have unexpected output.
+exists to make templates look coherent. Syntax highlighters won't mess things
+up and you won't have the situation that some names work depending on the
+context.
 
 The following keywords exist and cannot be used as identifiers:
 

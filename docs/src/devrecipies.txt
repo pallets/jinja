@@ -4,6 +4,7 @@ Recipies For Developers
 
 Here some recipies for application developers.
 
+
 Automagic Template Variables
 ============================
 

@@ -53,19 +53,19 @@ class optional_build_ext(build_ext):
 
 
 setup(
-    name = 'Jinja',
-    version = '1.2',
-    url = 'http://jinja.pocoo.org/',
-    license = 'BSD',
-    author = 'Armin Ronacher',
-    author_email = 'armin.ronacher@active-4.com',
-    description = 'A small but fast and easy to use stand-alone template '
-                  'engine written in pure python.',
+    name='Jinja',
+    version='1.2',
+    url='http://jinja.pocoo.org/',
+    license='BSD',
+    author='Armin Ronacher',
+    author_email='armin.ronacher@active-4.com',
+    description='A small but fast and easy to use stand-alone template '
+                'engine written in pure python.',
     long_description = getdoc(jinja),
     # jinja is egg safe. But because we distribute the documentation
     # in form of html and txt files it's a better idea to extract the files
-    zip_safe = False,
-    classifiers = [
+    zip_safe=False,
+    classifiers=[
         'Development Status :: 5 - Production/Stable',
         'Environment :: Web Environment',
         'Intended Audience :: Developers',
@@ -76,9 +76,9 @@ setup(
         'Topic :: Software Development :: Libraries :: Python Modules',
         'Topic :: Text Processing :: Markup :: HTML'
     ],
-    keywords = ['python.templating.engines'],
-    packages = ['jinja', 'jinja.translators'],
-    data_files = [
+    keywords=['python.templating.engines'],
+    packages=['jinja', 'jinja.translators'],
+    data_files=[
         ('docs', list(list_files('docs/build'))),
         ('docs/txt', list(list_files('docs/src')))
     ],
@@ -86,8 +86,8 @@ setup(
     [python.templating.engines]
     jinja = jinja.plugin:BuffetPlugin
     ''',
-    extras_require = {'plugin': ['setuptools>=0.6a2']},
-    features = {
+    extras_require={'plugin': ['setuptools>=0.6a2']},
+    features={
         'speedups': Feature(
             'optional C-speed enhancements',
             standard = True,
@@ -103,5 +103,5 @@ setup(
             ]
         )
     },
-    cmdclass = {'build_ext': optional_build_ext}
+    cmdclass={'build_ext': optional_build_ext}
 )

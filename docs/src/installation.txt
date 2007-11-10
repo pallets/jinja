@@ -36,8 +36,8 @@ Installing the development version
 If you want to play around with the code
 ----------------------------------------
 
-1.  Install `Subversion`_
-2.  ``svn co http://trac.pocoo.org/repos/jinja/trunk jinja``
+1.  Install `mercurial`_
+2.  ``svn co http://dev.pocoo.org/hg/jinja-main jinja``
 3.  ``cd jinja``
 4.  ``ln -s jinja /usr/lib/python2.X/site-packages``
 
@@ -70,4 +70,4 @@ number.
 .. _download page: http://jinja.pocoo.org/download.html
 .. _setuptools: http://peak.telecommunity.com/DevCenter/setuptools
 .. _easy_install: http://peak.telecommunity.com/DevCenter/EasyInstall
-.. _Subversion: http://subversion.tigris.org/
+.. _mercurial: http://www.selenic.com/mercurial/

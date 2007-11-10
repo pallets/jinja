@@ -73,7 +73,7 @@ Version 1.2
   "nonlocal" keyword. This means that you can now override variables
   defined in the outer scope from within a loop.
 
-- ``foo + bar`` is now a simpler alternative to ``foo|string + bar|string``
+- ``foo ~ bar`` is now a simpler alternative to ``foo|string + bar|string``
 
 - `PackageLoader` can now work without pkg_resources too
 
