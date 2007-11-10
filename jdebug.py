@@ -10,13 +10,14 @@
 """
 import os
 import sys
+import gc
 from jinja import Environment
 from jinja.parser import Parser
 from jinja.lexer import Lexer
 from jinja.translators.python import PythonTranslator
 
 
-__all__ = ['e', 't', 'p', 'l']
+__all__ = ['e', 't', 'p', 'l', 'm']
 
 e = Environment()
 t = e.from_string
@@ -43,6 +44,32 @@ def l(x):
         print '%5s  %-20s  %r' % (item.lineno,
                                   item.type,
                                   item.value)
+
+class MemoryGuard(object):
+
+    def __init__(self):
+        self.guarded_objects = {}
+        self.clear = self.guarded_objects.clear
+
+    def freeze(self):
+        self.clear()
+        self.update()
+
+    def update(self):
+        self.guarded_objects.clear()
+        for obj in gc.get_objects():
+            self.guarded_objects[id(obj)] = True
+
+    def get_delta(self):
+        result = []
+        for obj in gc.get_objects():
+            if id(obj) not in self.guarded_objects:
+                result.append(obj)
+        return result
+
+
+m = MemoryGuard()
+
 
 if __name__ == '__main__':
     if len(sys.argv) > 1:

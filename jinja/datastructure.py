@@ -535,6 +535,7 @@ class TokenStreamIterator(object):
     def next(self):
         token = self._stream.current
         if token.type == 'eof':
+            self._stream.close()
             raise StopIteration()
         self._stream.next()
         return token
