@@ -389,7 +389,8 @@ class PythonTranslator(Translator):
         # bootstrapping code
         lines = ['# Essential imports', 'from __future__ import division']
         if self.used_utils:
-            lines.append('from jinja.utils import %s' % ', '.join(self.used_utils))
+            lines.append('from jinja.utils import %s' % \
+                         ', '.join(tuple(self.used_utils)))
         if self.require_runtime_error:
             lines.append('from jinja.exceptions import TemplateRuntimeError')
         if self.used_data_structures:
