@@ -19,19 +19,10 @@ from jinja.translators.python import PythonTranslator
 
 __all__ = ['e', 't', 'p', 'l', 'm']
 
+
+_global_frame = sys._getframe()
 e = Environment()
 t = e.from_string
-
-
-if os.environ.get('JDEBUG_SOURCEPRINT'):
-    original_translate = PythonTranslator.translate
-
-    def debug_translate(self):
-        rv = original_translate(self)
-        sys.stderr.write('## GENERATED SOURCE:\n%s\n' % rv)
-        return rv
-
-    PythonTranslator.translate = debug_translate
 
 
 def p(x=None, f=None):
@@ -53,17 +44,15 @@ class MemoryGuard(object):
 
     def freeze(self):
         self.clear()
-        self.update()
-
-    def update(self):
-        self.guarded_objects.clear()
         for obj in gc.get_objects():
             self.guarded_objects[id(obj)] = True
 
     def get_delta(self):
+        frm = sys._getframe()
         result = []
         for obj in gc.get_objects():
-            if id(obj) not in self.guarded_objects:
+            if id(obj) not in self.guarded_objects and \
+               obj is not frm and obj is not result:
                 result.append(obj)
         return result
 

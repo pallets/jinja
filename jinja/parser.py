@@ -1117,6 +1117,35 @@ class Parser(object):
 
         return assemble_list()
 
+    def sanitize_tree(self, body, extends):
+        self._sanitize_tree([body], [body], extends, body)
+        return body
+
+    def _sanitize_tree(self, nodelist, stack, extends, body):
+        """
+        This is not a closure because python leaks memory if it is.  It's used
+        by `parse()` to make sure blocks do not trigger unexpected behavior.
+        """
+        for node in nodelist:
+            if extends is not None and \
+                 node.__class__ is nodes.Block and \
+                 stack[-1] is not body:
+                for n in stack:
+                    if n.__class__ is nodes.Block:
+                        break
+                else:
+                    raise TemplateSyntaxError('misplaced block %r, '
+                                              'blocks in child '
+                                              'templates must be '
+                                              'either top level or '
+                                              'located in a block '
+                                              'tag.' % node.name,
+                                              node.lineno,
+                                              self.filename)
+            stack.append(node)
+            self._sanitize_tree(node.get_child_nodes(), stack, extends, body)
+            stack.pop()
+
     def parse(self):
         """
         Parse the template and return a Template node. This also does some
@@ -1142,28 +1171,7 @@ class Parser(object):
                 if leading_whitespace:
                     self.stream.shift(leading_whitespace)
 
-            body = self.subparse(None)
-            def walk(nodelist, stack):
-                for node in nodelist:
-                    if extends is not None and \
-                         node.__class__ is nodes.Block and \
-                         stack[-1] is not body:
-                        for n in stack:
-                            if n.__class__ is nodes.Block:
-                                break
-                        else:
-                            raise TemplateSyntaxError('misplaced block %r, '
-                                                      'blocks in child '
-                                                      'templates must be '
-                                                      'either top level or '
-                                                      'located in a block '
-                                                      'tag.' % node.name,
-                                                      node.lineno,
-                                                      self.filename)
-                    stack.append(node)
-                    walk(node.get_child_nodes(), stack)
-                    stack.pop()
-            walk([body], [body])
+            body = self.sanitize_tree(self.subparse(None), extends)
             return nodes.Template(extends, body, 1, self.filename)
         finally:
             self.close()

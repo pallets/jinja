@@ -269,10 +269,9 @@ class PythonTranslator(Translator):
         if self.closed:
             raise RuntimeError('translator is closed')
         if node.__class__ in self.handlers:
-            out = self.handlers[node.__class__](node)
+            return self.handlers[node.__class__](node)
         else:
             raise AssertionError('unhandled node %r' % node.__class__)
-        return out
 
     def close(self):
         """
