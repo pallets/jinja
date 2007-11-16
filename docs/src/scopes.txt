@@ -182,6 +182,5 @@ it. There is however a way to override a variable from an outer scope using the
 
 After the iteration `last_item` will point to the item of the last iteration.
 
-If `last_item` was not defined in the outer scope it wouldn't exist now because
-in that situation `set`, even with a postfixed bang just behaves like setting a
-scope variable.
+If `last_item` was not defined in the outer scope it would be defined in the
+outermost scope.

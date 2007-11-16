@@ -4,6 +4,7 @@ Installation
 
 Jinja requires at least Python 2.3 to work correctly.
 
+
 Installing a released version
 =============================
 
@@ -30,6 +31,7 @@ internet connection.
 
 This will install Jinja into your Python installation's site-packages directory.
 
+
 Installing the development version
 ==================================
 
@@ -42,7 +44,8 @@ If you want to play around with the code
 4.  ``ln -s jinja /usr/lib/python2.X/site-packages``
 
 As an alternative to steps 4 you can also do ``python setup.py develop``
-which will install the package via setuptools in development mode.
+which will install the package via setuptools in development mode.  This also
+has the advantage that the c extensions are compiled.
 
 If you just want the latest features and use them
 -------------------------------------------------
@@ -54,6 +57,19 @@ If you just want the latest features and use them
 This will install a Jinja egg containing the latest Subversion trunk code
 in your Python installation's site-packages directory. Every time the command
 is run, the sources are updated from Subversion.
+
+
+Windows Installation Information
+================================
+
+On windows computers without Visual Studio 2003 Jinja is unable to compile the
+C extensions.  This is usually not a problem because there is a fallback for
+native Python implementations of those C libraries.  However under certain
+conditions the installation may fail with an error message.  In that case try
+to disable the extensions by passing the following parameters to setup.py::
+
+    python setup.py install --without-speedups --without-extended-debugger
+
 
 Documentation
 =============

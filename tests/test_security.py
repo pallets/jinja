@@ -6,6 +6,14 @@
     :copyright: 2007 by Armin Ronacher.
     :license: BSD, see LICENSE for more details.
 """
+from jinja import Environment
+
+
+NONLOCALSET = '''\
+{% for item in range(10) %}
+    {%- set outer = item! -%}
+{% endfor -%}
+{{ outer }}'''
 
 
 class PrivateStuff(object):
@@ -49,3 +57,11 @@ Traceback (most recent call last):
     ...
 TemplateSyntaxError: cannot assign to expression (line 1)
 '''
+
+
+def test_nonlocal_set():
+    env = Environment()
+    env.globals['outer'] = 42
+    tmpl = env.from_string(NONLOCALSET)
+    assert tmpl.render() == '9'
+    assert env.globals['outer'] == 42

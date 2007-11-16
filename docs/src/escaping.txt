@@ -40,8 +40,8 @@ processing).
 
 Starting with `Jinja 1.1` you can also handle some whitespace rules in the
 template. If you put an minus sign (`-`) to the start or end of an block
-(for example a `for` tag) or a comment, variable element you can remove
-the whitespaces after that block or before that block:
+(for example a `for` tag), a comment or variable element you can remove
+the whitespaces after or before that block:
 
 .. sourcecode:: jinja
 

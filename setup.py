@@ -90,15 +90,15 @@ setup(
     features={
         'speedups': Feature(
             'optional C-speed enhancements',
-            standard = True,
-            ext_modules = [
+            standard=True,
+            ext_modules=[
                 Extension('jinja._speedups', ['jinja/_speedups.c'])
             ]
         ),
         'extended-debugger': Feature(
             'extended debugger',
-            standard = True,
-            ext_modules = [
+            standard=True,
+            ext_modules=[
                 Extension('jinja._debugger', ['jinja/_debugger.c'])
             ]
         )

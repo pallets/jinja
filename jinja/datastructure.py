@@ -274,7 +274,7 @@ class Context(BaseContext):
             if name in layer:
                 layer[name] = value
                 return
-        self.current[name] = value
+        self.initial[name] = value
 
     def translate_func(self):
         """

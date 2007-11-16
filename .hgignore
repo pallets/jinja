@@ -1,0 +1,6 @@
+^instance$
+^instance/
+^jinja/.*\.so$
+^(build|dist|Jinja\.egg-info)/
+\.py[co]$
+\.DS_Store$

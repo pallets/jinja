@@ -3,7 +3,14 @@ Jinja Changelog
 
 Version 1.2
 -----------
-(codename to be selected, release date unknown)
+(codename to be hatsuyuki, released Nov 17th 2007)
+
+.. admonition:: Backwards Incompatible Changes
+
+    - `call` is a keyword now
+    - the internal parser AST changed
+    - `extends` must be the first tag in a template
+    - the tuple literal yields tuples now, instead of lists.
 
 - environments now have a `translator_factory` parameter that allows
   to change the translator without subclassing the environment.

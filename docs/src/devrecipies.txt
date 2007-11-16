@@ -38,6 +38,7 @@ You can use it now like this:
 
 In the template you can now access the local variables `seq` and `foo`.
 
+
 Using Django Filters with Jinja
 ===============================
 
@@ -75,9 +76,17 @@ And use it:
 Also keep in mind that Jinja knows about keywords, thus you cannot have a filter
 that is called `pluralize` for example.
 
+Such a conversion function is also part of the djangosupport module which was
+introduced in Jinja 1.2.  It's explained on the `Framework Integration`_ page.
+
 
 Using Jinja in Django
 =====================
+
+.. admonition:: Note
+
+    This section is more or less obsolete as of Jinja 1.2 which provides a
+    djangosupport module, covered on the `Framework Integration`_ page.
 
 This snippet was contributed by Bryan McLemore. It provides a `render_to_response`
 function similar to the one shipped with django just that it uses Jinja for
@@ -125,3 +134,6 @@ environment class:
 
 Because Django uses gettext internally we can create just assign the
 ngettext and gettext functions directly to the translator class.
+
+
+.. _Framework Integration: frameworks.txt

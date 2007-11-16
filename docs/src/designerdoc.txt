@@ -223,6 +223,14 @@ table shows which syntax elements are supported:
     ``undefined``           special Jinja undefined singleton.
     ======================= ===================================================
 
+.. admonition:: Common Pitfalls
+
+    Keep in mind that Jinja literals, keywords and functions are all lowercase.
+    If you're used to Python you probably tried to write `True` which evaluates
+    to undefined because it simply does not exist.  The correct name for the
+    true value is just `true` (lowercase).
+   
+
 Operators
 =========
 
