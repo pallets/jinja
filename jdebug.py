@@ -31,7 +31,7 @@ def p(x=None, f=None):
     print PythonTranslator(e, Parser(e, x, f).parse(), None).translate()
 
 def l(x):
-    for token in e.lexer.tokenize(x):
+    for item in e.lexer.tokenize(x):
         print '%5s  %-20s  %r' % (item.lineno,
                                   item.type,
                                   item.value)

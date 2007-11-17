@@ -7,6 +7,7 @@
     :license: BSD, see LICENSE for more details.
 """
 
+RAW = '{% raw %}foo{% endraw %}|{%raw%}{{ bar }}|{% baz %}{%       endraw    %}'
 BALANCING = '''{% for item in seq %}${{'foo': item}|upper}{% endfor %}'''
 COMMENTS = '''\
 <ul>
@@ -15,6 +16,11 @@ COMMENTS = '''\
 <!--- endfor -->
 </ul>'''
 BYTEFALLBACK = u'''{{ 'foo'|pprint }}|{{ 'bär'|pprint }}'''
+
+
+def test_raw(env):
+    tmpl = env.from_string(RAW)
+    assert tmpl.render() == 'foo|{{ bar }}|{% baz %}'
 
 
 def test_balancing():

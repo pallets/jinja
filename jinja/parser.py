@@ -1080,6 +1080,10 @@ class Parser(object):
                 next()
                 push_variable()
                 self.stream.expect('variable_end')
+            elif token_type == 'raw_begin':
+                next()
+                push_data()
+                self.stream.expect('raw_end')
             elif token_type == 'block_begin':
                 next()
                 if test is not None and test(self.stream.current):

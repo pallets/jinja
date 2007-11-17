@@ -276,19 +276,16 @@ class Lexer(object):
         # global lexing rules
         self.rules = {
             'root': [
-                # raw directive
-                (c('((?:\s*%s\-|%s)\s*raw\s*(?:\-%s\s*|%s%s))' % (
-                    e(environment.block_start_string),
-                    e(environment.block_start_string),
-                    e(environment.block_end_string),
-                    e(environment.block_end_string),
-                    block_suffix_re
-                )), (None,), 'raw'),
-                # normal directives
-                (c('(.*?)(?:%s)' % '|'.join([
-                    '(?P<%s_begin>\s*%s\-|%s)' % (n, e(r), e(r))
-                   for n, r in root_tag_rules
-                ])), ('data', '#bygroup'), '#bygroup'),
+                # directives
+                (c('(.*?)(?:%s)' % '|'.join(
+                    ['(?P<raw_begin>(?:\s*%s\-|%s)\s*raw\s*%s)' % (
+                        e(environment.block_start_string),
+                        e(environment.block_start_string),
+                        e(environment.block_end_string)
+                    )] + [
+                        '(?P<%s_begin>\s*%s\-|%s)' % (n, e(r), e(r))
+                        for n, r in root_tag_rules
+                    ])), ('data', '#bygroup'), '#bygroup'),
                 # data
                 (c('.+'), 'data', None)
             ],
@@ -310,14 +307,14 @@ class Lexer(object):
                 )), 'block_end', '#pop'),
             ] + tag_rules,
             # raw block
-            'raw': [
+            'raw_begin': [
                 (c('(.*?)((?:\s*%s\-|%s)\s*endraw\s*(?:\-%s\s*|%s%s))' % (
                     e(environment.block_start_string),
                     e(environment.block_start_string),
                     e(environment.block_end_string),
                     e(environment.block_end_string),
                     block_suffix_re
-                )), ('data', None), '#pop'),
+                )), ('data', 'raw_end'), '#pop'),
                 (c('(.)'), (Failure('Missing end of raw directive'),), None)
             ]
         }
