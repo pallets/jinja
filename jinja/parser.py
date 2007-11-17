@@ -108,10 +108,10 @@ class Parser(object):
         """
         if self.stream:
             raise TemplateSyntaxError('raw directive does not support '
-                                      'any arguments.', lineno,
+                                      'any arguments.', self.stream.lineno,
                                       self.filename)
         raise TemplateSyntaxError('missing end tag for raw directive.',
-                                  lineno, self.filename)
+                                  self.stream.lineno, self.filename)
 
     def parse_extends_directive(self):
         """
