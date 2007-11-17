@@ -317,7 +317,7 @@ def run(dst, preproc, sources=(), handle_file=handle_file):
             f.close()
 
 
-def main(dst='build/', preproc=False, *sources):
+def main(dst='html/', preproc=False, *sources):
     run(os.path.realpath(dst), str(preproc).lower() == 'true', sources)
 
 

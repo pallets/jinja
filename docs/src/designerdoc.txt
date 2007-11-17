@@ -281,7 +281,7 @@ With Jinja 1.2 onwards it's possible to replace basic if/else blocks with the
 inline `if` / `else` expression.  The following two examples evaluate to the
 same:
 
-.. source:: jinja
+.. sourcecode:: jinja
 
     {{ "something" if expr else "otherthing" }}
 

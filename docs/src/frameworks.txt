@@ -223,7 +223,7 @@ Available methods on the `register` object:
 
         {{ render_author_details('John Doe') }}
 
-``clean_inclusion (func, template[, name[, run_processors]]) ``
+``clean_inclusion (func, template[, name[, run_processors]])``
     Works like `context_inclusion` but doesn't use the calles
     context but an empty context. If `run_processors` is `True`
     it will lookup the context for a `request` object and pass

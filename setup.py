@@ -79,7 +79,7 @@ setup(
     keywords=['python.templating.engines'],
     packages=['jinja', 'jinja.translators'],
     data_files=[
-        ('docs', list(list_files('docs/build'))),
+        ('docs/html', list(list_files('docs/html'))),
         ('docs/txt', list(list_files('docs/src')))
     ],
     entry_points='''
