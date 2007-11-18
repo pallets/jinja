@@ -54,7 +54,7 @@ class optional_build_ext(build_ext):
 
 setup(
     name='Jinja',
-    version='1.2',
+    version='1.3',
     url='http://jinja.pocoo.org/',
     license='BSD',
     author='Armin Ronacher',

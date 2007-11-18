@@ -69,4 +69,8 @@ __all__ = ['Environment', 'Markup', 'FileSystemLoader', 'PackageLoader',
            'DictLoader', 'ChoiceLoader', 'FunctionLoader',
            'MemcachedFileSystemLoader', 'from_string']
 
-__version__ = '1.2'
+__version__ = '1.3'
+__author__ = 'Armin Ronacher'
+__url__ = 'http://jinja.pocoo.org/'
+__license__ = 'BSD'
+__docformat__ = 'restructuredtext'
