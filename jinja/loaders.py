@@ -414,7 +414,7 @@ class BaseFileSystemLoader(BaseLoader):
 
     def get_source(self, environment, name, parent):
         filename = get_template_filename(self.searchpath, name)
-        if path.exists(filename):
+        if path.isfile(filename):
             f = codecs.open(filename, 'r', environment.template_charset)
             try:
                 return f.read()
@@ -473,7 +473,7 @@ class FileSystemLoader(CachedLoaderMixin, BaseFileSystemLoader):
 
     def check_source_changed(self, environment, name):
         filename = get_template_filename(self.searchpath, name)
-        if path.exists(filename):
+        if path.isfile(filename):
             return path.getmtime(filename)
         return -1
 
@@ -562,7 +562,7 @@ class BasePackageLoader(BaseLoader):
                     self.package_path.split('/') +
                     [p for p in name.split('/') if p != '..'])
                 )
-                if path.exists(filename):
+                if path.isfile(filename):
                     f = file(filename)
                     try:
                         return f.read()

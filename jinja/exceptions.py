@@ -56,7 +56,7 @@ class TestArgumentError(TypeError, TemplateError):
         TypeError.__init__(self, message)
 
 
-class TemplateNotFound(IOError, TemplateError):
+class TemplateNotFound(IOError, LookupError, TemplateError):
     """
     Raised if a template does not exist.
     """
