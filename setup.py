@@ -77,7 +77,7 @@ setup(
         'Topic :: Text Processing :: Markup :: HTML'
     ],
     keywords=['python.templating.engines'],
-    packages=['jinja', 'jinja.translators'],
+    packages=['jinja', 'jinja.translators', 'jinja.contrib'],
     data_files=[
         ('docs/html', list(list_files('docs/html'))),
         ('docs/txt', list(list_files('docs/src')))
