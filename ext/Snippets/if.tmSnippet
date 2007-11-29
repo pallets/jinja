@@ -1,0 +1,18 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE plist PUBLIC "-//Apple Computer//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
+<plist version="1.0">
+<dict>
+	<key>content</key>
+	<string>{% if $1 %}
+	$1
+{% endif %}</string>
+	<key>name</key>
+	<string>if</string>
+	<key>scope</key>
+	<string>source.jinja, text.html.jinja</string>
+	<key>tabTrigger</key>
+	<string>if</string>
+	<key>uuid</key>
+	<string>5B95AA2C-B0E7-4886-9A55-90C1939D39C8</string>
+</dict>
+</plist>
