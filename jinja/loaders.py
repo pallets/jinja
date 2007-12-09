@@ -33,6 +33,9 @@ def get_template_filename(searchpath, name):
     """
     Return the filesystem filename wanted.
     """
+    for sep in path.sep, path.altsep:
+        if sep and sep in name:
+            name = name.replace(sep, '/')
     return path.join(searchpath, *[p for p in name.split('/')
                      if p and p[0] != '.'])
 
