@@ -10,7 +10,10 @@
 """
 import re
 from random import choice
-from operator import itemgetter
+try:
+    from operator import itemgetter
+except ImportError:
+    itemgetter = lambda a: lambda b: b[a]
 from urllib import urlencode, quote
 from jinja.utils import urlize, escape, reversed, sorted, groupby, \
      get_attribute, pformat

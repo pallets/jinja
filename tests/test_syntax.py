@@ -28,7 +28,7 @@ GROUPING = '''{{ (true and false) or (false and true) and not false }}'''
 CONDEXPR = '''{{ 0 if true else 1 }}'''
 DJANGOATTR = '''{{ [1, 2, 3].0 }}'''
 FILTERPRIORITY = '''{{ "foo"|upper + "bar"|upper }}'''
-REGEX = '''{{ @/\S+/.findall('foo bar baz') }}'''
+REGEX = r'''{{ @/\S+/.findall('foo bar baz') }}'''
 TUPLETEMPLATES = [
     '{{ () }}',
     '{{ (1, 2) }}',
@@ -110,7 +110,7 @@ def test_inop(env):
 
 def test_literals(env):
     tmpl = env.from_string(LITERALS)
-    assert tmpl.render() == '[]|{}|()||set([])'
+    assert tmpl.render().lower() == '[]|{}|()||set([])'
 
 
 def test_bool(env):
@@ -174,7 +174,7 @@ def test_tuple_expr(env):
 
 def test_trailing_comma(env):
     tmpl = env.from_string(TRAILINGCOMMA)
-    assert tmpl.render() == '(1, 2)|[1, 2]|{1: 2}|set([1, 2])'
+    assert tmpl.render().lower() == '(1, 2)|[1, 2]|{1: 2}|set([1, 2])'
 
 
 def test_extends_position():

@@ -150,7 +150,7 @@ class ControlledLoader(LoaderWrapper):
         try:
             new_method.__name__ = method.__name__
             new_method.__doc__ = method.__doc__
-        except AttributeError:
+        except:
             pass
         return new_method
 

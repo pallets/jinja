@@ -45,7 +45,7 @@ string_re = re.compile(r"('([^'\\]*(?:\\.[^'\\]*)*)'"
                        r'|"([^"\\]*(?:\\.[^"\\]*)*)")(?ms)')
 integer_re = re.compile(r'\d+')
 float_re = re.compile(r'\d+\.\d+')
-regex_re = re.compile(r'@/([^/\\]*(?:\\.[^/\\]*)*)*/[a-z]*(?ms)')
+regex_re = re.compile(r'\@/([^/\\]*(?:\\.[^/\\]*)*)*/[a-z]*(?ms)')
 
 
 # set of used keywords
