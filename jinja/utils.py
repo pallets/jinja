@@ -200,8 +200,12 @@ def get_attribute(obj, name):
     if getattr(obj, '__class__', None) in callable_types and \
        name.startswith('func_') or name.startswith('im_'):
         raise SecurityException('not allowed to access function attributes')
+
     r = _getattr(obj, 'jinja_allowed_attributes', None)
-    if r is not None and name not in r:
+    # the empty string check is for pylons which returns empty strings on
+    # it's stacked something foobar object
+    if r not in (None, '') and name not in r:
+        print "broken here"
         raise SecurityException('disallowed attribute accessed')
 
     # attribute lookups convert unicode strings to ascii bytestrings.
