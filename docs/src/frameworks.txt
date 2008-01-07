@@ -87,6 +87,16 @@ It's meant to be used as replacement for the turbogears package name but
 Jinja assumes that the name of the template does not include the package
 path.
 
+.. admonition:: Note
+
+    Special note for pylons users.  Jinja will be unable to request attributes
+    from the special `c` object, unless you set `strict_c` to `True` in the
+    `environment.py`:
+
+    .. sourcecode:: python
+
+        return pylons.config.Config(tmpl_options, map, paths, strict_c=True)
+
 You can then render the template in the view like this:
 
 .. sourcecode:: python
