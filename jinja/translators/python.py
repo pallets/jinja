@@ -137,6 +137,41 @@ class Template(object):
         raise exc_type, exc_value, traceback
 
 
+class TranslationOperator(object):
+    """
+    A translation operator has a single string representing the operation
+    """
+    def __init__(self, operator, translator):
+        self.operator = operator
+        self.translator = translator
+
+class UnaryOperator(TranslationOperator):
+    """
+    A unary operator has one side to the operation.
+    """
+    def __call__(self, node):
+        """
+        Apply operator.
+        """
+        return '( %s %s)' % (
+            self.operator,
+            self.translator.handle_node(node.node),
+        )
+
+class BinaryOperator(TranslationOperator):
+    """
+    A binary operator has two sides to the operation.
+    """
+    def __call__(self, node):
+        """
+        Apply operator.
+        """
+        return '(%s %s %s)' % (
+            self.translator.handle_node(node.left),
+            self.operator,
+            self.translator.handle_node(node.right),
+        )
+
 class PythonTranslator(Translator):
     """
     Pass this translator a ast tree to get valid python code.
@@ -198,24 +233,24 @@ class PythonTranslator(Translator):
             nodes.SubscriptExpression:      self.handle_subscript,
             nodes.FilterExpression:         self.handle_filter_expr,
             nodes.CallExpression:           self.handle_call_expr,
-            nodes.AddExpression:            self.handle_add,
-            nodes.SubExpression:            self.handle_sub,
+            nodes.AddExpression:            BinaryOperator('+', self),
+            nodes.SubExpression:            BinaryOperator('-', self),
             nodes.ConcatExpression:         self.handle_concat,
-            nodes.DivExpression:            self.handle_div,
-            nodes.FloorDivExpression:       self.handle_floor_div,
-            nodes.MulExpression:            self.handle_mul,
-            nodes.ModExpression:            self.handle_mod,
-            nodes.PosExpression:            self.handle_pos,
-            nodes.NegExpression:            self.handle_neg,
-            nodes.PowExpression:            self.handle_pow,
+            nodes.DivExpression:            BinaryOperator('/', self),
+            nodes.FloorDivExpression:       BinaryOperator('//', self),
+            nodes.MulExpression:            BinaryOperator('*', self),
+            nodes.ModExpression:            BinaryOperator('%', self),
+            nodes.PosExpression:            UnaryOperator('+', self),
+            nodes.NegExpression:            UnaryOperator('-', self),
+            nodes.PowExpression:            BinaryOperator('**', self),
             nodes.DictExpression:           self.handle_dict,
             nodes.SetExpression:            self.handle_set_expr,
             nodes.ListExpression:           self.handle_list,
             nodes.TupleExpression:          self.handle_tuple,
             nodes.UndefinedExpression:      self.handle_undefined,
-            nodes.AndExpression:            self.handle_and,
-            nodes.OrExpression:             self.handle_or,
-            nodes.NotExpression:            self.handle_not,
+            nodes.AndExpression:            BinaryOperator(' and ', self),
+            nodes.OrExpression:             BinaryOperator(' or ', self),
+            nodes.NotExpression:            UnaryOperator(' not ', self),
             nodes.SliceExpression:          self.handle_slice,
             nodes.ConditionalExpression:    self.handle_conditional_expr
         }
@@ -993,24 +1028,6 @@ class PythonTranslator(Translator):
             dyn_kwargs
         )
 
-    def handle_add(self, node):
-        """
-        Add two items.
-        """
-        return '(%s + %s)' % (
-            self.handle_node(node.left),
-            self.handle_node(node.right)
-        )
-
-    def handle_sub(self, node):
-        """
-        Sub two items.
-        """
-        return '(%s - %s)' % (
-            self.handle_node(node.left),
-            self.handle_node(node.right)
-        )
-
     def handle_concat(self, node):
         """
         Convert some objects to unicode and concatenate them.
@@ -1021,62 +1038,6 @@ class PythonTranslator(Translator):
             for arg in node.args
         ])
 
-    def handle_div(self, node):
-        """
-        Divide two items.
-        """
-        return '(%s / %s)' % (
-            self.handle_node(node.left),
-            self.handle_node(node.right)
-        )
-
-    def handle_floor_div(self, node):
-        """
-        Divide two items, return truncated result.
-        """
-        return '(%s // %s)' % (
-            self.handle_node(node.left),
-            self.handle_node(node.right)
-        )
-
-    def handle_mul(self, node):
-        """
-        Multiply two items.
-        """
-        return '(%s * %s)' % (
-            self.handle_node(node.left),
-            self.handle_node(node.right)
-        )
-
-    def handle_mod(self, node):
-        """
-        Apply modulo.
-        """
-        return '(%s %% %s)' % (
-            self.handle_node(node.left),
-            self.handle_node(node.right)
-        )
-
-    def handle_pos(self, node):
-        """
-        One of the more or less unused nodes.
-        """
-        return '(+%s)' % self.handle_node(node.node)
-
-    def handle_neg(self, node):
-        """
-        Make a number negative.
-        """
-        return '(-%s)' % self.handle_node(node.node)
-
-    def handle_pow(self, node):
-        """
-        handle foo**bar
-        """
-        return '(%s**%s)' % (
-            self.handle_node(node.left),
-            self.handle_node(node.right)
-        )
 
     def handle_dict(self, node):
         """
@@ -1111,29 +1072,6 @@ class PythonTranslator(Translator):
         """
         return 'undefined_singleton'
 
-    def handle_and(self, node):
-        """
-        Handle foo and bar.
-        """
-        return '(%s and %s)' % (
-            self.handle_node(node.left),
-            self.handle_node(node.right)
-        )
-
-    def handle_or(self, node):
-        """
-        handle foo or bar.
-        """
-        return '(%s or %s)' % (
-            self.handle_node(node.left),
-            self.handle_node(node.right)
-        )
-
-    def handle_not(self, node):
-        """
-        handle not operator.
-        """
-        return '(not %s)' % self.handle_node(node.node)
 
     def handle_slice(self, node, getslice_test=False):
         """
