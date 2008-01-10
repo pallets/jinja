@@ -239,7 +239,7 @@ class CachedLoaderMixin(object):
         try:
             # caching is only possible for the python translator. skip
             # all other translators
-            if translator is not PythonTranslator:
+            if isinstance(translator, PythonTranslator):
                 return super(CachedLoaderMixin, self).load(
                              environment, name, translator)
 
@@ -363,7 +363,7 @@ class MemcachedLoaderMixin(object):
         try:
             # caching is only possible for the python translator. skip
             # all other translators
-            if translator is not PythonTranslator:
+            if isinstance(translator, PythonTranslator):
                 return super(MemcachedLoaderMixin, self).load(
                              environment, name, translator)
             tmpl = None
