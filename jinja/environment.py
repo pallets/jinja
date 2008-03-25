@@ -12,6 +12,7 @@ from jinja.lexer import Lexer
 from jinja.parser import Parser
 from jinja.loaders import LoaderWrapper
 from jinja.datastructure import SilentUndefined, Markup, Context, FakeTranslator
+from jinja.translators.python import PythonTranslator 
 from jinja.utils import collect_translations, get_attribute
 from jinja.exceptions import FilterNotFound, TestNotFound, \
      SecurityException, TemplateSyntaxError
@@ -54,7 +55,8 @@ class Environment(object):
                  undefined_singleton=SilentUndefined,
                  disable_regexps=False,
                  friendly_traceback=True,
-                 translator_factory=None):
+                 translator_factory=None,
+                 template_translator=PythonTranslator):
         """
         Here the possible initialization parameters:
 
@@ -117,6 +119,10 @@ class Environment(object):
                                   the context as first argument to get the
                                   translator for the current instance.
                                   *new in Jinja 1.2*
+        `template_translator`     An class that defines a static method called
+                                  process which can be used to process the 
+                                  template's AST into a compiled python module.
+                                  *new in Jinja 1.2*
         ========================= ============================================
 
         All of these variables except those marked with a star (*) are
@@ -160,6 +166,9 @@ class Environment(object):
 
         # and here the translator factory
         self.translator_factory = translator_factory
+
+        # and here the AST translator
+        self.template_translator = template_translator
 
         # create lexer
         self.lexer = Lexer(self)
@@ -219,7 +228,7 @@ class Environment(object):
         Load a template from a loader. If the template does not exist, you
         will get a `TemplateNotFound` exception.
         """
-        return self._loader.load(filename)
+        return self._loader.load(filename, translator=self.template_translator)
 
     def to_unicode(self, value):
         """
