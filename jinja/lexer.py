@@ -19,7 +19,7 @@
     This is required in order to make "class" and some other python keywords
     we don't use valid identifiers.
 
-    :copyright: 2007 by Armin Ronacher.
+    :copyright: 2007-2008 by Armin Ronacher.
     :license: BSD, see LICENSE for more details.
 """
 import re
@@ -91,6 +91,24 @@ assert len(operators) == len(reverse_operators), 'operators dropped'
 operator_re = re.compile('(%s)' % '|'.join([re.escape(x) for x in
                          sorted(operators, key=lambda x: -len(x))]))
 
+simple_escapes = {
+    'a':    '\a',
+    'n':    '\n',
+    'r':    '\r',
+    'f':    '\f',
+    't':    '\t',
+    'v':    '\v',
+    '\\':   '\\',
+    '"':    '"',
+    "'":    "'",
+    '0':    '\x00'
+}
+unicode_escapes = {
+    'x':    2,
+    'u':    4,
+    'U':    8
+}
+
 
 def unescape_string(lineno, filename, s):
     r"""
@@ -103,34 +121,21 @@ def unescape_string(lineno, filename, s):
     """
     result = []
     write = result.append
-    simple_escapes = {
-        'a':    '\a',
-        'n':    '\n',
-        'r':    '\r',
-        'f':    '\f',
-        't':    '\t',
-        'v':    '\v',
-        '\\':   '\\',
-        '"':    '"',
-        "'":    "'",
-        '0':    '\x00'
-    }
-    unicode_escapes = {
-        'x':    2,
-        'u':    4,
-        'U':    8
-    }
     chariter = iter(s)
     next_char = chariter.next
+
+    # faster lookup
+    sescapes = simple_escapes
+    uescapes = unicode_escapes
 
     try:
         for char in chariter:
             if char == '\\':
                 char = next_char()
-                if char in simple_escapes:
-                    write(simple_escapes[char])
-                elif char in unicode_escapes:
-                    seq = [next_char() for x in xrange(unicode_escapes[char])]
+                if char in sescapes:
+                    write(sescapes[char])
+                elif char in uescapes:
+                    seq = [next_char() for x in xrange(uescapes[char])]
                     try:
                         write(unichr(int(''.join(seq), 16)))
                     except ValueError:
@@ -141,7 +146,7 @@ def unescape_string(lineno, filename, s):
                         raise TemplateSyntaxError('no name for codepoint',
                                                   lineno, filename)
                     seq = []
-                    while True:
+                    while 1:
                         char = next_char()
                         if char == '}':
                             break
