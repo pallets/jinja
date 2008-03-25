@@ -1,4 +1,5 @@
 # -*- coding: utf-8 -*-
+# -*- coding: utf-8 -*-
 """
     jinja.contrib._djangosupport
     ~~~~~~~~~~~~~~~~~~~~~~~~~~~~
@@ -10,10 +11,11 @@
     `django.contrib.jinja`. See the docstring of `jinja.contrib.djangosupport`
     for more details.
 
-    :copyright: 2007 by Armin Ronacher, Bryan McLemore.
+    :copyright: 2007-2008 by Armin Ronacher, Bryan McLemore, David Cramer.
     :license: BSD, see LICENSE for more details.
 """
 import sys
+import warnings
 import new
 from django.conf import settings
 from django.template.context import get_standard_processors
@@ -32,13 +34,12 @@ env = None
 
 
 #: default filters
-DEFAULT_FILTERS = [
+DEFAULT_FILTERS = (
     'django.template.defaultfilters.date',
     'django.template.defaultfilters.timesince',
     'django.template.defaultfilters.linebreaks',
     'django.contrib.humanize.templatetags.humanize.intcomma'
-]
-
+)
 
 def configure(convert_filters=DEFAULT_FILTERS, loader=None, **options):
     """
@@ -46,12 +47,13 @@ def configure(convert_filters=DEFAULT_FILTERS, loader=None, **options):
     """
     global env
 
-    if env is not None:
-        raise RuntimeError('jinja already configured')
+    if env:
+        warnings.warn("Jinja already initialized.")
+        return
 
     # setup environment
     if loader is None:
-        loaders = [FileSystemLoader(l) for l in settings.TEMPLATE_DIRS]
+        loaders = tuple(FileSystemLoader(l) for l in settings.TEMPLATE_DIRS)
         if not loaders:
             loader = None
         elif len(loaders) == 1:
@@ -84,7 +86,7 @@ def setup_django_module():
              new.module('django.contrib.jinja')
     module.env = env
     module.__doc__ = djangosupport.__doc__
-    module.register = Library()
+    module.register = Library
     public_names = module.__all__ = ['register', 'env']
     get_name = globals().get
     for name in exported:
@@ -121,11 +123,8 @@ def convert_django_filter(f):
         def wrapped(env, ctx, value):
             return f(value, *args)
         return wrapped
-    try:
-        filter_factory.__name__ = f.__name__
-        filter_factory.__doc__ = f.__doc__
-    except:
-        pass
+    filter_factory.__name__ = f.__name__
+    filter_factory.__doc__ = getattr(f, '__doc__', None)
     return filter_factory
 
 
@@ -138,15 +137,15 @@ class Library(object):
 
     For more details see the docstring of the `django.contrib.jinja` module.
     """
-    __slots__ = ()
-
-    def object(obj, name=None):
+    @staticmethod
+    def object(func, name=None):
         """Register a new global."""
         if name is None:
-            name = getattr(obj, '__name__')
-        env.globals[name] = obj
+            name = getattr(func, '__name__')
+        env.globals[name] = func
         return func
 
+    @staticmethod
     def filter(func, name=None):
         """Register a new filter function."""
         if name is None:
@@ -154,6 +153,7 @@ class Library(object):
         env.filters[name] = func
         return func
 
+    @staticmethod
     def test(func, name):
         """Register a new test function."""
         if name is None:
@@ -161,6 +161,7 @@ class Library(object):
         env.tests[name] = func
         return func
 
+    @staticmethod
     def context_inclusion(func, template, name=None):
         """
         Similar to the inclusion tag from django this one expects func to be a
@@ -185,6 +186,7 @@ class Library(object):
             pass
         env.globals[name] = wrapper
 
+    @staticmethod
     def clean_inclusion(func, template, name=None, run_processors=False):
         """
         Similar to above however it won't pass the context into func().
