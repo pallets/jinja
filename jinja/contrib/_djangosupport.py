@@ -1,5 +1,4 @@
 # -*- coding: utf-8 -*-
-# -*- coding: utf-8 -*-
 """
     jinja.contrib._djangosupport
     ~~~~~~~~~~~~~~~~~~~~~~~~~~~~
@@ -137,31 +136,30 @@ class Library(object):
 
     For more details see the docstring of the `django.contrib.jinja` module.
     """
-    @staticmethod
     def object(func, name=None):
         """Register a new global."""
         if name is None:
             name = getattr(func, '__name__')
         env.globals[name] = func
         return func
+    object = staticmethod(object)
 
-    @staticmethod
     def filter(func, name=None):
         """Register a new filter function."""
         if name is None:
             name = func.__name__
         env.filters[name] = func
         return func
+    filter = staticmethod(filter)
 
-    @staticmethod
     def test(func, name):
         """Register a new test function."""
         if name is None:
             name = func.__name__
         env.tests[name] = func
         return func
+    test = staticmethod(test)
 
-    @staticmethod
     def context_inclusion(func, template, name=None):
         """
         Similar to the inclusion tag from django this one expects func to be a
@@ -185,8 +183,8 @@ class Library(object):
         except:
             pass
         env.globals[name] = wrapper
+    context_inclusion = staticmethod(context_inclusion)
 
-    @staticmethod
     def clean_inclusion(func, template, name=None, run_processors=False):
         """
         Similar to above however it won't pass the context into func().
@@ -208,3 +206,4 @@ class Library(object):
         except:
             pass
         env.globals[name] = wrapper
+    clean_inclusion = staticmethod(clean_inclusion)
