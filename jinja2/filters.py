@@ -15,10 +15,6 @@ try:
 except ImportError:
     itemgetter = lambda a: lambda b: b[a]
 from urllib import urlencode, quote
-from jinja.utils import urlize, escape, reversed, sorted, groupby, \
-     get_attribute, pformat
-from jinja.datastructure import TemplateData
-from jinja.exceptions import FilterArgumentError, SecurityException
 
 
 _striptags_re = re.compile(r'(<!--.*?-->|<[^>]*>)')

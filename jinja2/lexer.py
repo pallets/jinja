@@ -1,7 +1,7 @@
 # -*- coding: utf-8 -*-
 """
-    jinja.lexer
-    ~~~~~~~~~~~
+    jinja2.lexer
+    ~~~~~~~~~~~~
 
     This module implements a Jinja / Python combination lexer. The
     `Lexer` class provided by this module is used to do some preprocessing
@@ -11,14 +11,6 @@
     operators we don't allow in templates. On the other hand it separates
     template code and python code in expressions.
 
-    Because of some limitations in the compiler package which are just
-    natural but annoying for Jinja, the lexer also "escapes" non names that
-    are not keywords. The Jinja parser then removes those escaping marks
-    again.
-
-    This is required in order to make "class" and some other python keywords
-    we don't use valid identifiers.
-
     :copyright: 2007-2008 by Armin Ronacher.
     :license: BSD, see LICENSE for more details.
 """
@@ -26,7 +18,6 @@ import re
 import unicodedata
 from jinja.datastructure import TokenStream, Token
 from jinja.exceptions import TemplateSyntaxError
-from jinja.utils import set, sorted
 from weakref import WeakValueDictionary
 
 
@@ -40,20 +31,20 @@ _lexer_cache = WeakValueDictionary()
 
 # static regular expressions
 whitespace_re = re.compile(r'\s+(?um)')
-name_re = re.compile(r'[a-zA-Z_][a-zA-Z0-9_]*')
 string_re = re.compile(r"('([^'\\]*(?:\\.[^'\\]*)*)'"
                        r'|"([^"\\]*(?:\\.[^"\\]*)*)")(?ms)')
 integer_re = re.compile(r'\d+')
+name_re = re.compile(r'[a-zA-Z_][a-zA-Z0-9_]*')
 float_re = re.compile(r'\d+\.\d+')
-regex_re = re.compile(r'\@/([^/\\]*(?:\\.[^/\\]*)*)*/[a-z]*(?ms)')
 
 
 # set of used keywords
-keywords = set(['and', 'block', 'cycle', 'elif', 'else', 'endblock',
+keywords = set(['and', 'block', 'elif', 'else', 'endblock',
                 'endfilter', 'endfor', 'endif', 'endmacro', 'endraw',
                 'endtrans', 'extends', 'filter', 'for', 'if', 'in',
                 'include', 'is', 'macro', 'not', 'or', 'pluralize', 'raw',
-                'recursive', 'set', 'trans', 'print', 'call', 'endcall'])
+                'recursive', 'set', 'trans', 'call', 'endcall',
+                'true', 'false', 'none'])
 
 # bind operators to token types
 operators = {
@@ -65,8 +56,6 @@ operators = {
     '%':            'mod',
     '**':           'pow',
     '~':            'tilde',
-    '!':            'bang',
-    '@':            'at',
     '[':            'lbracket',
     ']':            'rbracket',
     '(':            'lparen',
@@ -83,7 +72,8 @@ operators = {
     '.':            'dot',
     ':':            'colon',
     '|':            'pipe',
-    ',':            'comma'
+    ',':            'comma',
+    ';':            'semicolon'
 }
 
 reverse_operators = dict([(v, k) for k, v in operators.iteritems()])
@@ -242,9 +232,10 @@ class Lexer(object):
             (whitespace_re, None, None),
             (float_re, 'float', None),
             (integer_re, 'integer', None),
+            ('%s' % '|'.join(sorted(keywords, key=lambda x: -len(x))),
+             'keyword', None),
             (name_re, 'name', None),
             (string_re, 'string', None),
-            (regex_re, 'regex', None),
             (operator_re, 'operator', None)
         ]
 
@@ -351,22 +342,16 @@ class Lexer(object):
                         value = str(value)
                     except UnicodeError:
                         pass
+                elif token == 'keyword':
+                    token = str(value)
                 elif token == 'name':
                     value = str(value)
-                    if value in keywords:
-                        token = value
-                        value = ''
                 elif token == 'string':
                     value = unescape_string(lineno, filename, value[1:-1])
                     try:
                         value = str(value)
                     except UnicodeError:
                         pass
-                elif token == 'regex':
-                    args = value[value.rfind('/') + 1:]
-                    value = unescape_regex(value[2:-(len(args) + 1)])
-                    if args:
-                        value = '(?%s)%s' % (args, value)
                 elif token == 'integer':
                     value = int(value)
                 elif token == 'float':

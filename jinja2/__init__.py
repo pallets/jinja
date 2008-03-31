@@ -1,7 +1,7 @@
 # -*- coding: utf-8 -*-
 """
-    jinja
-    ~~~~~
+    jinja2
+    ~~~~~~
 
     Jinja is a `sandboxed`_ template engine written in pure Python. It
     provides a `Django`_ like non-XML syntax and compiles templates into
@@ -53,24 +53,6 @@
     .. _Jinja tip: http://dev.pocoo.org/hg/jinja-main/archive/tip.tar.gz#egg=Jinja-dev
 
 
-    :copyright: 2007 by Armin Ronacher.
+    :copyright: 2008 by Armin Ronacher.
     :license: BSD, see LICENSE for more details.
 """
-
-from jinja.environment import Environment
-from jinja.datastructure import Markup
-from jinja.plugin import jinja_plugin_factory as template_plugin_factory
-from jinja.loaders import FileSystemLoader, PackageLoader, DictLoader, \
-     ChoiceLoader, FunctionLoader, MemcachedFileSystemLoader
-from jinja.utils import from_string
-
-
-__all__ = ['Environment', 'Markup', 'FileSystemLoader', 'PackageLoader',
-           'DictLoader', 'ChoiceLoader', 'FunctionLoader',
-           'MemcachedFileSystemLoader', 'from_string']
-
-__version__ = '1.3'
-__author__ = 'Armin Ronacher'
-__url__ = 'http://jinja.pocoo.org/'
-__license__ = 'BSD'
-__docformat__ = 'restructuredtext'
