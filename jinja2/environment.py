@@ -1,28 +1,16 @@
 # -*- coding: utf-8 -*-
 """
-    jinja.environment
-    ~~~~~~~~~~~~~~~~~
+    jinja2.environment
+    ~~~~~~~~~~~~~~~~~~
 
     Provides a class that holds runtime and parsing time options.
 
     :copyright: 2007 by Armin Ronacher.
     :license: BSD, see LICENSE for more details.
 """
-from jinja.lexer import Lexer
-from jinja.parser import Parser
-from jinja.loaders import LoaderWrapper
-from jinja.datastructure import SilentUndefined, Markup, Context, FakeTranslator
-from jinja.utils import collect_translations, get_attribute
-from jinja.exceptions import FilterNotFound, TestNotFound, \
-     SecurityException, TemplateSyntaxError
-from jinja.defaults import DEFAULT_FILTERS, DEFAULT_TESTS, DEFAULT_NAMESPACE
-
-
-__all__ = ['Environment']
-
-
-#: minor speedup
-_getattr = getattr
+from jinja2.lexer import Lexer
+from jinja2.parser import Parser
+from jinja2.defaults import DEFAULT_FILTERS, DEFAULT_TESTS, DEFAULT_NAMESPACE
 
 
 class Environment(object):
@@ -42,7 +30,7 @@ class Environment(object):
                  comment_start_string='{#',
                  comment_end_string='#}',
                  trim_blocks=False,
-                 loader=None):
+                 template_charset='utf-8'):
         """
         Here the possible initialization parameters:
 
@@ -60,7 +48,7 @@ class Environment(object):
         `trim_blocks`             If this is set to ``True`` the first newline
                                   after a block is removed (block, not
                                   variable tag!). Defaults to ``False``.
-        `loader`                  The loader for this environment.
+        `template_charset`        the charset of the templates.
         ========================= ============================================
         """
 
@@ -72,10 +60,7 @@ class Environment(object):
         self.comment_start_string = comment_start_string
         self.comment_end_string = comment_end_string
         self.trim_blocks = trim_blocks
-
-        # other stuff
         self.template_charset = template_charset
-        self.loader = loader
 
         # defaults
         self.filters = DEFAULT_FILTERS.copy()
@@ -84,13 +69,6 @@ class Environment(object):
 
         # create lexer
         self.lexer = Lexer(self)
-
-    def loader(self, value):
-        """
-        Get or set the template loader.
-        """
-        self._loader = LoaderWrapper(self, value)
-    loader = property(lambda s: s._loader, loader, doc=loader.__doc__)
 
     def parse(self, source, filename=None):
         """

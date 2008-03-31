@@ -9,7 +9,8 @@
     :license: BSD, see LICENSE for more details.
 """
 from operator import itemgetter
-from jinja.exceptions import TemplateSyntaxError, TemplateRuntimeError
+from collections import deque
+from jinja2.exceptions import TemplateSyntaxError, TemplateRuntimeError
 
 
 _missing = object()
@@ -20,10 +21,10 @@ class Token(tuple):
     Token class.
     """
     __slots__ = ()
-    lineno, type, value = map(itemgetter, range(3))
+    lineno, type, value = (property(itemgetter(x)) for x in range(3))
 
     def __new__(cls, lineno, type, value):
-        return tuple.__new__(cls, (lineno, type, value))
+        return tuple.__new__(cls, (lineno, intern(str(type)), value))
 
     def __str__(self):
         from jinja.lexer import keywords, reverse_operators
@@ -75,18 +76,13 @@ class TokenStream(object):
 
     def __init__(self, generator, filename):
         self._next = generator.next
-        self._pushed = []
+        self._pushed = deque()
         self.current = Token(1, 'initial', '')
         self.filename = filename
         self.next()
 
     def __iter__(self):
         return TokenStreamIterator(self)
-
-    def lineno(self):
-        """The current line number."""
-        return self.current.lineno
-    lineno = property(lineno, doc=lineno.__doc__)
 
     def __nonzero__(self):
         """Are we at the end of the tokenstream?"""
@@ -98,6 +94,14 @@ class TokenStream(object):
         """Push a token back to the stream."""
         self._pushed.append(token)
 
+    def look(self):
+        """Look at the next token."""
+        old_token = self.current
+        next = self.next()
+        self.push(old_token)
+        self.push(next)
+        return next
+
     def skip(self, n):
         """Got n tokens ahead."""
         for x in xrange(n):
@@ -106,7 +110,7 @@ class TokenStream(object):
     def next(self):
         """Go one token ahead."""
         if self._pushed:
-            self.current = self._pushed.pop()
+            self.current = self._pushed.popleft()
         elif self.current.type != 'eof':
             try:
                 self.current = self._next()
@@ -120,7 +124,7 @@ class TokenStream(object):
 
     def expect(self, token_type, token_value=_missing):
         """Expect a given token type and return it"""
-        if self.current.type != token_type:
+        if self.current.type is not token_type:
             raise TemplateSyntaxError("expected token %r, got %r" %
                                       (token_type, self.current.type),
                                       self.current.lineno,

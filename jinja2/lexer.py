@@ -16,8 +16,8 @@
 """
 import re
 import unicodedata
-from jinja.datastructure import TokenStream, Token
-from jinja.exceptions import TemplateSyntaxError
+from jinja2.datastructure import TokenStream, Token
+from jinja2.exceptions import TemplateSyntaxError
 from weakref import WeakValueDictionary
 
 
@@ -232,7 +232,7 @@ class Lexer(object):
             (whitespace_re, None, None),
             (float_re, 'float', None),
             (integer_re, 'integer', None),
-            ('%s' % '|'.join(sorted(keywords, key=lambda x: -len(x))),
+            (c('%s' % '|'.join(sorted(keywords, key=lambda x: -len(x)))),
              'keyword', None),
             (name_re, 'name', None),
             (string_re, 'string', None),
@@ -343,7 +343,7 @@ class Lexer(object):
                     except UnicodeError:
                         pass
                 elif token == 'keyword':
-                    token = str(value)
+                    token = value
                 elif token == 'name':
                     value = str(value)
                 elif token == 'string':

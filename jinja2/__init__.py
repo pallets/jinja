@@ -56,3 +56,4 @@
     :copyright: 2008 by Armin Ronacher.
     :license: BSD, see LICENSE for more details.
 """
+from jinja2.environment import Environment

@@ -14,6 +14,7 @@
 """
 import operator
 from itertools import chain, izip
+from collections import deque
 from copy import copy
 
 
@@ -32,6 +33,21 @@ _uaop_to_func = {
     '+':        operator.pos,
     '-':        operator.neg
 }
+
+
+def set_ctx(node, ctx):
+    """
+    Reset the context of a node and all child nodes.  Per default the parser
+    will all generate nodes that have a 'load' context as it's the most common
+    one.  This method is used in the parser to set assignment targets and
+    other nodes to a store context.
+    """
+    todo = deque([node])
+    while todo:
+        node = todo.popleft()
+        if 'ctx' in node._fields:
+            node.ctx = ctx
+        todo.extend(node.iter_child_nodes())
 
 
 class Impossible(Exception):
@@ -120,7 +136,7 @@ class Template(Node):
     """
     Node that represents a template.
     """
-    _fields = ('extends', 'body')
+    _fields = ('body',)
 
 
 class Output(Stmt):
@@ -142,7 +158,7 @@ class For(Stmt):
     """
     A node that represents a for loop
     """
-    _fields = ('item', 'seq', 'body', 'else_', 'recursive')
+    _fields = ('target', 'iter', 'body', 'else_', 'recursive')
 
 
 class If(Stmt):
@@ -208,6 +224,13 @@ class ExprStmt(Stmt):
     _fields = ('node',)
 
 
+class Assign(Stmt):
+    """
+    Assigns an expression to a target.
+    """
+    _fields = ('target', 'node')
+
+
 class Expr(Node):
     """
     Baseclass for all expressions.
@@ -262,7 +285,7 @@ class Name(Expr):
     """
     any name such as {{ foo }}
     """
-    _fields = ('name',)
+    _fields = ('name', 'ctx')
 
     def can_assign(self):
         return True
@@ -289,7 +312,7 @@ class Tuple(Literal):
     For loop unpacking and some other things like multiple arguments
     for subscripts.
     """
-    _fields = ('items',)
+    _fields = ('items', 'ctx')
 
     def as_const(self):
         return tuple(x.as_const() for x in self.items)
@@ -350,11 +373,18 @@ class Filter(Expr):
     _fields = ('node', 'filters')
 
 
+class FilterCall(Expr):
+    """
+    {{ |bar() }}
+    """
+    _fields = ('name', 'args', 'kwargs', 'dyn_args', 'dyn_kwargs')
+
+
 class Test(Expr):
     """
     {{ foo is lower }}
     """
-    _fields = ('node', 'name', 'args')
+    _fields = ('name', 'args', 'kwargs', 'dyn_args', 'dyn_kwargs')
 
 
 class Call(Expr):
@@ -368,7 +398,7 @@ class Subscript(Expr):
     """
     {{ foo.bar }} and {{ foo['bar'] }} etc.
     """
-    _fields = ('node', 'arg')
+    _fields = ('node', 'arg', 'ctx')
 
     def as_const(self):
         try:
@@ -402,6 +432,13 @@ class Compare(Expr):
     {{ foo == bar }}, {{ foo >= bar }} etc.
     """
     _fields = ('expr', 'ops')
+
+
+class Operand(Helper):
+    """
+    Operator + expression.
+    """
+    _fields = ('op', 'expr')
 
 
 class Mul(BinExpr):
