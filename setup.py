@@ -57,9 +57,7 @@ import sys
 import ez_setup
 ez_setup.use_setuptools()
 
-from distutils.command.build_ext import build_ext
-from distutils.errors import CCompilerError, DistutilsError
-from setuptools import setup, Extension, Feature
+from setuptools import setup
 
 
 def list_files(path):
@@ -71,41 +69,9 @@ def list_files(path):
             yield fn
 
 
-class optional_build_ext(build_ext):
-
-    def run(self):
-        try:
-            build_ext.run(self)
-        except DistutilsError, e:
-            self.compiler = None
-            self._setup_error = e
-
-    def build_extension(self, ext):
-        try:
-            if self.compiler is None:
-                raise self._setup_error
-            build_ext.build_extension(self, ext)
-        except CCompilerError, e:
-            print '=' * 79
-            print 'INFORMATION'
-            print '  the speedup extension could not be compiled, Jinja will'
-            print '  fall back to the native python classes.'
-            print '=' * 79
-        except:
-            e = sys.exc_info()[1]
-            print '=' * 79
-            print 'WARNING'
-            print '  could not compile optional speedup extension. This is'
-            print '  is not a real problem because Jinja provides a native'
-            print '  implementation of those classes but for best performance'
-            print '  you could try to reinstall Jinja after fixing this'
-            print '  problem: %s' % e
-            print '=' * 79
-
-
 setup(
-    name='Jinja',
-    version='1.3',
+    name='Jinja 2',
+    version='2.0dev',
     url='http://jinja.pocoo.org/',
     license='BSD',
     author='Armin Ronacher',
@@ -117,7 +83,7 @@ setup(
     # in form of html and txt files it's a better idea to extract the files
     zip_safe=False,
     classifiers=[
-        'Development Status :: 5 - Production/Stable',
+        'Development Status :: 1 - Alpha',
         'Environment :: Web Environment',
         'Intended Audience :: Developers',
         'License :: OSI Approved :: BSD License',
@@ -127,32 +93,10 @@ setup(
         'Topic :: Software Development :: Libraries :: Python Modules',
         'Topic :: Text Processing :: Markup :: HTML'
     ],
-    keywords=['python.templating.engines'],
-    packages=['jinja', 'jinja.translators', 'jinja.contrib'],
+    packages=['jinja2'],
     data_files=[
         ('docs/html', list(list_files('docs/html'))),
         ('docs/txt', list(list_files('docs/src')))
     ],
-    entry_points='''
-    [python.templating.engines]
-    jinja = jinja.plugin:BuffetPlugin
-    ''',
-    extras_require={'plugin': ['setuptools>=0.6a2']},
-    features={
-        'speedups': Feature(
-            'optional C-speed enhancements',
-            standard=True,
-            ext_modules=[
-                Extension('jinja._speedups', ['jinja/_speedups.c'])
-            ]
-        ),
-        'extended-debugger': Feature(
-            'extended debugger',
-            standard=True,
-            ext_modules=[
-                Extension('jinja._debugger', ['jinja/_debugger.c'])
-            ]
-        )
-    },
-    cmdclass={'build_ext': optional_build_ext}
+    extras_require={'plugin': ['setuptools>=0.6a2']}
 )
