@@ -10,7 +10,7 @@
 """
 
 
-class TemplateError(RuntimeError):
+class TemplateError(Exception):
     pass
 
 
@@ -30,9 +30,17 @@ class TemplateSyntaxError(SyntaxError, TemplateError):
     """
 
     def __init__(self, message, lineno, filename):
-        SyntaxError.__init__(self, message)
+        SyntaxError.__init__(self, '%s (line %s)' % (message, lineno))
+        self.message = message
         self.lineno = lineno
         self.filename = filename
+
+
+class TemplateAssertionError(AssertionError, TemplateSyntaxError):
+
+    def __init__(self, message, lineno, filename):
+        AssertionError.__init__(self, message)
+        TemplateSyntaxError.__init__(self, message, lineno, filename)
 
 
 class TemplateRuntimeError(TemplateError):

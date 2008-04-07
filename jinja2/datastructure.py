@@ -59,7 +59,7 @@ class TokenStreamIterator(object):
         if token.type == 'eof':
             self._stream.close()
             raise StopIteration()
-        self._stream.next()
+        self._stream.next(False)
         return token
 
 
@@ -107,15 +107,20 @@ class TokenStream(object):
         for x in xrange(n):
             self.next()
 
-    def next(self):
-        """Go one token ahead."""
-        if self._pushed:
-            self.current = self._pushed.popleft()
-        elif self.current.type != 'eof':
-            try:
-                self.current = self._next()
-            except StopIteration:
-                self.close()
+    def next(self, skip_eol=True):
+        """Go one token ahead and return the old one"""
+        rv = self.current
+        while 1:
+            if self._pushed:
+                self.current = self._pushed.popleft()
+            elif self.current.type is not 'eof':
+                try:
+                    self.current = self._next()
+                except StopIteration:
+                    self.close()
+            if not skip_eol or self.current.type is not 'eol':
+                break
+        return rv
 
     def close(self):
         """Close the stream."""

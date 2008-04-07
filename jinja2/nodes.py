@@ -35,19 +35,6 @@ _uaop_to_func = {
 }
 
 
-def set_ctx(node, ctx):
-    """
-    Reset the context of a node and all child nodes.  Per default the parser
-    will all generate nodes that have a 'load' context as it's the most common
-    one.  This method is used in the parser to set assignment targets and
-    other nodes to a store context.
-    """
-    todo = deque([node])
-    while todo:
-        node = todo.popleft()
-        if 'ctx' in node._fields:
-            node.ctx = ctx
-        todo.extend(node.iter_child_nodes())
 
 
 class Impossible(Exception):
@@ -59,7 +46,7 @@ class Impossible(Exception):
 class NodeType(type):
 
     def __new__(cls, name, bases, d):
-        for attr in '_fields', '_attributes':
+        for attr in 'fields', 'attributes':
             storage = []
             for base in bases:
                 storage.extend(getattr(base, attr, ()))
@@ -71,39 +58,41 @@ class NodeType(type):
 
 class Node(object):
     """
-    Base jinja node.
+    Baseclass for all Jinja nodes.
     """
     __metaclass__ = NodeType
-    _fields = ()
-    _attributes = ('lineno',)
+    fields = ()
+    attributes = ('lineno',)
 
     def __init__(self, *args, **kw):
         if args:
-            if len(args) != len(self._fields):
-                if not self._fields:
+            if len(args) != len(self.fields):
+                if not self.fields:
                     raise TypeError('%r takes 0 arguments' %
                                     self.__class__.__name__)
                 raise TypeError('%r takes 0 or %d argument%s' % (
                     self.__class__.__name__,
-                    len(self._fields),
-                    len(self._fields) != 1 and 's' or ''
+                    len(self.fields),
+                    len(self.fields) != 1 and 's' or ''
                 ))
-            for name, arg in izip(self._fields, args):
+            for name, arg in izip(self.fields, args):
                 setattr(self, name, arg)
-        for attr in self._attributes:
+        for attr in self.attributes:
             setattr(self, attr, kw.pop(attr, None))
         if kw:
             raise TypeError('unknown keyword argument %r' %
                             iter(kw).next())
 
     def iter_fields(self):
-        for name in self._fields:
+        """Iterate over all fields."""
+        for name in self.fields:
             try:
                 yield name, getattr(self, name)
             except AttributeError:
                 pass
 
     def iter_child_nodes(self):
+        """Iterate over all child nodes."""
         for field, item in self.iter_fields():
             if isinstance(item, list):
                 for n in item:
@@ -112,11 +101,38 @@ class Node(object):
             elif isinstance(item, Node):
                 yield item
 
+    def find(self, node_type):
+        """Find the first node of a given type."""
+        for result in self.find_all(node_type):
+            return result
+
+    def find_all(self, node_type):
+        """Find all the nodes of a given type."""
+        for child in self.iter_child_nodes():
+            if isinstance(child, node_type):
+                yield child
+            for result in child.find_all(node_type):
+                yield result
+
+    def set_ctx(self, ctx):
+        """
+        Reset the context of a node and all child nodes.  Per default the parser
+        will all generate nodes that have a 'load' context as it's the most common
+        one.  This method is used in the parser to set assignment targets and
+        other nodes to a store context.
+        """
+        todo = deque([self])
+        while todo:
+            node = todo.popleft()
+            if 'ctx' in node.fields:
+                node.ctx = ctx
+            todo.extend(node.iter_child_nodes())
+
     def __repr__(self):
         return '%s(%s)' % (
             self.__class__.__name__,
             ', '.join('%s=%r' % (arg, getattr(self, arg, None)) for
-                      arg in self._fields)
+                      arg in self.fields)
         )
 
 
@@ -136,7 +152,7 @@ class Template(Node):
     """
     Node that represents a template.
     """
-    _fields = ('body',)
+    fields = ('body',)
 
 
 class Output(Stmt):
@@ -144,91 +160,106 @@ class Output(Stmt):
     A node that holds multiple expressions which are then printed out.  This
     is used both for the `print` statement and the regular template data.
     """
-    _fields = ('nodes',)
+    fields = ('nodes',)
+
+    def optimized_nodes(self):
+        """Try to optimize the nodes."""
+        buffer = []
+        for node in self.nodes:
+            try:
+                const = unicode(node.as_const())
+            except:
+                buffer.append(node)
+            else:
+                if buffer and isinstance(buffer[-1], unicode):
+                    buffer[-1] += const
+                else:
+                    buffer.append(const)
+        return buffer
 
 
 class Extends(Stmt):
     """
     Represents an extends statement.
     """
-    _fields = ('extends',)
+    fields = ('template',)
 
 
 class For(Stmt):
     """
     A node that represents a for loop
     """
-    _fields = ('target', 'iter', 'body', 'else_', 'recursive')
+    fields = ('target', 'iter', 'body', 'else_', 'recursive')
 
 
 class If(Stmt):
     """
     A node that represents an if condition.
     """
-    _fields = ('test', 'body', 'else_')
+    fields = ('test', 'body', 'else_')
 
 
 class Macro(Stmt):
     """
     A node that represents a macro.
     """
-    _fields = ('name', 'arguments', 'body')
+    fields = ('name', 'args', 'defaults', 'dyn_args', 'dyn_kwargs', 'body')
 
 
 class CallBlock(Stmt):
     """
     A node that represents am extended macro call.
     """
-    _fields = ('expr', 'body')
+    fields = ('call', 'body')
 
 
 class Set(Stmt):
     """
     Allows defining own variables.
     """
-    _fields = ('name', 'expr')
+    fields = ('name', 'expr')
 
 
 class FilterBlock(Stmt):
     """
     Node for filter sections.
     """
-    _fields = ('body', 'filters')
+    fields = ('body', 'filters')
 
 
 class Block(Stmt):
     """
     A node that represents a block.
     """
-    _fields = ('name', 'body')
+    fields = ('name', 'body')
 
 
 class Include(Stmt):
     """
     A node that represents the include tag.
     """
-    _fields = ('template',)
+    fields = ('template', 'target')
 
 
 class Trans(Stmt):
     """
     A node for translatable sections.
     """
-    _fields = ('singular', 'plural', 'indicator', 'replacements')
+    fields = ('singular', 'plural', 'indicator', 'replacements')
 
 
 class ExprStmt(Stmt):
     """
     A statement that evaluates an expression to None.
     """
-    _fields = ('node',)
+    fields = ('node',)
 
 
 class Assign(Stmt):
     """
     Assigns an expression to a target.
     """
-    _fields = ('target', 'node')
+    fields = ('target', 'node')
 
 
 class Expr(Node):
@@ -254,7 +285,7 @@ class BinExpr(Expr):
     """
     Baseclass for all binary expressions.
     """
-    _fields = ('left', 'right')
+    fields = ('left', 'right')
     operator = None
 
     def as_const(self):
@@ -270,7 +301,7 @@ class UnaryExpr(Expr):
     """
     Baseclass for all unary expressions.
     """
-    _fields = ('node',)
+    fields = ('node',)
     operator = None
 
     def as_const(self):
@@ -285,10 +316,10 @@ class Name(Expr):
     """
     any name such as {{ foo }}
     """
-    _fields = ('name', 'ctx')
+    fields = ('name', 'ctx')
 
     def can_assign(self):
-        return True
+        return self.name not in ('true', 'false', 'none')
 
 
 class Literal(Expr):
@@ -301,7 +332,7 @@ class Const(Literal):
     """
     any constat such as {{ "foo" }}
     """
-    _fields = ('value',)
+    fields = ('value',)
 
     def as_const(self):
         return self.value
@@ -312,7 +343,7 @@ class Tuple(Literal):
     For loop unpacking and some other things like multiple arguments
     for subscripts.
     """
-    _fields = ('items', 'ctx')
+    fields = ('items', 'ctx')
 
     def as_const(self):
         return tuple(x.as_const() for x in self.items)
@@ -328,7 +359,7 @@ class List(Literal):
     """
     any list literal such as {{ [1, 2, 3] }}
     """
-    _fields = ('items',)
+    fields = ('items',)
 
     def as_const(self):
         return [x.as_const() for x in self.items]
@@ -338,7 +369,7 @@ class Dict(Literal):
     """
     any dict literal such as {{ {1: 2, 3: 4} }}
     """
-    _fields = ('items',)
+    fields = ('items',)
 
     def as_const(self):
         return dict(x.as_const() for x in self.items)
@@ -348,7 +379,7 @@ class Pair(Helper):
     """
     A key, value pair for dicts.
     """
-    _fields = ('key', 'value')
+    fields = ('key', 'value')
 
     def as_const(self):
         return self.key.as_const(), self.value.as_const()
@@ -358,7 +389,7 @@ class CondExpr(Expr):
     """
     {{ foo if bar else baz }}
     """
-    _fields = ('test', 'expr1', 'expr2')
+    fields = ('test', 'expr1', 'expr2')
 
     def as_const(self):
         if self.test.as_const():
@@ -370,35 +401,35 @@ class Filter(Expr):
     """
     {{ foo|bar|baz }}
     """
-    _fields = ('node', 'filters')
+    fields = ('node', 'filters')
 
 
 class FilterCall(Expr):
     """
     {{ |bar() }}
     """
-    _fields = ('name', 'args', 'kwargs', 'dyn_args', 'dyn_kwargs')
+    fields = ('name', 'args', 'kwargs', 'dyn_args', 'dyn_kwargs')
 
 
 class Test(Expr):
     """
     {{ foo is lower }}
     """
-    _fields = ('name', 'args', 'kwargs', 'dyn_args', 'dyn_kwargs')
+    fields = ('node', 'name', 'args', 'kwargs', 'dyn_args', 'dyn_kwargs')
 
 
 class Call(Expr):
     """
     {{ foo(bar) }}
     """
-    _fields = ('node', 'args', 'kwargs', 'dyn_args', 'dyn_kwargs')
+    fields = ('node', 'args', 'kwargs', 'dyn_args', 'dyn_kwargs')
 
 
 class Subscript(Expr):
     """
     {{ foo.bar }} and {{ foo['bar'] }} etc.
     """
-    _fields = ('node', 'arg', 'ctx')
+    fields = ('node', 'arg', 'ctx')
 
     def as_const(self):
         try:
@@ -414,14 +445,14 @@ class Slice(Expr):
     """
     1:2:3 etc.
     """
-    _fields = ('start', 'stop', 'step')
+    fields = ('start', 'stop', 'step')
 
 
 class Concat(Expr):
     """
     For {{ foo ~ bar }}.  Concatenates strings.
     """
-    _fields = ('nodes',)
+    fields = ('nodes',)
 
     def as_const(self):
         return ''.join(unicode(x.as_const()) for x in self.nodes)
@@ -431,14 +462,14 @@ class Compare(Expr):
     """
     {{ foo == bar }}, {{ foo >= bar }} etc.
     """
-    _fields = ('expr', 'ops')
+    fields = ('expr', 'ops')
 
 
 class Operand(Helper):
     """
     Operator + expression.
     """
-    _fields = ('op', 'expr')
+    fields = ('op', 'expr')
 
 
 class Mul(BinExpr):
@@ -517,14 +548,14 @@ class Not(UnaryExpr):
     operator = 'not'
 
 
-class NegExpr(UnaryExpr):
+class Neg(UnaryExpr):
     """
     {{ -foo }}
     """
     operator = '-'
 
 
-class PosExpr(UnaryExpr):
+class Pos(UnaryExpr):
     """
     {{ +foo }}
     """

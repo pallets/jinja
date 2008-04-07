@@ -34,17 +34,17 @@ whitespace_re = re.compile(r'\s+(?um)')
 string_re = re.compile(r"('([^'\\]*(?:\\.[^'\\]*)*)'"
                        r'|"([^"\\]*(?:\\.[^"\\]*)*)")(?ms)')
 integer_re = re.compile(r'\d+')
-name_re = re.compile(r'[a-zA-Z_][a-zA-Z0-9_]*')
+name_re = re.compile(r'\b[a-zA-Z_][a-zA-Z0-9_]*\b')
 float_re = re.compile(r'\d+\.\d+')
+eol_re = re.compile(r'(\s*$\s*)+(?m)')
 
 
 # set of used keywords
-keywords = set(['and', 'block', 'elif', 'else', 'endblock',
+keywords = set(['and', 'block', 'elif', 'else', 'endblock', 'print',
                 'endfilter', 'endfor', 'endif', 'endmacro', 'endraw',
                 'endtrans', 'extends', 'filter', 'for', 'if', 'in',
                 'include', 'is', 'macro', 'not', 'or', 'pluralize', 'raw',
-                'recursive', 'set', 'trans', 'call', 'endcall',
-                'true', 'false', 'none'])
+                'recursive', 'set', 'trans', 'call', 'endcall'])
 
 # bind operators to token types
 operators = {
@@ -78,8 +78,8 @@ operators = {
 
 reverse_operators = dict([(v, k) for k, v in operators.iteritems()])
 assert len(operators) == len(reverse_operators), 'operators dropped'
-operator_re = re.compile('(%s)' % '|'.join([re.escape(x) for x in
-                         sorted(operators, key=lambda x: -len(x))]))
+operator_re = re.compile('(%s)' % '|'.join(re.escape(x) for x in
+                         sorted(operators, key=lambda x: -len(x))))
 
 simple_escapes = {
     'a':    '\a',
@@ -229,10 +229,11 @@ class Lexer(object):
 
         # lexing rules for tags
         tag_rules = [
+            (eol_re, 'eol', None),
             (whitespace_re, None, None),
             (float_re, 'float', None),
             (integer_re, 'integer', None),
-            (c('%s' % '|'.join(sorted(keywords, key=lambda x: -len(x)))),
+            (c(r'\b(?:%s)\b' % '|'.join(sorted(keywords, key=lambda x: -len(x)))),
              'keyword', None),
             (name_re, 'name', None),
             (string_re, 'string', None),
