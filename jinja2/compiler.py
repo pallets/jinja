@@ -29,9 +29,9 @@ operators = {
 }
 
 
-def generate(node, filename, stream=None):
+def generate(node, environment, filename, stream=None):
     is_child = node.find(nodes.Extends) is not None
-    generator = CodeGenerator(is_child, filename, stream)
+    generator = CodeGenerator(environment, is_child, filename, stream)
     generator.visit(node)
     if stream is None:
         return generator.stream.getvalue()
@@ -55,6 +55,10 @@ class Identifiers(object):
 
         # names that are declared by parameters
         self.declared_parameter = set()
+
+        # filters that are declared locally
+        self.declared_filter = set()
+        self.undeclared_filter = set()
 
     def add_special(self, name):
         """Register a special name like `loop`."""
@@ -117,6 +121,11 @@ class FrameIdentifierVisitor(NodeVisitor):
             if not self.identifiers.is_declared(node.name):
                 self.identifiers.undeclared.add(node.name)
 
+    def visit_FilterCall(self, node):
+        if not node.name in self.identifiers.declared_filter:
+            self.identifiers.undeclared_filter.add(node.name)
+        self.identifiers.declared_filter.add(node.name)
+
     def visit_Macro(self, node):
         """Macros set local."""
         self.identifiers.declared_locally.add(node.name)
@@ -128,9 +137,10 @@ class FrameIdentifierVisitor(NodeVisitor):
 
 class CodeGenerator(NodeVisitor):
 
-    def __init__(self, is_child, filename, stream=None):
+    def __init__(self, environment, is_child, filename, stream=None):
         if stream is None:
             stream = StringIO()
+        self.environment = environment
         self.is_child = is_child
         self.filename = filename
         self.stream = stream
@@ -205,6 +215,8 @@ class CodeGenerator(NodeVisitor):
             self.indent()
         for name in frame.identifiers.undeclared:
             self.writeline('l_%s = context[%r]' % (name, name))
+        for name in frame.identifiers.undeclared_filter:
+            self.writeline('f_%s = context[%r]' % (name, name))
         if not no_indent:
             self.outdent()
 
@@ -516,7 +528,7 @@ class CodeGenerator(NodeVisitor):
 
     def visit_Filter(self, node, frame):
         for filter in node.filters:
-            self.write('context.filters[%r](' % filter.name)
+            self.write('f_%s(' % filter.name)
         self.visit(node.node, frame)
         for filter in reversed(node.filters):
             self.signature(filter, frame)

@@ -14,4 +14,4 @@ ast = env.parse("""
 """)
 print ast
 print
-print generate(ast, "foo.html")
+print generate(ast, env, "foo.html")
