@@ -8,7 +8,7 @@
         * eliminating constant nodes
         * evaluating filters and macros on constant nodes
         * unroll loops on constant values
-        * replace variables which are already known (because the doesn't
+        * replace variables which are already known (because they doesn't
           change often and you want to prerender a template) with constants
 
     After the optimation you will get a new, simplier template which can
@@ -24,26 +24,11 @@ from jinja2 import nodes
 from jinja2.visitor import NodeVisitor, NodeTransformer
 
 
-class Optimizer(NodeVisitor):
+class Optimizer(NodeTransformer):
 
     def __init__(self, environment, context={}):
         self.environment = environment
         self.context = context
-
-    def visit_Output(self, node):
-        node.nodes = [self.visit(n) for n in node.nodes]
-        return node
-
-    def visit_Template(self, node):
-        body = []
-        for n in node.body:
-            x = self.visit(n)
-            if isinstance(x, list):
-                body.extend(x)
-            else:
-                body.append(x)
-        node.body = body
-        return node
 
     def visit_Filter(self, node):
         """Try to evaluate filters if possible."""
@@ -76,10 +61,6 @@ class Optimizer(NodeVisitor):
         if node.name not in self.context:
             return node
         return nodes.Const(self.context[node.name])
-
-    def generic_visit(self, node, *args, **kwargs):
-        NodeVisitor.generic_visit(self, node, *args, **kwargs)
-        return node
 
 
 def optimize(node, environment):

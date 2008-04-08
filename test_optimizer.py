@@ -8,8 +8,8 @@ ast = env.parse("""
     Hi {{ "<blub>"|e }},
     how are you?
 
-    {% for item in ('foo', 'bar', 'blub') %}
-        {{ item }}
+    {% for item in ('foo', 'bar', 'blub', '<42>') %}
+        {{ item|e }}
     {% endfor %}
 """)
 print ast
