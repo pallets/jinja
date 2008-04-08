@@ -381,7 +381,7 @@ class CodeGenerator(NodeVisitor):
         for arg in node.defaults:
             self.visit(arg)
             self.write(', ')
-        self.write('), %r)' % accesses_arguments)
+        self.write('), %r, make_undefined)' % accesses_arguments)
 
     def visit_ExprStmt(self, node, frame):
         self.newline(node)
@@ -447,6 +447,8 @@ class CodeGenerator(NodeVisitor):
         self.visit(node.target, assignment_frame)
         self.write(' = ')
         self.visit(node.node, frame)
+
+        # make sure toplevel assignments are added to the context.
         if frame.toplevel:
             for name in assignment_frame.assigned_names:
                 self.writeline('context[%r] = l_%s' % (name, name))
