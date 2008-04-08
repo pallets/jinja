@@ -96,11 +96,11 @@ class TokenStream(object):
 
     def look(self):
         """Look at the next token."""
-        old_token = self.current
-        next = self.next()
-        self.push(old_token)
-        self.push(next)
-        return next
+        old_token = self.next()
+        result = self.current
+        self.push(result)
+        self.current = old_token
+        return result
 
     def skip(self, n):
         """Got n tokens ahead."""

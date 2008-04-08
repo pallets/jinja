@@ -35,15 +35,14 @@ _uaop_to_func = {
 }
 
 
-
-
 class Impossible(Exception):
-    """
-    Raised if the node could not perform a requested action.
-    """
+    """Raised if the node could not perform a requested action."""
 
 
 class NodeType(type):
+    """A metaclass for nodes that handles the field and attribute
+    inheritance.  fields and attributes from the parent class are
+    automatically forwarded to the child."""
 
     def __new__(cls, name, bases, d):
         for attr in 'fields', 'attributes':
@@ -57,9 +56,7 @@ class NodeType(type):
 
 
 class Node(object):
-    """
-    Baseclass for all Jinja nodes.
-    """
+    """Baseclass for all Jinja nodes."""
     __metaclass__ = NodeType
     fields = ()
     attributes = ('lineno',)
@@ -115,11 +112,10 @@ class Node(object):
                 yield result
 
     def set_ctx(self, ctx):
-        """
-        Reset the context of a node and all child nodes.  Per default the parser
-        will all generate nodes that have a 'load' context as it's the most common
-        one.  This method is used in the parser to set assignment targets and
-        other nodes to a store context.
+        """Reset the context of a node and all child nodes.  Per default the
+        parser will all generate nodes that have a 'load' context as it's the
+        most common one.  This method is used in the parser to set assignment
+        targets and other nodes to a store context.
         """
         todo = deque([self])
         while todo:
@@ -137,28 +133,21 @@ class Node(object):
 
 
 class Stmt(Node):
-    """
-    Base node for all statements.
-    """
+    """Base node for all statements."""
 
 
 class Helper(Node):
-    """
-    Nodes that exist in a specific context only.
-    """
+    """Nodes that exist in a specific context only."""
 
 
 class Template(Node):
-    """
-    Node that represents a template.
-    """
+    """Node that represents a template."""
     fields = ('body',)
 
 
 class Output(Stmt):
-    """
-    A node that holds multiple expressions which are then printed out.  This
-    is used both for the `print` statement and the regular template data.
+    """A node that holds multiple expressions which are then printed out.
+    This is used both for the `print` statement and the regular template data.
     """
     fields = ('nodes',)
 
@@ -179,112 +168,81 @@ class Output(Stmt):
 
 
 class Extends(Stmt):
-    """
-    Represents an extends statement.
-    """
+    """Represents an extends statement."""
     fields = ('template',)
 
 
 class For(Stmt):
-    """
-    A node that represents a for loop
-    """
+    """A node that represents a for loop"""
     fields = ('target', 'iter', 'body', 'else_', 'recursive')
 
 
 class If(Stmt):
-    """
-    A node that represents an if condition.
-    """
+    """A node that represents an if condition."""
     fields = ('test', 'body', 'else_')
 
 
 class Macro(Stmt):
-    """
-    A node that represents a macro.
-    """
-    fields = ('name', 'args', 'defaults', 'dyn_args', 'dyn_kwargs', 'body')
+    """A node that represents a macro."""
+    fields = ('name', 'args', 'defaults', 'body')
 
 
 class CallBlock(Stmt):
-    """
-    A node that represents am extended macro call.
-    """
+    """A node that represents am extended macro call."""
     fields = ('call', 'body')
 
 
 class Set(Stmt):
-    """
-    Allows defining own variables.
-    """
+    """Allows defining own variables."""
     fields = ('name', 'expr')
 
 
 class FilterBlock(Stmt):
-    """
-    Node for filter sections.
-    """
+    """Node for filter sections."""
     fields = ('body', 'filters')
 
 
 class Block(Stmt):
-    """
-    A node that represents a block.
-    """
+    """A node that represents a block."""
     fields = ('name', 'body')
 
 
 class Include(Stmt):
-    """
-    A node that represents the include tag.
-    """
+    """A node that represents the include tag."""
     fields = ('template', 'target')
 
 
 class Trans(Stmt):
-    """
-    A node for translatable sections.
-    """
+    """A node for translatable sections."""
     fields = ('singular', 'plural', 'indicator', 'replacements')
 
 
 class ExprStmt(Stmt):
-    """
-    A statement that evaluates an expression to None.
-    """
+    """A statement that evaluates an expression to None."""
     fields = ('node',)
 
 
 class Assign(Stmt):
-    """
-    Assigns an expression to a target.
-    """
+    """Assigns an expression to a target."""
     fields = ('target', 'node')
 
 
 class Expr(Node):
-    """
-    Baseclass for all expressions.
-    """
+    """Baseclass for all expressions."""
 
     def as_const(self):
-        """
-        Return the value of the expression as constant or raise `Impossible`
-        if this was not possible.
+        """Return the value of the expression as constant or raise
+        `Impossible` if this was not possible.
         """
         raise Impossible()
 
     def can_assign(self):
-        """
-        Check if it's possible to assign something to this node.
-        """
+        """Check if it's possible to assign something to this node."""
         return False
 
 
 class BinExpr(Expr):
-    """
-    Baseclass for all binary expressions.
-    """
+    """Baseclass for all binary expressions."""
     fields = ('left', 'right')
     operator = None
 
@@ -293,14 +251,11 @@ class BinExpr(Expr):
         try:
             return f(self.left.as_const(), self.right.as_const())
         except:
-            print self.left, f, self.right
             raise Impossible()
 
 
 class UnaryExpr(Expr):
-    """
-    Baseclass for all unary expressions.
-    """
+    """Baseclass for all unary expressions."""
     fields = ('node',)
     operator = None
 
@@ -313,9 +268,7 @@ class UnaryExpr(Expr):
 
 
 class Name(Expr):
-    """
-    any name such as {{ foo }}
-    """
+    """any name such as {{ foo }}"""
     fields = ('name', 'ctx')
 
     def can_assign(self):
@@ -323,15 +276,11 @@ class Name(Expr):
 
 
 class Literal(Expr):
-    """
-    Baseclass for literals.
-    """
+    """Baseclass for literals."""
 
 
 class Const(Literal):
-    """
-    any constat such as {{ "foo" }}
-    """
+    """any constat such as {{ "foo" }}"""
     fields = ('value',)
 
     def as_const(self):
@@ -339,8 +288,7 @@ class Const(Literal):
 
 
 class Tuple(Literal):
-    """
-    For loop unpacking and some other things like multiple arguments
+    """For loop unpacking and some other things like multiple arguments
     for subscripts.
     """
     fields = ('items', 'ctx')
@@ -356,9 +304,7 @@ class Tuple(Literal):
 
 
 class List(Literal):
-    """
-    any list literal such as {{ [1, 2, 3] }}
-    """
+    """any list literal such as {{ [1, 2, 3] }}"""
     fields = ('items',)
 
     def as_const(self):
@@ -366,9 +312,7 @@ class List(Literal):
 
 
 class Dict(Literal):
-    """
-    any dict literal such as {{ {1: 2, 3: 4} }}
-    """
+    """any dict literal such as {{ {1: 2, 3: 4} }}"""
     fields = ('items',)
 
     def as_const(self):
@@ -376,19 +320,20 @@ class Dict(Literal):
 
 
 class Pair(Helper):
-    """
-    A key, value pair for dicts.
-    """
+    """A key, value pair for dicts."""
     fields = ('key', 'value')
 
     def as_const(self):
         return self.key.as_const(), self.value.as_const()
 
 
+class Keyword(Helper):
+    """A key, value pair for keyword arguments."""
+    fields = ('key', 'value')
+
+
 class CondExpr(Expr):
-    """
-    {{ foo if bar else baz }}
-    """
+    """{{ foo if bar else baz }}"""
     fields = ('test', 'expr1', 'expr2')
 
     def as_const(self):
@@ -398,37 +343,27 @@ class CondExpr(Expr):
 
 
 class Filter(Expr):
-    """
-    {{ foo|bar|baz }}
-    """
+    """{{ foo|bar|baz }}"""
     fields = ('node', 'filters')
 
 
 class FilterCall(Expr):
-    """
-    {{ |bar() }}
-    """
+    """{{ |bar() }}"""
     fields = ('name', 'args', 'kwargs', 'dyn_args', 'dyn_kwargs')
 
 
 class Test(Expr):
-    """
-    {{ foo is lower }}
-    """
+    """{{ foo is lower }}"""
     fields = ('node', 'name', 'args', 'kwargs', 'dyn_args', 'dyn_kwargs')
 
 
 class Call(Expr):
-    """
-    {{ foo(bar) }}
-    """
+    """{{ foo(bar) }}"""
     fields = ('node', 'args', 'kwargs', 'dyn_args', 'dyn_kwargs')
 
 
 class Subscript(Expr):
-    """
-    {{ foo.bar }} and {{ foo['bar'] }} etc.
-    """
+    """{{ foo.bar }} and {{ foo['bar'] }} etc."""
     fields = ('node', 'arg', 'ctx')
 
     def as_const(self):
@@ -442,16 +377,12 @@ class Subscript(Expr):
 
 
 class Slice(Expr):
-    """
-    1:2:3 etc.
-    """
+    """1:2:3 etc."""
     fields = ('start', 'stop', 'step')
 
 
 class Concat(Expr):
-    """
-    For {{ foo ~ bar }}.  Concatenates strings.
-    """
+    """For {{ foo ~ bar }}.  Concatenates strings."""
     fields = ('nodes',)
 
     def as_const(self):
@@ -459,72 +390,52 @@ class Concat(Expr):
 
 
 class Compare(Expr):
-    """
-    {{ foo == bar }}, {{ foo >= bar }} etc.
-    """
+    """{{ foo == bar }}, {{ foo >= bar }} etc."""
     fields = ('expr', 'ops')
 
 
 class Operand(Helper):
-    """
-    Operator + expression.
-    """
+    """Operator + expression."""
     fields = ('op', 'expr')
 
 
 class Mul(BinExpr):
-    """
-    {{ foo * bar }}
-    """
+    """{{ foo * bar }}"""
     operator = '*'
 
 
 class Div(BinExpr):
-    """
-    {{ foo / bar }}
-    """
+    """{{ foo / bar }}"""
     operator = '/'
 
 
 class FloorDiv(BinExpr):
-    """
-    {{ foo // bar }}
-    """
+    """{{ foo // bar }}"""
     operator = '//'
 
 
 class Add(BinExpr):
-    """
-    {{ foo + bar }}
-    """
+    """{{ foo + bar }}"""
     operator = '+'
 
 
 class Sub(BinExpr):
-    """
-    {{ foo - bar }}
-    """
+    """{{ foo - bar }}"""
     operator = '-'
 
 
 class Mod(BinExpr):
-    """
-    {{ foo % bar }}
-    """
+    """{{ foo % bar }}"""
     operator = '%'
 
 
 class Pow(BinExpr):
-    """
-    {{ foo ** bar }}
-    """
+    """{{ foo ** bar }}"""
     operator = '**'
 
 
 class And(BinExpr):
-    """
-    {{ foo and bar }}
-    """
+    """{{ foo and bar }}"""
     operator = 'and'
 
     def as_const(self):
@@ -532,9 +443,7 @@ class And(BinExpr):
 
 
 class Or(BinExpr):
-    """
-    {{ foo or bar }}
-    """
+    """{{ foo or bar }}"""
     operator = 'or'
 
     def as_const(self):
@@ -542,21 +451,15 @@ class Or(BinExpr):
 
 
 class Not(UnaryExpr):
-    """
-    {{ not foo }}
-    """
+    """{{ not foo }}"""
     operator = 'not'
 
 
 class Neg(UnaryExpr):
-    """
-    {{ -foo }}
-    """
+    """{{ -foo }}"""
     operator = '-'
 
 
 class Pos(UnaryExpr):
-    """
-    {{ +foo }}
-    """
+    """{{ +foo }}"""
     operator = '+'

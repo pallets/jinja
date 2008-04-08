@@ -4,12 +4,13 @@ from jinja2.compiler import generate
 
 env = Environment()
 ast = env.parse("""
-Hello {{ name }}!.  How is it {{ "going" }}. {{ [1, 2, 3] }}?
-{% for name in user_names %}
-    {{ loop.index }}: {{ name }}
-    {% if loop.index % 2 == 0 %}...{% endif %}
-{% endfor %}
-Name again: {{ name }}!
+{% (a, b), c = foo() %}
+{% macro foo(a, b, c=42) %}
+  42 {{ arguments }}
+{% endmacro %}
+{% block body %}
+    {% bar = 23 %}
+{% endblock %}
 """)
 print ast
 print

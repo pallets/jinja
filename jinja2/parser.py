@@ -59,7 +59,7 @@ class Parser(object):
             self.stream.next()
             return self.parse_call_block()
         lineno = self.stream.current
-        expr = self.parse_expression()
+        expr = self.parse_tuple()
         if self.stream.current.type == 'assign':
             result = self.parse_assign(expr)
         else:
@@ -202,6 +202,7 @@ class Parser(object):
             if self.stream.current.type is 'assign':
                 self.stream.next()
                 defaults.append(self.parse_expression())
+            args.append(arg)
         self.stream.expect('rparen')
         node.body = self.parse_statements(('endmacro',), drop_needle=True)
         return node
@@ -555,8 +556,8 @@ class Parser(object):
                     self.stream.look().type is 'assign':
                     key = self.stream.current.value
                     self.stream.skip(2)
-                    kwargs.append(nodes.Pair(key, self.parse_expression(),
-                                             lineno=key.lineno))
+                    kwargs.append(nodes.Keyword(key, self.parse_expression(),
+                                                lineno=key.lineno))
                 else:
                     ensure(not kwargs)
                     args.append(self.parse_expression())
