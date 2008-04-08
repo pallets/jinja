@@ -58,7 +58,7 @@ class Identifiers(object):
 
         # filters that are declared locally
         self.declared_filter = set()
-        self.undeclared_filter = set()
+        self.undeclared_filter = dict()
 
     def add_special(self, name):
         """Register a special name like `loop`."""
@@ -123,8 +123,10 @@ class FrameIdentifierVisitor(NodeVisitor):
 
     def visit_FilterCall(self, node):
         if not node.name in self.identifiers.declared_filter:
-            self.identifiers.undeclared_filter.add(node.name)
-        self.identifiers.declared_filter.add(node.name)
+            uf = self.identifiers.undeclared_filter.get(node.name, 0) + 1
+            if uf > 1:
+                self.identifiers.declared_filter.add(node.name)
+            self.identifiers.undeclared_filter[node.name] = uf
 
     def visit_Macro(self, node):
         """Macros set local."""
@@ -215,8 +217,9 @@ class CodeGenerator(NodeVisitor):
             self.indent()
         for name in frame.identifiers.undeclared:
             self.writeline('l_%s = context[%r]' % (name, name))
-        for name in frame.identifiers.undeclared_filter:
-            self.writeline('f_%s = context[%r]' % (name, name))
+        for name, count in frame.identifiers.undeclared_filter.iteritems():
+            if count > 1:
+                self.writeline('f_%s = context[%r]' % (name, name))
         if not no_indent:
             self.outdent()
 
@@ -528,7 +531,10 @@ class CodeGenerator(NodeVisitor):
 
     def visit_Filter(self, node, frame):
         for filter in node.filters:
-            self.write('f_%s(' % filter.name)
+            if filter.name in frame.identifiers.declared_filter:
+                self.write('f_%s(' % filter.name)
+            else:
+                self.write('context.filter[%r](' % filter.name)
         self.visit(node.node, frame)
         for filter in reversed(node.filters):
             self.signature(filter, frame)
