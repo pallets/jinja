@@ -10,7 +10,6 @@
 """
 from copy import copy
 from random import randrange
-from operator import xor
 from cStringIO import StringIO
 from jinja2 import nodes
 from jinja2.visitor import NodeVisitor, NodeTransformer
