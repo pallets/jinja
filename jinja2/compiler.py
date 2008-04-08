@@ -396,7 +396,7 @@ class CodeGenerator(NodeVisitor):
         for arg in node.defaults:
             self.visit(arg)
             self.write(', ')
-        self.write('), %r)' % accesses_arguments)
+        self.write('), %r, make_undefined)' % accesses_arguments)
 
     def visit_ExprStmt(self, node, frame):
         self.newline(node)
@@ -462,6 +462,8 @@ class CodeGenerator(NodeVisitor):
         self.visit(node.target, assignment_frame)
         self.write(' = ')
         self.visit(node.node, frame)
+
+        # make sure toplevel assignments are added to the context.
         if frame.toplevel:
             for name in assignment_frame.assigned_names:
                 self.writeline('context[%r] = l_%s' % (name, name))
@@ -564,22 +566,13 @@ class CodeGenerator(NodeVisitor):
             self.visit(node.step, frame)
 
     def visit_Filter(self, node, frame):
-        value = node.node
-        flen = len(node.filters)
-        if isinstance(value, nodes.Const):
-            # try to optimize filters on constant values
-            for filter in reversed(node.filters):
-                value = nodes.Const(self.environment.filters \
-                    .get(filter.name)(self.environment, value.value))
-                print value
-                flen -= 1
-        for filter in node.filters[:flen]:
+        for filter in node.filters:
             if filter.name in frame.identifiers.declared_filter:
                 self.write('f_%s(' % filter.name)
             else:
                 self.write('context.filter[%r](' % filter.name)
-        self.visit(value, frame)
-        for filter in reversed(node.filters[:flen]):
+        self.visit(node.node, frame)
+        for filter in reversed(node.filters):
             self.signature(filter, frame)
             self.write(')')
 
