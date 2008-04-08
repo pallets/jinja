@@ -22,6 +22,7 @@
 from copy import deepcopy
 from jinja2 import nodes
 from jinja2.visitor import NodeVisitor, NodeTransformer
+from jinja2.runtime import subscribe
 
 
 class Optimizer(NodeTransformer):
@@ -62,7 +63,16 @@ class Optimizer(NodeTransformer):
             return node
         return nodes.Const(self.context[node.name])
 
+    def visit_Subscript(self, node):
+        try:
+            item = self.visit(node.node).as_const()
+            arg = self.visit(node.arg).as_const()
+        except nodes.Impossible:
+            return node
+        # XXX: what does the 3rd parameter mean?
+        return nodes.Const(subscribe(item, arg, None))
 
-def optimize(node, environment):
-    optimizer = Optimizer(environment)
+
+def optimize(node, environment, context={}):
+    optimizer = Optimizer(environment, context=context)
     return optimizer.visit(node)
