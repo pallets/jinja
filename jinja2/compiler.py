@@ -530,13 +530,22 @@ class CodeGenerator(NodeVisitor):
             self.visit(node.step, frame)
 
     def visit_Filter(self, node, frame):
-        for filter in node.filters:
+        value = node.node
+        flen = len(node.filters)
+        if isinstance(value, nodes.Const):
+            # try to optimize filters on constant values
+            for filter in reversed(node.filters):
+                value = nodes.Const(self.environment.filters \
+                    .get(filter.name)(self.environment, value.value))
+                print value
+                flen -= 1
+        for filter in node.filters[:flen]:
             if filter.name in frame.identifiers.declared_filter:
                 self.write('f_%s(' % filter.name)
             else:
                 self.write('context.filter[%r](' % filter.name)
-        self.visit(node.node, frame)
-        for filter in reversed(node.filters):
+        self.visit(value, frame)
+        for filter in reversed(node.filters[:flen]):
             self.signature(filter, frame)
             self.write(')')
 

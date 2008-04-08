@@ -15,6 +15,7 @@ try:
 except ImportError:
     itemgetter = lambda a: lambda b: b[a]
 from urllib import urlencode, quote
+from jinja.utils import escape
 
 
 _striptags_re = re.compile(r'(<!--.*?-->|<[^>]*>)')
@@ -94,18 +95,16 @@ def do_upper(s):
     Convert a value to uppercase.
     """
     return s.upper()
-do_upper = stringfilter(do_upper)
 
 
-def do_lower(s):
+def do_lower(env, s):
     """
     Convert a value to lowercase.
     """
     return s.lower()
-do_lower = stringfilter(do_lower)
 
 
-def do_escape(attribute=False):
+def do_escape(env, s, attribute=False):
     """
     XML escape ``&``, ``<``, and ``>`` in a string of data. If the
     optional parameter is `true` this filter will also convert
@@ -114,20 +113,12 @@ def do_escape(attribute=False):
 
     This method will have no effect it the value is already escaped.
     """
-    #: because filters are cached we can make a local alias to
-    #: speed things up a bit
-    e = escape
-    def wrapped(env, context, s):
-        if isinstance(s, TemplateData):
-            return s
-        elif hasattr(s, '__html__'):
-            return s.__html__()
-        #: small speedup, do not convert to unicode if we already
-        #: have an unicode object.
-        if s.__class__ is not unicode:
-            s = env.to_unicode(s)
-        return e(s, attribute)
-    return wrapped
+    # XXX: Does this still exists?
+    #if isinstance(s, TemplateData):
+    #    return s
+    if hasattr(s, '__html__'):
+        return s.__html__()
+    return escape(unicode(s), attribute)
 
 
 def do_xmlattr(autospace=False):
