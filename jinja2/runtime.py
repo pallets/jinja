@@ -24,8 +24,8 @@ def extends(template, namespace):
 def subscribe(obj, argument, undefined_factory):
     """Get an item or attribute of an object."""
     try:
-        return getattr(obj, argument)
-    except AttributeError:
+        return getattr(obj, str(argument))
+    except (AttributeError, UnicodeError):
         try:
             return obj[argument]
         except LookupError:

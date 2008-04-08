@@ -16,12 +16,19 @@ ast = env.parse("""
     {% for forum in forums %}
         {{ readstatus(forum.id) }} {{ forum.id|e }} {{ forum.name|e }}
     {% endfor %}
+
+    {% navigation = [('#foo', 'Foo'), ('#bar', 'Bar')] %}
+    <ul>
+    {% for item in navigation %}
+        <li><a href="{{ item[0] }}">{{ item[1] }}</a></li>
+    {% endfor %}
+    </ul>
 """)
 print ast
 print
 print generate(ast, env, "foo.html")
 print
-ast = optimize(ast, env, context={'forums': forums})
+ast = optimize(ast, env, context_hint={'forums': forums})
 print ast
 print
 print generate(ast, env, "foo.html")
