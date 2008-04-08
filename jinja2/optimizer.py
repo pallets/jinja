@@ -19,13 +19,9 @@
     :copyright: Copyright 2008 by Christoph Hack.
     :license: GNU GPL.
 """
-from copy import copy
-from random import randrange
-from operator import xor
-from cStringIO import StringIO
+from copy import deepcopy
 from jinja2 import nodes
 from jinja2.visitor import NodeVisitor, NodeTransformer
-from jinja2.exceptions import TemplateAssertionError
 
 
 class Optimizer(NodeVisitor):
@@ -38,25 +34,54 @@ class Optimizer(NodeVisitor):
         node.nodes = [self.visit(n) for n in node.nodes]
         return node
 
+    def visit_Template(self, node):
+        body = []
+        for n in node.body:
+            x = self.visit(n)
+            if isinstance(x, list):
+                body.extend(x)
+            else:
+                body.append(x)
+        node.body = body
+        return node
+
     def visit_Filter(self, node):
         """Try to evaluate filters if possible."""
-        value = self.visit(node.node)
-        if isinstance(value, nodes.Const):
-            x = value.value
-            for filter in reversed(node.filters):
-                # XXX: call filters with arguments
-                x = self.environment.filters[filter.name](self.environment, x)
-                # XXX: don't optimize context dependent filters
-            return nodes.Const(x)
-        return node
+        try:
+            x = self.visit(node.node).as_const()
+        except nodes.Impossible:
+            return node
+        for filter in reversed(node.filters):
+            # XXX: call filters with arguments
+            x = self.environment.filters[filter.name](self.environment, x)
+            # XXX: don't optimize context dependent filters
+        return nodes.Const(x)
+
+    def visit_For(self, node):
+        """Loop unrolling for constant values."""
+        try:
+            iter = self.visit(node.iter).as_const()
+        except nodes.Impossible:
+            return node
+        result = []
+        target = node.target.name
+        for item in iter:
+            # XXX: take care of variable scopes
+            self.context[target] = item
+            result.extend(self.visit(n) for n in deepcopy(node.body))
+        return result
+
+    def visit_Name(self, node):
+        # XXX: take care of variable scopes!
+        if node.name not in self.context:
+            return node
+        return nodes.Const(self.context[node.name])
 
     def generic_visit(self, node, *args, **kwargs):
         NodeVisitor.generic_visit(self, node, *args, **kwargs)
         return node
 
 
-def optimize(ast, env, clone=True):
-    optimizer = Optimizer(env)
-    if clone:
-        ast = copy(ast)
-    return optimizer.visit(ast)
+def optimize(node, environment):
+    optimizer = Optimizer(environment)
+    return optimizer.visit(node)

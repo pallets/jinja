@@ -7,6 +7,10 @@ env = Environment()
 ast = env.parse("""
     Hi {{ "<blub>"|e }},
     how are you?
+
+    {% for item in ('foo', 'bar', 'blub') %}
+        {{ item }}
+    {% endfor %}
 """)
 print ast
 print
