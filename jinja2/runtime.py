@@ -56,3 +56,21 @@ class TemplateContext(dict):
                 return self.globals[key]
             except:
                 return self.undefined_factory(key)
+
+
+class Macro(object):
+
+    def __init__(self, func, name, arguments, defaults, catch_all):
+        self.func = func
+        self.name = name
+        self.arguments = arguments
+        self.defaults = defaults
+        self.catch_all = catch_all
+
+    def __call__(self, *args, **kwargs):
+        if len(args) > len(self.arguments):
+            raise TypeError('macro %r takes not more than %d argument(s).' %
+                            (self.name, len(self.arguments)))
+        arguments = {}
+        # XXX: assemble arguments
+        return u''.join(self.func(*args, **kwargs))

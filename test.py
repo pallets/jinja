@@ -4,7 +4,13 @@ from jinja2.compiler import generate
 
 env = Environment()
 ast = env.parse("""
-Hallo {{ name|e }}!, wie geht es {{ "<dir>"|e|lower }}?
+{% block body %}
+    {% b = 23 %}
+    {% macro foo(a) %}[{{ a }}|{{ b }}|{{ c }}]{% endmacro %}
+    {% for item in seq %}
+      {{ foo(item) }}
+    {% endfor %}
+{% endblock %}
 """)
 print ast
 print
