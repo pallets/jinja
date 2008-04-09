@@ -14,7 +14,10 @@ except ImportError:
     defaultdict = None
 
 
-__all__ = ['extends', 'subscribe', 'LoopContext', 'TemplateContext', 'Macro']
+# contains only the variables the template will import automatically, not the
+# objects injected by the evaluation loop (such as undefined objects)
+__all__ = ['extends', 'subscribe', 'LoopContext', 'StaticLoopContext',
+           'TemplateContext', 'Macro']
 
 
 def extends(template, namespace):
@@ -74,34 +77,72 @@ class TemplateContext(dict):
             return self.undefined_factory(key)
 
 
-class LoopContext(object):
+class LoopContextBase(object):
     """Helper for extended iteration."""
 
     def __init__(self, iterable, parent=None):
         self._iterable = iterable
+        self._length = None
         self.index0 = 0
         self.parent = parent
-
-    def __iter__(self):
-        for item in self._iterable:
-            yield self, item
-            self.index0 += 1
 
     first = property(lambda x: x.index0 == 0)
     last = property(lambda x: x.revindex0 == 0)
     index = property(lambda x: x.index0 + 1)
     revindex = property(lambda x: x.length)
     revindex0 = property(lambda x: x.length - 1)
+    length = property(lambda x: len(x))
 
-    @property
-    def length(self):
-        if not hasattr(self, '_length'):
+
+class LoopContext(LoopContextBase):
+
+    def __init__(self, iterable, parent=None, enforce_length=False):
+        self._iterable = iterable
+        self._length = None
+        self.index0 = 0
+        self.parent = parent
+        if enforce_length:
+            len(self)
+
+    def make_static(self):
+        """Return a static loop context for the optimizer."""
+        parent = None
+        if self.parent is not None:
+            parent = self.parent.make_static()
+        return StaticLoopContext(self.index0, self.length, parent)
+
+    def __iter__(self):
+        for item in self._iterable:
+            yield self, item
+            self.index0 += 1
+
+    def __len__(self):
+        if self._length is None:
             try:
                 length = len(self._iterable)
             except TypeError:
-                length = len(tuple(self._iterable))
+                self._iterable = tuple(self._iterable)
+                length = self.index0 + len(tuple(self._iterable))
             self._length = length
         return self._length
+
+
+class StaticLoopContext(LoopContextBase):
+
+    def __init__(self, index0, length, parent):
+        self.index0 = index0
+        self.parent = parent
+        self._length = length
+
+    def __repr__(self):
+        return 'StaticLoopContext(%r, %r, %r)' % (
+            self.index0,
+            self._length,
+            self.parent
+        )
+
+    def make_static(self):
+        return self
 
 
 class Macro(object):
@@ -139,3 +180,35 @@ class Macro(object):
         if self.catch_all:
             arguments['l_arguments'] = kwargs
         return u''.join(self.func(**arguments))
+
+
+class Undefined(object):
+    """The default undefined behavior."""
+
+    def __init__(self, name=None, attr=None):
+        if attr is None:
+            self._undefined_hint = '%r is undefined' % attr
+        elif name is None:
+            self._undefined_hint = 'attribute %r is undefined' % name
+        else:
+            self._undefined_hint = 'attribute %r of %r is undefined' \
+                                   % (attr, name)
+
+    def fail(self, *args, **kwargs):
+        raise TypeError(self._undefined_hint)
+    __getattr__ = __getitem__ = __add__ = __mul__ = __div__ = \
+    __realdiv__ = __floordiv__ = __mod__ = __pos__ = __neg__ = fail
+    del fail
+
+    def __unicode__(self):
+        return ''
+
+    def __repr__(self):
+        return 'Undefined'
+
+    def __len__(self):
+        return 0
+
+    def __iter__(self):
+        if 0:
+            yield None
