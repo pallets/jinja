@@ -112,6 +112,30 @@ class Node(object):
             for result in child.find_all(node_type):
                 yield result
 
+    def copy(self):
+        """Return a deep copy of the node."""
+        result = object.__new__(self.__class__)
+        for field, value in self.iter_fields():
+            if isinstance(value, Node):
+                new_value = value.copy()
+            elif isinstance(value, list):
+                new_value = []
+                for item in new_value:
+                    if isinstance(item, Node):
+                        item = item.copy()
+                    else:
+                        item = copy(item)
+                    new_value.append(item)
+            else:
+                new_value = copy(new_value)
+            setattr(result, field, new_value)
+        for attr in self.attributes:
+            try:
+                setattr(result, attr, getattr(self, attr))
+            except AttributeError:
+                pass
+        return result
+
     def set_ctx(self, ctx):
         """Reset the context of a node and all child nodes.  Per default the
         parser will all generate nodes that have a 'load' context as it's the

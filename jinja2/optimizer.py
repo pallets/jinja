@@ -19,7 +19,6 @@
     :copyright: Copyright 2008 by Christoph Hack.
     :license: GNU GPL.
 """
-from copy import deepcopy
 from jinja2 import nodes
 from jinja2.visitor import NodeVisitor, NodeTransformer
 from jinja2.runtime import subscribe, LoopContext
@@ -102,12 +101,12 @@ class Optimizer(NodeTransformer):
                 for loop, item in LoopContext(iterable, parent, True):
                     context['loop'] = loop.make_static()
                     assign(node.target, item)
-                    result.extend(self.visit(n, context)
-                                  for n in deepcopy(node.body))
+                    result.extend(self.visit(n.copy(), context)
+                                  for n in node.body)
                     iterated = True
                 if not iterated and node.else_:
-                    result.extend(self.visit(n, context)
-                                  for n in deepcopy(node.else_))
+                    result.extend(self.visit(n.copy(), context)
+                                  for n in node.else_)
             except nodes.Impossible:
                 return node
         finally:
