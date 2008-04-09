@@ -39,11 +39,12 @@ def generate(node, environment, filename, stream=None):
 
 def has_safe_repr(value):
     """Does the node have a safe representation?"""
-    if value is None:
+    if value is None or value is NotImplemented or value is Ellipsis:
         return True
-    if isinstance(value, (int, long, float, basestring, StaticLoopContext)):
+    if isinstance(value, (bool, int, long, float, complex, basestring,
+                          StaticLoopContext)):
         return True
-    if isinstance(value, (tuple, list)):
+    if isinstance(value, (tuple, list, set, frozenset)):
         for item in value:
             if not has_safe_repr(item):
                 return False
@@ -148,7 +149,7 @@ class FrameIdentifierVisitor(NodeVisitor):
             if not self.identifiers.is_declared(node.name, self.hard_scope):
                 self.identifiers.undeclared.add(node.name)
 
-    def visit_FilterCall(self, node):
+    def visit_Filter(self, node):
         if not node.name in self.identifiers.declared_filter:
             uf = self.identifiers.undeclared_filter.get(node.name, 0) + 1
             if uf > 1:
@@ -589,15 +590,13 @@ class CodeGenerator(NodeVisitor):
             self.visit(node.step, frame)
 
     def visit_Filter(self, node, frame):
-        for filter in node.filters:
-            if filter.name in frame.identifiers.declared_filter:
-                self.write('f_%s(' % filter.name)
-            else:
-                self.write('context.filter[%r](' % filter.name)
+        if node.name in frame.identifiers.declared_filter:
+            self.write('f_%s(' % node.name)
+        else:
+            self.write('context.filter[%r](' % node.name)
         self.visit(node.node, frame)
-        for filter in reversed(node.filters):
-            self.signature(filter, frame)
-            self.write(')')
+        self.signature(node, frame)
+        self.write(')')
 
     def visit_Test(self, node, frame):
         self.write('context.tests[%r](')

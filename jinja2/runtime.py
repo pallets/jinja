@@ -148,9 +148,7 @@ class StaticLoopContext(LoopContextBase):
 
 
 class Macro(object):
-    """
-    Wraps a macor
-    """
+    """Wraps a macro."""
 
     def __init__(self, func, name, arguments, defaults, catch_all):
         self.func = func

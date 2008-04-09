@@ -23,8 +23,7 @@ _statement_end_tokens = set(['elif', 'else', 'endblock', 'endfilter',
 
 
 class Parser(object):
-    """
-    The template parser class.
+    """The template parser class.
 
     Transforms sourcecode into an abstract syntax tree.
     """
@@ -572,7 +571,6 @@ class Parser(object):
 
     def parse_filter(self, node):
         lineno = self.stream.current.type
-        filters = []
         while self.stream.current.type == 'pipe':
             self.stream.next()
             token = self.stream.expect('name')
@@ -582,10 +580,9 @@ class Parser(object):
                 args = []
                 kwargs = []
                 dyn_args = dyn_kwargs = None
-            filters.append(nodes.FilterCall(token.value, args, kwargs,
-                                            dyn_args, dyn_kwargs,
-                                            lineno=token.lineno))
-        return nodes.Filter(node, filters)
+            node = nodes.Filter(node, token.value, args, kwargs, dyn_args,
+                                dyn_kwargs, lineno=token.lineno)
+        return node
 
     def parse_test(self, node):
         token = self.stream.expect('is')
@@ -653,4 +650,6 @@ class Parser(object):
 
     def parse(self):
         """Parse the whole template into a `Template` node."""
-        return nodes.Template(self.subparse(), lineno=1)
+        result = nodes.Template(self.subparse(), lineno=1)
+        result.set_environment(self.environment)
+        return result

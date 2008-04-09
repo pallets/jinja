@@ -60,7 +60,7 @@ class Node(object):
     """Baseclass for all Jinja nodes."""
     __metaclass__ = NodeType
     fields = ()
-    attributes = ('lineno',)
+    attributes = ('lineno', 'environment')
 
     def __init__(self, *args, **kw):
         if args:
@@ -123,6 +123,14 @@ class Node(object):
             node = todo.popleft()
             if 'ctx' in node.fields:
                 node.ctx = ctx
+            todo.extend(node.iter_child_nodes())
+
+    def set_environment(self, environment):
+        """Set the environment for all nodes."""
+        todo = deque([self])
+        while todo:
+            node = todo.popleft()
+            node.environment = environment
             todo.extend(node.iter_child_nodes())
 
     def __repr__(self):
@@ -288,7 +296,7 @@ class Const(Literal):
         return self.value
 
     @classmethod
-    def from_untrusted(cls, value, lineno=None, silent=False):
+    def from_untrusted(cls, value, lineno=None, environment=None):
         """Return a const object if the value is representable as
         constant value in the generated code, otherwise it will raise
         an `Impossible` exception."""
@@ -297,7 +305,7 @@ class Const(Literal):
             if silent:
                 return
             raise Impossible()
-        return cls(value, lineno=lineno)
+        return cls(value, lineno=lineno, environment=environment)
 
 
 class Tuple(Literal):
@@ -357,12 +365,29 @@ class CondExpr(Expr):
 
 class Filter(Expr):
     """{{ foo|bar|baz }}"""
-    fields = ('node', 'filters')
+    fields = ('node', 'name', 'args', 'kwargs', 'dyn_args', 'dyn_kwargs')
 
-
-class FilterCall(Expr):
-    """{{ |bar() }}"""
-    fields = ('name', 'args', 'kwargs', 'dyn_args', 'dyn_kwargs')
+    def as_const(self):
+        filter = self.environment.filters.get(self.name)
+        if filter is None or getattr(filter, 'contextfilter', False):
+            raise nodes.Impossible()
+        obj = self.node.as_const()
+        args = [x.as_const() for x in self.args]
+        kwargs = dict(x.as_const() for x in self.kwargs)
+        if self.dyn_args is not None:
+            try:
+                args.extend(self.dyn_args.as_const())
+            except:
+                raise Impossible()
+        if self.dyn_kwargs is not None:
+            try:
+                kwargs.update(self.dyn_kwargs.as_const())
+            except:
+                raise Impossible()
+        try:
+            return filter(obj, *args, **kwargs)
+        except:
+            raise nodes.Impossible()
 
 
 class Test(Expr):
@@ -385,7 +410,7 @@ class Call(Expr):
                 raise Impossible()
         if self.dyn_kwargs is not None:
             try:
-                dyn_kwargs.update(self.dyn_kwargs.as_const())
+                kwargs.update(self.dyn_kwargs.as_const())
             except:
                 raise Impossible()
         try:

@@ -67,22 +67,6 @@ class Optimizer(NodeTransformer):
     def visit_Block(self, node, context):
         return self.generic_visit(node, context.blank())
 
-    def visit_Filter(self, node, context):
-        """Try to evaluate filters if possible."""
-        # XXX: nonconstant arguments?  not-called visitors?  generic visit!
-        try:
-            x = self.visit(node.node, context).as_const()
-        except nodes.Impossible:
-            return self.generic_visit(node, context)
-        for filter in reversed(node.filters):
-            # XXX: call filters with arguments
-            x = self.environment.filters[filter.name](x)
-            # XXX: don't optimize context dependent filters
-        try:
-            return nodes.Const.from_untrusted(x, lineno=node.lineno)
-        except nodes.Impossible:
-            return self.generic_visit(node)
-
     def visit_For(self, node, context):
         """Loop unrolling for iterable constant values."""
         try:
@@ -140,13 +124,14 @@ class Optimizer(NodeTransformer):
         return node.else_
 
     def visit_Name(self, node, context):
-        if node.ctx == 'load':
-            try:
-                return nodes.Const.from_untrusted(context[node.name],
-                                                  lineno=node.lineno)
-            except (KeyError, nodes.Impossible):
-                pass
-        return node
+        if node.ctx != 'load':
+            return node
+        try:
+            return nodes.Const.from_untrusted(context[node.name],
+                                              lineno=node.lineno,
+                                              environment=self.environment)
+        except (KeyError, nodes.Impossible):
+            return node
 
     def visit_Assign(self, node, context):
         try:
@@ -185,12 +170,14 @@ class Optimizer(NodeTransformer):
         node = self.generic_visit(node, context)
         try:
             return nodes.Const.from_untrusted(node.as_const(),
-                                              lineno=node.lineno)
+                                              lineno=node.lineno,
+                                              environment=self.environment)
         except nodes.Impossible:
             return node
     visit_Add = visit_Sub = visit_Mul = visit_Div = visit_FloorDiv = \
     visit_Pow = visit_Mod = visit_And = visit_Or = visit_Pos = visit_Neg = \
-    visit_Not = visit_Compare = visit_Subscribt = visit_Call = fold
+    visit_Not = visit_Compare = visit_Subscript = visit_Call = \
+    visit_Filter = visit_Test = fold
     del fold
 
 
