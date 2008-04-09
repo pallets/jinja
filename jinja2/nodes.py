@@ -16,6 +16,7 @@ import operator
 from itertools import chain, izip
 from collections import deque
 from copy import copy
+from jinja2.runtime import Undefined, subscribe
 
 
 _binop_to_func = {
@@ -286,6 +287,18 @@ class Const(Literal):
     def as_const(self):
         return self.value
 
+    @classmethod
+    def from_untrusted(cls, value, lineno=None, silent=False):
+        """Return a const object if the value is representable as
+        constant value in the generated code, otherwise it will raise
+        an `Impossible` exception."""
+        from compiler import has_safe_repr
+        if not has_safe_repr(value):
+            if silent:
+                return
+            raise Impossible()
+        return cls(value, lineno=lineno)
+
 
 class Tuple(Literal):
     """For loop unpacking and some other things like multiple arguments
@@ -361,14 +374,35 @@ class Call(Expr):
     """{{ foo(bar) }}"""
     fields = ('node', 'args', 'kwargs', 'dyn_args', 'dyn_kwargs')
 
+    def as_const(self):
+        obj = self.node.as_const()
+        args = [x.as_const() for x in self.args]
+        kwargs = dict(x.as_const() for x in self.kwargs)
+        if self.dyn_args is not None:
+            try:
+                args.extend(self.dyn_args.as_const())
+            except:
+                raise Impossible()
+        if self.dyn_kwargs is not None:
+            try:
+                dyn_kwargs.update(self.dyn_kwargs.as_const())
+            except:
+                raise Impossible()
+        try:
+            return obj(*args, **kwargs)
+        except:
+            raise nodes.Impossible()
+
 
 class Subscript(Expr):
     """{{ foo.bar }} and {{ foo['bar'] }} etc."""
     fields = ('node', 'arg', 'ctx')
 
     def as_const(self):
+        if self.ctx != 'load':
+            raise Impossible()
         try:
-            return self.node.as_const()[self.node.as_const()]
+            return subscribe(self.node.as_const(), self.arg.as_const())
         except:
             raise Impossible()
 
@@ -379,6 +413,13 @@ class Subscript(Expr):
 class Slice(Expr):
     """1:2:3 etc."""
     fields = ('start', 'stop', 'step')
+
+    def as_const(self):
+        def const(obj):
+            if obj is None:
+                return obj
+            return obj.as_const()
+        return slice(const(self.start), const(self.stop), const(self.step))
 
 
 class Concat(Expr):

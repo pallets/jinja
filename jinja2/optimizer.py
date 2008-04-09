@@ -78,7 +78,10 @@ class Optimizer(NodeTransformer):
             # XXX: call filters with arguments
             x = self.environment.filters[filter.name](self.environment, x)
             # XXX: don't optimize context dependent filters
-        return nodes.Const(x)
+        try:
+            return nodes.Const.from_untrusted(x, lineno=node.lineno)
+        except nodes.Impossible:
+            return self.generic_visit(node)
 
     def visit_For(self, node, context):
         """Loop unrolling for iterable constant values."""
@@ -139,8 +142,9 @@ class Optimizer(NodeTransformer):
     def visit_Name(self, node, context):
         if node.ctx == 'load':
             try:
-                return nodes.Const(context[node.name], lineno=node.lineno)
-            except KeyError:
+                return nodes.Const.from_untrusted(context[node.name],
+                                                  lineno=node.lineno)
+            except (KeyError, nodes.Impossible):
                 pass
         return node
 
@@ -155,8 +159,8 @@ class Optimizer(NodeTransformer):
         lineno = node.lineno
         def walk(target, value):
             if isinstance(target, nodes.Name):
-                const_value = nodes.Const(value, lineno=lineno)
-                result.append(nodes.Assign(target, const_value, lineno=lineno))
+                const = nodes.Const.from_untrusted(value, lineno=lineno)
+                result.append(nodes.Assign(target, const, lineno=lineno))
                 context[target.name] = value
             elif isinstance(target, nodes.Tuple):
                 try:
@@ -180,22 +184,14 @@ class Optimizer(NodeTransformer):
         """Do constant folding."""
         node = self.generic_visit(node, context)
         try:
-            return nodes.Const(node.as_const(), lineno=node.lineno)
+            return nodes.Const.from_untrusted(node.as_const(),
+                                              lineno=node.lineno)
         except nodes.Impossible:
             return node
     visit_Add = visit_Sub = visit_Mul = visit_Div = visit_FloorDiv = \
     visit_Pow = visit_Mod = visit_And = visit_Or = visit_Pos = visit_Neg = \
-    visit_Not = visit_Compare = fold
-
-    def visit_Subscript(self, node, context):
-        if node.ctx == 'load':
-            try:
-                item = self.visit(node.node, context).as_const()
-                arg = self.visit(node.arg, context).as_const()
-            except nodes.Impossible:
-                return self.generic_visit(node, context)
-            return nodes.Const(subscribe(item, arg, 'load'))
-        return self.generic_visit(node, context)
+    visit_Not = visit_Compare = visit_Subscribt = visit_Call = fold
+    del fold
 
 
 def optimize(node, environment, context_hint=None):

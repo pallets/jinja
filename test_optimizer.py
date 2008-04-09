@@ -22,6 +22,7 @@ ast = env.parse("""
     {% for key, value in navigation %}
         <li>{{ test(loop) }}: <a href="{{ key|e }}">{{ value|e }}</a></li>
     {% endfor %}
+    {{ "Hello World".upper() }}
     </ul>
 """)
 print ast

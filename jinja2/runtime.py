@@ -14,17 +14,15 @@ except ImportError:
     defaultdict = None
 
 
-# contains only the variables the template will import automatically, not the
-# objects injected by the evaluation loop (such as undefined objects)
 __all__ = ['extends', 'subscribe', 'LoopContext', 'StaticLoopContext',
-           'TemplateContext', 'Macro']
+           'TemplateContext', 'Macro', 'Undefined']
 
 
 def extends(template, namespace):
     """This loads a template (and evaluates it) and replaces the blocks."""
 
 
-def subscribe(obj, argument, undefined_factory):
+def subscribe(obj, argument):
     """Get an item or attribute of an object."""
     try:
         return getattr(obj, str(argument))
@@ -32,7 +30,7 @@ def subscribe(obj, argument, undefined_factory):
         try:
             return obj[argument]
         except LookupError:
-            return undefined_factory(attr=argument)
+            return Undefined(obj, argument)
 
 
 class TemplateContext(dict):
@@ -43,10 +41,9 @@ class TemplateContext(dict):
     the exported variables for example).
     """
 
-    def __init__(self, globals, undefined_factory, filename):
+    def __init__(self, globals, filename):
         dict.__init__(self, globals)
         self.exported = set()
-        self.undefined_factory = undefined_factory
         self.filename = filename
         self.filters = {}
         self.tests = {}
@@ -71,10 +68,10 @@ class TemplateContext(dict):
         def __getitem__(self, name):
             if name in self:
                 return self[name]
-            return self.undefined_factory(name)
+            return Undefined(name)
     else:
         def __missing__(self, key):
-            return self.undefined_factory(key)
+            return Undefined(key)
 
 
 class LoopContextBase(object):
@@ -128,6 +125,10 @@ class LoopContext(LoopContextBase):
 
 
 class StaticLoopContext(LoopContextBase):
+    """The static loop context is used in the optimizer to "freeze" the
+    status of an iteration.  The only reason for this object is if the
+    loop object is accessed in a non static way (eg: becomes part of a
+    function call)."""
 
     def __init__(self, index0, length, parent):
         self.index0 = index0
@@ -135,6 +136,7 @@ class StaticLoopContext(LoopContextBase):
         self._length = length
 
     def __repr__(self):
+        """The repr is used by the optimizer to dump the object."""
         return 'StaticLoopContext(%r, %r, %r)' % (
             self.index0,
             self._length,
@@ -150,14 +152,12 @@ class Macro(object):
     Wraps a macor
     """
 
-    def __init__(self, func, name, arguments, defaults, catch_all, \
-                 undefined_factory):
+    def __init__(self, func, name, arguments, defaults, catch_all):
         self.func = func
         self.name = name
         self.arguments = arguments
         self.defaults = defaults
         self.catch_all = catch_all
-        self.undefined_factory = undefined_factory
 
     def __call__(self, *args, **kwargs):
         arg_count = len(self.arguments)
@@ -175,7 +175,7 @@ class Macro(object):
                     try:
                         value = self.defaults[idx - arg_count]
                     except IndexError:
-                        value = self.undefined_factory(name)
+                        value = Undefined(name)
             arguments['l_' + name] = arg
         if self.catch_all:
             arguments['l_arguments'] = kwargs
@@ -183,7 +183,7 @@ class Macro(object):
 
 
 class Undefined(object):
-    """The default undefined behavior."""
+    """The object for undefined values."""
 
     def __init__(self, name=None, attr=None):
         if attr is None:

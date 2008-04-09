@@ -10,6 +10,7 @@
 """
 from jinja2.lexer import Lexer
 from jinja2.parser import Parser
+from jinja2.runtime import Undefined
 from jinja2.defaults import DEFAULT_FILTERS, DEFAULT_TESTS, DEFAULT_NAMESPACE
 
 
@@ -66,6 +67,9 @@ class Environment(object):
         self.filters = DEFAULT_FILTERS.copy()
         self.tests = DEFAULT_TESTS.copy()
         self.globals = DEFAULT_NAMESPACE.copy()
+
+        # the factory that creates the undefined object
+        self.undefined_factory = Undefined
 
         # create lexer
         self.lexer = Lexer(self)

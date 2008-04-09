@@ -14,6 +14,7 @@ from cStringIO import StringIO
 from jinja2 import nodes
 from jinja2.visitor import NodeVisitor, NodeTransformer
 from jinja2.exceptions import TemplateAssertionError
+from jinja2.runtime import StaticLoopContext
 
 
 operators = {
@@ -34,6 +35,27 @@ def generate(node, environment, filename, stream=None):
     generator.visit(node)
     if stream is None:
         return generator.stream.getvalue()
+
+
+def has_safe_repr(value):
+    """Does the node have a safe representation?"""
+    if value is None:
+        return True
+    if isinstance(value, (int, long, float, basestring, StaticLoopContext)):
+        return True
+    if isinstance(value, (tuple, list)):
+        for item in value:
+            if not has_safe_repr(item):
+                return False
+        return True
+    elif isinstance(value, dict):
+        for key, value in value.iteritems():
+            if not has_safe_repr(key):
+                return False
+            if not has_safe_repr(value):
+                return False
+        return True
+    return False
 
 
 class Identifiers(object):
@@ -235,7 +257,7 @@ class CodeGenerator(NodeVisitor):
         self.writeline('from jinja2.runtime import *')
         self.writeline('filename = %r' % self.filename)
         self.writeline('template_context = TemplateContext(global_context, '
-                       'make_undefined, filename)')
+                       'filename)')
 
         # generate the root render function.
         self.writeline('def root(context=template_context):', extra=1)
@@ -397,7 +419,7 @@ class CodeGenerator(NodeVisitor):
         for arg in node.defaults:
             self.visit(arg)
             self.write(', ')
-        self.write('), %r, make_undefined)' % accesses_arguments)
+        self.write('), %r)' % accesses_arguments)
 
     def visit_ExprStmt(self, node, frame):
         self.newline(node)
@@ -554,7 +576,7 @@ class CodeGenerator(NodeVisitor):
             self.write(repr(const))
         else:
             self.visit(node.arg, frame)
-        self.write(', make_undefined)')
+        self.write(')')
 
     def visit_Slice(self, node, frame):
         if node.start is not None:
