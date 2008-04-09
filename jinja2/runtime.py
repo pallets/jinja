@@ -14,7 +14,7 @@ except ImportError:
     defaultdict = None
 
 
-__all__ = ['extends', 'subscribe', 'TemplateContext', 'Macro']
+__all__ = ['extends', 'subscribe', 'LoopContext', 'TemplateContext', 'Macro']
 
 
 def extends(template, namespace):
@@ -72,6 +72,36 @@ class TemplateContext(dict):
     else:
         def __missing__(self, key):
             return self.undefined_factory(key)
+
+
+class LoopContext(object):
+    """Helper for extended iteration."""
+
+    def __init__(self, iterable, parent=None):
+        self._iterable = iterable
+        self.index0 = 0
+        self.parent = parent
+
+    def __iter__(self):
+        for item in self._iterable:
+            yield self, item
+            self.index0 += 1
+
+    first = property(lambda x: x.index0 == 0)
+    last = property(lambda x: x.revindex0 == 0)
+    index = property(lambda x: x.index0 + 1)
+    revindex = property(lambda x: x.length)
+    revindex0 = property(lambda x: x.length - 1)
+
+    @property
+    def length(self):
+        if not hasattr(self, '_length'):
+            try:
+                length = len(self._iterable)
+            except TypeError:
+                length = len(tuple(self._iterable))
+            self._length = length
+        return self._length
 
 
 class Macro(object):
