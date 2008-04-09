@@ -315,8 +315,10 @@ class CodeGenerator(NodeVisitor):
             self.writeline('l_loop = None')
         self.write('for ')
         self.visit(node.target, loop_frame)
-        self.write(extended_loop and ', l_loop in looper(' or ' in ')
+        self.write(extended_loop and ', l_loop in LoopContext(' or ' in ')
         self.visit(node.iter, loop_frame)
+        if 'loop' in aliases:
+            self.write(', ' + aliases['loop'])
         self.write(extended_loop and '):' or ':')
         self.blockvisit(node.body, loop_frame)
 

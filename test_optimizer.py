@@ -17,10 +17,10 @@ ast = env.parse("""
         {{ readstatus(forum.id) }} {{ forum.id|e }} {{ forum.name|e }}
     {% endfor %}
 
-    {% navigation = [('#foo', 'Foo'), ('#bar', 'Bar')] %}
+    {% navigation = [('#foo', 'Foo'), ('#bar', 'Bar'), ('#baz', 42 * 2 + 23)] %}
     <ul>
-    {% for item in navigation %}
-        <li><a href="{{ item[0] }}">{{ item[1] }}</a></li>
+    {% for key, value in navigation %}
+        <li>{{ loop.index }}: <a href="{{ key|e }}">{{ value|e }}</a></li>
     {% endfor %}
     </ul>
 """)

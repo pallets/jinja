@@ -22,7 +22,7 @@
 from copy import deepcopy
 from jinja2 import nodes
 from jinja2.visitor import NodeVisitor, NodeTransformer
-from jinja2.runtime import subscribe
+from jinja2.runtime import subscribe, LoopContext
 
 
 class ContextStack(object):
@@ -38,6 +38,12 @@ class ContextStack(object):
 
     def pop(self):
         self.stack.pop()
+
+    def get(self, key, default=None):
+        try:
+            return self[key]
+        except KeyError:
+            return default
 
     def __getitem__(self, key):
         for level in reversed(self.stack):
@@ -58,6 +64,9 @@ class Optimizer(NodeTransformer):
     def __init__(self, environment):
         self.environment = environment
 
+    def visit_Block(self, node, context):
+        return self.generic_visit(node, context.blank())
+
     def visit_Filter(self, node, context):
         """Try to evaluate filters if possible."""
         # XXX: nonconstant arguments?  not-called visitors?  generic visit!
@@ -77,18 +86,44 @@ class Optimizer(NodeTransformer):
             iterable = iter(self.visit(node.iter, context).as_const())
         except (nodes.Impossible, TypeError):
             return self.generic_visit(node, context)
+
+        parent = context.get('loop')
         context.push()
         result = []
-        # XXX: tuple unpacking (for key, value in foo)
-        target = node.target.name
         iterated = False
-        for item in iterable:
-            context[target] = item
-            result.extend(self.visit(n, context) for n in deepcopy(node.body))
-            iterated = True
-        if not iterated and node.else_:
-            result.extend(self.visit(n, context) for n in deepcopy(node.else_))
-        context.pop()
+
+        def assign(target, value):
+            if isinstance(target, nodes.Name):
+                context[target.name] = value
+            elif isinstance(target, nodes.Tuple):
+                try:
+                    value = tuple(value)
+                except TypeError:
+                    raise nodes.Impossible()
+                if len(target.items) != len(value):
+                    raise nodes.Impossible()
+                for name, val in zip(target.items, value):
+                    assign(name, val)
+            else:
+                raise AssertionError('unexpected assignable node')
+
+        # XXX: not covered cases:
+        #       - item is accessed by dynamic part in the iteration
+        try:
+            try:
+                for loop, item in LoopContext(iterable, parent):
+                    context['loop'] = loop
+                    assign(node.target, item)
+                    result.extend(self.visit(n, context)
+                                  for n in deepcopy(node.body))
+                    iterated = True
+                if not iterated and node.else_:
+                    result.extend(self.visit(n, context)
+                                  for n in deepcopy(node.else_))
+            except nodes.Impossible:
+                return node
+        finally:
+            context.pop()
         return result
 
     def visit_If(self, node, context):
@@ -127,9 +162,9 @@ class Optimizer(NodeTransformer):
                     value = tuple(value)
                 except TypeError:
                     raise nodes.Impossible()
-                if len(target) != len(value):
+                if len(target.items) != len(value):
                     raise nodes.Impossible()
-                for name, val in zip(target, value):
+                for name, val in zip(target.items, value):
                     walk(name, val)
             else:
                 raise AssertionError('unexpected assignable node')
@@ -139,6 +174,17 @@ class Optimizer(NodeTransformer):
         except nodes.Impossible:
             return node
         return result
+
+    def fold(self, node, context):
+        """Do constant folding."""
+        node = self.generic_visit(node, context)
+        try:
+            return nodes.Const(node.as_const(), lineno=node.lineno)
+        except nodes.Impossible:
+            return node
+    visit_Add = visit_Sub = visit_Mul = visit_Div = visit_FloorDiv = \
+    visit_Pow = visit_Mod = visit_And = visit_Or = visit_Pos = visit_Neg = \
+    visit_Not = visit_Compare = fold
 
     def visit_Subscript(self, node, context):
         if node.ctx == 'load':
