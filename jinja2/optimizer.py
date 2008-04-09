@@ -83,7 +83,10 @@ class Optimizer(NodeTransformer):
     def visit_For(self, node, context):
         """Loop unrolling for iterable constant values."""
         try:
-            iterable = iter(self.visit(node.iter, context).as_const())
+            iterable = self.visit(node.iter, context).as_const()
+            # we only unroll them if they have a length and are iterable
+            iter(iterable)
+            len(iterable)
         except (nodes.Impossible, TypeError):
             return self.generic_visit(node, context)
 
@@ -107,12 +110,10 @@ class Optimizer(NodeTransformer):
             else:
                 raise AssertionError('unexpected assignable node')
 
-        # XXX: not covered cases:
-        #       - item is accessed by dynamic part in the iteration
         try:
             try:
-                for loop, item in LoopContext(iterable, parent):
-                    context['loop'] = loop
+                for loop, item in LoopContext(iterable, parent, True):
+                    context['loop'] = loop.make_static()
                     assign(node.target, item)
                     result.extend(self.visit(n, context)
                                   for n in deepcopy(node.body))
