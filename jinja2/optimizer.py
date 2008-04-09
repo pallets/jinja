@@ -67,7 +67,7 @@ class Optimizer(NodeTransformer):
             return self.generic_visit(node, context)
         for filter in reversed(node.filters):
             # XXX: call filters with arguments
-            x = self.environment.filters[filter.name](self.environment, x)
+            x = self.environment.filters[filter.name](x)
             # XXX: don't optimize context dependent filters
         return nodes.Const(x)
 
