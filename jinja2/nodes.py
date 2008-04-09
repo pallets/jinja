@@ -120,14 +120,14 @@ class Node(object):
                 new_value = value.copy()
             elif isinstance(value, list):
                 new_value = []
-                for item in new_value:
+                for item in value:
                     if isinstance(item, Node):
                         item = item.copy()
                     else:
                         item = copy(item)
                     new_value.append(item)
             else:
-                new_value = copy(new_value)
+                new_value = copy(value)
             setattr(result, field, new_value)
         for attr in self.attributes:
             try:
@@ -326,8 +326,6 @@ class Const(Literal):
         an `Impossible` exception."""
         from compiler import has_safe_repr
         if not has_safe_repr(value):
-            if silent:
-                return
             raise Impossible()
         return cls(value, lineno=lineno, environment=environment)
 
