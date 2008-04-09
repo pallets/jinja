@@ -5,7 +5,7 @@
 
     Bundled jinja filters.
 
-    :copyright: 2007 by Armin Ronacher.
+    :copyright: 2008 by Armin Ronacher, Christoph Hack.
     :license: BSD, see LICENSE for more details.
 """
 import re
@@ -21,43 +21,13 @@ from jinja.utils import escape
 _striptags_re = re.compile(r'(<!--.*?-->|<[^>]*>)')
 
 
-def stringfilter(f):
+def contextfilter(f):
     """
-    Decorator for filters that just work on unicode objects.
+    Decorator for marking context dependent filters. The current context
+    argument will be passed as first argument.
     """
-    def decorator(*args):
-        def wrapped(env, context, value):
-            nargs = list(args)
-            for idx, var in enumerate(nargs):
-                if isinstance(var, str):
-                    nargs[idx] = env.to_unicode(var)
-            return f(env.to_unicode(value), *nargs)
-        return wrapped
-    try:
-        decorator.__doc__ = f.__doc__
-        decorator.__name__ = f.__name__
-    except:
-        pass
-    return decorator
-
-
-def simplefilter(f):
-    """
-    Decorator for simplifying filters. Filter arguments are passed
-    to the decorated function without environment and context. The
-    source value is the first argument. (like stringfilter but
-    without unicode conversion)
-    """
-    def decorator(*args):
-        def wrapped(env, context, value):
-            return f(value, *args)
-        return wrapped
-    try:
-        decorator.__doc__ = f.__doc__
-        decorator.__name__ = f.__name__
-    except:
-        pass
-    return decorator
+    f.contextfilter = True
+    return f
 
 
 def do_replace(s, old, new, count=None):
@@ -87,7 +57,6 @@ def do_replace(s, old, new, count=None):
                                    'replace filter requires '
                                    'an integer')
     return s.replace(old, new, count)
-do_replace = stringfilter(do_replace)
 
 
 def do_upper(s):
@@ -97,14 +66,14 @@ def do_upper(s):
     return s.upper()
 
 
-def do_lower(env, s):
+def do_lower(s):
     """
     Convert a value to lowercase.
     """
     return s.lower()
 
 
-def do_escape(env, s, attribute=False):
+def do_escape(s, attribute=False):
     """
     XML escape ``&``, ``<``, and ``>`` in a string of data. If the
     optional parameter is `true` this filter will also convert
@@ -121,7 +90,7 @@ def do_escape(env, s, attribute=False):
     return escape(unicode(s), attribute)
 
 
-def do_xmlattr(autospace=False):
+def do_xmlattr(d, autospace=False):
     """
     Create an SGML/XML attribute string based on the items in a dict.
     All values that are neither `none` nor `undefined` are automatically
@@ -148,22 +117,19 @@ def do_xmlattr(autospace=False):
 
     *New in Jinja 1.1*
     """
-    e = escape
-    def wrapped(env, context, d):
-        if not hasattr(d, 'iteritems'):
-            raise TypeError('a dict is required')
-        result = []
-        for key, value in d.iteritems():
-            if value not in (None, env.undefined_singleton):
-                result.append(u'%s="%s"' % (
-                    e(env.to_unicode(key)),
-                    e(env.to_unicode(value), True)
-                ))
-        rv = u' '.join(result)
-        if autospace:
-            rv = ' ' + rv
-        return rv
-    return wrapped
+    if not hasattr(d, 'iteritems'):
+        raise TypeError('a dict is required')
+    result = []
+    for key, value in d.iteritems():
+        if value not in (None, env.undefined_singleton):
+            result.append(u'%s="%s"' % (
+                escape(env.to_unicode(key)),
+                escape(env.to_unicode(value), True)
+            ))
+    rv = u' '.join(result)
+    if autospace:
+        rv = ' ' + rv
+    return rv
 
 
 def do_capitalize(s):
@@ -171,8 +137,7 @@ def do_capitalize(s):
     Capitalize a value. The first character will be uppercase, all others
     lowercase.
     """
-    return s.capitalize()
-do_capitalize = stringfilter(do_capitalize)
+    return unicode(s).capitalize()
 
 
 def do_title(s):
@@ -180,8 +145,7 @@ def do_title(s):
     Return a titlecased version of the value. I.e. words will start with
     uppercase letters, all remaining characters are lowercase.
     """
-    return s.title()
-do_title = stringfilter(do_title)
+    return unicode(s).title()
 
 
 def do_dictsort(case_sensitive=False, by='key'):
@@ -224,7 +188,7 @@ def do_dictsort(case_sensitive=False, by='key'):
     return wrapped
 
 
-def do_default(default_value=u'', boolean=False):
+def do_default(value, default_value=u'', boolean=False):
     """
     If the value is undefined it will return the passed default value,
     otherwise the value of the variable:
@@ -242,14 +206,13 @@ def do_default(default_value=u'', boolean=False):
 
         {{ ''|default('the string was empty', true) }}
     """
-    def wrapped(env, context, value):
-        if (boolean and not value) or value in (env.undefined_singleton, None):
-            return default_value
-        return value
-    return wrapped
+    # XXX: undefined_sigleton
+    if (boolean and not value) or value in (env.undefined_singleton, None):
+        return default_value
+    return value
 
 
-def do_join(d=u''):
+def do_join(value, d=u''):
     """
     Return a string which is the concatenation of the strings in the
     sequence. The separator between elements is an empty string per
@@ -263,9 +226,7 @@ def do_join(d=u''):
         {{ [1, 2, 3]|join }}
             -> 123
     """
-    def wrapped(env, context, value):
-        return env.to_unicode(d).join([env.to_unicode(x) for x in value])
-    return wrapped
+    return unicode(d).join([unicode(x) for x in value])
 
 
 def do_count():
@@ -274,17 +235,15 @@ def do_count():
     it will convert it into a string an return the length of the new
     string. If the object has no length it will of corse return 0.
     """
-    def wrapped(env, context, value):
-        try:
-            if type(value) in (int, float, long):
-                return len(str(value))
-            return len(value)
-        except TypeError:
-            return 0
-    return wrapped
+    try:
+        if type(value) in (int, float, long):
+            return len(str(value))
+        return len(value)
+    except TypeError:
+        return 0
 
 
-def do_reverse():
+def do_reverse(l):
     """
     Return a reversed list of the sequence filtered. You can use this
     for example for reverse iteration:
@@ -295,61 +254,52 @@ def do_reverse():
             {{ item|e }}
         {% endfor %}
     """
-    def wrapped(env, context, value):
-        try:
-            return value[::-1]
-        except:
-            l = list(value)
-            l.reverse()
-            return l
-    return wrapped
+    try:
+        return value[::-1]
+    except:
+        l = list(value)
+        l.reverse()
+        return l
 
 
 def do_center(value, width=80):
     """
     Centers the value in a field of a given width.
     """
-    return value.center(width)
-do_center = stringfilter(do_center)
+    return unicode(value).center(width)
 
 
-def do_first():
+def do_first(seq):
     """
     Return the frist item of a sequence.
     """
-    def wrapped(env, context, seq):
-        try:
-            return iter(seq).next()
-        except StopIteration:
-            return env.undefined_singleton
-    return wrapped
+    try:
+        return iter(seq).next()
+    except StopIteration:
+        return env.undefined_singleton
 
 
-def do_last():
+def do_last(seq):
     """
     Return the last item of a sequence.
     """
-    def wrapped(env, context, seq):
-        try:
-            return iter(reversed(seq)).next()
-        except StopIteration:
-            return env.undefined_singleton
-    return wrapped
+    try:
+        return iter(reversed(seq)).next()
+    except StopIteration:
+        return env.undefined_singleton
 
 
 def do_random():
     """
     Return a random item from the sequence.
     """
-    def wrapped(env, context, seq):
-        try:
-            return choice(seq)
-        except IndexError:
-            return env.undefined_singleton
-    return wrapped
+    try:
+        return choice(seq)
+    except IndexError:
+        return env.undefined_singleton
 
 
-def do_urlencode():
+def do_urlencode(value):
     """
     urlencode a string or directory.
 
@@ -361,20 +311,20 @@ def do_urlencode():
         {{ 'Hello World' }}
             -> Hello%20World
     """
-    def wrapped(env, context, value):
-        if isinstance(value, dict):
-            tmp = {}
-            for key, value in value.iteritems():
-                key = env.to_unicode(key).encode(env.charset)
-                value = env.to_unicode(value).encode(env.charset)
-                tmp[key] = value
-            return urlencode(tmp)
-        else:
-            return quote(env.to_unicode(value).encode(env.charset))
-    return wrapped
+    if isinstance(value, dict):
+        tmp = {}
+        for key, value in value.iteritems():
+            # XXX env.charset?
+            key = unicode(key).encode(env.charset)
+            value = unicode(value).encode(env.charset)
+            tmp[key] = value
+        return urlencode(tmp)
+    else:
+        # XXX: env.charset?
+        return quote(unicode(value).encode(env.charset))
 
 
-def do_jsonencode():
+def do_jsonencode(value):
     """
     JSON dump a variable. just works if simplejson is installed.
 
@@ -388,7 +338,7 @@ def do_jsonencode():
         simplejson
     except NameError:
         import simplejson
-    return lambda e, c, v: simplejson.dumps(v)
+    return simplejson.dumps(value)
 
 
 def do_filesizeformat():
@@ -413,16 +363,14 @@ def do_filesizeformat():
     return wrapped
 
 
-def do_pprint(verbose=False):
+def do_pprint(value, verbose=False):
     """
     Pretty print a variable. Useful for debugging.
 
     With Jinja 1.2 onwards you can pass it a parameter.  If this parameter
     is truthy the output will be more verbose (this requires `pretty`)
     """
-    def wrapped(env, context, value):
-        return pformat(value, verbose=verbose)
-    return wrapped
+    return pformat(value, verbose=verbose)
 
 
 def do_urlize(value, trim_url_limit=None, nofollow=False):
@@ -438,8 +386,7 @@ def do_urlize(value, trim_url_limit=None, nofollow=False):
         {{ mytext|urlize(40, True) }}
             links are shortened to 40 chars and defined with rel="nofollow"
     """
-    return urlize(value, trim_url_limit, nofollow)
-do_urlize = stringfilter(do_urlize)
+    return urlize(unicode(value), trim_url_limit, nofollow)
 
 
 def do_indent(s, width=4, indentfirst=False):
@@ -460,7 +407,6 @@ def do_indent(s, width=4, indentfirst=False):
     if indentfirst:
         return u'\n'.join([indention + line for line in s.splitlines()])
     return s.replace('\n', '\n' + indention)
-do_indent = stringfilter(do_indent)
 
 
 def do_truncate(s, length=255, killwords=False, end='...'):
@@ -493,7 +439,6 @@ def do_truncate(s, length=255, killwords=False, end='...'):
         result.append(word)
     result.append(end)
     return u' '.join(result)
-do_truncate = stringfilter(do_truncate)
 
 
 def do_wordwrap(s, pos=79, hard=False):
@@ -514,7 +459,6 @@ def do_wordwrap(s, pos=79, hard=False):
                   (line, u' \n'[(len(line)-line.rfind('\n') - 1 +
                                 len(word.split('\n', 1)[0]) >= pos)],
                    word), s.split(' '))
-do_wordwrap = stringfilter(do_wordwrap)
 
 
 def do_wordcount(s):
@@ -522,7 +466,6 @@ def do_wordcount(s):
     Count the words in that string.
     """
     return len([x for x in s.split() if x])
-do_wordcount = stringfilter(do_wordcount)
 
 
 def do_textile(s):
@@ -535,7 +478,6 @@ def do_textile(s):
     """
     from textile import textile
     return textile(s.encode('utf-8')).decode('utf-8')
-do_textile = stringfilter(do_textile)
 
 
 def do_markdown(s):
@@ -548,7 +490,6 @@ def do_markdown(s):
     """
     from markdown import markdown
     return markdown(s.encode('utf-8')).decode('utf-8')
-do_markdown = stringfilter(do_markdown)
 
 
 def do_rst(s):
@@ -563,8 +504,6 @@ def do_rst(s):
     from docutils.core import publish_parts
     parts = publish_parts(source=s, writer_name='html4css1')
     return parts['fragment']
-do_rst = stringfilter(do_rst)
-
 
 def do_int(default=0):
     """
@@ -647,7 +586,6 @@ def do_trim(value):
     Strip leading and trailing whitespace.
     """
     return value.strip()
-do_trim = stringfilter(do_trim)
 
 
 def do_capture(name='captured', clean=False):
@@ -690,7 +628,6 @@ def do_striptags(value):
     *new in Jinja 1.1*
     """
     return ' '.join(_striptags_re.sub('', value).split())
-do_striptags = stringfilter(do_striptags)
 
 
 def do_slice(slices, fill_with=None):
