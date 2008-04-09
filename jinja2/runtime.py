@@ -149,7 +149,7 @@ class StaticLoopContext(LoopContextBase):
 
 class Macro(object):
     """
-    Wraps a macor
+    Wraps a macro
     """
 
     def __init__(self, func, name, arguments, defaults, catch_all):
@@ -176,7 +176,7 @@ class Macro(object):
                         value = self.defaults[idx - arg_count]
                     except IndexError:
                         value = Undefined(name)
-            arguments['l_' + name] = arg
+            arguments['l_' + name] = value
         if self.catch_all:
             arguments['l_arguments'] = kwargs
         return u''.join(self.func(**arguments))
