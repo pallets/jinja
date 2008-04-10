@@ -257,11 +257,17 @@ class CodeGenerator(NodeVisitor):
         assert frame is None, 'no root frame allowed'
         self.writeline('from jinja2.runtime import *')
         self.writeline('filename = %r' % self.filename)
-        self.writeline('template_context = TemplateContext(global_context, '
-                       'filename)')
+
+        # find all blocks
+        for block in node.find_all(nodes.Block):
+            if block.name in self.blocks:
+                raise TemplateAssertionError('block %r defined twice' %
+                                             block.name, block.lineno,
+                                             self.filename)
+            self.blocks[block.name] = block
 
         # generate the root render function.
-        self.writeline('def root(context=template_context):', extra=1)
+        self.writeline('def root(context):', extra=1)
         self.indent()
         self.writeline('parent_root = None')
         self.outdent()
@@ -285,17 +291,13 @@ class CodeGenerator(NodeVisitor):
             block_frame = Frame()
             block_frame.inspect(block.body)
             block_frame.block = name
+            print block_frame.identifiers.__dict__
             self.writeline('def block_%s(context):' % name, block, 1)
             self.pull_locals(block_frame)
             self.blockvisit(block.body, block_frame, True)
 
     def visit_Block(self, node, frame):
         """Call a block and register it for the template."""
-        if node.name in self.blocks:
-            raise TemplateAssertionError("the block '%s' was already defined" %
-                                         node.name, node.lineno,
-                                         self.filename)
-        self.blocks[node.name] = node
         self.writeline('for event in block_%s(context):' % node.name)
         self.indent()
         self.writeline('yield event')
@@ -429,6 +431,11 @@ class CodeGenerator(NodeVisitor):
     def visit_Output(self, node, frame):
         self.newline(node)
 
+        if self.environment.finalize is unicode:
+            finalizer = 'unicode'
+        else:
+            finalizer = 'context.finalize'
+
         # try to evaluate as many chunks as possible into a static
         # string at compile time.
         body = []
@@ -450,7 +457,7 @@ class CodeGenerator(NodeVisitor):
                     self.writeline('yield %s' % repr(u''.join(item)))
                 else:
                     self.newline(item)
-                    self.write('yield unicode(')
+                    self.write('yield %s(' % finalizer)
                     self.visit(item, frame)
                     self.write(')')
 
@@ -469,7 +476,11 @@ class CodeGenerator(NodeVisitor):
             for idx, argument in enumerate(arguments):
                 if idx:
                     self.write(', ')
+                if finalizer != 'unicode':
+                    self.write('(')
                 self.visit(argument, frame)
+                if finalizer != 'unicode':
+                    self.write(')')
             self.write(idx == 0 and ',)' or ')')
 
     def visit_Assign(self, node, frame):
@@ -513,6 +524,24 @@ class CodeGenerator(NodeVisitor):
                 self.write(', ')
             self.visit(item, frame)
         self.write(idx == 0 and ',)' or ')')
+
+    def visit_List(self, node, frame):
+        self.write('[')
+        for idx, item in enumerate(node.items):
+            if idx:
+                self.write(', ')
+            self.visit(item, frame)
+        self.write(']')
+
+    def visit_Dict(self, node, frame):
+        self.write('{')
+        for idx, item in enumerate(node.items):
+            if idx:
+                self.write(', ')
+            self.visit(item.key, frame)
+            self.write(': ')
+            self.visit(item.value, frame)
+        self.write('}')
 
     def binop(operator):
         def visitor(self, node, frame):

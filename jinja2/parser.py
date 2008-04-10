@@ -55,7 +55,6 @@ class Parser(object):
         if token_type in _statement_keywords:
             return getattr(self, 'parse_' + token_type)()
         elif token_type is 'call':
-            self.stream.next()
             return self.parse_call_block()
         lineno = self.stream.current
         expr = self.parse_tuple()
@@ -179,7 +178,10 @@ class Parser(object):
 
     def parse_call_block(self):
         node = nodes.CallBlock(lineno=self.stream.expect('call').lineno)
-        node.call = self.parse_call()
+        node.call = self.parse_expression()
+        if not isinstance(node.call, nodes.Call):
+            raise TemplateSyntaxError('expected call', node.lineno,
+                                      self.filename)
         node.body = self.parse_statements(('endcall',), drop_needle=True)
         return node
 

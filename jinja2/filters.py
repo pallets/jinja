@@ -15,15 +15,14 @@ try:
 except ImportError:
     itemgetter = lambda a: lambda b: b[a]
 from urllib import urlencode, quote
-from jinja.utils import escape
+from jinja2.utils import escape
 
 
 _striptags_re = re.compile(r'(<!--.*?-->|<[^>]*>)')
 
 
 def contextfilter(f):
-    """
-    Decorator for marking context dependent filters. The current context
+    """Decorator for marking context dependent filters. The current context
     argument will be passed as first argument.
     """
     f.contextfilter = True
@@ -60,17 +59,13 @@ def do_replace(s, old, new, count=None):
 
 
 def do_upper(s):
-    """
-    Convert a value to uppercase.
-    """
-    return s.upper()
+    """Convert a value to uppercase."""
+    return unicode(s).upper()
 
 
 def do_lower(s):
-    """
-    Convert a value to lowercase.
-    """
-    return s.lower()
+    """Convert a value to lowercase."""
+    return unicode(s).lower()
 
 
 def do_escape(s, attribute=False):
@@ -82,11 +77,6 @@ def do_escape(s, attribute=False):
 
     This method will have no effect it the value is already escaped.
     """
-    # XXX: Does this still exists?
-    #if isinstance(s, TemplateData):
-    #    return s
-    if hasattr(s, '__html__'):
-        return s.__html__()
     return escape(unicode(s), attribute)
 
 

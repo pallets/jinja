@@ -8,3 +8,16 @@
     :copyright: 2008 by Armin Ronacher.
     :license: BSD, see LICENSE for more details.
 """
+
+
+def escape(obj, attribute=False):
+    """HTML escape an object."""
+    if hasattr(obj, '__html__'):
+        return obj.__html__()
+    s = unicode(obj) \
+        .replace('&', '&amp;') \
+        .replace('>', '&gt;') \
+        .replace('<', '&lt;')
+    if attribute:
+        s = s.replace('"', '&quot;')
+    return s

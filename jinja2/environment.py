@@ -10,13 +10,11 @@
 """
 from jinja2.lexer import Lexer
 from jinja2.parser import Parser
-from jinja2.runtime import Undefined
 from jinja2.defaults import DEFAULT_FILTERS, DEFAULT_TESTS, DEFAULT_NAMESPACE
 
 
 class Environment(object):
-    """
-    The Jinja environment.
+    """The Jinja environment.
 
     The core component of Jinja is the `Environment`. It contains
     important shared variables like configuration, filters, tests,
@@ -32,8 +30,7 @@ class Environment(object):
                  comment_end_string='#}',
                  trim_blocks=False,
                  template_charset='utf-8'):
-        """
-        Here the possible initialization parameters:
+        """Here the possible initialization parameters:
 
         ========================= ============================================
         `block_start_string`      the string marking the begin of a block.
@@ -68,26 +65,25 @@ class Environment(object):
         self.tests = DEFAULT_TESTS.copy()
         self.globals = DEFAULT_NAMESPACE.copy()
 
-        # the factory that creates the undefined object
-        self.undefined_factory = Undefined
+        # if no finalize function/method exists we default to unicode.  The
+        # compiler check if the finalize attribute *is* unicode, if yes no
+        # finalizaion is written where it can be avoided.
+        if not hasattr(self, 'finalize'):
+            self.finalize = unicode
 
         # create lexer
         self.lexer = Lexer(self)
 
     def parse(self, source, filename=None):
-        """
-        Parse the sourcecode and return the abstract syntax tree. This tree
-        of nodes is used by the `translators`_ to convert the template into
+        """Parse the sourcecode and return the abstract syntax tree. This tree
+        of nodes is used by the compiler to convert the template into
         executable source- or bytecode.
-
-        .. _translators: translators.txt
         """
         parser = Parser(self, source, filename)
         return parser.parse()
 
     def lex(self, source, filename=None):
-        """
-        Lex the given sourcecode and return a generator that yields tokens.
+        """Lex the given sourcecode and return a generator that yields tokens.
         The stream returned is not usable for Jinja but can be used if
         Jinja templates should be processed by other tools (for example
         syntax highlighting etc)

@@ -33,9 +33,17 @@ def subscribe(obj, argument):
             return Undefined(obj, argument)
 
 
+class TemplateData(unicode):
+    """Marks data as "coming from the template".  This is used to let the
+    system know that this data is already processed if a finalization is
+    used."""
+
+    def __html__(self):
+        return self
+
+
 class TemplateContext(dict):
-    """
-    Holds the variables of the local template or of the global one.  It's
+    """Holds the variables of the local template or of the global one.  It's
     not save to use this class outside of the compiled code.  For example
     update and other methods will not work as they seem (they don't update
     the exported variables for example).
@@ -177,7 +185,7 @@ class Macro(object):
             arguments['l_' + name] = value
         if self.catch_all:
             arguments['l_arguments'] = kwargs
-        return u''.join(self.func(**arguments))
+        return TemplateData(u''.join(self.func(**arguments)))
 
 
 class Undefined(object):

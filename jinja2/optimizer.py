@@ -26,6 +26,7 @@ from jinja2.runtime import subscribe, LoopContext
 
 class ContextStack(object):
     """Simple compile time context implementation."""
+    undefined = object()
 
     def __init__(self, initial=None):
         self.stack = [{}]
@@ -44,10 +45,24 @@ class ContextStack(object):
         except KeyError:
             return default
 
+    def undef(self, name):
+        if name in self:
+            self[name] = self.undefined
+
+    def __contains__(self, key):
+        try:
+            self[key]
+        except KeyError:
+            return False
+        return True
+
     def __getitem__(self, key):
         for level in reversed(self.stack):
             if key in level:
-                return level[key]
+                rv = level[key]
+                if rv is self.undefined:
+                    raise KeyError(key)
+                return rv
         raise KeyError(key)
 
     def __setitem__(self, key, value):
@@ -66,6 +81,13 @@ class Optimizer(NodeTransformer):
     def visit_Block(self, node, context):
         return self.generic_visit(node, context.blank())
 
+    def visit_Macro(self, node, context):
+        context.push()
+        try:
+            return self.generic_visit(node, context)
+        finally:
+            context.pop()
+
     def visit_For(self, node, context):
         """Loop unrolling for iterable constant values."""
         try:
@@ -73,6 +95,9 @@ class Optimizer(NodeTransformer):
             # we only unroll them if they have a length and are iterable
             iter(iterable)
             len(iterable)
+            # we also don't want unrolling if macros are defined in it
+            if node.find(nodes.Macro) is not None:
+                raise TypeError()
         except (nodes.Impossible, TypeError):
             return self.generic_visit(node, context)
 
@@ -124,6 +149,9 @@ class Optimizer(NodeTransformer):
 
     def visit_Name(self, node, context):
         if node.ctx != 'load':
+            # something overwrote the variable, we can no longer use
+            # the constant from the context
+            context.undef(node.name)
             return node
         try:
             return nodes.Const.from_untrusted(context[node.name],
