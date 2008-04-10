@@ -160,6 +160,11 @@ class FrameIdentifierVisitor(NodeVisitor):
         """Macros set local."""
         self.identifiers.declared_locally.add(node.name)
 
+    def visit_Assign(self, node):
+        """Visit assignments in the correct order."""
+        self.visit(node.node)
+        self.visit(node.target)
+
     # stop traversing at instructions that have their own scope.
     visit_Block = visit_CallBlock = visit_FilterBlock = \
         visit_For = lambda s, n: None
