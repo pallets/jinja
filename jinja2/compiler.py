@@ -296,7 +296,6 @@ class CodeGenerator(NodeVisitor):
             block_frame = Frame()
             block_frame.inspect(block.body)
             block_frame.block = name
-            print block_frame.identifiers.__dict__
             self.writeline('def block_%s(context):' % name, block, 1)
             self.pull_locals(block_frame)
             self.blockvisit(block.body, block_frame, True)
