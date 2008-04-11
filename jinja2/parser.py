@@ -12,8 +12,6 @@ from jinja2 import nodes
 from jinja2.exceptions import TemplateSyntaxError
 
 
-__all__ = ['Parser']
-
 _statement_keywords = frozenset(['for', 'if', 'block', 'extends', 'print',
                                  'macro', 'include'])
 _compare_operators = frozenset(['eq', 'ne', 'lt', 'lteq', 'gt', 'gteq', 'in'])

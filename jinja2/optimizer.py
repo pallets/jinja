@@ -24,6 +24,13 @@ from jinja2.visitor import NodeVisitor, NodeTransformer
 from jinja2.runtime import subscribe, LoopContext
 
 
+def optimize(node, environment, context_hint=None):
+    """The context hint can be used to perform an static optimization
+    based on the context given."""
+    optimizer = Optimizer(environment)
+    return optimizer.visit(node, ContextStack(context_hint))
+
+
 class ContextStack(object):
     """Simple compile time context implementation."""
     undefined = object()
@@ -206,10 +213,3 @@ class Optimizer(NodeTransformer):
     visit_Not = visit_Compare = visit_Subscript = visit_Call = \
     visit_Filter = visit_Test = fold
     del fold
-
-
-def optimize(node, environment, context_hint=None):
-    """The context hint can be used to perform an static optimization
-    based on the context given."""
-    optimizer = Optimizer(environment)
-    return optimizer.visit(node, ContextStack(context_hint))

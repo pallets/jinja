@@ -18,9 +18,12 @@ __all__ = ['extends', 'subscribe', 'LoopContext', 'StaticLoopContext',
            'TemplateContext', 'Macro', 'Undefined']
 
 
-def extends(template, context):
+def extends(template_name, context, environment):
     """This loads a template (and evaluates it) and replaces the blocks."""
-    context.stream_muted = True
+    template = environment.get_template(template_name, context.filename)
+    for name, block in template.blocks.iteritems():
+        context.blocks.setdefault(name, []).append(block)
+    return template.root_render_func
 
 
 def subscribe(obj, argument):

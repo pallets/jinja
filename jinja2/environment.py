@@ -10,6 +10,8 @@
 """
 from jinja2.lexer import Lexer
 from jinja2.parser import Parser
+from jinja2.optimizer import optimize
+from jinja2.compiler import generate
 from jinja2.defaults import DEFAULT_FILTERS, DEFAULT_TESTS, DEFAULT_NAMESPACE
 
 
@@ -29,7 +31,8 @@ class Environment(object):
                  comment_start_string='{#',
                  comment_end_string='#}',
                  trim_blocks=False,
-                 template_charset='utf-8'):
+                 template_charset='utf-8',
+                 loader=None):
         """Here the possible initialization parameters:
 
         ========================= ============================================
@@ -47,6 +50,7 @@ class Environment(object):
                                   after a block is removed (block, not
                                   variable tag!). Defaults to ``False``.
         `template_charset`        the charset of the templates.
+        `loader`                  the loader which should be used.
         ========================= ============================================
         """
 
@@ -71,6 +75,9 @@ class Environment(object):
         if not hasattr(self, 'finalize'):
             self.finalize = unicode
 
+        # set the loader provided
+        self.loader = loader
+
         # create lexer
         self.lexer = Lexer(self)
 
@@ -91,3 +98,47 @@ class Environment(object):
         The tuples are returned in the form ``(lineno, token, value)``.
         """
         return self.lexer.tokeniter(source, filename)
+
+    def compile(self, source, filename=None, raw=False):
+        """Compile a node or source."""
+        if isinstance(source, basestring):
+            source = self.parse(source, filename)
+        node = optimize(source, self)
+        source = generate(node, self)
+        if raw:
+            return source
+        if isinstance(filename, unicode):
+            filename = filename.encode('utf-8')
+        return compile(source, filename, 'exec')
+
+    def join_path(self, template, parent):
+        """Join a template with the parent.  By default all the lookups are
+        relative to the loader root, but if the paths should be relative this
+        function can be used to calculate the real filename."""
+        return template
+
+    def get_template(self, name, parent=None):
+        """Load a template."""
+        if self.loader is None:
+            raise TypeError('no loader for this environment specified')
+        if parent is not None:
+            name = self.join_path(name, parent)
+        return self.loader.load(self, name)
+
+
+class Template(object):
+    """Represents a template."""
+
+    def __init__(self, environment, code):
+        namespace = {'environment': environment}
+        exec code in namespace
+        self.environment = environment
+        self.root_render_func = namespace['root']
+        self.blocks = namespace['blocks']
+
+    def render(self, *args, **kwargs):
+        return u''.join(self.stream(*args, **kwargs))
+
+    def stream(self, *args, **kwargs):
+        context = dict(*args, **kwargs)
+        return self.root_render_func(context)

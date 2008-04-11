@@ -21,9 +21,6 @@ from jinja2.exceptions import TemplateSyntaxError
 from weakref import WeakValueDictionary
 
 
-__all__ = ['Lexer', 'Failure', 'keywords']
-
-
 # cache for the lexers. Exists in order to be able to have multiple
 # environments with the same lexer
 _lexer_cache = WeakValueDictionary()

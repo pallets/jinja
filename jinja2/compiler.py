@@ -30,6 +30,7 @@ operators = {
 
 
 def generate(node, environment, filename, stream=None):
+    """Generate the python source for a node tree."""
     is_child = node.find(nodes.Extends) is not None
     generator = CodeGenerator(environment, is_child, filename, stream)
     generator.visit(node)
@@ -341,14 +342,14 @@ class CodeGenerator(NodeVisitor):
 
     def visit_Block(self, node, frame):
         """Call a block and register it for the template."""
-        # if we know that we are a child template, there is no need to
-        # check if we are one
-        if self.has_known_extends and frame.toplevel:
-            return
         if frame.toplevel:
+            # if we know that we are a child template, there is no need to
+            # check if we are one
+            if self.has_known_extends:
+                return
             self.writeline('if parent_root is None:')
             self.indent()
-        self.writeline('for event in context.blocks[-1][%r](context):' % node.name)
+        self.writeline('for event in context.blocks[0][%r](context):' % node.name)
         self.indent()
         self.writeline('yield event')
         self.outdent(1 + frame.toplevel)
@@ -383,7 +384,7 @@ class CodeGenerator(NodeVisitor):
 
         self.writeline('parent_root = extends(', node, 1)
         self.visit(node.template, frame)
-        self.write(', context)')
+        self.write(', context, environment)')
 
         # if this extends statement was in the root level we can take
         # advantage of that information and simplify the generated code
