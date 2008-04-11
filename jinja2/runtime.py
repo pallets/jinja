@@ -14,16 +14,8 @@ except ImportError:
     defaultdict = None
 
 
-__all__ = ['extends', 'subscribe', 'LoopContext', 'StaticLoopContext',
+__all__ = ['subscribe', 'LoopContext', 'StaticLoopContext',
            'TemplateContext', 'Macro', 'Undefined']
-
-
-def extends(template_name, context, environment):
-    """This loads a template (and evaluates it) and replaces the blocks."""
-    template = environment.get_template(template_name, context.filename)
-    for name, block in template.blocks.iteritems():
-        context.blocks.setdefault(name, []).append(block)
-    return template.root_render_func
 
 
 def subscribe(obj, argument):
@@ -58,7 +50,9 @@ class TemplateContext(dict):
         self.exported = set()
         self.filename = filename
         self.blocks = dict((k, [v]) for k, v in blocks.iteritems())
-        self.stream_muted = False
+        if isinstance(globals, TemplateContext):
+            for name, parent_blocks in globals.blocks.iteritems():
+                self.blocks.setdefault(name, []).extend(parent_blocks)
 
     def __setitem__(self, key, value):
         """If we set items to the dict we track the variables set so

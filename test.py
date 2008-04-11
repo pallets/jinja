@@ -1,27 +1,21 @@
 from jinja2 import Environment
+from jinja2.loaders import DictLoader
 
-env = Environment()
-tmpl = env.from_string("""<!doctype html>
-<html>
-  <head>
-    <title>{{ page_title|e }}</title>
-  </head>
-  <body>
-    <ul class="navigation">
-    {%- for href, caption in [
-        ('index.html', 'Index'),
-        ('projects.html', 'Projects'),
-        ('about.html', 'About')
-    ] %}
-      <li><a href="{{ href|e }}">{{ caption|e }}</a></li>
-    {%- endfor %}
-    </ul>
-    <div class="body">
-      {{ body }}
-    </div>
-  </body>
-</html>\
-""")
+env = Environment(loader=DictLoader({
+'child.html': u'''\
+{% extends master_layout or 'master.html' %}
+{% macro get_the_answer() %}42{% endmacro %}
+{% block body %}
+    {{ get_the_answer() }}
+{% endblock %}
+''',
+'master.html': u'''\
+<!doctype html>
+<title>Foo</title>
+{% block body %}{% endblock %}
+'''
+}))
 
 
-print tmpl.render(page_title='<foo>', body='<p>Hello World</p>')
+tmpl = env.get_template("child.html")
+print tmpl.render()

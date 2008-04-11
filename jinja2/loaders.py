@@ -46,3 +46,14 @@ class FileSystemLoader(BaseLoader):
             return f.read().decode(self.encoding)
         finally:
             f.close()
+
+
+class DictLoader(BaseLoader):
+
+    def __init__(self, mapping):
+        self.mapping = mapping
+
+    def get_source(self, environment, template):
+        if template in self.mapping:
+            return self.mapping[template], template
+        raise TemplateNotFound(template)

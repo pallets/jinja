@@ -340,17 +340,20 @@ class CodeGenerator(NodeVisitor):
 
     def visit_Block(self, node, frame):
         """Call a block and register it for the template."""
+        level = 1
         if frame.toplevel:
             # if we know that we are a child template, there is no need to
             # check if we are one
             if self.has_known_extends:
                 return
-            self.writeline('if parent_root is None:')
-            self.indent()
-        self.writeline('for event in context.blocks[0][%r](context):' % node.name)
+            if self.extends_so_far > 0:
+                self.writeline('if parent_root is None:')
+                self.indent()
+                level += 1
+        self.writeline('for event in context.blocks[%r][-1](context):' % node.name)
         self.indent()
         self.writeline('yield event')
-        self.outdent(1 + frame.toplevel)
+        self.outdent(level)
 
     def visit_Extends(self, node, frame):
         """Calls the extender."""
@@ -380,9 +383,9 @@ class CodeGenerator(NodeVisitor):
                 raise CompilerExit()
             self.outdent()
 
-        self.writeline('parent_root = extends(', node, 1)
+        self.writeline('parent_root = environment.get_template(', node, 1)
         self.visit(node.template, frame)
-        self.write(', context, environment)')
+        self.write(', %r).root_render_func' % self.filename)
 
         # if this extends statement was in the root level we can take
         # advantage of that information and simplify the generated code
