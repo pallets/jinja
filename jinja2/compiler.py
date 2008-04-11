@@ -204,6 +204,7 @@ class CodeGenerator(NodeVisitor):
         self.indentation = 0
         self.new_lines = 0
         self.last_identifier = 0
+        self.extends_so_far = 0
         self.has_known_extends = False
         self._last_line = 0
         self._first_write = True
@@ -359,22 +360,27 @@ class CodeGenerator(NodeVisitor):
                                          'top-level scope', node.lineno,
                                          self.filename)
 
-        # if we have a known extends we just add a template runtime
-        # error into the generated code.  We could catch that at compile
-        # time too, but i welcome it not to confuse users by throwing the
-        # same error at different times just "because we can".
-        if not self.has_known_extends:
-            self.writeline('if parent_root is not None:')
-            self.indent()
-        self.writeline('raise TemplateRuntimeError(%r)' %
-                       'extended multiple times')
+        # if the number of extends statements in general is zero so
+        # far, we don't have to add a check if something extended
+        # the template before this one.
+        if self.extends_so_far > 0:
 
-        # if we have a known extends already we don't need that code here
-        # as we know that the template execution will end here.
-        if self.has_known_extends:
-            raise CompilerExit()
+            # if we have a known extends we just add a template runtime
+            # error into the generated code.  We could catch that at compile
+            # time too, but i welcome it not to confuse users by throwing the
+            # same error at different times just "because we can".
+            if not self.has_known_extends:
+                self.writeline('if parent_root is not None:')
+                self.indent()
+            self.writeline('raise TemplateRuntimeError(%r)' %
+                           'extended multiple times')
 
-        self.outdent()
+            # if we have a known extends already we don't need that code here
+            # as we know that the template execution will end here.
+            if self.has_known_extends:
+                raise CompilerExit()
+            self.outdent()
+
         self.writeline('parent_root = extends(', node, 1)
         self.visit(node.template, frame)
         self.write(', context)')
@@ -383,6 +389,9 @@ class CodeGenerator(NodeVisitor):
         # advantage of that information and simplify the generated code
         # in the top level from this point onwards
         self.has_known_extends = True
+
+        # and now we have one more
+        self.extends_so_far += 1
 
     def visit_For(self, node, frame):
         loop_frame = frame.inner()
@@ -506,9 +515,14 @@ class CodeGenerator(NodeVisitor):
         else:
             finalizer = 'context.finalize'
 
-        if frame.toplevel:
+        # if we are in the toplevel scope and there was already an extends
+        # statement we have to add a check that disables our yield(s) here
+        # so that they don't appear in the output.
+        outdent_later = False
+        if frame.toplevel and self.extends_so_far != 0:
             self.writeline('if parent_root is None:')
             self.indent()
+            outdent_later = True
 
         # try to evaluate as many chunks as possible into a static
         # string at compile time.
@@ -557,7 +571,7 @@ class CodeGenerator(NodeVisitor):
                     self.write(')')
             self.write(idx == 0 and ',)' or ')')
 
-        if frame.toplevel:
+        if outdent_later:
             self.outdent()
 
     def visit_Assign(self, node, frame):
