@@ -4,16 +4,17 @@ from jinja2.loaders import DictLoader
 env = Environment(loader=DictLoader({
 'child.html': u'''\
 {% extends master_layout or 'master.html' %}
-{% include 'helpers.html' %}
+{% include helpers = 'helpers.html' %}
 {% macro get_the_answer() %}42{% endmacro %}
+{% title = 'Hello World' %}
 {% block body %}
     {{ get_the_answer() }}
-    {{ conspirate() }}
+    {{ helpers.conspirate() }}
 {% endblock %}
 ''',
 'master.html': u'''\
 <!doctype html>
-<title>Foo</title>
+<title>{{ title }}</title>
 {% block body %}{% endblock %}
 ''',
 'helpers.html': u'''\

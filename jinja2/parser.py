@@ -161,12 +161,15 @@ class Parser(object):
         expr = self.parse_expression()
         if self.stream.current.type is 'assign':
             self.stream.next()
-            node.target = self.stream.expect('name')
-            # make sure that assignments to that name are allowed
-            if not nodes.Name(node.target, 'store').can_assign():
+            if not isinstance(expr, nodes.Name):
+                raise TemplateSyntaxError('must assign imported template to '
+                                          'variable or current scope',
+                                          expr.lineno, self.filename)
+            if not expr.can_assign():
                 raise TemplateSyntaxError('can\'t assign imported template '
-                                          'to %r' % node.target, expr.lineno,
+                                          'to %r' % expr, expr.lineno,
                                           self.filename)
+            node.target = expr.name
             node.template = self.parse_expression()
         else:
             node.target = None

@@ -96,16 +96,24 @@ class IncludedTemplate(object):
     """Represents an included template."""
 
     def __init__(self, environment, context, template):
-        root = environment.get_template(template).root_render_func
-        gen = root(context, standalone=True)
-        self._context = gen.next().get_exported()
+        template = environment.get_template(template)
+        gen = template.root_render_func(context, standalone=True)
+        context = gen.next()
+        self._filename = template.name
         self._rendered_body = u''.join(gen)
+        self._context = context.get_exported()
 
     def __getitem__(self, name):
         return self._context[name]
 
     def __unicode__(self):
         return self._context
+
+    def __repr__(self):
+        return '<%s %r>' % (
+            self.__class__.__name__,
+            self._filename
+        )
 
 
 class LoopContextBase(object):
@@ -230,7 +238,8 @@ class Undefined(object):
     def fail(self, *args, **kwargs):
         raise TypeError(self._undefined_hint)
     __getattr__ = __getitem__ = __add__ = __mul__ = __div__ = \
-    __realdiv__ = __floordiv__ = __mod__ = __pos__ = __neg__ = fail
+    __realdiv__ = __floordiv__ = __mod__ = __pos__ = __neg__ = \
+    __call__ = fail
     del fail
 
     def __unicode__(self):
