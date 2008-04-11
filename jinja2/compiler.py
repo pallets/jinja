@@ -101,10 +101,16 @@ class Identifiers(object):
 
 
 class Frame(object):
+    """Holds compile time information for us."""
 
     def __init__(self, parent=None):
         self.identifiers = Identifiers()
+        # a toplevel frame is the root + soft frames such as if conditions.
         self.toplevel = False
+        # the root frame is basically just the outermost frame, so no if
+        # conditions.  This information is used to optimize inheritance
+        # situations.
+        self.rootlevel = False
         self.parent = parent
         self.block = parent and parent.block or None
         if parent is not None:
@@ -132,6 +138,15 @@ class Frame(object):
     def inner(self):
         """Return an inner frame."""
         return Frame(self)
+
+    def soft(self):
+        """Return a soft frame.  A soft frame may not be modified as
+        standalone thing as it shares the resources with the frame it
+        was created of, but it's not a rootlevel frame any longer.
+        """
+        rv = copy(self)
+        rv.rootlevel = False
+        return rv
 
 
 class FrameIdentifierVisitor(NodeVisitor):
@@ -170,6 +185,12 @@ class FrameIdentifierVisitor(NodeVisitor):
         visit_For = lambda s, n: None
 
 
+class CompilerExit(Exception):
+    """Raised if the compiler encountered a situation where it just
+    doesn't make sense to further process the code.  Any block that
+    raises such an exception is not further processed."""
+
+
 class CodeGenerator(NodeVisitor):
 
     def __init__(self, environment, is_child, filename, stream=None):
@@ -183,6 +204,7 @@ class CodeGenerator(NodeVisitor):
         self.indentation = 0
         self.new_lines = 0
         self.last_identifier = 0
+        self.has_known_extends = False
         self._last_line = 0
         self._first_write = True
 
@@ -200,8 +222,11 @@ class CodeGenerator(NodeVisitor):
         self.indent()
         if force_generator:
             self.writeline('if 0: yield None')
-        for node in nodes:
-            self.visit(node, frame)
+        try:
+            for node in nodes:
+                self.visit(node, frame)
+        except CompilerExit:
+            pass
         self.outdent()
 
     def write(self, x):
@@ -263,6 +288,10 @@ class CodeGenerator(NodeVisitor):
         self.writeline('from jinja2.runtime import *')
         self.writeline('filename = %r' % self.filename)
 
+        # do we have an extends tag at all?  If not, we can save some
+        # overhead by just not processing any inheritance code.
+        have_extends = node.find(nodes.Extends) is not None
+
         # find all blocks
         for block in node.find_all(nodes.Block):
             if block.name in self.blocks:
@@ -272,24 +301,30 @@ class CodeGenerator(NodeVisitor):
             self.blocks[block.name] = block
 
         # generate the root render function.
-        self.writeline('def root(context):', extra=1)
+        self.writeline('def root(globals):', extra=1)
         self.indent()
-        self.writeline('parent_root = None')
+        self.writeline('context = TemplateContext(globals, filename, blocks)')
+        if have_extends:
+            self.writeline('parent_root = None')
         self.outdent()
+
+        # process the root
         frame = Frame()
         frame.inspect(node.body)
-        frame.toplevel = True
+        frame.toplevel = frame.rootlevel = True
         self.pull_locals(frame)
         self.blockvisit(node.body, frame, True)
 
         # make sure that the parent root is called.
-        self.indent()
-        self.writeline('if parent_root is not None:')
-        self.indent()
-        self.writeline('for event in parent_root(context):')
-        self.indent()
-        self.writeline('yield event')
-        self.outdent(3)
+        if have_extends:
+            if not self.has_known_extends:
+                self.indent()
+                self.writeline('if parent_root is not None:')
+            self.indent()
+            self.writeline('for event in parent_root(context):')
+            self.indent()
+            self.writeline('yield event')
+            self.outdent(2 + self.has_known_extends)
 
         # at this point we now have the blocks collected and can visit them too.
         for name, block in self.blocks.iteritems():
@@ -300,12 +335,22 @@ class CodeGenerator(NodeVisitor):
             self.pull_locals(block_frame)
             self.blockvisit(block.body, block_frame, True)
 
+        self.writeline('blocks = {%s}' % ', '.join('%r: block_%s' % (x, x)
+                                                   for x in self.blocks), extra=1)
+
     def visit_Block(self, node, frame):
         """Call a block and register it for the template."""
+        # if we know that we are a child template, there is no need to
+        # check if we are one
+        if self.has_known_extends:
+            return
+        if frame.toplevel:
+            self.writeline('if parent_root is None:')
+            self.indent()
         self.writeline('for event in block_%s(context):' % node.name)
         self.indent()
         self.writeline('yield event')
-        self.outdent()
+        self.outdent(1 + frame.toplevel)
 
     def visit_Extends(self, node, frame):
         """Calls the extender."""
@@ -313,14 +358,31 @@ class CodeGenerator(NodeVisitor):
             raise TemplateAssertionError('cannot use extend from a non '
                                          'top-level scope', node.lineno,
                                          self.filename)
-        self.writeline('if parent_root is not None:')
-        self.indent()
+
+        # if we have a known extends we just add a template runtime
+        # error into the generated code.  We could catch that at compile
+        # time too, but i welcome it not to confuse users by throwing the
+        # same error at different times just "because we can".
+        if not self.has_known_extends:
+            self.writeline('if parent_root is not None:')
+            self.indent()
         self.writeline('raise TemplateRuntimeError(%r)' %
                        'extended multiple times')
+
+        # if we have a known extends already we don't need that code here
+        # as we know that the template execution will end here.
+        if self.has_known_extends:
+            raise CompilerExit()
+
         self.outdent()
         self.writeline('parent_root = extends(', node, 1)
         self.visit(node.template, frame)
-        self.write(', globals())')
+        self.write(', context)')
+
+        # if this extends statement was in the root level we can take
+        # advantage of that information and simplify the generated code
+        # in the top level from this point onwards
+        self.has_known_extends = True
 
     def visit_For(self, node, frame):
         loop_frame = frame.inner()
@@ -367,13 +429,14 @@ class CodeGenerator(NodeVisitor):
         self.writeline('del %s' % ', '.join(delete))
 
     def visit_If(self, node, frame):
+        if_frame = frame.soft()
         self.writeline('if ', node)
-        self.visit(node.test, frame)
+        self.visit(node.test, if_frame)
         self.write(':')
-        self.blockvisit(node.body, frame)
+        self.blockvisit(node.body, if_frame)
         if node.else_:
             self.writeline('else:')
-            self.blockvisit(node.else_, frame)
+            self.blockvisit(node.else_, if_frame)
 
     def visit_Macro(self, node, frame):
         macro_frame = frame.inner()
@@ -433,12 +496,19 @@ class CodeGenerator(NodeVisitor):
         self.visit(node, frame)
 
     def visit_Output(self, node, frame):
-        self.newline(node)
+        # if we have a known extends statement, we don't output anything
+        if self.has_known_extends:
+            return
 
+        self.newline(node)
         if self.environment.finalize is unicode:
             finalizer = 'unicode'
         else:
             finalizer = 'context.finalize'
+
+        if frame.toplevel:
+            self.writeline('if parent_root is None:')
+            self.indent()
 
         # try to evaluate as many chunks as possible into a static
         # string at compile time.
@@ -486,6 +556,9 @@ class CodeGenerator(NodeVisitor):
                 if finalizer != 'unicode':
                     self.write(')')
             self.write(idx == 0 and ',)' or ')')
+
+        if frame.toplevel:
+            self.outdent()
 
     def visit_Assign(self, node, frame):
         self.newline(node)

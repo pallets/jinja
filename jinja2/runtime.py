@@ -18,8 +18,9 @@ __all__ = ['extends', 'subscribe', 'LoopContext', 'StaticLoopContext',
            'TemplateContext', 'Macro', 'Undefined']
 
 
-def extends(template, namespace):
+def extends(template, context):
     """This loads a template (and evaluates it) and replaces the blocks."""
+    context.stream_muted = True
 
 
 def subscribe(obj, argument):
@@ -49,12 +50,12 @@ class TemplateContext(dict):
     the exported variables for example).
     """
 
-    def __init__(self, globals, filename):
+    def __init__(self, globals, filename, blocks):
         dict.__init__(self, globals)
         self.exported = set()
         self.filename = filename
-        self.filters = {}
-        self.tests = {}
+        self.blocks = dict((k, [v]) for k, v in blocks.iteritems())
+        self.stream_muted = False
 
     def __setitem__(self, key, value):
         """If we set items to the dict we track the variables set so
