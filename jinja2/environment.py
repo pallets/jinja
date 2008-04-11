@@ -145,4 +145,7 @@ class Template(object):
         return u''.join(self.stream(*args, **kwargs))
 
     def stream(self, *args, **kwargs):
-        return self.root_render_func(dict(*args, **kwargs))
+        gen = self.root_render_func(dict(*args, **kwargs))
+        # skip the first item which is a reference to the stream
+        gen.next()
+        return gen

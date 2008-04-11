@@ -14,8 +14,8 @@ except ImportError:
     defaultdict = None
 
 
-__all__ = ['subscribe', 'LoopContext', 'StaticLoopContext',
-           'TemplateContext', 'Macro', 'Undefined']
+__all__ = ['subscribe', 'LoopContext', 'StaticLoopContext', 'TemplateContext',
+           'Macro', 'IncludedTemplate', 'Undefined']
 
 
 def subscribe(obj, argument):
@@ -45,14 +45,19 @@ class TemplateContext(dict):
     the exported variables for example).
     """
 
-    def __init__(self, globals, filename, blocks):
+    def __init__(self, globals, filename, blocks, standalone):
         dict.__init__(self, globals)
         self.exported = set()
         self.filename = filename
         self.blocks = dict((k, [v]) for k, v in blocks.iteritems())
-        if isinstance(globals, TemplateContext):
-            for name, parent_blocks in globals.blocks.iteritems():
-                self.blocks.setdefault(name, []).extend(parent_blocks)
+
+        # if the template is in standalone mode we don't copy the blocks over.
+        # this is used for includes for example but otherwise, if the globals
+        # are a template context, this template is participating in a template
+        # inheritance chain and we have to copy the blocks over.
+        if not standalone and isinstance(globals, TemplateContext):
+                for name, parent_blocks in globals.blocks.iteritems():
+                    self.blocks.setdefault(name, []).extend(parent_blocks)
 
     def __setitem__(self, key, value):
         """If we set items to the dict we track the variables set so
@@ -79,6 +84,29 @@ class TemplateContext(dict):
         def __missing__(self, key):
             return Undefined(key)
 
+    def __repr__(self):
+        return '<%s %s of %r>' % (
+            self.__class__.__name__,
+            dict.__repr__(self),
+            self.filename
+        )
+
+
+class IncludedTemplate(object):
+    """Represents an included template."""
+
+    def __init__(self, environment, context, template):
+        root = environment.get_template(template).root_render_func
+        gen = root(context, standalone=True)
+        self._context = gen.next().get_exported()
+        self._rendered_body = u''.join(gen)
+
+    def __getitem__(self, name):
+        return self._context[name]
+
+    def __unicode__(self):
+        return self._context
+
 
 class LoopContextBase(object):
     """Helper for extended iteration."""
@@ -98,6 +126,7 @@ class LoopContextBase(object):
 
 
 class LoopContext(LoopContextBase):
+    """A loop context for dynamic iteration."""
 
     def __init__(self, iterable, parent=None, enforce_length=False):
         self._iterable = iterable

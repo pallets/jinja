@@ -161,12 +161,12 @@ class Parser(object):
         expr = self.parse_expression()
         if self.stream.current.type is 'assign':
             self.stream.next()
-            if not expr.can_assign():
+            node.target = self.stream.expect('name')
+            # make sure that assignments to that name are allowed
+            if not nodes.Name(node.target, 'store').can_assign():
                 raise TemplateSyntaxError('can\'t assign imported template '
-                                          'to this expression.', expr.lineno,
+                                          'to %r' % node.target, expr.lineno,
                                           self.filename)
-            expr.set_ctx('store')
-            node.target = expr
             node.template = self.parse_expression()
         else:
             node.target = None
@@ -186,6 +186,11 @@ class Parser(object):
     def parse_macro(self):
         node = nodes.Macro(lineno=self.stream.expect('macro').lineno)
         node.name = self.stream.expect('name').value
+        # make sure that assignments to that name are allowed
+        if not nodes.Name(node.name, 'store').can_assign():
+            raise TemplateSyntaxError('can\'t assign macro to %r' %
+                                      node.target, node.lineno,
+                                      self.filename)
         self.stream.expect('lparen')
         node.args = args = []
         node.defaults = defaults = []

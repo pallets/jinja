@@ -79,8 +79,9 @@ class Identifiers(object):
         # names that are declared by parameters
         self.declared_parameter = set()
 
-        # filters that are referenced
+        # filters/tests that are referenced
         self.filters = set()
+        self.tests = set()
 
     def add_special(self, name):
         """Register a special name like `loop`."""
@@ -166,12 +167,21 @@ class FrameIdentifierVisitor(NodeVisitor):
 
     def visit_Filter(self, node):
         self.generic_visit(node)
-        if node.name not in self.identifiers.filters:
-            self.identifiers.filters.add(node.name)
+        self.identifiers.filters.add(node.name)
+
+    def visit_Test(self, node):
+        self.generic_visit(node)
+        self.identifiers.tests.add(node.name)
 
     def visit_Macro(self, node):
         """Macros set local."""
         self.identifiers.declared_locally.add(node.name)
+
+    def visit_Include(self, node):
+        """Some includes set local."""
+        self.generic_visit(node)
+        if node.target is not None:
+            self.identifiers.declared_locally.add(node.target)
 
     def visit_Assign(self, node):
         """Visit assignments in the correct order."""
@@ -276,6 +286,8 @@ class CodeGenerator(NodeVisitor):
             self.writeline('l_%s = context[%r]' % (name, name))
         for name in frame.identifiers.filters:
             self.writeline('f_%s = environment.filters[%r]' % (name, name))
+        for name in frame.identifiers.tests:
+            self.writeline('t_%s = environment.tests[%r]' % (name, name))
         if not no_indent:
             self.outdent()
 
@@ -299,10 +311,11 @@ class CodeGenerator(NodeVisitor):
             self.blocks[block.name] = block
 
         # generate the root render function.
-        self.writeline('def root(globals, environment=environment):', extra=1)
+        self.writeline('def root(globals, environment=environment'
+                       ', standalone=False):', extra=1)
         self.indent()
-        self.writeline('context = TemplateContext(globals, %r, blocks)' %
-                       self.filename)
+        self.writeline('context = TemplateContext(globals, %r, blocks'
+                       ', standalone)' % self.filename)
         if have_extends:
             self.writeline('parent_root = None')
         self.outdent()
@@ -312,7 +325,10 @@ class CodeGenerator(NodeVisitor):
         frame.inspect(node.body)
         frame.toplevel = frame.rootlevel = True
         self.pull_locals(frame)
-        self.blockvisit(node.body, frame, True)
+        self.indent()
+        self.writeline('yield context')
+        self.outdent()
+        self.blockvisit(node.body, frame)
 
         # make sure that the parent root is called.
         if have_extends:
@@ -320,7 +336,9 @@ class CodeGenerator(NodeVisitor):
                 self.indent()
                 self.writeline('if parent_root is not None:')
             self.indent()
-            self.writeline('for event in parent_root(context):')
+            self.writeline('stream = parent_root(context)')
+            self.writeline('stream.next()')
+            self.writeline('for event in stream:')
             self.indent()
             self.writeline('yield event')
             self.outdent(1 + self.has_known_extends)
@@ -394,6 +412,34 @@ class CodeGenerator(NodeVisitor):
 
         # and now we have one more
         self.extends_so_far += 1
+
+    def visit_Include(self, node, frame):
+        """Handles includes."""
+        # simpled include is include into a variable.  This kind of
+        # include works the same on every level, so we handle it first.
+        if node.target is not None:
+            self.writeline('l_%s = ' % node.target, node)
+            if frame.toplevel:
+                self.write('context[%r] = ' % node.target)
+            self.write('IncludedTemplate(environment, context, ')
+            self.visit(node.template, frame)
+            self.write(')')
+            return
+
+        self.writeline('included_stream = environment.get_template(', node)
+        self.visit(node.template, frame)
+        self.write(').root_render_func(context, standalone=True)')
+        self.writeline('included_context = included_stream.next()')
+        self.writeline('for event in included_stream:')
+        self.indent()
+        self.writeline('yield event')
+        self.outdent()
+
+        # if we have a toplevel include the exported variables are copied
+        # into the current context without exporting them.  context.udpate
+        # does *not* mark the variables as exported
+        if frame.toplevel:
+            self.writeline('context.update(included_context.get_exported())')
 
     def visit_For(self, node, frame):
         loop_frame = frame.inner()
@@ -507,8 +553,10 @@ class CodeGenerator(NodeVisitor):
         self.newline(node)
         if self.environment.finalize is unicode:
             finalizer = 'unicode'
+            have_finalizer = False
         else:
             finalizer = 'context.finalize'
+            have_finalizer = False
 
         # if we are in the toplevel scope and there was already an extends
         # statement we have to add a check that disables our yield(s) here
@@ -559,10 +607,10 @@ class CodeGenerator(NodeVisitor):
             for idx, argument in enumerate(arguments):
                 if idx:
                     self.write(', ')
-                if finalizer != 'unicode':
+                if have_finalizer:
                     self.write('(')
                 self.visit(argument, frame)
-                if finalizer != 'unicode':
+                if have_finalizer:
                     self.write(')')
             self.write(idx == 0 and ',)' or ')')
 
@@ -706,12 +754,18 @@ class CodeGenerator(NodeVisitor):
 
     def visit_Filter(self, node, frame):
         self.write('f_%s(' % node.name)
+        func = self.environment.filters.get(node.name)
+        if getattr(func, 'contextfilter', False):
+            self.write('context, ')
         self.visit(node.node, frame)
         self.signature(node, frame)
         self.write(')')
 
     def visit_Test(self, node, frame):
-        self.write('environment.tests[%r](')
+        self.write('t_%s(' % node.name)
+        func = self.environment.tests.get(node.name)
+        if getattr(func, 'contexttest', False):
+            self.write('context, ')
         self.visit(node.node, frame)
         self.signature(node, frame)
         self.write(')')
