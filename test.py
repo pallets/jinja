@@ -1,12 +1,10 @@
-from jinja2 import Environment
+from jinja import Environment as E1
+from jinja2 import Environment as E2
 
-env = Environment()
-tmpl = env.from_string("""
+t1, t2 = [e.from_string("""
 <ul>
-{% for item in seq %}
+{%- for item in seq %}
     <li>{{ item|e }}</li>
-{% endfor %}
+{%- endfor %}
 </ul>
-""")
-
-print tmpl.render(seq=range(10))
+""") for e in E1(), E2()]

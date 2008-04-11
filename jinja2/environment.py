@@ -107,7 +107,6 @@ class Environment(object):
         source = generate(node, self, filename)
         if raw:
             return source
-        print source
         if isinstance(filename, unicode):
             filename = filename.encode('utf-8')
         return compile(source, filename, 'exec')
@@ -138,6 +137,7 @@ class Template(object):
         namespace = {'environment': environment}
         exec code in namespace
         self.environment = environment
+        self.name = namespace['filename']
         self.root_render_func = namespace['root']
         self.blocks = namespace['blocks']
 

@@ -79,9 +79,8 @@ class Identifiers(object):
         # names that are declared by parameters
         self.declared_parameter = set()
 
-        # filters that are declared locally
-        self.declared_filter = set()
-        self.undeclared_filter = dict()
+        # filters that are referenced
+        self.filters = set()
 
     def add_special(self, name):
         """Register a special name like `loop`."""
@@ -166,11 +165,8 @@ class FrameIdentifierVisitor(NodeVisitor):
                 self.identifiers.undeclared.add(node.name)
 
     def visit_Filter(self, node):
-        if not node.name in self.identifiers.declared_filter:
-            uf = self.identifiers.undeclared_filter.get(node.name, 0) + 1
-            if uf > 1:
-                self.identifiers.declared_filter.add(node.name)
-            self.identifiers.undeclared_filter[node.name] = uf
+        if node.name not in self.identifiers.filters:
+            self.identifiers.filters.add(node.name)
 
     def visit_Macro(self, node):
         """Macros set local."""
@@ -277,9 +273,8 @@ class CodeGenerator(NodeVisitor):
             self.indent()
         for name in frame.identifiers.undeclared:
             self.writeline('l_%s = context[%r]' % (name, name))
-        for name, count in frame.identifiers.undeclared_filter.iteritems():
-            if count > 1:
-                self.writeline('f_%s = environment.filters[%r]' % (name, name))
+        for name in frame.identifiers.filters:
+            self.writeline('f_%s = environment.filters[%r]' % (name, name))
         if not no_indent:
             self.outdent()
 
@@ -303,9 +298,10 @@ class CodeGenerator(NodeVisitor):
             self.blocks[block.name] = block
 
         # generate the root render function.
-        self.writeline('def root(globals):', extra=1)
+        self.writeline('def root(globals, environment=environment):', extra=1)
         self.indent()
-        self.writeline('context = TemplateContext(globals, filename, blocks)')
+        self.writeline('context = TemplateContext(globals, %r, blocks)' %
+                       self.filename)
         if have_extends:
             self.writeline('parent_root = None')
         self.outdent()
@@ -333,7 +329,8 @@ class CodeGenerator(NodeVisitor):
             block_frame = Frame()
             block_frame.inspect(block.body)
             block_frame.block = name
-            self.writeline('def block_%s(context):' % name, block, 1)
+            self.writeline('def block_%s(context, environment=environment):'
+                           % name, block, 1)
             self.pull_locals(block_frame)
             self.blockvisit(block.body, block_frame, True)
 
@@ -427,16 +424,9 @@ class CodeGenerator(NodeVisitor):
             self.writeline('if l_loop is None:')
             self.blockvisit(node.else_, loop_frame)
 
-        # reset the aliases and clean up
-        delete = set('l_' + x for x in loop_frame.identifiers.declared_locally
-                     | loop_frame.identifiers.declared_parameter)
-        if extended_loop:
-            delete.add('l_loop')
+        # reset the aliases if there are any.
         for name, alias in aliases.iteritems():
             self.writeline('l_%s = %s' % (name, alias))
-            delete.add(alias)
-            delete.discard('l_' + name)
-        self.writeline('del %s' % ', '.join(delete))
 
     def visit_If(self, node, frame):
         if_frame = frame.soft()
@@ -711,10 +701,7 @@ class CodeGenerator(NodeVisitor):
             self.visit(node.step, frame)
 
     def visit_Filter(self, node, frame):
-        if node.name in frame.identifiers.declared_filter:
-            self.write('f_%s(' % node.name)
-        else:
-            self.write('environment.filters[%r](' % node.name)
+        self.write('f_%s(' % node.name)
         self.visit(node.node, frame)
         self.signature(node, frame)
         self.write(')')
