@@ -145,5 +145,4 @@ class Template(object):
         return u''.join(self.stream(*args, **kwargs))
 
     def stream(self, *args, **kwargs):
-        context = dict(*args, **kwargs)
-        return self.root_render_func(context)
+        return self.root_render_func(dict(*args, **kwargs))

@@ -165,6 +165,7 @@ class FrameIdentifierVisitor(NodeVisitor):
                 self.identifiers.undeclared.add(node.name)
 
     def visit_Filter(self, node):
+        self.generic_visit(node)
         if node.name not in self.identifiers.filters:
             self.identifiers.filters.add(node.name)
 

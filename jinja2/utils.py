@@ -14,10 +14,8 @@ def escape(obj, attribute=False):
     """HTML escape an object."""
     if hasattr(obj, '__html__'):
         return obj.__html__()
-    s = unicode(obj) \
+    return unicode(obj) \
         .replace('&', '&amp;') \
         .replace('>', '&gt;') \
-        .replace('<', '&lt;')
-    if attribute:
-        s = s.replace('"', '&quot;')
-    return s
+        .replace('<', '&lt;') \
+        .replace('"', '&quot;')
