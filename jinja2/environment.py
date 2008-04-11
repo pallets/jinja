@@ -104,9 +104,10 @@ class Environment(object):
         if isinstance(source, basestring):
             source = self.parse(source, filename)
         node = optimize(source, self)
-        source = generate(node, self)
+        source = generate(node, self, filename)
         if raw:
             return source
+        print source
         if isinstance(filename, unicode):
             filename = filename.encode('utf-8')
         return compile(source, filename, 'exec')
@@ -124,6 +125,10 @@ class Environment(object):
         if parent is not None:
             name = self.join_path(name, parent)
         return self.loader.load(self, name)
+
+    def from_string(self, source, filename='<string>'):
+        """Load a template from a string."""
+        return Template(self, self.compile(source, filename))
 
 
 class Template(object):

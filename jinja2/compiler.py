@@ -279,7 +279,7 @@ class CodeGenerator(NodeVisitor):
             self.writeline('l_%s = context[%r]' % (name, name))
         for name, count in frame.identifiers.undeclared_filter.iteritems():
             if count > 1:
-                self.writeline('f_%s = context[%r]' % (name, name))
+                self.writeline('f_%s = environment.filters[%r]' % (name, name))
         if not no_indent:
             self.outdent()
 
@@ -714,13 +714,13 @@ class CodeGenerator(NodeVisitor):
         if node.name in frame.identifiers.declared_filter:
             self.write('f_%s(' % node.name)
         else:
-            self.write('context.filter[%r](' % node.name)
+            self.write('environment.filters[%r](' % node.name)
         self.visit(node.node, frame)
         self.signature(node, frame)
         self.write(')')
 
     def visit_Test(self, node, frame):
-        self.write('context.tests[%r](')
+        self.write('environment.tests[%r](')
         self.visit(node.node, frame)
         self.signature(node, frame)
         self.write(')')

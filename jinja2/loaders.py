@@ -14,6 +14,7 @@ from jinja2.environment import Template
 
 
 class BaseLoader(object):
+    """Baseclass for all loaders."""
 
     def get_source(self, environment, template):
         raise TemplateNotFound()
