@@ -325,7 +325,7 @@ class CodeGenerator(NodeVisitor):
             self.writeline('for event in parent_root(context):')
             self.indent()
             self.writeline('yield event')
-            self.outdent(2 + self.has_known_extends)
+            self.outdent(1 + self.has_known_extends)
 
         # at this point we now have the blocks collected and can visit them too.
         for name, block in self.blocks.iteritems():
@@ -343,12 +343,12 @@ class CodeGenerator(NodeVisitor):
         """Call a block and register it for the template."""
         # if we know that we are a child template, there is no need to
         # check if we are one
-        if self.has_known_extends:
+        if self.has_known_extends and frame.toplevel:
             return
         if frame.toplevel:
             self.writeline('if parent_root is None:')
             self.indent()
-        self.writeline('for event in block_%s(context):' % node.name)
+        self.writeline('for event in context.blocks[-1][%r](context):' % node.name)
         self.indent()
         self.writeline('yield event')
         self.outdent(1 + frame.toplevel)
@@ -506,7 +506,7 @@ class CodeGenerator(NodeVisitor):
 
     def visit_Output(self, node, frame):
         # if we have a known extends statement, we don't output anything
-        if self.has_known_extends:
+        if self.has_known_extends and frame.toplevel:
             return
 
         self.newline(node)
