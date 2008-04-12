@@ -113,6 +113,7 @@ class Frame(object):
         # situations.
         self.rootlevel = False
         self.parent = parent
+        self.buffer = None
         self.block = parent and parent.block or None
         if parent is not None:
             self.identifiers.declared.update(
@@ -120,11 +121,12 @@ class Frame(object):
                 parent.identifiers.declared_locally |
                 parent.identifiers.declared_parameter
             )
+            self.buffer = parent.buffer
 
     def copy(self):
         """Create a copy of the current one."""
         rv = copy(self)
-        rv.identifiers = copy(self)
+        rv.identifiers = copy(self.identifiers)
         return rv
 
     def inspect(self, nodes, hard_scope=False):
@@ -229,7 +231,7 @@ class CodeGenerator(NodeVisitor):
 
     def blockvisit(self, nodes, frame, force_generator=False):
         self.indent()
-        if force_generator:
+        if force_generator and frame.buffer is None:
             self.writeline('if 0: yield None')
         try:
             for node in nodes:
@@ -295,6 +297,16 @@ class CodeGenerator(NodeVisitor):
             self.writeline('t_%s = environment.tests[%r]' % (name, name))
         if not no_indent:
             self.outdent()
+
+    def collect_shadowed(self, frame):
+        # make sure we "backup" overridden, local identifiers
+        # TODO: we should probably optimize this and check if the
+        # identifier is in use afterwards.
+        aliases = {}
+        for name in frame.identifiers.find_shadowed():
+            aliases[name] = ident = self.temporary_identifier()
+            self.writeline('%s = l_%s' % (ident, name))
+        return aliases
 
     def function_scoping(self, node, frame):
         func_frame = frame.inner()
@@ -417,7 +429,10 @@ class CodeGenerator(NodeVisitor):
                 level += 1
         self.writeline('for event in context.blocks[%r][-1](context):' % node.name)
         self.indent()
-        self.writeline('yield event')
+        if frame.buffer is None:
+            self.writeline('yield event')
+        else:
+            self.writeline('%s.append(event)' % frame.buffer)
         self.outdent(level)
 
     def visit_Extends(self, node, frame):
@@ -479,7 +494,10 @@ class CodeGenerator(NodeVisitor):
         self.writeline('included_context = included_stream.next()')
         self.writeline('for event in included_stream:')
         self.indent()
-        self.writeline('yield event')
+        if frame.buffer is None:
+            self.writeline('yield event')
+        else:
+            self.writeline('%s.append(event)' % frame.buffer)
         self.outdent()
 
         # if we have a toplevel include the exported variables are copied
@@ -493,16 +511,10 @@ class CodeGenerator(NodeVisitor):
         loop_frame.inspect(node.iter_child_nodes())
         extended_loop = bool(node.else_) or \
                         'loop' in loop_frame.identifiers.undeclared
-        loop_frame.identifiers.add_special('loop')
+        if extended_loop:
+            loop_frame.identifiers.add_special('loop')
 
-        # make sure we "backup" overridden, local identifiers
-        # TODO: we should probably optimize this and check if the
-        # identifier is in use afterwards.
-        aliases = {}
-        for name in loop_frame.identifiers.find_shadowed():
-            aliases[name] = ident = self.temporary_identifier()
-            self.writeline('%s = l_%s' % (ident, name))
-
+        aliases = self.collect_shadowed(loop_frame)
         self.pull_locals(loop_frame, True)
 
         self.newline(node)
@@ -570,8 +582,33 @@ class CodeGenerator(NodeVisitor):
             self.visit(arg)
             self.write(', ')
         self.write('), %r, False)' % call_frame.accesses_arguments)
-        self.writeline('yield ', node)
+        if frame.buffer is None:
+            self.writeline('yield ', node)
+        else:
+            self.writeline('%s.append(' % frame.buffer, node)
         self.visit_Call(node.call, call_frame, extra_kwargs='caller=caller')
+        if frame.buffer is not None:
+            self.write(')')
+
+    def visit_FilterBlock(self, node, frame):
+        filter_frame = frame.inner()
+        filter_frame.inspect(node.iter_child_nodes())
+
+        aliases = self.collect_shadowed(filter_frame)
+        self.pull_locals(filter_frame, True)
+        filter_frame.buffer = buf = self.temporary_identifier()
+
+        self.writeline('%s = []' % buf, node)
+        for child in node.body:
+            self.visit(child, filter_frame)
+
+        if frame.buffer is None:
+            self.writeline('yield ', node)
+        else:
+            self.writeline('%s.append(' % frame.buffer, node)
+        self.visit_Filter(node.filter, filter_frame, "u''.join(%s)" % buf)
+        if frame.buffer is not None:
+            self.write(')')
 
     def visit_ExprStmt(self, node, frame):
         self.newline(node)
@@ -617,12 +654,20 @@ class CodeGenerator(NodeVisitor):
         if len(body) < 3:
             for item in body:
                 if isinstance(item, list):
-                    self.writeline('yield %s' % repr(u''.join(item)))
+                    val = repr(u''.join(item))
+                    if frame.buffer is None:
+                        self.writeline('yield ' + val)
+                    else:
+                        self.writeline('%s.append(%s)' % (frame.buffer, val))
                 else:
                     self.newline(item)
-                    self.write('yield %s(' % finalizer)
+                    if frame.buffer is None:
+                        self.write('yield ')
+                    else:
+                        self.write('%s.append(' % frame.buffer)
+                    self.write(finalizer + '(')
                     self.visit(item, frame)
-                    self.write(')')
+                    self.write(')' * (1 + frame.buffer is not None))
 
         # otherwise we create a format string as this is faster in that case
         else:
@@ -634,7 +679,11 @@ class CodeGenerator(NodeVisitor):
                 else:
                     format.append('%s')
                     arguments.append(item)
-            self.writeline('yield %r %% (' % u''.join(format))
+            if frame.buffer is None:
+                self.writeline('yield ')
+            else:
+                self.writeline('%s.append(' % frame.buffer)
+            self.write(repr(u''.join(format)) + ' % (')
             idx = -1
             for idx, argument in enumerate(arguments):
                 if idx:
@@ -645,6 +694,8 @@ class CodeGenerator(NodeVisitor):
                 if have_finalizer:
                     self.write(')')
             self.write(idx == 0 and ',)' or ')')
+            if frame.buffer is not None:
+                self.write(')')
 
         if outdent_later:
             self.outdent()
@@ -784,12 +835,15 @@ class CodeGenerator(NodeVisitor):
             self.write(':')
             self.visit(node.step, frame)
 
-    def visit_Filter(self, node, frame):
+    def visit_Filter(self, node, frame, initial=None):
         self.write('f_%s(' % node.name)
-        func = self.environment.filters.get(node.name)
-        if getattr(func, 'contextfilter', False):
-            self.write('context, ')
-        self.visit(node.node, frame)
+        if initial is not None:
+            self.write(initial)
+        else:
+            func = self.environment.filters.get(node.name)
+            if getattr(func, 'contextfilter', False):
+                self.write('context, ')
+            self.visit(node.node, frame)
         self.signature(node, frame)
         self.write(')')
 

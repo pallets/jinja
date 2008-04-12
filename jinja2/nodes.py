@@ -232,7 +232,7 @@ class Set(Stmt):
 
 class FilterBlock(Stmt):
     """Node for filter sections."""
-    fields = ('body', 'filters')
+    fields = ('body', 'filter')
 
 
 class Block(Stmt):
@@ -390,6 +390,8 @@ class Filter(Expr):
     fields = ('node', 'name', 'args', 'kwargs', 'dyn_args', 'dyn_kwargs')
 
     def as_const(self):
+        if self.node is None:
+            raise Impossible()
         filter = self.environment.filters.get(self.name)
         if filter is None or getattr(filter, 'contextfilter', False):
             raise nodes.Impossible()

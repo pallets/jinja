@@ -52,6 +52,8 @@ class Parser(object):
             return getattr(self, 'parse_' + token_type)()
         elif token_type is 'call':
             return self.parse_call_block()
+        elif token_type is 'filter':
+            return self.parse_filter_block()
         lineno = self.stream.current
         expr = self.parse_tuple()
         if self.stream.current.type == 'assign':
@@ -204,6 +206,12 @@ class Parser(object):
             raise TemplateSyntaxError('expected call', node.lineno,
                                       self.filename)
         node.body = self.parse_statements(('endcall',), drop_needle=True)
+        return node
+
+    def parse_filter_block(self):
+        node = nodes.FilterBlock(lineno=self.stream.expect('filter').lineno)
+        node.filter = self.parse_filter(None, start_inline=True)
+        node.body = self.parse_statements(('endfilter',), drop_needle=True)
         return node
 
     def parse_macro(self):
@@ -581,10 +589,11 @@ class Parser(object):
         return nodes.Call(node, args, kwargs, dyn_args, dyn_kwargs,
                           lineno=token.lineno)
 
-    def parse_filter(self, node):
+    def parse_filter(self, node, start_inline=False):
         lineno = self.stream.current.type
-        while self.stream.current.type == 'pipe':
-            self.stream.next()
+        while self.stream.current.type == 'pipe' or start_inline:
+            if not start_inline:
+                self.stream.next()
             token = self.stream.expect('name')
             if self.stream.current.type is 'lparen':
                 args, kwargs, dyn_args, dyn_kwargs = self.parse_call(None)
@@ -594,6 +603,7 @@ class Parser(object):
                 dyn_args = dyn_kwargs = None
             node = nodes.Filter(node, token.value, args, kwargs, dyn_args,
                                 dyn_kwargs, lineno=token.lineno)
+            start_inline = False
         return node
 
     def parse_test(self, node):
@@ -634,12 +644,13 @@ class Parser(object):
         while self.stream:
             token = self.stream.current
             if token.type is 'data':
-                add_data(nodes.Const(token.value, lineno=token.lineno))
+                if token.value:
+                    add_data(nodes.Const(token.value, lineno=token.lineno))
                 self.stream.next()
             elif token.type is 'variable_begin':
                 self.stream.next()
                 want_comma = False
-                while not self.stream.current.type in _statement_end_tokens:
+                while self.stream.current.type not in _statement_end_tokens:
                     if want_comma:
                         self.stream.expect('comma')
                     add_data(self.parse_expression())
