@@ -33,7 +33,6 @@ string_re = re.compile(r"('([^'\\]*(?:\\.[^'\\]*)*)'"
 integer_re = re.compile(r'\d+')
 name_re = re.compile(r'\b[a-zA-Z_][a-zA-Z0-9_]*\b')
 float_re = re.compile(r'\d+\.\d+')
-eol_re = re.compile(r'(\s*$\s*)+(?m)')
 
 
 # set of used keywords
@@ -340,9 +339,8 @@ class Lexer(object):
             ] + tag_rules
 
     def tokenize(self, source, filename=None):
-        """
-        Works like `tokeniter` but returns a tokenstream of tokens and not a
-        generator or token tuples. Additionally all token values are already
+        """Works like `tokeniter` but returns a tokenstream of tokens and not
+        a generator or token tuples. Additionally all token values are already
         converted into types and postprocessed. For example keywords are
         already keyword tokens, not named tokens, comments are removed,
         integers and floats converted, strings unescaped etc.
@@ -377,7 +375,6 @@ class Lexer(object):
                     value = float(value)
                 elif token == 'operator':
                     token = operators[value]
-                    value = ''
                 yield Token(lineno, token, value)
         return TokenStream(generate(), filename)
 
@@ -398,12 +395,12 @@ class Lexer(object):
 
         balancing_stack = []
 
-        while True:
+        while 1:
             # tokenizer loop
             for regex, tokens, new_state in statetokens:
                 m = regex.match(source, pos)
                 # if no match we try again with the next rule
-                if not m:
+                if m is None:
                     continue
 
                 # we only match blocks and variables if brances / parentheses
@@ -411,7 +408,8 @@ class Lexer(object):
                 # is the operator rule. do this only if the end tags look
                 # like operators
                 if balancing_stack and \
-                   tokens in ('variable_end', 'block_end'):
+                   tokens in ('variable_end', 'block_end',
+                              'linestatement_end'):
                     continue
 
                 # tuples support more options
@@ -447,8 +445,7 @@ class Lexer(object):
                                 yield lineno, token, data
                             lineno += data.count('\n')
 
-                # strings as token just are yielded as it, but just
-                # if the data is not empty
+                # strings as token just are yielded as it.
                 else:
                     data = m.group()
                     # update brace/parentheses balance
@@ -472,8 +469,7 @@ class Lexer(object):
                                                           lineno, filename)
                     # yield items
                     if tokens is not None:
-                        if data:
-                            yield lineno, tokens, data
+                        yield lineno, tokens, data
                     lineno += data.count('\n')
 
                 # fetch new position into new variable so that we can check

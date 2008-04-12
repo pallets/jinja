@@ -193,12 +193,13 @@ class StaticLoopContext(LoopContextBase):
 class Macro(object):
     """Wraps a macro."""
 
-    def __init__(self, func, name, arguments, defaults, catch_all):
-        self.func = func
+    def __init__(self, func, name, arguments, defaults, catch_all, caller):
+        self._func = func
         self.name = name
         self.arguments = arguments
         self.defaults = defaults
         self.catch_all = catch_all
+        self.caller = caller
 
     def __call__(self, *args, **kwargs):
         arg_count = len(self.arguments)
@@ -218,9 +219,20 @@ class Macro(object):
                     except IndexError:
                         value = Undefined(name)
             arguments['l_' + name] = value
+        if self.caller:
+            caller = kwargs.pop('caller', None)
+            if caller is None:
+                caller = Undefined('caller')
+            arguments['l_caller'] = caller
         if self.catch_all:
             arguments['l_arguments'] = kwargs
-        return TemplateData(u''.join(self.func(**arguments)))
+        return TemplateData(u''.join(self._func(**arguments)))
+
+    def __repr__(self):
+        return '<%s %s>' % (
+            self.__class__.__name__,
+            self.name is None and 'anonymous' or repr(self.name)
+        )
 
 
 class Undefined(object):
@@ -228,7 +240,7 @@ class Undefined(object):
 
     def __init__(self, name=None, attr=None):
         if attr is None:
-            self._undefined_hint = '%r is undefined' % attr
+            self._undefined_hint = '%r is undefined' % name
         elif name is None:
             self._undefined_hint = 'attribute %r is undefined' % name
         else:

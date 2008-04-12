@@ -175,8 +175,30 @@ class Parser(object):
         self.end_statement()
         return node
 
+    def parse_signature(self, node):
+        node.args = args = []
+        node.defaults = defaults = []
+        self.stream.expect('lparen')
+        while self.stream.current.type is not 'rparen':
+            if args:
+                self.stream.expect('comma')
+            token = self.stream.expect('name')
+            arg = nodes.Name(token.value, 'param', lineno=token.lineno)
+            if not arg.can_assign():
+                raise TemplateSyntaxError("can't assign to '%s'" %
+                                          arg.name, arg.lineno,
+                                          self.filename)
+            if self.stream.current.type is 'assign':
+                self.stream.next()
+                defaults.append(self.parse_expression())
+            args.append(arg)
+        self.stream.expect('rparen')
+
     def parse_call_block(self):
         node = nodes.CallBlock(lineno=self.stream.expect('call').lineno)
+        if self.stream.current.type is 'lparen':
+            self.parse_signature(node)
+
         node.call = self.parse_expression()
         if not isinstance(node.call, nodes.Call):
             raise TemplateSyntaxError('expected call', node.lineno,
@@ -192,23 +214,7 @@ class Parser(object):
             raise TemplateSyntaxError('can\'t assign macro to %r' %
                                       node.target, node.lineno,
                                       self.filename)
-        self.stream.expect('lparen')
-        node.args = args = []
-        node.defaults = defaults = []
-        while self.stream.current.type is not 'rparen':
-            if args:
-                self.stream.expect('comma')
-            token = self.stream.expect('name')
-            arg = nodes.Name(token.value, 'param', lineno=token.lineno)
-            if not arg.can_assign():
-                raise TemplateSyntaxError("can't assign to '%s'" %
-                                          arg.name, arg.lineno,
-                                          self.filename)
-            if self.stream.current.type is 'assign':
-                self.stream.next()
-                defaults.append(self.parse_expression())
-            args.append(arg)
-        self.stream.expect('rparen')
+        self.parse_signature(node)
         node.body = self.parse_statements(('endmacro',), drop_needle=True)
         return node
 

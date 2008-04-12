@@ -222,7 +222,7 @@ class Macro(Stmt):
 
 class CallBlock(Stmt):
     """A node that represents am extended macro call."""
-    fields = ('call', 'body')
+    fields = ('call', 'args', 'defaults', 'body')
 
 
 class Set(Stmt):

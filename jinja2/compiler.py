@@ -258,7 +258,7 @@ class CodeGenerator(NodeVisitor):
             self.new_lines = 1
             self._last_line = node.lineno
 
-    def signature(self, node, frame, have_comma=True):
+    def signature(self, node, frame, have_comma=True, extra_kwargs=None):
         have_comma = have_comma and [True] or []
         def touch_comma():
             if have_comma:
@@ -272,11 +272,16 @@ class CodeGenerator(NodeVisitor):
         for kwarg in node.kwargs:
             touch_comma()
             self.visit(kwarg, frame)
+        if extra_kwargs is not None:
+            touch_comma()
+            self.write(extra_kwargs)
         if node.dyn_args:
             touch_comma()
+            self.write('*')
             self.visit(node.dyn_args, frame)
         if node.dyn_kwargs:
             touch_comma()
+            self.write('**')
             self.visit(node.dyn_kwargs, frame)
 
     def pull_locals(self, frame, no_indent=False):
@@ -290,6 +295,48 @@ class CodeGenerator(NodeVisitor):
             self.writeline('t_%s = environment.tests[%r]' % (name, name))
         if not no_indent:
             self.outdent()
+
+    def function_scoping(self, node, frame):
+        func_frame = frame.inner()
+        func_frame.inspect(node.iter_child_nodes(), hard_scope=True)
+
+        # variables that are undeclared (accessed before declaration) and
+        # declared locally *and* part of an outside scope raise a template
+        # assertion error. Reason: we can't generate reasonable code from
+        # it without aliasing all the variables.  XXX: alias them ^^
+        overriden_closure_vars = (
+            func_frame.identifiers.undeclared &
+            func_frame.identifiers.declared &
+            (func_frame.identifiers.declared_locally |
+             func_frame.identifiers.declared_parameter)
+        )
+        if overriden_closure_vars:
+            vars = ', '.join(sorted(overriden_closure_vars))
+            raise TemplateAssertionError('It\'s not possible to set and '
+                                         'access variables derived from '
+                                         'an outer scope! (affects: %s' %
+                                         vars, node.lineno, self.filename)
+
+        # remove variables from a closure from the frame's undeclared
+        # identifiers.
+        func_frame.identifiers.undeclared -= (
+            func_frame.identifiers.undeclared &
+            func_frame.identifiers.declared
+        )
+
+        func_frame.accesses_arguments = False
+        func_frame.accesses_caller = False
+        func_frame.arguments = args = ['l_' + x.name for x in node.args]
+
+        if 'arguments' in func_frame.identifiers.undeclared:
+            func_frame.accesses_arguments = True
+            func_frame.identifiers.add_special('arguments')
+            args.append('l_arguments')
+        if 'caller' in func_frame.identifiers.undeclared:
+            func_frame.accesses_caller = True
+            func_frame.identifiers.add_special('caller')
+            args.append('l_caller')
+        return func_frame
 
     # -- Visitors
 
@@ -489,45 +536,11 @@ class CodeGenerator(NodeVisitor):
             self.blockvisit(node.else_, if_frame)
 
     def visit_Macro(self, node, frame):
-        macro_frame = frame.inner()
-        macro_frame.inspect(node.iter_child_nodes(), hard_scope=True)
-
-        # variables that are undeclared (accessed before declaration) and
-        # declared locally *and* part of an outside scope raise a template
-        # assertion error. Reason: we can't generate reasonable code from
-        # it without aliasing all the variables.  XXX: alias them ^^
-        overriden_closure_vars = (
-            macro_frame.identifiers.undeclared &
-            macro_frame.identifiers.declared &
-            (macro_frame.identifiers.declared_locally |
-             macro_frame.identifiers.declared_parameter)
-        )
-        if overriden_closure_vars:
-            vars = ', '.join(sorted(overriden_closure_vars))
-            raise TemplateAssertionError('It\'s not possible to set and '
-                                         'access variables derived from '
-                                         'an outer scope! (affects: %s' %
-                                         vars, node.lineno, self.filename)
-
-        # remove variables from a closure from the frame's undeclared
-        # identifiers.
-        macro_frame.identifiers.undeclared -= (
-            macro_frame.identifiers.undeclared &
-            macro_frame.identifiers.declared
-        )
-
-        args = ['l_' + x.name for x in node.args]
-        if 'arguments' in macro_frame.identifiers.undeclared:
-            accesses_arguments = True
-            args.append('l_arguments')
-        else:
-            accesses_arguments = False
+        macro_frame = self.function_scoping(node, frame)
+        args = macro_frame.arguments
         self.writeline('def macro(%s):' % ', '.join(args), node)
-        self.indent()
-        self.writeline('if 0: yield None')
-        self.outdent()
         self.pull_locals(macro_frame)
-        self.blockvisit(node.body, macro_frame)
+        self.blockvisit(node.body, macro_frame, True)
         self.newline()
         if frame.toplevel:
             self.write('context[%r] = ' % node.name)
@@ -539,7 +552,26 @@ class CodeGenerator(NodeVisitor):
         for arg in node.defaults:
             self.visit(arg)
             self.write(', ')
-        self.write('), %r)' % accesses_arguments)
+        self.write('), %r, %r)' % (
+            macro_frame.accesses_arguments,
+            macro_frame.accesses_caller
+        ))
+
+    def visit_CallBlock(self, node, frame):
+        call_frame = self.function_scoping(node, frame)
+        args = call_frame.arguments
+        self.writeline('def call(%s):' % ', '.join(args), node)
+        self.blockvisit(node.body, call_frame, node)
+        arg_tuple = ', '.join(repr(x.name) for x in node.args)
+        if len(node.args) == 1:
+            arg_tuple += ','
+        self.writeline('caller = Macro(call, None, (%s), (' % arg_tuple)
+        for arg in node.defaults:
+            self.visit(arg)
+            self.write(', ')
+        self.write('), %r, False)' % call_frame.accesses_arguments)
+        self.writeline('yield ', node)
+        self.visit_Call(node.call, call_frame, extra_kwargs='caller=caller')
 
     def visit_ExprStmt(self, node, frame):
         self.newline(node)
@@ -770,10 +802,10 @@ class CodeGenerator(NodeVisitor):
         self.signature(node, frame)
         self.write(')')
 
-    def visit_Call(self, node, frame):
+    def visit_Call(self, node, frame, extra_kwargs=None):
         self.visit(node.node, frame)
         self.write('(')
-        self.signature(node, frame, False)
+        self.signature(node, frame, False, extra_kwargs)
         self.write(')')
 
     def visit_Keyword(self, node, frame):
