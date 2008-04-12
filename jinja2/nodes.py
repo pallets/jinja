@@ -389,13 +389,14 @@ class Filter(Expr):
     """{{ foo|bar|baz }}"""
     fields = ('node', 'name', 'args', 'kwargs', 'dyn_args', 'dyn_kwargs')
 
-    def as_const(self):
-        if self.node is None:
+    def as_const(self, obj=None):
+        if self.node is obj is None:
             raise Impossible()
         filter = self.environment.filters.get(self.name)
         if filter is None or getattr(filter, 'contextfilter', False):
             raise nodes.Impossible()
-        obj = self.node.as_const()
+        if obj is None:
+            obj = self.node.as_const()
         args = [x.as_const() for x in self.args]
         kwargs = dict(x.as_const() for x in self.kwargs)
         if self.dyn_args is not None:

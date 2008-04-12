@@ -16,6 +16,9 @@ tmpl = env.from_string("""\
 % endcall
 % filter escape
     <hello world>
+    % for item in [1, 2, 3]
+      -  ${item}
+    % endfor
 % endfilter
 """)
 

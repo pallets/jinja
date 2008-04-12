@@ -564,9 +564,9 @@ class CodeGenerator(NodeVisitor):
         for arg in node.defaults:
             self.visit(arg)
             self.write(', ')
-        self.write('), %r, %r)' % (
-            macro_frame.accesses_arguments,
-            macro_frame.accesses_caller
+        self.write('), %s, %s)' % (
+            macro_frame.accesses_arguments and '1' or '0',
+            macro_frame.accesses_caller and '1' or '0'
         ))
 
     def visit_CallBlock(self, node, frame):
@@ -581,7 +581,7 @@ class CodeGenerator(NodeVisitor):
         for arg in node.defaults:
             self.visit(arg)
             self.write(', ')
-        self.write('), %r, False)' % call_frame.accesses_arguments)
+        self.write('), %s, 0)' % (call_frame.accesses_arguments and '1' or '0'))
         if frame.buffer is None:
             self.writeline('yield ', node)
         else:

@@ -95,6 +95,32 @@ class Optimizer(NodeTransformer):
         finally:
             context.pop()
 
+    def visit_FilterBlock(self, node, context):
+        """Try to filter a block at compile time."""
+        node = self.generic_visit(node, context)
+        context.push()
+
+        # check if we can evaluate the wrapper body into a string
+        # at compile time
+        buffer = []
+        for child in node.body:
+            if not isinstance(child, nodes.Output):
+                return node
+            for item in child.optimized_nodes():
+                if isinstance(item, nodes.Node):
+                    return node
+                buffer.append(item)
+
+        # now check if we can evaluate the filter at compile time.
+        try:
+            data = node.filter.as_const(u''.join(buffer))
+        except nodes.Impossible:
+            return node
+
+        context.pop()
+        const = nodes.Const(data, lineno=node.lineno)
+        return nodes.Output([const], lineno=node.lineno)
+
     def visit_For(self, node, context):
         """Loop unrolling for iterable constant values."""
         try:

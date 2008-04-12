@@ -107,7 +107,6 @@ class Environment(object):
             source = self.parse(source, filename)
         node = optimize(source, self)
         source = generate(node, self, filename)
-        print source
         if raw:
             return source
         if isinstance(filename, unicode):
