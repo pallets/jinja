@@ -196,6 +196,7 @@ class LexerMeta(type):
                     environment.variable_end_string,
                     environment.comment_start_string,
                     environment.comment_end_string,
+                    environment.line_statement_prefix,
                     environment.trim_blocks))
 
         # use the cached lexer if possible
@@ -226,7 +227,6 @@ class Lexer(object):
 
         # lexing rules for tags
         tag_rules = [
-            (eol_re, 'eol', None),
             (whitespace_re, None, None),
             (float_re, 'float', None),
             (integer_re, 'integer', None),
@@ -262,7 +262,17 @@ class Lexer(object):
         if not self.no_variable_block:
             root_tag_rules.append(('variable',
                                    environment.variable_start_string))
-        root_tag_rules.sort(lambda a, b: cmp(len(b[1]), len(a[1])))
+        root_tag_rules.sort(key=lambda x: len(x[1]))
+
+        # now escape the rules.  This is done here so that the escape
+        # signs don't count for the lengths of the tags.
+        root_tag_rules = [(a, e(b)) for a, b in root_tag_rules]
+
+        # if we have a line statement prefix we need an extra rule for
+        # that.  We add this rule *after* all the others.
+        if environment.line_statement_prefix is not None:
+            prefix = e(environment.line_statement_prefix)
+            root_tag_rules.insert(0, ('linestatement', '^\s*' + prefix))
 
         # block suffix if trimming is enabled
         block_suffix_re = environment.trim_blocks and '\\n?' or ''
@@ -277,7 +287,7 @@ class Lexer(object):
                         e(environment.block_start_string),
                         e(environment.block_end_string)
                     )] + [
-                        '(?P<%s_begin>\s*%s\-|%s)' % (n, e(r), e(r))
+                        '(?P<%s_begin>\s*%s\-|%s)' % (n, r, r)
                         for n, r in root_tag_rules
                     ])), ('data', '#bygroup'), '#bygroup'),
                 # data
@@ -323,6 +333,12 @@ class Lexer(object):
                 )), 'variable_end', '#pop')
             ] + tag_rules
 
+        # the same goes for the line_statement_prefix
+        if environment.line_statement_prefix is not None:
+            self.rules['linestatement_begin'] = [
+                (c(r'\s*(\n|$)'), 'linestatement_end', '#pop')
+            ] + tag_rules
+
     def tokenize(self, source, filename=None):
         """
         Works like `tokeniter` but returns a tokenstream of tokens and not a
@@ -331,10 +347,15 @@ class Lexer(object):
         already keyword tokens, not named tokens, comments are removed,
         integers and floats converted, strings unescaped etc.
         """
+        source = unicode(source)
         def generate():
             for lineno, token, value in self.tokeniter(source, filename):
                 if token in ('comment_begin', 'comment', 'comment_end'):
                     continue
+                elif token == 'linestatement_begin':
+                    token = 'block_begin'
+                elif token == 'linestatement_end':
+                    token = 'block_end'
                 elif token == 'data':
                     try:
                         value = str(value)

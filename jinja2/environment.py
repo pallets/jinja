@@ -30,8 +30,8 @@ class Environment(object):
                  variable_end_string='}}',
                  comment_start_string='{#',
                  comment_end_string='#}',
+                 line_statement_prefix=None,
                  trim_blocks=False,
-                 template_charset='utf-8',
                  loader=None):
         """Here the possible initialization parameters:
 
@@ -46,10 +46,12 @@ class Environment(object):
                                   comment. defaults to ``'{#'``.
         `comment_end_string`      the string marking the end of a comment.
                                   defaults to ``'#}'``.
+        `line_statement_prefix`   If given and a string, this will be used as
+                                  prefix for line based statements.  See the
+                                  documentation for more details.
         `trim_blocks`             If this is set to ``True`` the first newline
                                   after a block is removed (block, not
                                   variable tag!). Defaults to ``False``.
-        `template_charset`        the charset of the templates.
         `loader`                  the loader which should be used.
         ========================= ============================================
         """
@@ -61,8 +63,8 @@ class Environment(object):
         self.variable_end_string = variable_end_string
         self.comment_start_string = comment_start_string
         self.comment_end_string = comment_end_string
+        self.line_statement_prefix = line_statement_prefix
         self.trim_blocks = trim_blocks
-        self.template_charset = template_charset
 
         # defaults
         self.filters = DEFAULT_FILTERS.copy()

@@ -28,11 +28,9 @@ class Parser(object):
 
     def __init__(self, environment, source, filename=None):
         self.environment = environment
-        if isinstance(source, str):
-            source = source.decode(environment.template_charset, 'ignore')
         if isinstance(filename, unicode):
             filename = filename.encode('utf-8')
-        self.source = source
+        self.source = unicode(source)
         self.filename = filename
         self.closed = False
         self.no_variable_block = self.environment.lexer.no_variable_block
