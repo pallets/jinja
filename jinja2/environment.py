@@ -148,10 +148,8 @@ class Environment(object):
 class Template(object):
     """Represents a template."""
 
-    def __init__(self, environment, code):
-        namespace = {
-            'environment': environment
-        }
+    def __init__(self, environment, code, globals):
+        namespace = {'environment': environment}
         exec code in namespace
         self.environment = environment
         self.name = namespace['filename']
@@ -167,15 +165,16 @@ class Template(object):
 
     def generate(self, *args, **kwargs):
         # assemble the context
+        local_context = dict(*args, **kwargs)
         context = self.globals.copy()
-        context.update(*args, **kwargs)
+        context.update(local_context)
 
         # if the environment is using the optimizer locals may never
         # override globals as optimizations might have happened
         # depending on values of certain globals.  This assertion goes
         # away if the python interpreter is started with -O
         if __debug__ and self.environment.optimized:
-            overrides = set(context) & set(self.globals)
+            overrides = set(local_context) & set(self.globals)
             if overrides:
                 plural = len(overrides) != 1 and 's' or ''
                 raise AssertionError('the per template variable%s %s '
