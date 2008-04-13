@@ -56,8 +56,17 @@ class TemplateContext(dict):
         # are a template context, this template is participating in a template
         # inheritance chain and we have to copy the blocks over.
         if not standalone and isinstance(globals, TemplateContext):
-                for name, parent_blocks in globals.blocks.iteritems():
-                    self.blocks.setdefault(name, []).extend(parent_blocks)
+            for name, parent_blocks in globals.blocks.iteritems():
+                self.blocks.setdefault(name, []).extend(parent_blocks)
+
+    def super(self, block):
+        """Render a parent block."""
+        try:
+            func = self.blocks[block][-2]
+        except LookupError:
+            return Undefined('super', extra='there is probably no parent '
+                             'block with this name')
+        return SuperBlock(block, self, func)
 
     def __setitem__(self, key, value):
         """If we set items to the dict we track the variables set so
@@ -89,6 +98,24 @@ class TemplateContext(dict):
             self.__class__.__name__,
             dict.__repr__(self),
             self.filename
+        )
+
+
+class SuperBlock(object):
+    """When called this renders a parent block."""
+
+    def __init__(self, name, context, render_func):
+        self.name = name
+        self._context = context
+        self._render_func = render_func
+
+    def __call__(self):
+        return TemplateData(u''.join(self._render_func(self._context)))
+
+    def __repr__(self):
+        return '<%s %r>' % (
+            self.__class__.__name__,
+            self.name
         )
 
 
@@ -256,7 +283,7 @@ class Undefined(object):
             self._undefined_hint += ' (' + extra + ')'
 
     def fail(self, *args, **kwargs):
-        raise TypeError(self._undefined_hint)
+        raise NameError(self._undefined_hint)
     __getattr__ = __getitem__ = __add__ = __mul__ = __div__ = \
     __realdiv__ = __floordiv__ = __mod__ = __pos__ = __neg__ = \
     __call__ = fail
