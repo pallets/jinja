@@ -32,6 +32,7 @@ class Environment(object):
                  comment_end_string='#}',
                  line_statement_prefix=None,
                  trim_blocks=False,
+                 optimized=True,
                  loader=None):
         """Here the possible initialization parameters:
 
@@ -52,6 +53,8 @@ class Environment(object):
         `trim_blocks`             If this is set to ``True`` the first newline
                                   after a block is removed (block, not
                                   variable tag!). Defaults to ``False``.
+        `optimized`               should the optimizer be enabled?  Default is
+                                  ``True``.
         `loader`                  the loader which should be used.
         ========================= ============================================
         """
@@ -65,6 +68,7 @@ class Environment(object):
         self.comment_end_string = comment_end_string
         self.line_statement_prefix = line_statement_prefix
         self.trim_blocks = trim_blocks
+        self.optimized = optimized
 
         # defaults
         self.filters = DEFAULT_FILTERS.copy()
@@ -101,11 +105,12 @@ class Environment(object):
         """
         return self.lexer.tokeniter(source, filename)
 
-    def compile(self, source, filename=None, raw=False):
+    def compile(self, source, filename=None, raw=False, globals=None):
         """Compile a node or source."""
         if isinstance(source, basestring):
             source = self.parse(source, filename)
-        node = optimize(source, self)
+        if self.optimized:
+            node = optimize(source, self, globals or {})
         source = generate(node, self, filename)
         if raw:
             return source
@@ -119,35 +124,64 @@ class Environment(object):
         function can be used to calculate the real filename."""
         return template
 
-    def get_template(self, name, parent=None):
+    def get_template(self, name, parent=None, globals=None):
         """Load a template."""
         if self.loader is None:
             raise TypeError('no loader for this environment specified')
         if parent is not None:
             name = self.join_path(name, parent)
-        return self.loader.load(self, name)
+        globals = self.make_globals(globals)
+        return self.loader.load(self, name, globals)
 
-    def from_string(self, source, filename='<string>'):
+    def from_string(self, source, filename='<string>', globals=None):
         """Load a template from a string."""
-        return Template(self, self.compile(source, filename))
+        globals = self.make_globals(globals)
+        return Template(self, self.compile(source, filename), globals)
+
+    def make_globals(self, d):
+        """Return a dict for the globals."""
+        if d is None:
+            return self.globals
+        return dict(self.globals, **d)
 
 
 class Template(object):
     """Represents a template."""
 
-    def __init__(self, environment, code):
+    def __init__(self, environment, code, globals):
         namespace = {'environment': environment}
         exec code in namespace
         self.environment = environment
         self.name = namespace['filename']
         self.root_render_func = namespace['root']
         self.blocks = namespace['blocks']
+        self.globals = globals
 
     def render(self, *args, **kwargs):
-        return u''.join(self.stream(*args, **kwargs))
+        return u''.join(self.generate(*args, **kwargs))
 
     def stream(self, *args, **kwargs):
-        gen = self.root_render_func(dict(*args, **kwargs))
+        return TemplateStream(self.generate(*args, **kwargs))
+
+    def generate(self, *args, **kwargs):
+        # assemble the context
+        context = self.globals.copy()
+        context.update(*args, **kwargs)
+
+        # if the environment is using the optimizer locals may never
+        # override globals as optimizations might have happened
+        # depending on values of certain globals.  This assertion goes
+        # away if the python interpreter is started with -O
+        if __debug__ and self.environment.optimized:
+            overrides = set(context) & set(self.globals)
+            if overrides:
+                plural = len(overrides) != 1 and 's' or ''
+                raise AssertionError('the per template variable%s %s '
+                                     'override%s global variable%s. '
+                                     'With an enabled optimizer this '
+                                     'will lead to unexpected results.' %
+                    (plural, ', '.join(overrides), plural or ' a', plural))
+        gen = self.root_render_func(context)
         # skip the first item which is a reference to the stream
         gen.next()
         return gen

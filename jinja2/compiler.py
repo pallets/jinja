@@ -39,8 +39,7 @@ else:
 
 def generate(node, environment, filename, stream=None):
     """Generate the python source for a node tree."""
-    is_child = node.find(nodes.Extends) is not None
-    generator = CodeGenerator(environment, is_child, filename, stream)
+    generator = CodeGenerator(environment, filename, stream)
     generator.visit(node)
     if stream is None:
         return generator.stream.getvalue()
@@ -114,16 +113,31 @@ class Frame(object):
 
     def __init__(self, parent=None):
         self.identifiers = Identifiers()
+
         # a toplevel frame is the root + soft frames such as if conditions.
         self.toplevel = False
+
         # the root frame is basically just the outermost frame, so no if
         # conditions.  This information is used to optimize inheritance
         # situations.
         self.rootlevel = False
-        self.parent = parent
+
+        # inside some tags we are using a buffer rather than yield statements.
+        # this for example affects {% filter %} or {% macro %}.  If a frame
+        # is buffered this variable points to the name of the list used as
+        # buffer.
         self.buffer = None
+
+        # if a frame has name_overrides, all read access to a name in this
+        # dict is redirected to a string expression.
         self.name_overrides = {}
+
+        # the name of the block we're in, otherwise None.
         self.block = parent and parent.block or None
+
+        # the parent of this frame
+        self.parent = parent
+
         if parent is not None:
             self.identifiers.declared.update(
                 parent.identifiers.declared |
@@ -214,33 +228,61 @@ class CompilerExit(Exception):
 
 class CodeGenerator(NodeVisitor):
 
-    def __init__(self, environment, is_child, filename, stream=None):
+    def __init__(self, environment, filename, stream=None):
         if stream is None:
             stream = StringIO()
         self.environment = environment
-        self.is_child = is_child
         self.filename = filename
         self.stream = stream
+
+        # a registry for all blocks.  Because blocks are moved out
+        # into the global python scope they are registered here
         self.blocks = {}
-        self.indentation = 0
-        self.new_lines = 0
-        self.last_identifier = 0
+
+        # the number of extends statements so far
         self.extends_so_far = 0
+
+        # some templates have a rootlevel extends.  In this case we
+        # can safely assume that we're a child template and do some
+        # more optimizations.
         self.has_known_extends = False
+
+        # the number of new lines before the next write()
+        self._new_lines = 0
+
+        # the line number of the last written statement
         self._last_line = 0
+
+        # true if nothing was written so far.
         self._first_write = True
 
+        # used by the `temporary_identifier` method to get new
+        # unique, temporary identifier
+        self._last_identifier = 0
+
+        # the current indentation
+        self._indentation = 0
+
     def temporary_identifier(self):
-        self.last_identifier += 1
-        return 't%d' % self.last_identifier
+        """Get a new unique identifier."""
+        self._last_identifier += 1
+        return 't%d' % self._last_identifier
 
     def indent(self):
-        self.indentation += 1
+        """Indent by one."""
+        self._indentation += 1
 
     def outdent(self, step=1):
-        self.indentation -= step
+        """Outdent by step."""
+        self._indentation -= step
 
     def blockvisit(self, nodes, frame, indent=True, force_generator=True):
+        """Visit a list of nodes as block in a frame.  Per default the
+        code is indented, but this can be disabled by setting the indent
+        parameter to False.  If the current frame is no buffer a dummy
+        ``if 0: yield None`` is written automatically unless the
+        force_generator parameter is set to False.
+        """
         if indent:
             self.indent()
         if frame.buffer is None and force_generator:
@@ -254,26 +296,36 @@ class CodeGenerator(NodeVisitor):
             self.outdent()
 
     def write(self, x):
-        if self.new_lines:
+        """Write a string into the output stream."""
+        if self._new_lines:
             if not self._first_write:
-                self.stream.write('\n' * self.new_lines)
+                self.stream.write('\n' * self._new_lines)
             self._first_write = False
-            self.stream.write('    ' * self.indentation)
-            self.new_lines = 0
+            self.stream.write('    ' * self._indentation)
+            self._new_lines = 0
         self.stream.write(x)
 
     def writeline(self, x, node=None, extra=0):
+        """Combination of newline and write."""
         self.newline(node, extra)
         self.write(x)
 
     def newline(self, node=None, extra=0):
-        self.new_lines = max(self.new_lines, 1 + extra)
+        """Add one or more newlines before the next write."""
+        self._new_lines = max(self._new_lines, 1 + extra)
         if node is not None and node.lineno != self._last_line:
             self.write('# line: %s' % node.lineno)
-            self.new_lines = 1
+            self._new_lines = 1
             self._last_line = node.lineno
 
     def signature(self, node, frame, have_comma=True, extra_kwargs=None):
+        """Writes a function call to the stream for the current node.
+        Per default it will write a leading comma but this can be
+        disabled by setting have_comma to False.  If extra_kwargs is
+        given it must be a string that represents a single keyword
+        argument call that is inserted at the end of the regular
+        keyword argument calls.
+        """
         have_comma = have_comma and [True] or []
         def touch_comma():
             if have_comma:
@@ -300,6 +352,10 @@ class CodeGenerator(NodeVisitor):
             self.visit(node.dyn_kwargs, frame)
 
     def pull_locals(self, frame, indent=True):
+        """Pull all the references identifiers into the local scope.
+        This affects regular names, filters and tests.  If indent is
+        set to False, no automatic indentation will take place.
+        """
         if indent:
             self.indent()
         for name in frame.identifiers.undeclared:
@@ -312,6 +368,10 @@ class CodeGenerator(NodeVisitor):
             self.outdent()
 
     def collect_shadowed(self, frame):
+        """This function returns all the shadowed variables in a dict
+        in the form name: alias and will write the required assignments
+        into the current scope.  No indentation takes place.
+        """
         # make sure we "backup" overridden, local identifiers
         # TODO: we should probably optimize this and check if the
         # identifier is in use afterwards.
@@ -322,6 +382,17 @@ class CodeGenerator(NodeVisitor):
         return aliases
 
     def function_scoping(self, node, frame):
+        """In Jinja a few statements require the help of anonymous
+        functions.  Those are currently macros and call blocks and in
+        the future also recursive loops.  As there is currently
+        technical limitation that doesn't allow reading and writing a
+        variable in a scope where the initial value is coming from an
+        outer scope, this function tries to fall back with a common
+        error message.  Additionally the frame passed is modified so
+        that the argumetns are collected and callers are looked up.
+
+        This will return the modified frame.
+        """
         func_frame = frame.inner()
         func_frame.inspect(node.iter_child_nodes(), hard_scope=True)
 
