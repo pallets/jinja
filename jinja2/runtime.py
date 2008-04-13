@@ -25,7 +25,7 @@ def subscribe(obj, argument):
     except (AttributeError, UnicodeError):
         try:
             return obj[argument]
-        except LookupError:
+        except (TypeError, LookupError):
             return Undefined(obj, argument)
 
 
@@ -138,8 +138,9 @@ class LoopContext(LoopContextBase):
 
     def __init__(self, iterable, parent=None, enforce_length=False):
         self._iterable = iterable
+        self._next = iter(iterable).next
         self._length = None
-        self.index0 = 0
+        self.index0 = -1
         self.parent = parent
         if enforce_length:
             len(self)
@@ -152,9 +153,11 @@ class LoopContext(LoopContextBase):
         return StaticLoopContext(self.index0, self.length, parent)
 
     def __iter__(self):
-        for item in self._iterable:
-            yield self, item
-            self.index0 += 1
+        return self
+
+    def next(self):
+        self.index0 += 1
+        return self._next(), self
 
     def __len__(self):
         if self._length is None:
@@ -162,7 +165,8 @@ class LoopContext(LoopContextBase):
                 length = len(self._iterable)
             except TypeError:
                 self._iterable = tuple(self._iterable)
-                length = self.index0 + len(tuple(self._iterable))
+                self._next = iter(self._iterable).next
+                length = len(tuple(self._iterable)) + self.index0 + 1
             self._length = length
         return self._length
 
@@ -217,12 +221,13 @@ class Macro(object):
                     try:
                         value = self.defaults[idx - arg_count]
                     except IndexError:
-                        value = Undefined(name)
+                        value = Undefined(name, extra='parameter not provided')
             arguments['l_' + name] = value
         if self.caller:
             caller = kwargs.pop('caller', None)
             if caller is None:
-                caller = Undefined('caller')
+                caller = Undefined('caller', extra='The macro was called '
+                                   'from an expression and not a call block.')
             arguments['l_caller'] = caller
         if self.catch_all:
             arguments['l_arguments'] = kwargs
@@ -238,14 +243,14 @@ class Macro(object):
 class Undefined(object):
     """The object for undefined values."""
 
-    def __init__(self, name=None, attr=None):
+    def __init__(self, name=None, attr=None, extra=None):
         if attr is None:
             self._undefined_hint = '%r is undefined' % name
-        elif name is None:
-            self._undefined_hint = 'attribute %r is undefined' % name
         else:
             self._undefined_hint = 'attribute %r of %r is undefined' \
                                    % (attr, name)
+        if extra is not None:
+            self._undefined_hint += ' (' + extra + ')'
 
     def fail(self, *args, **kwargs):
         raise TypeError(self._undefined_hint)

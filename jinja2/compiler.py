@@ -29,6 +29,14 @@ operators = {
 }
 
 
+try:
+    exec '(0 if 0 else 0)'
+except SyntaxError:
+    have_condexpr = False
+else:
+    have_condexpr = True
+
+
 def generate(node, environment, filename, stream=None):
     """Generate the python source for a node tree."""
     is_child = node.find(nodes.Extends) is not None
@@ -114,6 +122,7 @@ class Frame(object):
         self.rootlevel = False
         self.parent = parent
         self.buffer = None
+        self.name_overrides = {}
         self.block = parent and parent.block or None
         if parent is not None:
             self.identifiers.declared.update(
@@ -122,11 +131,13 @@ class Frame(object):
                 parent.identifiers.declared_parameter
             )
             self.buffer = parent.buffer
+            self.name_overrides = parent.name_overrides.copy()
 
     def copy(self):
         """Create a copy of the current one."""
         rv = copy(self)
         rv.identifiers = copy(self.identifiers)
+        rv.name_overrides = self.name_overrides.copy()
         return rv
 
     def inspect(self, nodes, hard_scope=False):
@@ -516,21 +527,62 @@ class CodeGenerator(NodeVisitor):
 
         aliases = self.collect_shadowed(loop_frame)
         self.pull_locals(loop_frame, True)
-
-        self.newline(node)
         if node.else_:
             self.writeline('l_loop = None')
-        self.write('for ')
+
+        self.newline(node)
+        self.writeline('for ')
         self.visit(node.target, loop_frame)
         self.write(extended_loop and ', l_loop in LoopContext(' or ' in ')
-        self.visit(node.iter, loop_frame)
+
+        # the expression pointing to the parent loop.  We make the
+        # undefined a bit more debug friendly at the same time.
+        parent_loop = 'loop' in aliases and aliases['loop'] \
+                      or "Undefined('loop', extra=%r)" % \
+                         'the filter section of a loop as well as the ' \
+                         'else block doesn\'t have access to the special ' \
+                         "'loop' variable of the current loop.  Because " \
+                         'there is no parent loop it\'s undefined.'
+
+        # if we have an extened loop and a node test, we filter in the
+        # "outer frame".
+        if extended_loop and node.test is not None:
+            self.write('(')
+            self.visit(node.target, loop_frame)
+            self.write(' for ')
+            self.visit(node.target, loop_frame)
+            self.write(' in ')
+            self.visit(node.iter, loop_frame)
+            self.write(' if (')
+            test_frame = loop_frame.copy()
+            test_frame.name_overrides['loop'] = parent_loop
+            self.visit(node.test, test_frame)
+            self.write('))')
+
+        else:
+            self.visit(node.iter, loop_frame)
+
         if 'loop' in aliases:
             self.write(', ' + aliases['loop'])
         self.write(extended_loop and '):' or ':')
+
+        # tests in not extended loops become a continue
+        if not extended_loop and node.test is not None:
+            self.indent()
+            self.writeline('if ')
+            self.visit(node.test)
+            self.write(':')
+            self.indent()
+            self.writeline('continue')
+            self.outdent(2)
+
         self.blockvisit(node.body, loop_frame)
 
         if node.else_:
             self.writeline('if l_loop is None:')
+            self.indent()
+            self.writeline('l_loop = ' + parent_loop)
+            self.outdent()
             self.blockvisit(node.else_, loop_frame)
 
         # reset the aliases if there are any.
@@ -667,7 +719,7 @@ class CodeGenerator(NodeVisitor):
                         self.write('%s.append(' % frame.buffer)
                     self.write(finalizer + '(')
                     self.visit(item, frame)
-                    self.write(')' * (1 + frame.buffer is not None))
+                    self.write(')' * (1 + (frame.buffer is not None)))
 
         # otherwise we create a format string as this is faster in that case
         else:
@@ -721,8 +773,14 @@ class CodeGenerator(NodeVisitor):
                 self.writeline('context[%r] = l_%s' % (name, name))
 
     def visit_Name(self, node, frame):
-        if frame.toplevel and node.ctx == 'store':
-            frame.assigned_names.add(node.name)
+        if node.ctx == 'store':
+            if frame.toplevel:
+                frame.assigned_names.add(node.name)
+            frame.name_overrides.pop(node.name, None)
+        elif node.ctx == 'load':
+            if node.name in frame.name_overrides:
+                self.write(frame.name_overrides[node.name])
+                return
         self.write('l_' + node.name)
 
     def visit_Const(self, node, frame):
@@ -855,6 +913,24 @@ class CodeGenerator(NodeVisitor):
         self.visit(node.node, frame)
         self.signature(node, frame)
         self.write(')')
+
+    def visit_CondExpr(self, node, frame):
+        if not have_condexpr:
+            self.write('((')
+            self.visit(node.test, frame)
+            self.write(') and (')
+            self.visit(node.expr1, frame)
+            self.write(',) or (')
+            self.visit(node.expr2, frame)
+            self.write(',))[0]')
+        else:
+            self.write('(')
+            self.visit(node.expr1, frame)
+            self.write(' if ')
+            self.visit(node.test, frame)
+            self.write(' else ')
+            self.visit(node.expr2, frame)
+            self.write(')')
 
     def visit_Call(self, node, frame, extra_kwargs=None):
         self.visit(node.node, frame)

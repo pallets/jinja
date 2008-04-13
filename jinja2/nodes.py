@@ -207,7 +207,7 @@ class Extends(Stmt):
 
 class For(Stmt):
     """A node that represents a for loop"""
-    fields = ('target', 'iter', 'body', 'else_', 'recursive')
+    fields = ('target', 'iter', 'body', 'else_', 'test')
 
 
 class If(Stmt):

@@ -131,6 +131,9 @@ class Optimizer(NodeTransformer):
             # we also don't want unrolling if macros are defined in it
             if node.find(nodes.Macro) is not None:
                 raise TypeError()
+            # XXX: add support for loop test clauses in the optimizer
+            if node.test is not None:
+                raise TypeError()
         except (nodes.Impossible, TypeError):
             return self.generic_visit(node, context)
 
@@ -156,7 +159,7 @@ class Optimizer(NodeTransformer):
 
         try:
             try:
-                for loop, item in LoopContext(iterable, parent, True):
+                for item, loop in LoopContext(iterable, parent, True):
                     context['loop'] = loop.make_static()
                     assign(node.target, item)
                     result.extend(self.visit(n.copy(), context)

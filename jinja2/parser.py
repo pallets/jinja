@@ -110,18 +110,17 @@ class Parser(object):
                                       self.filename)
         target.set_ctx('store')
         self.stream.expect('in')
-        iter = self.parse_tuple()
-        if self.stream.current.type is 'recursive':
+        iter = self.parse_tuple(no_condexpr=True)
+        test = None
+        if self.stream.current.type is 'if':
             self.stream.next()
-            recursive = True
-        else:
-            recursive = False
+            test = self.parse_expression()
         body = self.parse_statements(('endfor', 'else'))
         if self.stream.next().type is 'endfor':
             else_ = []
         else:
             else_ = self.parse_statements(('endfor',), drop_needle=True)
-        return nodes.For(target, iter, body, else_, False, lineno=lineno)
+        return nodes.For(target, iter, body, else_, test, lineno=lineno)
 
     def parse_if(self):
         """Parse an if construct."""
@@ -236,8 +235,10 @@ class Parser(object):
         self.end_statement()
         return node
 
-    def parse_expression(self):
+    def parse_expression(self, no_condexpr=False):
         """Parse an expression."""
+        if no_condexpr:
+            return self.parse_or()
         return self.parse_condexpr()
 
     def parse_condexpr(self):
@@ -417,14 +418,19 @@ class Parser(object):
             node = self.parse_postfix(node)
         return node
 
-    def parse_tuple(self, enforce=False, simplified=False):
+    def parse_tuple(self, enforce=False, simplified=False, no_condexpr=False):
         """
         Parse multiple expressions into a tuple. This can also return
         just one expression which is not a tuple. If you want to enforce
         a tuple, pass it enforce=True (currently unused).
         """
         lineno = self.stream.current.lineno
-        parse = simplified and self.parse_primary or self.parse_expression
+        if simplified:
+            parse = self.parse_primary
+        elif no_condexpr:
+            parse = lambda: self.parse_expression(no_condexpr=True)
+        else:
+            parse = self.parse_expression
         args = []
         is_tuple = False
         while 1:
