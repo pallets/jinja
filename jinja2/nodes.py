@@ -405,7 +405,7 @@ class Filter(Expr):
             raise Impossible()
         filter = self.environment.filters.get(self.name)
         if filter is None or getattr(filter, 'contextfilter', False):
-            raise nodes.Impossible()
+            raise Impossible()
         if obj is None:
             obj = self.node.as_const()
         args = [x.as_const() for x in self.args]
@@ -423,7 +423,7 @@ class Filter(Expr):
         try:
             return filter(obj, *args, **kwargs)
         except:
-            raise nodes.Impossible()
+            raise Impossible()
 
 
 class Test(Expr):
@@ -452,7 +452,7 @@ class Call(Expr):
         try:
             return obj(*args, **kwargs)
         except:
-            raise nodes.Impossible()
+            raise Impossible()
 
 
 class Subscript(Expr):

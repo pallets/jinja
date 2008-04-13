@@ -3,8 +3,8 @@ import sys
 sys.path.insert(0, os.path.join(os.path.dirname(__file__), '..', '..'))
 
 import jdebug
-from jinja import Environment, DictLoader
-from jinja.exceptions import TemplateNotFound
+from jinja2 import Environment, DictLoader
+from jinja2.exceptions import TemplateNotFound
 from wsgiref.simple_server import make_server
 
 e = Environment(loader=DictLoader({

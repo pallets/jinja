@@ -15,7 +15,9 @@ try:
 except ImportError:
     itemgetter = lambda a: lambda b: b[a]
 from urllib import urlencode, quote
-from jinja2.utils import escape
+from jinja2.utils import escape, pformat
+from jinja2.nodes import Undefined
+
 
 
 _striptags_re = re.compile(r'(<!--.*?-->|<[^>]*>)')
@@ -138,7 +140,7 @@ def do_title(s):
     return unicode(s).title()
 
 
-def do_dictsort(case_sensitive=False, by='key'):
+def do_dictsort(value, case_sensitive=False, by='key'):
     """
     Sort a dict and yield (key, value) pairs. Because python dicts are
     unsorted you may want to use this function to order them by either
@@ -163,19 +165,16 @@ def do_dictsort(case_sensitive=False, by='key'):
     else:
         raise FilterArgumentError('You can only sort by either '
                                   '"key" or "value"')
-    def sort_func(value, env):
+    def sort_func(value):
         if isinstance(value, basestring):
-            value = env.to_unicode(value)
+            value = unicode(value)
             if not case_sensitive:
                 value = value.lower()
         return value
 
-    def wrapped(env, context, value):
-        items = value.items()
-        items.sort(lambda a, b: cmp(sort_func(a[pos], env),
-                                    sort_func(b[pos], env)))
-        return items
-    return wrapped
+    items = value.items()
+    items.sort(lambda a, b: cmp(sort_func(a[pos]), sort_func(b[pos])))
+    return items
 
 
 def do_default(value, default_value=u'', boolean=False):
@@ -196,8 +195,7 @@ def do_default(value, default_value=u'', boolean=False):
 
         {{ ''|default('the string was empty', true) }}
     """
-    # XXX: undefined_sigleton
-    if (boolean and not value) or value in (env.undefined_singleton, None):
+    if (boolean and not value) or isinstance(value, Undefined):
         return default_value
     return value
 
@@ -219,7 +217,7 @@ def do_join(value, d=u''):
     return unicode(d).join([unicode(x) for x in value])
 
 
-def do_count():
+def do_count(value):
     """
     Return the length of the value. In case if getting an integer or float
     it will convert it into a string an return the length of the new
@@ -233,7 +231,7 @@ def do_count():
         return 0
 
 
-def do_reverse(l):
+def do_reverse(value):
     """
     Return a reversed list of the sequence filtered. You can use this
     for example for reverse iteration:
@@ -279,7 +277,7 @@ def do_last(seq):
         return env.undefined_singleton
 
 
-def do_random():
+def do_random(seq):
     """
     Return a random item from the sequence.
     """
@@ -331,26 +329,24 @@ def do_jsonencode(value):
     return simplejson.dumps(value)
 
 
-def do_filesizeformat():
+def do_filesizeformat(value):
     """
     Format the value like a 'human-readable' file size (i.e. 13 KB, 4.1 MB, 102
     bytes, etc).
     """
-    def wrapped(env, context, value):
-        # fail silently
-        try:
-            bytes = float(value)
-        except TypeError:
-            bytes = 0
+    # fail silently
+    try:
+        bytes = float(value)
+    except TypeError:
+        bytes = 0
 
-        if bytes < 1024:
-            return "%d Byte%s" % (bytes, bytes != 1 and 's' or '')
-        elif bytes < 1024 * 1024:
-            return "%.1f KB" % (bytes / 1024)
-        elif bytes < 1024 * 1024 * 1024:
-            return "%.1f MB" % (bytes / (1024 * 1024))
-        return "%.1f GB" % (bytes / (1024 * 1024 * 1024))
-    return wrapped
+    if bytes < 1024:
+        return "%d Byte%s" % (bytes, bytes != 1 and 's' or '')
+    elif bytes < 1024 * 1024:
+        return "%.1f KB" % (bytes / 1024)
+    elif bytes < 1024 * 1024 * 1024:
+        return "%.1f MB" % (bytes / (1024 * 1024))
+    return "%.1f GB" % (bytes / (1024 * 1024 * 1024))
 
 
 def do_pprint(value, verbose=False):
@@ -495,45 +491,42 @@ def do_rst(s):
     parts = publish_parts(source=s, writer_name='html4css1')
     return parts['fragment']
 
-def do_int(default=0):
+
+def do_int(value, default=0):
     """
     Convert the value into an integer. If the
     conversion doesn't work it will return ``0``. You can
     override this default using the first parameter.
     """
-    def wrapped(env, context, value):
+    try:
+        return int(value)
+    except (TypeError, ValueError):
         try:
-            return int(value)
+            return int(float(value))
         except (TypeError, ValueError):
-            try:
-                return int(float(value))
-            except (TypeError, ValueError):
-                return default
-    return wrapped
+            return default
 
 
-def do_float(default=0.0):
+def do_float(value, default=0.0):
     """
     Convert the value into a floating point number. If the
     conversion doesn't work it will return ``0.0``. You can
     override this default using the first parameter.
     """
-    def wrapped(env, context, value):
-        try:
-            return float(value)
-        except (TypeError, ValueError):
-            return default
-    return wrapped
+    try:
+        return float(value)
+    except (TypeError, ValueError):
+        return default
 
 
-def do_string():
+def do_string(value):
     """
     Convert the value into an string.
     """
-    return lambda e, c, v: e.to_unicode(v)
+    return unicode(value)
 
 
-def do_format(*args):
+def do_format(value, *args):
     """
     Apply python string formatting on an object:
 
@@ -545,9 +538,7 @@ def do_format(*args):
     Note that you cannot use the mapping syntax (``%(name)s``)
     like in python. Use `|dformat` for that.
     """
-    def wrapped(env, context, value):
-        return env.to_unicode(value) % args
-    return wrapped
+    return unicode(value) % args
 
 
 def do_dformat(d):
@@ -578,39 +569,6 @@ def do_trim(value):
     return value.strip()
 
 
-def do_capture(name='captured', clean=False):
-    """
-    Store the value in a variable called ``captured`` or a variable
-    with the name provided. Useful for filter blocks:
-
-    .. sourcecode:: jinja
-
-        {% filter capture('foo') %}
-            ...
-        {% endfilter %}
-        {{ foo }}
-
-    This will output "..." two times. One time from the filter block
-    and one time from the variable. If you don't want the filter to
-    output something you can use it in `clean` mode:
-
-    .. sourcecode:: jinja
-
-        {% filter capture('foo', True) %}
-            ...
-        {% endfilter %}
-        {{ foo }}
-    """
-    if not isinstance(name, basestring):
-        raise FilterArgumentError('You can only capture into variables')
-    def wrapped(env, context, value):
-        context[name] = value
-        if clean:
-            return TemplateData()
-        return value
-    return wrapped
-
-
 def do_striptags(value):
     """
     Strip SGML/XML tags and replace adjacent whitespace by one space.
@@ -620,7 +578,7 @@ def do_striptags(value):
     return ' '.join(_striptags_re.sub('', value).split())
 
 
-def do_slice(slices, fill_with=None):
+def do_slice(value, slices, fill_with=None):
     """
     Slice an iterator and return a list of lists containing
     those items. Useful if you want to create a div containing
@@ -643,27 +601,25 @@ def do_slice(slices, fill_with=None):
 
     *new in Jinja 1.1*
     """
-    def wrapped(env, context, value):
-        result = []
-        seq = list(value)
-        length = len(seq)
-        items_per_slice = length // slices
-        slices_with_extra = length % slices
-        offset = 0
-        for slice_number in xrange(slices):
-            start = offset + slice_number * items_per_slice
-            if slice_number < slices_with_extra:
-                offset += 1
-            end = offset + (slice_number + 1) * items_per_slice
-            tmp = seq[start:end]
-            if fill_with is not None and slice_number >= slices_with_extra:
-                tmp.append(fill_with)
-            result.append(tmp)
-        return result
-    return wrapped
+    result = []
+    seq = list(value)
+    length = len(seq)
+    items_per_slice = length // slices
+    slices_with_extra = length % slices
+    offset = 0
+    for slice_number in xrange(slices):
+        start = offset + slice_number * items_per_slice
+        if slice_number < slices_with_extra:
+            offset += 1
+        end = offset + (slice_number + 1) * items_per_slice
+        tmp = seq[start:end]
+        if fill_with is not None and slice_number >= slices_with_extra:
+            tmp.append(fill_with)
+        result.append(tmp)
+    return result
 
 
-def do_batch(linecount, fill_with=None):
+def do_batch(value, linecount, fill_with=None):
     """
     A filter that batches items. It works pretty much like `slice`
     just the other way round. It returns a list of lists with the
@@ -684,20 +640,18 @@ def do_batch(linecount, fill_with=None):
 
     *new in Jinja 1.1*
     """
-    def wrapped(env, context, value):
-        result = []
-        tmp = []
-        for item in value:
-            if len(tmp) == linecount:
-                result.append(tmp)
-                tmp = []
-            tmp.append(item)
-        if tmp:
-            if fill_with is not None and len(tmp) < linecount:
-                tmp += [fill_with] * (linecount - len(tmp))
+    result = []
+    tmp = []
+    for item in value:
+        if len(tmp) == linecount:
             result.append(tmp)
-        return result
-    return wrapped
+            tmp = []
+        tmp.append(item)
+    if tmp:
+        if fill_with is not None and len(tmp) < linecount:
+            tmp += [fill_with] * (linecount - len(tmp))
+        result.append(tmp)
+    return result
 
 
 def do_sum():
@@ -888,7 +842,6 @@ FILTERS = {
     'urlize':               do_urlize,
     'format':               do_format,
     'dformat':              do_dformat,
-    'capture':              do_capture,
     'trim':                 do_trim,
     'striptags':            do_striptags,
     'slice':                do_slice,

@@ -15,7 +15,6 @@
 """
 
 CAPITALIZE = '''{{ "foo bar"|capitalize }}'''
-CAPTURE = '''{{ "foo"|capture('bar') }}|{{ bar }}'''
 CENTER = '''{{ "foo"|center(9) }}'''
 DEFAULT = '''{{ missing|default("no") }}|{{ false|default('no') }}|\
 {{ false|default('no', true) }}|{{ given|default("no") }}'''
@@ -75,11 +74,6 @@ def test_capitalize(env):
     assert tmpl.render() == 'Foo bar'
 
 
-def test_capture(env):
-    tmpl = env.from_string(CAPTURE)
-    assert tmpl.render() == 'foo|foo'
-
-
 def test_center(env):
     tmpl = env.from_string(CENTER)
     assert tmpl.render() == '   foo   '
@@ -115,7 +109,7 @@ def test_slice(env):
 def test_escape(env):
     tmpl = env.from_string(ESCAPE)
     out = tmpl.render()
-    assert out == '&lt;"&gt;&amp;|&lt;&quot;&gt;&amp;'
+    assert out == '&lt;&quot;&gt;&amp;|&lt;&quot;&gt;&amp;'
 
 
 def test_striptags(env):
@@ -191,7 +185,7 @@ def test_lower(env):
 def test_pprint(env):
     from pprint import pformat
     tmpl = env.from_string(PPRINT)
-    data = range(10000)
+    data = range(1000)
     assert tmpl.render(data=data) == pformat(data)
 
 

@@ -7,9 +7,9 @@
     :license: BSD, see LICENSE for more details.
 """
 
-from jinja import Environment
-from jinja.exceptions import TemplateRuntimeError
-from jinja.datastructure import SilentUndefined, ComplainingUndefined
+from jinja2 import Environment
+from jinja2.exceptions import TemplateRuntimeError
+from jinja2.datastructure import SilentUndefined, ComplainingUndefined
 
 
 silent_env = Environment(undefined_singleton=SilentUndefined)

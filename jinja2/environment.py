@@ -136,7 +136,9 @@ class Template(object):
     """Represents a template."""
 
     def __init__(self, environment, code):
-        namespace = {'environment': environment}
+        namespace = {
+            'environment': environment
+        }
         exec code in namespace
         self.environment = environment
         self.name = namespace['filename']

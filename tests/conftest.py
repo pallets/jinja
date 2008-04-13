@@ -14,8 +14,8 @@ import sys
 sys.path.insert(0, os.path.join(os.path.dirname(__file__), '..'))
 
 import py
-from jinja import Environment
-from jinja.parser import Parser
+from jinja2 import Environment
+from jinja2.parser import Parser
 
 try:
     # This code adds support for coverage.py (see
@@ -25,15 +25,15 @@ try:
 
     import coverage, atexit
 
-    IGNORED_MODULES = ['jinja._speedups', 'jinja.defaults',
-                       'jinja.translators']
+    IGNORED_MODULES = ['jinja2._speedups', 'jinja2.defaults',
+                       'jinja2.translators']
 
     def report_coverage():
         coverage.stop()
         module_list = [
             mod for name, mod in sys.modules.copy().iteritems() if
             getattr(mod, '__file__', None) and
-            name.startswith('jinja.') and
+            name.startswith('jinja2.') and
             name not in IGNORED_MODULES
         ]
         module_list.sort()
@@ -70,7 +70,7 @@ class GlobalLoader(object):
 
 
 loader = GlobalLoader(globals())
-simple_env = Environment(trim_blocks=True, friendly_traceback=False, loader=loader)
+simple_env = Environment(trim_blocks=True, loader=loader)
 
 
 class MemcacheClient(object):

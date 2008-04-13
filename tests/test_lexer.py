@@ -24,14 +24,14 @@ def test_raw(env):
 
 
 def test_balancing():
-    from jinja import Environment
+    from jinja2 import Environment
     env = Environment('{%', '%}', '${', '}')
     tmpl = env.from_string(BALANCING)
     assert tmpl.render(seq=range(3)) == "{'FOO': 0}{'FOO': 1}{'FOO': 2}"
 
 
 def test_comments():
-    from jinja import Environment
+    from jinja2 import Environment
     env = Environment('<!--', '-->', '{', '}')
     tmpl = env.from_string(COMMENTS)
     assert tmpl.render(seq=range(3)) == ("<ul>\n  <li>0</li>\n  "
@@ -51,7 +51,7 @@ def test_bytefallback(env):
 
 
 def test_operators(env):
-    from jinja.lexer import operators
+    from jinja2.lexer import operators
     for test, expect in operators.iteritems():
         if test in '([{}])':
             continue

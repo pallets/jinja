@@ -24,7 +24,7 @@ try:
 except ImportError:
     have_genshi = False
 
-from jinja import Environment
+from jinja2 import Environment
 
 try:
     from django.conf import settings

@@ -6,8 +6,8 @@
     :copyright: 2007 by Armin Ronacher.
     :license: BSD, see LICENSE for more details.
 """
-from jinja import Environment, DictLoader
-from jinja.exceptions import TemplateSyntaxError
+from jinja2 import Environment, DictLoader
+from jinja2.exceptions import TemplateSyntaxError
 
 
 CALL = '''{{ foo('a', c='d', e='f', *['b'], **{'g': 'h'}) }}'''
@@ -46,7 +46,7 @@ TRAILINGCOMMA = '''{{ (1, 2,) }}|{{ [1, 2,] }}|{{ {1: 2,} }}|{{ @(1, 2,) }}'''
 
 
 def test_call():
-    from jinja import Environment
+    from jinja2 import Environment
     env = Environment()
     env.globals['foo'] = lambda a, b, c, e, g: a + b + c + e + g
     tmpl = env.from_string(CALL)

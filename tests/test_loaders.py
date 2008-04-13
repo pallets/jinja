@@ -9,8 +9,8 @@
 
 import time
 import tempfile
-from jinja import Environment, loaders
-from jinja.exceptions import TemplateNotFound
+from jinja2 import Environment, loaders
+from jinja2.exceptions import TemplateNotFound
 
 
 dict_loader = loaders.DictLoader({

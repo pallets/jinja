@@ -19,3 +19,16 @@ def escape(obj, attribute=False):
         .replace('>', '&gt;') \
         .replace('<', '&lt;') \
         .replace('"', '&quot;')
+
+
+def pformat(obj, verbose=False):
+    """
+    Prettyprint an object.  Either use the `pretty` library or the
+    builtin `pprint`.
+    """
+    try:
+        from pretty import pretty
+        return pretty(obj, verbose=verbose)
+    except ImportError:
+        from pprint import pformat
+        return pformat(obj)

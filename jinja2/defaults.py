@@ -10,7 +10,9 @@
 """
 from jinja2.filters import FILTERS as DEFAULT_FILTERS
 from jinja.tests import TESTS as DEFAULT_TESTS
-DEFAULT_NAMESPACE = {}
+DEFAULT_NAMESPACE = {
+    'range': xrange
+}
 
 
 __all__ = ['DEFAULT_FILTERS', 'DEFAULT_TESTS', 'DEFAULT_NAMESPACE']

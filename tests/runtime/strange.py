@@ -1,5 +1,5 @@
 import jdebug
-from jinja import Environment, DictLoader
+from jinja2 import Environment, DictLoader
 
 base_tmpl = """
 {% block content %}Default{% endblock %}

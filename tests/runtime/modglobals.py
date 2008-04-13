@@ -1,6 +1,6 @@
 # test file for block super support
 import jdebug
-from jinja import Environment, DictLoader
+from jinja2 import Environment, DictLoader
 
 env = Environment(loader=DictLoader({
     'a': '''\

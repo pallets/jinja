@@ -1,5 +1,5 @@
 import jdebug
-from jinja import from_string
+from jinja2 import from_string
 
 
 template = from_string(u'''\

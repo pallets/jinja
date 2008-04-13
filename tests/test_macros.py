@@ -64,7 +64,7 @@ def test_simple(env):
 
 
 def test_kwargs_failure(env):
-    from jinja.exceptions import TemplateRuntimeError
+    from jinja2.exceptions import TemplateRuntimeError
     tmpl = env.from_string(KWARGSFAILURE)
     try:
         tmpl.render()

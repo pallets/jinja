@@ -7,7 +7,7 @@
     :license: BSD, see LICENSE for more details.
 """
 
-from jinja import Environment
+from jinja2 import Environment
 
 NO_VARIABLE_BLOCK = '''\
 {# i'm a freaking comment #}\

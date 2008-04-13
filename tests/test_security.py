@@ -6,7 +6,7 @@
     :copyright: 2007 by Armin Ronacher.
     :license: BSD, see LICENSE for more details.
 """
-from jinja import Environment
+from jinja2 import Environment
 
 
 NONLOCALSET = '''\

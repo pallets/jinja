@@ -6,7 +6,7 @@
     :copyright: 2007 by Armin Ronacher.
     :license: BSD, see LICENSE for more details.
 """
-from jinja.exceptions import TemplateSyntaxError
+from jinja2.exceptions import TemplateSyntaxError
 
 KEYWORDS = '''\
 {{ with }}
@@ -58,14 +58,14 @@ def test_raw(env):
 
 
 def test_crazy_raw():
-    from jinja import Environment
+    from jinja2 import Environment
     env = Environment('{', '}', '{', '}')
     tmpl = env.from_string('{raw}{broken foo}{endraw}')
     assert tmpl.render() == '{broken foo}'
 
 
 def test_cache_dict():
-    from jinja.utils import CacheDict
+    from jinja2.utils import CacheDict
     d = CacheDict(3)
     d["a"] = 1
     d["b"] = 2
@@ -77,13 +77,13 @@ def test_cache_dict():
 
 
 def test_stringfilter(env):
-    from jinja.filters import stringfilter
+    from jinja2.filters import stringfilter
     f = stringfilter(lambda f, x: f + x)
     assert f('42')(env, None, 23) == '2342'
 
 
 def test_simplefilter(env):
-    from jinja.filters import simplefilter
+    from jinja2.filters import simplefilter
     f = simplefilter(lambda f, x: f + x)
     assert f(42)(env, None, 23) == 65
 

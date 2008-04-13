@@ -1,6 +1,6 @@
 import jdebug
 from time import time
-from jinja import Environment
+from jinja2 import Environment
 tmpl = Environment().from_string('''
 <h1>Bigtable</h1>
 <table>
