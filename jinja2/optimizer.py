@@ -123,6 +123,7 @@ class Optimizer(NodeTransformer):
 
     def visit_For(self, node, context):
         """Loop unrolling for iterable constant values."""
+        fallback = self.generic_visit(node.copy(), context)
         try:
             iterable = self.visit(node.iter, context).as_const()
             # we only unroll them if they have a length and are iterable
@@ -131,11 +132,8 @@ class Optimizer(NodeTransformer):
             # we also don't want unrolling if macros are defined in it
             if node.find(nodes.Macro) is not None:
                 raise TypeError()
-            # XXX: add support for loop test clauses in the optimizer
-            if node.test is not None:
-                raise TypeError()
         except (nodes.Impossible, TypeError):
-            return self.generic_visit(node, context)
+            return fallback
 
         parent = context.get('loop')
         context.push()
@@ -156,6 +154,20 @@ class Optimizer(NodeTransformer):
                     assign(name, val)
             else:
                 raise AssertionError('unexpected assignable node')
+
+        if node.test is not None:
+            filtered_sequence = []
+            for item in iterable:
+                context.push()
+                assign(node.target, item)
+                try:
+                    rv = self.visit(node.test.copy(), context).as_const()
+                except:
+                    return fallback
+                context.pop()
+                if rv:
+                    filtered_sequence.append(item)
+            iterable = filtered_sequence
 
         try:
             try:

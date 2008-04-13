@@ -240,16 +240,18 @@ class CodeGenerator(NodeVisitor):
     def outdent(self, step=1):
         self.indentation -= step
 
-    def blockvisit(self, nodes, frame, force_generator=False):
-        self.indent()
-        if force_generator and frame.buffer is None:
+    def blockvisit(self, nodes, frame, indent=True, force_generator=True):
+        if indent:
+            self.indent()
+        if frame.buffer is None and force_generator:
             self.writeline('if 0: yield None')
         try:
             for node in nodes:
                 self.visit(node, frame)
         except CompilerExit:
             pass
-        self.outdent()
+        if indent:
+            self.outdent()
 
     def write(self, x):
         if self.new_lines:
@@ -297,8 +299,8 @@ class CodeGenerator(NodeVisitor):
             self.write('**')
             self.visit(node.dyn_kwargs, frame)
 
-    def pull_locals(self, frame, no_indent=False):
-        if not no_indent:
+    def pull_locals(self, frame, indent=True):
+        if indent:
             self.indent()
         for name in frame.identifiers.undeclared:
             self.writeline('l_%s = context[%r]' % (name, name))
@@ -306,7 +308,7 @@ class CodeGenerator(NodeVisitor):
             self.writeline('f_%s = environment.filters[%r]' % (name, name))
         for name in frame.identifiers.tests:
             self.writeline('t_%s = environment.tests[%r]' % (name, name))
-        if not no_indent:
+        if indent:
             self.outdent()
 
     def collect_shadowed(self, frame):
@@ -394,11 +396,11 @@ class CodeGenerator(NodeVisitor):
         frame = Frame()
         frame.inspect(node.body)
         frame.toplevel = frame.rootlevel = True
-        self.pull_locals(frame)
         self.indent()
+        self.pull_locals(frame, indent=False)
         self.writeline('yield context')
+        self.blockvisit(node.body, frame, indent=False)
         self.outdent()
-        self.blockvisit(node.body, frame)
 
         # make sure that the parent root is called.
         if have_extends:
@@ -421,7 +423,7 @@ class CodeGenerator(NodeVisitor):
             self.writeline('def block_%s(context, environment=environment):'
                            % name, block, 1)
             self.pull_locals(block_frame)
-            self.blockvisit(block.body, block_frame, True)
+            self.blockvisit(block.body, block_frame)
 
         self.writeline('blocks = {%s}' % ', '.join('%r: block_%s' % (x, x)
                                                    for x in self.blocks), extra=1)
@@ -526,7 +528,7 @@ class CodeGenerator(NodeVisitor):
             loop_frame.identifiers.add_special('loop')
 
         aliases = self.collect_shadowed(loop_frame)
-        self.pull_locals(loop_frame, True)
+        self.pull_locals(loop_frame, indent=False)
         if node.else_:
             self.writeline('l_loop = None')
 
@@ -576,14 +578,14 @@ class CodeGenerator(NodeVisitor):
             self.writeline('continue')
             self.outdent(2)
 
-        self.blockvisit(node.body, loop_frame)
+        self.blockvisit(node.body, loop_frame, force_generator=False)
 
         if node.else_:
             self.writeline('if l_loop is None:')
             self.indent()
             self.writeline('l_loop = ' + parent_loop)
             self.outdent()
-            self.blockvisit(node.else_, loop_frame)
+            self.blockvisit(node.else_, loop_frame, force_generator=False)
 
         # reset the aliases if there are any.
         for name, alias in aliases.iteritems():
@@ -603,8 +605,13 @@ class CodeGenerator(NodeVisitor):
         macro_frame = self.function_scoping(node, frame)
         args = macro_frame.arguments
         self.writeline('def macro(%s):' % ', '.join(args), node)
-        self.pull_locals(macro_frame)
-        self.blockvisit(node.body, macro_frame, True)
+        macro_frame.buffer = buf = self.temporary_identifier()
+        self.indent()
+        self.pull_locals(macro_frame, indent=False)
+        self.writeline('%s = []' % buf)
+        self.blockvisit(node.body, macro_frame, indent=False)
+        self.writeline("return TemplateData(u''.join(%s))" % buf)
+        self.outdent()
         self.newline()
         if frame.toplevel:
             self.write('context[%r] = ' % node.name)
@@ -614,7 +621,7 @@ class CodeGenerator(NodeVisitor):
         self.write('l_%s = Macro(macro, %r, (%s), (' % (node.name, node.name,
                                                        arg_tuple))
         for arg in node.defaults:
-            self.visit(arg)
+            self.visit(arg, macro_frame)
             self.write(', ')
         self.write('), %s, %s)' % (
             macro_frame.accesses_arguments and '1' or '0',
@@ -625,7 +632,13 @@ class CodeGenerator(NodeVisitor):
         call_frame = self.function_scoping(node, frame)
         args = call_frame.arguments
         self.writeline('def call(%s):' % ', '.join(args), node)
-        self.blockvisit(node.body, call_frame, node)
+        call_frame.buffer = buf = self.temporary_identifier()
+        self.indent()
+        self.pull_locals(call_frame, indent=False)
+        self.writeline('%s = []' % buf)
+        self.blockvisit(node.body, call_frame, indent=False)
+        self.writeline("return TemplateData(u''.join(%s))" % buf)
+        self.outdent()
         arg_tuple = ', '.join(repr(x.name) for x in node.args)
         if len(node.args) == 1:
             arg_tuple += ','
@@ -647,7 +660,7 @@ class CodeGenerator(NodeVisitor):
         filter_frame.inspect(node.iter_child_nodes())
 
         aliases = self.collect_shadowed(filter_frame)
-        self.pull_locals(filter_frame, True)
+        self.pull_locals(filter_frame, indent=False)
         filter_frame.buffer = buf = self.temporary_identifier()
 
         self.writeline('%s = []' % buf, node)

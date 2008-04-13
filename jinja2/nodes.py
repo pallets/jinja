@@ -35,6 +35,17 @@ _uaop_to_func = {
     '-':        operator.neg
 }
 
+_cmpop_to_func = {
+    'eq':       operator.eq,
+    'ne':       operator.ne,
+    'gt':       operator.gt,
+    'gteq':     operator.ge,
+    'lt':       operator.lt,
+    'lteq':     operator.le,
+    'in':       operator.contains,
+    'notin':    lambda a, b: not operator.contains(a, b)
+}
+
 
 class Impossible(Exception):
     """Raised if the node could not perform a requested action."""
@@ -483,6 +494,14 @@ class Concat(Expr):
 class Compare(Expr):
     """{{ foo == bar }}, {{ foo >= bar }} etc."""
     fields = ('expr', 'ops')
+
+    def as_const(self):
+        result = value = self.expr.as_const()
+        for op in self.ops:
+            new_value = op.expr.as_const()
+            result = _cmpop_to_func[op.op](value, new_value)
+            value = new_value
+        return result
 
 
 class Operand(Helper):

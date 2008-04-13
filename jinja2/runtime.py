@@ -15,7 +15,7 @@ except ImportError:
 
 
 __all__ = ['subscribe', 'LoopContext', 'StaticLoopContext', 'TemplateContext',
-           'Macro', 'IncludedTemplate', 'Undefined']
+           'Macro', 'IncludedTemplate', 'Undefined', 'TemplateData']
 
 
 def subscribe(obj, argument):
@@ -190,6 +190,9 @@ class StaticLoopContext(LoopContextBase):
             self.parent
         )
 
+    def __len__(self):
+        return self._length
+
     def make_static(self):
         return self
 
@@ -231,7 +234,7 @@ class Macro(object):
             arguments['l_caller'] = caller
         if self.catch_all:
             arguments['l_arguments'] = kwargs
-        return TemplateData(u''.join(self._func(**arguments)))
+        return self._func(**arguments)
 
     def __repr__(self):
         return '<%s %s>' % (
