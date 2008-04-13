@@ -491,6 +491,8 @@ class CodeGenerator(NodeVisitor):
             block_frame = Frame()
             block_frame.inspect(block.body)
             block_frame.block = name
+            block_frame.identifiers.add_special('super')
+            block_frame.name_overrides['super'] = 'context.super(%r)' % name
             self.writeline('def block_%s(context, environment=environment):'
                            % name, block, 1)
             self.pull_locals(block_frame)
