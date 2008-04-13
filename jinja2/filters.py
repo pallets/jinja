@@ -15,8 +15,8 @@ try:
 except ImportError:
     itemgetter = lambda a: lambda b: b[a]
 from urllib import urlencode, quote
-from jinja2.utils import escape, pformat
-from jinja2.nodes import Undefined
+from jinja2.utils import escape, pformat, urlize
+from jinja2.runtime import Undefined
 
 
 
@@ -285,31 +285,6 @@ def do_random(seq):
         return choice(seq)
     except IndexError:
         return env.undefined_singleton
-
-
-def do_urlencode(value):
-    """
-    urlencode a string or directory.
-
-    .. sourcecode:: jinja
-
-        {{ {'foo': 'bar', 'blub': 'blah'}|urlencode }}
-            -> foo=bar&blub=blah
-
-        {{ 'Hello World' }}
-            -> Hello%20World
-    """
-    if isinstance(value, dict):
-        tmp = {}
-        for key, value in value.iteritems():
-            # XXX env.charset?
-            key = unicode(key).encode(env.charset)
-            value = unicode(value).encode(env.charset)
-            tmp[key] = value
-        return urlencode(tmp)
-    else:
-        # XXX: env.charset?
-        return quote(unicode(value).encode(env.charset))
 
 
 def do_jsonencode(value):
@@ -825,7 +800,6 @@ FILTERS = {
     'first':                do_first,
     'last':                 do_last,
     'random':               do_random,
-    'urlencode':            do_urlencode,
     'jsonencode':           do_jsonencode,
     'filesizeformat':       do_filesizeformat,
     'pprint':               do_pprint,
