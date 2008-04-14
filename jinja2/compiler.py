@@ -982,12 +982,14 @@ class CodeGenerator(NodeVisitor):
 
     def visit_Filter(self, node, frame, initial=None):
         self.write('f_%s(' % node.name)
-        if initial is not None:
+        func = self.environment.filters.get(node.name)
+        if getattr(func, 'contextfilter', False):
+            self.write('context, ')
+        if isinstance(node.node, nodes.Filter):
+            self.visit_Filter(node.node, frame, initial)
+        elif node.node is None:
             self.write(initial)
         else:
-            func = self.environment.filters.get(node.name)
-            if getattr(func, 'contextfilter', False):
-                self.write('context, ')
             self.visit(node.node, frame)
         self.signature(node, frame)
         self.write(')')

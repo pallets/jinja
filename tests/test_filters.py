@@ -49,7 +49,6 @@ TRUNCATE = '''{{ data|truncate(15, true, ">>>") }}|\
 {{ data|truncate(15, false, ">>>") }}|\
 {{ smalldata|truncate(15) }}'''
 UPPER = '''{{ "foo"|upper }}'''
-URLENCODE = '''{{ "f#b"|urlencode }}'''
 URLIZE = '''{{ "foo http://www.example.com/ bar"|urlize }}'''
 WORDCOUNT = '''{{ "foo bar baz"|wordcount }}'''
 BLOCK = '''{% filter lower|escape %}<HEHE>{% endfilter %}'''
@@ -203,7 +202,7 @@ def test_reverse(env):
 
 def test_string(env):
     tmpl = env.from_string(STRING)
-    assert tmpl.render(foo=range(10)) == str(range(10))
+    assert tmpl.render(foo=range(10)) == unicode(xrange(10))
 
 
 def test_title(env):
@@ -226,11 +225,6 @@ def test_truncate(env):
 def test_upper(env):
     tmpl = env.from_string(UPPER)
     assert tmpl.render() == 'FOO'
-
-
-def test_urlencode(env):
-    tmpl = env.from_string(URLENCODE)
-    assert tmpl.render() == 'f%23b'
 
 
 def test_urlize(env):
