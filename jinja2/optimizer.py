@@ -21,7 +21,7 @@
 """
 from jinja2 import nodes
 from jinja2.visitor import NodeVisitor, NodeTransformer
-from jinja2.runtime import subscribe, LoopContext
+from jinja2.runtime import LoopContext
 
 
 def optimize(node, environment, context_hint=None):

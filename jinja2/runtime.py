@@ -14,19 +14,8 @@ except ImportError:
     defaultdict = None
 
 
-__all__ = ['subscribe', 'LoopContext', 'StaticLoopContext', 'TemplateContext',
-           'Macro', 'IncludedTemplate', 'Undefined', 'TemplateData']
-
-
-def subscribe(obj, argument):
-    """Get an item or attribute of an object."""
-    try:
-        return getattr(obj, str(argument))
-    except (AttributeError, UnicodeError):
-        try:
-            return obj[argument]
-        except (TypeError, LookupError):
-            return Undefined(obj, argument)
+__all__ = ['LoopContext', 'StaticLoopContext', 'TemplateContext',
+           'Macro', 'IncludedTemplate', 'TemplateData']
 
 
 class TemplateData(unicode):
@@ -45,8 +34,9 @@ class TemplateContext(dict):
     the exported variables for example).
     """
 
-    def __init__(self, globals, filename, blocks, standalone):
+    def __init__(self, environment, globals, filename, blocks, standalone):
         dict.__init__(self, globals)
+        self.environment = environment
         self.exported = set()
         self.filename = filename
         self.blocks = dict((k, [v]) for k, v in blocks.iteritems())
@@ -64,8 +54,8 @@ class TemplateContext(dict):
         try:
             func = self.blocks[block][-2]
         except LookupError:
-            return Undefined('super', extra='there is probably no parent '
-                             'block with this name')
+            return self.environment.undefined('super',
+                extra='there is probably no parent block with this name')
         return SuperBlock(block, self, func)
 
     def __setitem__(self, key, value):
@@ -88,10 +78,10 @@ class TemplateContext(dict):
         def __getitem__(self, name):
             if name in self:
                 return self[name]
-            return Undefined(name)
+            return self.environment.undefined(name)
     else:
         def __missing__(self, key):
-            return Undefined(key)
+            return self.environment.undefined(key)
 
     def __repr__(self):
         return '<%s %s of %r>' % (
@@ -227,7 +217,8 @@ class StaticLoopContext(LoopContextBase):
 class Macro(object):
     """Wraps a macro."""
 
-    def __init__(self, func, name, arguments, defaults, catch_all, caller):
+    def __init__(self, environment, func, name, arguments, defaults, catch_all, caller):
+        self._environment = environment
         self._func = func
         self.name = name
         self.arguments = arguments
@@ -251,13 +242,15 @@ class Macro(object):
                     try:
                         value = self.defaults[idx - arg_count]
                     except IndexError:
-                        value = Undefined(name, extra='parameter not provided')
+                        value = self._environment.undefined(name,
+                            extra='parameter not provided')
             arguments['l_' + name] = value
         if self.caller:
             caller = kwargs.pop('caller', None)
             if caller is None:
-                caller = Undefined('caller', extra='The macro was called '
-                                   'from an expression and not a call block.')
+                caller = self._environment.undefined('caller',
+                    extra='The macro was called from an expression and not '
+                          'a call block.')
             arguments['l_caller'] = caller
         if self.catch_all:
             arguments['l_arguments'] = kwargs
@@ -271,7 +264,10 @@ class Macro(object):
 
 
 class Undefined(object):
-    """The object for undefined values."""
+    """The default undefined implementation.  This undefined implementation
+    can be printed and iterated over, but every other access will raise a
+    `NameError`.  Custom undefined classes must subclass this.
+    """
 
     def __init__(self, name=None, attr=None, extra=None):
         if attr is None:
@@ -282,18 +278,22 @@ class Undefined(object):
         if extra is not None:
             self._undefined_hint += ' (' + extra + ')'
 
-    def fail(self, *args, **kwargs):
+    def fail_with_error(self, *args, **kwargs):
         raise NameError(self._undefined_hint)
-    __getattr__ = __getitem__ = __add__ = __mul__ = __div__ = \
-    __realdiv__ = __floordiv__ = __mod__ = __pos__ = __neg__ = \
-    __call__ = fail
-    del fail
+    __add__ = __radd__ = __mul__ = __rmul__ = __div__ = __rdiv__ = \
+    __realdiv__ = __rrealdiv__ = __floordiv__ = __rfloordiv__ = \
+    __mod__ = __rmod__ = __pos__ = __neg__ = __call__ = \
+    __getattr__ = __getitem__ = fail_with_error
+    del fail_with_error
 
     def __unicode__(self):
-        return ''
+        return u''
+
+    def __str__(self):
+        return self.__unicode__().encode('utf-8')
 
     def __repr__(self):
-        return 'Undefined'
+        return 'undefined'
 
     def __len__(self):
         return 0
@@ -301,3 +301,22 @@ class Undefined(object):
     def __iter__(self):
         if 0:
             yield None
+
+    def __nonzero__(self):
+        return False
+
+
+class DebugUndefined(Undefined):
+    """An undefined that returns the debug info when printed."""
+
+    def __unicode__(self):
+        return u'{{ %s }}' % self._undefined_hint
+
+
+class StrictUndefined(Undefined):
+    """An undefined that barks on print and iteration."""
+
+    def fail_with_error(self, *args, **kwargs):
+        raise NameError(self._undefined_hint)
+    __iter__ = __unicode__ = __len__ = fail_with_error
+    del fail_with_error

@@ -12,6 +12,7 @@ from jinja2.lexer import Lexer
 from jinja2.parser import Parser
 from jinja2.optimizer import optimize
 from jinja2.compiler import generate
+from jinja2.runtime import Undefined
 from jinja2.defaults import DEFAULT_FILTERS, DEFAULT_TESTS, DEFAULT_NAMESPACE
 
 
@@ -23,6 +24,11 @@ class Environment(object):
     globals and others.
     """
 
+    #: if this environment is sandboxed.  Modifying this variable won't make
+    #: the environment sandboxed though.  For a real sandboxed environment
+    #: have a look at jinja2.sandbox
+    sandboxed = False
+
     def __init__(self,
                  block_start_string='{%',
                  block_end_string='%}',
@@ -33,6 +39,7 @@ class Environment(object):
                  line_statement_prefix=None,
                  trim_blocks=False,
                  optimized=True,
+                 undefined=Undefined,
                  loader=None):
         """Here the possible initialization parameters:
 
@@ -55,9 +62,13 @@ class Environment(object):
                                   variable tag!). Defaults to ``False``.
         `optimized`               should the optimizer be enabled?  Default is
                                   ``True``.
+        `undefined`               a subclass of `Undefined` that is used to
+                                  represent undefined variables.
         `loader`                  the loader which should be used.
         ========================= ============================================
         """
+        assert issubclass(undefined, Undefined), 'undefined must be ' \
+               'a subclass of undefined because filters depend on it.'
 
         # lexer / parser information
         self.block_start_string = block_start_string
@@ -68,6 +79,7 @@ class Environment(object):
         self.comment_end_string = comment_end_string
         self.line_statement_prefix = line_statement_prefix
         self.trim_blocks = trim_blocks
+        self.undefined = undefined
         self.optimized = optimized
 
         # defaults
@@ -86,6 +98,16 @@ class Environment(object):
 
         # create lexer
         self.lexer = Lexer(self)
+
+    def subscribe(self, obj, argument):
+        """Get an item or attribute of an object."""
+        try:
+            return getattr(obj, str(argument))
+        except (AttributeError, UnicodeError):
+            try:
+                return obj[argument]
+            except (TypeError, LookupError):
+                return self.undefined(obj, argument)
 
     def parse(self, source, filename=None):
         """Parse the sourcecode and return the abstract syntax tree. This tree
@@ -186,3 +208,56 @@ class Template(object):
         # skip the first item which is a reference to the stream
         gen.next()
         return gen
+
+    def __repr__(self):
+        return '<%s %r>' % (
+            self.__class__.__name__,
+            self.name
+        )
+
+
+class TemplateStream(object):
+    """Wraps a genererator for outputing template streams."""
+
+    def __init__(self, gen):
+        self._gen = gen
+        self._next = gen.next
+        self.buffered = False
+
+    def disable_buffering(self):
+        """Disable the output buffering."""
+        self._next = self._gen.next
+        self.buffered = False
+
+    def enable_buffering(self, size=5):
+        """Enable buffering. Buffer `size` items before yielding them."""
+        if size <= 1:
+            raise ValueError('buffer size too small')
+        self.buffered = True
+
+        def buffering_next():
+            buf = []
+            c_size = 0
+            push = buf.append
+            next = self._gen.next
+
+            try:
+                while 1:
+                    item = next()
+                    if item:
+                        push(item)
+                        c_size += 1
+                    if c_size >= size:
+                        raise StopIteration()
+            except StopIteration:
+                if not c_size:
+                    raise
+            return u''.join(buf)
+
+        self._next = buffering_next
+
+    def __iter__(self):
+        return self
+
+    def next(self):
+        return self._next()

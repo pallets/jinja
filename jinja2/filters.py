@@ -16,8 +16,7 @@ except ImportError:
     itemgetter = lambda a: lambda b: b[a]
 from urllib import urlencode, quote
 from jinja2.utils import escape, pformat
-from jinja2.nodes import Undefined
-
+from jinja2.runtime import Undefined
 
 
 _striptags_re = re.compile(r'(<!--.*?-->|<[^>]*>)')

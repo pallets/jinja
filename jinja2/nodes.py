@@ -16,7 +16,6 @@ import operator
 from itertools import chain, izip
 from collections import deque
 from copy import copy
-from jinja2.runtime import Undefined, subscribe
 
 
 _binop_to_func = {
@@ -463,7 +462,7 @@ class Subscript(Expr):
         if self.ctx != 'load':
             raise Impossible()
         try:
-            return subscribe(self.node.as_const(), self.arg.as_const())
+            return environmen.subscribe(self.node.as_const(), self.arg.as_const())
         except:
             raise Impossible()
 

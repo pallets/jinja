@@ -457,8 +457,8 @@ class CodeGenerator(NodeVisitor):
         self.writeline('def root(globals, environment=environment'
                        ', standalone=False):', extra=1)
         self.indent()
-        self.writeline('context = TemplateContext(globals, %r, blocks'
-                       ', standalone)' % self.filename)
+        self.writeline('context = TemplateContext(environment, globals, %r, '
+                       'blocks, standalone)' % self.filename)
         if have_extends:
             self.writeline('parent_root = None')
         self.outdent()
@@ -613,7 +613,7 @@ class CodeGenerator(NodeVisitor):
         # the expression pointing to the parent loop.  We make the
         # undefined a bit more debug friendly at the same time.
         parent_loop = 'loop' in aliases and aliases['loop'] \
-                      or "Undefined('loop', extra=%r)" % \
+                      or "environment.undefined('loop', extra=%r)" % \
                          'the filter section of a loop as well as the ' \
                          'else block doesn\'t have access to the special ' \
                          "'loop' variable of the current loop.  Because " \
@@ -691,8 +691,8 @@ class CodeGenerator(NodeVisitor):
         arg_tuple = ', '.join(repr(x.name) for x in node.args)
         if len(node.args) == 1:
             arg_tuple += ','
-        self.write('l_%s = Macro(macro, %r, (%s), (' % (node.name, node.name,
-                                                       arg_tuple))
+        self.write('l_%s = Macro(environment, macro, %r, (%s), (' %
+                   (node.name, node.name, arg_tuple))
         for arg in node.defaults:
             self.visit(arg, macro_frame)
             self.write(', ')
@@ -715,7 +715,8 @@ class CodeGenerator(NodeVisitor):
         arg_tuple = ', '.join(repr(x.name) for x in node.args)
         if len(node.args) == 1:
             arg_tuple += ','
-        self.writeline('caller = Macro(call, None, (%s), (' % arg_tuple)
+        self.writeline('caller = Macro(environment, call, None, (%s), (' %
+                       arg_tuple)
         for arg in node.defaults:
             self.visit(arg)
             self.write(', ')
@@ -960,7 +961,7 @@ class CodeGenerator(NodeVisitor):
                 self.visit(node.node, frame)
                 self.write('[%s]' % const)
                 return
-        self.write('subscribe(')
+        self.write('environment.subscribe(')
         self.visit(node.node, frame)
         self.write(', ')
         if have_const:
@@ -1019,8 +1020,10 @@ class CodeGenerator(NodeVisitor):
             self.write(')')
 
     def visit_Call(self, node, frame, extra_kwargs=None):
+        if self.environment.sandboxed:
+            self.write('environment.call(')
         self.visit(node.node, frame)
-        self.write('(')
+        self.write(self.environment.sandboxed and ', ' or '(')
         self.signature(node, frame, False, extra_kwargs)
         self.write(')')
 
