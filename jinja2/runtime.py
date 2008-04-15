@@ -64,11 +64,6 @@ class TemplateContext(dict):
         dict.__setitem__(self, key, value)
         self.exported.add(key)
 
-    def __delitem__(self, key):
-        """On delete we no longer export it."""
-        dict.__delitem__(self, key)
-        self.exported.dicard(key)
-
     def get_exported(self):
         """Get a dict of all exported variables."""
         return dict((k, self[k]) for k in self.exported)
