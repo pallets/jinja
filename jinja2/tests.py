@@ -9,29 +9,25 @@
     :license: BSD, see LICENSE for more details.
 """
 import re
+from jinja2.runtime import Undefined
 
 
 number_re = re.compile(r'^-?\d+(\.\d+)?$')
 regex_type = type(number_re)
 
 
-def test_odd():
-    """
-    Return true if the variable is odd.
-    """
-    return lambda e, c, v: v % 2 == 1
+def test_odd(value):
+    """Return true if the variable is odd."""
+    return value % 2 == 1
 
 
-def test_even():
-    """
-    Return true of the variable is even.
-    """
-    return lambda e, c, v: v % 2 == 0
+def test_even(value):
+    """Return true of the variable is even."""
+    return value % 2 == 0
 
 
-def test_defined():
-    """
-    Return true if the variable is defined:
+def test_defined(value):
+    """Return true if the variable is defined:
 
     .. sourcecode:: jinja
 
@@ -43,80 +39,40 @@ def test_defined():
 
     See also the ``default`` filter.
     """
-    return lambda e, c, v: v is not e.undefined_singleton
+    return not isinstance(value, Undefined)
 
 
-def test_lower():
-    """
-    Return true if the variable is lowercase.
-    """
-    return lambda e, c, v: isinstance(v, basestring) and v.islower()
+def test_lower(value):
+    """Return true if the variable is lowercase."""
+    return unicode(value).islower()
 
 
-def test_upper():
-    """
-    Return true if the variable is uppercase.
-    """
-    return lambda e, c, v: isinstance(v, basestring) and v.isupper()
+def test_upper(value):
+    """Return true if the variable is uppercase."""
+    return unicode(value).isupper()
 
 
-def test_numeric():
-    """
-    Return true if the variable is numeric.
-    """
-    return lambda e, c, v: isinstance(v, (int, long, float)) or (
-                           isinstance(v, basestring) and
-                               number_re.match(v) is not None)
+def test_numeric(value):
+    """Return true if the variable is numeric."""
+    return isinstance(value, (int, long, float)) or (
+           isinstance(value, basestring) and
+           number_re.match(value) is not None)
 
 
-def test_sequence():
-    """
-    Return true if the variable is a sequence. Sequences are variables
+def test_sequence(value):
+    """Return true if the variable is a sequence. Sequences are variables
     that are iterable.
     """
-    def wrapped(environment, context, value):
-        try:
-            len(value)
-            value.__getitem__
-        except:
-            return False
-        return True
-    return wrapped
+    try:
+        len(value)
+        value.__getitem__
+    except:
+        return False
+    return True
 
 
-def test_matching(regex):
-    r"""
-    Test if the variable matches the regular expression given. Note that
-    you have to escape special chars using *two* backslashes, these are
-    *not* raw strings.
-
-    .. sourcecode:: jinja
-
-        {% if var is matching @/^\d+$/ %}
-            var looks like a number
-        {% else %}
-            var doesn't really look like a number
-        {% endif %}
-    """
-    def wrapped(environment, context, value):
-        if type(regex) is regex_type:
-            regex_ = regex
-        else:
-            if environment.disable_regexps:
-                raise RuntimeError('regular expressions disabled.')
-            if isinstance(regex, unicode):
-                regex_ = re.compile(regex, re.U)
-            elif isinstance(regex, str):
-                regex_ = re.compile(regex)
-            else:
-                return False
-        return regex_.search(value) is not None
-    return wrapped
-
-
-def test_sameas(other):
-    """
-    Check if an object points to the same memory address than another
+def test_sameas(value, other):
+    """Check if an object points to the same memory address than another
     object:
 
     .. sourcecode:: jinja
@@ -127,7 +83,7 @@ def test_sameas(other):
 
     *New in Jinja 1.2*
     """
-    return lambda e, c, v: v is other
+    return value is other
 
 
 TESTS = {
@@ -138,6 +94,5 @@ TESTS = {
     'upper':            test_upper,
     'numeric':          test_numeric,
     'sequence':         test_sequence,
-    'matching':         test_matching,
     'sameas':           test_sameas
 }
