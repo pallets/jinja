@@ -21,7 +21,7 @@ class BaseLoader(object):
 
     def load(self, environment, name, globals=None):
         source, filename = self.get_source(environment, name)
-        code = environment.compile(source, filename, globals=globals)
+        code = environment.compile(source, name, filename, globals=globals)
         return Template(environment, code, globals or {})
 
 
@@ -43,7 +43,7 @@ class FileSystemLoader(BaseLoader):
             raise TemplateNotFound(template)
         f = file(filename)
         try:
-            return f.read().decode(self.encoding)
+            return f.read().decode(self.encoding), filename
         finally:
             f.close()
 

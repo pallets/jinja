@@ -37,9 +37,9 @@ else:
     have_condexpr = True
 
 
-def generate(node, environment, filename, stream=None):
+def generate(node, environment, name, filename, stream=None):
     """Generate the python source for a node tree."""
-    generator = CodeGenerator(environment, filename, stream)
+    generator = CodeGenerator(environment, name, filename, stream)
     generator.visit(node)
     if stream is None:
         return generator.stream.getvalue()
@@ -228,10 +228,11 @@ class CompilerExit(Exception):
 
 class CodeGenerator(NodeVisitor):
 
-    def __init__(self, environment, filename, stream=None):
+    def __init__(self, environment, name, filename, stream=None):
         if stream is None:
             stream = StringIO()
         self.environment = environment
+        self.name = name
         self.filename = filename
         self.stream = stream
 
@@ -248,10 +249,11 @@ class CodeGenerator(NodeVisitor):
         self.has_known_extends = False
 
         # the current line number
-        self.lineno = 1
+        self.code_lineno = 1
 
         # the debug information
         self.debug_info = []
+        self._write_debug_info = None
 
         # the number of new lines before the next write()
         self._new_lines = 0
@@ -306,7 +308,11 @@ class CodeGenerator(NodeVisitor):
         if self._new_lines:
             if not self._first_write:
                 self.stream.write('\n' * self._new_lines)
-                self.lineno += self._new_lines
+                self.code_lineno += self._new_lines
+                if self._write_debug_info is not None:
+                    self.debug_info.append((self._write_debug_info,
+                                            self.code_lineno))
+                    self._write_debug_info = None
             self._first_write = False
             self.stream.write('    ' * self._indentation)
             self._new_lines = 0
@@ -321,7 +327,8 @@ class CodeGenerator(NodeVisitor):
         """Add one or more newlines before the next write."""
         self._new_lines = max(self._new_lines, 1 + extra)
         if node is not None and node.lineno != self._last_line:
-            self.debug_info.append((node.lineno, self.lineno))
+            self._write_debug_info = node.lineno
+            self._last_line = node.lineno
 
     def signature(self, node, frame, have_comma=True, extra_kwargs=None):
         """Writes a function call to the stream for the current node.
@@ -444,7 +451,7 @@ class CodeGenerator(NodeVisitor):
     def visit_Template(self, node, frame=None):
         assert frame is None, 'no root frame allowed'
         self.writeline('from jinja2.runtime import *')
-        self.writeline('name = %r' % self.filename)
+        self.writeline('name = %r' % self.name)
 
         # do we have an extends tag at all?  If not, we can save some
         # overhead by just not processing any inheritance code.
@@ -463,7 +470,7 @@ class CodeGenerator(NodeVisitor):
                        ', standalone=False):', extra=1)
         self.indent()
         self.writeline('context = TemplateContext(environment, globals, %r, '
-                       'blocks, standalone)' % self.filename)
+                       'blocks, standalone)' % self.name)
         if have_extends:
             self.writeline('parent_root = None')
         self.outdent()
@@ -835,15 +842,17 @@ class CodeGenerator(NodeVisitor):
                 self.writeline('%s.append(' % frame.buffer)
             self.write(repr(u''.join(format)) + ' % (')
             idx = -1
-            for idx, argument in enumerate(arguments):
-                if idx:
-                    self.write(', ')
+            self.indent()
+            for argument in arguments:
+                self.newline(argument)
                 if have_finalizer:
                     self.write('(')
                 self.visit(argument, frame)
                 if have_finalizer:
                     self.write(')')
-            self.write(idx == 0 and ',)' or ')')
+                self.write(',')
+            self.outdent()
+            self.writeline(')')
             if frame.buffer is not None:
                 self.write(')')
 

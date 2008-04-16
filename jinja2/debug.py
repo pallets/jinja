@@ -8,15 +8,33 @@
     :copyright: Copyright 2008 by Armin Ronacher.
     :license: BSD.
 """
-import re
 import sys
 from jinja2.exceptions import TemplateNotFound
 
 
-_line_re = re.compile(r'^\s*# line: (\d+)\s*$')
+def translate_exception(exc_info):
+    """If passed an exc_info it will automatically rewrite the exceptions
+    all the way down to the correct line numbers and frames.
+    """
+    result_tb = prev_tb = None
+    initial_tb = tb = exc_info[2]
+
+    while tb is not None:
+        template = tb.tb_frame.f_globals.get('__jinja_template__')
+        if template is not None:
+            lineno = template.get_corresponding_lineno(tb.tb_lineno)
+            tb = fake_exc_info(exc_info[:2] + (tb,), template.filename,
+                               lineno, prev_tb)[2]
+        if result_tb is None:
+            result_tb = tb
+        prev_tb = tb
+        tb = tb.tb_next
+
+    return exc_info[:2] + (result_tb or initial_tb,)
 
 
 def fake_exc_info(exc_info, filename, lineno, tb_back=None):
+    """Helper for `translate_exception`."""
     exc_type, exc_value, tb = exc_info
 
     # figure the real context out
@@ -48,25 +66,6 @@ def fake_exc_info(exc_info, filename, lineno, tb_back=None):
         if tb is not None:
             tb_set_next(exc_info[2].tb_next, tb.tb_next)
     return exc_info
-
-
-def translate_exception(exc_info):
-    result_tb = prev_tb = None
-    initial_tb = tb = exc_info[2]
-
-    while tb is not None:
-        template = tb.tb_frame.f_globals.get('__jinja_template__')
-        if template is not None:
-            # TODO: inject faked exception with correct line number
-            lineno = template.get_corresponding_lineno(tb.tb_lineno)
-            tb = fake_exc_info(exc_info[:2] + (tb,), template.filename,
-                               lineno, prev_tb)[2]
-        if result_tb is None:
-            result_tb = tb
-        prev_tb = tb
-        tb = tb.tb_next
-
-    return exc_info[:2] + (result_tb or initial_tb,)
 
 
 def _init_ugly_crap():
@@ -112,11 +111,20 @@ def _init_ugly_crap():
     ]
 
     def tb_set_next(tb, next):
+        """Set the tb_next attribute of a traceback object."""
         if not (isinstance(tb, TracebackType) and
-                isinstance(next, TracebackType)):
+                (next is None or isinstance(next, TracebackType))):
             raise TypeError('tb_set_next arguments must be traceback objects')
         obj = _Traceback.from_address(id(tb))
-        obj.tb_next = ctypes.pointer(_Traceback.from_address(id(next)))
+        if tb.tb_next is not None:
+            old = _Traceback.from_address(id(tb.tb_next))
+            old.ob_refcnt -= 1
+        if next is None:
+            obj.tb_next = ctypes.POINTER(_Traceback)()
+        else:
+            next = _Traceback.from_address(id(next))
+            next.ob_refcnt += 1
+            obj.tb_next = ctypes.pointer(next)
 
     return tb_set_next
 

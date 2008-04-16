@@ -134,13 +134,14 @@ class Environment(object):
         """
         return self.lexer.tokeniter(source, name)
 
-    def compile(self, source, filename=None, raw=False, globals=None):
+    def compile(self, source, name=None, filename=None, raw=False,
+                globals=None):
         """Compile a node or source."""
         if isinstance(source, basestring):
-            source = self.parse(source, filename)
+            source = self.parse(source, name)
         if self.optimized:
             node = optimize(source, self, globals or {})
-        source = generate(node, self, filename)
+        source = generate(node, self, name, filename)
         if raw:
             return source
         if filename is None:
@@ -164,10 +165,10 @@ class Environment(object):
         globals = self.make_globals(globals)
         return self.loader.load(self, name, globals)
 
-    def from_string(self, source, filename='<string>', globals=None):
+    def from_string(self, source, globals=None):
         """Load a template from a string."""
         globals = self.make_globals(globals)
-        return Template(self, self.compile(source, filename, globals=globals),
+        return Template(self, self.compile(source, globals=globals),
                         globals)
 
     def make_globals(self, d):
