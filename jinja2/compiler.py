@@ -247,6 +247,12 @@ class CodeGenerator(NodeVisitor):
         # more optimizations.
         self.has_known_extends = False
 
+        # the current line number
+        self.lineno = 1
+
+        # the debug information
+        self.debug_info = []
+
         # the number of new lines before the next write()
         self._new_lines = 0
 
@@ -300,6 +306,7 @@ class CodeGenerator(NodeVisitor):
         if self._new_lines:
             if not self._first_write:
                 self.stream.write('\n' * self._new_lines)
+                self.lineno += self._new_lines
             self._first_write = False
             self.stream.write('    ' * self._indentation)
             self._new_lines = 0
@@ -314,9 +321,7 @@ class CodeGenerator(NodeVisitor):
         """Add one or more newlines before the next write."""
         self._new_lines = max(self._new_lines, 1 + extra)
         if node is not None and node.lineno != self._last_line:
-            self.write('# line: %s' % node.lineno)
-            self._new_lines = 1
-            self._last_line = node.lineno
+            self.debug_info.append((node.lineno, self.lineno))
 
     def signature(self, node, frame, have_comma=True, extra_kwargs=None):
         """Writes a function call to the stream for the current node.
@@ -439,7 +444,7 @@ class CodeGenerator(NodeVisitor):
     def visit_Template(self, node, frame=None):
         assert frame is None, 'no root frame allowed'
         self.writeline('from jinja2.runtime import *')
-        self.writeline('filename = %r' % self.filename)
+        self.writeline('name = %r' % self.filename)
 
         # do we have an extends tag at all?  If not, we can save some
         # overhead by just not processing any inheritance code.
@@ -499,7 +504,13 @@ class CodeGenerator(NodeVisitor):
             self.blockvisit(block.body, block_frame)
 
         self.writeline('blocks = {%s}' % ', '.join('%r: block_%s' % (x, x)
-                                                   for x in self.blocks), extra=1)
+                                                   for x in self.blocks),
+                       extra=1)
+
+        # add a function that returns the debug info
+        self.writeline('def get_debug_info():', extra=1)
+        self.indent()
+        self.writeline('return %r' % self.debug_info)
 
     def visit_Block(self, node, frame):
         """Call a block and register it for the template."""

@@ -19,8 +19,8 @@ class BaseLoader(object):
     def get_source(self, environment, template):
         raise TemplateNotFound()
 
-    def load(self, environment, template, globals=None):
-        source, filename = self.get_source(environment, template)
+    def load(self, environment, name, globals=None):
+        source, filename = self.get_source(environment, name)
         code = environment.compile(source, filename, globals=globals)
         return Template(environment, code, globals or {})
 
