@@ -50,7 +50,7 @@ def has_safe_repr(value):
     if value is None or value is NotImplemented or value is Ellipsis:
         return True
     if isinstance(value, (bool, int, long, float, complex, basestring,
-                          StaticLoopContext)):
+                          xrange, StaticLoopContext)):
         return True
     if isinstance(value, (tuple, list, set, frozenset)):
         for item in value:
@@ -1030,6 +1030,5 @@ class CodeGenerator(NodeVisitor):
         self.write(')')
 
     def visit_Keyword(self, node, frame):
-        self.visit(node.key, frame)
-        self.write('=')
+        self.write(node.key + '=')
         self.visit(node.value, frame)

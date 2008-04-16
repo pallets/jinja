@@ -67,8 +67,13 @@ class Environment(object):
         `loader`                  the loader which should be used.
         ========================= ============================================
         """
+
+        # santity checks
         assert issubclass(undefined, Undefined), 'undefined must be ' \
                'a subclass of undefined because filters depend on it.'
+        assert block_start_string != variable_start_string != \
+               comment_start_string, 'block, variable and comment ' \
+               'start strings must be different'
 
         # lexer / parser information
         self.block_start_string = block_start_string
@@ -136,7 +141,9 @@ class Environment(object):
         source = generate(node, self, filename)
         if raw:
             return source
-        if isinstance(filename, unicode):
+        if filename is None:
+            filename = '<from_string>'
+        elif isinstance(filename, unicode):
             filename = filename.encode('utf-8')
         return compile(source, filename, 'exec')
 
@@ -158,7 +165,8 @@ class Environment(object):
     def from_string(self, source, filename='<string>', globals=None):
         """Load a template from a string."""
         globals = self.make_globals(globals)
-        return Template(self, self.compile(source, filename), globals)
+        return Template(self, self.compile(source, filename, globals=globals),
+                        globals)
 
     def make_globals(self, d):
         """Return a dict for the globals."""
@@ -187,16 +195,14 @@ class Template(object):
 
     def generate(self, *args, **kwargs):
         # assemble the context
-        local_context = dict(*args, **kwargs)
-        context = self.globals.copy()
-        context.update(local_context)
+        context = dict(*args, **kwargs)
 
         # if the environment is using the optimizer locals may never
         # override globals as optimizations might have happened
         # depending on values of certain globals.  This assertion goes
         # away if the python interpreter is started with -O
         if __debug__ and self.environment.optimized:
-            overrides = set(local_context) & set(self.globals)
+            overrides = set(context) & set(self.globals)
             if overrides:
                 plural = len(overrides) != 1 and 's' or ''
                 raise AssertionError('the per template variable%s %s '
@@ -204,8 +210,8 @@ class Template(object):
                                      'With an enabled optimizer this '
                                      'will lead to unexpected results.' %
                     (plural, ', '.join(overrides), plural or ' a', plural))
-        gen = self.root_render_func(context)
-        # skip the first item which is a reference to the stream
+        gen = self.root_render_func(dict(self.globals, **context))
+        # skip the first item which is a reference to the context
         gen.next()
         return gen
 

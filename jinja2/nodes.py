@@ -159,6 +159,16 @@ class Node(object):
                 node.ctx = ctx
             todo.extend(node.iter_child_nodes())
 
+    def set_lineno(self, lineno, override=False):
+        """Set the line numbers of the node and children."""
+        todo = deque([self])
+        while todo:
+            node = todo.popleft()
+            if 'lineno' in node.attributes:
+                if node.lineno is None or override:
+                    node.lineno = lineno
+            todo.extend(node.iter_child_nodes())
+
     def set_environment(self, environment):
         """Set the environment for all nodes."""
         todo = deque([self])
@@ -333,7 +343,8 @@ class Const(Literal):
     def from_untrusted(cls, value, lineno=None, environment=None):
         """Return a const object if the value is representable as
         constant value in the generated code, otherwise it will raise
-        an `Impossible` exception."""
+        an `Impossible` exception.
+        """
         from compiler import has_safe_repr
         if not has_safe_repr(value):
             raise Impossible()

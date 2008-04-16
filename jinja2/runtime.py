@@ -137,12 +137,20 @@ class LoopContextBase(object):
         self.index0 = 0
         self.parent = parent
 
+    def cycle(self, *args):
+        """A replacement for the old ``{% cycle %}`` tag."""
+        if not args:
+            raise TypeError('no items for cycling given')
+        return args[self.index0 % len(args)]
+
     first = property(lambda x: x.index0 == 0)
     last = property(lambda x: x.revindex0 == 0)
     index = property(lambda x: x.index0 + 1)
     revindex = property(lambda x: x.length)
     revindex0 = property(lambda x: x.length - 1)
-    length = property(lambda x: len(x))
+
+    def __len__(self):
+        return self.length
 
 
 class LoopContext(LoopContextBase):
@@ -171,7 +179,8 @@ class LoopContext(LoopContextBase):
         self.index0 += 1
         return self._next(), self
 
-    def __len__(self):
+    @property
+    def length(self):
         if self._length is None:
             try:
                 length = len(self._iterable)
@@ -181,6 +190,9 @@ class LoopContext(LoopContextBase):
                 length = len(tuple(self._iterable)) + self.index0 + 1
             self._length = length
         return self._length
+
+    def __repr__(self):
+        return 'LoopContext(%r)' % self.index0
 
 
 class StaticLoopContext(LoopContextBase):
@@ -192,18 +204,15 @@ class StaticLoopContext(LoopContextBase):
     def __init__(self, index0, length, parent):
         self.index0 = index0
         self.parent = parent
-        self._length = length
+        self.length = length
 
     def __repr__(self):
         """The repr is used by the optimizer to dump the object."""
         return 'StaticLoopContext(%r, %r, %r)' % (
             self.index0,
-            self._length,
+            self.length,
             self.parent
         )
-
-    def __len__(self):
-        return self._length
 
     def make_static(self):
         return self
@@ -267,19 +276,20 @@ class Undefined(object):
     def __init__(self, name=None, attr=None, extra=None):
         if attr is None:
             self._undefined_hint = '%r is undefined' % name
+            self._error_class = NameError
         else:
-            self._undefined_hint = 'attribute %r of %r is undefined' \
-                                   % (attr, name)
+            self._undefined_hint = '%r has no attribute named %r' \
+                                   % (name, attr)
+            self._error_class = AttributeError
         if extra is not None:
             self._undefined_hint += ' (' + extra + ')'
 
-    def fail_with_error(self, *args, **kwargs):
-        raise NameError(self._undefined_hint)
+    def _fail_with_error(self, *args, **kwargs):
+        raise self._error_class(self._undefined_hint)
     __add__ = __radd__ = __mul__ = __rmul__ = __div__ = __rdiv__ = \
     __realdiv__ = __rrealdiv__ = __floordiv__ = __rfloordiv__ = \
     __mod__ = __rmod__ = __pos__ = __neg__ = __call__ = \
-    __getattr__ = __getitem__ = fail_with_error
-    del fail_with_error
+    __getattr__ = __getitem__ = _fail_with_error
 
     def __unicode__(self):
         return u''
@@ -311,7 +321,4 @@ class DebugUndefined(Undefined):
 class StrictUndefined(Undefined):
     """An undefined that barks on print and iteration."""
 
-    def fail_with_error(self, *args, **kwargs):
-        raise NameError(self._undefined_hint)
-    __iter__ = __unicode__ = __len__ = fail_with_error
-    del fail_with_error
+    __iter__ = __unicode__ = __len__ = Undefined._fail_with_error

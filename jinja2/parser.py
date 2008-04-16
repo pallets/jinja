@@ -13,7 +13,7 @@ from jinja2.exceptions import TemplateSyntaxError
 
 
 _statement_keywords = frozenset(['for', 'if', 'block', 'extends', 'print',
-                                 'macro', 'include'])
+                                 'macro', 'include', 'trans'])
 _compare_operators = frozenset(['eq', 'ne', 'lt', 'lteq', 'gt', 'gteq', 'in'])
 _statement_end_tokens = set(['elif', 'else', 'endblock', 'endfilter',
                              'endfor', 'endif', 'endmacro', 'variable_end',
@@ -33,7 +33,6 @@ class Parser(object):
         self.source = unicode(source)
         self.filename = filename
         self.closed = False
-        self.no_variable_block = self.environment.lexer.no_variable_block
         self.stream = environment.lexer.tokenize(source, filename)
 
     def end_statement(self):
@@ -234,6 +233,13 @@ class Parser(object):
             node.nodes.append(self.parse_expression())
         self.end_statement()
         return node
+
+    def parse_trans(self):
+        """Parse a translatable section."""
+        # lazily imported because we don't want the i18n overhead
+        # if it's not used.  (Even though the overhead is low)
+        from jinja2.i18n import parse_trans
+        return parse_trans(self)
 
     def parse_expression(self, no_condexpr=False):
         """Parse an expression."""

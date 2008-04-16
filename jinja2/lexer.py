@@ -236,18 +236,6 @@ class Lexer(object):
             (operator_re, 'operator', None)
         ]
 
-        #: if variables and blocks have the same delimiters we won't
-        #: receive any variable blocks in the parser. This variable is `True`
-        #: if we need that.
-        self.no_variable_block = (
-            (environment.variable_start_string is
-             environment.variable_end_string is None) or
-            (environment.variable_start_string ==
-             environment.block_start_string and
-             environment.variable_end_string ==
-             environment.block_end_string)
-        )
-
         # assamble the root lexing rule. because "|" is ungreedy
         # we have to sort by length so that the lexer continues working
         # as expected when we have parsing rules like <% for block and
@@ -256,11 +244,9 @@ class Lexer(object):
         # is required.
         root_tag_rules = [
             ('comment',     environment.comment_start_string),
-            ('block',       environment.block_start_string)
+            ('block',       environment.block_start_string),
+            ('variable',    environment.variable_start_string)
         ]
-        if not self.no_variable_block:
-            root_tag_rules.append(('variable',
-                                   environment.variable_start_string))
         root_tag_rules.sort(key=lambda x: len(x[1]))
 
         # now escape the rules.  This is done here so that the escape
@@ -309,6 +295,13 @@ class Lexer(object):
                     block_suffix_re
                 )), 'block_end', '#pop'),
             ] + tag_rules,
+            # variables
+            'variable_begin': [
+                (c('\-%s\s*|%s' % (
+                    e(environment.variable_end_string),
+                    e(environment.variable_end_string)
+                )), 'variable_end', '#pop')
+            ] + tag_rules,
             # raw block
             'raw_begin': [
                 (c('(.*?)((?:\s*%s\-|%s)\s*endraw\s*(?:\-%s\s*|%s%s))' % (
@@ -319,24 +312,12 @@ class Lexer(object):
                     block_suffix_re
                 )), ('data', 'raw_end'), '#pop'),
                 (c('(.)'), (Failure('Missing end of raw directive'),), None)
-            ]
-        }
-
-        # only add the variable rules to the list if we process variables
-        # the variable_end_string variable could be None and break things.
-        if not self.no_variable_block:
-            self.rules['variable_begin'] = [
-                (c('\-%s\s*|%s' % (
-                    e(environment.variable_end_string),
-                    e(environment.variable_end_string)
-                )), 'variable_end', '#pop')
-            ] + tag_rules
-
-        # the same goes for the line_statement_prefix
-        if environment.line_statement_prefix is not None:
-            self.rules['linestatement_begin'] = [
+            ],
+            # line statements
+            'linestatement_begin': [
                 (c(r'\s*(\n|$)'), 'linestatement_end', '#pop')
             ] + tag_rules
+        }
 
     def tokenize(self, source, filename=None):
         """Works like `tokeniter` but returns a tokenstream of tokens and not

@@ -16,12 +16,22 @@
     prerender a template, this module might speed up your templates a bit
     if you are using a lot of constants.
 
-    :copyright: Copyright 2008 by Christoph Hack.
+    :copyright: Copyright 2008 by Christoph Hack, Armin Ronacher.
     :license: GNU GPL.
 """
 from jinja2 import nodes
 from jinja2.visitor import NodeVisitor, NodeTransformer
 from jinja2.runtime import LoopContext
+
+
+# TODO
+#   - function calls to contant objects are not properly evaluated if the
+#     function is not representable at constant type.  eg:
+#           {% for item in range(10) %} doesn't become
+#           for l_item in xrange(10: even though it would be possible
+#   - multiple Output() nodes should be concatenated into one node.
+#     for example the i18n system could output such nodes:
+#     "foo{% trans %}bar{% endtrans %}blah"
 
 
 def optimize(node, environment, context_hint=None):
