@@ -108,8 +108,9 @@ def _parse_block(parser, allow_pluralize):
             parser.stream.next()
         elif parser.stream.current.type is 'variable_begin':
             parser.stream.next()
-            referenced.append(parser.stream.expect('name').value)
-            buf.append('%s')
+            name = parser.stream.expect('name').value
+            referenced.append(name)
+            buf.append('%%(%s)s' % name)
             parser.stream.expect('variable_end')
         elif parser.stream.current.type is 'block_begin':
             parser.stream.next()

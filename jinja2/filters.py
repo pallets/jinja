@@ -113,7 +113,7 @@ def do_xmlattr(d, autospace=False):
         raise TypeError('a dict is required')
     result = []
     for key, value in d.iteritems():
-        if value not in (None, env.undefined_singleton):
+        if value is not None and not isinstance(value, Undefined):
             result.append(u'%s="%s"' % (
                 escape(env.to_unicode(key)),
                 escape(env.to_unicode(value), True)
@@ -214,40 +214,7 @@ def do_join(value, d=u''):
         {{ [1, 2, 3]|join }}
             -> 123
     """
-    return unicode(d).join([unicode(x) for x in value])
-
-
-def do_count(value):
-    """
-    Return the length of the value. In case if getting an integer or float
-    it will convert it into a string an return the length of the new
-    string. If the object has no length it will of corse return 0.
-    """
-    try:
-        if type(value) in (int, float, long):
-            return len(str(value))
-        return len(value)
-    except TypeError:
-        return 0
-
-
-def do_reverse(value):
-    """
-    Return a reversed list of the sequence filtered. You can use this
-    for example for reverse iteration:
-
-    .. sourcecode:: jinja
-
-        {% for item in seq|reverse %}
-            {{ item|e }}
-        {% endfor %}
-    """
-    try:
-        return value[::-1]
-    except:
-        l = list(value)
-        l.reverse()
-        return l
+    return unicode(d).join(unicode(x) for x in value)
 
 
 def do_center(value, width=80):
@@ -257,34 +224,40 @@ def do_center(value, width=80):
     return unicode(value).center(width)
 
 
-def do_first(seq):
+@contextfilter
+def do_first(context, seq):
     """
     Return the frist item of a sequence.
     """
     try:
         return iter(seq).next()
     except StopIteration:
-        return env.undefined_singleton
+        return context.environment.undefined('seq|first',
+            extra='the sequence was empty')
 
 
-def do_last(seq):
+@contextfilter
+def do_last(context, seq):
     """
     Return the last item of a sequence.
     """
     try:
         return iter(reversed(seq)).next()
     except StopIteration:
-        return env.undefined_singleton
+        return context.environment.undefined('seq|last',
+            extra='the sequence was empty')
 
 
-def do_random(seq):
+@contextfilter
+def do_random(context, seq):
     """
     Return a random item from the sequence.
     """
     try:
         return choice(seq)
     except IndexError:
-        return env.undefined_singleton
+        return context.environment.undefined('seq|random',
+            extra='the sequence was empty')
 
 
 def do_jsonencode(value):
@@ -306,8 +279,8 @@ def do_jsonencode(value):
 
 def do_filesizeformat(value):
     """
-    Format the value like a 'human-readable' file size (i.e. 13 KB, 4.1 MB, 102
-    bytes, etc).
+    Format the value like a 'human-readable' file size (i.e. 13 KB,
+    4.1 MB, 102 bytes, etc).
     """
     # fail silently
     try:
@@ -501,7 +474,7 @@ def do_string(value):
     return unicode(value)
 
 
-def do_format(value, *args):
+def do_format(value, *args, **kwargs):
     """
     Apply python string formatting on an object:
 
@@ -509,32 +482,11 @@ def do_format(value, *args):
 
         {{ "%s - %s"|format("Hello?", "Foo!") }}
             -> Hello? - Foo!
-
-    Note that you cannot use the mapping syntax (``%(name)s``)
-    like in python. Use `|dformat` for that.
     """
+    if kwargs:
+        kwargs.update(idx, arg in enumerate(args))
+        args = kwargs
     return unicode(value) % args
-
-
-def do_dformat(d):
-    """
-    Apply python mapping string formatting on an object:
-
-    .. sourcecode:: jinja
-
-        {{ "Hello %(username)s!"|dformat({'username': 'John Doe'}) }}
-            -> Hello John Doe!
-
-    This is useful when adding variables to translateable
-    string expressions.
-
-    *New in Jinja 1.1*
-    """
-    if not isinstance(d, dict):
-        raise FilterArgumentError('dict required')
-    def wrapped(env, context, value):
-        return env.to_unicode(value) % d
-    return wrapped
 
 
 def do_trim(value):
@@ -629,28 +581,6 @@ def do_batch(value, linecount, fill_with=None):
     return result
 
 
-def do_sum():
-    """
-    Sum up the given sequence of numbers.
-
-    *new in Jinja 1.1*
-    """
-    def wrapped(env, context, value):
-        return sum(value)
-    return wrapped
-
-
-def do_abs():
-    """
-    Return the absolute value of a number.
-
-    *new in Jinja 1.1*
-    """
-    def wrapped(env, context, value):
-        return abs(value)
-    return wrapped
-
-
 def do_round(precision=0, method='common'):
     """
     Round the number to a given precision. The first
@@ -737,48 +667,6 @@ def do_groupby(attribute):
     return wrapped
 
 
-def do_getattribute(attribute):
-    """
-    Get one attribute from an object. Normally you don't have to use this
-    filter because the attribute and subscript expressions try to either
-    get an attribute of an object or an item. In some situations it could
-    be that there is an item *and* an attribute with the same name. In that
-    situation only the item is returned, never the attribute.
-
-    .. sourcecode:: jinja
-
-        {{ foo.bar }} -> {{ foo|getattribute('bar') }}
-
-    *New in Jinja 1.2*
-    """
-    def wrapped(env, context, value):
-        try:
-            return get_attribute(value, attribute)
-        except (SecurityException, AttributeError):
-            return env.undefined_singleton
-    return wrapped
-
-
-def do_getitem(key):
-    """
-    This filter basically works like the normal subscript expression but
-    it doesn't fall back to attribute lookup. If an item does not exist for
-    an object undefined is returned.
-
-    .. sourcecode:: jinja
-
-        {{ foo.bar }} -> {{ foo|getitem('bar') }}
-
-    *New in Jinja 1.2*
-    """
-    def wrapped(env, context, value):
-        try:
-            return value[key]
-        except (TypeError, KeyError, IndexError, AttributeError):
-            return env.undefined_singleton
-    return wrapped
-
-
 FILTERS = {
     'replace':              do_replace,
     'upper':                do_upper,
@@ -790,10 +678,10 @@ FILTERS = {
     'title':                do_title,
     'default':              do_default,
     'join':                 do_join,
-    'count':                do_count,
+    'count':                len,
     'dictsort':             do_dictsort,
-    'length':               do_count,
-    'reverse':              do_reverse,
+    'length':               len,
+    'reverse':              reversed,
     'center':               do_center,
     'title':                do_title,
     'capitalize':           do_capitalize,
@@ -815,16 +703,13 @@ FILTERS = {
     'string':               do_string,
     'urlize':               do_urlize,
     'format':               do_format,
-    'dformat':              do_dformat,
     'trim':                 do_trim,
     'striptags':            do_striptags,
     'slice':                do_slice,
     'batch':                do_batch,
-    'sum':                  do_sum,
-    'abs':                  do_abs,
+    'sum':                  sum,
+    'abs':                  abs,
     'round':                do_round,
     'sort':                 do_sort,
-    'groupby':              do_groupby,
-    'getattribute':         do_getattribute,
-    'getitem':              do_getitem
+    'groupby':              do_groupby
 }
