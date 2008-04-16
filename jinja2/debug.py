@@ -17,7 +17,7 @@ def translate_exception(exc_info):
     all the way down to the correct line numbers and frames.
     """
     result_tb = prev_tb = None
-    initial_tb = tb = exc_info[2]
+    initial_tb = tb = exc_info[2].tb_next
 
     while tb is not None:
         template = tb.tb_frame.f_globals.get('__jinja_template__')
@@ -65,7 +65,9 @@ def fake_exc_info(exc_info, filename, lineno, tb_back=None):
             tb_set_next(tb_back, exc_info[2])
         if tb is not None:
             tb_set_next(exc_info[2].tb_next, tb.tb_next)
-    return exc_info
+
+    # return without this frame
+    return exc_info[:2] + (exc_info[2].tb_next,)
 
 
 def _init_ugly_crap():
