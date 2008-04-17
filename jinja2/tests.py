@@ -1,7 +1,7 @@
 # -*- coding: utf-8 -*-
 """
-    jinja.tests
-    ~~~~~~~~~~~
+    jinja2.tests
+    ~~~~~~~~~~~~
 
     Jinja test functions. Used with the "is" operator.
 
@@ -37,7 +37,8 @@ def test_defined(value):
             variable is not defined
         {% endif %}
 
-    See also the ``default`` filter.
+    See the ``default`` filter for a simple way to set undefined
+    variables.
     """
     return not isinstance(value, Undefined)
 
@@ -80,8 +81,6 @@ def test_sameas(value, other):
         {% if foo.attribute is sameas(false) %}
             the foo attribute really is the `False` singleton
         {% endif %}
-
-    *New in Jinja 1.2*
     """
     return value is other
 

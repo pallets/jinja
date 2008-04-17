@@ -1,7 +1,7 @@
 # -*- coding: utf-8 -*-
 """
-    jinja.exceptions
-    ~~~~~~~~~~~~~~~~
+    jinja2.exceptions
+    ~~~~~~~~~~~~~~~~~
 
     Jinja exceptions.
 

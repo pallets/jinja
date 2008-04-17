@@ -1,7 +1,7 @@
 # -*- coding: utf-8 -*-
 """
-    jinja.filters
-    ~~~~~~~~~~~~~
+    jinja2.filters
+    ~~~~~~~~~~~~~~
 
     Bundled jinja filters.
 

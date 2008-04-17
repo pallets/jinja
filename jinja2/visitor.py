@@ -12,10 +12,9 @@ from jinja2.nodes import Node
 
 
 class NodeVisitor(object):
-    """
-    Walks the abstract syntax tree and call visitor functions for every node
-    found.  The visitor functions may return values which will be forwarded
-    by the `visit` method.
+    """Walks the abstract syntax tree and call visitor functions for every
+    node found.  The visitor functions may return values which will be
+    forwarded by the `visit` method.
 
     Per default the visitor functions for the nodes are ``'visit_'`` +
     class name of the node.  So a `TryFinally` node visit function would
@@ -47,8 +46,7 @@ class NodeVisitor(object):
 
 
 class NodeTransformer(NodeVisitor):
-    """
-    Walks the abstract syntax tree and allows modifications of nodes.
+    """Walks the abstract syntax tree and allows modifications of nodes.
 
     The `NodeTransformer` will walk the AST and use the return value of the
     visitor functions to replace or remove the old node.  If the return
