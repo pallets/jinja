@@ -374,11 +374,9 @@ def do_wordwrap(s, pos=79, hard=False):
                                 len(word.split('\n', 1)[0]) >= pos)],
                    word), s.split(' '))
 
-
 def do_wordcount(s):
     """Count the words in that string."""
-    return len(x for x in s.split() if x)
-
+    return len(s.split())
 
 def do_int(value, default=0):
     """Convert the value into an integer. If the
