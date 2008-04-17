@@ -9,7 +9,6 @@
     :license: BSD.
 """
 import sys
-from jinja2.exceptions import TemplateNotFound
 
 
 def translate_exception(exc_info):
@@ -43,6 +42,10 @@ def fake_exc_info(exc_info, filename, lineno, tb_back=None):
     for name, value in real_locals.iteritems():
         if name.startswith('l_'):
             locals[name[2:]] = value
+
+    # if there is a local called __jinja_exception__, we get
+    # rid of it to not break the debug functionality.
+    locals.pop('__jinja_exception__', None)
 
     # assamble fake globals we need
     globals = {

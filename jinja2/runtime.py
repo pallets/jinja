@@ -12,19 +12,19 @@ try:
     from collections import defaultdict
 except ImportError:
     defaultdict = None
+from jinja2.utils import Markup
 
 
 __all__ = ['LoopContext', 'StaticLoopContext', 'TemplateContext',
            'Macro', 'IncludedTemplate', 'TemplateData']
 
 
-class TemplateData(unicode):
+class TemplateData(Markup):
     """Marks data as "coming from the template".  This is used to let the
     system know that this data is already processed if a finalization is
-    used."""
-
-    def __html__(self):
-        return self
+    used.
+    """
+    __slots__ = ()
 
 
 class TemplateContext(dict):
@@ -119,7 +119,10 @@ class IncludedTemplate(object):
         return self._context[name]
 
     def __unicode__(self):
-        return self._context
+        return self._rendered_body
+
+    def __html__(self):
+        return self._rendered_body
 
     def __repr__(self):
         return '<%s %r>' % (

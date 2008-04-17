@@ -15,7 +15,7 @@ try:
 except ImportError:
     itemgetter = lambda a: lambda b: b[a]
 from urllib import urlencode, quote
-from jinja2.utils import escape, pformat, urlize
+from jinja2.utils import Markup, escape, pformat, urlize
 from jinja2.runtime import Undefined
 
 
@@ -711,5 +711,6 @@ FILTERS = {
     'abs':                  abs,
     'round':                do_round,
     'sort':                 do_sort,
-    'groupby':              do_groupby
+    'groupby':              do_groupby,
+    'safe':                 Markup
 }

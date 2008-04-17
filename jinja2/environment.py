@@ -42,7 +42,8 @@ class Environment(object):
                  trim_blocks=False,
                  optimized=True,
                  undefined=Undefined,
-                 loader=None):
+                 loader=None,
+                 finalize=unicode):
         """Here the possible initialization parameters:
 
         ========================= ============================================
@@ -88,17 +89,12 @@ class Environment(object):
         self.trim_blocks = trim_blocks
         self.undefined = undefined
         self.optimized = optimized
+        self.finalize = finalize
 
         # defaults
         self.filters = DEFAULT_FILTERS.copy()
         self.tests = DEFAULT_TESTS.copy()
         self.globals = DEFAULT_NAMESPACE.copy()
-
-        # if no finalize function/method exists we default to unicode.  The
-        # compiler check if the finalize attribute *is* unicode, if yes no
-        # finalizaion is written where it can be avoided.
-        if not hasattr(self, 'finalize'):
-            self.finalize = unicode
 
         # set the loader provided
         self.loader = loader

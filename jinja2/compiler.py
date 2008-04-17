@@ -781,8 +781,8 @@ class CodeGenerator(NodeVisitor):
             finalizer = 'unicode'
             have_finalizer = False
         else:
-            finalizer = 'context.finalize'
-            have_finalizer = False
+            finalizer = 'environment.finalize'
+            have_finalizer = True
 
         # if we are in the toplevel scope and there was already an extends
         # statement we have to add a check that disables our yield(s) here
@@ -846,7 +846,7 @@ class CodeGenerator(NodeVisitor):
             for argument in arguments:
                 self.newline(argument)
                 if have_finalizer:
-                    self.write('(')
+                    self.write(finalizer + '(')
                 self.visit(argument, frame)
                 if have_finalizer:
                     self.write(')')
