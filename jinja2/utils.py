@@ -16,7 +16,9 @@ from itertools import imap
 
 def escape(obj, attribute=False):
     """HTML escape an object."""
-    if hasattr(obj, '__html__'):
+    if obj is None:
+        return u''
+    elif hasattr(obj, '__html__'):
         return obj.__html__()
     return Markup(unicode(obj)
         .replace('&', '&amp;')

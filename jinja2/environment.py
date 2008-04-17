@@ -132,7 +132,12 @@ class Environment(object):
 
     def compile(self, source, name=None, filename=None, raw=False,
                 globals=None):
-        """Compile a node or source."""
+        """Compile a node or source.  The name is the load name of the
+        template after it was joined using `join_path` if necessary,
+        filename is the estimated filename of the template on the file
+        system.  If the template came from a database or memory this
+        can be omitted.
+        """
         if isinstance(source, basestring):
             source = self.parse(source, name)
         if self.optimized:
@@ -141,7 +146,7 @@ class Environment(object):
         if raw:
             return source
         if filename is None:
-            filename = '<from_string>'
+            filename = '<template>'
         elif isinstance(filename, unicode):
             filename = filename.encode('utf-8')
         return compile(source, filename, 'exec')

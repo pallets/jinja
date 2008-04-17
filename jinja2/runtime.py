@@ -26,11 +26,11 @@ class TemplateContext(dict):
     the exported variables for example).
     """
 
-    def __init__(self, environment, globals, filename, blocks, standalone):
+    def __init__(self, environment, globals, name, blocks, standalone):
         dict.__init__(self, globals)
         self.environment = environment
         self.exported = set()
-        self.filename = filename
+        self.name = name
         self.blocks = dict((k, [v]) for k, v in blocks.iteritems())
 
         # if the template is in standalone mode we don't copy the blocks over.
@@ -74,7 +74,7 @@ class TemplateContext(dict):
         return '<%s %s of %r>' % (
             self.__class__.__name__,
             dict.__repr__(self),
-            self.filename
+            self.name
         )
 
 
@@ -103,7 +103,7 @@ class IncludedTemplate(object):
         template = environment.get_template(template)
         gen = template.root_render_func(context, standalone=True)
         context = gen.next()
-        self._filename = template.name
+        self._name = template.name
         self._rendered_body = u''.join(gen)
         self._context = context.get_exported()
 
@@ -119,7 +119,7 @@ class IncludedTemplate(object):
     def __repr__(self):
         return '<%s %r>' % (
             self.__class__.__name__,
-            self._filename
+            self._name
         )
 
 

@@ -24,23 +24,23 @@ class TemplateNotFound(IOError, LookupError, TemplateError):
         self.name = name
 
 
-class TemplateSyntaxError(SyntaxError, TemplateError):
+class TemplateSyntaxError(TemplateError):
     """
     Raised to tell the user that there is a problem with the template.
     """
 
-    def __init__(self, message, lineno, filename):
-        SyntaxError.__init__(self, '%s (line %s)' % (message, lineno))
+    def __init__(self, message, lineno, name):
+        TEmplateError.__init__(self, '%s (line %s)' % (message, lineno))
         self.message = message
         self.lineno = lineno
-        self.filename = filename
+        self.name = name
 
 
 class TemplateAssertionError(AssertionError, TemplateSyntaxError):
 
-    def __init__(self, message, lineno, filename):
+    def __init__(self, message, lineno, name):
         AssertionError.__init__(self, message)
-        TemplateSyntaxError.__init__(self, message, lineno, filename)
+        TemplateSyntaxError.__init__(self, message, lineno, name)
 
 
 class TemplateRuntimeError(TemplateError):
