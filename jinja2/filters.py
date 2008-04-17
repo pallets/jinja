@@ -208,7 +208,7 @@ def do_join(value, d=u''):
     """
     # if the delimiter doesn't have an html representation we check
     # if any of the items has.  If yes we do a coercion to Markup
-    if not hasttr(d, '__html__'):
+    if not hasattr(d, '__html__'):
         value = list(value)
         do_escape = False
         for idx, item in enumerate(value):

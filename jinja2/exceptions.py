@@ -30,7 +30,7 @@ class TemplateSyntaxError(TemplateError):
     """Raised to tell the user that there is a problem with the template."""
 
     def __init__(self, message, lineno, name):
-        TEmplateError.__init__(self, '%s (line %s)' % (message, lineno))
+        TemplateError.__init__(self, '%s (line %s)' % (message, lineno))
         self.message = message
         self.lineno = lineno
         self.name = name

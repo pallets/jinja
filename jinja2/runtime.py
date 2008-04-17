@@ -301,7 +301,7 @@ class Undefined(object):
         return self.__unicode__().encode('utf-8')
 
     def __repr__(self):
-        return 'undefined'
+        return 'Undefined'
 
     def __len__(self):
         return 0
@@ -329,6 +329,9 @@ class DebugUndefined(Undefined):
 
 
 class StrictUndefined(Undefined):
-    """An undefined that barks on print and iteration."""
+    """An undefined that barks on print and iteration as well as boolean tests.
+    In other words: you can do nothing with it except checking if it's defined
+    using the `defined` test.
+    """
 
-    __iter__ = __unicode__ = __len__ = Undefined._fail_with_error
+    __iter__ = __unicode__ = __len__ = __nonzero__ = Undefined._fail_with_error
