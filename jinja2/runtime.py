@@ -16,15 +16,7 @@ from jinja2.utils import Markup
 
 
 __all__ = ['LoopContext', 'StaticLoopContext', 'TemplateContext',
-           'Macro', 'IncludedTemplate', 'TemplateData']
-
-
-class TemplateData(Markup):
-    """Marks data as "coming from the template".  This is used to let the
-    system know that this data is already processed if a finalization is
-    used.
-    """
-    __slots__ = ()
+           'Macro', 'IncludedTemplate', 'Markup']
 
 
 class TemplateContext(dict):
@@ -95,7 +87,7 @@ class SuperBlock(object):
         self._render_func = render_func
 
     def __call__(self):
-        return TemplateData(u''.join(self._render_func(self._context)))
+        return Markup(u''.join(self._render_func(self._context)))
 
     def __repr__(self):
         return '<%s %r>' % (

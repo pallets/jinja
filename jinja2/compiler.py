@@ -15,6 +15,7 @@ from jinja2 import nodes
 from jinja2.visitor import NodeVisitor, NodeTransformer
 from jinja2.exceptions import TemplateAssertionError
 from jinja2.runtime import StaticLoopContext
+from jinja2.utils import Markup
 
 
 operators = {
@@ -50,7 +51,7 @@ def has_safe_repr(value):
     if value is None or value is NotImplemented or value is Ellipsis:
         return True
     if isinstance(value, (bool, int, long, float, complex, basestring,
-                          xrange, StaticLoopContext)):
+                          xrange, StaticLoopContext, Markup)):
         return True
     if isinstance(value, (tuple, list, set, frozenset)):
         for item in value:
@@ -701,7 +702,7 @@ class CodeGenerator(NodeVisitor):
         self.pull_locals(macro_frame, indent=False)
         self.writeline('%s = []' % buf)
         self.blockvisit(node.body, macro_frame, indent=False)
-        self.writeline("return TemplateData(u''.join(%s))" % buf)
+        self.writeline("return Markup(u''.join(%s))" % buf)
         self.outdent()
         self.newline()
         if frame.toplevel:
@@ -728,7 +729,7 @@ class CodeGenerator(NodeVisitor):
         self.pull_locals(call_frame, indent=False)
         self.writeline('%s = []' % buf)
         self.blockvisit(node.body, call_frame, indent=False)
-        self.writeline("return TemplateData(u''.join(%s))" % buf)
+        self.writeline("return Markup(u''.join(%s))" % buf)
         self.outdent()
         arg_tuple = ', '.join(repr(x.name) for x in node.args)
         if len(node.args) == 1:
