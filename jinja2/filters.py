@@ -588,6 +588,7 @@ FILTERS = {
     'length':               len,
     'reverse':              reversed,
     'center':               do_center,
+    'indent':               do_indent,
     'title':                do_title,
     'capitalize':           do_capitalize,
     'first':                do_first,
