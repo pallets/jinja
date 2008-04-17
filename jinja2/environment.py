@@ -130,8 +130,8 @@ class Environment(object):
         """
         return self.lexer.tokeniter(source, name)
 
-    def compile(self, source, name=None, filename=None, raw=False,
-                globals=None):
+    def compile(self, source, name=None, filename=None, globals=None,
+                raw=False):
         """Compile a node or source.  The name is the load name of the
         template after it was joined using `join_path` if necessary,
         filename is the estimated filename of the template on the file
@@ -182,7 +182,7 @@ class Environment(object):
 class Template(object):
     """Represents a template."""
 
-    def __init__(self, environment, code, globals):
+    def __init__(self, environment, code, globals, uptodate=None):
         namespace = {'environment': environment}
         exec code in namespace
         self.environment = environment
@@ -194,6 +194,7 @@ class Template(object):
 
         # debug helpers
         self._get_debug_info = namespace['get_debug_info']
+        self._uptodate = uptodate
         namespace['__jinja_template__'] = self
 
     def render(self, *args, **kwargs):
@@ -238,6 +239,12 @@ class Template(object):
             if code_line <= lineno:
                 return template_line
         return 1
+
+    def is_up_to_date(self):
+        """Check if the template is still up to date."""
+        if self._uptodate is None:
+            return True
+        return self._uptodate()
 
     def __repr__(self):
         return '<%s %r>' % (

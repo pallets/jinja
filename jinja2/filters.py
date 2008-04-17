@@ -21,7 +21,6 @@ from jinja2.utils import Markup, escape, pformat, urlize, soft_unicode
 from jinja2.runtime import Undefined
 
 
-
 _striptags_re = re.compile(r'(<!--.*?-->|<[^>]*>)')
 
 
@@ -78,14 +77,6 @@ def do_upper(s):
 def do_lower(s):
     """Convert a value to lowercase."""
     return soft_unicode(s).lower()
-
-
-def do_escape(s):
-    """XML escape ``&``, ``<``, ``>``, and ``"`` in a string of data.
-
-    This method will have no effect it the value is already escaped.
-    """
-    return escape(s)
 
 
 def do_xmlattr(d, autospace=False):
@@ -400,10 +391,7 @@ def do_int(value, default=0):
     try:
         return int(value)
     except (TypeError, ValueError):
-        try:
-            return int(float(value))
-        except (TypeError, ValueError):
-            return default
+        return default
 
 
 def do_float(value, default=0.0):
@@ -468,8 +456,7 @@ def do_slice(value, slices, fill_with=None):
     If you pass it a second argument it's used to fill missing
     values on the last iteration.
     """
-    result = []
-    seq = list(value)
+    seq = list(seq)
     length = len(seq)
     items_per_slice = length // slices
     slices_with_extra = length % slices
@@ -482,8 +469,7 @@ def do_slice(value, slices, fill_with=None):
         tmp = seq[start:end]
         if fill_with is not None and slice_number >= slices_with_extra:
             tmp.append(fill_with)
-        result.append(tmp)
-    return result
+        yield tmp
 
 
 def do_batch(value, linecount, fill_with=None):
@@ -509,14 +495,13 @@ def do_batch(value, linecount, fill_with=None):
     tmp = []
     for item in value:
         if len(tmp) == linecount:
-            result.append(tmp)
+            yield tmp
             tmp = []
         tmp.append(item)
     if tmp:
         if fill_with is not None and len(tmp) < linecount:
             tmp += [fill_with] * (linecount - len(tmp))
-        result.append(tmp)
-    return result
+        yield tmp
 
 
 def do_round(value, precision=0, method='common'):
@@ -594,8 +579,8 @@ FILTERS = {
     'replace':              do_replace,
     'upper':                do_upper,
     'lower':                do_lower,
-    'escape':               do_escape,
-    'e':                    do_escape,
+    'escape':               escape,
+    'e':                    escape,
     'xmlattr':              do_xmlattr,
     'capitalize':           do_capitalize,
     'title':                do_title,
@@ -613,7 +598,6 @@ FILTERS = {
     'random':               do_random,
     'filesizeformat':       do_filesizeformat,
     'pprint':               do_pprint,
-    'indent':               do_indent,
     'truncate':             do_truncate,
     'wordwrap':             do_wordwrap,
     'wordcount':            do_wordcount,

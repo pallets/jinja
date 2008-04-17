@@ -10,6 +10,8 @@
 """
 import re
 import string
+from collections import deque
+from copy import deepcopy
 from functools import update_wrapper
 from itertools import imap
 
@@ -196,3 +198,122 @@ class _MarkupEscapeHelper(object):
     __repr__ = lambda s: str(repr(escape(s.obj)))
     __int__ = lambda s: int(s.obj)
     __float__ = lambda s: float(s.obj)
+
+
+class LRUCache(object):
+    """A simple LRU Cache implementation."""
+    # this is fast for small capacities (something around 200) but doesn't
+    # scale.  But as long as it's only used for the database connections in
+    # a non request fallback it's fine.
+
+    def __init__(self, capacity):
+        self.capacity = capacity
+        self._mapping = {}
+        self._queue = deque()
+
+        # alias all queue methods for faster lookup
+        self._popleft = self._queue.popleft
+        self._pop = self._queue.pop
+        if hasattr(self._queue, 'remove'):
+            self._remove = self._queue.remove
+        self._append = self._queue.append
+
+    def _remove(self, obj):
+        """Python 2.4 compatibility."""
+        for idx, item in enumerate(self._queue):
+            if item == obj:
+                del self._queue[idx]
+                break
+
+    def copy(self):
+        """Return an shallow copy of the instance."""
+        rv = LRUCache(self.capacity)
+        rv._mapping.update(self._mapping)
+        rv._queue = self._queue[:]
+        return rv
+
+    def get(self, key, default=None):
+        """Return an item from the cache dict or `default`"""
+        if key in self:
+            return self[key]
+        return default
+
+    def setdefault(self, key, default=None):
+        """
+        Set `default` if the key is not in the cache otherwise
+        leave unchanged. Return the value of this key.
+        """
+        if key in self:
+            return self[key]
+        self[key] = default
+        return default
+
+    def clear(self):
+        """Clear the cache."""
+        self._mapping.clear()
+        self._queue.clear()
+
+    def __contains__(self, key):
+        """Check if a key exists in this cache."""
+        return key in self._mapping
+
+    def __len__(self):
+        """Return the current size of the cache."""
+        return len(self._mapping)
+
+    def __repr__(self):
+        return '<%s %r>' % (
+            self.__class__.__name__,
+            self._mapping
+        )
+
+    def __getitem__(self, key):
+        """Get an item from the cache. Moves the item up so that it has the
+        highest priority then.
+
+        Raise an `KeyError` if it does not exist.
+        """
+        rv = self._mapping[key]
+        if self._queue[-1] != key:
+            self._remove(key)
+            self._append(key)
+        return rv
+
+    def __setitem__(self, key, value):
+        """Sets the value for an item. Moves the item up so that it
+        has the highest priority then.
+        """
+        if key in self._mapping:
+            self._remove(key)
+        elif len(self._mapping) == self.capacity:
+            del self._mapping[self._popleft()]
+        self._append(key)
+        self._mapping[key] = value
+
+    def __delitem__(self, key):
+        """Remove an item from the cache dict.
+        Raise an `KeyError` if it does not exist.
+        """
+        del self._mapping[key]
+        self._remove(key)
+
+    def __iter__(self):
+        """Iterate over all values in the cache dict, ordered by
+        the most recent usage.
+        """
+        return reversed(self._queue)
+
+    def __reversed__(self):
+        """Iterate over the values in the cache dict, oldest items
+        coming first.
+        """
+        return iter(self._queue)
+
+    __copy__ = copy
+
+    def __deepcopy__(self):
+        """Return a deep copy of the LRU Cache"""
+        rv = LRUCache(self.capacity)
+        rv._mapping = deepcopy(self._mapping)
+        rv._queue = deepcopy(self._queue)
+        return rv
