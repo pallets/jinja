@@ -639,7 +639,7 @@ class Parser(object):
         node = nodes.Test(node, name, args, kwargs, dyn_args,
                           dyn_kwargs, lineno=token.lineno)
         if negated:
-            node = nodes.NotExpression(node, lineno=token.lineno)
+            node = nodes.Not(node, lineno=token.lineno)
         return node
 
     def subparse(self, end_tokens=None):

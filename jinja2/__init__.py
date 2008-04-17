@@ -57,6 +57,7 @@
     :license: BSD, see LICENSE for more details.
 """
 from jinja2.environment import Environment
-from jinja2.loaders import BaseLoader, FileSystemLoader, DictLoader
+from jinja2.loaders import BaseLoader, FileSystemLoader, PackageLoader, \
+     DictLoader
 from jinja2.runtime import Undefined, DebugUndefined, StrictUndefined
 from jinja2.utils import Markup, escape

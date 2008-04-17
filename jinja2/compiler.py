@@ -938,7 +938,7 @@ class CodeGenerator(NodeVisitor):
     def uaop(operator):
         def visitor(self, node, frame):
             self.write('(' + operator)
-            self.visit(node.node)
+            self.visit(node.node, frame)
             self.write(')')
         return visitor
 
@@ -977,11 +977,6 @@ class CodeGenerator(NodeVisitor):
             have_const = True
         except nodes.Impossible:
             have_const = False
-        if have_const:
-            if isinstance(const, (int, long, float)):
-                self.visit(node.node, frame)
-                self.write('[%s]' % const)
-                return
         self.write('environment.subscribe(')
         self.visit(node.node, frame)
         self.write(', ')

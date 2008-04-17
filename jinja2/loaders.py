@@ -9,10 +9,24 @@
     :license: BSD, see LICENSE for more details.
 """
 from os import path
-from time import time
 from jinja2.exceptions import TemplateNotFound
 from jinja2.environment import Template
 from jinja2.utils import LRUCache
+
+
+def split_template_path(template):
+    """Split a path into segments and perform a sanity check.  If it detects
+    '..' in the path it will raise a `TemplateNotFound` error.
+    """
+    pieces = []
+    for piece in template.split('/'):
+        if path.sep in piece \
+           or (path.altsep and path.altsep in piece) or \
+           piece == path.pardir:
+            raise TemplateNotFound(template)
+        elif piece != '.':
+            pieces.append(piece)
+    return pieces
 
 
 class BaseLoader(object):
@@ -61,7 +75,7 @@ class BaseLoader(object):
         if self.cache is not None:
             template = self.cache.get(name)
             if template is not None and (not self.auto_reload or \
-                                         template.is_up_to_date()):
+                                         template.is_up_to_date):
                 return template
 
         source, filename, uptodate = self.get_source(environment, name)
@@ -84,25 +98,37 @@ class FileSystemLoader(BaseLoader):
         self.encoding = encoding
 
     def get_source(self, environment, template):
-        pieces = []
-        for piece in template.split('/'):
-            if piece == '..':
-                raise TemplateNotFound(template)
-            elif piece != '.':
-                pieces.append(piece)
+        pieces = split_template_path(template)
         for searchpath in self.searchpath:
             filename = path.join(searchpath, *pieces)
-            if path.isfile(filename):
-                f = file(filename)
-                try:
-                    contents = f.read().decode(self.encoding)
-                finally:
-                    f.close()
-                mtime = path.getmtime(filename)
-                def uptodate():
-                    return path.getmtime(filename) != mtime
-                return contents, filename, uptodate
+            if not path.isfile(filename):
+                continue
+            f = file(filename)
+            try:
+                contents = f.read().decode(self.encoding)
+            finally:
+                f.close()
+            old = path.getmtime(filename)
+            return contents, filename, lambda: path.getmtime(filename) != old
         raise TemplateNotFound(template)
+
+
+class PackageLoader(BaseLoader):
+    """Load templates from python eggs."""
+
+    def __init__(self, package_name, package_path, charset='utf-8',
+                 cache_size=50, auto_reload=True):
+        BaseLoader.__init__(self, cache_size, auto_reload)
+        import pkg_resources
+        self._pkg = pkg_resources
+        self.package_name = package_name
+        self.package_path = package_path
+
+    def get_source(self, environment, template):
+        path = '/'.join(split_template_path(template))
+        if not self._pkg.resource_exists(self.package_name, path):
+            raise TemplateNotFound(template)
+        return self._pkg.resource_string(self.package_name, path), None, None
 
 
 class DictLoader(BaseLoader):

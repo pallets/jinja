@@ -237,8 +237,7 @@ def do_first(environment, seq):
     try:
         return iter(seq).next()
     except StopIteration:
-        return environment.undefined('seq|first',
-            extra='the sequence was empty')
+        return environment.undefined('No first item, sequence was empty.')
 
 
 @environmentfilter
@@ -247,8 +246,7 @@ def do_last(environment, seq):
     try:
         return iter(reversed(seq)).next()
     except StopIteration:
-        return environment.undefined('seq|last',
-            extra='the sequence was empty')
+        return environment.undefined('No last item, sequence was empty.')
 
 
 @environmentfilter
@@ -257,8 +255,7 @@ def do_random(environment, seq):
     try:
         return choice(seq)
     except IndexError:
-        return environment.undefined('seq|random',
-            extra='the sequence was empty')
+        return environment.undefined('No random item, sequence was empty.')
 
 
 def do_filesizeformat(value):

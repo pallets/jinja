@@ -13,6 +13,7 @@ try:
 except ImportError:
     defaultdict = None
 from jinja2.utils import Markup
+from jinja2.exceptions import UndefinedError
 
 
 __all__ = ['LoopContext', 'StaticLoopContext', 'TemplateContext',
@@ -46,8 +47,8 @@ class TemplateContext(dict):
         try:
             func = self.blocks[block][-2]
         except LookupError:
-            return self.environment.undefined('super',
-                extra='there is probably no parent block with this name')
+            return self.environment.undefined('there is no parent block '
+                                              'called %r.' % block)
         return SuperBlock(block, self, func)
 
     def __setitem__(self, key, value):
@@ -65,10 +66,10 @@ class TemplateContext(dict):
         def __getitem__(self, name):
             if name in self:
                 return self[name]
-            return self.environment.undefined(name)
+            return self.environment.undefined(name=name)
     else:
-        def __missing__(self, key):
-            return self.environment.undefined(key)
+        def __missing__(self, name):
+            return self.environment.undefined(name=name)
 
     def __repr__(self):
         return '<%s %s of %r>' % (
@@ -241,15 +242,13 @@ class Macro(object):
                     try:
                         value = self.defaults[idx - arg_count]
                     except IndexError:
-                        value = self._environment.undefined(name,
-                            extra='parameter not provided')
+                        value = self._environment.undefined(
+                            'parameter %r was not provided' % name)
             arguments['l_' + name] = value
         if self.caller:
             caller = kwargs.pop('caller', None)
             if caller is None:
-                caller = self._environment.undefined('caller',
-                    extra='The macro was called from an expression and not '
-                          'a call block.')
+                caller = self._environment.undefined('No caller defined')
             arguments['l_caller'] = caller
         if self.catch_all:
             arguments['l_arguments'] = kwargs
@@ -268,19 +267,28 @@ class Undefined(object):
     `NameError`.  Custom undefined classes must subclass this.
     """
 
-    def __init__(self, name=None, attr=None, extra=None):
-        if attr is None:
-            self._undefined_hint = '%r is undefined' % name
-            self._error_class = NameError
-        else:
-            self._undefined_hint = '%r has no attribute named %r' \
-                                   % (name, attr)
-            self._error_class = AttributeError
-        if extra is not None:
-            self._undefined_hint += ' (' + extra + ')'
+    def __init__(self, hint=None, obj=None, name=None):
+        self._undefined_hint = hint
+        self._undefined_obj = obj
+        self._undefined_name = name
 
     def _fail_with_error(self, *args, **kwargs):
-        raise self._error_class(self._undefined_hint)
+        if self._undefined_hint is None:
+            if self._undefined_obj is None:
+                hint = '%r is undefined' % self._undefined_name
+            elif not isinstance(self._undefined_name, basestring):
+                hint = '%r object has no element %r' % (
+                    self._undefined_obj.__class__.__name__,
+                    self._undefined_name
+                )
+            else:
+                hint = '%r object has no attribute %s' % (
+                    self._undefined_obj.__class__.__name__,
+                    self._undefined_name
+                )
+        else:
+            hint = self._undefined_hint
+        raise UndefinedError(hint)
     __add__ = __radd__ = __mul__ = __rmul__ = __div__ = __rdiv__ = \
     __realdiv__ = __rrealdiv__ = __floordiv__ = __rfloordiv__ = \
     __mod__ = __rmod__ = __pos__ = __neg__ = __call__ = \
@@ -310,7 +318,14 @@ class DebugUndefined(Undefined):
     """An undefined that returns the debug info when printed."""
 
     def __unicode__(self):
-        return u'{{ %s }}' % self._undefined_hint
+        if self._undefined_hint is None:
+            if self._undefined_obj is None:
+                return u'{{ %s }}' % self._undefined_name
+            return '{{ no such element: %s[%r] }}' % (
+                self._undefined_obj.__class__.__name__,
+                self._undefined_name
+            )
+        return u'{{ undefined value printed: %s }}' % self._undefined_hint
 
 
 class StrictUndefined(Undefined):

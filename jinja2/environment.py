@@ -110,15 +110,14 @@ class Environment(object):
             try:
                 return obj[argument]
             except (TypeError, LookupError):
-                return self.undefined(obj, argument)
+                return self.undefined(obj=obj, name=argument)
 
     def parse(self, source, name=None):
         """Parse the sourcecode and return the abstract syntax tree. This tree
         of nodes is used by the compiler to convert the template into
         executable source- or bytecode.
         """
-        parser = Parser(self, source, name)
-        return parser.parse()
+        return Parser(self, source, name).parse()
 
     def lex(self, source, name=None):
         """Lex the given sourcecode and return a generator that yields tokens.
@@ -198,12 +197,15 @@ class Template(object):
         namespace['__jinja_template__'] = self
 
     def render(self, *args, **kwargs):
+        """Render the template into a string."""
         return u''.join(self.generate(*args, **kwargs))
 
     def stream(self, *args, **kwargs):
+        """Return a `TemplateStream` that generates the template."""
         return TemplateStream(self.generate(*args, **kwargs))
 
     def generate(self, *args, **kwargs):
+        """Return a generator that generates the template."""
         # assemble the context
         context = dict(*args, **kwargs)
 
@@ -240,6 +242,7 @@ class Template(object):
                 return template_line
         return 1
 
+    @property
     def is_up_to_date(self):
         """Check if the template is still up to date."""
         if self._uptodate is None:
