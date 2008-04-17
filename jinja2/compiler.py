@@ -1005,6 +1005,8 @@ class CodeGenerator(NodeVisitor):
         func = self.environment.filters.get(node.name)
         if getattr(func, 'contextfilter', False):
             self.write('context, ')
+        elif getattr(func, 'environmentfilter', False):
+            self.write('environment, ')
         if isinstance(node.node, nodes.Filter):
             self.visit_Filter(node.node, frame, initial)
         elif node.node is None:

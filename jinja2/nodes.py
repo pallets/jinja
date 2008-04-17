@@ -419,6 +419,8 @@ class Filter(Expr):
         if obj is None:
             obj = self.node.as_const()
         args = [x.as_const() for x in self.args]
+        if getattr(filter, 'environmentfilter', False):
+            args.insert(0, self.environment)
         kwargs = dict(x.as_const() for x in self.kwargs)
         if self.dyn_args is not None:
             try:
