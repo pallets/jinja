@@ -182,7 +182,10 @@ class Template(object):
     """Represents a template."""
 
     def __init__(self, environment, code, globals, uptodate=None):
-        namespace = {'environment': environment}
+        namespace = {
+            'environment':          environment,
+            '__jinja_template__':   self
+        }
         exec code in namespace
         self.environment = environment
         self.name = namespace['name']
@@ -191,18 +194,27 @@ class Template(object):
         self.blocks = namespace['blocks']
         self.globals = globals
 
-        # debug helpers
+        # debug and loader helpers
         self._get_debug_info = namespace['get_debug_info']
         self._uptodate = uptodate
-        namespace['__jinja_template__'] = self
 
     def render(self, *args, **kwargs):
         """Render the template into a string."""
-        return u''.join(self.generate(*args, **kwargs))
+        try:
+            return u''.join(self.generate(*args, **kwargs))
+        except:
+            # hide the `generate` frame
+            exc_type, exc_value, tb = sys.exc_info()
+            raise exc_type, exc_value, tb.tb_next
 
     def stream(self, *args, **kwargs):
         """Return a `TemplateStream` that generates the template."""
-        return TemplateStream(self.generate(*args, **kwargs))
+        try:
+            return TemplateStream(self.generate(*args, **kwargs))
+        except:
+            # hide the `generate` frame
+            exc_type, exc_value, tb = sys.exc_info()
+            raise exc_type, exc_value, tb.tb_next
 
     def generate(self, *args, **kwargs):
         """Return a generator that generates the template."""

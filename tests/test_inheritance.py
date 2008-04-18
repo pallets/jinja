@@ -36,15 +36,6 @@ LEVEL4TEMPLATE = '''\
 {% block block3 %}block 3 from level4{% endblock %}
 '''
 
-BROKENTEMPLATE = '''\
-{% extends "layout" %}
-{% if false %}
-  {% block block1 %}
-    this is broken
-  {% endblock %}
-{% endif %}
-'''
-
 WORKINGTEMPLATE = '''\
 {% extends "layout" %}
 {% block block1 %}
@@ -100,19 +91,5 @@ def test_super():
     assert tmpl.render() == '--INTRO--|BEFORE|[(INNER)]|AFTER'
 
 
-def test_broken(env):
-    try:
-        tmpl = env.get_template('broken')
-    except TemplateSyntaxError:
-        pass
-    else:
-        raise RuntimeError('no syntax error occured')
-
-
 def test_working(env):
     tmpl = env.get_template('working')
-
-
-def test_shortcut(env):
-    tmpl = env.from_string('{% block foo "42" %}')
-    assert tmpl.render() == '42'

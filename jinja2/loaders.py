@@ -39,10 +39,12 @@ class BaseLoader(object):
     """
 
     def __init__(self, cache_size=50, auto_reload=True):
-        if cache_size > 0:
-            self.cache = LRUCache(cache_size)
-        else:
+        if cache_size == 0:
             self.cache = None
+        elif cache_size < 0:
+            self.cache = {}
+        else:
+            self.cache = LRUCache(cache_size)
         self.auto_reload = auto_reload
 
     def get_source(self, environment, template):
@@ -134,7 +136,8 @@ class PackageLoader(BaseLoader):
 class DictLoader(BaseLoader):
     """Loads a template from a python dict.  Used for unittests mostly."""
 
-    def __init__(self, mapping):
+    def __init__(self, mapping, cache_size=50):
+        BaseLoader.__init__(self, cache_size, False)
         self.mapping = mapping
 
     def get_source(self, environment, template):

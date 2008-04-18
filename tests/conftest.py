@@ -15,7 +15,8 @@ sys.path.insert(0, os.path.join(os.path.dirname(__file__), '..'))
 
 import py
 from jinja2 import Environment
-from jinja2.parser import Parser
+from jinja2.loaders import BaseLoader
+from jinja2.exceptions import TemplateNotFound
 
 try:
     # This code adds support for coverage.py (see
@@ -52,43 +53,18 @@ except ImportError:
     coverage = None
 
 
-class GlobalLoader(object):
+class GlobalLoader(BaseLoader):
+    scope = globals()
 
-    def __init__(self, scope):
-        self.scope = scope
-
-    def get_source(self, environment, name, parent, scope=None):
-        return self.scope[name.upper() + 'TEMPLATE']
-
-    def parse(self, environment, name, parent, scope=None):
-        return Parser(environment, self.get_source(environment, name,
-                      parent, scope), name).parse()
-
-    def load(self, environment, name, translator, scope=None):
-        return translator.process(environment, self.parse(environment,
-                                  name, None, scope))
+    def get_source(self, environment, name):
+        try:
+            return self.scope[name.upper() + 'TEMPLATE'], None, None
+        except KeyError:
+            raise TemplateNotFound(name)
 
 
-loader = GlobalLoader(globals())
+loader = GlobalLoader(cache_size=0)
 simple_env = Environment(trim_blocks=True, loader=loader)
-
-
-class MemcacheClient(object):
-    """
-    Helper for the loader test.
-    """
-
-    def __init__(self, hosts):
-        self.cache = {}
-
-    def get(self, name):
-        return self.cache.get(name)
-
-    def set(self, name, data, time):
-        self.cache[name] = data
-
-sys.modules['memcache'] = memcache = type(sys)('memcache')
-memcache.Client = MemcacheClient
 
 
 class Module(py.test.collect.Module):

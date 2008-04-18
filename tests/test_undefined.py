@@ -1,67 +1,74 @@
 # -*- coding: utf-8 -*-
 """
-    unit test for the undefined singletons
-    ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+    unit test for the undefined types
+    ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
-    :copyright: 2007 by Armin Ronacher.
+    :copyright: 2008 by Armin Ronacher.
     :license: BSD, see LICENSE for more details.
 """
 
-from jinja2 import Environment
-from jinja2.exceptions import TemplateRuntimeError
-from jinja2.datastructure import SilentUndefined, ComplainingUndefined
 
+test_default_undefined = '''
+>>> from jinja2 import Environment, Undefined
+>>> env = Environment(undefined=Undefined)
+>>> env.from_string('{{ missing }}').render()
+u''
+>>> env.from_string('{{ missing.attribute }}').render()
+Traceback (most recent call last):
+  ...
+UndefinedError: 'missing' is undefined
+>>> env.from_string('{{ missing|list }}').render()
+u'[]'
+>>> env.from_string('{{ missing is not defined }}').render()
+u'True'
+>>> env.from_string('{{ foo.missing }}').render(foo=42)
+u''
+>>> env.from_string('{{ not missing }}').render()
+u'True'
+'''
 
-silent_env = Environment(undefined_singleton=SilentUndefined)
-complaining_env = Environment(undefined_singleton=ComplainingUndefined)
+test_debug_undefined = '''
+>>> from jinja2 import Environment, DebugUndefined
+>>> env = Environment(undefined=DebugUndefined)
+>>> env.from_string('{{ missing }}').render()
+u'{{ missing }}'
+>>> env.from_string('{{ missing.attribute }}').render()
+Traceback (most recent call last):
+  ...
+UndefinedError: 'missing' is undefined
+>>> env.from_string('{{ missing|list }}').render()
+u'[]'
+>>> env.from_string('{{ missing is not defined }}').render()
+u'True'
+>>> env.from_string('{{ foo.missing }}').render(foo=42)
+u"{{ no such element: int['missing'] }}"
+>>> env.from_string('{{ not missing }}').render()
+u'True'
+'''
 
-
-JUSTUNDEFINED = '''{{ missing }}'''
-DEFINEDUNDEFINED = '''{{ missing is defined }}|{{ given is defined }}'''
-ITERATION = '''{% for item in missing %}{{ item }}{% endfor %}'''
-CONCATENATION = '''{{ missing + [1, 2] + missing + [3] }}'''
-
-
-def test_silent_defined():
-    tmpl = silent_env.from_string(DEFINEDUNDEFINED)
-    assert tmpl.render(given=0) == 'False|True'
-
-
-def test_complaining_defined():
-    tmpl = complaining_env.from_string(DEFINEDUNDEFINED)
-    assert tmpl.render(given=0) == 'False|True'
-
-
-def test_silent_rendering():
-    tmpl = silent_env.from_string(JUSTUNDEFINED)
-    assert tmpl.render() == ''
-
-
-def test_complaining_undefined():
-    tmpl = complaining_env.from_string(JUSTUNDEFINED)
-    try:
-        tmpl.render()
-    except TemplateRuntimeError:
-        pass
-    else:
-        raise ValueError('template runtime error expected')
-
-
-def test_silent_iteration():
-    tmpl = silent_env.from_string(ITERATION)
-    assert tmpl.render() == ''
-
-
-def test_complaining_iteration():
-    tmpl = complaining_env.from_string(ITERATION)
-    try:
-        tmpl.render()
-    except TemplateRuntimeError:
-        pass
-    else:
-        raise ValueError('template runtime error expected')
-
-
-def test_concatenation():
-    tmpl = silent_env.from_string(CONCATENATION)
-    assert tmpl.render() == '[1, 2, 3]'
+test_strict_undefined = '''
+>>> from jinja2 import Environment, StrictUndefined
+>>> env = Environment(undefined=StrictUndefined)
+>>> env.from_string('{{ missing }}').render()
+Traceback (most recent call last):
+  ...
+UndefinedError: 'missing' is undefined
+>>> env.from_string('{{ missing.attribute }}').render()
+Traceback (most recent call last):
+  ...
+UndefinedError: 'missing' is undefined
+>>> env.from_string('{{ missing|list }}').render()
+Traceback (most recent call last):
+  ...
+UndefinedError: 'missing' is undefined
+>>> env.from_string('{{ missing is not defined }}').render()
+u'True'
+>>> env.from_string('{{ foo.missing }}').render(foo=42)
+Traceback (most recent call last):
+  ...
+UndefinedError: 'int' object has no attribute 'missing'
+>>> env.from_string('{{ not missing }}').render()
+Traceback (most recent call last):
+  ...
+UndefinedError: 'missing' is undefined
+'''

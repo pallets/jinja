@@ -115,7 +115,7 @@ static PyObject*
 escape(PyObject *self, PyObject *args)
 {
 	PyObject *text = NULL, *s = NULL, *rv = NULL;
-	if (!PyArg_UnpackTuple(args, "escape", 1, 2, &text))
+	if (!PyArg_UnpackTuple(args, "escape", 1, 1, &text))
 		return NULL;
 
 	/* we don't have to escape integers, bools or floats */

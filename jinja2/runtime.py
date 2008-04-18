@@ -277,7 +277,7 @@ class Undefined(object):
                     self._undefined_name
                 )
             else:
-                hint = '%r object has no attribute %s' % (
+                hint = '%r object has no attribute %r' % (
                     self._undefined_obj.__class__.__name__,
                     self._undefined_name
                 )
