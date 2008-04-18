@@ -57,7 +57,9 @@ import sys
 import ez_setup
 ez_setup.use_setuptools()
 
-from setuptools import setup
+from setuptools import setup, Extension, Feature
+from distutils.command.build_ext import build_ext
+from distutils.errors import CCompilerError, DistutilsPlatformError
 
 
 def list_files(path):
@@ -69,6 +71,29 @@ def list_files(path):
             yield fn
 
 
+class optional_build_ext(build_ext):
+    """This class allows C extension building to fail."""
+
+    def run(self):
+        try:
+            build_ext.run(self)
+        except DistutilsPlatformError:
+            self._unavailable()
+
+    def build_extension(self, ext):
+        try:
+            build_ext.build_extension(self, ext)
+        except CCompilerError, x:
+            self._unavailable()
+
+    def _unavailable(self):
+        print '*' * 70
+        print """WARNING:
+An optional C extension could not be compiled, speedups will not be
+available."""
+        print '*' * 70
+
+
 setup(
     name='Jinja 2',
     version='2.0dev',
@@ -78,7 +103,7 @@ setup(
     author_email='armin.ronacher@active-4.com',
     description='A small but fast and easy to use stand-alone template '
                 'engine written in pure python.',
-    long_description = __doc__,
+    long_description=__doc__,
     # jinja is egg safe. But because we distribute the documentation
     # in form of html and txt files it's a better idea to extract the files
     zip_safe=False,
@@ -98,5 +123,13 @@ setup(
         ('docs/html', list(list_files('docs/html'))),
         ('docs/txt', list(list_files('docs/src')))
     ],
+    features={
+        'speedups': Feature("optional C speed-enhancements",
+            standard=True,
+            ext_modules=[
+                Extension('jinja2._speedups', ['jinja2/_speedups.c'])
+            ]
+        )
+    },
     extras_require={'plugin': ['setuptools>=0.6a2']}
 )

@@ -16,20 +16,6 @@ from functools import update_wrapper
 from itertools import imap
 
 
-def escape(obj, attribute=False):
-    """HTML escape an object."""
-    if obj is None:
-        return u''
-    elif hasattr(obj, '__html__'):
-        return obj.__html__()
-    return Markup(unicode(obj)
-        .replace('&', '&amp;')
-        .replace('>', '&gt;')
-        .replace('<', '&lt;')
-        .replace('"', '&quot;')
-    )
-
-
 def soft_unicode(s):
     """Make a string unicode if it isn't already.  That way a markup
     string is not converted back to unicode.
@@ -317,3 +303,23 @@ class LRUCache(object):
         rv._mapping = deepcopy(self._mapping)
         rv._queue = deepcopy(self._queue)
         return rv
+
+
+# we have to import it down here as the speedups module imports the
+# markup type which is define above.
+try:
+    from jinja2._speedups import escape
+except ImportError:
+    def escape(obj):
+        """Convert the characters &, <, >, and " in string s to HTML-safe
+        sequences. Use this if you need to display text that might contain
+        such characters in HTML.
+        """
+        if hasattr(obj, '__html__'):
+            return obj.__html__()
+        return Markup(unicode(obj)
+            .replace('&', '&amp;')
+            .replace('>', '&gt;')
+            .replace('<', '&lt;')
+            .replace('"', '&quot;')
+        )

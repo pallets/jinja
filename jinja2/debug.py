@@ -134,9 +134,12 @@ def _init_ugly_crap():
     return tb_set_next
 
 
-# no ctypes, no fun
+# try to get a tb_set_next implementation
 try:
-    tb_set_next = _init_ugly_crap()
-except:
-    tb_set_next = None
+    from jinja2._speedups import tb_set_next
+except ImportError:
+    try:
+        tb_set_next = _init_ugly_crap()
+    except:
+        tb_set_next = None
 del _init_ugly_crap
