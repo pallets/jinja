@@ -76,6 +76,9 @@ class Identifiers(object):
         # frames or because they are special for the frame)
         self.declared = set()
 
+        # undeclared variables from outer scopes
+        self.outer_undeclared = set()
+
         # names that are accessed without being explicitly declared by
         # this one or any of the outer scopes.  Names can appear both in
         # declared and undeclared.
@@ -106,7 +109,8 @@ class Identifiers(object):
 
     def find_shadowed(self):
         """Find all the shadowed names."""
-        return self.declared & (self.declared_locally | self.declared_parameter)
+        return (self.declared | self.outer_undeclared) & \
+               (self.declared_locally | self.declared_parameter)
 
 
 class Frame(object):
@@ -144,6 +148,10 @@ class Frame(object):
                 parent.identifiers.declared |
                 parent.identifiers.declared_locally |
                 parent.identifiers.declared_parameter
+            )
+            self.identifiers.outer_undeclared.update(
+                parent.identifiers.undeclared -
+                self.identifiers.declared
             )
             self.buffer = parent.buffer
             self.name_overrides = parent.name_overrides.copy()

@@ -142,8 +142,8 @@ class LoopContextBase(object):
     first = property(lambda x: x.index0 == 0)
     last = property(lambda x: x.revindex0 == 0)
     index = property(lambda x: x.index0 + 1)
-    revindex = property(lambda x: x.length)
-    revindex0 = property(lambda x: x.length - 1)
+    revindex = property(lambda x: x.length - x.index0)
+    revindex0 = property(lambda x: x.length - x.index)
 
     def __len__(self):
         return self.length
@@ -191,7 +191,8 @@ class StaticLoopContext(LoopContextBase):
     """The static loop context is used in the optimizer to "freeze" the
     status of an iteration.  The only reason for this object is if the
     loop object is accessed in a non static way (eg: becomes part of a
-    function call)."""
+    function call).
+    """
 
     def __init__(self, index0, length):
         self.index0 = index0

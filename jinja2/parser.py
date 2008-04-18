@@ -626,6 +626,8 @@ class Parser(object):
         else:
             negated = False
         name = self.stream.expect('name').value
+        dyn_args = dyn_kwargs = None
+        kwargs = []
         if self.stream.current.type is 'lparen':
             args, kwargs, dyn_args, dyn_kwargs = self.parse_call(None)
         elif self.stream.current.type in ('name', 'string', 'integer',
@@ -634,8 +636,6 @@ class Parser(object):
             args = [self.parse_expression()]
         else:
             args = []
-            kwargs = []
-            dyn_args = dyn_kwargs = None
         node = nodes.Test(node, name, args, kwargs, dyn_args,
                           dyn_kwargs, lineno=token.lineno)
         if negated:

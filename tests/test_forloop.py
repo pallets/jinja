@@ -6,6 +6,8 @@
     :copyright: 2007 by Armin Ronacher.
     :license: BSD, see LICENSE for more details.
 """
+from py.test import raises
+
 
 SIMPLE = '''{% for item in seq %}{{ item }}{% endfor %}'''
 ELSE = '''{% for item in seq %}XXX{% else %}...{% endfor %}'''
@@ -13,9 +15,9 @@ EMPTYBLOCKS = '''<{% for item in seq %}{% else %}{% endfor %}>'''
 CONTEXTVARS = '''{% for item in seq %}\
 {{ loop.index }}|{{ loop.index0 }}|{{ loop.revindex }}|{{
    loop.revindex0 }}|{{ loop.first }}|{{ loop.last }}|{{
-   loop.even }}|{{ loop.odd }}|{{ loop.length }}###{% endfor %}'''
-CYCLING = '''{% for item in seq %}{% cycle '<1>', '<2>' %}{% endfor %}\
-{% for item in seq %}{% cycle through %}{% endfor %}'''
+   loop.length }}###{% endfor %}'''
+CYCLING = '''{% for item in seq %}{{ loop.cycle('<1>', '<2>') }}{% endfor %}\
+{% for item in seq %}{{ loop.cycle(*through) }}{% endfor %}'''
 SCOPE = '''{% for item in seq %}{% endfor %}{{ item }}'''
 VARLEN = '''{% for item in iter %}{{ item }}{% endfor %}'''
 NONITER = '''{% for item in none %}...{% endfor %}'''
@@ -40,9 +42,9 @@ def test_context_vars(env):
     tmpl = env.from_string(CONTEXTVARS)
     one, two, _ = tmpl.render(seq=[0, 1]).split('###')
     (one_index, one_index0, one_revindex, one_revindex0, one_first,
-     one_last, one_even, one_odd, one_length) = one.split('|')
+     one_last, one_length) = one.split('|')
     (two_index, two_index0, two_revindex, two_revindex0, two_first,
-     two_last, two_even, two_odd, two_length) = two.split('|')
+     two_last, two_length) = two.split('|')
 
     assert int(one_index) == 1 and int(two_index) == 2
     assert int(one_index0) == 0 and int(two_index0) == 1
@@ -50,8 +52,6 @@ def test_context_vars(env):
     assert int(one_revindex0) == 1 and int(two_revindex0) == 0
     assert one_first == 'True' and two_first == 'False'
     assert one_last == 'False' and two_last == 'True'
-    assert one_even == 'False' and two_even == 'True'
-    assert one_odd == 'True' and two_odd == 'False'
     assert one_length == two_length == '2'
 
 
@@ -78,4 +78,4 @@ def test_varlen(env):
 
 def test_noniter(env):
     tmpl = env.from_string(NONITER)
-    assert not tmpl.render()
+    raises(TypeError, tmpl.render)
