@@ -11,7 +11,7 @@
 #include <Python.h>
 
 
-static char *samp = "&amp;", *slt = "&lt;", *sgt = "&gt;", *sqt = "&quot;";
+static const char *samp = "&amp;", *slt = "&lt;", *sgt = "&gt;", *sqt = "&quot;";
 static Py_UNICODE *amp, *lt, *gt, *qt;
 static PyObject* markup;
 
