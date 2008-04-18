@@ -152,21 +152,17 @@ class LoopContextBase(object):
 class LoopContext(LoopContextBase):
     """A loop context for dynamic iteration."""
 
-    def __init__(self, iterable, parent=None, enforce_length=False):
+    def __init__(self, iterable, enforce_length=False):
         self._iterable = iterable
         self._next = iter(iterable).next
         self._length = None
         self.index0 = -1
-        self.parent = parent
         if enforce_length:
             len(self)
 
     def make_static(self):
         """Return a static loop context for the optimizer."""
-        parent = None
-        if self.parent is not None:
-            parent = self.parent.make_static()
-        return StaticLoopContext(self.index0, self.length, parent)
+        return StaticLoopContext(self.index0, self.length)
 
     def __iter__(self):
         return self
@@ -197,17 +193,15 @@ class StaticLoopContext(LoopContextBase):
     loop object is accessed in a non static way (eg: becomes part of a
     function call)."""
 
-    def __init__(self, index0, length, parent):
+    def __init__(self, index0, length):
         self.index0 = index0
-        self.parent = parent
         self.length = length
 
     def __repr__(self):
         """The repr is used by the optimizer to dump the object."""
-        return 'StaticLoopContext(%r, %r, %r)' % (
+        return 'StaticLoopContext(%r, %r)' % (
             self.index0,
-            self.length,
-            self.parent
+            self.length
         )
 
     def make_static(self):

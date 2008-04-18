@@ -145,7 +145,6 @@ class Optimizer(NodeTransformer):
         except (nodes.Impossible, TypeError):
             return fallback
 
-        parent = context.get('loop')
         context.push()
         result = []
         iterated = False
@@ -181,7 +180,7 @@ class Optimizer(NodeTransformer):
 
         try:
             try:
-                for item, loop in LoopContext(iterable, parent, True):
+                for item, loop in LoopContext(iterable, True):
                     context['loop'] = loop.make_static()
                     assign(node.target, item)
                     result.extend(self.visit(n.copy(), context)

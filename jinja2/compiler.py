@@ -656,8 +656,6 @@ class CodeGenerator(NodeVisitor):
         else:
             self.visit(node.iter, loop_frame)
 
-        if 'loop' in aliases:
-            self.write(', ' + aliases['loop'])
         self.write(extended_loop and '):' or ':')
 
         # tests in not extended loops become a continue
