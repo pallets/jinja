@@ -21,9 +21,9 @@ DEFAULT = '''{{ missing|default("no") }}|{{ false|default('no') }}|\
 DICTSORT = '''{{ foo|dictsort }}|\
 {{ foo|dictsort(true) }}|\
 {{ foo|dictsort(false, 'value') }}'''
-BATCH = '''{{ foo|batch(3) }}|{{ foo|batch(3, 'X') }}'''
-SLICE = '''{{ foo|slice(3) }}|{{ foo|slice(3, 'X') }}'''
-ESCAPE = '''{{ '<">&'|escape }}|{{ '<">&'|escape(true) }}'''
+BATCH = '''{{ foo|batch(3)|list }}|{{ foo|batch(3, 'X')|list }}'''
+SLICE = '''{{ foo|slice(3)|list }}|{{ foo|slice(3, 'X')|list }}'''
+ESCAPE = '''{{ '<">&'|escape }}'''
 STRIPTAGS = '''{{ foo|striptags }}'''
 FILESIZEFORMAT = '{{ 100|filesizeformat }}|\
 {{ 1000|filesizeformat }}|\
@@ -41,7 +41,7 @@ LENGTH = '''{{ "hello world"|length }}'''
 LOWER = '''{{ "FOO"|lower }}'''
 PPRINT = '''{{ data|pprint }}'''
 RANDOM = '''{{ seq|random }}'''
-REVERSE = '''{{ "foobar"|reverse }}|{{ [1, 2, 3]|reverse }}'''
+REVERSE = '''{{ "foobar"|reverse|join }}|{{ [1, 2, 3]|reverse|list }}'''
 STRING = '''{{ range(10)|string }}'''
 TITLE = '''{{ "foo bar"|title }}'''
 TRIM = '''{{ "      foo       "|trim }}'''
@@ -108,7 +108,7 @@ def test_slice(env):
 def test_escape(env):
     tmpl = env.from_string(ESCAPE)
     out = tmpl.render()
-    assert out == '&lt;&quot;&gt;&amp;|&lt;&quot;&gt;&amp;'
+    assert out == '&lt;&quot;&gt;&amp;'
 
 
 def test_striptags(env):

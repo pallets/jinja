@@ -481,7 +481,7 @@ class Parser(object):
             value = self.parse_expression()
             items.append(nodes.Pair(key, value, lineno=key.lineno))
         self.stream.expect('rbrace')
-        return nodes.Dict(items, token.lineno, self.filename)
+        return nodes.Dict(items, lineno=token.lineno)
 
     def parse_postfix(self, node):
         while 1:

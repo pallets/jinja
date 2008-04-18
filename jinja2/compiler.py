@@ -632,7 +632,7 @@ class CodeGenerator(NodeVisitor):
         # the expression pointing to the parent loop.  We make the
         # undefined a bit more debug friendly at the same time.
         parent_loop = 'loop' in aliases and aliases['loop'] \
-                      or "environment.undefined('loop', extra=%r)" % \
+                      or "environment.undefined(%r)" % "'loop' is undefined. " \
                          'the filter section of a loop as well as the ' \
                          'else block doesn\'t have access to the special ' \
                          "'loop' variable of the current loop.  Because " \
@@ -670,7 +670,7 @@ class CodeGenerator(NodeVisitor):
             self.writeline('continue')
             self.outdent(2)
 
-        self.blockvisit(node.body, loop_frame, force_generator=False)
+        self.blockvisit(node.body, loop_frame, force_generator=True)
 
         if node.else_:
             self.writeline('if l_loop is None:')

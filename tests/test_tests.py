@@ -10,9 +10,6 @@
 DEFINED = '''{{ missing is defined }}|{{ true is defined }}'''
 EVEN = '''{{ 1 is even }}|{{ 2 is even }}'''
 LOWER = '''{{ "foo" is lower }}|{{ "FOO" is lower }}'''
-MATCHING = '''{{ "42" is matching('^\\d+$') }}|\
-{{ "foo" is matching('^\\d+$') }}|\
-{{ "foo bar" is matching @/^foo\\s+BAR$/i }}'''
 NUMERIC = '''{{ "43" is numeric }}|{{ "foo" is numeric }}|\
 {{ 42 is numeric }}'''
 ODD = '''{{ 1 is odd }}|{{ 2 is odd }}'''
@@ -37,11 +34,6 @@ def test_even(env):
 def test_lower(env):
     tmpl = env.from_string(LOWER)
     assert tmpl.render() == 'True|False'
-
-
-def test_matching(env):
-    tmpl = env.from_string(MATCHING)
-    assert tmpl.render() == 'True|False|True'
 
 
 def test_numeric(env):

@@ -16,6 +16,16 @@ from functools import update_wrapper
 from itertools import imap
 
 
+_word_split_re = re.compile(r'(\s+)')
+_punctuation_re = re.compile(
+    '^(?P<lead>(?:%s)*)(?P<middle>.*?)(?P<trail>(?:%s)*)$' % (
+        '|'.join(imap(re.escape, ('(', '<', '&lt;'))),
+        '|'.join(imap(re.escape, ('.', ',', ')', '>', '\n', '&gt;')))
+    )
+)
+_simple_email_re = re.compile(r'^\S+@[a-zA-Z0-9._-]+\.[a-zA-Z0-9._-]+$')
+
+
 def soft_unicode(s):
     """Make a string unicode if it isn't already.  That way a markup
     string is not converted back to unicode.
@@ -26,8 +36,7 @@ def soft_unicode(s):
 
 
 def pformat(obj, verbose=False):
-    """
-    Prettyprint an object.  Either use the `pretty` library or the
+    """Prettyprint an object.  Either use the `pretty` library or the
     builtin `pprint`.
     """
     try:
@@ -38,21 +47,8 @@ def pformat(obj, verbose=False):
         return pformat(obj)
 
 
-_word_split_re = re.compile(r'(\s+)')
-
-_punctuation_re = re.compile(
-    '^(?P<lead>(?:%s)*)(?P<middle>.*?)(?P<trail>(?:%s)*)$' % (
-        '|'.join(imap(re.escape, ('(', '<', '&lt;'))),
-        '|'.join(imap(re.escape, ('.', ',', ')', '>', '\n', '&gt;')))
-    )
-)
-
-_simple_email_re = re.compile(r'^\S+@[a-zA-Z0-9._-]+\.[a-zA-Z0-9._-]+$')
-
-
 def urlize(text, trim_url_limit=None, nofollow=False):
-    """
-    Converts any URLs in text into clickable links. Works on http://,
+    """Converts any URLs in text into clickable links. Works on http://,
     https:// and www. links. Links can have trailing punctuation (periods,
     commas, close-parens) and leading punctuation (opening parens) and
     it'll still do the right thing.
@@ -213,9 +209,9 @@ class LRUCache(object):
 
     def copy(self):
         """Return an shallow copy of the instance."""
-        rv = LRUCache(self.capacity)
+        rv = self.__class__(self.capacity)
         rv._mapping.update(self._mapping)
-        rv._queue = self._queue[:]
+        rv._queue = deque(self._queue)
         return rv
 
     def get(self, key, default=None):
@@ -225,8 +221,7 @@ class LRUCache(object):
         return default
 
     def setdefault(self, key, default=None):
-        """
-        Set `default` if the key is not in the cache otherwise
+        """Set `default` if the key is not in the cache otherwise
         leave unchanged. Return the value of this key.
         """
         if key in self:
@@ -296,13 +291,6 @@ class LRUCache(object):
         return iter(self._queue)
 
     __copy__ = copy
-
-    def __deepcopy__(self):
-        """Return a deep copy of the LRU Cache"""
-        rv = LRUCache(self.capacity)
-        rv._mapping = deepcopy(self._mapping)
-        rv._queue = deepcopy(self._queue)
-        return rv
 
 
 # we have to import it down here as the speedups module imports the

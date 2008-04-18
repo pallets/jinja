@@ -16,7 +16,7 @@ try:
 except ImportError:
     itemgetter = lambda a: lambda b: b[a]
 from urllib import urlencode, quote
-from itertools import imap
+from itertools import imap, groupby
 from jinja2.utils import Markup, escape, pformat, urlize, soft_unicode
 from jinja2.runtime import Undefined
 
@@ -108,10 +108,7 @@ def do_xmlattr(d, autospace=False):
     result = []
     for key, value in d.iteritems():
         if value is not None and not isinstance(value, Undefined):
-            result.append(u'%s="%s"' % (
-                escape(env.to_unicode(key)),
-                escape(env.to_unicode(value), True)
-            ))
+            result.append(u'%s="%s"' % (escape(key), escape(value)))
     rv = u' '.join(
         u'%s="%s"' % (escape(key), escape(value))
         for key, value in d.iteritems()
@@ -386,7 +383,10 @@ def do_int(value, default=0):
     try:
         return int(value)
     except (TypeError, ValueError):
-        return default
+        try:
+            return int(float(value))
+        except (TypeError, ValueError):
+            return default
 
 
 def do_float(value, default=0.0):
@@ -398,11 +398,6 @@ def do_float(value, default=0.0):
         return float(value)
     except (TypeError, ValueError):
         return default
-
-
-def do_string(value):
-    """Convert the value into an string."""
-    return soft_unicode(value)
 
 
 def do_format(value, *args, **kwargs):
@@ -451,7 +446,7 @@ def do_slice(value, slices, fill_with=None):
     If you pass it a second argument it's used to fill missing
     values on the last iteration.
     """
-    seq = list(seq)
+    seq = list(value)
     length = len(seq)
     items_per_slice = length // slices
     slices_with_extra = length % slices
@@ -599,7 +594,8 @@ FILTERS = {
     'wordcount':            do_wordcount,
     'int':                  do_int,
     'float':                do_float,
-    'string':               do_string,
+    'string':               soft_unicode,
+    'list':                 list,
     'urlize':               do_urlize,
     'format':               do_format,
     'trim':                 do_trim,
