@@ -35,7 +35,10 @@ class Parser(object):
         self.filename = filename
         self.closed = False
         self.stream = environment.lexer.tokenize(source, filename)
-        self.extensions = environment.parser_extensions
+        self.extensions = {}
+        for extension in environment.extensions:
+            for tag in extension.tags:
+                self.extensions[tag] = extension.parse
 
     def end_statement(self):
         """Make sure that the statement ends properly."""
@@ -686,20 +689,3 @@ class Parser(object):
         result = nodes.Template(self.subparse(), lineno=1)
         result.set_environment(self.environment)
         return result
-
-
-class ParserExtension(tuple):
-    """Instances of this class store parser extensions."""
-    __slots__ = ()
-
-    def __new__(cls, tag, parse_func):
-        return tuple.__new__(cls, (tag, parse_func))
-
-    def __call__(self, parser):
-        return self.parse_func(parser)
-
-    def __repr__(self):
-        return '<%s %r>' % (self.__class__.__name__, self.tag)
-
-    tag = property(itemgetter(0))
-    parse_func = property(itemgetter(1))
