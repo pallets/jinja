@@ -108,14 +108,8 @@ class IncludedTemplate(object):
         self._rendered_body = u''.join(gen)
         self._context = context.get_exported()
 
-    def __getitem__(self, name):
-        return self._context[name]
-
-    def __unicode__(self):
-        return self._rendered_body
-
-    def __html__(self):
-        return self._rendered_body
+    __getitem__ = lambda x, n: x._context[n]
+    __html__ = __unicode__ = lambda x: x._rendered_body
 
     def __repr__(self):
         return '<%s %r>' % (

@@ -44,6 +44,13 @@ def environmentfilter(f):
     return f
 
 
+def do_forceescape(value):
+    """Enforce HTML escaping.  This will probably double escape variables."""
+    if hasattr(value, '__html__'):
+        value = value.__html__()
+    return escape(unicode(value))
+
+
 def do_replace(s, old, new, count=None):
     """Return a copy of the value with all occurrences of a substring
     replaced with a new one. The first argument is the substring
@@ -383,6 +390,7 @@ def do_int(value, default=0):
     try:
         return int(value)
     except (TypeError, ValueError):
+        # this quirk is necessary so that "42.23"|int gives 42.
         try:
             return int(float(value))
         except (TypeError, ValueError):
@@ -423,7 +431,9 @@ def do_trim(value):
 def do_striptags(value):
     """Strip SGML/XML tags and replace adjacent whitespace by one space.
     """
-    return ' '.join(_striptags_re.sub('', value).split())
+    if hasattr(value, '__html__'):
+        value = value.__html__()
+    return u' '.join(_striptags_re.sub('', value).split())
 
 
 def do_slice(value, slices, fill_with=None):
@@ -571,7 +581,7 @@ FILTERS = {
     'lower':                do_lower,
     'escape':               escape,
     'e':                    escape,
-    'xmlattr':              do_xmlattr,
+    'forceescape':          do_forceescape,
     'capitalize':           do_capitalize,
     'title':                do_title,
     'default':              do_default,

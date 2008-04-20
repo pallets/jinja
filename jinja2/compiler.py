@@ -280,6 +280,12 @@ class CodeGenerator(NodeVisitor):
         # the current indentation
         self._indentation = 0
 
+    def get_visitor(self, node):
+        """Custom nodes have their own compilation method."""
+        if isinstance(node, nodes.CustomStmt):
+            return node.compile
+        return NodeVisitor.get_visitor(self, node)
+
     def temporary_identifier(self):
         """Get a new unique identifier."""
         self._last_identifier += 1

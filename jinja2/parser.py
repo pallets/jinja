@@ -8,14 +8,15 @@
     :copyright: 2008 by Armin Ronacher.
     :license: BSD, see LICENSE for more details.
 """
+from operator import itemgetter
 from jinja2 import nodes
 from jinja2.exceptions import TemplateSyntaxError
 
 
 _statement_keywords = frozenset(['for', 'if', 'block', 'extends', 'print',
-                                 'macro', 'include', 'trans'])
+                                 'macro', 'include'])
 _compare_operators = frozenset(['eq', 'ne', 'lt', 'lteq', 'gt', 'gteq', 'in'])
-_statement_end_tokens = set(['elif', 'else', 'endblock', 'endfilter',
+statement_end_tokens = set(['elif', 'else', 'endblock', 'endfilter',
                              'endfor', 'endif', 'endmacro', 'variable_end',
                              'in', 'recursive', 'endcall', 'block_end'])
 
@@ -34,12 +35,13 @@ class Parser(object):
         self.filename = filename
         self.closed = False
         self.stream = environment.lexer.tokenize(source, filename)
+        self.extensions = environment.parser_extensions
 
     def end_statement(self):
         """Make sure that the statement ends properly."""
         if self.stream.current.type is 'semicolon':
             self.stream.next()
-        elif self.stream.current.type not in _statement_end_tokens:
+        elif self.stream.current.type not in statement_end_tokens:
             raise TemplateSyntaxError('ambigous end of statement',
                                       self.stream.current.lineno,
                                       self.filename)
@@ -53,6 +55,10 @@ class Parser(object):
             return self.parse_call_block()
         elif token_type is 'filter':
             return self.parse_filter_block()
+        elif token_type is 'name':
+            ext = self.extensions.get(self.stream.current.value)
+            if ext is not None:
+                return ext(self)
         lineno = self.stream.current
         expr = self.parse_tuple()
         if self.stream.current.type == 'assign':
@@ -75,10 +81,9 @@ class Parser(object):
         return nodes.Assign(target, expr, lineno=lineno)
 
     def parse_statements(self, end_tokens, drop_needle=False):
-        """
-        Parse multiple statements into a list until one of the end tokens
-        is reached.  This is used to parse the body of statements as it
-        also parses template data if appropriate.
+        """Parse multiple statements into a list until one of the end tokens
+        is reached.  This is used to parse the body of statements as it also
+        parses template data if appropriate.
         """
         # the first token may be a colon for python compatibility
         if self.stream.current.type is 'colon':
@@ -89,7 +94,7 @@ class Parser(object):
             result = self.subparse(end_tokens)
         else:
             result = []
-            while self.stream.current.type not in end_tokens:
+            while not self.stream.current.test_many(end_tokens):
                 if self.stream.current.type is 'block_end':
                     self.stream.next()
                     result.extend(self.subparse(end_tokens))
@@ -227,19 +232,12 @@ class Parser(object):
     def parse_print(self):
         node = nodes.Output(lineno=self.stream.expect('print').lineno)
         node.nodes = []
-        while self.stream.current.type not in _statement_end_tokens:
+        while self.stream.current.type not in statement_end_tokens:
             if node.nodes:
                 self.stream.expect('comma')
             node.nodes.append(self.parse_expression())
         self.end_statement()
         return node
-
-    def parse_trans(self):
-        """Parse a translatable section."""
-        # lazily imported because we don't want the i18n overhead
-        # if it's not used.  (Even though the overhead is low)
-        from jinja2.i18n import parse_trans
-        return parse_trans(self)
 
     def parse_expression(self, no_condexpr=False):
         """Parse an expression."""
@@ -442,7 +440,7 @@ class Parser(object):
         while 1:
             if args:
                 self.stream.expect('comma')
-            if self.stream.current.type in _statement_end_tokens:
+            if self.stream.current.type in statement_end_tokens:
                 break
             args.append(parse())
             if self.stream.current.type is not 'comma':
@@ -662,7 +660,7 @@ class Parser(object):
             elif token.type is 'variable_begin':
                 self.stream.next()
                 want_comma = False
-                while self.stream.current.type not in _statement_end_tokens:
+                while not self.stream.current.test_many(statement_end_tokens):
                     if want_comma:
                         self.stream.expect('comma')
                     add_data(self.parse_expression())
@@ -672,7 +670,7 @@ class Parser(object):
                 flush_data()
                 self.stream.next()
                 if end_tokens is not None and \
-                   self.stream.current.type in end_tokens:
+                   self.stream.current.test_many(end_tokens):
                     return body
                 while self.stream.current.type is not 'block_end':
                     body.append(self.parse_statement())
@@ -688,3 +686,20 @@ class Parser(object):
         result = nodes.Template(self.subparse(), lineno=1)
         result.set_environment(self.environment)
         return result
+
+
+class ParserExtension(tuple):
+    """Instances of this class store parser extensions."""
+    __slots__ = ()
+
+    def __new__(cls, tag, parse_func):
+        return tuple.__new__(cls, (tag, parse_func))
+
+    def __call__(self, parser):
+        return self.parse_func(parser)
+
+    def __repr__(self):
+        return '<%s %r>' % (self.__class__.__name__, self.tag)
+
+    tag = property(itemgetter(0))
+    parse_func = property(itemgetter(1))

@@ -26,13 +26,30 @@ _punctuation_re = re.compile(
 _simple_email_re = re.compile(r'^\S+@[a-zA-Z0-9._-]+\.[a-zA-Z0-9._-]+$')
 
 
-def soft_unicode(s):
-    """Make a string unicode if it isn't already.  That way a markup
-    string is not converted back to unicode.
+def import_string(import_name, silent=False):
+    """Imports an object based on a string.  This use useful if you want to
+    use import paths as endpoints or something similar.  An import path can
+    be specified either in dotted notation (``xml.sax.saxutils.escape``)
+    or with a colon as object delimiter (``xml.sax.saxutils:escape``).
+
+    If the `silent` is True the return value will be `None` if the import
+    fails.
+
+    :return: imported object
     """
-    if not isinstance(s, unicode):
-        s = unicode(s)
-    return s
+    try:
+        if ':' in import_name:
+            module, obj = import_name.split(':', 1)
+        elif '.' in import_name:
+            items = import_name.split('.')
+            module = '.'.join(items[:-1])
+            obj = items[-1]
+        else:
+            return __import__(import_name)
+        return getattr(__import__(module, None, None, [obj]), obj)
+    except (ImportError, AttributeError):
+        if not silent:
+            raise
 
 
 def pformat(obj, verbose=False):
@@ -100,7 +117,6 @@ class Markup(unicode):
     happen.  If you want to use autoescaping in Jinja just set the finalizer
     of the environment to `escape`.
     """
-
     __slots__ = ()
 
     def __html__(self):
@@ -137,15 +153,19 @@ class Markup(unicode):
 
     def join(self, seq):
         return self.__class__(unicode.join(self, imap(escape, seq)))
+    join.__doc__ = unicode.join.__doc__
 
     def split(self, *args, **kwargs):
         return map(self.__class__, unicode.split(self, *args, **kwargs))
+    split.__doc__ = unicode.split.__doc__
 
     def rsplit(self, *args, **kwargs):
         return map(self.__class__, unicode.rsplit(self, *args, **kwargs))
+    rsplit.__doc__ = unicode.rsplit.__doc__
 
     def splitlines(self, *args, **kwargs):
         return map(self.__class__, unicode.splitlines(self, *args, **kwargs))
+    splitlines.__doc__ = unicode.splitlines.__doc__
 
     def make_wrapper(name):
         orig = getattr(unicode, name)
@@ -296,7 +316,7 @@ class LRUCache(object):
 # we have to import it down here as the speedups module imports the
 # markup type which is define above.
 try:
-    from jinja2._speedups import escape
+    from jinja2._speedups import escape, soft_unicode
 except ImportError:
     def escape(obj):
         """Convert the characters &, <, >, and " in string s to HTML-safe
@@ -311,3 +331,11 @@ except ImportError:
             .replace('<', '&lt;')
             .replace('"', '&quot;')
         )
+
+    def soft_unicode(s):
+        """Make a string unicode if it isn't already.  That way a markup
+        string is not converted back to unicode.
+        """
+        if not isinstance(s, unicode):
+            s = unicode(s)
+        return s

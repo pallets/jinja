@@ -46,19 +46,19 @@ escape_unicode(PyUnicodeObject *in)
 		switch (*inp++) {
 		case '&':
 			len += 5;
-			erepl++;
+			++erepl;
 			break;
 		case '"':
 			len += 6;
-			erepl++;
+			++erepl;
 			break;
 		case '<':
 		case '>':
 			len += 4;
-			erepl++;
+			++erepl;
 			break;
 		default:
-			len++;
+			++len;
 		}
 
 	/* Do we need to escape anything at all? */
@@ -84,22 +84,22 @@ escape_unicode(PyUnicodeObject *in)
 		case '&':
 			Py_UNICODE_COPY(outp, amp, 5);
 			outp += 5;
-			repl++;
+			++repl;
 			break;
 		case '"':
 			Py_UNICODE_COPY(outp, qt, 6);
 			outp += 6;
-			repl++;
+			++repl;
 			break;
 		case '<':
 			Py_UNICODE_COPY(outp, lt, 4);
 			outp += 4;
-			repl++;
+			++repl;
 			break;
 		case '>':
 			Py_UNICODE_COPY(outp, gt, 4);
 			outp += 4;
-			repl++;
+			++repl;
 			break;
 		default:
 			*outp++ = *inp;
@@ -112,17 +112,25 @@ escape_unicode(PyUnicodeObject *in)
 
 
 static PyObject*
-escape(PyObject *self, PyObject *args)
+soft_unicode(PyObject *self, PyObject *s)
 {
-	PyObject *text = NULL, *s = NULL, *rv = NULL;
-	if (!PyArg_UnpackTuple(args, "escape", 1, 1, &text))
-		return NULL;
+	if (!PyUnicode_Check(s))
+		return PyObject_Unicode(s);
+	Py_INCREF(s);
+	return s;
+}
+
+
+static PyObject*
+escape(PyObject *self, PyObject *text)
+{
+	PyObject *s = NULL, *rv = NULL;
 
 	/* we don't have to escape integers, bools or floats */
 	if (PyInt_CheckExact(text) || PyLong_CheckExact(text) ||
 	    PyFloat_CheckExact(text) || PyBool_Check(text) ||
 	    text == Py_None) {
-		args = PyTuple_New(1);
+		PyObject *args = PyTuple_New(1);
 		if (!args) {
 			Py_DECREF(s);
 			return NULL;
@@ -152,15 +160,7 @@ escape(PyObject *self, PyObject *args)
 		s = escape_unicode((PyUnicodeObject*)text);
 
 	/* convert the unicode string into a markup object. */
-	args = PyTuple_New(1);
-	if (!args) {
-		Py_DECREF(s);
-		return NULL;
-	}
-	PyTuple_SET_ITEM(args, 0, (PyObject*)s);
-	rv = PyObject_CallObject(markup, args);
-	Py_DECREF(args);
-	return rv;
+	return PyObject_CallFunctionObjArgs(markup, (PyObject*)s, NULL);
 }
 
 
@@ -192,11 +192,15 @@ tb_set_next(PyObject *self, PyObject *args)
 
 
 static PyMethodDef module_methods[] = {
-	{"escape", (PyCFunction)escape, METH_VARARGS,
+	{"escape", (PyCFunction)escape, METH_O,
 	 "escape(s) -> string\n\n"
 	 "Convert the characters &, <, >, and \" in string s to HTML-safe\n"
 	 "sequences. Use this if you need to display text that might contain\n"
 	 "such characters in HTML."},
+	{"soft_unicode", (PyCFunction)soft_unicode, METH_O,
+	 "soft_unicode(object) -> string\n\n"
+         "Make a string unicode if it isn't already.  That way a markup\n"
+         "string is not converted back to unicode."},
 	{"tb_set_next", (PyCFunction)tb_set_next, METH_VARARGS,
 	 "Set the tb_next member of a traceback object."},
 	{NULL, NULL, 0, NULL}		/* Sentinel */

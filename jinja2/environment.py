@@ -10,11 +10,12 @@
 """
 import sys
 from jinja2.lexer import Lexer
-from jinja2.parser import Parser
+from jinja2.parser import Parser, ParserExtension
 from jinja2.optimizer import optimize
 from jinja2.compiler import generate
 from jinja2.runtime import Undefined
 from jinja2.debug import translate_exception
+from jinja2.utils import import_string
 from jinja2.defaults import DEFAULT_FILTERS, DEFAULT_TESTS, DEFAULT_NAMESPACE
 
 
@@ -43,6 +44,7 @@ class Environment(object):
                  optimized=True,
                  undefined=Undefined,
                  loader=None,
+                 parser_extensions=(),
                  finalize=unicode):
         """Here the possible initialization parameters:
 
@@ -68,6 +70,10 @@ class Environment(object):
         `undefined`               a subclass of `Undefined` that is used to
                                   represent undefined variables.
         `loader`                  the loader which should be used.
+        `parser_extensions`       List of parser extensions to use.
+        `finalize`                A callable that finalizes the variable.  Per
+                                  default this is `unicode`, other useful
+                                  builtin finalizers are `escape`.
         ========================= ============================================
         """
 
@@ -87,6 +93,14 @@ class Environment(object):
         self.comment_end_string = comment_end_string
         self.line_statement_prefix = line_statement_prefix
         self.trim_blocks = trim_blocks
+        self.parser_extensions = {}
+        for extension in parser_extensions:
+            if isinstance(extension, basestring):
+                extension = import_string(extension)
+            self.parser_extensions[extension.tag] = extension
+
+
+        # runtime information
         self.undefined = undefined
         self.optimized = optimized
         self.finalize = finalize

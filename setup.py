@@ -108,7 +108,7 @@ setup(
     # in form of html and txt files it's a better idea to extract the files
     zip_safe=False,
     classifiers=[
-        'Development Status :: 1 - Alpha',
+        'Development Status :: 4 Beta',
         'Environment :: Web Environment',
         'Intended Audience :: Developers',
         'License :: OSI Approved :: BSD License',
@@ -131,5 +131,9 @@ setup(
             ]
         )
     },
-    extras_require={'plugin': ['setuptools>=0.6a2']}
+    extras_require={'i18n': ['Babel>=0.8']}
+    entry_points="""
+    [babel.extractors]
+    jinja2 = jinja.i18n:babel_extract[i18n]
+    """
 )

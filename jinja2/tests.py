@@ -26,6 +26,11 @@ def test_even(value):
     return value % 2 == 0
 
 
+def test_divisibleby(value, num):
+    """Check if a variable is divisible by a number."""
+    return value % num == 0
+
+
 def test_defined(value):
     """Return true if the variable is defined:
 
@@ -78,7 +83,7 @@ def test_sameas(value, other):
 
     .. sourcecode:: jinja
 
-        {% if foo.attribute is sameas(false) %}
+        {% if foo.attribute is sameas false %}
             the foo attribute really is the `False` singleton
         {% endif %}
     """
@@ -88,6 +93,7 @@ def test_sameas(value, other):
 TESTS = {
     'odd':              test_odd,
     'even':             test_even,
+    'divisibleby':      test_divisibleby,
     'defined':          test_defined,
     'lower':            test_lower,
     'upper':            test_upper,

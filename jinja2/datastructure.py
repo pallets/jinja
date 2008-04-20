@@ -13,9 +13,6 @@ from collections import deque
 from jinja2.exceptions import TemplateSyntaxError, TemplateRuntimeError
 
 
-_missing = object()
-
-
 class Token(tuple):
     """
     Token class.
@@ -32,7 +29,27 @@ class Token(tuple):
             return self.type
         elif self.type in reverse_operators:
             return reverse_operators[self.type]
-        return self.value
+        return '%s:%s' % (self.type, self.value)
+
+    def test(self, expr):
+        """Test a token against a token expression.  This can either be a
+        token type or 'token_type:token_value'.  This can only test against
+        string values!
+        """
+        # here we do a regular string equality check as test_many is usually
+        # passed an iterable of not interned strings.
+        if self.type == expr:
+            return True
+        elif ':' in expr:
+            return expr.split(':', 1) == [self.type, self.value]
+        return False
+
+    def test_many(self, iterable):
+        """Test against multiple token expressions."""
+        for expr in iterable:
+            if self.test(expr):
+                return True
+        return False
 
     def __repr__(self):
         return 'Token(%r, %r, %r)' % (
@@ -127,17 +144,11 @@ class TokenStream(object):
         self.current = Token(self.current.lineno, 'eof', '')
         self._next = None
 
-    def expect(self, token_type, token_value=_missing):
+    def expect(self, expr):
         """Expect a given token type and return it"""
-        if self.current.type is not token_type:
+        if not self.current.test(expr):
             raise TemplateSyntaxError("expected token %r, got %r" %
-                                      (token_type, self.current.type),
-                                      self.current.lineno,
-                                      self.filename)
-        elif token_value is not _missing and \
-             self.current.value != token_value:
-            raise TemplateSyntaxError("expected %r, got %r" %
-                                      (token_value, self.current.value),
+                                      (expr, self.current),
                                       self.current.lineno,
                                       self.filename)
         try:
