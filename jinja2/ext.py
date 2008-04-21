@@ -34,6 +34,7 @@ class Extension(object):
 
 
 class CacheExtension(Extension):
+    """An example extension that adds cacheable blocks."""
     tags = set(['cache'])
 
     def parse(self, parser):

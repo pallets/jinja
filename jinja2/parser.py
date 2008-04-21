@@ -16,9 +16,7 @@ from jinja2.exceptions import TemplateSyntaxError
 _statement_keywords = frozenset(['for', 'if', 'block', 'extends', 'print',
                                  'macro', 'include'])
 _compare_operators = frozenset(['eq', 'ne', 'lt', 'lteq', 'gt', 'gteq', 'in'])
-statement_end_tokens = set(['elif', 'else', 'endblock', 'endfilter',
-                             'endfor', 'endif', 'endmacro', 'variable_end',
-                             'in', 'recursive', 'endcall', 'block_end'])
+statement_end_tokens = set(['variable_end', 'block_end', 'in'])
 
 
 class Parser(object):
@@ -40,15 +38,6 @@ class Parser(object):
             for tag in extension.tags:
                 self.extensions[tag] = extension.parse
 
-    def end_statement(self):
-        """Make sure that the statement ends properly."""
-        if self.stream.current.type is 'semicolon':
-            self.stream.next()
-        elif self.stream.current.type not in statement_end_tokens:
-            raise TemplateSyntaxError('ambigous end of statement',
-                                      self.stream.current.lineno,
-                                      self.filename)
-
     def parse_statement(self):
         """Parse a single statement."""
         token_type = self.stream.current.type
@@ -68,7 +57,6 @@ class Parser(object):
             result = self.parse_assign(expr)
         else:
             result = nodes.ExprStmt(expr, lineno=lineno)
-        self.end_statement()
         return result
 
     def parse_assign(self, target):
@@ -79,7 +67,6 @@ class Parser(object):
                                       target, target.lineno,
                                       self.filename)
         expr = self.parse_tuple()
-        self.end_statement()
         target.set_ctx('store')
         return nodes.Assign(target, expr, lineno=lineno)
 
@@ -92,17 +79,11 @@ class Parser(object):
         if self.stream.current.type is 'colon':
             self.stream.next()
 
-        if self.stream.current.type is 'block_end':
-            self.stream.next()
-            result = self.subparse(end_tokens)
-        else:
-            result = []
-            while not self.stream.current.test_many(end_tokens):
-                if self.stream.current.type is 'block_end':
-                    self.stream.next()
-                    result.extend(self.subparse(end_tokens))
-                    break
-                result.append(self.parse_statement())
+        # in the future it would be possible to add whole code sections
+        # by adding some sort of end of statement token and parsing those here.
+        self.stream.expect('block_end')
+        result = self.subparse(end_tokens)
+
         if drop_needle:
             self.stream.next()
         return result
@@ -159,7 +140,6 @@ class Parser(object):
     def parse_extends(self):
         node = nodes.Extends(lineno=self.stream.expect('extends').lineno)
         node.template = self.parse_expression()
-        self.end_statement()
         return node
 
     def parse_include(self):
@@ -180,7 +160,6 @@ class Parser(object):
         else:
             node.target = None
             node.template = expr
-        self.end_statement()
         return node
 
     def parse_signature(self, node):
@@ -239,7 +218,6 @@ class Parser(object):
             if node.nodes:
                 self.stream.expect('comma')
             node.nodes.append(self.parse_expression())
-        self.end_statement()
         return node
 
     def parse_expression(self, no_condexpr=False):

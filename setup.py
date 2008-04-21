@@ -131,7 +131,7 @@ setup(
             ]
         )
     },
-    extras_require={'i18n': ['Babel>=0.8']}
+    extras_require={'i18n': ['Babel>=0.8']},
     entry_points="""
     [babel.extractors]
     jinja2 = jinja.i18n:babel_extract[i18n]

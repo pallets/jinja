@@ -150,7 +150,6 @@ class TransExtension(Extension):
             referenced.update(plural_names)
         else:
             parser.stream.next()
-            parser.end_statement()
 
         # register free names as simple name expressions
         for var in referenced:
@@ -173,7 +172,7 @@ class TransExtension(Extension):
             variables = nodes.Dict([nodes.Pair(nodes.Const(x, lineno=lineno), y)
                                     for x, y in variables.items()])
         else:
-            vairables = None
+            variables = None
 
         node = self._make_node(singular, plural, variables, plural_expr)
         node.set_lineno(lineno)

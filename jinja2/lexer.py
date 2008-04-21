@@ -38,9 +38,8 @@ float_re = re.compile(r'\d+\.\d+')
 # set of used keywords
 keywords = set(['and', 'block', 'elif', 'else', 'endblock', 'print',
                 'endfilter', 'endfor', 'endif', 'endmacro', 'endraw',
-                'extends', 'filter', 'for', 'if', 'in',
-                'include', 'is', 'macro', 'not', 'or', 'raw',
-                'recursive', 'set', 'call', 'endcall'])
+                'extends', 'filter', 'for', 'if', 'in', 'include'
+                'is', 'macro', 'not', 'or', 'raw', 'call', 'endcall'])
 
 # bind operators to token types
 operators = {
