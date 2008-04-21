@@ -75,7 +75,9 @@ def babel_extract(fileobj, keywords, comment_tags, options):
         options.get('comment_start_string', '{#'),
         options.get('comment_end_string', '#}'),
         options.get('line_statement_prefix') or None,
-        options.get('trim_blocks', '').lower() in ('1', 'on', 'yes', 'true')
+        options.get('trim_blocks', '').lower() in ('1', 'on', 'yes', 'true'),
+        extensions=[x.strip() for x in options.get('extensions', '')
+                     .split(',')] + [TransExtension]
     )
     node = environment.parse(fileobj.read().decode(encoding))
     for lineno, func, message in extract_from_ast(node, keywords):

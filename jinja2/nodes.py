@@ -58,24 +58,12 @@ class NodeType(type):
     def __new__(cls, name, bases, d):
         for attr in 'fields', 'attributes':
             storage = []
-            for base in bases:
-                storage.extend(getattr(base, attr, ()))
+            storage.extend(getattr(bases[0], attr, ()))
             storage.extend(d.get(attr, ()))
-            assert len(storage) == len(set(storage))
+            assert len(bases) == 1, 'multiple inheritance not allowed'
+            assert len(storage) == len(set(storage)), 'layout conflict'
             d[attr] = tuple(storage)
-        rv = type.__new__(cls, name, bases, d)
-
-        # unless the node is a subclass of `CustomNode` it may not
-        # be defined in any other module than the jinja2.nodes module.
-        # the reason for this is that the we don't want users to take
-        # advantage of the fact that the parser is using the node name
-        # only as callback name for non custom nodes.  This could lead
-        # to broken code in the future and is disallowed because of this.
-        if rv.__module__ != 'jinja2.nodes' and not \
-           isinstance(rv, CustomStmt):
-            raise TypeError('non builtin node %r is not a subclass of '
-                            'CustomStmt.' % node.__class__.__name__)
-        return rv
+        return type.__new__(cls, name, bases, d)
 
 
 class Node(object):
@@ -203,15 +191,6 @@ class Stmt(Node):
 
 class Helper(Node):
     """Nodes that exist in a specific context only."""
-
-
-class CustomStmt(Stmt):
-    """Custom statements must extend this node."""
-
-    def compile(self, compiler):
-        """The compiler calls this method to get the python sourcecode
-        for the statement.
-        """
 
 
 class Template(Node):
