@@ -6,62 +6,65 @@
     :copyright: 2007 by Armin Ronacher.
     :license: BSD, see LICENSE for more details.
 """
-from jinja2 import Environment
-
-
-NONLOCALSET = '''\
-{% for item in range(10) %}
-    {%- set outer = item! -%}
-{% endfor -%}
-{{ outer }}'''
+from jinja2.sandbox import SandboxedEnvironment, unsafe
 
 
 class PrivateStuff(object):
-    bar = lambda self: 23
-    foo = lambda self: 42
-    foo.jinja_unsafe_call = True
+
+    def bar(self):
+        return 23
+
+    @unsafe
+    def foo(self):
+        return 42
+
+    def __repr__(self):
+        return 'PrivateStuff'
 
 
 class PublicStuff(object):
-    jinja_allowed_attributes = ['bar']
     bar = lambda self: 23
-    foo = lambda self: 42
+    _foo = lambda self: 42
+
+    def __repr__(self):
+        return 'PublicStuff'
 
 
 test_unsafe = '''
+>>> env = MODULE.SandboxedEnvironment()
 >>> env.from_string("{{ foo.foo() }}").render(foo=MODULE.PrivateStuff())
-u''
+Traceback (most recent call last):
+    ...
+TypeError: <bound method PrivateStuff.foo of PrivateStuff> is not safely callable
 >>> env.from_string("{{ foo.bar() }}").render(foo=MODULE.PrivateStuff())
 u'23'
 
->>> env.from_string("{{ foo.foo() }}").render(foo=MODULE.PublicStuff())
-u''
+>>> env.from_string("{{ foo._foo() }}").render(foo=MODULE.PublicStuff())
+Traceback (most recent call last):
+    ...
+UndefinedError: access to attribute '_foo' of 'PublicStuff' object is unsafe.
 >>> env.from_string("{{ foo.bar() }}").render(foo=MODULE.PublicStuff())
 u'23'
 
 >>> env.from_string("{{ foo.__class__ }}").render(foo=42)
 u''
-
 >>> env.from_string("{{ foo.func_code }}").render(foo=lambda:None)
 u''
+>>> env.from_string("{{ foo.__class__.__subclasses__() }}").render(foo=42)
+Traceback (most recent call last):
+    ...
+UndefinedError: access to attribute '__class__' of 'int' object is unsafe.
 '''
 
 
 test_restricted = '''
+>>> env = MODULE.SandboxedEnvironment()
 >>> env.from_string("{% for item.attribute in seq %}...{% endfor %}")
 Traceback (most recent call last):
     ...
-TemplateSyntaxError: cannot assign to expression (line 1)
+TemplateSyntaxError: can't assign to 'subscript' (line 1)
 >>> env.from_string("{% for foo, bar.baz in seq %}...{% endfor %}")
 Traceback (most recent call last):
     ...
-TemplateSyntaxError: cannot assign to expression (line 1)
+TemplateSyntaxError: can't assign to 'tuple' (line 1)
 '''
-
-
-def test_nonlocal_set():
-    env = Environment()
-    env.globals['outer'] = 42
-    tmpl = env.from_string(NONLOCALSET)
-    assert tmpl.render() == '9'
-    assert env.globals['outer'] == 42

@@ -77,3 +77,12 @@ class NodeTransformer(NodeVisitor):
                 else:
                     setattr(node, field, new_node)
         return node
+
+    def visit_list(self, node, *args, **kwargs):
+        """As transformers may return lists in some places this method
+        can be used to enforce a list as return value.
+        """
+        rv = self.visit(node, *args, **kwargs)
+        if not isinstance(rv, list):
+            rv = [rv]
+        return rv

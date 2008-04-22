@@ -8,43 +8,16 @@
 """
 from jinja2.exceptions import TemplateSyntaxError
 
-KEYWORDS = '''\
-{{ with }}
-{{ as }}
-{{ import }}
-{{ from }}
-{{ class }}
-{{ def }}
-{{ try }}
-{{ except }}
-{{ exec }}
-{{ global }}
-{{ assert }}
-{{ break }}
-{{ continue }}
-{{ lambda }}
-{{ return }}
-{{ raise }}
-{{ yield }}
-{{ while }}
-{{ pass }}
-{{ finally }}'''
+
 UNPACKING = '''{% for a, b, c in [[1, 2, 3]] %}{{ a }}|{{ b }}|{{ c }}{% endfor %}'''
 RAW = '''{% raw %}{{ FOO }} and {% BAR %}{% endraw %}'''
-CONST = '''{{ true }}|{{ false }}|{{ none }}|{{ undefined }}|\
-{{ none is defined }}|{{ undefined is defined }}'''
-LOCALSET = '''{% set foo = 0 %}\
-{% for item in [1, 2] %}{% set foo = 1 %}{% endfor %}\
+CONST = '''{{ true }}|{{ false }}|{{ none }}|\
+{{ none is defined }}|{{ missing is defined }}'''
+LOCALSET = '''{% foo = 0 %}\
+{% for item in [1, 2] %}{% foo = 1 %}{% endfor %}\
 {{ foo }}'''
-NONLOCALSET = '''{% set foo = 0 %}\
-{% for item in [1, 2] %}{% set foo = 1! %}{% endfor %}\
-{{ foo }}'''
-CONSTASS1 = '''{% set true = 42 %}'''
-CONSTASS2 = '''{% for undefined in seq %}{% endfor %}'''
-
-
-def test_keywords(env):
-    env.from_string(KEYWORDS)
+CONSTASS1 = '''{% true = 42 %}'''
+CONSTASS2 = '''{% for none in seq %}{% endfor %}'''
 
 
 def test_unpacking(env):
@@ -57,16 +30,9 @@ def test_raw(env):
     assert tmpl.render() == '{{ FOO }} and {% BAR %}'
 
 
-def test_crazy_raw():
-    from jinja2 import Environment
-    env = Environment('{', '}', '{', '}')
-    tmpl = env.from_string('{raw}{broken foo}{endraw}')
-    assert tmpl.render() == '{broken foo}'
-
-
-def test_cache_dict():
-    from jinja2.utils import CacheDict
-    d = CacheDict(3)
+def test_lru_cache():
+    from jinja2.utils import LRUCache
+    d = LRUCache(3)
     d["a"] = 1
     d["b"] = 2
     d["c"] = 3
@@ -76,21 +42,9 @@ def test_cache_dict():
     assert 'a' in d and 'c' in d and 'd' in d and 'b' not in d
 
 
-def test_stringfilter(env):
-    from jinja2.filters import stringfilter
-    f = stringfilter(lambda f, x: f + x)
-    assert f('42')(env, None, 23) == '2342'
-
-
-def test_simplefilter(env):
-    from jinja2.filters import simplefilter
-    f = simplefilter(lambda f, x: f + x)
-    assert f(42)(env, None, 23) == 65
-
-
 def test_const(env):
     tmpl = env.from_string(CONST)
-    assert tmpl.render() == 'True|False|||True|False'
+    assert tmpl.render() == 'True|False|None|True|False'
 
 
 def test_const_assign(env):
@@ -106,8 +60,3 @@ def test_const_assign(env):
 def test_localset(env):
     tmpl = env.from_string(LOCALSET)
     assert tmpl.render() == '0'
-
-
-def test_nonlocalset(env):
-    tmpl = env.from_string(NONLOCALSET)
-    assert tmpl.render() == '1'

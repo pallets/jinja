@@ -9,10 +9,11 @@
     `get_nodes` used by the parser and translator in order to normalize
     python and jinja nodes.
 
-    :copyright: 2007 by Armin Ronacher.
+    :copyright: 2008 by Armin Ronacher.
     :license: BSD, see LICENSE for more details.
 """
 import operator
+from types import FunctionType
 from itertools import chain, izip
 from collections import deque
 from copy import copy
@@ -42,7 +43,7 @@ _cmpop_to_func = {
     'lt':       operator.lt,
     'lteq':     operator.le,
     'in':       operator.contains,
-    'notin':    lambda a, b: not operator.contains(a, b)
+    'notin':    lambda a, b: b not in a
 }
 
 
@@ -449,6 +450,12 @@ class Call(Expr):
 
     def as_const(self):
         obj = self.node.as_const()
+
+        # don't evaluate context functions
+        if type(obj) is FunctionType and \
+           getattr(obj, 'contextfunction', False):
+            raise Impossible()
+
         args = [x.as_const() for x in self.args]
         kwargs = dict(x.as_const() for x in self.kwargs)
         if self.dyn_args is not None:
@@ -480,7 +487,7 @@ class Subscript(Expr):
             raise Impossible()
 
     def can_assign(self):
-        return True
+        return False
 
 
 class Slice(Expr):

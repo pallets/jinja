@@ -12,7 +12,6 @@ import re
 import string
 from collections import deque
 from copy import deepcopy
-from functools import update_wrapper
 from itertools import imap
 
 
@@ -24,6 +23,14 @@ _punctuation_re = re.compile(
     )
 )
 _simple_email_re = re.compile(r'^\S+@[a-zA-Z0-9._-]+\.[a-zA-Z0-9._-]+$')
+
+
+def contextfunction(f):
+    """Mark a callable as context callable.  A context callable is passed
+    the active context as first argument.
+    """
+    f.contextfunction = True
+    return f
 
 
 def import_string(import_name, silent=False):
@@ -108,6 +115,55 @@ def urlize(text, trim_url_limit=None, nofollow=False):
     return u''.join(words)
 
 
+def generate_lorem_ipsum(n=5, html=True, min=20, max=100):
+    """Generate some lorem impsum for the template."""
+    from jinja2.constants import LOREM_IPSUM_WORDS
+    from random import choice, random, randrange
+    words = LOREM_IPSUM_WORDS.split()
+    result = []
+
+    for _ in xrange(n):
+        next_capitalized = True
+        last_comma = last_fullstop = 0
+        word = None
+        last = None
+        p = []
+
+        # each paragraph contains out of 20 to 100 words.
+        for idx, _ in enumerate(xrange(randrange(min, max))):
+            while True:
+                word = choice(words)
+                if word != last:
+                    last = word
+                    break
+            if next_capitalized:
+                word = word.capitalize()
+                next_capitalized = False
+            # add commas
+            if idx - randrange(3, 8) > last_comma:
+                last_comma = idx
+                last_fullstop += 2
+                word += ','
+            # add end of sentences
+            if idx - randrange(10, 20) > last_fullstop:
+                last_comma = last_fullstop = idx
+                word += '.'
+                next_capitalized = True
+            p.append(word)
+
+        # ensure that the paragraph ends with a dot.
+        p = u' '.join(p)
+        if p.endswith(','):
+            p = p[:-1] + '.'
+        elif not p.endswith('.'):
+            p += '.'
+        result.append(p)
+
+    if not html:
+        return u'\n\n'.join(result)
+    return Markup(u'\n'.join(u'<p>%s</p>' % escape(x) for x in result))
+
+
 class Markup(unicode):
     """Marks a string as being safe for inclusion in HTML/XML output without
     needing to be escaped.  This implements the `__html__` interface a couple
@@ -178,7 +234,9 @@ class Markup(unicode):
                 if hasattr(arg, '__html__') or isinstance(arg, basestring):
                     kwargs[name] = escape(arg)
             return self.__class__(orig(self, *args, **kwargs))
-        return update_wrapper(func, orig, ('__name__', '__doc__'))
+        func.__name__ = orig.__name__
+        func.__doc__ = orig.__doc__
+        return func
     for method in '__getitem__', '__getslice__', 'capitalize', \
                   'title', 'lower', 'upper', 'replace', 'ljust', \
                   'rjust', 'lstrip', 'rstrip', 'partition', 'center', \
@@ -339,3 +397,17 @@ except ImportError:
         if not isinstance(s, unicode):
             s = unicode(s)
         return s
+
+
+# partials
+try:
+    from functools import partial
+except ImportError:
+    class partial(object):
+        def __init__(self, _func, *args, **kwargs):
+            self._func = func
+            self._args = args
+            self._kwargs = kwargs
+        def __call__(self, *args, **kwargs):
+            kwargs.update(self._kwargs)
+            return self._func(*(self._args + args), **kwargs)

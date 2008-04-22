@@ -34,7 +34,7 @@ def extract_from_ast(node, gettext_functions=GETTEXT_FUNCTIONS):
     *  ``message`` is the string itself (a ``unicode`` object, or a tuple
        of ``unicode`` objects for functions with multiple string arguments).
     """
-    for call in node.find_all(nodes.Call):
+    for node in node.find_all(nodes.Call):
         if not isinstance(node.node, nodes.Name) or \
            node.node.name not in gettext_functions:
             continue
@@ -43,7 +43,7 @@ def extract_from_ast(node, gettext_functions=GETTEXT_FUNCTIONS):
         for arg in node.args:
             if isinstance(arg, nodes.Const) and \
                isinstance(arg.value, basestring):
-                strings.append(arg)
+                strings.append(arg.value)
             else:
                 strings.append(None)
 
@@ -67,6 +67,7 @@ def babel_extract(fileobj, keywords, comment_tags, options):
              (comments will be empty currently)
     """
     encoding = options.get('encoding', 'utf-8')
+    extensions = [x.strip() for x in options.get('extensions', '').split(',')]
     environment = Environment(
         options.get('block_start_string', '{%'),
         options.get('block_end_string', '%}'),
@@ -76,9 +77,18 @@ def babel_extract(fileobj, keywords, comment_tags, options):
         options.get('comment_end_string', '#}'),
         options.get('line_statement_prefix') or None,
         options.get('trim_blocks', '').lower() in ('1', 'on', 'yes', 'true'),
-        extensions=[x.strip() for x in options.get('extensions', '')
-                     .split(',')] + [TransExtension]
+        extensions=[x for x in extensions if x]
     )
+
+    # add the i18n extension only if it's not yet in the list.  Some people
+    # might use a script to sync the babel ini with the Jinja configuration
+    # so we want to avoid having the trans extension twice in the list.
+    for extension in environment.extensions:
+        if isinstance(extension, TransExtension):
+            break
+    else:
+        environment.extensions.append(TransExtension(environment))
+
     node = environment.parse(fileobj.read().decode(encoding))
     for lineno, func, message in extract_from_ast(node, keywords):
         yield lineno, func, message, []
@@ -163,10 +173,10 @@ class TransExtension(Extension):
                 plural = plural.replace('%%', '%')
 
         if not have_plural:
-            if plural_expr is None:
-                raise TemplateAssertionError('pluralize without variables',
-                                             lineno, parser.filename)
             plural_expr = None
+        elif plural_expr is None:
+            raise TemplateAssertionError('pluralize without variables',
+                                         lineno, parser.filename)
 
         if variables:
             variables = nodes.Dict([nodes.Pair(nodes.Const(x, lineno=lineno), y)

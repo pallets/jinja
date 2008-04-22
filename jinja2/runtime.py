@@ -12,7 +12,8 @@ try:
     from collections import defaultdict
 except ImportError:
     defaultdict = None
-from jinja2.utils import Markup
+from types import FunctionType
+from jinja2.utils import Markup, partial
 from jinja2.exceptions import UndefinedError
 
 
@@ -33,6 +34,12 @@ class TemplateContext(dict):
         self.exported = set()
         self.name = name
         self.blocks = dict((k, [v]) for k, v in blocks.iteritems())
+
+        # give all context functions the context as first argument
+        for key, value in self.iteritems():
+            if type(value) is FunctionType and \
+               getattr(value, 'contextfunction', False):
+                dict.__setitem__(self, key, partial(value, self))
 
         # if the template is in standalone mode we don't copy the blocks over.
         # this is used for includes for example but otherwise, if the globals

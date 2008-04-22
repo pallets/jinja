@@ -64,8 +64,8 @@ class Parser(object):
         lineno = self.stream.expect('assign').lineno
         if not target.can_assign():
             raise TemplateSyntaxError("can't assign to '%s'" %
-                                      target, target.lineno,
-                                      self.filename)
+                                      target.__class__.__name__.lower(),
+                                      target.lineno, self.filename)
         expr = self.parse_tuple()
         target.set_ctx('store')
         return nodes.Assign(target, expr, lineno=lineno)
@@ -94,8 +94,8 @@ class Parser(object):
         target = self.parse_tuple(simplified=True)
         if not target.can_assign():
             raise TemplateSyntaxError("can't assign to '%s'" %
-                                      target, target.lineno,
-                                      self.filename)
+                                      target.__class__.__name__.lower(),
+                                      target.lineno, self.filename)
         target.set_ctx('store')
         self.stream.expect('in')
         iter = self.parse_tuple(no_condexpr=True)

@@ -6,15 +6,8 @@
     :copyright: 2007 by Armin Ronacher.
     :license: BSD, see LICENSE for more details.
 """
-
 from jinja2 import Environment
 
-NO_VARIABLE_BLOCK = '''\
-{# i'm a freaking comment #}\
-{% if foo %}{% foo %}{% endif %}
-{% for item in seq %}{% item %}{% endfor %}
-{% trans foo %}foo is {% foo %}{% endtrans %}
-{% trans foo %}one foo{% pluralize %}{% foo %} foos{% endtrans %}'''
 
 PHP_SYNTAX = '''\
 <!-- I'm a comment, I'm not interesting -->\
@@ -34,11 +27,10 @@ COMMENT_SYNTAX = '''\
     ${item}
 <!--- endfor -->'''
 
-SMARTY_SYNTAX = '''\
-{* I'm a comment, I'm not interesting *}\
-{for item in seq-}
-    {item}
-{-endfor}'''
+MAKO_SYNTAX = '''\
+% for item in seq:
+    ${item}
+% endfor'''
 
 BALANCING = '''{{{'foo':'bar'}.foo}}'''
 
@@ -46,17 +38,6 @@ STARTCOMMENT = '''{# foo comment
 and bar comment #}
 {% macro blub() %}foo{% endmacro %}
 {{ blub() }}'''
-
-
-def test_no_variable_block():
-    env = Environment('{%', '%}', None, None)
-    tmpl = env.from_string(NO_VARIABLE_BLOCK)
-    assert tmpl.render(foo=42, seq=range(2)).splitlines() == [
-        '42',
-        '01',
-        'foo is 42',
-        '42 foos'
-    ]
 
 
 def test_php_syntax():
@@ -77,12 +58,6 @@ def test_comment_syntax():
     assert tmpl.render(seq=range(5)) == '01234'
 
 
-def test_smarty_syntax():
-    env = Environment('{', '}', '{', '}', '{*', '*}')
-    tmpl = env.from_string(SMARTY_SYNTAX)
-    assert tmpl.render(seq=range(5)) == '01234'
-
-
 def test_balancing(env):
     tmpl = env.from_string(BALANCING)
     assert tmpl.render() == 'bar'
@@ -91,3 +66,10 @@ def test_balancing(env):
 def test_start_comment(env):
     tmpl = env.from_string(STARTCOMMENT)
     assert tmpl.render().strip() == 'foo'
+
+
+def test_line_syntax():
+    env = Environment('<%', '%>', '${', '}', '<%#', '%>', '%')
+    tmpl = env.from_string(MAKO_SYNTAX)
+    assert [int(x.strip()) for x in tmpl.render(seq=range(5)).split()] == \
+           range(5)

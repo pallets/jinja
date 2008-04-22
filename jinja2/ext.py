@@ -40,10 +40,11 @@ class CacheExtension(Extension):
     def parse(self, parser):
         lineno = parser.stream.next().lineno
         args = [parser.parse_expression()]
-        if self.stream.current.type is 'comma':
+        if parser.stream.current.type is 'comma':
+            parser.stream.next()
             args.append(parser.parse_expression())
         body = parser.parse_statements(('name:endcache',), drop_needle=True)
         return nodes.CallBlock(
-            nodes.Call(nodes.Name('cache_support'), args, [], None, None),
+            nodes.Call(nodes.Name('cache_support', 'load'), args, [], None, None),
             [], [], body
         )

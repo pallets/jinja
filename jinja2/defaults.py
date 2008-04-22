@@ -10,8 +10,10 @@
 """
 from jinja2.filters import FILTERS as DEFAULT_FILTERS
 from jinja2.tests import TESTS as DEFAULT_TESTS
+from jinja2.utils import generate_lorem_ipsum
 
 
 DEFAULT_NAMESPACE = {
-    'range':        xrange
+    'range':        xrange,
+    'lipsum':       generate_lorem_ipsum
 }

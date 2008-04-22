@@ -6,13 +6,13 @@
     :copyright: 2007 by Armin Ronacher.
     :license: BSD, see LICENSE for more details.
 """
-from jinja2 import Environment, DictLoader
+from jinja2 import Environment, DictLoader, contextfunction
 
 templates = {
     'master.html': '<title>{{ page_title|default(_("missing")) }}</title>'
                    '{% block body %}{% endblock %}',
     'child.html': '{% extends "master.html" %}{% block body %}'
-                  '{% trans "watch out" %}{% endblock %}',
+                  '{% trans %}watch out{% endtrans %}{% endblock %}',
     'plural.html': '{% trans user_count %}One user online{% pluralize %}'
                    '{{ user_count }} users online{% endtrans %}',
     'stringformat.html': '{{ _("User: %d")|format(user_count) }}'
@@ -30,52 +30,29 @@ languages = {
 }
 
 
-class SimpleTranslator(object):
-    """Yes i know it's only suitable for english and german but
-    that's a stupid unittest..."""
-
-    def __init__(self, language):
-        self.strings = languages.get(language, {})
-
-    def gettext(self, string):
-        return self.strings.get(string, string)
-
-    def ngettext(self, s, p, n):
-        if n != 1:
-            return self.strings.get(p, p)
-        return self.strings.get(s, s)
+@contextfunction
+def gettext(context, string):
+    language = context.get('LANGUAGE', 'en')
+    return languages.get(language, {}).get(string, string)
 
 
-class I18NEnvironment(Environment):
-
-    def __init__(self):
-        super(I18NEnvironment, self).__init__(loader=DictLoader(templates))
-
-    def get_translator(self, context):
-        return SimpleTranslator(context['LANGUAGE'] or 'en')
-
-
-i18n_env = I18NEnvironment()
+@contextfunction
+def ngettext(context, s, p, n):
+    language = context.get('LANGUAGE', 'en')
+    if n != 1:
+        return languages.get(language, {}).get(p, p)
+    return languages.get(language, {}).get(s, s)
 
 
-def test_factory():
-    def factory(context):
-        return SimpleTranslator(context['LANGUAGE'] or 'en')
-    env = Environment(translator_factory=factory)
-    tmpl = env.from_string('{% trans "watch out" %}')
-    assert tmpl.render(LANGUAGE='de') == 'pass auf'
-
-
-def test_get_translations():
-    trans = list(i18n_env.get_translations('child.html'))
-    assert len(trans) == 1
-    assert trans[0] == (1, u'watch out', None)
-
-
-def test_get_translations_for_string():
-    trans = list(i18n_env.get_translations('master.html'))
-    assert len(trans) == 1
-    assert trans[0] == (1, u'missing', None)
+i18n_env = Environment(
+    loader=DictLoader(templates),
+    extensions=['jinja2.i18n.TransExtension']
+)
+i18n_env.globals.update({
+    '_':            gettext,
+    'gettext':      gettext,
+    'ngettext':     ngettext
+})
 
 
 def test_trans():
@@ -92,3 +69,18 @@ def test_trans_plural():
 def test_trans_stringformatting():
     tmpl = i18n_env.get_template('stringformat.html')
     assert tmpl.render(LANGUAGE='de', user_count=5) == 'Benutzer: 5'
+
+
+def test_extract():
+    from jinja2.i18n import babel_extract
+    from StringIO import StringIO
+    source = StringIO('''
+    {{ gettext('Hello World') }}
+    {% trans %}Hello World{% endtrans %}
+    {% trans %}{{ users }} user{% pluralize %}{{ users }} users{% endtrans %}
+    ''')
+    assert list(babel_extract(source, ('gettext', 'ngettext', '_'), [], {})) == [
+        (2, 'gettext', 'Hello World', []),
+        (3, 'gettext', u'Hello World', []),
+        (4, 'ngettext', (u'%(users)s user', u'%(users)s users', None), [])
+    ]

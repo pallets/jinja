@@ -32,6 +32,8 @@ from jinja2.runtime import LoopContext
 #   - multiple Output() nodes should be concatenated into one node.
 #     for example the i18n system could output such nodes:
 #     "foo{% trans %}bar{% endtrans %}blah"
+#   - when unrolling loops local sets become global sets :-/
+#     see also failing test case `test_localset` in test_various
 
 
 def optimize(node, environment, context_hint=None):
@@ -183,12 +185,12 @@ class Optimizer(NodeTransformer):
                 for item, loop in LoopContext(iterable, True):
                     context['loop'] = loop.make_static()
                     assign(node.target, item)
-                    result.extend(self.visit(n.copy(), context)
-                                  for n in node.body)
+                    for n in node.body:
+                        result.extend(self.visit_list(n.copy(), context))
                     iterated = True
                 if not iterated and node.else_:
-                    result.extend(self.visit(n.copy(), context)
-                                  for n in node.else_)
+                    for n in node.else_:
+                        result.extend(self.visit_list(n.copy(), context))
             except nodes.Impossible:
                 return node
         finally:
