@@ -3,18 +3,15 @@
     jinja2.optimizer
     ~~~~~~~~~~~~~~~~
 
-    This module tries to optimize template trees by:
+    The jinja optimizer is currently trying to constant fold a few expressions
+    and modify the AST in place so that it should be easier to evaluate it.
 
-        * eliminating constant nodes
-        * evaluating filters and macros on constant nodes
-        * unroll loops on constant values
-        * replace variables which are already known (because they doesn't
-          change often and you want to prerender a template) with constants
+    Because the AST does not contain all the scoping information and the
+    compiler has to find that out, we cannot do all the optimizations we
+    want.  For example loop unrolling doesn't work because unrolled loops would
+    have a different scoping.
 
-    After the optimation you will get a new, simplier template which can
-    be saved again for later rendering. But even if you don't want to
-    prerender a template, this module might speed up your templates a bit
-    if you are using a lot of constants.
+    The solution would be a second syntax tree that has the scoping rules stored.
 
     :copyright: Copyright 2008 by Christoph Hack, Armin Ronacher.
     :license: GNU GPL.
@@ -22,18 +19,6 @@
 from jinja2 import nodes
 from jinja2.visitor import NodeVisitor, NodeTransformer
 from jinja2.runtime import LoopContext
-
-
-# TODO
-#   - function calls to contant objects are not properly evaluated if the
-#     function is not representable at constant type.  eg:
-#           {% for item in range(10) %} doesn't become
-#           for l_item in xrange(10: even though it would be possible
-#   - multiple Output() nodes should be concatenated into one node.
-#     for example the i18n system could output such nodes:
-#     "foo{% trans %}bar{% endtrans %}blah"
-#   - when unrolling loops local sets become global sets :-/
-#     see also failing test case `test_localset` in test_various
 
 
 def optimize(node, environment, context_hint=None):
@@ -100,12 +85,13 @@ class Optimizer(NodeTransformer):
     def visit_Block(self, node, context):
         return self.generic_visit(node, context.blank())
 
-    def visit_Macro(self, node, context):
+    def scoped_section(self, node, context):
         context.push()
         try:
             return self.generic_visit(node, context)
         finally:
             context.pop()
+    visit_For = visit_Macro = scoped_section
 
     def visit_FilterBlock(self, node, context):
         """Try to filter a block at compile time."""
@@ -132,70 +118,6 @@ class Optimizer(NodeTransformer):
         context.pop()
         const = nodes.Const(data, lineno=node.lineno)
         return nodes.Output([const], lineno=node.lineno)
-
-    def visit_For(self, node, context):
-        """Loop unrolling for iterable constant values."""
-        fallback = self.generic_visit(node.copy(), context)
-        try:
-            iterable = self.visit(node.iter, context).as_const()
-            # we only unroll them if they have a length and are iterable
-            iter(iterable)
-            len(iterable)
-            # we also don't want unrolling if macros are defined in it
-            if node.find(nodes.Macro) is not None:
-                raise TypeError()
-        except (nodes.Impossible, TypeError):
-            return fallback
-
-        context.push()
-        result = []
-        iterated = False
-
-        def assign(target, value):
-            if isinstance(target, nodes.Name):
-                context[target.name] = value
-            elif isinstance(target, nodes.Tuple):
-                try:
-                    value = tuple(value)
-                except TypeError:
-                    raise nodes.Impossible()
-                if len(target.items) != len(value):
-                    raise nodes.Impossible()
-                for name, val in zip(target.items, value):
-                    assign(name, val)
-            else:
-                raise AssertionError('unexpected assignable node')
-
-        if node.test is not None:
-            filtered_sequence = []
-            for item in iterable:
-                context.push()
-                assign(node.target, item)
-                try:
-                    rv = self.visit(node.test.copy(), context).as_const()
-                except:
-                    return fallback
-                context.pop()
-                if rv:
-                    filtered_sequence.append(item)
-            iterable = filtered_sequence
-
-        try:
-            try:
-                for item, loop in LoopContext(iterable, True):
-                    context['loop'] = loop.make_static()
-                    assign(node.target, item)
-                    for n in node.body:
-                        result.extend(self.visit_list(n.copy(), context))
-                    iterated = True
-                if not iterated and node.else_:
-                    for n in node.else_:
-                        result.extend(self.visit_list(n.copy(), context))
-            except nodes.Impossible:
-                return node
-        finally:
-            context.pop()
-        return result
 
     def visit_If(self, node, context):
         try:
