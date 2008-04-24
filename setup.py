@@ -134,6 +134,6 @@ setup(
     extras_require={'i18n': ['Babel>=0.8']},
     entry_points="""
     [babel.extractors]
-    jinja2 = jinja.i18n:babel_extract[i18n]
+    jinja2 = jinja.ext:babel_extract[i18n]
     """
 )

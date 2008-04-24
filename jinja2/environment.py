@@ -23,7 +23,7 @@ from jinja2.defaults import DEFAULT_FILTERS, DEFAULT_TESTS, DEFAULT_NAMESPACE
 _spontaneous_environments = LRUCache(10)
 
 
-def _get_spontaneous_environment(*args):
+def get_spontaneous_environment(*args):
     """Return a new spontaneus environment.  A spontaneus environment is an
     unnamed and unaccessable (in theory) environment that is used for
     template generated from a string and not from the file system.
@@ -85,11 +85,21 @@ class Environment(object):
                  comment_end_string='#}',
                  line_statement_prefix=None,
                  trim_blocks=False,
+                 extensions=(),
                  optimized=True,
                  undefined=Undefined,
-                 loader=None,
-                 extensions=(),
-                 finalize=unicode):
+                 finalize=unicode,
+                 loader=None):
+        # !!Important notice!!
+        #   The constructor accepts quite a few arguments that should be
+        #   passed by keyword rather than position.  However it's important to
+        #   not change the order of arguments because it's used at least
+        #   internally in those cases:
+        #       -   spontaneus environments (i18n extension and Template)
+        #       -   unittests
+        #   If parameter changes are required only add parameters at the end
+        #   and don't change the arguments (or the defaults!) of the arguments
+        #   up to (but excluding) loader.
         """Here the possible initialization parameters:
 
         ========================= ============================================
@@ -109,15 +119,15 @@ class Environment(object):
         `trim_blocks`             If this is set to ``True`` the first newline
                                   after a block is removed (block, not
                                   variable tag!). Defaults to ``False``.
+        `extensions`              List of Jinja extensions to use.
         `optimized`               should the optimizer be enabled?  Default is
                                   ``True``.
         `undefined`               a subclass of `Undefined` that is used to
                                   represent undefined variables.
-        `loader`                  the loader which should be used.
-        `extensions`              List of Jinja extensions to use.
         `finalize`                A callable that finalizes the variable.  Per
                                   default this is `unicode`, other useful
                                   builtin finalizers are `escape`.
+        `loader`                  the loader which should be used.
         ========================= ============================================
         """
 
@@ -138,14 +148,6 @@ class Environment(object):
         self.line_statement_prefix = line_statement_prefix
         self.trim_blocks = trim_blocks
 
-        # load extensions
-        self.extensions = []
-        for extension in extensions:
-            if isinstance(extension, basestring):
-                extension = import_string(extension)
-            # extensions are instanciated early but initalized later.
-            self.extensions.append(object.__new__(extension))
-
         # runtime information
         self.undefined = undefined
         self.optimized = optimized
@@ -162,9 +164,12 @@ class Environment(object):
         # create lexer
         self.lexer = Lexer(self)
 
-        # initialize extensions
-        for extension in self.extensions:
-            extension.__init__(self)
+        # load extensions
+        self.extensions = []
+        for extension in extensions:
+            if isinstance(extension, basestring):
+                extension = import_string(extension)
+            self.extensions.append(extension(self))
 
     def subscribe(self, obj, argument):
         """Get an item or attribute of an object."""
@@ -282,17 +287,15 @@ class Template(object):
                 comment_end_string='#}',
                 line_statement_prefix=None,
                 trim_blocks=False,
+                extensions=(),
                 optimized=True,
                 undefined=Undefined,
-                extensions=(),
                 finalize=unicode):
-        # make sure extensions are hashable
-        extensions = tuple(extensions)
-        env = _get_spontaneous_environment(
+        env = get_spontaneous_environment(
             block_start_string, block_end_string, variable_start_string,
             variable_end_string, comment_start_string, comment_end_string,
-            line_statement_prefix, trim_blocks, optimized, undefined,
-            None, extensions, finalize)
+            line_statement_prefix, trim_blocks, tuple(extensions), optimized,
+            undefined, finalize)
         return env.from_string(source, template_class=cls)
 
     def render(self, *args, **kwargs):
@@ -402,11 +405,9 @@ class TemplateStream(object):
 
             while 1:
                 try:
-                    while 1:
+                    while c_size < size:
                         push(next())
                         c_size += 1
-                        if c_size >= size:
-                            raise StopIteration()
                 except StopIteration:
                     if not c_size:
                         raise

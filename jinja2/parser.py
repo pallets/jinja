@@ -17,6 +17,7 @@ _statement_keywords = frozenset(['for', 'if', 'block', 'extends', 'print',
                                  'macro', 'include'])
 _compare_operators = frozenset(['eq', 'ne', 'lt', 'lteq', 'gt', 'gteq', 'in'])
 statement_end_tokens = set(['variable_end', 'block_end', 'in'])
+_tuple_edge_tokens = set(['rparen']) | statement_end_tokens
 
 
 class Parser(object):
@@ -421,12 +422,13 @@ class Parser(object):
         while 1:
             if args:
                 self.stream.expect('comma')
-            if self.stream.current.type in statement_end_tokens:
+            if self.stream.current.type in _tuple_edge_tokens:
                 break
             args.append(parse())
-            if self.stream.current.type is not 'comma':
+            if self.stream.current.type is 'comma':
+                is_tuple = True
+            else:
                 break
-            is_tuple = True
             lineno = self.stream.current.lineno
         if not is_tuple and args:
             if enforce:
@@ -640,12 +642,7 @@ class Parser(object):
                 self.stream.next()
             elif token.type is 'variable_begin':
                 self.stream.next()
-                want_comma = False
-                while not self.stream.current.test_many(statement_end_tokens):
-                    if want_comma:
-                        self.stream.expect('comma')
-                    add_data(self.parse_expression())
-                    want_comma = True
+                add_data(self.parse_tuple())
                 self.stream.expect('variable_end')
             elif token.type is 'block_begin':
                 flush_data()

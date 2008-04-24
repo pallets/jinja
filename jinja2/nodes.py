@@ -42,8 +42,8 @@ _cmpop_to_func = {
     'gteq':     operator.ge,
     'lt':       operator.lt,
     'lteq':     operator.le,
-    'in':       operator.contains,
-    'notin':    lambda a, b: b not in a
+    'in':       lambda a, b: a in b,
+    'notin':    lambda a, b: a not in b
 }
 
 
@@ -518,10 +518,13 @@ class Compare(Expr):
 
     def as_const(self):
         result = value = self.expr.as_const()
-        for op in self.ops:
-            new_value = op.expr.as_const()
-            result = _cmpop_to_func[op.op](value, new_value)
-            value = new_value
+        try:
+            for op in self.ops:
+                new_value = op.expr.as_const()
+                result = _cmpop_to_func[op.op](value, new_value)
+                value = new_value
+        except:
+            raise Impossible()
         return result
 
 

@@ -18,13 +18,12 @@ import re
 import unicodedata
 from jinja2.datastructure import TokenStream, Token
 from jinja2.exceptions import TemplateSyntaxError
-from weakref import WeakValueDictionary
+from jinja2.utils import LRUCache
 
 
 # cache for the lexers. Exists in order to be able to have multiple
 # environments with the same lexer
-_lexer_cache = WeakValueDictionary()
-
+_lexer_cache = LRUCache(10)
 
 # static regular expressions
 whitespace_re = re.compile(r'\s+(?um)')
@@ -33,7 +32,6 @@ string_re = re.compile(r"('([^'\\]*(?:\\.[^'\\]*)*)'"
 integer_re = re.compile(r'\d+')
 name_re = re.compile(r'\b[a-zA-Z_][a-zA-Z0-9_]*\b')
 float_re = re.compile(r'\d+\.\d+')
-
 
 # set of used keywords
 keywords = set(['and', 'block', 'elif', 'else', 'endblock', 'print',
@@ -96,80 +94,20 @@ unicode_escapes = {
 
 
 def unescape_string(lineno, filename, s):
-    r"""
-    Unescape a string. Supported escapes:
+    r"""Unescape a string. Supported escapes:
         \a, \n, \r\, \f, \v, \\, \", \', \0
 
         \x00, \u0000, \U00000000, \N{...}
-
-    Not supported are \101 because imho redundant.
     """
-    result = []
-    write = result.append
-    chariter = iter(s)
-    next_char = chariter.next
-
-    # faster lookup
-    sescapes = simple_escapes
-    uescapes = unicode_escapes
-
     try:
-        for char in chariter:
-            if char == '\\':
-                char = next_char()
-                if char in sescapes:
-                    write(sescapes[char])
-                elif char in uescapes:
-                    seq = [next_char() for x in xrange(uescapes[char])]
-                    try:
-                        write(unichr(int(''.join(seq), 16)))
-                    except ValueError:
-                        raise TemplateSyntaxError('invalid unicode codepoint',
-                                                  lineno, filename)
-                elif char == 'N':
-                    if next_char() != '{':
-                        raise TemplateSyntaxError('no name for codepoint',
-                                                  lineno, filename)
-                    seq = []
-                    while 1:
-                        char = next_char()
-                        if char == '}':
-                            break
-                        seq.append(char)
-                    try:
-                        write(unicodedata.lookup(u''.join(seq)))
-                    except KeyError:
-                        raise TemplateSyntaxError('unknown character name',
-                                                  lineno, filename)
-                else:
-                    write('\\' + char)
-            else:
-                write(char)
-    except StopIteration:
-        raise TemplateSyntaxError('invalid string escape', lineno, filename)
-    return u''.join(result)
-
-
-def unescape_regex(s):
-    """
-    Unescape rules for regular expressions.
-    """
-    buffer = []
-    write = buffer.append
-    in_escape = False
-    for char in s:
-        if in_escape:
-            in_escape = False
-            if char not in safe_chars:
-                write('\\' + char)
-                continue
-        write(char)
-    return u''.join(buffer)
+        return s.encode('ascii', 'backslashreplace').decode('unicode-escape')
+    except UnicodeError, e:
+        msg = str(e).split(':')[-1].strip()
+        raise TemplateSyntaxError(msg, lineno, filename)
 
 
 class Failure(object):
-    """
-    Class that raises a `TemplateSyntaxError` if called.
+    """Class that raises a `TemplateSyntaxError` if called.
     Used by the `Lexer` to specify known errors.
     """
 
@@ -182,8 +120,7 @@ class Failure(object):
 
 
 class LexerMeta(type):
-    """
-    Metaclass for the lexer that caches instances for
+    """Metaclass for the lexer that caches instances for
     the same configuration in a weak value dictionary.
     """
 
@@ -196,20 +133,15 @@ class LexerMeta(type):
                environment.comment_end_string,
                environment.line_statement_prefix,
                environment.trim_blocks)
-
-        # use the cached lexer if possible
-        if key in _lexer_cache:
-            return _lexer_cache[key]
-
-        # create a new lexer and cache it
-        lexer = type.__call__(cls, environment)
-        _lexer_cache[key] = lexer
+        lexer = _lexer_cache.get(key)
+        if lexer is None:
+            lexer = type.__call__(cls, environment)
+            _lexer_cache[key] = lexer
         return lexer
 
 
 class Lexer(object):
-    """
-    Class that implements a lexer for a given environment. Automatically
+    """Class that implements a lexer for a given environment. Automatically
     created by the environment class, usually you don't have to do that.
 
     Note that the lexer is not automatically bound to an environment.
@@ -362,12 +294,11 @@ class Lexer(object):
         return TokenStream(generate(), filename)
 
     def tokeniter(self, source, filename=None):
-        """
-        This method tokenizes the text and returns the tokens in a generator.
-        Use this method if you just want to tokenize a template. The output
-        you get is not compatible with the input the jinja parser wants. The
-        parser uses the `tokenize` function with returns a `TokenStream` and
-        keywords instead of just names.
+        """This method tokenizes the text and returns the tokens in a
+        generator.  Use this method if you just want to tokenize a template.
+        The output you get is not compatible with the input the jinja parser
+        wants.  The parser uses the `tokenize` function with returns a
+        `TokenStream` and postprocessed tokens.
         """
         source = '\n'.join(source.splitlines())
         pos = 0

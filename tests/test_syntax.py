@@ -36,10 +36,7 @@ TUPLETEMPLATES = [
     '{{ 1, 2 }}',
     '{% for foo, bar in seq %}...{% endfor %}',
     '{% for x in foo, bar %}...{% endfor %}',
-    '{% for x in foo, %}...{% endfor %}',
-    '{% for x in foo, recursive %}...{% endfor %}',
-    '{% for x in foo, bar recursive %}...{% endfor %}',
-    '{% for x, in foo, recursive %}...{% endfor %}'
+    '{% for x in foo, %}...{% endfor %}'
 ]
 TRAILINGCOMMA = '''{{ (1, 2,) }}|{{ [1, 2,] }}|{{ {1: 2,} }}'''
 

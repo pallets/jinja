@@ -35,9 +35,9 @@ class TemplateContext(object):
         for name, obj in self.parent.iteritems():
             if type(obj) is FunctionType:
                 if getattr(obj, 'contextfunction', 0):
-                    self.vars[key] = partial(obj, self)
+                    self.vars[name] = partial(obj, self)
                 elif getattr(obj, 'environmentfunction', 0):
-                    self.vars[key] = partial(obj, environment)
+                    self.vars[name] = partial(obj, environment)
 
         # create the initial mapping of blocks.  Whenever template inheritance
         # takes place the runtime will update this mapping with the new blocks
@@ -55,6 +55,13 @@ class TemplateContext(object):
             return self.environment.undefined('there is no parent block '
                                               'called %r.' % block)
         return SuperBlock(block, self, last)
+
+    def get(self, name, default=None):
+        """For dict compatibility"""
+        try:
+            return self[name]
+        except KeyError:
+            return default
 
     def update(self, mapping):
         """Update vars from a mapping but don't export them."""
@@ -75,6 +82,9 @@ class TemplateContext(object):
     def __setitem__(self, key, value):
         self.vars[key] = value
         self.exported_vars.add(key)
+
+    def __contains__(self, name):
+        return name in self.vars or name in self.parent
 
     def __getitem__(self, key):
         if key in self.vars:

@@ -46,7 +46,7 @@ def ngettext(context, s, p, n):
 
 i18n_env = Environment(
     loader=DictLoader(templates),
-    extensions=['jinja2.i18n.TransExtension']
+    extensions=['jinja2.ext.TransExtension']
 )
 i18n_env.globals.update({
     '_':            gettext,
@@ -72,7 +72,7 @@ def test_trans_stringformatting():
 
 
 def test_extract():
-    from jinja2.i18n import babel_extract
+    from jinja2.ext import babel_extract
     from StringIO import StringIO
     source = StringIO('''
     {{ gettext('Hello World') }}
@@ -80,7 +80,7 @@ def test_extract():
     {% trans %}{{ users }} user{% pluralize %}{{ users }} users{% endtrans %}
     ''')
     assert list(babel_extract(source, ('gettext', 'ngettext', '_'), [], {})) == [
-        (2, 'gettext', 'Hello World', []),
+        (2, 'gettext', u'Hello World', []),
         (3, 'gettext', u'Hello World', []),
         (4, 'ngettext', (u'%(users)s user', u'%(users)s users', None), [])
     ]
