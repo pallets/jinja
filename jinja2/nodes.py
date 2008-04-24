@@ -452,11 +452,13 @@ class Call(Expr):
         obj = self.node.as_const()
 
         # don't evaluate context functions
-        if type(obj) is FunctionType and \
-           getattr(obj, 'contextfunction', False):
-            raise Impossible()
-
         args = [x.as_const() for x in self.args]
+        if type(obj) is FunctionType:
+            if getattr(obj, 'contextfunction', False):
+                raise Impossible()
+            elif obj.environmentfunction:
+                args.insert(0, self.environment)
+
         kwargs = dict(x.as_const() for x in self.kwargs)
         if self.dyn_args is not None:
             try:

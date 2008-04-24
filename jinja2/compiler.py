@@ -475,14 +475,12 @@ class CodeGenerator(NodeVisitor):
             self.blocks[block.name] = block
 
         # generate the root render function.
-        self.writeline('def root(globals, environment=environment'
-                       ', standalone=False):', extra=1)
-        self.indent()
-        self.writeline('context = TemplateContext(environment, globals, %r, '
-                       'blocks, standalone)' % self.name)
+        self.writeline('def root(context, environment=environment'
+                       '):', extra=1)
         if have_extends:
-            self.writeline('parent_root = None')
-        self.outdent()
+            self.indent()
+            self.writeline('parent_template = None')
+            self.outdent()
 
         # process the root
         frame = Frame()
@@ -490,7 +488,6 @@ class CodeGenerator(NodeVisitor):
         frame.toplevel = frame.rootlevel = True
         self.indent()
         self.pull_locals(frame, indent=False)
-        self.writeline('yield context')
         self.blockvisit(node.body, frame, indent=False)
         self.outdent()
 
@@ -498,14 +495,13 @@ class CodeGenerator(NodeVisitor):
         if have_extends:
             if not self.has_known_extends:
                 self.indent()
-                self.writeline('if parent_root is not None:')
+                self.writeline('if parent_template is not None:')
             self.indent()
-            self.writeline('stream = parent_root(context)')
-            self.writeline('stream.next()')
-            self.writeline('for event in stream:')
+            self.writeline('for event in parent_template.'
+                           'root_render_func(context):')
             self.indent()
             self.writeline('yield event')
-            self.outdent(1 + self.has_known_extends)
+            self.outdent(2 + (not self.has_known_extends))
 
         # at this point we now have the blocks collected and can visit them too.
         for name, block in self.blocks.iteritems():
@@ -513,7 +509,8 @@ class CodeGenerator(NodeVisitor):
             block_frame.inspect(block.body)
             block_frame.block = name
             block_frame.identifiers.add_special('super')
-            block_frame.name_overrides['super'] = 'context.super(%r)' % name
+            block_frame.name_overrides['super'] = 'context.super(%r, ' \
+                'block_%s)' % (name, name)
             self.writeline('def block_%s(context, environment=environment):'
                            % name, block, 1)
             self.pull_locals(block_frame)
@@ -524,9 +521,8 @@ class CodeGenerator(NodeVisitor):
                        extra=1)
 
         # add a function that returns the debug info
-        self.writeline('def get_debug_info():', extra=1)
-        self.indent()
-        self.writeline('return %r' % self.debug_info)
+        self.writeline('debug_info = %r' % '&'.join('%s=%s' % x for x
+                                                    in self.debug_info))
 
     def visit_Block(self, node, frame):
         """Call a block and register it for the template."""
@@ -537,7 +533,7 @@ class CodeGenerator(NodeVisitor):
             if self.has_known_extends:
                 return
             if self.extends_so_far > 0:
-                self.writeline('if parent_root is None:')
+                self.writeline('if parent_template is None:')
                 self.indent()
                 level += 1
         self.writeline('for event in context.blocks[%r][-1](context):' % node.name)
@@ -565,7 +561,7 @@ class CodeGenerator(NodeVisitor):
             # time too, but i welcome it not to confuse users by throwing the
             # same error at different times just "because we can".
             if not self.has_known_extends:
-                self.writeline('if parent_root is not None:')
+                self.writeline('if parent_template is not None:')
                 self.indent()
             self.writeline('raise TemplateRuntimeError(%r)' %
                            'extended multiple times')
@@ -576,9 +572,15 @@ class CodeGenerator(NodeVisitor):
                 raise CompilerExit()
             self.outdent()
 
-        self.writeline('parent_root = environment.get_template(', node, 1)
+        self.writeline('parent_template = environment.get_template(', node, 1)
         self.visit(node.template, frame)
-        self.write(', %r).root_render_func' % self.name)
+        self.write(', %r)' % self.name)
+        self.writeline('for name, parent_block in parent_template.'
+                       'blocks.iteritems():')
+        self.indent()
+        self.writeline('context.blocks.setdefault(name, []).'
+                       'insert(0, parent_block)')
+        self.outdent()
 
         # if this extends statement was in the root level we can take
         # advantage of that information and simplify the generated code
@@ -601,11 +603,17 @@ class CodeGenerator(NodeVisitor):
             self.write(')')
             return
 
-        self.writeline('included_stream = environment.get_template(', node)
+        self.writeline('included_template = environment.get_template(', node)
         self.visit(node.template, frame)
-        self.write(').root_render_func(context, standalone=True)')
-        self.writeline('included_context = included_stream.next()')
-        self.writeline('for event in included_stream:')
+        self.write(')')
+        if frame.toplevel:
+            self.writeline('included_context = included_template.new_context('
+                           'context.get_root())')
+            self.writeline('for event in included_template.root_render_func('
+                           'included_context):')
+        else:
+            self.writeline('for event in included_template.root_render_func('
+                           'included_template.new_context(context.get_root())):')
         self.indent()
         if frame.buffer is None:
             self.writeline('yield event')
@@ -796,7 +804,7 @@ class CodeGenerator(NodeVisitor):
         # so that they don't appear in the output.
         outdent_later = False
         if frame.toplevel and self.extends_so_far != 0:
-            self.writeline('if parent_root is None:')
+            self.writeline('if parent_template is None:')
             self.indent()
             outdent_later = True
 

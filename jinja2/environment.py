@@ -13,10 +13,54 @@ from jinja2.lexer import Lexer
 from jinja2.parser import Parser
 from jinja2.optimizer import optimize
 from jinja2.compiler import generate
-from jinja2.runtime import Undefined
+from jinja2.runtime import Undefined, TemplateContext
 from jinja2.debug import translate_exception
-from jinja2.utils import import_string
+from jinja2.utils import import_string, LRUCache
 from jinja2.defaults import DEFAULT_FILTERS, DEFAULT_TESTS, DEFAULT_NAMESPACE
+
+
+# for direct template usage we have up to ten living environments
+_spontaneous_environments = LRUCache(10)
+
+
+def _get_spontaneous_environment(*args):
+    """Return a new spontaneus environment.  A spontaneus environment is an
+    unnamed and unaccessable (in theory) environment that is used for
+    template generated from a string and not from the file system.
+    """
+    try:
+        env = _spontaneous_environments.get(args)
+    except TypeError:
+        return Environment(*args)
+    if env is not None:
+        return env
+    _spontaneous_environments[args] = env = Environment(*args)
+    return env
+
+
+def template_from_code(environment, code, globals, uptodate=None,
+                       template_class=None):
+    """Generate a new template object from code.  It's used in the
+    template constructor and the loader `load` implementation.
+    """
+    t = object.__new__(template_class or environment.template_class)
+    namespace = {
+        'environment':          environment,
+        '__jinja_template__':   t
+    }
+    exec code in namespace
+    t.environment = environment
+    t.name = namespace['name']
+    t.filename = code.co_filename
+    t.root_render_func = namespace['root']
+    t.blocks = namespace['blocks']
+    t.globals = globals
+
+    # debug and loader helpers
+    t._debug_info = namespace['debug_info']
+    t._uptodate = uptodate
+
+    return t
 
 
 class Environment(object):
@@ -93,11 +137,14 @@ class Environment(object):
         self.comment_end_string = comment_end_string
         self.line_statement_prefix = line_statement_prefix
         self.trim_blocks = trim_blocks
+
+        # load extensions
         self.extensions = []
         for extension in extensions:
             if isinstance(extension, basestring):
                 extension = import_string(extension)
-            self.extensions.append(extension(self))
+            # extensions are instanciated early but initalized later.
+            self.extensions.append(object.__new__(extension))
 
         # runtime information
         self.undefined = undefined
@@ -108,14 +155,16 @@ class Environment(object):
         self.filters = DEFAULT_FILTERS.copy()
         self.tests = DEFAULT_TESTS.copy()
         self.globals = DEFAULT_NAMESPACE.copy()
-        for extension in self.extensions:
-            extension.update_globals(self.globals)
 
         # set the loader provided
         self.loader = loader
 
         # create lexer
         self.lexer = Lexer(self)
+
+        # initialize extensions
+        for extension in self.extensions:
+            extension.__init__(self)
 
     def subscribe(self, obj, argument):
         """Get an item or attribute of an object."""
@@ -180,11 +229,11 @@ class Environment(object):
         globals = self.make_globals(globals)
         return self.loader.load(self, name, globals)
 
-    def from_string(self, source, globals=None):
+    def from_string(self, source, globals=None, template_class=None):
         """Load a template from a string."""
         globals = self.make_globals(globals)
-        return Template(self, self.compile(source, globals=globals),
-                        globals)
+        return template_from_code(self, self.compile(source, globals=globals),
+                                  globals, template_class)
 
     def make_globals(self, d):
         """Return a dict for the globals."""
@@ -194,24 +243,57 @@ class Environment(object):
 
 
 class Template(object):
-    """Represents a template."""
+    """The central template object.  This class represents a compiled template
+    and is used to evaluate it.
 
-    def __init__(self, environment, code, globals, uptodate=None):
-        namespace = {
-            'environment':          environment,
-            '__jinja_template__':   self
-        }
-        exec code in namespace
-        self.environment = environment
-        self.name = namespace['name']
-        self.filename = code.co_filename
-        self.root_render_func = namespace['root']
-        self.blocks = namespace['blocks']
-        self.globals = globals
+    Normally the template object is generated from an `Environment` but it
+    also has a constructor that makes it possible to create a template
+    instance directly using the constructor.  It takes the same arguments as
+    the environment constructor but it's not possible to specify a loader.
 
-        # debug and loader helpers
-        self._get_debug_info = namespace['get_debug_info']
-        self._uptodate = uptodate
+    Every template object has a few methods and members that are guaranteed
+    to exist.  However it's important that a template object should be
+    considered immutable.  Modifications on the object are not supported.
+
+    Template objects created from the constructor rather than an environment
+    do have an `environment` attribute that points to a temporary environment
+    that is probably shared with other templates created with the constructor
+    and compatible settings.
+
+    >>> template = Template('Hello {{ name }}!')
+    >>> template.render(name='John Doe')
+    u'Hello John Doe!'
+
+    >>> stream = template.stream(name='John Doe')
+    >>> stream.next()
+    u'Hello John Doe!'
+    >>> stream.next()
+    Traceback (most recent call last):
+        ...
+    StopIteration
+    """
+
+    def __new__(cls, source,
+                block_start_string='{%',
+                block_end_string='%}',
+                variable_start_string='{{',
+                variable_end_string='}}',
+                comment_start_string='{#',
+                comment_end_string='#}',
+                line_statement_prefix=None,
+                trim_blocks=False,
+                optimized=True,
+                undefined=Undefined,
+                extensions=(),
+                finalize=unicode):
+        # make sure extensions are hashable
+        extensions = tuple(extensions)
+        env = _get_spontaneous_environment(
+            block_start_string, block_end_string, variable_start_string,
+            variable_end_string, comment_start_string, comment_end_string,
+            line_statement_prefix, trim_blocks, optimized, undefined,
+            None, extensions, finalize)
+        return env.from_string(source, template_class=cls)
 
     def render(self, *args, **kwargs):
         """Render the template into a string."""
@@ -249,42 +331,53 @@ class Template(object):
                                      'With an enabled optimizer this '
                                      'will lead to unexpected results.' %
                     (plural, ', '.join(overrides), plural or ' a', plural))
-        gen = self.root_render_func(dict(self.globals, **context))
-        # skip the first item which is a reference to the context
-        gen.next()
 
         try:
-            for event in gen:
+            for event in self.root_render_func(self.new_context(context)):
                 yield event
         except:
-            exc_info = translate_exception(sys.exc_info())
-            raise exc_info[0], exc_info[1], exc_info[2]
+            exc_type, exc_value, tb = translate_exception(sys.exc_info())
+            raise exc_type, exc_value, tb
+
+    def new_context(self, vars):
+        """Create a new template context for this template."""
+        return TemplateContext(self.environment, dict(self.globals, **vars),
+                               self.name, self.blocks)
 
     def get_corresponding_lineno(self, lineno):
         """Return the source line number of a line number in the
         generated bytecode as they are not in sync.
         """
-        for template_line, code_line in reversed(self._get_debug_info()):
+        for template_line, code_line in reversed(self.debug_info):
             if code_line <= lineno:
                 return template_line
         return 1
 
     @property
     def is_up_to_date(self):
-        """Check if the template is still up to date."""
+        """If this variable is `False` there is a newer version available."""
         if self._uptodate is None:
             return True
         return self._uptodate()
 
+    @property
+    def debug_info(self):
+        """The debug info mapping."""
+        return [tuple(map(int, x.split('='))) for x in
+                self._debug_info.split('&')]
+
     def __repr__(self):
         return '<%s %r>' % (
             self.__class__.__name__,
-            self.name
+            self.name or '<from string>'
         )
 
 
 class TemplateStream(object):
-    """Wraps a genererator for outputing template streams."""
+    """This class wraps a generator returned from `Template.generate` so that
+    it's possible to buffer multiple elements so that it's possible to return
+    them from a WSGI application which flushes after each iteration.
+    """
 
     def __init__(self, gen):
         self._gen = gen
@@ -300,31 +393,37 @@ class TemplateStream(object):
         """Enable buffering. Buffer `size` items before yielding them."""
         if size <= 1:
             raise ValueError('buffer size too small')
-        self.buffered = True
 
-        def buffering_next():
+        def generator():
             buf = []
             c_size = 0
             push = buf.append
             next = self._gen.next
 
-            try:
-                while 1:
-                    item = next()
-                    if item:
-                        push(item)
+            while 1:
+                try:
+                    while 1:
+                        push(next())
                         c_size += 1
-                    if c_size >= size:
-                        raise StopIteration()
-            except StopIteration:
-                if not c_size:
-                    raise
-            return u''.join(buf)
+                        if c_size >= size:
+                            raise StopIteration()
+                except StopIteration:
+                    if not c_size:
+                        raise
+                yield u''.join(buf)
+                del buf[:]
+                c_size = 0
 
-        self._next = buffering_next
+        self.buffered = True
+        self._next = generator().next
 
     def __iter__(self):
         return self
 
     def next(self):
         return self._next()
+
+
+# hook in default template class.  if anyone reads this comment: ignore that
+# it's possible to use custom templates ;-)
+Environment.template_class = Template

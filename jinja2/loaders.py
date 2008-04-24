@@ -10,7 +10,7 @@
 """
 from os import path
 from jinja2.exceptions import TemplateNotFound
-from jinja2.environment import Template
+from jinja2.environment import template_from_code
 from jinja2.utils import LRUCache
 
 
@@ -30,8 +30,7 @@ def split_template_path(template):
 
 
 class BaseLoader(object):
-    """
-    Baseclass for all loaders.  Subclass this and override `get_source` to
+    """Baseclass for all loaders.  Subclass this and override `get_source` to
     implement a custom loading mechanism.
 
     The environment provides a `get_template` method that will automatically
@@ -82,7 +81,7 @@ class BaseLoader(object):
 
         source, filename, uptodate = self.get_source(environment, name)
         code = environment.compile(source, name, filename, globals)
-        template = Template(environment, code, globals, uptodate)
+        template = template_from_code(environment, code, globals, uptodate)
         if self.cache is not None:
             self.cache[name] = template
         return template
@@ -143,4 +142,64 @@ class DictLoader(BaseLoader):
     def get_source(self, environment, template):
         if template in self.mapping:
             return self.mapping[template], None, None
+        raise TemplateNotFound(template)
+
+
+class FunctionLoader(BaseLoader):
+    """A loader that is passed a function which does the loading.  The
+    function has to work like a `get_source` method but the return value for
+    not existing templates may be `None` instead of a `TemplateNotFound`
+    exception.
+    """
+
+    def __init__(self, load_func, cache_size=50, auto_reload=True):
+        BaseLoader.__init__(self, cache_size, auto_reload)
+        self.load_func = load_func
+
+    def get_source(self, environment, template):
+        rv = self.load_func(environment, template)
+        if rv is None:
+            raise TemplateNotFound(template)
+        return rv
+
+
+class PrefixLoader(BaseLoader):
+    """A loader that is passed a dict of loaders where each loader is bound
+    to a prefix.  The caching is independent of the actual loaders so the
+    per loader cache settings are ignored.  The prefix is delimited from the
+    template by a slash.
+    """
+
+    def __init__(self, mapping, delimiter='/', cache_size=50,
+                 auto_reload=True):
+        BaseLoader.__init__(self, cache_size, auto_reload)
+        self.mapping = mapping
+        self.delimiter = delimiter
+
+    def get_source(self, environment, template):
+        try:
+            prefix, template = template.split(self.delimiter, 1)
+            loader = self.mapping[prefix]
+        except (ValueError, KeyError):
+            raise TemplateNotFound(template)
+        return loader.get_source(environment, template)
+
+
+class ChoiceLoader(BaseLoader):
+    """This loader works like the `PrefixLoader` just that no prefix is
+    specified.  If a template could not be found by one loader the next one
+    is tried.  Like for the `PrefixLoader` the cache settings of the actual
+    loaders don't matter as the choice loader does the caching.
+    """
+
+    def __init__(self, loaders, cache_size=50, auto_reload=True):
+        BaseLoader.__init__(self, cache_size, auto_reload)
+        self.loaders = loaders
+
+    def get_source(self, environment, template):
+        for loader in self.loaders:
+            try:
+                return loader.get_source(environment, template)
+            except TemplateNotFound:
+                pass
         raise TemplateNotFound(template)

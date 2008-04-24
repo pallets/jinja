@@ -33,6 +33,14 @@ def contextfunction(f):
     return f
 
 
+def environmentfunction(f):
+    """Mark a callable as environment callable.  An environment callable is
+    passed the current environment as first argument.
+    """
+    f.environmentfunction = True
+    return f
+
+
 def import_string(import_name, silent=False):
     """Imports an object based on a string.  This use useful if you want to
     use import paths as endpoints or something similar.  An import path can

@@ -8,10 +8,6 @@
     :copyright: Copyright 2008 by Armin Ronacher.
     :license: GNU GPL.
 """
-try:
-    from collections import defaultdict
-except ImportError:
-    defaultdict = None
 from types import FunctionType
 from jinja2.utils import Markup, partial
 from jinja2.exceptions import UndefinedError
@@ -21,62 +17,72 @@ __all__ = ['LoopContext', 'StaticLoopContext', 'TemplateContext',
            'Macro', 'IncludedTemplate', 'Markup']
 
 
-class TemplateContext(dict):
+class TemplateContext(object):
     """Holds the variables of the local template or of the global one.  It's
     not save to use this class outside of the compiled code.  For example
     update and other methods will not work as they seem (they don't update
     the exported variables for example).
     """
 
-    def __init__(self, environment, globals, name, blocks, standalone):
-        dict.__init__(self, globals)
+    def __init__(self, environment, parent, name, blocks):
+        self.parent = parent
+        self.vars = {}
         self.environment = environment
-        self.exported = set()
+        self.exported_vars = set()
         self.name = name
+
+        # bind functions to the context of environment if required
+        for name, obj in self.parent.iteritems():
+            if type(obj) is FunctionType:
+                if getattr(obj, 'contextfunction', 0):
+                    self.vars[key] = partial(obj, self)
+                elif getattr(obj, 'environmentfunction', 0):
+                    self.vars[key] = partial(obj, environment)
+
+        # create the initial mapping of blocks.  Whenever template inheritance
+        # takes place the runtime will update this mapping with the new blocks
+        # from the template.
         self.blocks = dict((k, [v]) for k, v in blocks.iteritems())
 
-        # give all context functions the context as first argument
-        for key, value in self.iteritems():
-            if type(value) is FunctionType and \
-               getattr(value, 'contextfunction', False):
-                dict.__setitem__(self, key, partial(value, self))
-
-        # if the template is in standalone mode we don't copy the blocks over.
-        # this is used for includes for example but otherwise, if the globals
-        # are a template context, this template is participating in a template
-        # inheritance chain and we have to copy the blocks over.
-        if not standalone and isinstance(globals, TemplateContext):
-            for name, parent_blocks in globals.blocks.iteritems():
-                self.blocks.setdefault(name, []).extend(parent_blocks)
-
-    def super(self, block):
+    def super(self, name, current):
         """Render a parent block."""
-        try:
-            func = self.blocks[block][-2]
-        except LookupError:
+        last = None
+        for block in self.blocks[name]:
+            if block is current:
+                break
+            last = block
+        if last is None:
             return self.environment.undefined('there is no parent block '
                                               'called %r.' % block)
-        return SuperBlock(block, self, func)
+        return SuperBlock(block, self, last)
 
-    def __setitem__(self, key, value):
-        """If we set items to the dict we track the variables set so
-        that includes can access the exported variables."""
-        dict.__setitem__(self, key, value)
-        self.exported.add(key)
+    def update(self, mapping):
+        """Update vars from a mapping but don't export them."""
+        self.vars.update(mapping)
 
     def get_exported(self):
-        """Get a dict of all exported variables."""
-        return dict((k, self[k]) for k in self.exported)
+        """Get a new dict with the exported variables."""
+        return dict((k, self.vars[k]) for k in self.exported_vars)
 
-    # if there is a default dict, dict has a __missing__ method we can use.
-    if defaultdict is None:
-        def __getitem__(self, name):
-            if name in self:
-                return self[name]
-            return self.environment.undefined(name=name)
-    else:
-        def __missing__(self, name):
-            return self.environment.undefined(name=name)
+    def get_root(self):
+        """Return a new dict with all the non local variables."""
+        return dict(self.parent)
+
+    def get_all(self):
+        """Return a copy of the complete context as dict."""
+        return dict(self.parent, **self.vars)
+
+    def __setitem__(self, key, value):
+        self.vars[key] = value
+        self.exported_vars.add(key)
+
+    def __getitem__(self, key):
+        if key in self.vars:
+            return self.vars[key]
+        try:
+            return self.parent[key]
+        except KeyError:
+            return self.environment.undefined(name=key)
 
     def __repr__(self):
         return '<%s %s of %r>' % (
@@ -109,10 +115,9 @@ class IncludedTemplate(object):
 
     def __init__(self, environment, context, template):
         template = environment.get_template(template)
-        gen = template.root_render_func(context, standalone=True)
-        context = gen.next()
+        context = template.new_context(context.get_root())
         self._name = template.name
-        self._rendered_body = u''.join(gen)
+        self._rendered_body = u''.join(template.root_render_func(context))
         self._context = context.get_exported()
 
     __getitem__ = lambda x, n: x._context[n]
@@ -257,6 +262,28 @@ class Macro(object):
         )
 
 
+def fail_with_undefined_error(self, *args, **kwargs):
+    """Regular callback function for undefined objects that raises an
+    `UndefinedError` on call.
+    """
+    if self._undefined_hint is None:
+        if self._undefined_obj is None:
+            hint = '%r is undefined' % self._undefined_name
+        elif not isinstance(self._undefined_name, basestring):
+            hint = '%r object has no element %r' % (
+                self._undefined_obj.__class__.__name__,
+                self._undefined_name
+            )
+        else:
+            hint = '%r object has no attribute %r' % (
+                self._undefined_obj.__class__.__name__,
+                self._undefined_name
+            )
+    else:
+        hint = self._undefined_hint
+    raise UndefinedError(hint)
+
+
 class Undefined(object):
     """The default undefined implementation.  This undefined implementation
     can be printed and iterated over, but every other access will raise a
@@ -268,36 +295,19 @@ class Undefined(object):
         self._undefined_obj = obj
         self._undefined_name = name
 
-    def _fail_with_error(self, *args, **kwargs):
-        if self._undefined_hint is None:
-            if self._undefined_obj is None:
-                hint = '%r is undefined' % self._undefined_name
-            elif not isinstance(self._undefined_name, basestring):
-                hint = '%r object has no element %r' % (
-                    self._undefined_obj.__class__.__name__,
-                    self._undefined_name
-                )
-            else:
-                hint = '%r object has no attribute %r' % (
-                    self._undefined_obj.__class__.__name__,
-                    self._undefined_name
-                )
-        else:
-            hint = self._undefined_hint
-        raise UndefinedError(hint)
     __add__ = __radd__ = __mul__ = __rmul__ = __div__ = __rdiv__ = \
     __realdiv__ = __rrealdiv__ = __floordiv__ = __rfloordiv__ = \
     __mod__ = __rmod__ = __pos__ = __neg__ = __call__ = \
-    __getattr__ = __getitem__ = _fail_with_error
-
-    def __unicode__(self):
-        return u''
+    __getattr__ = __getitem__ = fail_with_undefined_error
 
     def __str__(self):
         return self.__unicode__().encode('utf-8')
 
     def __repr__(self):
         return 'Undefined'
+
+    def __unicode__(self):
+        return u''
 
     def __len__(self):
         return 0
@@ -325,9 +335,9 @@ class DebugUndefined(Undefined):
 
 
 class StrictUndefined(Undefined):
-    """An undefined that barks on print and iteration as well as boolean tests.
-    In other words: you can do nothing with it except checking if it's defined
-    using the `defined` test.
+    """An undefined that barks on print and iteration as well as boolean
+    tests.  In other words: you can do nothing with it except checking if it's
+    defined using the `defined` test.
     """
 
-    __iter__ = __unicode__ = __len__ = __nonzero__ = Undefined._fail_with_error
+    __iter__ = __unicode__ = __len__ = __nonzero__ = fail_with_undefined_error

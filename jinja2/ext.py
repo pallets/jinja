@@ -25,10 +25,6 @@ class Extension(object):
     def __init__(self, environment):
         self.environment = environment
 
-    def update_globals(self, globals):
-        """Called to inject runtime variables into the globals."""
-        pass
-
     def parse(self, parser):
         """Called if one of the tags matched."""
 
@@ -36,6 +32,13 @@ class Extension(object):
 class CacheExtension(Extension):
     """An example extension that adds cacheable blocks."""
     tags = set(['cache'])
+
+    def __init__(self, environment):
+        Extension.__init__(self, environment)
+        def dummy_cache_support(name, timeout=None, caller=None):
+            if caller is not None:
+                return caller()
+        environment.globals['cache_support'] = dummy_cache_support
 
     def parse(self, parser):
         lineno = parser.stream.next().lineno

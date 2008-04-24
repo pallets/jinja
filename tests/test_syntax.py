@@ -22,13 +22,12 @@ UNARY = '''{{ +3 }}|{{ -3 }}'''
 CONCAT = '''{{ [1, 2] ~ 'foo' }}'''
 COMPARE = '''{{ 1 > 0 }}|{{ 1 >= 1 }}|{{ 2 < 3 }}|{{ 2 == 2 }}|{{ 1 <= 1 }}'''
 INOP = '''{{ 1 in [1, 2, 3] }}|{{ 1 not in [1, 2, 3] }}'''
-LITERALS = '''{{ [] }}|{{ {} }}|{{ () }}|{{ '' }}|{{ @() }}'''
+LITERALS = '''{{ [] }}|{{ {} }}|{{ () }}'''
 BOOL = '''{{ true and false }}|{{ false or true }}|{{ not false }}'''
 GROUPING = '''{{ (true and false) or (false and true) and not false }}'''
 CONDEXPR = '''{{ 0 if true else 1 }}'''
 DJANGOATTR = '''{{ [1, 2, 3].0 }}'''
 FILTERPRIORITY = '''{{ "foo"|upper + "bar"|upper }}'''
-REGEX = r'''{{ @/\S+/.findall('foo bar baz') }}'''
 TUPLETEMPLATES = [
     '{{ () }}',
     '{{ (1, 2) }}',
@@ -42,7 +41,7 @@ TUPLETEMPLATES = [
     '{% for x in foo, bar recursive %}...{% endfor %}',
     '{% for x, in foo, recursive %}...{% endfor %}'
 ]
-TRAILINGCOMMA = '''{{ (1, 2,) }}|{{ [1, 2,] }}|{{ {1: 2,} }}|{{ @(1, 2,) }}'''
+TRAILINGCOMMA = '''{{ (1, 2,) }}|{{ [1, 2,] }}|{{ {1: 2,} }}'''
 
 
 def test_call():
@@ -110,7 +109,7 @@ def test_inop(env):
 
 def test_literals(env):
     tmpl = env.from_string(LITERALS)
-    assert tmpl.render().lower() == '[]|{}|()||set([])'
+    assert tmpl.render().lower() == '[]|{}|()'
 
 
 def test_bool(env):
@@ -162,11 +161,6 @@ def test_function_calls(env):
             env.from_string('foo(%s)' % sig)
 
 
-def test_regex(env):
-    tmpl = env.from_string(REGEX)
-    assert tmpl.render() == "['foo', 'bar', 'baz']"
-
-
 def test_tuple_expr(env):
     for tmpl in TUPLETEMPLATES:
         assert env.from_string(tmpl)
@@ -174,25 +168,4 @@ def test_tuple_expr(env):
 
 def test_trailing_comma(env):
     tmpl = env.from_string(TRAILINGCOMMA)
-    assert tmpl.render().lower() == '(1, 2)|[1, 2]|{1: 2}|set([1, 2])'
-
-
-def test_extends_position():
-    env = Environment(loader=DictLoader({
-        'empty': '[{% block empty %}{% endblock %}]'
-    }))
-    tests = [
-        ('{% extends "empty" %}', '[!]'),
-        ('  {% extends "empty" %}', '[!]'),
-        ('  !\n', '  !\n!'),
-        ('{# foo #}  {% extends "empty" %}', '[!]'),
-        ('{% set foo = "blub" %}{% extends "empty" %}', None)
-    ]
-
-    for tmpl, expected_output in tests:
-        try:
-            tmpl = env.from_string(tmpl + '{% block empty %}!{% endblock %}')
-        except TemplateSyntaxError:
-            assert expected_output is None, 'got syntax error'
-        else:
-            assert expected_output == tmpl.render()
+    assert tmpl.render().lower() == '(1, 2)|[1, 2]|{1: 2}'

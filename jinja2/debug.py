@@ -38,7 +38,11 @@ def fake_exc_info(exc_info, filename, lineno, tb_back=None):
 
     # figure the real context out
     real_locals = tb.tb_frame.f_locals.copy()
-    locals = dict(real_locals.get('context', {}))
+    ctx = real_locals.get('context')
+    if ctx:
+        locals = ctx.get_all()
+    else:
+        locals = {}
     for name, value in real_locals.iteritems():
         if name.startswith('l_'):
             locals[name[2:]] = value

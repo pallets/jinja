@@ -97,9 +97,9 @@ def babel_extract(fileobj, keywords, comment_tags, options):
 class TransExtension(Extension):
     tags = set(['trans'])
 
-    def update_globals(self, globals):
-        """Inject noop translation functions."""
-        globals.update({
+    def __init__(self, environment):
+        Extension.__init__(self, environment)
+        environment.globals.update({
             '_':        lambda x: x,
             'gettext':  lambda x: x,
             'ngettext': lambda s, p, n: (s, p)[n != 1]

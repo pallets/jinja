@@ -1,12 +1,11 @@
 # -*- coding: utf-8 -*-
 """
-jinja
-~~~~~
+Jinja2
+~~~~~~
 
-Jinja is a `sandboxed`_ template engine written in pure Python. It
-provides a `Django`_ like non-XML syntax and compiles templates into
-executable python code. It's basically a combination of Django templates
-and python code.
+Jinja2 is a template engine written in pure Python.  It provides a
+`Django`_ inspired non-XML syntax but supports inline expressions and
+an optional `sandboxed`_ environment.
 
 Nutshell
 --------
@@ -18,7 +17,7 @@ Here a small example of a Jinja template::
     {% block content %}
       <ul>
       {% for user in users %}
-        <li><a href="{{ user.url|e }}">{{ user.username|e }}</a></li>
+        <li><a href="{{ user.url }}">{{ user.username }}</a></li>
       {% endfor %}
       </ul>
     {% endblock %}
@@ -29,28 +28,16 @@ Philosophy
 Application logic is for the controller but don't try to make the life
 for the template designer too hard by giving him too few functionality.
 
-For more informations visit the new `jinja webpage`_ and `documentation`_.
+For more informations visit the new `jinja2 webpage`_ and `documentation`_.
 
-Note
-----
-
-This is the Jinja 1.0 release which is completely incompatible with the
-old "pre 1.0" branch. The old branch will still receive security updates
-and bugfixes but the 1.0 branch will be the only version that receives
-support.
-
-If you have an application that uses Jinja 0.9 and won't be updated in
-the near future the best idea is to ship a Jinja 0.9 checkout together
-with the application.
-
-The `Jinja tip`_ is installable via `easy_install` with ``easy_install
-Jinja==dev``.
+The `Jinja2 tip`_ is installable via `easy_install` with ``easy_install
+Jinja2==dev``.
 
 .. _sandboxed: http://en.wikipedia.org/wiki/Sandbox_(computer_security)
 .. _Django: http://www.djangoproject.com/
-.. _jinja webpage: http://jinja.pocoo.org/
-.. _documentation: http://jinja.pocoo.org/documentation/index.html
-.. _Jinja tip: http://dev.pocoo.org/hg/jinja-main/archive/tip.tar.gz#egg=Jinja-dev
+.. _jinja webpage: http://jinja2.pocoo.org/
+.. _documentation: http://jinja2.pocoo.org/documentation/index.html
+.. _Jinja tip: http://dev.pocoo.org/hg/jinja2-main/archive/tip.tar.gz#egg=Jinja2-dev
 """
 import os
 import sys
@@ -71,6 +58,18 @@ def list_files(path):
             yield fn
 
 
+def get_terminal_width():
+    """Return the current terminal dimensions."""
+    try:
+        from struct import pack, unpack
+        from fcntl import ioctl
+        from termios import TIOCGWINSZ
+        s = pack('HHHH', 0, 0, 0, 0)
+        return unpack('HHHH', ioctl(sys.stdout.fileno(), TIOCGWINSZ, s))[1]
+    except:
+        return 80
+
+
 class optional_build_ext(build_ext):
     """This class allows C extension building to fail."""
 
@@ -87,15 +86,16 @@ class optional_build_ext(build_ext):
             self._unavailable()
 
     def _unavailable(self):
-        print '*' * 70
+        width = get_terminal_width()
+        print '*' * width
         print """WARNING:
 An optional C extension could not be compiled, speedups will not be
 available."""
-        print '*' * 70
+        print '*' * width
 
 
 setup(
-    name='Jinja 2',
+    name='Jinja2',
     version='2.0dev',
     url='http://jinja.pocoo.org/',
     license='BSD',

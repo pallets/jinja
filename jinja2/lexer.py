@@ -188,14 +188,14 @@ class LexerMeta(type):
     """
 
     def __call__(cls, environment):
-        key = hash((environment.block_start_string,
-                    environment.block_end_string,
-                    environment.variable_start_string,
-                    environment.variable_end_string,
-                    environment.comment_start_string,
-                    environment.comment_end_string,
-                    environment.line_statement_prefix,
-                    environment.trim_blocks))
+        key = (environment.block_start_string,
+               environment.block_end_string,
+               environment.variable_start_string,
+               environment.variable_end_string,
+               environment.comment_start_string,
+               environment.comment_end_string,
+               environment.line_statement_prefix,
+               environment.trim_blocks)
 
         # use the cached lexer if possible
         if key in _lexer_cache:
