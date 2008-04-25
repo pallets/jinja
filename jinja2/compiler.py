@@ -14,7 +14,7 @@ from cStringIO import StringIO
 from jinja2 import nodes
 from jinja2.visitor import NodeVisitor, NodeTransformer
 from jinja2.exceptions import TemplateAssertionError
-from jinja2.runtime import StaticLoopContext
+from jinja2.runtime import StaticLoopContext, concat
 from jinja2.utils import Markup
 
 
@@ -728,7 +728,7 @@ class CodeGenerator(NodeVisitor):
         self.pull_locals(macro_frame, indent=False)
         self.writeline('%s = []' % buf)
         self.blockvisit(node.body, macro_frame, indent=False)
-        self.writeline("return Markup(u''.join(%s))" % buf)
+        self.writeline("return Markup(concat(%s))" % buf)
         self.outdent()
         self.newline()
         if frame.toplevel:
@@ -756,7 +756,7 @@ class CodeGenerator(NodeVisitor):
         self.pull_locals(call_frame, indent=False)
         self.writeline('%s = []' % buf)
         self.blockvisit(node.body, call_frame, indent=False)
-        self.writeline("return Markup(u''.join(%s))" % buf)
+        self.writeline("return Markup(concat(%s))" % buf)
         self.outdent()
         arg_tuple = ', '.join(repr(x.name) for x in node.args)
         if len(node.args) == 1:
@@ -794,7 +794,7 @@ class CodeGenerator(NodeVisitor):
             self.writeline('yield ', node)
         else:
             self.writeline('%s.append(' % frame.buffer, node)
-        self.visit_Filter(node.filter, filter_frame, "u''.join(%s)" % buf)
+        self.visit_Filter(node.filter, filter_frame, 'concat(%s)' % buf)
         if frame.buffer is not None:
             self.write(')')
 
@@ -842,7 +842,7 @@ class CodeGenerator(NodeVisitor):
         if len(body) < 3:
             for item in body:
                 if isinstance(item, list):
-                    val = repr(u''.join(item))
+                    val = repr(concat(item))
                     if frame.buffer is None:
                         self.writeline('yield ' + val)
                     else:
@@ -863,7 +863,7 @@ class CodeGenerator(NodeVisitor):
             arguments = []
             for item in body:
                 if isinstance(item, list):
-                    format.append(u''.join(item).replace('%', '%%'))
+                    format.append(concat(item).replace('%', '%%'))
                 else:
                     format.append('%s')
                     arguments.append(item)
@@ -871,7 +871,7 @@ class CodeGenerator(NodeVisitor):
                 self.writeline('yield ')
             else:
                 self.writeline('%s.append(' % frame.buffer)
-            self.write(repr(u''.join(format)) + ' % (')
+            self.write(repr(concat(format)) + ' % (')
             idx = -1
             self.indent()
             for argument in arguments:

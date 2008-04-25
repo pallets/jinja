@@ -18,7 +18,7 @@
 """
 from jinja2 import nodes
 from jinja2.visitor import NodeVisitor, NodeTransformer
-from jinja2.runtime import LoopContext
+from jinja2.runtime import LoopContext, concat
 
 
 def optimize(node, environment, context_hint=None):
@@ -111,7 +111,7 @@ class Optimizer(NodeTransformer):
 
         # now check if we can evaluate the filter at compile time.
         try:
-            data = node.filter.as_const(u''.join(buffer))
+            data = node.filter.as_const(concat(buffer))
         except nodes.Impossible:
             return node
 

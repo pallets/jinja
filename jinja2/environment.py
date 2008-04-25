@@ -13,7 +13,7 @@ from jinja2.lexer import Lexer
 from jinja2.parser import Parser
 from jinja2.optimizer import optimize
 from jinja2.compiler import generate
-from jinja2.runtime import Undefined, TemplateContext
+from jinja2.runtime import Undefined, TemplateContext, concat
 from jinja2.debug import translate_exception
 from jinja2.utils import import_string, LRUCache, Markup
 from jinja2.defaults import DEFAULT_FILTERS, DEFAULT_TESTS, DEFAULT_NAMESPACE
@@ -301,7 +301,7 @@ class Template(object):
     def render(self, *args, **kwargs):
         """Render the template into a string."""
         try:
-            return u''.join(self.generate(*args, **kwargs))
+            return concat(self.generate(*args, **kwargs))
         except:
             # hide the `generate` frame
             exc_type, exc_value, tb = sys.exc_info()
@@ -395,7 +395,7 @@ class IncludedTemplate(object):
     """Represents an included template."""
 
     def __init__(self, template, context):
-        body = Markup(u''.join(template.root_render_func(context)))
+        body = Markup(concat(template.root_render_func(context)))
         self.__dict__.update(context.get_exported())
         self._name = template.name
         self._rendered_body = body
@@ -448,7 +448,7 @@ class TemplateStream(object):
                 except StopIteration:
                     if not c_size:
                         raise
-                yield u''.join(buf)
+                yield concat(buf)
                 del buf[:]
                 c_size = 0
 

@@ -14,11 +14,15 @@ from jinja2.exceptions import UndefinedError
 
 
 __all__ = ['LoopContext', 'StaticLoopContext', 'TemplateContext',
-           'Macro', 'Markup', 'missing']
+           'Macro', 'Markup', 'missing', 'concat']
 
 
 # special singleton representing missing values for the runtime
 missing = object()
+
+
+# concatenate a list of strings and convert them to unicode.
+concat = u''.join
 
 
 class TemplateContext(object):
@@ -116,7 +120,7 @@ class SuperBlock(object):
         self._render_func = render_func
 
     def __call__(self):
-        return Markup(u''.join(self._render_func(self._context)))
+        return Markup(concat(self._render_func(self._context)))
 
     def __repr__(self):
         return '<%s %r>' % (
