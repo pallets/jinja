@@ -378,9 +378,11 @@ def do_wordwrap(s, pos=79, hard=False):
                                 len(word.split('\n', 1)[0]) >= pos)],
                    word), s.split(' '))
 
+
 def do_wordcount(s):
     """Count the words in that string."""
     return len(s.split())
+
 
 def do_int(value, default=0):
     """Convert the value into an integer. If the
@@ -563,16 +565,30 @@ def do_groupby(environment, value, attribute):
         {% endfor %}
         </ul>
 
+    Additionally it's possible to use tuple unpacking for the grouper and
+    list:
+
+    .. sourcecode:: html+jinja
+
+        <ul>
+        {% for grouper, list in persons|groupby('gender') %}
+            ...
+        {% endfor %}
+        </ul>
+
     As you can see the item we're grouping by is stored in the `grouper`
     attribute and the `list` contains all the objects that have this grouper
     in common.
     """
     expr = lambda x: environment.subscribe(x, attribute)
-    return sorted([{
-        'grouper':  a,
-        'list':     b
-    } for a, b in groupby(sorted(value, key=expr), expr)],
-        key=itemgetter('grouper'))
+    return sorted(map(_GroupTuple, groupby(sorted(value, key=expr), expr)),
+                  key=itemgetter('grouper'))
+
+
+class _GroupTuple(tuple):
+    __slots__ = ()
+    grouper = property(itemgetter(0))
+    list = property(itemgetter(1))
 
 
 FILTERS = {

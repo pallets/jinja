@@ -126,7 +126,8 @@ class PackageLoader(BaseLoader):
         self.package_path = package_path
 
     def get_source(self, environment, template):
-        path = '/'.join(split_template_path(template))
+        pieces = split_template_path(template)
+        path = '/'.join((self.package_path,) + tuple(pieces))
         if not self._pkg.resource_exists(self.package_name, path):
             raise TemplateNotFound(template)
         return self._pkg.resource_string(self.package_name, path), None, None
@@ -147,9 +148,9 @@ class DictLoader(BaseLoader):
 
 class FunctionLoader(BaseLoader):
     """A loader that is passed a function which does the loading.  The
-    function has to work like a `get_source` method but the return value for
-    not existing templates may be `None` instead of a `TemplateNotFound`
-    exception.
+    function becomes the name of the template passed and has to return either
+    an unicode string with the template source, a tuple in the form ``(source,
+    filename, uptodatefunc)`` or `None` if the template does not exist.
     """
 
     def __init__(self, load_func, cache_size=50, auto_reload=True):
@@ -157,9 +158,11 @@ class FunctionLoader(BaseLoader):
         self.load_func = load_func
 
     def get_source(self, environment, template):
-        rv = self.load_func(environment, template)
+        rv = self.load_func(template)
         if rv is None:
             raise TemplateNotFound(template)
+        elif isinstance(rv, basestring):
+            return rv, None, None
         return rv
 
 

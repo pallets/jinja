@@ -16,7 +16,7 @@ SCOPING = '''\
 {% macro level1(data1) %}
 {% macro level2(data2) %}{{ data1 }}|{{ data2 }}{% endmacro %}
 {{ level2('bar') }}{% endmacro %}
-{{ level1('foo') }}|{{ level2('bar') }}\
+{{ level1('foo') }}\
 '''
 
 ARGUMENTS = '''\
@@ -55,7 +55,7 @@ def test_simple(env):
 
 def test_scoping(env):
     tmpl = env.from_string(SCOPING)
-    assert tmpl.render() == 'foo|bar|'
+    assert tmpl.render() == 'foo|bar'
 
 
 def test_arguments(env):

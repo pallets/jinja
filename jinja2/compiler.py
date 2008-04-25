@@ -441,14 +441,19 @@ class CodeGenerator(NodeVisitor):
             func_frame.identifiers.declared
         )
 
-        func_frame.accesses_arguments = False
+        func_frame.accesses_kwargs = False
+        func_frame.accesses_varargs = False
         func_frame.accesses_caller = False
         func_frame.arguments = args = ['l_' + x.name for x in node.args]
 
-        if 'arguments' in func_frame.identifiers.undeclared:
-            func_frame.accesses_arguments = True
-            func_frame.identifiers.add_special('arguments')
-            args.append('l_arguments')
+        if 'kwargs' in func_frame.identifiers.undeclared:
+            func_frame.accesses_kwargs = True
+            func_frame.identifiers.add_special('kwargs')
+            args.append('l_kwargs')
+        if 'varargs' in func_frame.identifiers.undeclared:
+            func_frame.accesses_varargs = True
+            func_frame.identifiers.add_special('varargs')
+            args.append('l_varargs')
         if 'caller' in func_frame.identifiers.undeclared:
             func_frame.accesses_caller = True
             func_frame.identifiers.add_special('caller')
@@ -598,14 +603,14 @@ class CodeGenerator(NodeVisitor):
             self.writeline('l_%s = ' % node.target, node)
             if frame.toplevel:
                 self.write('context[%r] = ' % node.target)
-            self.write('IncludedTemplate(environment, context, ')
+            self.write('environment.get_template(')
             self.visit(node.template, frame)
-            self.write(')')
+            self.write(', %r).include(context)' % self.name)
             return
 
         self.writeline('included_template = environment.get_template(', node)
         self.visit(node.template, frame)
-        self.write(')')
+        self.write(', %r)' % self.name)
         if frame.toplevel:
             self.writeline('included_context = included_template.new_context('
                            'context.get_root())')
@@ -729,8 +734,9 @@ class CodeGenerator(NodeVisitor):
         for arg in node.defaults:
             self.visit(arg, macro_frame)
             self.write(', ')
-        self.write('), %s, %s)' % (
-            macro_frame.accesses_arguments and '1' or '0',
+        self.write('), %s, %s, %s)' % (
+            macro_frame.accesses_kwargs and '1' or '0',
+            macro_frame.accesses_varargs and '1' or '0',
             macro_frame.accesses_caller and '1' or '0'
         ))
 
@@ -753,7 +759,10 @@ class CodeGenerator(NodeVisitor):
         for arg in node.defaults:
             self.visit(arg)
             self.write(', ')
-        self.write('), %s, 0)' % (call_frame.accesses_arguments and '1' or '0'))
+        self.write('), %s, %s, 0)' % (
+            call_frame.accesses_kwargs and '1' or '0',
+            call_frame.accesses_varargs and '1' or '0'
+        ))
         if frame.buffer is None:
             self.writeline('yield ', node)
         else:

@@ -14,7 +14,7 @@ from jinja2.exceptions import UndefinedError
 
 
 __all__ = ['LoopContext', 'StaticLoopContext', 'TemplateContext',
-           'Macro', 'IncludedTemplate', 'Markup']
+           'Macro', 'Markup']
 
 
 class TemplateContext(object):
@@ -97,7 +97,7 @@ class TemplateContext(object):
     def __repr__(self):
         return '<%s %s of %r>' % (
             self.__class__.__name__,
-            dict.__repr__(self),
+            repr(self.get_all()),
             self.name
         )
 
@@ -117,26 +117,6 @@ class SuperBlock(object):
         return '<%s %r>' % (
             self.__class__.__name__,
             self.name
-        )
-
-
-class IncludedTemplate(object):
-    """Represents an included template."""
-
-    def __init__(self, environment, context, template):
-        template = environment.get_template(template)
-        context = template.new_context(context.get_root())
-        self._name = template.name
-        self._rendered_body = u''.join(template.root_render_func(context))
-        self._context = context.get_exported()
-
-    __getitem__ = lambda x, n: x._context[n]
-    __html__ = __unicode__ = lambda x: x._rendered_body
-
-    def __repr__(self):
-        return '<%s %r>' % (
-            self.__class__.__name__,
-            self._name
         )
 
 
@@ -228,19 +208,21 @@ class StaticLoopContext(LoopContextBase):
 class Macro(object):
     """Wraps a macro."""
 
-    def __init__(self, environment, func, name, arguments, defaults, catch_all, caller):
+    def __init__(self, environment, func, name, arguments, defaults,
+                 catch_kwargs, catch_varargs, caller):
         self._environment = environment
         self._func = func
         self.name = name
         self.arguments = arguments
         self.defaults = defaults
-        self.catch_all = catch_all
+        self.catch_kwargs = catch_kwargs
+        self.catch_varargs = catch_varargs
         self.caller = caller
 
     def __call__(self, *args, **kwargs):
         arg_count = len(self.arguments)
-        if len(args) > arg_count:
-            raise TypeError('macro %r takes not more than %d argument(s).' %
+        if not self.catch_varargs and len(args) > arg_count:
+            raise TypeError('macro %r takes not more than %d argument(s)' %
                             (self.name, len(self.arguments)))
         arguments = {}
         for idx, name in enumerate(self.arguments):
@@ -261,8 +243,13 @@ class Macro(object):
             if caller is None:
                 caller = self._environment.undefined('No caller defined')
             arguments['l_caller'] = caller
-        if self.catch_all:
-            arguments['l_arguments'] = kwargs
+        if self.catch_kwargs:
+            arguments['l_kwargs'] = kwargs
+        elif kwargs:
+            raise TypeError('macro %r takes no keyword argument %r' %
+                            (self.name, iter(kwargs).next()))
+        if self.catch_varargs:
+            arguments['l_varargs'] = args[arg_count:]
         return self._func(**arguments)
 
     def __repr__(self):

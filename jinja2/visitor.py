@@ -24,8 +24,7 @@ class NodeVisitor(object):
     """
 
     def get_visitor(self, node):
-        """
-        Return the visitor function for this node or `None` if no visitor
+        """Return the visitor function for this node or `None` if no visitor
         exists for this node.  In that case the generic visit function is
         used instead.
         """
