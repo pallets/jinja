@@ -793,7 +793,7 @@ class CodeGenerator(NodeVisitor):
 
     def visit_ExprStmt(self, node, frame):
         self.newline(node)
-        self.visit(node, frame)
+        self.visit(node.node, frame)
 
     def visit_Output(self, node, frame):
         # if we have a known extends statement, we don't output anything

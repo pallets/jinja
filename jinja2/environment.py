@@ -15,7 +15,7 @@ from jinja2.optimizer import optimize
 from jinja2.compiler import generate
 from jinja2.runtime import Undefined, TemplateContext
 from jinja2.debug import translate_exception
-from jinja2.utils import import_string, LRUCache
+from jinja2.utils import import_string, LRUCache, Markup
 from jinja2.defaults import DEFAULT_FILTERS, DEFAULT_TESTS, DEFAULT_NAMESPACE
 
 
@@ -348,7 +348,12 @@ class Template(object):
                                self.name, self.blocks)
 
     def include(self, context=None):
-        """Include this template."""
+        """Include this template.  When passed a template context or dict
+        the template is evaluated in that context and an `IncludedTemplate`
+        object is returned.  This object then exposes all the exported
+        variables as attributes and renders the contents of the template
+        when converted to unicode.
+        """
         if context is None:
             context = self.new_context({})
         elif isinstance(context, TemplateContext):
@@ -390,13 +395,16 @@ class IncludedTemplate(object):
     """Represents an included template."""
 
     def __init__(self, template, context):
-        self._template = template
+        body = Markup(u''.join(template.root_render_func(context)))
+        self.__dict__.update(context.get_exported())
         self._name = template.name
-        self._rendered_body = u''.join(template.root_render_func(context))
-        self._context = context.get_exported()
+        self._rendered_body = body
 
-    __getitem__ = lambda x, n: x._context[n]
-    __html__ = __unicode__ = lambda x: x._rendered_body
+    __html__ = lambda x: x._rendered_body
+    __unicode__ = lambda x: unicode(x._rendered_body)
+
+    def __str__(self):
+        return unicode(self._rendered_body).encode('utf-8')
 
     def __repr__(self):
         return '<%s %r>' % (
