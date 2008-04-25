@@ -633,5 +633,6 @@ FILTERS = {
     'round':                do_round,
     'sort':                 do_sort,
     'groupby':              do_groupby,
-    'safe':                 Markup
+    'safe':                 Markup,
+    'xmlattr':              do_xmlattr
 }

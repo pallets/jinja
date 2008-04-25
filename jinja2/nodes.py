@@ -263,7 +263,24 @@ class Block(Stmt):
 
 class Include(Stmt):
     """A node that represents the include tag."""
+    fields = ('template',)
+
+
+class Import(Stmt):
+    """A node that represents the import tag."""
     fields = ('template', 'target')
+
+
+class FromImport(Stmt):
+    """A node that represents the from import tag.  It's important to not
+    pass unsafe names to the name attribute.  The compiler translates the
+    attribute lookups directly into getattr calls and does *not* use the
+    subscribe callback of the interface.  As exported variables may not
+    start with double underscores (which the parser asserts) this is not a
+    problem for regular Jinja code, but if this node is used in an extension
+    extra care must be taken.
+    """
+    fields = ('template', 'names')
 
 
 class Trans(Stmt):

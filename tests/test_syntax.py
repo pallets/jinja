@@ -14,7 +14,6 @@ CALL = '''{{ foo('a', c='d', e='f', *['b'], **{'g': 'h'}) }}'''
 SLICING = '''{{ [1, 2, 3][:] }}|{{ [1, 2, 3][::-1] }}'''
 ATTR = '''{{ foo.bar }}|{{ foo['bar'] }}'''
 SUBSCRIPT = '''{{ foo[0] }}|{{ foo[-1] }}'''
-KEYATTR = '''{{ {'items': 'foo'}.items }}|{{ {}.items() }}'''
 TUPLE = '''{{ () }}|{{ (1,) }}|{{ (1, 2) }}'''
 MATH = '''{{ (1 + 1 * 2) - 3 / 2 }}|{{ 2**3 }}'''
 DIV = '''{{ 3 // 2 }}|{{ 3 / 2 }}|{{ 3 % 2 }}'''
@@ -62,11 +61,6 @@ def test_attr(env):
 def test_subscript(env):
     tmpl = env.from_string(SUBSCRIPT)
     assert tmpl.render(foo=[0, 1, 2]) == '0|2'
-
-
-def test_keyattr(env):
-    tmpl = env.from_string(KEYATTR)
-    assert tmpl.render() == 'foo|[]'
 
 
 def test_tuple(env):

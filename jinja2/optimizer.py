@@ -173,6 +173,17 @@ class Optimizer(NodeTransformer):
             return node
         return result
 
+    def visit_Import(self, node, context):
+        rv = self.generic_visit(node, context)
+        context.undef(node.target)
+        return rv
+
+    def visit_FromImport(self, node, context):
+        rv = self.generic_visit(node, context)
+        for name in node.names:
+            context.undef(name)
+        return rv
+
     def fold(self, node, context):
         """Do constant folding."""
         node = self.generic_visit(node, context)

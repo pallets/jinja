@@ -14,7 +14,11 @@ from jinja2.exceptions import UndefinedError
 
 
 __all__ = ['LoopContext', 'StaticLoopContext', 'TemplateContext',
-           'Macro', 'Markup']
+           'Macro', 'Markup', 'missing']
+
+
+# special singleton representing missing values for the runtime
+missing = object()
 
 
 class TemplateContext(object):
@@ -69,7 +73,8 @@ class TemplateContext(object):
 
     def get_exported(self):
         """Get a new dict with the exported variables."""
-        return dict((k, self.vars[k]) for k in self.exported_vars)
+        return dict((k, self.vars[k]) for k in self.exported_vars
+                    if not k.startswith('__'))
 
     def get_root(self):
         """Return a new dict with all the non local variables."""

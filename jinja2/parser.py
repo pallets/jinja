@@ -14,7 +14,7 @@ from jinja2.exceptions import TemplateSyntaxError
 
 
 _statement_keywords = frozenset(['for', 'if', 'block', 'extends', 'print',
-                                 'macro', 'include'])
+                                 'macro', 'include', 'from', 'import'])
 _compare_operators = frozenset(['eq', 'ne', 'lt', 'lteq', 'gt', 'gteq', 'in'])
 statement_end_tokens = set(['variable_end', 'block_end', 'in'])
 _tuple_edge_tokens = set(['rparen']) | statement_end_tokens
@@ -145,22 +145,47 @@ class Parser(object):
 
     def parse_include(self):
         node = nodes.Include(lineno=self.stream.expect('include').lineno)
-        expr = self.parse_expression()
-        if self.stream.current.type is 'assign':
+        node.template = self.parse_expression()
+        return node
+
+    def parse_import(self):
+        node = nodes.Import(lineno=self.stream.expect('import').lineno)
+        node.template = self.parse_expression()
+        self.stream.expect('name:as')
+        node.target = self.stream.expect('name').value
+        if not nodes.Name(node.target, 'store').can_assign():
+            raise TemplateSyntaxError('can\'t assign imported template '
+                                      'to %r' % node.target, node.lineno,
+                                      self.filename)
+        return node
+
+    def parse_from(self):
+        node = nodes.FromImport(lineno=self.stream.expect('from').lineno)
+        node.template = self.parse_expression()
+        self.stream.expect('import')
+        node.names = []
+        while 1:
+            if node.names:
+                self.stream.expect('comma')
+            if self.stream.current.type is 'name':
+                target = nodes.Name(self.stream.current.value, 'store')
+                if not target.can_assign():
+                    raise TemplateSyntaxError('can\'t import object named %r'
+                                              % target.name, target.lineno,
+                                              self.filename)
+                elif target.name.startswith('__'):
+                    raise TemplateAssertionError('names starting with two '
+                                                 'underscores can not be '
+                                                 'imported', target.lineno,
+                                                 self.filename)
+                node.names.append(target.name)
+                self.stream.next()
+                if self.stream.current.type is not 'comma':
+                    break
+            else:
+                break
+        if self.stream.current.type is 'comma':
             self.stream.next()
-            if not isinstance(expr, nodes.Name):
-                raise TemplateSyntaxError('must assign imported template to '
-                                          'variable or current scope',
-                                          expr.lineno, self.filename)
-            if not expr.can_assign():
-                raise TemplateSyntaxError('can\'t assign imported template '
-                                          'to %r' % expr, expr.lineno,
-                                          self.filename)
-            node.target = expr.name
-            node.template = self.parse_expression()
-        else:
-            node.target = None
-            node.template = expr
         return node
 
     def parse_signature(self, node):
@@ -568,8 +593,9 @@ class Parser(object):
                     self.stream.look().type is 'assign':
                     key = self.stream.current.value
                     self.stream.skip(2)
-                    kwargs.append(nodes.Keyword(key, self.parse_expression(),
-                                                lineno=key.lineno))
+                    value = self.parse_expression()
+                    kwargs.append(nodes.Keyword(key, value,
+                                                lineno=value.lineno))
                 else:
                     ensure(not kwargs)
                     args.append(self.parse_expression())

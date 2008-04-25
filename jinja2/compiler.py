@@ -210,14 +210,15 @@ class FrameIdentifierVisitor(NodeVisitor):
         self.identifiers.tests.add(node.name)
 
     def visit_Macro(self, node):
-        """Macros set local."""
         self.identifiers.declared_locally.add(node.name)
 
-    def visit_Include(self, node):
-        """Some includes set local."""
+    def visit_Import(self, node):
         self.generic_visit(node)
-        if node.target is not None:
-            self.identifiers.declared_locally.add(node.target)
+        self.identifiers.declared_locally.add(node.target)
+
+    def visit_FromImport(self, node):
+        self.generic_visit(node)
+        self.identifiers.declared_locally.update(node.names)
 
     def visit_Assign(self, node):
         """Visit assignments in the correct order."""
@@ -232,7 +233,8 @@ class FrameIdentifierVisitor(NodeVisitor):
 class CompilerExit(Exception):
     """Raised if the compiler encountered a situation where it just
     doesn't make sense to further process the code.  Any block that
-    raises such an exception is not further processed."""
+    raises such an exception is not further processed.
+    """
 
 
 class CodeGenerator(NodeVisitor):
@@ -597,28 +599,11 @@ class CodeGenerator(NodeVisitor):
 
     def visit_Include(self, node, frame):
         """Handles includes."""
-        # simpled include is include into a variable.  This kind of
-        # include works the same on every level, so we handle it first.
-        if node.target is not None:
-            self.writeline('l_%s = ' % node.target, node)
-            if frame.toplevel:
-                self.write('context[%r] = ' % node.target)
-            self.write('environment.get_template(')
-            self.visit(node.template, frame)
-            self.write(', %r).include(context)' % self.name)
-            return
-
         self.writeline('included_template = environment.get_template(', node)
         self.visit(node.template, frame)
         self.write(', %r)' % self.name)
-        if frame.toplevel:
-            self.writeline('included_context = included_template.new_context('
-                           'context.get_root())')
-            self.writeline('for event in included_template.root_render_func('
-                           'included_context):')
-        else:
-            self.writeline('for event in included_template.root_render_func('
-                           'included_template.new_context(context.get_root())):')
+        self.writeline('for event in included_template.root_render_func('
+                       'included_template.new_context(context.get_root())):')
         self.indent()
         if frame.buffer is None:
             self.writeline('yield event')
@@ -626,11 +611,33 @@ class CodeGenerator(NodeVisitor):
             self.writeline('%s.append(event)' % frame.buffer)
         self.outdent()
 
-        # if we have a toplevel include the exported variables are copied
-        # into the current context without exporting them.  context.udpate
-        # does *not* mark the variables as exported
+    def visit_Import(self, node, frame):
+        """Visit regular imports."""
+        self.writeline('l_%s = ' % node.target, node)
         if frame.toplevel:
-            self.writeline('context.update(included_context.get_exported())')
+            self.write('context[%r] = ' % node.target)
+        self.write('environment.get_template(')
+        self.visit(node.template, frame)
+        self.write(', %r).include(context)' % self.name)
+
+    def visit_FromImport(self, node, frame):
+        """Visit named imports."""
+        self.newline(node)
+        self.write('included_template = environment.get_template(')
+        self.visit(node.template, frame)
+        self.write(', %r).include(context)' % self.name)
+        for name in node.names:
+            self.writeline('l_%s = getattr(included_template, '
+                           '%r, missing)' % (name, name))
+            self.writeline('if l_%s is missing:' % name)
+            self.indent()
+            self.writeline('l_%s = environment.undefined(%r %% '
+                           'included_template.name)' %
+                           (name, 'the template %r does not export '
+                            'the requested name ' + repr(name)))
+            self.outdent()
+            if frame.toplevel:
+                self.writeline('context[%r] = l_%s' % (name, name))
 
     def visit_For(self, node, frame):
         loop_frame = frame.inner()
@@ -1022,6 +1029,9 @@ class CodeGenerator(NodeVisitor):
     def visit_Filter(self, node, frame, initial=None):
         self.write('f_%s(' % node.name)
         func = self.environment.filters.get(node.name)
+        if func is None:
+            raise TemplateAssertionError('no filter named %r' % node.name,
+                                         node.lineno, self.filename)
         if getattr(func, 'contextfilter', False):
             self.write('context, ')
         elif getattr(func, 'environmentfilter', False):
@@ -1037,9 +1047,9 @@ class CodeGenerator(NodeVisitor):
 
     def visit_Test(self, node, frame):
         self.write('t_%s(' % node.name)
-        func = self.environment.tests.get(node.name)
-        if getattr(func, 'contexttest', False):
-            self.write('context, ')
+        if node.name not in self.environment.tests:
+            raise TemplateAssertionError('no test named %r' % node.name,
+                                         node.lineno, self.filename)
         self.visit(node.node, frame)
         self.signature(node, frame)
         self.write(')')
