@@ -685,8 +685,7 @@ class Parser(object):
                 if end_tokens is not None and \
                    self.stream.current.test_many(end_tokens):
                     return body
-                while self.stream.current.type is not 'block_end':
-                    body.append(self.parse_statement())
+                body.append(self.parse_statement())
                 self.stream.expect('block_end')
             else:
                 raise AssertionError('internal parsing error')

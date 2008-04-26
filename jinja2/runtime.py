@@ -14,12 +14,12 @@ from jinja2.exceptions import UndefinedError
 
 
 # these variables are exported to the template runtime
-__all__ = ['LoopContext', 'StaticLoopContext', 'TemplateContext',
-           'Macro', 'Markup', 'missing', 'concat']
+__all__ = ['LoopContext', 'TemplateContext', 'Macro', 'Markup', 'missing',
+           'concat']
 
 
 # special singleton representing missing values for the runtime
-missing = object()
+missing = type('MissingType', (), {'__repr__': lambda x: 'missing'})()
 
 
 # concatenate a list of strings and convert them to unicode.
@@ -73,17 +73,6 @@ class TemplateContext(object):
             return self.parent[key]
         return default
 
-    def setdefault(self, key, default=None):
-        """For dict compatibility"""
-        self.exported_vars.add(key)
-        return self.vars.setdefault(key, default)
-
-    def update(self, *args, **kwargs):
-        """Update vars from a mapping but don't export them."""
-        d = dict(*args, **kwargs)
-        self.vars.update(d)
-        self.exported_vars.update(d)
-
     def get_exported(self):
         """Get a new dict with the exported variables."""
         return dict((k, self.vars[k]) for k in self.exported_vars
@@ -96,10 +85,6 @@ class TemplateContext(object):
     def get_all(self):
         """Return a copy of the complete context as dict."""
         return dict(self.parent, **self.vars)
-
-    def __setitem__(self, key, value):
-        self.vars[key] = value
-        self.exported_vars.add(key)
 
     def __contains__(self, name):
         return name in self.vars or name in self.parent
@@ -137,14 +122,16 @@ class SuperBlock(object):
         )
 
 
-class LoopContextBase(object):
-    """Helper for extended iteration."""
+class LoopContext(object):
+    """A loop context for dynamic iteration."""
 
-    def __init__(self, iterable, parent=None):
+    def __init__(self, iterable, enforce_length=False):
         self._iterable = iterable
+        self._next = iter(iterable).next
         self._length = None
-        self.index0 = 0
-        self.parent = parent
+        self.index0 = -1
+        if enforce_length:
+            len(self)
 
     def cycle(self, *args):
         """A replacement for the old ``{% cycle %}`` tag."""
@@ -160,22 +147,6 @@ class LoopContextBase(object):
 
     def __len__(self):
         return self.length
-
-
-class LoopContext(LoopContextBase):
-    """A loop context for dynamic iteration."""
-
-    def __init__(self, iterable, enforce_length=False):
-        self._iterable = iterable
-        self._next = iter(iterable).next
-        self._length = None
-        self.index0 = -1
-        if enforce_length:
-            len(self)
-
-    def make_static(self):
-        """Return a static loop context for the optimizer."""
-        return StaticLoopContext(self.index0, self.length)
 
     def __iter__(self):
         return self
@@ -198,28 +169,6 @@ class LoopContext(LoopContextBase):
 
     def __repr__(self):
         return 'LoopContext(%r)' % self.index0
-
-
-class StaticLoopContext(LoopContextBase):
-    """The static loop context is used in the optimizer to "freeze" the
-    status of an iteration.  The only reason for this object is if the
-    loop object is accessed in a non static way (eg: becomes part of a
-    function call).
-    """
-
-    def __init__(self, index0, length):
-        self.index0 = index0
-        self.length = length
-
-    def __repr__(self):
-        """The repr is used by the optimizer to dump the object."""
-        return 'StaticLoopContext(%r, %r)' % (
-            self.index0,
-            self.length
-        )
-
-    def make_static(self):
-        return self
 
 
 class Macro(object):

@@ -9,6 +9,7 @@
     :license: BSD.
 """
 import sys
+from types import CodeType
 
 
 def translate_exception(exc_info):
@@ -61,20 +62,41 @@ def fake_exc_info(exc_info, filename, lineno, tb_back=None):
     # and fake the exception
     code = compile('\n' * (lineno - 1) + 'raise __jinja_exception__[0], ' +
                    '__jinja_exception__[1]', filename, 'exec')
+
+    # if it's possible, change the name of the code.  This won't work
+    # on some python environments such as google appengine
+    try:
+        function = tb.tb_frame.f_code.co_name
+        if function == 'root':
+            location = 'top-level template code'
+        elif function.startswith('block_'):
+            location = 'block "%s"' % function[6:]
+        else:
+            location = 'template'
+        code = CodeType(0, code.co_nlocals, code.co_stacksize,
+                        code.co_flags, code.co_code, code.co_consts,
+                        code.co_names, code.co_varnames, filename,
+                        location, code.co_firstlineno,
+                        code.co_lnotab, (), ())
+    except:
+        pass
+
+    # execute the code and catch the new traceback
     try:
         exec code in globals, locals
     except:
         exc_info = sys.exc_info()
+        new_tb = exc_info[2].tb_next
 
     # now we can patch the exc info accordingly
     if tb_set_next is not None:
         if tb_back is not None:
-            tb_set_next(tb_back, exc_info[2])
+            tb_set_next(tb_back, new_tb)
         if tb is not None:
-            tb_set_next(exc_info[2].tb_next, tb.tb_next)
+            tb_set_next(new_tb, tb.tb_next)
 
     # return without this frame
-    return exc_info[:2] + (exc_info[2].tb_next,)
+    return exc_info[:2] + (new_tb,)
 
 
 def _init_ugly_crap():

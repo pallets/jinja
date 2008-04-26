@@ -8,6 +8,7 @@
     :copyright: Copyright 2008 by Armin Ronacher.
     :license: GNU GPL.
 """
+from time import time
 from copy import copy
 from random import randrange
 from keyword import iskeyword
@@ -16,7 +17,7 @@ from itertools import chain
 from jinja2 import nodes
 from jinja2.visitor import NodeVisitor, NodeTransformer
 from jinja2.exceptions import TemplateAssertionError
-from jinja2.runtime import StaticLoopContext, concat
+from jinja2.runtime import concat
 from jinja2.utils import Markup
 
 
@@ -53,7 +54,7 @@ def has_safe_repr(value):
     if value is None or value is NotImplemented or value is Ellipsis:
         return True
     if isinstance(value, (bool, int, long, float, complex, basestring,
-                          xrange, StaticLoopContext, Markup)):
+                          xrange, Markup)):
         return True
     if isinstance(value, (tuple, list, set, frozenset)):
         for item in value:
@@ -545,8 +546,7 @@ class CodeGenerator(NodeVisitor):
             self.blocks[block.name] = block
 
         # generate the root render function.
-        self.writeline('def root(context, environment=environment'
-                       '):', extra=1)
+        self.writeline('def root(context, environment=environment):', extra=1)
         if have_extends:
             self.indent()
             self.writeline('parent_template = None')
@@ -760,7 +760,7 @@ class CodeGenerator(NodeVisitor):
         if not extended_loop and node.test is not None:
             self.indent()
             self.writeline('if ')
-            self.visit(node.test)
+            self.visit(node.test, loop_frame)
             self.write(':')
             self.indent()
             self.writeline('continue')
@@ -802,7 +802,8 @@ class CodeGenerator(NodeVisitor):
         self.outdent()
         self.newline()
         if frame.toplevel:
-            self.write('context[%r] = ' % node.name)
+            self.write('context.exported_vars.add(%r)' % node.name)
+            self.writeline('context.vars[%r] = ' % node.name)
         arg_tuple = ', '.join(repr(x.name) for x in node.args)
         if len(node.args) == 1:
             arg_tuple += ','
@@ -909,24 +910,28 @@ class CodeGenerator(NodeVisitor):
             else:
                 body.append([const])
 
-        # if we have less than 3 nodes we just yield them
-        if len(body) < 3:
+        # if we have less than 3 nodes or less than 6 and a buffer we
+        # yield or extend
+        if len(body) < 3 or (frame.buffer is not None and len(body) < 6):
+            if frame.buffer is not None:
+                self.writeline('%s.extend((' % frame.buffer)
             for item in body:
                 if isinstance(item, list):
                     val = repr(concat(item))
                     if frame.buffer is None:
                         self.writeline('yield ' + val)
                     else:
-                        self.writeline('%s.append(%s)' % (frame.buffer, val))
+                        self.write(val + ', ')
                 else:
-                    self.newline(item)
                     if frame.buffer is None:
-                        self.write('yield ')
-                    else:
-                        self.write('%s.append(' % frame.buffer)
+                        self.writeline('yield ')
                     self.write(finalizer + '(')
                     self.visit(item, frame)
-                    self.write(')' * (1 + (frame.buffer is not None)))
+                    self.write(')')
+                    if frame.buffer is not None:
+                        self.write(', ')
+            if frame.buffer is not None:
+                self.write('))')
 
         # otherwise we create a format string as this is faster in that case
         else:
@@ -979,7 +984,8 @@ class CodeGenerator(NodeVisitor):
         # make sure toplevel assignments are added to the context.
         if frame.toplevel:
             for name in assignment_frame.assigned_names:
-                self.writeline('context[%r] = l_%s' % (name, name))
+                self.writeline('context.vars[%r] = l_%s' % (name, name))
+                self.writeline('context.exported_vars.add(%r)' % name)
 
     def visit_Name(self, node, frame):
         if node.ctx == 'store':

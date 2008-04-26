@@ -1,9 +1,10 @@
-"""
+"""\
     This benchmark compares some python templating engines with Jinja 2 so
     that we get a picture of how fast Jinja 2 is for a semi real world
-    template.  If a template engine is not installed the test is skipped.
+    template.  If a template engine is not installed the test is skipped.\
 """
 import sys
+import cgi
 from timeit import Timer
 from jinja2 import Environment as JinjaEnvironment
 
@@ -247,20 +248,67 @@ else:
         from tenjin.helpers import escape, to_str
         tenjin_template.render(context, locals())
 
+try:
+    from spitfire.compiler import util as SpitfireTemplate
+    from spitfire.compiler.analyzer import o2_options as spitfire_optimizer
+except ImportError:
+    test_spitfire = None
+else:
+    spitfire_template = SpitfireTemplate.load_template("""\
+<!doctype html>
+<html>
+  <head>
+    <title>$cgi.escape($page_title)</title>
+  </head>
+  <body>
+    <div class="header">
+      <h1>$cgi.escape($page_title)</h1>
+    </div>
+    <ul class="navigation">
+    #for $href, $caption in [('index.html', 'Index'), ('downloads.html', 'Downloads'), ('products.html', 'Products')]
+      <li><a href="$cgi.escape($href)">$cgi.escape($caption)</a></li>
+    #end for
+    </ul>
+    <div class="table">
+      <table>
+      #for $row in $table
+        <tr>
+        #for $cell in $row
+          <td>$cell</td>
+        #end for
+        </tr>
+      #end for
+      </table>
+    </div>
+  </body>
+</html>\
+""", 'spitfire_tmpl', spitfire_optimizer, {'enable_filters': False})
+    spitfire_context = dict(context, **{'cgi': cgi})
+
+    def test_spitfire():
+        spitfire_template(search_list=[spitfire_context]).main()
+
 sys.stdout.write('\r' + '\n'.join((
     '=' * 80,
     'Template Engine BigTable Benchmark'.center(80),
-    '-' * 80,
+    '=' * 80,
     __doc__,
     '-' * 80
 )) + '\n')
-for test in 'jinja', 'tenjin', 'mako', 'django', 'genshi', 'cheetah':
+for test in 'jinja', 'tenjin', 'mako', 'spitfire', 'django', 'genshi', 'cheetah':
     if locals()['test_' + test] is None:
-        sys.stdout.write('  %-20s*not installed*\n' % test)
+        sys.stdout.write('    %-20s*not installed*\n' % test)
         continue
     t = Timer(setup='from __main__ import test_%s as bench' % test,
               stmt='bench()')
-    sys.stdout.write('> %-20s<running>' % test)
+    sys.stdout.write(' >> %-20s<running>' % test)
     sys.stdout.flush()
-    sys.stdout.write('\r  %-20s%.4f ms\n' % (test, t.timeit(number=20) / 20))
-sys.stdout.write('=' * 80 + '\n')
+    sys.stdout.write('\r    %-20s%.4f seconds\n' % (test, t.timeit(number=20) / 20))
+sys.stdout.write('-' * 80 + '\n')
+sys.stdout.write('''\
+    WARNING: The results of this benchmark are useless to compare the
+    performance of template engines and should not be taken seriously in any
+    way.  It's testing the performance of simple loops and has no real-world
+    usefulnes.  It only used to check if changes on the Jinja code affect
+    performance in a good or bad way and how it roughly compares to others.
+''' + '=' * 80 + '\n')

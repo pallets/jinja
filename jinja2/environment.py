@@ -231,8 +231,7 @@ class Environment(object):
             raise TypeError('no loader for this environment specified')
         if parent is not None:
             name = self.join_path(name, parent)
-        globals = self.make_globals(globals)
-        return self.loader.load(self, name, globals)
+        return self.loader.load(self, name, self.make_globals(globals))
 
     def from_string(self, source, globals=None, template_class=None):
         """Load a template from a string."""
