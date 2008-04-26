@@ -9,12 +9,14 @@
     :license: GNU GPL.
 """
 from types import FunctionType
+from itertools import izip
 from jinja2.utils import Markup, partial
 from jinja2.exceptions import UndefinedError
 
 
+# these variables are exported to the template runtime
 __all__ = ['LoopContext', 'StaticLoopContext', 'TemplateContext',
-           'Macro', 'Markup', 'missing', 'concat']
+           'Macro', 'Markup', 'missing', 'concat', 'izip']
 
 
 # special singleton representing missing values for the runtime
@@ -34,18 +36,18 @@ class TemplateContext(object):
 
     def __init__(self, environment, parent, name, blocks):
         self.parent = parent
-        self.vars = {}
+        self.vars = vars = {}
         self.environment = environment
         self.exported_vars = set()
         self.name = name
 
         # bind functions to the context of environment if required
-        for name, obj in self.parent.iteritems():
+        for name, obj in parent.iteritems():
             if type(obj) is FunctionType:
                 if getattr(obj, 'contextfunction', 0):
-                    self.vars[name] = partial(obj, self)
+                    vars[name] = partial(obj, self)
                 elif getattr(obj, 'environmentfunction', 0):
-                    self.vars[name] = partial(obj, environment)
+                    vars[name] = partial(obj, environment)
 
         # create the initial mapping of blocks.  Whenever template inheritance
         # takes place the runtime will update this mapping with the new blocks
@@ -223,17 +225,18 @@ class Macro(object):
         self._func = func
         self.name = name
         self.arguments = arguments
+        self.argument_count = len(arguments)
         self.defaults = defaults
         self.catch_kwargs = catch_kwargs
         self.catch_varargs = catch_varargs
         self.caller = caller
 
     def __call__(self, *args, **kwargs):
-        arg_count = len(self.arguments)
-        if not self.catch_varargs and len(args) > arg_count:
+        self.argument_count = len(self.arguments)
+        if not self.catch_varargs and len(args) > self.argument_count:
             raise TypeError('macro %r takes not more than %d argument(s)' %
                             (self.name, len(self.arguments)))
-        arguments = {}
+        arguments = []
         for idx, name in enumerate(self.arguments):
             try:
                 value = args[idx]
@@ -242,24 +245,28 @@ class Macro(object):
                     value = kwargs.pop(name)
                 except KeyError:
                     try:
-                        value = self.defaults[idx - arg_count]
+                        value = self.defaults[idx - self.argument_count]
                     except IndexError:
                         value = self._environment.undefined(
                             'parameter %r was not provided' % name)
-            arguments['l_' + name] = value
+            arguments.append(value)
+
+        # it's important that the order of these arguments does not change
+        # if not also changed in the compiler's `function_scoping` method.
+        # the order is caller, keyword arguments, positional arguments!
         if self.caller:
             caller = kwargs.pop('caller', None)
             if caller is None:
                 caller = self._environment.undefined('No caller defined')
-            arguments['l_caller'] = caller
+            arguments.append(caller)
         if self.catch_kwargs:
-            arguments['l_kwargs'] = kwargs
+            arguments.append(kwargs)
         elif kwargs:
             raise TypeError('macro %r takes no keyword argument %r' %
                             (self.name, iter(kwargs).next()))
         if self.catch_varargs:
-            arguments['l_varargs'] = args[arg_count:]
-        return self._func(**arguments)
+            arguments.append(args[self.argument_count:])
+        return self._func(*arguments)
 
     def __repr__(self):
         return '<%s %s>' % (

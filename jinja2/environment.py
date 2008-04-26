@@ -395,21 +395,20 @@ class IncludedTemplate(object):
     """Represents an included template."""
 
     def __init__(self, template, context):
-        body = Markup(concat(template.root_render_func(context)))
+        self._body_stream = tuple(template.root_render_func(context))
         self.__dict__.update(context.get_exported())
-        self._name = template.name
-        self._rendered_body = body
+        self.__name__ = template.name
 
-    __html__ = lambda x: x._rendered_body
-    __unicode__ = lambda x: unicode(x._rendered_body)
+    __html__ = lambda x: Markup(concat(x._body_stream))
+    __unicode__ = lambda x: unicode(concat(x._body_stream))
 
     def __str__(self):
-        return unicode(self._rendered_body).encode('utf-8')
+        return unicode(self).encode('utf-8')
 
     def __repr__(self):
         return '<%s %r>' % (
             self.__class__.__name__,
-            self._name
+            self.__name__
         )
 
 

@@ -13,7 +13,7 @@
 from collections import deque
 from jinja2 import nodes
 from jinja2.environment import get_spontaneous_environment
-from jinja2.runtime import Undefined
+from jinja2.runtime import Undefined, concat
 from jinja2.parser import statement_end_tokens
 from jinja2.exceptions import TemplateAssertionError
 from jinja2.utils import import_string
@@ -190,7 +190,7 @@ class TransExtension(Extension):
             else:
                 assert False, 'internal parser error'
 
-        return referenced, u''.join(buf)
+        return referenced, concat(buf)
 
     def _make_node(self, singular, plural, variables, plural_expr):
         """Generates a useful node from the data provided."""

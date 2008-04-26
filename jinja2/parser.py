@@ -13,10 +13,10 @@ from jinja2 import nodes
 from jinja2.exceptions import TemplateSyntaxError
 
 
+statement_end_tokens = set(['variable_end', 'block_end', 'in'])
 _statement_keywords = frozenset(['for', 'if', 'block', 'extends', 'print',
                                  'macro', 'include', 'from', 'import'])
 _compare_operators = frozenset(['eq', 'ne', 'lt', 'lteq', 'gt', 'gteq', 'in'])
-statement_end_tokens = set(['variable_end', 'block_end', 'in'])
 _tuple_edge_tokens = set(['rparen']) | statement_end_tokens
 
 
@@ -178,8 +178,17 @@ class Parser(object):
                                                  'underscores can not be '
                                                  'imported', target.lineno,
                                                  self.filename)
-                node.names.append(target.name)
                 self.stream.next()
+                if self.stream.current.test('name:as'):
+                    self.stream.next()
+                    alias = self.stream.expect('name')
+                    if not nodes.Name(alias.value, 'store').can_assign():
+                        raise TemplateSyntaxError('can\'t name imported '
+                                                  'object %r.' % alias.value,
+                                                  alias.lineno, self.filename)
+                    node.names.append((target.name, alias.value))
+                else:
+                    node.names.append(target.name)
                 if self.stream.current.type is not 'comma':
                     break
             else:

@@ -1,12 +1,11 @@
+"""
+    This benchmark compares some python templating engines with Jinja 2 so
+    that we get a picture of how fast Jinja 2 is for a semi real world
+    template.  If a template engine is not installed the test is skipped.
+"""
 import sys
-from django.conf import settings
-settings.configure()
-from django.template import Template as DjangoTemplate, Context as DjangoContext
-from jinja2 import Environment as JinjaEnvironment
-from mako.template import Template as MakoTemplate
-from genshi.template import MarkupTemplate as GenshiTemplate
-from Cheetah.Template import Template as CheetahTemplate
 from timeit import Timer
+from jinja2 import Environment as JinjaEnvironment
 
 context = {
     'page_title': 'mitsuhiko\'s benchmark',
@@ -51,7 +50,17 @@ jinja_template = JinjaEnvironment(
 </html>\
 """)
 
-django_template = DjangoTemplate("""\
+def test_jinja():
+    jinja_template.render(context)
+
+try:
+    from django.conf import settings
+    settings.configure()
+    from django.template import Template as DjangoTemplate, Context as DjangoContext
+except ImportError:
+    test_django = None
+else:
+    django_template = DjangoTemplate("""\
 <!doctype html>
 <html>
   <head>
@@ -81,7 +90,18 @@ django_template = DjangoTemplate("""\
 </html>\
 """)
 
-mako_template = MakoTemplate("""\
+    def test_django():
+        c = DjangoContext(context)
+        c['navigation'] = [('index.html', 'Index'), ('downloads.html', 'Downloads'),
+                           ('products.html', 'Products')]
+        django_template.render(c)
+
+try:
+    from mako.template import Template as MakoTemplate
+except ImportError:
+    test_mako = None
+else:
+    mako_template = MakoTemplate("""\
 <!doctype html>
 <html>
   <head>
@@ -111,7 +131,15 @@ mako_template = MakoTemplate("""\
 </html>\
 """)
 
-genshi_template = GenshiTemplate("""\
+    def test_mako():
+        mako_template.render(**context)
+
+try:
+    from genshi.template import MarkupTemplate as GenshiTemplate
+except ImportError:
+    test_genshi = None
+else:
+    genshi_template = GenshiTemplate("""\
 <html xmlns="http://www.w3.org/1999/xhtml" xmlns:py="http://genshi.edgewall.org/">
   <head>
     <title>${page_title}</title>
@@ -137,7 +165,15 @@ genshi_template = GenshiTemplate("""\
 </html>\
 """)
 
-cheetah_template = CheetahTemplate("""\
+    def test_genshi():
+        genshi_template.generate(**context).render('html', strip_whitespace=False)
+
+try:
+    from Cheetah.Template import Template as CheetahTemplate
+except ImportError:
+    test_cheetah = None
+else:
+    cheetah_template = CheetahTemplate("""\
 #import cgi
 <!doctype html>
 <html>
@@ -168,32 +204,63 @@ cheetah_template = CheetahTemplate("""\
 </html>\
 """, searchList=[dict(context)])
 
-def test_jinja():
-    jinja_template.render(context)
+    def test_cheetah():
+        unicode(cheetah_template)
 
-def test_django():
-    c = DjangoContext(context)
-    c['navigation'] = [('index.html', 'Index'), ('downloads.html', 'Downloads'), ('products.html', 'Products')]
-    django_template.render(c)
+try:
+    import tenjin
+except ImportError:
+    test_tenjin = None
+else:
+    tenjin_template = tenjin.Template()
+    tenjin_template.convert("""\
+<!doctype html>
+<html>
+  <head>
+    <title>${page_title}</title>
+  </head>
+  <body>
+    <div class="header">
+      <h1>${page_title}</h1>
+    </div>
+    <ul class="navigation">
+<?py for href, caption in [('index.html', 'Index'), ('downloads.html', 'Downloads'), ('products.html', 'Products')]: ?>
+      <li><a href="${href}">${caption}</a></li>
+<?py #end ?>
+    </ul>
+    <div class="table">
+      <table>
+<?py for row in table: ?>
+        <tr>
+<?py     for cell in row: ?>
+          <td>#{cell}</td>
+<?py #end ?>
+        </tr>
+<?py #end ?>
+      </table>
+    </div>
+  </body>
+</html>\
+""")
 
-def test_mako():
-    mako_template.render(**context)
+    def test_tenjin():
+        from tenjin.helpers import escape, to_str
+        tenjin_template.render(context, locals())
 
-def test_genshi():
-    genshi_template.generate(**context).render('html', strip_whitespace=False)
-
-def test_cheetah():
-    unicode(cheetah_template)
-
-sys.stdout.write('\r%s\n%s\n%s\n' % (
+sys.stdout.write('\r' + '\n'.join((
     '=' * 80,
     'Template Engine BigTable Benchmark'.center(80),
+    '-' * 80,
+    __doc__,
     '-' * 80
-))
-for test in 'jinja', 'mako', 'django', 'genshi', 'cheetah':
+)) + '\n')
+for test in 'jinja', 'tenjin', 'mako', 'django', 'genshi', 'cheetah':
+    if locals()['test_' + test] is None:
+        sys.stdout.write('  %-20s*not installed*\n' % test)
+        continue
     t = Timer(setup='from __main__ import test_%s as bench' % test,
               stmt='bench()')
     sys.stdout.write('> %-20s<running>' % test)
     sys.stdout.flush()
-    sys.stdout.write('\r  %-20s%.4f ms\n' % (test, t.timeit(number=100) / 100))
+    sys.stdout.write('\r  %-20s%.4f ms\n' % (test, t.timeit(number=20) / 20))
 sys.stdout.write('=' * 80 + '\n')

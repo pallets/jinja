@@ -92,17 +92,18 @@ class Node(object):
             raise TypeError('unknown keyword argument %r' %
                             iter(kw).next())
 
-    def iter_fields(self):
+    def iter_fields(self, exclude=()):
         """Iterate over all fields."""
         for name in self.fields:
-            try:
-                yield name, getattr(self, name)
-            except AttributeError:
-                pass
+            if name not in exclude:
+                try:
+                    yield name, getattr(self, name)
+                except AttributeError:
+                    pass
 
-    def iter_child_nodes(self):
+    def iter_child_nodes(self, exclude=()):
         """Iterate over all child nodes."""
-        for field, item in self.iter_fields():
+        for field, item in self.iter_fields(exclude):
             if isinstance(item, list):
                 for n in item:
                     if isinstance(n, Node):
@@ -243,7 +244,7 @@ class Macro(Stmt):
 
 class CallBlock(Stmt):
     """A node that represents am extended macro call."""
-    fields = ('call', 'args', 'defaults', 'body')
+    fields = ('call', 'body')
 
 
 class Set(Stmt):
@@ -279,6 +280,8 @@ class FromImport(Stmt):
     start with double underscores (which the parser asserts) this is not a
     problem for regular Jinja code, but if this node is used in an extension
     extra care must be taken.
+
+    The list of names may contain tuples if aliases are wanted.
     """
     fields = ('template', 'names')
 

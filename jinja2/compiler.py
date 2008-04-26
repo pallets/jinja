@@ -10,7 +10,9 @@
 """
 from copy import copy
 from random import randrange
+from keyword import iskeyword
 from cStringIO import StringIO
+from itertools import chain
 from jinja2 import nodes
 from jinja2.visitor import NodeVisitor, NodeTransformer
 from jinja2.exceptions import TemplateAssertionError
@@ -163,14 +165,19 @@ class Frame(object):
         rv.name_overrides = self.name_overrides.copy()
         return rv
 
-    def inspect(self, nodes, hard_scope=False):
-        """Walk the node and check for identifiers.  If the scope
-        is hard (eg: enforce on a python level) overrides from outer
-        scopes are tracked differently.
+    def inspect(self, nodes, with_depenencies=False, hard_scope=False):
+        """Walk the node and check for identifiers.  If the scope is hard (eg:
+        enforce on a python level) overrides from outer scopes are tracked
+        differently.
+
+        Per default filters and tests (dependencies) are not tracked.  That's
+        the case because filters and tests are absolutely immutable and so we
+        can savely use them in closures too.  The `Template` and `Block`
+        visitor visits the frame with dependencies to collect them.
         """
         visitor = FrameIdentifierVisitor(self.identifiers, hard_scope)
         for node in nodes:
-            visitor.visit(node)
+            visitor.visit(node, True, with_depenencies)
 
     def inner(self):
         """Return an inner frame."""
@@ -193,41 +200,63 @@ class FrameIdentifierVisitor(NodeVisitor):
         self.identifiers = identifiers
         self.hard_scope = hard_scope
 
-    def visit_Name(self, node):
+    def visit_Name(self, node, visit_ident, visit_deps):
         """All assignments to names go through this function."""
-        if node.ctx in ('store', 'param'):
-            self.identifiers.declared_locally.add(node.name)
-        elif node.ctx == 'load':
-            if not self.identifiers.is_declared(node.name, self.hard_scope):
+        if visit_ident:
+            if node.ctx in ('store', 'param'):
+                self.identifiers.declared_locally.add(node.name)
+            elif node.ctx == 'load' and not \
+                 self.identifiers.is_declared(node.name, self.hard_scope):
                 self.identifiers.undeclared.add(node.name)
 
-    def visit_Filter(self, node):
-        self.generic_visit(node)
-        self.identifiers.filters.add(node.name)
+    def visit_Filter(self, node, visit_ident, visit_deps):
+        if visit_deps:
+            self.generic_visit(node, visit_ident, True)
+            self.identifiers.filters.add(node.name)
 
-    def visit_Test(self, node):
-        self.generic_visit(node)
-        self.identifiers.tests.add(node.name)
+    def visit_Test(self, node, visit_ident, visit_deps):
+        if visit_deps:
+            self.generic_visit(node, visit_ident, True)
+            self.identifiers.tests.add(node.name)
 
-    def visit_Macro(self, node):
-        self.identifiers.declared_locally.add(node.name)
+    def visit_Macro(self, node, visit_ident, visit_deps):
+        if visit_ident:
+            self.identifiers.declared_locally.add(node.name)
 
-    def visit_Import(self, node):
-        self.generic_visit(node)
-        self.identifiers.declared_locally.add(node.target)
+    def visit_Import(self, node, visit_ident, visit_deps):
+        if visit_ident:
+            self.generic_visit(node, True, visit_deps)
+            self.identifiers.declared_locally.add(node.target)
 
-    def visit_FromImport(self, node):
-        self.generic_visit(node)
-        self.identifiers.declared_locally.update(node.names)
+    def visit_FromImport(self, node, visit_ident, visit_deps):
+        if visit_ident:
+            self.generic_visit(node, True, visit_deps)
+            for name in node.names:
+                if isinstance(name, tuple):
+                    self.identifiers.declared_locally.add(name[1])
+                else:
+                    self.identifiers.declared_locally.add(name)
 
-    def visit_Assign(self, node):
+    def visit_Assign(self, node, visit_ident, visit_deps):
         """Visit assignments in the correct order."""
-        self.visit(node.node)
-        self.visit(node.target)
+        self.visit(node.node, visit_ident, visit_deps)
+        self.visit(node.target, visit_ident, visit_deps)
 
-    # stop traversing at instructions that have their own scope.
-    visit_Block = visit_CallBlock = visit_FilterBlock = \
-        visit_For = lambda s, n: None
+    def visit_For(self, node, visit_ident, visit_deps):
+        """Visiting stops at for blocks.  However the block sequence
+        is visited as part of the outer scope.
+        """
+        if visit_ident:
+            self.visit(node.iter, True, visit_deps)
+            if visit_deps:
+                for child in node.iter_child_nodes(exclude=('iter',)):
+                    self.visit(child, False, True)
+
+    def ident_stop(self, node, visit_ident, visit_deps):
+        if visit_deps:
+            self.generic_visit(node, False, True)
+    visit_CallBlock = visit_FilterBlock = ident_stop
+    visit_Block = lambda s, n, a, b: None
 
 
 class CompilerExit(Exception):
@@ -344,10 +373,10 @@ class CodeGenerator(NodeVisitor):
     def signature(self, node, frame, have_comma=True, extra_kwargs=None):
         """Writes a function call to the stream for the current node.
         Per default it will write a leading comma but this can be
-        disabled by setting have_comma to False.  If extra_kwargs is
-        given it must be a string that represents a single keyword
-        argument call that is inserted at the end of the regular
-        keyword argument calls.
+        disabled by setting have_comma to False.  The extra keyword
+        arguments may not include python keywords otherwise a syntax
+        error could occour.  The extra keyword arguments should be given
+        as python dict.
         """
         have_comma = have_comma and [True] or []
         def touch_comma():
@@ -356,20 +385,53 @@ class CodeGenerator(NodeVisitor):
             else:
                 have_comma.append(True)
 
+        # if any of the given keyword arguments is a python keyword
+        # we have to make sure that no invalid call is created.
+        kwarg_workaround = False
+        for kwarg in chain((x.key for x in node.kwargs), extra_kwargs or ()):
+            if iskeyword(kwarg):
+                kwarg_workaround = True
+                break
+
         for arg in node.args:
             touch_comma()
             self.visit(arg, frame)
-        for kwarg in node.kwargs:
-            touch_comma()
-            self.visit(kwarg, frame)
-        if extra_kwargs is not None:
-            touch_comma()
-            self.write(extra_kwargs)
+
+        if not kwarg_workaround:
+            for kwarg in node.kwargs:
+                touch_comma()
+                self.visit(kwarg, frame)
+            if extra_kwargs is not None:
+                for key, value in extra_kwargs.iteritems():
+                    touch_comma()
+                    self.write('%s=%s' % (key, value))
         if node.dyn_args:
             touch_comma()
             self.write('*')
             self.visit(node.dyn_args, frame)
-        if node.dyn_kwargs:
+
+        if kwarg_workaround:
+            touch_comma()
+            if node.dyn_kwargs is not None:
+                self.write('**dict({')
+            else:
+                self.write('**{')
+            for kwarg in node.kwargs:
+                self.write('%r: ' % kwarg.key)
+                self.visit(kwarg.value, frame)
+                self.write(', ')
+            if extra_kwargs is not None:
+                for key, value in extra_kwargs.iteritems():
+                    touch_comma()
+                    self.write('%r: %s, ' % (key, value))
+            if node.dyn_kwargs is not None:
+                self.write('}, **')
+                self.visit(node.dyn_kwargs, frame)
+                self.write(')')
+            else:
+                self.write('}')
+
+        elif node.dyn_kwargs is not None:
             touch_comma()
             self.write('**')
             self.visit(node.dyn_kwargs, frame)
@@ -448,6 +510,10 @@ class CodeGenerator(NodeVisitor):
         func_frame.accesses_caller = False
         func_frame.arguments = args = ['l_' + x.name for x in node.args]
 
+        if 'caller' in func_frame.identifiers.undeclared:
+            func_frame.accesses_caller = True
+            func_frame.identifiers.add_special('caller')
+            args.append('l_caller')
         if 'kwargs' in func_frame.identifiers.undeclared:
             func_frame.accesses_kwargs = True
             func_frame.identifiers.add_special('kwargs')
@@ -456,17 +522,14 @@ class CodeGenerator(NodeVisitor):
             func_frame.accesses_varargs = True
             func_frame.identifiers.add_special('varargs')
             args.append('l_varargs')
-        if 'caller' in func_frame.identifiers.undeclared:
-            func_frame.accesses_caller = True
-            func_frame.identifiers.add_special('caller')
-            args.append('l_caller')
         return func_frame
 
     # -- Visitors
 
     def visit_Template(self, node, frame=None):
         assert frame is None, 'no root frame allowed'
-        self.writeline('from jinja2.runtime import *')
+        from jinja2.runtime import __all__ as exported
+        self.writeline('from jinja2.runtime import ' + ', '.join(exported))
         self.writeline('name = %r' % self.name)
 
         # do we have an extends tag at all?  If not, we can save some
@@ -491,7 +554,7 @@ class CodeGenerator(NodeVisitor):
 
         # process the root
         frame = Frame()
-        frame.inspect(node.body)
+        frame.inspect(node.body, with_depenencies=True)
         frame.toplevel = frame.rootlevel = True
         self.indent()
         self.pull_locals(frame, indent=False)
@@ -513,7 +576,7 @@ class CodeGenerator(NodeVisitor):
         # at this point we now have the blocks collected and can visit them too.
         for name, block in self.blocks.iteritems():
             block_frame = Frame()
-            block_frame.inspect(block.body)
+            block_frame.inspect(block.body, with_depenencies=True)
             block_frame.block = name
             block_frame.identifiers.add_special('super')
             block_frame.name_overrides['super'] = 'context.super(%r, ' \
@@ -627,21 +690,25 @@ class CodeGenerator(NodeVisitor):
         self.visit(node.template, frame)
         self.write(', %r).include(context)' % self.name)
         for name in node.names:
+            if isinstance(name, tuple):
+                name, alias = name
+            else:
+                alias = name
             self.writeline('l_%s = getattr(included_template, '
-                           '%r, missing)' % (name, name))
-            self.writeline('if l_%s is missing:' % name)
+                           '%r, missing)' % (alias, name))
+            self.writeline('if l_%s is missing:' % alias)
             self.indent()
             self.writeline('l_%s = environment.undefined(%r %% '
                            'included_template.name)' %
-                           (name, 'the template %r does not export '
+                           (alias, 'the template %r does not export '
                             'the requested name ' + repr(name)))
             self.outdent()
             if frame.toplevel:
-                self.writeline('context[%r] = l_%s' % (name, name))
+                self.writeline('context[%r] = l_%s' % (alias, alias))
 
     def visit_For(self, node, frame):
         loop_frame = frame.inner()
-        loop_frame.inspect(node.iter_child_nodes())
+        loop_frame.inspect(node.iter_child_nodes(exclude=('iter',)))
         extended_loop = bool(node.else_) or \
                         'loop' in loop_frame.identifiers.undeclared
         if extended_loop:
@@ -774,7 +841,8 @@ class CodeGenerator(NodeVisitor):
             self.writeline('yield ', node)
         else:
             self.writeline('%s.append(' % frame.buffer, node)
-        self.visit_Call(node.call, call_frame, extra_kwargs='caller=caller')
+        self.visit_Call(node.call, call_frame,
+                        extra_kwargs={'caller': 'caller'})
         if frame.buffer is not None:
             self.write(')')
 
