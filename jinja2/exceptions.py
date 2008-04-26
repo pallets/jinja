@@ -36,15 +36,11 @@ class TemplateSyntaxError(TemplateError):
         self.name = name
 
 
-class TemplateAssertionError(AssertionError, TemplateSyntaxError):
+class TemplateAssertionError(TemplateSyntaxError):
     """Like a template syntax error, but covers cases where something in the
     template caused an error at compile time that wasn't necessarily caused
     by a syntax error.
     """
-
-    def __init__(self, message, lineno, name):
-        AssertionError.__init__(self, message)
-        TemplateSyntaxError.__init__(self, message, lineno, name)
 
 
 class TemplateRuntimeError(TemplateError):

@@ -9,14 +9,13 @@
     :license: GNU GPL.
 """
 from types import FunctionType
-from itertools import izip
 from jinja2.utils import Markup, partial
 from jinja2.exceptions import UndefinedError
 
 
 # these variables are exported to the template runtime
 __all__ = ['LoopContext', 'StaticLoopContext', 'TemplateContext',
-           'Macro', 'Markup', 'missing', 'concat', 'izip']
+           'Macro', 'Markup', 'missing', 'concat']
 
 
 # special singleton representing missing values for the runtime
@@ -66,16 +65,24 @@ class TemplateContext(object):
                                               'called %r.' % block)
         return SuperBlock(block, self, last)
 
-    def get(self, name, default=None):
+    def get(self, key, default=None):
         """For dict compatibility"""
-        try:
-            return self[name]
-        except KeyError:
-            return default
+        if key in self.vars:
+            return self.vars[key]
+        if key in self.parent:
+            return self.parent[key]
+        return default
 
-    def update(self, mapping):
+    def setdefault(self, key, default=None):
+        """For dict compatibility"""
+        self.exported_vars.add(key)
+        return self.vars.setdefault(key, default)
+
+    def update(self, *args, **kwargs):
         """Update vars from a mapping but don't export them."""
-        self.vars.update(mapping)
+        d = dict(*args, **kwargs)
+        self.vars.update(d)
+        self.exported_vars.update(d)
 
     def get_exported(self):
         """Get a new dict with the exported variables."""
@@ -100,10 +107,9 @@ class TemplateContext(object):
     def __getitem__(self, key):
         if key in self.vars:
             return self.vars[key]
-        try:
+        if key in self.parent:
             return self.parent[key]
-        except KeyError:
-            return self.environment.undefined(name=key)
+        return self.environment.undefined(name=key)
 
     def __repr__(self):
         return '<%s %s of %r>' % (
@@ -302,6 +308,7 @@ class Undefined(object):
     can be printed and iterated over, but every other access will raise a
     `NameError`.  Custom undefined classes must subclass this.
     """
+    __slots__ = ('_undefined_hint', '_undefined_obj', '_undefined_name')
 
     def __init__(self, hint=None, obj=None, name=None):
         self._undefined_hint = hint
@@ -311,7 +318,8 @@ class Undefined(object):
     __add__ = __radd__ = __mul__ = __rmul__ = __div__ = __rdiv__ = \
     __realdiv__ = __rrealdiv__ = __floordiv__ = __rfloordiv__ = \
     __mod__ = __rmod__ = __pos__ = __neg__ = __call__ = \
-    __getattr__ = __getitem__ = fail_with_undefined_error
+    __getattr__ = __getitem__ = __lt__ = __le__ = __gt__ = __ge__ = \
+        fail_with_undefined_error
 
     def __str__(self):
         return self.__unicode__().encode('utf-8')
@@ -335,6 +343,7 @@ class Undefined(object):
 
 class DebugUndefined(Undefined):
     """An undefined that returns the debug info when printed."""
+    __slots__ = ()
 
     def __unicode__(self):
         if self._undefined_hint is None:
@@ -349,8 +358,14 @@ class DebugUndefined(Undefined):
 
 class StrictUndefined(Undefined):
     """An undefined that barks on print and iteration as well as boolean
-    tests.  In other words: you can do nothing with it except checking if it's
-    defined using the `defined` test.
+    tests and all kinds of comparisons.  In other words: you can do nothing
+    with it except checking if it's defined using the `defined` test.
     """
+    __slots__ = ()
+    __iter__ = __unicode__ = __len__ = __nonzero__ = __eq__ = __ne__ = \
+        fail_with_undefined_error
 
-    __iter__ = __unicode__ = __len__ = __nonzero__ = fail_with_undefined_error
+
+# remove remaining slots attributes, after the metaclass did the magic they
+# are unneeded and irritating as they contain wrong data for the subclasses.
+del Undefined.__slots__, DebugUndefined.__slots__, StrictUndefined.__slots__

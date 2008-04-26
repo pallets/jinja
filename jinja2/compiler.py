@@ -678,10 +678,12 @@ class CodeGenerator(NodeVisitor):
         """Visit regular imports."""
         self.writeline('l_%s = ' % node.target, node)
         if frame.toplevel:
-            self.write('context[%r] = ' % node.target)
+            self.write('context.vars[%r] = ' % node.target)
         self.write('environment.get_template(')
         self.visit(node.template, frame)
         self.write(', %r).include(context)' % self.name)
+        if frame.toplevel:
+            self.writeline('context.exported_vars.discard(%r)' % node.target)
 
     def visit_FromImport(self, node, frame):
         """Visit named imports."""
@@ -704,7 +706,8 @@ class CodeGenerator(NodeVisitor):
                             'the requested name ' + repr(name)))
             self.outdent()
             if frame.toplevel:
-                self.writeline('context[%r] = l_%s' % (alias, alias))
+                self.writeline('context.vars[%r] = l_%s' % (alias, alias))
+                self.writeline('context.exported_vars.discard(%r)' % alias)
 
     def visit_For(self, node, frame):
         loop_frame = frame.inner()

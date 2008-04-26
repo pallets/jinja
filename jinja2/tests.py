@@ -48,21 +48,34 @@ def test_defined(value):
     return not isinstance(value, Undefined)
 
 
+def test_undefined(value):
+    """Like `defined` but the other way round."""
+    return isinstance(value, Undefined)
+
+
+def test_none(value):
+    """Return true if the variable is none."""
+    return value is None
+
+
 def test_lower(value):
-    """Return true if the variable is lowercase."""
+    """Return true if the variable is lowercased."""
     return unicode(value).islower()
 
 
 def test_upper(value):
-    """Return true if the variable is uppercase."""
+    """Return true if the variable is uppercased."""
     return unicode(value).isupper()
 
 
-def test_numeric(value):
-    """Return true if the variable is numeric."""
-    return isinstance(value, (int, long, float)) or (
-           isinstance(value, basestring) and
-           number_re.match(value) is not None)
+def test_string(value):
+    """Return true if the object is a string."""
+    return isinstance(value, basestring)
+
+
+def test_number(value):
+    """Return true if the variable is a number."""
+    return isinstance(value, (int, long, float, complex))
 
 
 def test_sequence(value):
@@ -90,14 +103,28 @@ def test_sameas(value, other):
     return value is other
 
 
+def test_iterable(value):
+    """Check if it's possible to iterate over an object."""
+    try:
+        iter(value)
+    except TypeError:
+        return False
+    return True
+
+
 TESTS = {
     'odd':              test_odd,
     'even':             test_even,
     'divisibleby':      test_divisibleby,
     'defined':          test_defined,
+    'undefined':        test_undefined,
+    'none':             test_none,
     'lower':            test_lower,
     'upper':            test_upper,
-    'numeric':          test_numeric,
+    'string':           test_string,
+    'number':           test_number,
     'sequence':         test_sequence,
+    'iterable':         test_iterable,
+    'callable':         callable,
     'sameas':           test_sameas
 }

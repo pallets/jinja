@@ -238,7 +238,7 @@ class Environment(object):
         """Load a template from a string."""
         globals = self.make_globals(globals)
         return template_from_code(self, self.compile(source, globals=globals),
-                                  globals, template_class)
+                                  globals, None, template_class)
 
     def make_globals(self, d):
         """Return a dict for the globals."""
@@ -385,31 +385,36 @@ class Template(object):
                 self._debug_info.split('&')]
 
     def __repr__(self):
-        return '<%s %r>' % (
-            self.__class__.__name__,
-            self.name or '<from string>'
-        )
+        if self.name is None:
+            name = 'memory:%x' % id(self)
+        else:
+            name = repr(self.name)
+        return '<%s %s>' % (self.__class__.__name__, name)
 
 
 class IncludedTemplate(object):
-    """Represents an included template."""
+    """Represents an included template.  All the exported names of the
+    template are available as attributes on this object.  Additionally
+    converting it into an unicode- or bytestrings renders the contents.
+    """
 
     def __init__(self, template, context):
-        self._body_stream = tuple(template.root_render_func(context))
+        self.__body_stream = tuple(template.root_render_func(context))
         self.__dict__.update(context.get_exported())
         self.__name__ = template.name
 
-    __html__ = lambda x: Markup(concat(x._body_stream))
-    __unicode__ = lambda x: unicode(concat(x._body_stream))
+    __html__ = lambda x: Markup(concat(x.__body_stream))
+    __unicode__ = lambda x: unicode(concat(x.__body_stream))
 
     def __str__(self):
         return unicode(self).encode('utf-8')
 
     def __repr__(self):
-        return '<%s %r>' % (
-            self.__class__.__name__,
-            self.__name__
-        )
+        if self.__name__ is None:
+            name = 'memory:%x' % id(self)
+        else:
+            name = repr(self.name)
+        return '<%s %s>' % (self.__class__.__name__, name)
 
 
 class TemplateStream(object):
