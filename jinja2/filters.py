@@ -581,14 +581,16 @@ def do_groupby(environment, value, attribute):
     in common.
     """
     expr = lambda x: environment.subscribe(x, attribute)
-    return sorted(map(_GroupTuple, groupby(sorted(value, key=expr), expr)),
-                  key=itemgetter('grouper'))
+    return sorted(map(_GroupTuple, groupby(sorted(value, key=expr), expr)))
 
 
 class _GroupTuple(tuple):
     __slots__ = ()
     grouper = property(itemgetter(0))
     list = property(itemgetter(1))
+
+    def __new__(cls, (key, value)):
+        return tuple.__new__(cls, (key, list(value)))
 
 
 FILTERS = {

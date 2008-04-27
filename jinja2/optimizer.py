@@ -83,41 +83,44 @@ class Optimizer(NodeTransformer):
         self.environment = environment
 
     def visit_Block(self, node, context):
-        return self.generic_visit(node, context.blank())
+        block_context = context.blank()
+        for name in 'super', 'self':
+            block_context.undef(name)
+        return self.generic_visit(node, block_context)
 
-    def scoped_section(self, node, context):
+    def visit_For(self, node, context):
+        context.push()
+        context.undef('loop')
+        try:
+            return self.generic_visit(node, context)
+        finally:
+            context.pop()
+
+    def visit_Macro(self, node, context):
+        context.push()
+        for name in 'varargs', 'kwargs', 'caller':
+            context.undef(name)
+        try:
+            return self.generic_visit(node, context)
+        finally:
+            context.pop()
+
+    def visit_CallBlock(self, node, context):
+        context.push()
+        for name in 'varargs', 'kwargs':
+            context.undef(name)
+        try:
+            return self.generic_visit(node, context)
+        finally:
+            context.pop()
+
+    def visit_FilterBlock(self, node, context):
+        """Try to filter a block at compile time."""
         context.push()
         try:
             return self.generic_visit(node, context)
         finally:
             context.pop()
-    visit_For = visit_Macro = scoped_section
-
-    def visit_FilterBlock(self, node, context):
-        """Try to filter a block at compile time."""
-        node = self.generic_visit(node, context)
-        context.push()
-
-        # check if we can evaluate the wrapper body into a string
-        # at compile time
-        buffer = []
-        for child in node.body:
-            if not isinstance(child, nodes.Output):
-                return node
-            for item in child.optimized_nodes():
-                if isinstance(item, nodes.Node):
-                    return node
-                buffer.append(item)
-
-        # now check if we can evaluate the filter at compile time.
-        try:
-            data = node.filter.as_const(concat(buffer))
-        except nodes.Impossible:
-            return node
-
-        context.pop()
-        const = nodes.Const(data, lineno=node.lineno)
-        return nodes.Output([const], lineno=node.lineno)
 
     def visit_If(self, node, context):
         try:
@@ -125,8 +128,13 @@ class Optimizer(NodeTransformer):
         except nodes.Impossible:
             return self.generic_visit(node, context)
         if val:
-            return node.body
-        return node.else_
+            body = node.body
+        else:
+            body = node.else_
+        result = []
+        for node in body:
+            result.extend(self.visit_list(node, context))
+        return result
 
     def visit_Name(self, node, context):
         if node.ctx != 'load':
@@ -141,38 +149,6 @@ class Optimizer(NodeTransformer):
         except (KeyError, nodes.Impossible):
             return node
 
-    def visit_Assign(self, node, context):
-        try:
-            target = node.target = self.generic_visit(node.target, context)
-            value = self.generic_visit(node.node, context).as_const()
-        except nodes.Impossible:
-            return node
-
-        result = []
-        lineno = node.lineno
-        def walk(target, value):
-            if isinstance(target, nodes.Name):
-                const = nodes.Const.from_untrusted(value, lineno=lineno)
-                result.append(nodes.Assign(target, const, lineno=lineno))
-                context[target.name] = value
-            elif isinstance(target, nodes.Tuple):
-                try:
-                    value = tuple(value)
-                except TypeError:
-                    raise nodes.Impossible()
-                if len(target.items) != len(value):
-                    raise nodes.Impossible()
-                for name, val in zip(target.items, value):
-                    walk(name, val)
-            else:
-                raise AssertionError('unexpected assignable node')
-
-        try:
-            walk(target, value)
-        except nodes.Impossible:
-            return node
-        return result
-
     def visit_Import(self, node, context):
         rv = self.generic_visit(node, context)
         context.undef(node.target)
@@ -181,7 +157,10 @@ class Optimizer(NodeTransformer):
     def visit_FromImport(self, node, context):
         rv = self.generic_visit(node, context)
         for name in node.names:
-            context.undef(name)
+            if isinstance(name, tuple):
+                context.undef(name[1])
+            else:
+                context.undef(name)
         return rv
 
     def fold(self, node, context):

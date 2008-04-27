@@ -295,7 +295,9 @@ sys.stdout.write('\r' + '\n'.join((
     __doc__,
     '-' * 80
 )) + '\n')
-for test in 'jinja', 'tenjin', 'mako', 'spitfire', 'django', 'genshi', 'cheetah':
+
+
+for test in 'jinja', 'mako', 'tenjin', 'spitfire', 'django', 'genshi', 'cheetah':
     if locals()['test_' + test] is None:
         sys.stdout.write('    %-20s*not installed*\n' % test)
         continue

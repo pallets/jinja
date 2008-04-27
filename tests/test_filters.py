@@ -60,10 +60,12 @@ ROUND = '''{{ 2.7|round }}|{{ 2.1|round }}|\
 XMLATTR = '''{{ {'foo': 42, 'bar': 23, 'fish': none,
 'spam': missing, 'blub:blub': '<?>'}|xmlattr }}'''
 SORT = '''{{ [2, 3, 1]|sort }}|{{ [2, 3, 1]|sort(true) }}'''
-GROUPBY = '''{{ [{'foo': 1, 'bar': 2},
+GROUPBY = '''{% for grouper, list in [{'foo': 1, 'bar': 2},
                  {'foo': 2, 'bar': 3},
                  {'foo': 1, 'bar': 1},
-                 {'foo': 3, 'bar': 4}]|groupby('foo') }}'''
+                 {'foo': 3, 'bar': 4}]|groupby('foo') -%}
+{{ grouper }}: {{ list|join(', ') }}
+{% endfor %}'''
 FILTERTAG = '''{% filter upper|replace('FOO', 'foo') %}foobar{% endfilter %}'''
 
 
@@ -279,11 +281,11 @@ def test_sort(env):
 
 def test_groupby(env):
     tmpl = env.from_string(GROUPBY)
-    assert tmpl.render() == (
-        "[{'list': [{'foo': 1, 'bar': 2}, {'foo': 1, 'bar': 1}], "
-        "'grouper': 1}, {'list': [{'foo': 2, 'bar': 3}], 'grouper': 2}, "
-        "{'list': [{'foo': 3, 'bar': 4}], 'grouper': 3}]"
-    )
+    assert tmpl.render().splitlines() == [
+        "1: {'foo': 1, 'bar': 2}, {'foo': 1, 'bar': 1}",
+        "2: {'foo': 2, 'bar': 3}",
+        "3: {'foo': 3, 'bar': 4}"
+    ]
 
 
 def test_filtertag(env):

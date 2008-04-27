@@ -220,6 +220,9 @@ class Parser(object):
         node = nodes.CallBlock(lineno=self.stream.expect('call').lineno)
         if self.stream.current.type is 'lparen':
             self.parse_signature(node)
+        else:
+            node.args = []
+            node.defaults = []
 
         node.call = self.parse_expression()
         if not isinstance(node.call, nodes.Call):

@@ -32,7 +32,6 @@ operators = {
     'notin':    'not in'
 }
 
-
 try:
     exec '(0 if 0 else 0)'
 except SyntaxError:
@@ -71,6 +70,19 @@ def has_safe_repr(value):
     return False
 
 
+def find_undeclared(nodes, names):
+    """Check if the names passed are accessed undeclared.  The return value
+    is a set of all the undeclared names from the sequence of names found.
+    """
+    visitor = UndeclaredNameVisitor(names)
+    try:
+        for node in nodes:
+            visitor.visit(node)
+    except VisitorExit:
+        pass
+    return visitor.undeclared
+
+
 class Identifiers(object):
     """Tracks the status of identifiers in frames."""
 
@@ -92,10 +104,6 @@ class Identifiers(object):
 
         # names that are declared by parameters
         self.declared_parameter = set()
-
-        # filters/tests that are referenced
-        self.filters = set()
-        self.tests = set()
 
     def add_special(self, name):
         """Register a special name like `loop`."""
@@ -136,10 +144,6 @@ class Frame(object):
         # buffer.
         self.buffer = None
 
-        # if a frame has name_overrides, all read access to a name in this
-        # dict is redirected to a string expression.
-        self.name_overrides = {}
-
         # the name of the block we're in, otherwise None.
         self.block = parent and parent.block or None
 
@@ -157,28 +161,21 @@ class Frame(object):
                 self.identifiers.declared
             )
             self.buffer = parent.buffer
-            self.name_overrides = parent.name_overrides.copy()
 
     def copy(self):
         """Create a copy of the current one."""
         rv = copy(self)
         rv.identifiers = copy(self.identifiers)
-        rv.name_overrides = self.name_overrides.copy()
         return rv
 
-    def inspect(self, nodes, with_depenencies=False, hard_scope=False):
+    def inspect(self, nodes, hard_scope=False):
         """Walk the node and check for identifiers.  If the scope is hard (eg:
         enforce on a python level) overrides from outer scopes are tracked
         differently.
-
-        Per default filters and tests (dependencies) are not tracked.  That's
-        the case because filters and tests are absolutely immutable and so we
-        can savely use them in closures too.  The `Template` and `Block`
-        visitor visits the frame with dependencies to collect them.
         """
         visitor = FrameIdentifierVisitor(self.identifiers, hard_scope)
         for node in nodes:
-            visitor.visit(node, True, with_depenencies)
+            visitor.visit(node)
 
     def inner(self):
         """Return an inner frame."""
@@ -194,6 +191,51 @@ class Frame(object):
         return rv
 
 
+class VisitorExit(RuntimeError):
+    """Exception used by the `UndeclaredNameVisitor` to signal a stop."""
+
+
+class DependencyFinderVisitor(NodeVisitor):
+    """A visitor that collects filter and test calls."""
+
+    def __init__(self):
+        self.filters = set()
+        self.tests = set()
+
+    def visit_Filter(self, node):
+        self.generic_visit(node)
+        self.filters.add(node.name)
+
+    def visit_Test(self, node):
+        self.generic_visit(node)
+        self.tests.add(node.name)
+
+    def visit_Block(self, node):
+        """Stop visiting at blocks."""
+
+
+class UndeclaredNameVisitor(NodeVisitor):
+    """A visitor that checks if a name is accessed without being
+    declared.  This is different from the frame visitor as it will
+    not stop at closure frames.
+    """
+
+    def __init__(self, names):
+        self.names = set(names)
+        self.undeclared = set()
+
+    def visit_Name(self, node):
+        if node.ctx == 'load' and node.name in self.names:
+            self.undeclared.add(node.name)
+            if self.undeclared == self.names:
+                raise VisitorExit()
+        else:
+            self.names.discard(node.name)
+
+    def visit_Block(self, node):
+        """Stop visiting a blocks."""
+
+
 class FrameIdentifierVisitor(NodeVisitor):
     """A visitor for `Frame.inspect`."""
 
@@ -201,63 +243,50 @@ class FrameIdentifierVisitor(NodeVisitor):
         self.identifiers = identifiers
         self.hard_scope = hard_scope
 
-    def visit_Name(self, node, visit_ident, visit_deps):
+    def visit_Name(self, node):
         """All assignments to names go through this function."""
-        if visit_ident:
-            if node.ctx in ('store', 'param'):
-                self.identifiers.declared_locally.add(node.name)
-            elif node.ctx == 'load' and not \
-                 self.identifiers.is_declared(node.name, self.hard_scope):
-                self.identifiers.undeclared.add(node.name)
-
-    def visit_Filter(self, node, visit_ident, visit_deps):
-        if visit_deps:
-            self.generic_visit(node, visit_ident, True)
-            self.identifiers.filters.add(node.name)
-
-    def visit_Test(self, node, visit_ident, visit_deps):
-        if visit_deps:
-            self.generic_visit(node, visit_ident, True)
-            self.identifiers.tests.add(node.name)
-
-    def visit_Macro(self, node, visit_ident, visit_deps):
-        if visit_ident:
+        if node.ctx in ('store', 'param'):
             self.identifiers.declared_locally.add(node.name)
+        elif node.ctx == 'load' and not \
+             self.identifiers.is_declared(node.name, self.hard_scope):
+            self.identifiers.undeclared.add(node.name)
 
-    def visit_Import(self, node, visit_ident, visit_deps):
-        if visit_ident:
-            self.generic_visit(node, True, visit_deps)
-            self.identifiers.declared_locally.add(node.target)
+    def visit_Macro(self, node):
+        self.generic_visit(node)
+        self.identifiers.declared_locally.add(node.name)
 
-    def visit_FromImport(self, node, visit_ident, visit_deps):
-        if visit_ident:
-            self.generic_visit(node, True, visit_deps)
-            for name in node.names:
-                if isinstance(name, tuple):
-                    self.identifiers.declared_locally.add(name[1])
-                else:
-                    self.identifiers.declared_locally.add(name)
+    def visit_Import(self, node):
+        self.generic_visit(node)
+        self.identifiers.declared_locally.add(node.target)
 
-    def visit_Assign(self, node, visit_ident, visit_deps):
+    def visit_FromImport(self, node):
+        self.generic_visit(node)
+        for name in node.names:
+            if isinstance(name, tuple):
+                self.identifiers.declared_locally.add(name[1])
+            else:
+                self.identifiers.declared_locally.add(name)
+
+    def visit_Assign(self, node):
         """Visit assignments in the correct order."""
-        self.visit(node.node, visit_ident, visit_deps)
-        self.visit(node.target, visit_ident, visit_deps)
+        self.visit(node.node)
+        self.visit(node.target)
 
-    def visit_For(self, node, visit_ident, visit_deps):
+    def visit_For(self, node):
         """Visiting stops at for blocks.  However the block sequence
         is visited as part of the outer scope.
         """
-        if visit_ident:
-            self.visit(node.iter, True, visit_deps)
-            if visit_deps:
-                for child in node.iter_child_nodes(exclude=('iter',)):
-                    self.visit(child, False, True)
+        self.visit(node.iter)
 
-    def ident_stop(self, node, visit_ident, visit_deps):
-        if visit_deps:
-            self.generic_visit(node, False, True)
-    visit_CallBlock = visit_FilterBlock = ident_stop
-    visit_Block = lambda s, n, a, b: None
+    def visit_CallBlock(self, node):
+        for child in node.iter_child_nodes(exclude=('body',)):
+            self.visit(child)
+
+    def visit_FilterBlock(self, node):
+        self.visit(node.filter)
+
+    def visit_Block(self, node):
+        """Stop visiting at blocks."""
 
 
 class CompilerExit(Exception):
@@ -325,15 +354,11 @@ class CodeGenerator(NodeVisitor):
         """Outdent by step."""
         self._indentation -= step
 
-    def blockvisit(self, nodes, frame, indent=True, force_generator=True):
-        """Visit a list of nodes as block in a frame.  Per default the
-        code is indented, but this can be disabled by setting the indent
-        parameter to False.  If the current frame is no buffer a dummy
-        ``if 0: yield None`` is written automatically unless the
-        force_generator parameter is set to False.
+    def blockvisit(self, nodes, frame, force_generator=True):
+        """Visit a list of nodes as block in a frame.  If the current frame
+        is no buffer a dummy ``if 0: yield None`` is written automatically
+        unless the force_generator parameter is set to False.
         """
-        if indent:
-            self.indent()
         if frame.buffer is None and force_generator:
             self.writeline('if 0: yield None')
         try:
@@ -341,8 +366,6 @@ class CodeGenerator(NodeVisitor):
                 self.visit(node, frame)
         except CompilerExit:
             pass
-        if indent:
-            self.outdent()
 
     def write(self, x):
         """Write a string into the output stream."""
@@ -423,7 +446,6 @@ class CodeGenerator(NodeVisitor):
                 self.write(', ')
             if extra_kwargs is not None:
                 for key, value in extra_kwargs.iteritems():
-                    touch_comma()
                     self.write('%r: %s, ' % (key, value))
             if node.dyn_kwargs is not None:
                 self.write('}, **')
@@ -437,21 +459,20 @@ class CodeGenerator(NodeVisitor):
             self.write('**')
             self.visit(node.dyn_kwargs, frame)
 
-    def pull_locals(self, frame, indent=True):
-        """Pull all the references identifiers into the local scope.
-        This affects regular names, filters and tests.  If indent is
-        set to False, no automatic indentation will take place.
-        """
-        if indent:
-            self.indent()
+    def pull_locals(self, frame):
+        """Pull all the references identifiers into the local scope."""
         for name in frame.identifiers.undeclared:
             self.writeline('l_%s = context[%r]' % (name, name))
-        for name in frame.identifiers.filters:
+
+    def pull_dependencies(self, nodes):
+        """Pull all the dependencies."""
+        visitor = DependencyFinderVisitor()
+        for node in nodes:
+            visitor.visit(node)
+        for name in visitor.filters:
             self.writeline('f_%s = environment.filters[%r]' % (name, name))
-        for name in frame.identifiers.tests:
+        for name in visitor.tests:
             self.writeline('t_%s = environment.tests[%r]' % (name, name))
-        if indent:
-            self.outdent()
 
     def collect_shadowed(self, frame):
         """This function returns all the shadowed variables in a dict
@@ -467,7 +488,7 @@ class CodeGenerator(NodeVisitor):
             self.writeline('%s = l_%s' % (ident, name))
         return aliases
 
-    def function_scoping(self, node, frame):
+    def function_scoping(self, node, frame, children=None):
         """In Jinja a few statements require the help of anonymous
         functions.  Those are currently macros and call blocks and in
         the future also recursive loops.  As there is currently
@@ -479,8 +500,12 @@ class CodeGenerator(NodeVisitor):
 
         This will return the modified frame.
         """
+        # we have to iterate twice over it, make sure that works
+        if children is None:
+            children = node.iter_child_nodes()
+        children = list(children)
         func_frame = frame.inner()
-        func_frame.inspect(node.iter_child_nodes(), hard_scope=True)
+        func_frame.inspect(children, hard_scope=True)
 
         # variables that are undeclared (accessed before declaration) and
         # declared locally *and* part of an outside scope raise a template
@@ -511,15 +536,17 @@ class CodeGenerator(NodeVisitor):
         func_frame.accesses_caller = False
         func_frame.arguments = args = ['l_' + x.name for x in node.args]
 
-        if 'caller' in func_frame.identifiers.undeclared:
+        undeclared = find_undeclared(children, ('caller', 'kwargs', 'varargs'))
+
+        if 'caller' in undeclared:
             func_frame.accesses_caller = True
             func_frame.identifiers.add_special('caller')
             args.append('l_caller')
-        if 'kwargs' in func_frame.identifiers.undeclared:
+        if 'kwargs' in undeclared:
             func_frame.accesses_kwargs = True
             func_frame.identifiers.add_special('kwargs')
             args.append('l_kwargs')
-        if 'varargs' in func_frame.identifiers.undeclared:
+        if 'varargs' in undeclared:
             func_frame.accesses_varargs = True
             func_frame.identifiers.add_special('varargs')
             args.append('l_varargs')
@@ -547,18 +574,20 @@ class CodeGenerator(NodeVisitor):
 
         # generate the root render function.
         self.writeline('def root(context, environment=environment):', extra=1)
-        if have_extends:
-            self.indent()
-            self.writeline('parent_template = None')
-            self.outdent()
 
         # process the root
         frame = Frame()
-        frame.inspect(node.body, with_depenencies=True)
+        frame.inspect(node.body)
         frame.toplevel = frame.rootlevel = True
         self.indent()
-        self.pull_locals(frame, indent=False)
-        self.blockvisit(node.body, frame, indent=False)
+        if have_extends:
+            self.writeline('parent_template = None')
+        self.pull_locals(frame)
+        self.pull_dependencies(node.body)
+        if 'self' in find_undeclared(node.body, ('self',)):
+            frame.identifiers.add_special('self')
+            self.writeline('l_self = TemplateReference(context)')
+        self.blockvisit(node.body, frame)
         self.outdent()
 
         # make sure that the parent root is called.
@@ -576,15 +605,23 @@ class CodeGenerator(NodeVisitor):
         # at this point we now have the blocks collected and can visit them too.
         for name, block in self.blocks.iteritems():
             block_frame = Frame()
-            block_frame.inspect(block.body, with_depenencies=True)
+            block_frame.inspect(block.body)
             block_frame.block = name
-            block_frame.identifiers.add_special('super')
-            block_frame.name_overrides['super'] = 'context.super(%r, ' \
-                'block_%s)' % (name, name)
             self.writeline('def block_%s(context, environment=environment):'
                            % name, block, 1)
+            self.indent()
+            undeclared = find_undeclared(block.body, ('self', 'super'))
+            if 'self' in undeclared:
+                block_frame.identifiers.add_special('self')
+                self.writeline('l_self = TemplateReference(context)')
+            if 'super' in undeclared:
+                block_frame.identifiers.add_special('super')
+                self.writeline('l_super = context.super(%r, '
+                               'block_%s)' % (name, name))
             self.pull_locals(block_frame)
+            self.pull_dependencies(block.body)
             self.blockvisit(block.body, block_frame)
+            self.outdent()
 
         self.writeline('blocks = {%s}' % ', '.join('%r: block_%s' % (x, x)
                                                    for x in self.blocks),
@@ -606,7 +643,8 @@ class CodeGenerator(NodeVisitor):
                 self.writeline('if parent_template is None:')
                 self.indent()
                 level += 1
-        self.writeline('for event in context.blocks[%r][-1](context):' % node.name)
+        self.writeline('for event in context.blocks[%r][-1](context):' %
+                       node.name, node)
         self.indent()
         if frame.buffer is None:
             self.writeline('yield event')
@@ -666,7 +704,7 @@ class CodeGenerator(NodeVisitor):
         self.visit(node.template, frame)
         self.write(', %r)' % self.name)
         self.writeline('for event in included_template.root_render_func('
-                       'included_template.new_context(context.get_root())):')
+                       'included_template.new_context(context.parent, True)):')
         self.indent()
         if frame.buffer is None:
             self.writeline('yield event')
@@ -682,7 +720,7 @@ class CodeGenerator(NodeVisitor):
         self.write('environment.get_template(')
         self.visit(node.template, frame)
         self.write(', %r).include(context)' % self.name)
-        if frame.toplevel:
+        if frame.toplevel and not node.target.startswith('__'):
             self.writeline('context.exported_vars.discard(%r)' % node.target)
 
     def visit_FromImport(self, node, frame):
@@ -707,7 +745,8 @@ class CodeGenerator(NodeVisitor):
             self.outdent()
             if frame.toplevel:
                 self.writeline('context.vars[%r] = l_%s' % (alias, alias))
-                self.writeline('context.exported_vars.discard(%r)' % alias)
+                if not alias.startswith('__'):
+                    self.writeline('context.exported_vars.discard(%r)' % alias)
 
     def visit_For(self, node, frame):
         loop_frame = frame.inner()
@@ -718,7 +757,7 @@ class CodeGenerator(NodeVisitor):
             loop_frame.identifiers.add_special('loop')
 
         aliases = self.collect_shadowed(loop_frame)
-        self.pull_locals(loop_frame, indent=False)
+        self.pull_locals(loop_frame)
         if node.else_:
             self.writeline('l_loop = None')
 
@@ -747,7 +786,7 @@ class CodeGenerator(NodeVisitor):
             self.visit(node.iter, loop_frame)
             self.write(' if (')
             test_frame = loop_frame.copy()
-            test_frame.name_overrides['loop'] = parent_loop
+            self.writeline('l_loop = ' + parent_loop)
             self.visit(node.test, test_frame)
             self.write('))')
 
@@ -766,14 +805,16 @@ class CodeGenerator(NodeVisitor):
             self.writeline('continue')
             self.outdent(2)
 
+        self.indent()
         self.blockvisit(node.body, loop_frame, force_generator=True)
+        self.outdent()
 
         if node.else_:
             self.writeline('if l_loop is None:')
             self.indent()
             self.writeline('l_loop = ' + parent_loop)
-            self.outdent()
             self.blockvisit(node.else_, loop_frame, force_generator=False)
+            self.outdent()
 
         # reset the aliases if there are any.
         for name, alias in aliases.iteritems():
@@ -784,10 +825,14 @@ class CodeGenerator(NodeVisitor):
         self.writeline('if ', node)
         self.visit(node.test, if_frame)
         self.write(':')
+        self.indent()
         self.blockvisit(node.body, if_frame)
+        self.outdent()
         if node.else_:
             self.writeline('else:')
+            self.indent()
             self.blockvisit(node.else_, if_frame)
+            self.outdent()
 
     def visit_Macro(self, node, frame):
         macro_frame = self.function_scoping(node, frame)
@@ -795,14 +840,15 @@ class CodeGenerator(NodeVisitor):
         self.writeline('def macro(%s):' % ', '.join(args), node)
         macro_frame.buffer = buf = self.temporary_identifier()
         self.indent()
-        self.pull_locals(macro_frame, indent=False)
+        self.pull_locals(macro_frame)
         self.writeline('%s = []' % buf)
-        self.blockvisit(node.body, macro_frame, indent=False)
+        self.blockvisit(node.body, macro_frame)
         self.writeline("return Markup(concat(%s))" % buf)
         self.outdent()
         self.newline()
         if frame.toplevel:
-            self.write('context.exported_vars.add(%r)' % node.name)
+            if not node.name.startswith('__'):
+                self.write('context.exported_vars.add(%r)' % node.name)
             self.writeline('context.vars[%r] = ' % node.name)
         arg_tuple = ', '.join(repr(x.name) for x in node.args)
         if len(node.args) == 1:
@@ -819,14 +865,15 @@ class CodeGenerator(NodeVisitor):
         ))
 
     def visit_CallBlock(self, node, frame):
-        call_frame = self.function_scoping(node, frame)
+        call_frame = self.function_scoping(node, frame, node.iter_child_nodes
+                                           (exclude=('call',)))
         args = call_frame.arguments
         self.writeline('def call(%s):' % ', '.join(args), node)
         call_frame.buffer = buf = self.temporary_identifier()
         self.indent()
-        self.pull_locals(call_frame, indent=False)
+        self.pull_locals(call_frame)
         self.writeline('%s = []' % buf)
-        self.blockvisit(node.body, call_frame, indent=False)
+        self.blockvisit(node.body, call_frame)
         self.writeline("return Markup(concat(%s))" % buf)
         self.outdent()
         arg_tuple = ', '.join(repr(x.name) for x in node.args)
@@ -835,7 +882,7 @@ class CodeGenerator(NodeVisitor):
         self.writeline('caller = Macro(environment, call, None, (%s), (' %
                        arg_tuple)
         for arg in node.defaults:
-            self.visit(arg)
+            self.visit(arg, call_frame)
             self.write(', ')
         self.write('), %s, %s, 0)' % (
             call_frame.accesses_kwargs and '1' or '0',
@@ -855,7 +902,7 @@ class CodeGenerator(NodeVisitor):
         filter_frame.inspect(node.iter_child_nodes())
 
         aliases = self.collect_shadowed(filter_frame)
-        self.pull_locals(filter_frame, indent=False)
+        self.pull_locals(filter_frame)
         filter_frame.buffer = buf = self.temporary_identifier()
 
         self.writeline('%s = []' % buf, node)
@@ -985,17 +1032,12 @@ class CodeGenerator(NodeVisitor):
         if frame.toplevel:
             for name in assignment_frame.assigned_names:
                 self.writeline('context.vars[%r] = l_%s' % (name, name))
-                self.writeline('context.exported_vars.add(%r)' % name)
+                if not name.startswith('__'):
+                    self.writeline('context.exported_vars.add(%r)' % name)
 
     def visit_Name(self, node, frame):
-        if node.ctx == 'store':
-            if frame.toplevel:
-                frame.assigned_names.add(node.name)
-            frame.name_overrides.pop(node.name, None)
-        elif node.ctx == 'load':
-            if node.name in frame.name_overrides:
-                self.write(frame.name_overrides[node.name])
-                return
+        if node.ctx == 'store' and frame.toplevel:
+            frame.assigned_names.add(node.name)
         self.write('l_' + node.name)
 
     def visit_Const(self, node, frame):

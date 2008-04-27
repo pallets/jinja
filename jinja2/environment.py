@@ -35,6 +35,7 @@ def get_spontaneous_environment(*args):
     if env is not None:
         return env
     _spontaneous_environments[args] = env = Environment(*args)
+    env.shared = True
     return env
 
 
@@ -75,6 +76,10 @@ class Environment(object):
     #: the environment sandboxed though.  For a real sandboxed environment
     #: have a look at jinja2.sandbox
     sandboxed = False
+
+    #: shared environments have this set to `True`.  A shared environment
+    #: must not be modified
+    shared = False
 
     def __init__(self,
                  block_start_string='{%',
@@ -341,24 +346,35 @@ class Template(object):
             exc_type, exc_value, tb = translate_exception(sys.exc_info())
             raise exc_type, exc_value, tb
 
-    def new_context(self, vars):
-        """Create a new template context for this template."""
-        return TemplateContext(self.environment, dict(self.globals, **vars),
-                               self.name, self.blocks)
+    def new_context(self, vars=None, shared=False):
+        """Create a new template context for this template.  The vars
+        provided will be passed to the template.  Per default the globals
+        are added to the context, if shared is set to `True` the data
+        provided is used as parent namespace.  This is used to share the
+        same globals in multiple contexts without consuming more memory.
+        (This works because the context does not modify the parent dict)
+        """
+        if vars is None:
+            vars = {}
+        if shared:
+            parent = vars
+        else:
+            parent = dict(self.globals, **vars)
+        return TemplateContext(self.environment, parent, self.name,
+                               self.blocks)
 
-    def include(self, context=None):
+    def include(self, vars=None):
         """Include this template.  When passed a template context or dict
         the template is evaluated in that context and an `IncludedTemplate`
         object is returned.  This object then exposes all the exported
         variables as attributes and renders the contents of the template
         when converted to unicode.
         """
-        if context is None:
-            context = self.new_context({})
-        elif isinstance(context, TemplateContext):
-            context = self.new_context(context.get_root())
+        if isinstance(vars, TemplateContext):
+            context = TemplateContext(self.environment, vars.parent,
+                                      self.name, self.blocks)
         else:
-            context = self.new_context(context)
+            context = self.new_context(vars)
         return IncludedTemplate(self, context)
 
     def get_corresponding_lineno(self, lineno):

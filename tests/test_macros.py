@@ -35,12 +35,12 @@ SIMPLECALL = '''\
 '''
 
 COMPLEXCALL = '''\
-{% macro test() %}[[{{ caller(data='data') }}]]{% endmacro %}\
-{% call test() %}{{ data }}{% endcall %}\
+{% macro test() %}[[{{ caller('data') }}]]{% endmacro %}\
+{% call(data) test() %}{{ data }}{% endcall %}\
 '''
 
 CALLERUNDEFINED = '''\
-{% set caller = 42 %}\
+{% caller = 42 %}\
 {% macro test() %}{{ caller is not defined }}{% endmacro %}\
 {{ test() }}\
 '''
@@ -84,5 +84,5 @@ def test_caller_undefined(env):
 
 
 def test_include(env):
-    tmpl = env.from_string('{% include "include" %}{{ test("foo") }}')
+    tmpl = env.from_string('{% from "include" import test %}{{ test("foo") }}')
     assert tmpl.render() == '[foo]'

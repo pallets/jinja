@@ -14,8 +14,8 @@ from jinja2.exceptions import UndefinedError
 
 
 # these variables are exported to the template runtime
-__all__ = ['LoopContext', 'TemplateContext', 'Macro', 'Markup', 'missing',
-           'concat']
+__all__ = ['LoopContext', 'TemplateContext', 'TemplateReference', 'Macro',
+           'Markup', 'missing', 'concat']
 
 
 # special singleton representing missing values for the runtime
@@ -31,6 +31,11 @@ class TemplateContext(object):
     not save to use this class outside of the compiled code.  For example
     update and other methods will not work as they seem (they don't update
     the exported variables for example).
+
+    The context is immutable.  Modifications on `parent` must not happen and
+    modifications on `vars` are allowed from generated template code.  However
+    functions that are passed the template context may not modify the context
+    in any way.
     """
 
     def __init__(self, environment, parent, name, blocks):
@@ -55,15 +60,17 @@ class TemplateContext(object):
 
     def super(self, name, current):
         """Render a parent block."""
-        last = None
-        for block in self.blocks[name]:
-            if block is current:
-                break
-            last = block
-        if last is None:
+        try:
+            blocks = self.blocks[name]
+            pos = blocks.index(current) - 1
+            if pos < 0:
+                raise IndexError()
+        except LookupError:
             return self.environment.undefined('there is no parent block '
-                                              'called %r.' % block)
-        return SuperBlock(block, self, last)
+                                              'called %r.' % name)
+        render = lambda: Markup(concat(blocks[pos](self)))
+        render.__name__ = render.name = name
+        return render
 
     def get(self, key, default=None):
         """For dict compatibility"""
@@ -75,8 +82,7 @@ class TemplateContext(object):
 
     def get_exported(self):
         """Get a new dict with the exported variables."""
-        return dict((k, self.vars[k]) for k in self.exported_vars
-                    if not k.startswith('__'))
+        return dict((k, self.vars[k]) for k in self.exported_vars)
 
     def get_root(self):
         """Return a new dict with all the non local variables."""
@@ -85,6 +91,11 @@ class TemplateContext(object):
     def get_all(self):
         """Return a copy of the complete context as dict."""
         return dict(self.parent, **self.vars)
+
+    def clone(self):
+        """Return a copy of the context without the locals."""
+        return self.__class__(self.environment, self.parent,
+                              self.name, self.blocks)
 
     def __contains__(self, name):
         return name in self.vars or name in self.parent
@@ -104,21 +115,22 @@ class TemplateContext(object):
         )
 
 
-class SuperBlock(object):
-    """When called this renders a parent block."""
+class TemplateReference(object):
+    """The `self` in templates."""
 
-    def __init__(self, name, context, render_func):
-        self.name = name
-        self._context = context
-        self._render_func = render_func
+    def __init__(self, context):
+        self.__context = context
 
-    def __call__(self):
-        return Markup(concat(self._render_func(self._context)))
+    def __getitem__(self, name):
+        func = self.__context.blocks[name][-1]
+        render = lambda: Markup(concat(func(self.__context)))
+        render.__name__ = render.name = name
+        return render
 
     def __repr__(self):
         return '<%s %r>' % (
             self.__class__.__name__,
-            self.name
+            self._context.name
         )
 
 
@@ -168,7 +180,11 @@ class LoopContext(object):
         return self._length
 
     def __repr__(self):
-        return 'LoopContext(%r)' % self.index0
+        return '<%s %r/%r>' % (
+            self.__class__.__name__,
+            self.index,
+            self.length
+        )
 
 
 class Macro(object):
