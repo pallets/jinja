@@ -412,8 +412,8 @@ try:
     from functools import partial
 except ImportError:
     class partial(object):
-        def __init__(self, func, *args, **kwargs):
-            self._func = func
+        def __init__(self, _func, *args, **kwargs):
+            self._func = _func
             self._args = args
             self._kwargs = kwargs
         def __call__(self, *args, **kwargs):
