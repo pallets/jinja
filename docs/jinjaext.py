@@ -44,7 +44,7 @@ class JinjaStyle(Style):
         Name.Decorator:             '#686868',
 
         String:                     '#BE9B5D',
-        Number:                     '#FF0000',
+        Number:                     '#444444',
 
         Generic.Heading:            'bold #000080',
         Generic.Subheading:         'bold #800080',

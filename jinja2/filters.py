@@ -112,7 +112,7 @@ def do_xmlattr(_environment, d, autospace=True):
         </ul>
 
     As you can see it automatically prepends a space in front of the item
-    if the filter returned something unless the second parameter is `False`.
+    if the filter returned something unless the second parameter is false.
     """
     rv = u' '.join(
         u'%s="%s"' % (escape(key), escape(value))
@@ -541,7 +541,7 @@ def do_round(value, precision=0, method='common'):
 
 def do_sort(value, reverse=False):
     """Sort a sequence. Per default it sorts ascending, if you pass it
-    `True` as first argument it will reverse the sorting.
+    true as first argument it will reverse the sorting.
     """
     return sorted(value, reverse=reverse)
 

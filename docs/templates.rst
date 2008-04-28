@@ -578,7 +578,13 @@ is
 If Expression
 ~~~~~~~~~~~~~
 
-blah
+It is also possible to use inline `if` expressions.  These are useful in some
+situations.  For example you can use this to extend from one template if a
+variable is defined, otherwise from the default layout template:
+
+.. sourcecode:: jinja
+
+    {% extends layout_template if layout_template is defined else 'master.html' %}
 
 
 .. _builtin-filters:
