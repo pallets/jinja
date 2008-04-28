@@ -5,7 +5,7 @@
 
     Jinja exceptions.
 
-    :copyright: 2007 by Armin Ronacher.
+    :copyright: 2008 by Armin Ronacher.
     :license: BSD, see LICENSE for more details.
 """
 
@@ -15,7 +15,7 @@ class TemplateError(Exception):
 
 
 class UndefinedError(TemplateError):
-    """Raised if a template tries to operate on `Undefined`."""
+    """Raised if a template tries to operate on :class:`Undefined`."""
 
 
 class TemplateNotFound(IOError, LookupError, TemplateError):
@@ -44,6 +44,4 @@ class TemplateAssertionError(TemplateSyntaxError):
 
 
 class TemplateRuntimeError(TemplateError):
-    """Raised by the template engine if a tag encountered an error when
-    rendering.
-    """
+    """A runtime error."""

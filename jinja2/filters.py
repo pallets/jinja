@@ -51,7 +51,8 @@ def do_forceescape(value):
     return escape(unicode(value))
 
 
-def do_replace(s, old, new, count=None):
+@environmentfilter
+def do_replace(environment, s, old, new, count=None):
     """Return a copy of the value with all occurrences of a substring
     replaced with a new one. The first argument is the substring
     that should be replaced, the second is the replacement string.
@@ -68,6 +69,8 @@ def do_replace(s, old, new, count=None):
     """
     if count is None:
         count = -1
+    if not environment.autoescape:
+        return unicode(s).replace(unicode(old), unicode(new), count)
     if hasattr(old, '__html__') or hasattr(new, '__html__') and \
        not hasattr(s, '__html__'):
         s = escape(s)
@@ -86,7 +89,8 @@ def do_lower(s):
     return soft_unicode(s).lower()
 
 
-def do_xmlattr(d, autospace=False):
+@environmentfilter
+def do_xmlattr(_environment, *args, **kwargs):
     """Create an SGML/XML attribute string based on the items in a dict.
     All values that are neither `none` nor `undefined` are automatically
     escaped:
@@ -107,23 +111,18 @@ def do_xmlattr(d, autospace=False):
         </ul>
 
     As you can see it automatically prepends a space in front of the item
-    if the filter returned something. You can disable this by passing
-    `false` as only argument to the filter.
+    if the filter returned something.
     """
-    if not hasattr(d, 'iteritems'):
-        raise TypeError('a dict is required')
-    result = []
-    for key, value in d.iteritems():
-        if value is not None and not isinstance(value, Undefined):
-            result.append(u'%s="%s"' % (escape(key), escape(value)))
     rv = u' '.join(
         u'%s="%s"' % (escape(key), escape(value))
-        for key, value in d.iteritems()
+        for key, value in dict(*args, **kwargs).iteritems()
         if value is not None and not isinstance(value, Undefined)
     )
-    if autospace:
-        rv = ' ' + rv
-    return Markup(rv)
+    if rv:
+        rv = u' ' + rv
+    if _environment.autoescape:
+        rv = Markup(rv)
+    return rv
 
 
 def do_capitalize(s):
@@ -197,7 +196,8 @@ def do_default(value, default_value=u'', boolean=False):
     return value
 
 
-def do_join(value, d=u''):
+@environmentfilter
+def do_join(environment, value, d=u''):
     """Return a string which is the concatenation of the strings in the
     sequence. The separator between elements is an empty string per
     default, you can define ith with the optional parameter:
@@ -210,6 +210,10 @@ def do_join(value, d=u''):
         {{ [1, 2, 3]|join }}
             -> 123
     """
+    # no automatic escaping?  joining is a lot eaiser then
+    if not environment.autoescape:
+        return unicode(d).join(imap(unicode, value))
+
     # if the delimiter doesn't have an html representation we check
     # if any of the items has.  If yes we do a coercion to Markup
     if not hasattr(d, '__html__'):

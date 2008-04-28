@@ -16,7 +16,7 @@ from jinja2.environment import get_spontaneous_environment
 from jinja2.runtime import Undefined, concat
 from jinja2.parser import statement_end_tokens
 from jinja2.exceptions import TemplateAssertionError
-from jinja2.utils import import_string
+from jinja2.utils import import_string, Markup
 
 
 # the only real useful gettext functions for a Jinja template.  Note
@@ -286,7 +286,7 @@ def babel_extract(fileobj, keywords, comment_tags, options):
         tuple(extensions),
         # fill with defaults so that environments are shared
         # with other spontaneus environments.
-        True, Undefined, unicode
+        True, Undefined, None, False
     )
 
     node = environment.parse(fileobj.read().decode(encoding))

@@ -43,6 +43,10 @@ from jinja2.loaders import BaseLoader, FileSystemLoader, PackageLoader, \
 # undefined types
 from jinja2.runtime import Undefined, DebugUndefined, StrictUndefined
 
+# exceptions
+from jinja2.exceptions import TemplateError, UndefinedError, \
+     TemplateNotFound, TemplateSyntaxError, TemplateAssertionError
+
 # decorators and public utilities
 from jinja2.filters import environmentfilter, contextfilter
 from jinja2.utils import Markup, escape, environmentfunction, contextfunction

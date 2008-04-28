@@ -843,7 +843,10 @@ class CodeGenerator(NodeVisitor):
         self.pull_locals(macro_frame)
         self.writeline('%s = []' % buf)
         self.blockvisit(node.body, macro_frame)
-        self.writeline("return Markup(concat(%s))" % buf)
+        if self.environment.autoescape:
+            self.writeline('return Markup(concat(%s))' % buf)
+        else:
+            self.writeline("return concat(%s)" % buf)
         self.outdent()
         self.newline()
         if frame.toplevel:
@@ -874,7 +877,10 @@ class CodeGenerator(NodeVisitor):
         self.pull_locals(call_frame)
         self.writeline('%s = []' % buf)
         self.blockvisit(node.body, call_frame)
-        self.writeline("return Markup(concat(%s))" % buf)
+        if self.environment.autoescape:
+            self.writeline("return Markup(concat(%s))" % buf)
+        else:
+            self.writeline('return concat(%s)' % buf)
         self.outdent()
         arg_tuple = ', '.join(repr(x.name) for x in node.args)
         if len(node.args) == 1:
@@ -927,12 +933,6 @@ class CodeGenerator(NodeVisitor):
             return
 
         self.newline(node)
-        if self.environment.finalize is unicode:
-            finalizer = 'unicode'
-            have_finalizer = False
-        else:
-            finalizer = 'environment.finalize'
-            have_finalizer = True
 
         # if we are in the toplevel scope and there was already an extends
         # statement we have to add a check that disables our yield(s) here
@@ -972,9 +972,16 @@ class CodeGenerator(NodeVisitor):
                 else:
                     if frame.buffer is None:
                         self.writeline('yield ')
-                    self.write(finalizer + '(')
+                    close = 1
+                    if self.environment.autoescape:
+                        self.write('escape(')
+                    else:
+                        self.write('unicode(')
+                    if self.environment.finalize is not None:
+                        self.write('environment.finalize(')
+                        close += 1
                     self.visit(item, frame)
-                    self.write(')')
+                    self.write(')' * close)
                     if frame.buffer is not None:
                         self.write(', ')
             if frame.buffer is not None:
@@ -999,12 +1006,15 @@ class CodeGenerator(NodeVisitor):
             self.indent()
             for argument in arguments:
                 self.newline(argument)
-                if have_finalizer:
-                    self.write(finalizer + '(')
+                close = 0
+                if self.environment.autoescape:
+                    self.write('escape(')
+                    close += 1
+                if self.environment.finalize is not None:
+                    self.write('environment.finalize(')
+                    close += 1
                 self.visit(argument, frame)
-                if have_finalizer:
-                    self.write(')')
-                self.write(',')
+                self.write(')' * close + ',')
             self.outdent()
             self.writeline(')')
             if frame.buffer is not None:
@@ -1104,6 +1114,13 @@ class CodeGenerator(NodeVisitor):
     visit_Neg = uaop('-')
     visit_Not = uaop('not ')
     del binop, uaop
+
+    def visit_Concat(self, node, frame):
+        self.write('join((')
+        for arg in node.nodes:
+            self.visit(arg, frame)
+            self.write(', ')
+        self.write('))')
 
     def visit_Compare(self, node, frame):
         self.visit(node.expr, frame)

@@ -65,11 +65,59 @@ def template_from_code(environment, code, globals, uptodate=None,
 
 
 class Environment(object):
-    """The Jinja environment.
-
-    The core component of Jinja is the `Environment`. It contains
+    """The core component of Jinja is the `Environment`.  It contains
     important shared variables like configuration, filters, tests,
-    globals and others.
+    globals and others.  Instances of this class may be modified if
+    they are not shared and if no template was loaded so far.
+    Modifications on environments after the first template was loaded
+    will lead to surprising effects and undefined behavior.
+
+    Here the possible initialization parameters:
+
+    `block_start_string`
+        The string marking the begin of a block.  Defaults to ``'{%'``.
+
+    `block_end_string`
+        The string marking the end of a block.  Defaults to ``'%}'``.
+
+    `variable_start_string`
+        The string marking the begin of a print statement.
+        Defaults to ``'{{'``.
+
+    `comment_start_string`
+        The string marking the begin of a comment.  Defaults to ``'{#'``.
+
+    `comment_end_string`
+        The string marking the end of a comment.  Defaults to ``'#}'``.
+
+    `line_statement_prefix`
+        If given and a string, this will be used as prefix for line based
+        statements.
+
+    `trim_blocks`
+        If this is set to ``True`` the first newline after a block is
+        removed (block, not variable tag!).  Defaults to `False`.
+
+    `extensions`
+        List of Jinja extensions to use.  This can either be import paths
+        as strings or extension classes.
+
+    `optimized`
+        should the optimizer be enabled?  Default is `True`.
+
+    `undefined`
+        :class:`Undefined` or a subclass of it that is used to represent
+        undefined values in the template.
+
+    `finalize`
+        A callable that finalizes the variable.  Per default no finalizing
+        is applied.
+
+    `autoescape`
+        If set to true the XML/HTML autoescaping feature is enabled.
+
+    `loader`
+        The template loader for this environment.
     """
 
     #: if this environment is sandboxed.  Modifying this variable won't make
@@ -93,7 +141,8 @@ class Environment(object):
                  extensions=(),
                  optimized=True,
                  undefined=Undefined,
-                 finalize=unicode,
+                 finalize=None,
+                 autoescape=False,
                  loader=None):
         # !!Important notice!!
         #   The constructor accepts quite a few arguments that should be
@@ -105,36 +154,6 @@ class Environment(object):
         #   If parameter changes are required only add parameters at the end
         #   and don't change the arguments (or the defaults!) of the arguments
         #   up to (but excluding) loader.
-        """Here the possible initialization parameters:
-
-        ========================= ============================================
-        `block_start_string`      the string marking the begin of a block.
-                                  this defaults to ``'{%'``.
-        `block_end_string`        the string marking the end of a block.
-                                  defaults to ``'%}'``.
-        `variable_start_string`   the string marking the begin of a print
-                                  statement. defaults to ``'{{'``.
-        `comment_start_string`    the string marking the begin of a
-                                  comment. defaults to ``'{#'``.
-        `comment_end_string`      the string marking the end of a comment.
-                                  defaults to ``'#}'``.
-        `line_statement_prefix`   If given and a string, this will be used as
-                                  prefix for line based statements.  See the
-                                  documentation for more details.
-        `trim_blocks`             If this is set to ``True`` the first newline
-                                  after a block is removed (block, not
-                                  variable tag!). Defaults to ``False``.
-        `extensions`              List of Jinja extensions to use.
-        `optimized`               should the optimizer be enabled?  Default is
-                                  ``True``.
-        `undefined`               a subclass of `Undefined` that is used to
-                                  represent undefined variables.
-        `finalize`                A callable that finalizes the variable.  Per
-                                  default this is `unicode`, other useful
-                                  builtin finalizers are `escape`.
-        `loader`                  the loader which should be used.
-        ========================= ============================================
-        """
 
         # santity checks
         assert issubclass(undefined, Undefined), 'undefined must be ' \
@@ -157,6 +176,7 @@ class Environment(object):
         self.undefined = undefined
         self.optimized = optimized
         self.finalize = finalize
+        self.autoescape = autoescape
 
         # defaults
         self.filters = DEFAULT_FILTERS.copy()
@@ -187,29 +207,35 @@ class Environment(object):
                 return self.undefined(obj=obj, name=argument)
 
     def parse(self, source, name=None):
-        """Parse the sourcecode and return the abstract syntax tree. This tree
-        of nodes is used by the compiler to convert the template into
-        executable source- or bytecode.
+        """Parse the sourcecode and return the abstract syntax tree.  This
+        tree of nodes is used by the compiler to convert the template into
+        executable source- or bytecode.  This is useful for debugging or to
+        extract information from templates.
         """
         return Parser(self, source, name).parse()
 
     def lex(self, source, name=None):
-        """Lex the given sourcecode and return a generator that yields tokens.
-        The stream returned is not usable for Jinja but can be used if
-        Jinja templates should be processed by other tools (for example
-        syntax highlighting etc)
-
-        The tuples are returned in the form ``(lineno, token, value)``.
+        """Lex the given sourcecode and return a generator that yields
+        tokens as tuples in the form ``(lineno, token_type, value)``.
         """
         return self.lexer.tokeniter(source, name)
 
     def compile(self, source, name=None, filename=None, globals=None,
                 raw=False):
-        """Compile a node or source.  The name is the load name of the
-        template after it was joined using `join_path` if necessary,
-        filename is the estimated filename of the template on the file
-        system.  If the template came from a database or memory this
-        can be omitted.
+        """Compile a node or template source code.  The `name` parameter is
+        the load name of the template after it was joined using
+        :meth:`join_path` if necessary, not the filename on the file system.
+        the `filename` parameter is the estimated filename of the template on
+        the file system.  If the template came from a database or memory this
+        can be omitted.  The `globals` parameter can be used to provide extra
+        variables at compile time for the template.  In the future the
+        optimizer will be able to evaluate parts of the template at compile
+        time based on those variables.
+
+        The return value of this method is a python code object.  If the `raw`
+        parameter is `True` the return value will be a string with python
+        code equivalent to the bytecode returned otherwise.  This method is
+        mainly used internally.
         """
         if isinstance(source, basestring):
             source = self.parse(source, name)
@@ -226,12 +252,29 @@ class Environment(object):
 
     def join_path(self, template, parent):
         """Join a template with the parent.  By default all the lookups are
-        relative to the loader root, but if the paths should be relative this
-        function can be used to calculate the real filename."""
+        relative to the loader root so this method returns the `template`
+        parameter unchanged, but if the paths should be relative to the
+        parent template, this function can be used to calculate the real
+        template name.
+
+        Subclasses may override this method and implement template path
+        joining here.
+        """
         return template
 
     def get_template(self, name, parent=None, globals=None):
-        """Load a template."""
+        """Load a template from the loader.  If a loader is configured this
+        method ask the loader for the template and returns a :class:`Template`.
+        If the `parent` parameter is not `None`, :meth:`join_path` is called
+        to get the real template name before loading.
+
+        The `globals` parameter can be used to provide compile-time globals.
+        In the future this will allow the optimizer to render parts of the
+        templates at compile-time.
+
+        If the template does not exist a :exc:`TemplateNotFound` exception is
+        raised.
+        """
         if self.loader is None:
             raise TypeError('no loader for this environment specified')
         if parent is not None:
@@ -239,7 +282,9 @@ class Environment(object):
         return self.loader.load(self, name, self.make_globals(globals))
 
     def from_string(self, source, globals=None, template_class=None):
-        """Load a template from a string."""
+        """Load a template from a string.  This parses the source given and
+        returns a :class:`Template` object.
+        """
         globals = self.make_globals(globals)
         return template_from_code(self, self.compile(source, globals=globals),
                                   globals, None, template_class)
@@ -255,8 +300,8 @@ class Template(object):
     """The central template object.  This class represents a compiled template
     and is used to evaluate it.
 
-    Normally the template object is generated from an `Environment` but it
-    also has a constructor that makes it possible to create a template
+    Normally the template object is generated from an :class:`Environment` but
+    it also has a constructor that makes it possible to create a template
     instance directly using the constructor.  It takes the same arguments as
     the environment constructor but it's not possible to specify a loader.
 
@@ -294,16 +339,25 @@ class Template(object):
                 extensions=(),
                 optimized=True,
                 undefined=Undefined,
-                finalize=unicode):
+                finalize=None,
+                autoescape=False):
         env = get_spontaneous_environment(
             block_start_string, block_end_string, variable_start_string,
             variable_end_string, comment_start_string, comment_end_string,
             line_statement_prefix, trim_blocks, tuple(extensions), optimized,
-            undefined, finalize)
+            undefined, finalize, autoescape)
         return env.from_string(source, template_class=cls)
 
     def render(self, *args, **kwargs):
-        """Render the template into a string."""
+        """This method accepts the same arguments as the `dict` constructor:
+        A dict, a dict subclass or some keyword arguments.  If no arguments
+        are given the context will be empty.  These two calls do the same::
+
+            template.render(knights='that say nih')
+            template.render({'knights': 'that say nih'})
+
+        This will return the rendered template as unicode string.
+        """
         try:
             return concat(self.generate(*args, **kwargs))
         except:
@@ -312,7 +366,9 @@ class Template(object):
             raise exc_type, exc_value, tb.tb_next
 
     def stream(self, *args, **kwargs):
-        """Return a `TemplateStream` that generates the template."""
+        """Works exactly like :meth:`generate` but returns a
+        :class:`TemplateStream`.
+        """
         try:
             return TemplateStream(self.generate(*args, **kwargs))
         except:
@@ -321,7 +377,13 @@ class Template(object):
             raise exc_type, exc_value, tb.tb_next
 
     def generate(self, *args, **kwargs):
-        """Return a generator that generates the template."""
+        """For very large templates it can be useful to not render the whole
+        template at once but evaluate each statement after another and yield
+        piece for piece.  This method basically does exactly that and returns
+        a generator that yields one item after another as unicode strings.
+
+        It accepts the same arguments as :meth:`render`.
+        """
         # assemble the context
         context = dict(*args, **kwargs)
 
@@ -364,11 +426,24 @@ class Template(object):
                                self.blocks)
 
     def include(self, vars=None):
-        """Include this template.  When passed a template context or dict
-        the template is evaluated in that context and an `IncludedTemplate`
-        object is returned.  This object then exposes all the exported
-        variables as attributes and renders the contents of the template
-        when converted to unicode.
+        """Some templates may export macros or other variables.  It's possible
+        to access those variables by "including" the template.  This is mainly
+        used internally but may also be useful on the Python layer.  If passed
+        a context, the template is evaluated in it, otherwise an empty context
+        with just the globals is used.
+
+        The return value is an included template object.  Converting it to
+        unicode returns the rendered contents of the template, the exported
+        variables are accessable via the attribute syntax.
+
+        This example shows how it can be used:
+
+        >>> t = Template('{% say_hello(name) %}Hello {{ name }}!{% endmacro %}42')
+        >>> i = t.include()
+        >>> unicode(i)
+        u'42'
+        >>> i.say_hello('John')
+        u'Hello John!'
         """
         if isinstance(vars, TemplateContext):
             context = TemplateContext(self.environment, vars.parent,
@@ -433,9 +508,14 @@ class IncludedTemplate(object):
 
 
 class TemplateStream(object):
-    """This class wraps a generator returned from `Template.generate` so that
-    it's possible to buffer multiple elements so that it's possible to return
-    them from a WSGI application which flushes after each iteration.
+    """A template stream works pretty much like an ordinary python generator
+    but it can buffer multiple items to reduce the number of total iterations.
+    Per default the output is unbuffered which means that for every unbuffered
+    instruction in the template one unicode string is yielded.
+
+    If buffering is enabled with a buffer size of 5, five items are combined
+    into a new unicode string.  This is mainly useful if you are streaming
+    big templates to a client via WSGI which flushes after each iteration.
     """
 
     def __init__(self, gen):
@@ -449,7 +529,7 @@ class TemplateStream(object):
         self.buffered = False
 
     def enable_buffering(self, size=5):
-        """Enable buffering. Buffer `size` items before yielding them."""
+        """Enable buffering.  Buffer `size` items before yielding them."""
         if size <= 1:
             raise ValueError('buffer size too small')
 

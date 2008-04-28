@@ -9,13 +9,15 @@
     :license: GNU GPL.
 """
 from types import FunctionType
-from jinja2.utils import Markup, partial
-from jinja2.exceptions import UndefinedError
+from itertools import chain, imap
+from jinja2.utils import Markup, partial, soft_unicode, escape
+from jinja2.exceptions import UndefinedError, TemplateRuntimeError
 
 
 # these variables are exported to the template runtime
 __all__ = ['LoopContext', 'TemplateContext', 'TemplateReference', 'Macro',
-           'Markup', 'missing', 'concat']
+           'TemplateRuntimeError', 'Markup', 'missing', 'concat', 'escape',
+           'markup_join', 'unicode_join']
 
 
 # special singleton representing missing values for the runtime
@@ -24,6 +26,22 @@ missing = type('MissingType', (), {'__repr__': lambda x: 'missing'})()
 
 # concatenate a list of strings and convert them to unicode.
 concat = u''.join
+
+
+def markup_join(*args):
+    """Concatenation that escapes if necessary and converts to unicode."""
+    buf = []
+    iterator = imap(soft_unicode, args)
+    for arg in iterator:
+        buf.append(arg)
+        if hasattr(arg, '__html__'):
+            return Markup(u'').join(chain(buf, iterator))
+    return concat(buf)
+
+
+def unicode_join(*args):
+    """Simple args to unicode conversion and concatenation."""
+    return concat(imap(unicode, args))
 
 
 class TemplateContext(object):
@@ -68,7 +86,8 @@ class TemplateContext(object):
         except LookupError:
             return self.environment.undefined('there is no parent block '
                                               'called %r.' % name)
-        render = lambda: Markup(concat(blocks[pos](self)))
+        wrap = self.environment.autoescape and Markup or (lambda x: x)
+        render = lambda: wrap(concat(blocks[pos](self)))
         render.__name__ = render.name = name
         return render
 
@@ -123,7 +142,9 @@ class TemplateReference(object):
 
     def __getitem__(self, name):
         func = self.__context.blocks[name][-1]
-        render = lambda: Markup(concat(func(self.__context)))
+        wrap = self.__context.environment.autoescape and \
+               Markup or (lambda x: x)
+        render = lambda: wrap(concat(func(self.__context)))
         render.__name__ = render.name = name
         return render
 
@@ -269,9 +290,18 @@ def fail_with_undefined_error(self, *args, **kwargs):
 
 
 class Undefined(object):
-    """The default undefined implementation.  This undefined implementation
-    can be printed and iterated over, but every other access will raise a
-    `NameError`.  Custom undefined classes must subclass this.
+    """The default undefined type.  This undefined type can be printed and
+    iterated over, but every other access will raise an :exc:`UndefinedError`:
+
+    >>> foo = Undefined(name='foo')
+    >>> str(foo)
+    ''
+    >>> not foo
+    True
+    >>> foo + 42
+    Traceback (most recent call last):
+      ...
+    jinja2.exceptions.UndefinedError: 'foo' is undefined
     """
     __slots__ = ('_undefined_hint', '_undefined_obj', '_undefined_name')
 
@@ -307,7 +337,18 @@ class Undefined(object):
 
 
 class DebugUndefined(Undefined):
-    """An undefined that returns the debug info when printed."""
+    """An undefined that returns the debug info when printed.
+
+    >>> foo = DebugUndefined(name='foo')
+    >>> str(foo)
+    '{{ foo }}'
+    >>> not foo
+    True
+    >>> foo + 42
+    Traceback (most recent call last):
+      ...
+    jinja2.exceptions.UndefinedError: 'foo' is undefined
+    """
     __slots__ = ()
 
     def __unicode__(self):
@@ -325,6 +366,20 @@ class StrictUndefined(Undefined):
     """An undefined that barks on print and iteration as well as boolean
     tests and all kinds of comparisons.  In other words: you can do nothing
     with it except checking if it's defined using the `defined` test.
+
+    >>> foo = StrictUndefined(name='foo')
+    >>> str(foo)
+    Traceback (most recent call last):
+      ...
+    jinja2.exceptions.UndefinedError: 'foo' is undefined
+    >>> not foo
+    Traceback (most recent call last):
+      ...
+    jinja2.exceptions.UndefinedError: 'foo' is undefined
+    >>> foo + 42
+    Traceback (most recent call last):
+      ...
+    jinja2.exceptions.UndefinedError: 'foo' is undefined
     """
     __slots__ = ()
     __iter__ = __unicode__ = __len__ = __nonzero__ = __eq__ = __ne__ = \
