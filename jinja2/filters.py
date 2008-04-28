@@ -116,7 +116,7 @@ def do_xmlattr(_environment, d, autospace=True):
     """
     rv = u' '.join(
         u'%s="%s"' % (escape(key), escape(value))
-        for key, value in dict(*args, **kwargs).iteritems()
+        for key, value in d.iteritems()
         if value is not None and not isinstance(value, Undefined)
     )
     if autospace and rv:
