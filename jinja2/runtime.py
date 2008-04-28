@@ -8,6 +8,7 @@
     :copyright: Copyright 2008 by Armin Ronacher.
     :license: GNU GPL.
 """
+import sys
 from types import FunctionType
 from itertools import chain, imap
 from jinja2.utils import Markup, partial, soft_unicode, escape
@@ -25,7 +26,24 @@ missing = type('MissingType', (), {'__repr__': lambda x: 'missing'})()
 
 
 # concatenate a list of strings and convert them to unicode.
-concat = u''.join
+# unfortunately there is a bug in python 2.4 and lower that causes
+# unicode.join trash the traceback.
+try:
+    def _test_gen_bug():
+        raise TypeError(_test_gen_bug)
+        yield None
+    u''.join(_test_gen_bug())
+except TypeError, e:
+    if e.args and e.args[0] is _test_gen_bug:
+        concat = u''.join
+    else:
+        def concat(gen):
+            try:
+                return u''.join(list(gen()))
+            except:
+                exc_type, exc_value, tb = sys.exc_info()
+                raise exc_type, exc_value, tb.tb_next
+del _test_gen_bug
 
 
 def markup_join(*args):
