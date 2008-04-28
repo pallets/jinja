@@ -89,7 +89,7 @@ applied to the next.
 around the arguments, like a function call.  This example will join a list
 by spaces:  ``{{ list|join(', ') }}``.
 
-The `builtin-filters`_ below describes all the builtin filters.
+The :ref:`builtin-filters` below describes all the builtin filters.
 
 
 Tests
@@ -110,7 +110,7 @@ expressions do the same:
     {% if loop.index is divisibleby 3 %}
     {% if loop.index is divisibleby(3) %}
 
-The `builtin-tests`_ below descibes all the builtin tests.
+The :ref:`builtin-tests` below descibes all the builtin tests.
 
 
 Comments
@@ -267,7 +267,7 @@ The default configuaration is no automatic escaping for various reasons:
     escaped HTML.
 
 Working with Manual Escaping
-----------------------------
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
 If manual escaping is enabled it's **your** responsibility to escape
 variables if needed.  What to escape?  If you have a variable that *may*
@@ -277,27 +277,110 @@ HTML.  Escaping works by piping the variable through the ``|e`` filter:
 ``{{ user.username|e }}``.
 
 Working with Automatic Escaping
--------------------------------
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
 When automatic escaping is enabled everything is escaped by default except
 for values explicitly marked as safe.  Those can either be marked by the
 application or in the template by using the `|safe` filter.  The main
-problem with this approach is that python itself doesn't have the concept
+problem with this approach is that Python itself doesn't have the concept
 of tainted values so the information if a value is safe or unsafe can get
 lost.  If the information is lost escaping will take place which means that
 you could end up with double escaped contents.
 
 Double escaping is easy to avoid however, just relay on the tools Jinja2
-provides and don't use builtin python constructs such as the string modulo
+provides and don't use builtin Python constructs such as the string modulo
 operator.
 
 Functions returning template data (macros, `super`, `self.BLOCKNAME`) return
 safe markup always.
 
 String literals in templates with automatic escaping are considered unsafe
-too.  The reason for this is that the safe string is an extension to python
+too.  The reason for this is that the safe string is an extension to Python
 and not every library will work properly with it.
 
+
+List of Control Structures
+--------------------------
+
+A control structure refers to all those things that control the flow of a
+program - conditionals (i.e. if/elif/else), for-loops, as well as things like
+macros and blocks.  Control structures appear inside ``{% ... %}`` blocks
+in the default syntax.
+
+For Loops
+~~~~~~~~~
+
+Loop over each item in a sequece.  For example, to display a list of users
+provided in a variable called `users`:
+
+.. sourcecode:: html+jinja
+
+    <h1>Members</h1>
+    <ul>
+    {% for user in users %}
+      <li>{{ user.username|e }}</li>
+    {% endfor %}
+    </ul>
+
+Inside of a for loop block you can access some special variables:
+
++-----------------------+---------------------------------------------------+
+| `loop.index`          | The current iteration of the loop. (1 indexed)    |
++-----------------------+---------------------------------------------------+
+| `loop.index0`         | The current iteration of the loop. (0 indexed)    |
++-----------------------+---------------------------------------------------+
+| `loop.revindex`       | The number of iterations from the end of the loop |
+|                       | (1 indexed)                                       |
++-----------------------+---------------------------------------------------+
+| `loop.revindex0`      | The number of iterations from the end of the loop |
+|                       | (0 indexed)                                       |
++-----------------------+---------------------------------------------------+
+| `loop.first`          | True if first iteration.                          |
++-----------------------+---------------------------------------------------+
+| `loop.last`           | True if last iteration.                           |
++-----------------------+---------------------------------------------------+
+| `loop.length`         | The number of items in the sequence.              |
++-----------------------+---------------------------------------------------+
+| `loop.cycle`          | A helper function to cycle between a list of      |
+|                       | sequences.  See the explanation below.            |
++-----------------------+---------------------------------------------------+
+
+Within a for-loop, it's psosible to cycle among a list of strings/variables
+each time through the loop by using the special `loop.cycle` helper:
+
+.. sourcecode:: html+jinja
+
+    {% for row in rows %}
+        <li class="{{ loop.cycle('odd', 'even') }}">{{ row }}</li>
+    {% endfor %}
+
+Unlike in Python it's not possible to `break` or `continue` in a loop.  You
+can however filter the sequence during iteration which allows you to skip
+items.  The following example skips all the users which are hidden:
+
+.. sourcecode:: html+jinja
+
+    {% for user in users if not user.hidden %}
+        <li>{{ user.username|e }}</li>
+    {% endfor %}
+
+The advantage is that the special `loop` variable will count correctly thus
+not counting the users not iterated over.
+
+If no iteration took place because the sequence was empty or the filtering
+removed all the items from the sequence you can render a replacement block
+by using `else`:
+
+.. sourcecode:: html+jinja
+
+    <ul>
+    {% for user in users %}
+        <li>{{ user.username|e }}</li>
+    {% else %}
+        <li><em>no users found</em></li>
+    {% endif %}
+    </ul>
+    
 
 .. _builtin-filters:
 
@@ -312,4 +395,4 @@ List of Builtin Filters
 List of Builtin Tests
 ---------------------
 
-bleh
+.. jinjatests::

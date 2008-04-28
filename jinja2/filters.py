@@ -90,7 +90,7 @@ def do_lower(s):
 
 
 @environmentfilter
-def do_xmlattr(_environment, *args, **kwargs):
+def do_xmlattr(_environment, d, autospace=True):
     """Create an SGML/XML attribute string based on the items in a dict.
     All values that are neither `none` nor `undefined` are automatically
     escaped:
@@ -111,14 +111,14 @@ def do_xmlattr(_environment, *args, **kwargs):
         </ul>
 
     As you can see it automatically prepends a space in front of the item
-    if the filter returned something.
+    if the filter returned something unless the second parameter is `False`.
     """
     rv = u' '.join(
         u'%s="%s"' % (escape(key), escape(value))
         for key, value in dict(*args, **kwargs).iteritems()
         if value is not None and not isinstance(value, Undefined)
     )
-    if rv:
+    if autospace and rv:
         rv = u' ' + rv
     if _environment.autoescape:
         rv = Markup(rv)
@@ -310,10 +310,7 @@ def do_urlize(value, trim_url_limit=None, nofollow=False):
 
 
 def do_indent(s, width=4, indentfirst=False):
-    """
-    {{ s|indent[ width[ indentfirst[ usetab]]] }}
-
-    Return a copy of the passed string, each line indented by
+    """Return a copy of the passed string, each line indented by
     4 spaces. The first line is not indented. If you want to
     change the number of spaces or indent the first line too
     you can pass additional parameters to the filter:
@@ -330,8 +327,7 @@ def do_indent(s, width=4, indentfirst=False):
 
 
 def do_truncate(s, length=255, killwords=False, end='...'):
-    """
-    Return a truncated copy of the string. The length is specified
+    """Return a truncated copy of the string. The length is specified
     with the first parameter which defaults to ``255``. If the second
     parameter is ``true`` the filter will cut the text at length. Otherwise
     it will try to save the last word. If the text was in fact
@@ -597,6 +593,37 @@ class _GroupTuple(tuple):
         return tuple.__new__(cls, (key, list(value)))
 
 
+def do_list(value):
+    """Convert the value into a list.  If it was a string the returned list
+    will be a list of characters.
+    """
+    return list(value)
+
+
+def do_mark_safe(value):
+    """Mark the value as safe which means that in an environment with automatic
+    escaping enabled this variable will not be escaped.
+    """
+    return Markup(value)
+
+
+def do_reverse(value):
+    """Reverse the object or return an iterator the iterates over it the other
+    way round.
+    """
+    if isinstance(value, basestring):
+        return value[::-1]
+    try:
+        return reversed(value)
+    except TypeError:
+        try:
+            rv = list(value)
+            rv.reverse()
+            return rv
+        except TypeError:
+            raise FilterArgumentError('argument must be iterable')
+
+
 FILTERS = {
     'replace':              do_replace,
     'upper':                do_upper,
@@ -612,7 +639,7 @@ FILTERS = {
     'count':                len,
     'dictsort':             do_dictsort,
     'length':               len,
-    'reverse':              reversed,
+    'reverse':              do_reverse,
     'center':               do_center,
     'indent':               do_indent,
     'title':                do_title,
@@ -628,7 +655,7 @@ FILTERS = {
     'int':                  do_int,
     'float':                do_float,
     'string':               soft_unicode,
-    'list':                 list,
+    'list':                 do_list,
     'urlize':               do_urlize,
     'format':               do_format,
     'trim':                 do_trim,
@@ -640,6 +667,6 @@ FILTERS = {
     'round':                do_round,
     'sort':                 do_sort,
     'groupby':              do_groupby,
-    'safe':                 Markup,
+    'safe':                 do_mark_safe,
     'xmlattr':              do_xmlattr
 }

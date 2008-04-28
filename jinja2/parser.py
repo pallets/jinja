@@ -52,7 +52,7 @@ class Parser(object):
             ext = self.extensions.get(self.stream.current.value)
             if ext is not None:
                 return ext(self)
-        lineno = self.stream.current
+        lineno = self.stream.current.lineno
         expr = self.parse_tuple()
         if self.stream.current.type == 'assign':
             result = self.parse_assign(expr)

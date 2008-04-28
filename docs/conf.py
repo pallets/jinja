@@ -67,7 +67,7 @@ today_fmt = '%B %d, %Y'
 #show_authors = False
 
 # The name of the Pygments (syntax highlighting) style to use.
-pygments_style = 'autumn'
+pygments_style = 'jinjaext.JinjaStyle'
 
 
 # Options for HTML output
@@ -132,7 +132,14 @@ latex_documents = [
 ]
 
 # Additional stuff for the LaTeX preamble.
-latex_preamble = ''
+latex_preamble = '''
+\usepackage{palatino}
+\definecolor{TitleColor}{rgb}{0.7,0,0}
+\definecolor{InnerLinkColor}{rgb}{0.7,0,0}
+\definecolor{OuterLinkColor}{rgb}{0.8,0,0}
+\definecolor{VerbatimColor}{rgb}{0.98,0.98,0.98}
+\definecolor{VerbatimBorderColor}{rgb}{0.8,0.8,0.8}
+'''
 
 # Documents to append as an appendix to all manuals.
 #latex_appendices = []
