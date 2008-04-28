@@ -45,3 +45,9 @@ class TemplateAssertionError(TemplateSyntaxError):
 
 class TemplateRuntimeError(TemplateError):
     """A runtime error."""
+
+
+class FilterArgumentError(Exception):
+    """This error is raised if a filter was called with inappropriate
+    arguments
+    """
