@@ -19,6 +19,7 @@ from urllib import urlencode, quote
 from itertools import imap, groupby
 from jinja2.utils import Markup, escape, pformat, urlize, soft_unicode
 from jinja2.runtime import Undefined
+from jinja2.exceptions import FilterArgumentError
 
 
 _striptags_re = re.compile(r'(<!--.*?-->|<[^>]*>)')

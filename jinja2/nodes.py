@@ -504,7 +504,8 @@ class Subscript(Expr):
         if self.ctx != 'load':
             raise Impossible()
         try:
-            return environmen.subscribe(self.node.as_const(), self.arg.as_const())
+            return self.environment.subscribe(self.node.as_const(),
+                                              self.arg.as_const())
         except:
             raise Impossible()
 

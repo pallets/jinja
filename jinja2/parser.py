@@ -535,7 +535,7 @@ class Parser(object):
             if len(args) == 1:
                 arg = args[0]
             else:
-                arg = nodes.Tuple(args, lineno, self.filename)
+                arg = nodes.Tuple(args, self.lineno, self.filename)
         else:
             raise TemplateSyntaxError('expected subscript expression',
                                       self.lineno, self.filename)
