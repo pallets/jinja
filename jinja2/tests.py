@@ -112,6 +112,11 @@ def test_iterable(value):
     return True
 
 
+def test_escaped(value):
+    """Check if the value is escaped."""
+    return hasattr(value, '__html__')
+
+
 TESTS = {
     'odd':              test_odd,
     'even':             test_even,
@@ -126,5 +131,6 @@ TESTS = {
     'sequence':         test_sequence,
     'iterable':         test_iterable,
     'callable':         callable,
-    'sameas':           test_sameas
+    'sameas':           test_sameas,
+    'escaped':          test_escaped
 }

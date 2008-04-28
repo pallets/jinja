@@ -607,6 +607,7 @@ FILTERS = {
     'capitalize':           do_capitalize,
     'title':                do_title,
     'default':              do_default,
+    'd':                    do_default,
     'join':                 do_join,
     'count':                len,
     'dictsort':             do_dictsort,
