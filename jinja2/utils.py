@@ -247,10 +247,15 @@ class Markup(unicode):
         return func
     for method in '__getitem__', '__getslice__', 'capitalize', \
                   'title', 'lower', 'upper', 'replace', 'ljust', \
-                  'rjust', 'lstrip', 'rstrip', 'partition', 'center', \
-                  'strip', 'translate', 'expandtabs', 'rpartition', \
-                  'swapcase', 'zfill':
+                  'rjust', 'lstrip', 'rstrip', 'center', 'strip', \
+                  'translate', 'expandtabs', 'rpartition', 'swapcase', \
+                  'zfill':
         locals()[method] = make_wrapper(method)
+
+    # new in python 2.5
+    if hasattr(unicode, 'partition'):
+        locals().update(partition=make_wrapper('partition'),
+                        rpartition=make_wrapper('rpartition'))
     del method, make_wrapper
 
 

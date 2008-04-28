@@ -557,6 +557,7 @@ class CodeGenerator(NodeVisitor):
     def visit_Template(self, node, frame=None):
         assert frame is None, 'no root frame allowed'
         from jinja2.runtime import __all__ as exported
+        self.writeline('from __future__ import division')
         self.writeline('from jinja2.runtime import ' + ', '.join(exported))
         self.writeline('name = %r' % self.name)
 
@@ -1116,7 +1117,8 @@ class CodeGenerator(NodeVisitor):
     del binop, uaop
 
     def visit_Concat(self, node, frame):
-        self.write('join((')
+        self.write('%s((' % self.environment.autoescape and
+                   'markup_join' or 'unicode_join')
         for arg in node.nodes:
             self.visit(arg, frame)
             self.write(', ')

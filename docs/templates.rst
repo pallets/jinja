@@ -48,6 +48,7 @@ There are two kinds of delimiers. ``{% ... %}`` and ``{{ ... }}``.  The first
 one is used to execute statements such as for-loops or assign values, the
 latter prints the result of the expression to the template.
 
+.. _variables:
 
 Variables
 ---------
@@ -75,6 +76,7 @@ value.  What you can do with that kind of value depends on the application
 configuration, the default behavior is that it evaluates to an empty string
 if printed and that you can iterate over it, but every other operation fails.
 
+.. _filters:
 
 Filters
 -------
@@ -91,6 +93,7 @@ by spaces:  ``{{ list|join(', ') }}``.
 
 The :ref:`builtin-filters` below describes all the builtin filters.
 
+.. _tests:
 
 Tests
 -----
@@ -325,6 +328,8 @@ provided in a variable called `users`:
 Inside of a for loop block you can access some special variables:
 
 +-----------------------+---------------------------------------------------+
+| Variable              | Description                                       |
++=======================+===================================================+
 | `loop.index`          | The current iteration of the loop. (1 indexed)    |
 +-----------------------+---------------------------------------------------+
 | `loop.index0`         | The current iteration of the loop. (0 indexed)    |
@@ -354,6 +359,8 @@ each time through the loop by using the special `loop.cycle` helper:
         <li class="{{ loop.cycle('odd', 'even') }}">{{ row }}</li>
     {% endfor %}
 
+.. _loop-filtering:
+
 Unlike in Python it's not possible to `break` or `continue` in a loop.  You
 can however filter the sequence during iteration which allows you to skip
 items.  The following example skips all the users which are hidden:
@@ -380,7 +387,199 @@ by using `else`:
         <li><em>no users found</em></li>
     {% endif %}
     </ul>
-    
+
+
+If
+~~
+
+The `if` statement in Jinja is comparable with the if statements of Python.
+In the simplest form you can use it to test if a variable is defined, not
+empty or not false:
+
+.. sourcecode:: html+jinja
+
+    {% if users %}
+    <ul>
+    {% for user in users %}
+        <li>{{ user.username|e }}</li>
+    {% endfor %}
+    </ul>
+    {% endif %}
+
+For multiple branches `elif` and `else` can be used like in Python.  You can
+use more complex :ref:`expressions` there too.
+
+.. sourcecode:: html+jinja
+
+    {% if kenny.sick %}
+        Kenny is sick.
+    {% elif kenny.dead %}
+        You killed Kenny!  You bastard!!!
+    {% else %}
+        Kenny looks okay --- so far
+    {% endif %}
+
+If can also be used as :ref:`inline expression <if-expression>` and for
+:ref:`loop filtering <loop-filtering>`.
+
+
+.. _expressions:
+
+Expressions
+-----------
+
+Jinja allows basic expressions everywhere.  These work very similar to regular
+Python and even if you're not working with Python you should feel comfortable
+with it.
+
+Literals
+~~~~~~~~
+
+The simplest form of expressions are literals.  Literals are representations
+for Python objects such as strings and numbers.  The following literals exist:
+
+``"Hello World"``
+    Everything between two double or single quotes is a string.  They are
+    useful whenever you need a string in the template (for example as
+    arguments to function calls, filters or just to extend or include a
+    template).
+
+``42`` / ``42.23``
+    Integers and floating point numbers are created by just writing the
+    number down.  If a dot is present the number is a float, otherwise an
+    integer.  Keep in mind that for Python ``42`` and ``42.0`` is something
+    different.
+
+``['list', 'of', 'objects']``
+    Everything between two brackets is a list.  Lists are useful to store
+    sequential data in or to iterate over them.  For example you can easily
+    create a list of links using lists and tuples with a for loop.
+
+    .. sourcecode:: html+jinja
+
+        <ul>
+        {% for href, caption in [('index.html', 'Index'), ('about.html', 'About'),
+                                 ('downloads.html', 'Downloads')] %}
+            <li><a href="{{ href }}">{{ caption }}</a></li>
+        {% endfor %}
+        </ul>
+
+``('tuple', 'of', 'values')``
+    Tuples are like lists, just that you can't modify them.  If the tuple
+    only has one item you have to end it with a comma.  Tuples are usually
+    used to represent items of two or more elements.  See the example above
+    for more details.
+
+``{'dict': 'of', 'keys': 'and', 'value': 'pairs'}``
+    A dict in Python is a structure that combines keys and values.  Keys must
+    be unique and always have exactly one value.  Dicts are rarely used in
+    templates, they are useful in some rare cases such as the :func:`xmlattr`
+    filter.
+
+``true`` and ``false``
+    true is always true and false is always false.  Keep in mind that those
+    literals are lowercase!
+
+Math
+~~~~
+
+Jinja allows you to calculate with values.  This is rarely useful in templates
+but exists for completeness sake.  The following operators are supported:
+
+``+``
+    Adds two objects with each other.  Usually numbers but if both objects are
+    strings or lists you can concatenate them this way.  This however is not
+    the preferred way to concatenate strings!  For string concatenation have
+    a look at the ``~`` operator.  ``{{ 1 + 1 }}`` is ``2``.
+
+``-``
+    Substract two numbers from each other.  ``{{ 3 - 2 }}`` is ``1``.
+
+``/``
+    Divide two numbers.  The return value will be a floating point number.
+    ``{{ 1 / 2 }}`` is ``{{ 0.5 }}``.
+
+``//``
+    Divide two numbers and return the truncated integer result.
+    ``{{ 20 / 7 }}`` is ``2``.
+
+``%``
+    Calculate the remainder of an integer division between the left and right
+    operand.  ``{{ 11 % 7 }}`` is ``4``.
+
+``*``
+    Multiply the left operand with the right one.  ``{{ 2 * 2 }}`` would
+    return ``4``.  This can also be used to repeat string multiple times.
+    ``{{ '=' * 80 }}`` would print a bar of 80 equal signs.
+
+``**``
+    Raise the left operand to the power of the right operand.  ``{{ 2**3 }}``
+    would return ``8``.
+
+Logic
+~~~~~
+
+For `if` statements / `for` filtering or `if` expressions it can be useful to
+combine group multiple expressions:
+
+``and``
+    Return true if the left and the right operand is true.
+
+``or``
+    Return true if the left or the right operand is true.
+
+``not``
+    negate a statement (see below).
+
+``()`` (group)
+    group an expression.
+
+Note that there is no support for any bit operations or something similar.
+
+-   special note regarding ``not``: The ``is`` and ``in`` operators support
+    negation using an infix notation too: ``foo is not bar`` and
+    ``foo not in bar`` instead of ``not foo is bar`` and ``not foo in bar``.
+    All other expressions require a prefix notation: ``not (foo and bar).``
+
+
+Other Operators
+~~~~~~~~~~~~~~~
+
+The following operators are very useful but don't fit into any of the other
+two categories:
+
+``in``
+    Perform sequence / mapping containment test.  Returns true if the left
+    operand is contained in the right.  ``{{ 1 in [1, 2, 3] }}`` would for
+    example return true.
+
+``is``
+    Performs a :ref:`tests <test>`.
+
+``|``
+    Applies a :ref:`filters <filter>`.
+
+``~``
+    Converts all operands into strings and concatenates them.
+    ``{{ "Hello " ~ name ~ "!" }}`` would return (assuming `name` is
+    ``'John'``) ``Hello John!``.
+
+``()`` (call)
+    Call a callable: ``{{ post.render() }}``.  Inside of the parentheses you
+    can use arguments and keyword arguments like in python:
+    ``{{ post.render(user, full=true) }}``.
+
+``.`` / ``[]``
+    Get an attribute of an object.  (See :ref:`variables`)
+
+
+.. _if-expression:
+
+If Expression
+~~~~~~~~~~~~~
+
+blah
+
 
 .. _builtin-filters:
 
