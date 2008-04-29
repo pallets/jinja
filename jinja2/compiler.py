@@ -720,7 +720,7 @@ class CodeGenerator(NodeVisitor):
             self.write('context.vars[%r] = ' % node.target)
         self.write('environment.get_template(')
         self.visit(node.template, frame)
-        self.write(', %r).include(context)' % self.name)
+        self.write(', %r).module' % self.name)
         if frame.toplevel and not node.target.startswith('__'):
             self.writeline('context.exported_vars.discard(%r)' % node.target)
 
@@ -729,7 +729,7 @@ class CodeGenerator(NodeVisitor):
         self.newline(node)
         self.write('included_template = environment.get_template(')
         self.visit(node.template, frame)
-        self.write(', %r).include(context)' % self.name)
+        self.write(', %r).module' % self.name)
         for name in node.names:
             if isinstance(name, tuple):
                 name, alias = name
@@ -1050,6 +1050,11 @@ class CodeGenerator(NodeVisitor):
         if node.ctx == 'store' and frame.toplevel:
             frame.assigned_names.add(node.name)
         self.write('l_' + node.name)
+
+    def visit_MarkSafe(self, node, frame):
+        self.write('Markup(')
+        self.visit(node.expr, frame)
+        self.write(')')
 
     def visit_Const(self, node, frame):
         val = node.value

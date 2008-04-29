@@ -425,32 +425,22 @@ class Template(object):
         return TemplateContext(self.environment, parent, self.name,
                                self.blocks)
 
-    def include(self, vars=None):
-        """Some templates may export macros or other variables.  It's possible
-        to access those variables by "including" the template.  This is mainly
-        used internally but may also be useful on the Python layer.  If passed
-        a context, the template is evaluated in it, otherwise an empty context
-        with just the globals is used.
+    @property
+    def module(self):
+        """The template as module.  This is used for imports in the
+        template runtime but is also useful if one wants to access
+        exported template variables from the Python layer:
 
-        The return value is an included template object.  Converting it to
-        unicode returns the rendered contents of the template, the exported
-        variables are accessable via the attribute syntax.
-
-        This example shows how it can be used:
-
-        >>> t = Template('{% say_hello(name) %}Hello {{ name }}!{% endmacro %}42')
-        >>> i = t.include()
-        >>> unicode(i)
+        >>> t = Template('{% macro foo() %}42{% endmacro %}23')
+        >>> unicode(t.module)
+        u'23'
+        >>> t.module.foo()
         u'42'
-        >>> i.say_hello('John')
-        u'Hello John!'
         """
-        if isinstance(vars, TemplateContext):
-            context = TemplateContext(self.environment, vars.parent,
-                                      self.name, self.blocks)
-        else:
-            context = self.new_context(vars)
-        return IncludedTemplate(self, context)
+        if hasattr(self, '_module'):
+            return self._module
+        self._module = rv = TemplateModule(self, self.new_context())
+        return rv
 
     def get_corresponding_lineno(self, lineno):
         """Return the source line number of a line number in the
@@ -482,8 +472,8 @@ class Template(object):
         return '<%s %s>' % (self.__class__.__name__, name)
 
 
-class IncludedTemplate(object):
-    """Represents an included template.  All the exported names of the
+class TemplateModule(object):
+    """Represents an imported template.  All the exported names of the
     template are available as attributes on this object.  Additionally
     converting it into an unicode- or bytestrings renders the contents.
     """
@@ -546,7 +536,7 @@ class TemplateStream(object):
                         c_size += 1
                 except StopIteration:
                     if not c_size:
-                        raise
+                        return
                 yield concat(buf)
                 del buf[:]
                 c_size = 0

@@ -199,8 +199,6 @@ class TransExtension(Extension):
             gettext = nodes.Name('gettext', 'load')
             node = nodes.Call(gettext, [nodes.Const(singular)],
                               [], None, None)
-            if variables:
-                node = nodes.Mod(node, variables)
 
         # singular and plural
         else:
@@ -210,8 +208,14 @@ class TransExtension(Extension):
                 nodes.Const(plural),
                 plural_expr
             ], [], None, None)
-            if variables:
-                node = nodes.Mod(node, variables)
+
+        # mark the return value as safe if we are in an
+        # environment with autoescaping turned on
+        if self.environment.autoescape:
+            node = nodes.MarkSafe(node)
+
+        if variables:
+            node = nodes.Mod(node, variables)
         return nodes.Output([node])
 
 

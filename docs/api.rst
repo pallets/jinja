@@ -83,7 +83,7 @@ High Level API
 
 
 .. autoclass:: jinja2.Template
-    :members: render, stream, generate, include
+    :members: render, stream, generate, module
 
 
 .. autoclass:: jinja2.environment.TemplateStream

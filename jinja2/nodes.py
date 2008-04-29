@@ -17,6 +17,7 @@ from types import FunctionType
 from itertools import chain, izip
 from collections import deque
 from copy import copy
+from jinja2.utils import Markup
 
 
 _binop_to_func = {
@@ -347,6 +348,14 @@ class Name(Expr):
 
     def can_assign(self):
         return self.name not in ('true', 'false', 'none')
+
+
+class MarkSafe(Expr):
+    """Mark the wrapped expression as safe (Markup)"""
+    fields = ('expr',)
+
+    def as_const(self):
+        return Markup(self.expr.as_const())
 
 
 class Literal(Expr):

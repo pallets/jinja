@@ -39,7 +39,7 @@ except TypeError, e:
     else:
         def concat(gen):
             try:
-                return u''.join(list(gen()))
+                return u''.join(list(gen))
             except:
                 exc_type, exc_value, tb = sys.exc_info()
                 raise exc_type, exc_value, tb.tb_next
@@ -233,17 +233,16 @@ class Macro(object):
                  catch_kwargs, catch_varargs, caller):
         self._environment = environment
         self._func = func
+        self._argument_count = len(arguments)
         self.name = name
         self.arguments = arguments
-        self.argument_count = len(arguments)
         self.defaults = defaults
         self.catch_kwargs = catch_kwargs
         self.catch_varargs = catch_varargs
         self.caller = caller
 
     def __call__(self, *args, **kwargs):
-        self.argument_count = len(self.arguments)
-        if not self.catch_varargs and len(args) > self.argument_count:
+        if not self.catch_varargs and len(args) > self._argument_count:
             raise TypeError('macro %r takes not more than %d argument(s)' %
                             (self.name, len(self.arguments)))
         arguments = []
@@ -255,7 +254,7 @@ class Macro(object):
                     value = kwargs.pop(name)
                 except KeyError:
                     try:
-                        value = self.defaults[idx - self.argument_count]
+                        value = self.defaults[idx - self._argument_count]
                     except IndexError:
                         value = self._environment.undefined(
                             'parameter %r was not provided' % name)
@@ -275,7 +274,7 @@ class Macro(object):
             raise TypeError('macro %r takes no keyword argument %r' %
                             (self.name, iter(kwargs).next()))
         if self.catch_varargs:
-            arguments.append(args[self.argument_count:])
+            arguments.append(args[self._argument_count:])
         return self._func(*arguments)
 
     def __repr__(self):

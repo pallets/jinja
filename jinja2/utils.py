@@ -26,16 +26,18 @@ _simple_email_re = re.compile(r'^\S+@[a-zA-Z0-9._-]+\.[a-zA-Z0-9._-]+$')
 
 
 def contextfunction(f):
-    """Mark a callable as context callable.  A context callable is passed
-    the active context as first argument.
+    """This decorator can be used to mark a callable as context callable.  A
+    context callable is passed the active context as first argument if it
+    was directly stored in the context.
     """
     f.contextfunction = True
     return f
 
 
 def environmentfunction(f):
-    """Mark a callable as environment callable.  An environment callable is
-    passed the current environment as first argument.
+    """This decorator can be used to mark a callable as environment callable.
+    A environment callable is passed the current environment as first argument
+    if it was directly stored in the context.
     """
     f.environmentfunction = True
     return f
