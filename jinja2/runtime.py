@@ -11,7 +11,7 @@
 import sys
 from types import FunctionType
 from itertools import chain, imap
-from jinja2.utils import Markup, partial, soft_unicode, escape
+from jinja2.utils import Markup, partial, soft_unicode, escape, missing
 from jinja2.exceptions import UndefinedError, TemplateRuntimeError
 
 
@@ -19,10 +19,6 @@ from jinja2.exceptions import UndefinedError, TemplateRuntimeError
 __all__ = ['LoopContext', 'TemplateContext', 'TemplateReference', 'Macro',
            'TemplateRuntimeError', 'Markup', 'missing', 'concat', 'escape',
            'markup_join', 'unicode_join']
-
-
-# special singleton representing missing values for the runtime
-missing = type('MissingType', (), {'__repr__': lambda x: 'missing'})()
 
 
 # concatenate a list of strings and convert them to unicode.
@@ -33,8 +29,8 @@ try:
         raise TypeError(_test_gen_bug)
         yield None
     u''.join(_test_gen_bug())
-except TypeError, e:
-    if e.args and e.args[0] is _test_gen_bug:
+except TypeError, _error:
+    if _error.args and _error.args[0] is _test_gen_bug:
         concat = u''.join
     else:
         def concat(gen):
@@ -43,7 +39,7 @@ except TypeError, e:
             except:
                 exc_type, exc_value, tb = sys.exc_info()
                 raise exc_type, exc_value, tb.tb_next
-del _test_gen_bug
+    del _test_gen_bug, _error
 
 
 def markup_join(*args):
@@ -63,15 +59,21 @@ def unicode_join(*args):
 
 
 class TemplateContext(object):
-    """Holds the variables of the local template or of the global one.  It's
-    not save to use this class outside of the compiled code.  For example
-    update and other methods will not work as they seem (they don't update
-    the exported variables for example).
+    """The template context holds the variables of a template.  It stores the
+    values passed to the template and also the names the template exports.
+    Creating instances is neither supported nor useful as it's created
+    automatically at various stages of the template evaluation and should not
+    be created by hand.
 
-    The context is immutable.  Modifications on `parent` must not happen and
-    modifications on `vars` are allowed from generated template code.  However
-    functions that are passed the template context may not modify the context
-    in any way.
+    The context is immutable.  Modifications on :attr:`parent` **must not**
+    happen and modifications on :attr:`vars` are allowed from generated
+    template code only.  Template filters and global functions marked as
+    :func:`contextfunction`\s get the active context passed as first argument
+    and are allowed to access the context read-only.
+
+    The template context supports read only dict operations (`get`,
+    `__getitem__`, `__contains__`) however `__getitem__` doesn't fail with
+    a `KeyError` but returns an :attr:`Undefined` object.
     """
 
     def __init__(self, environment, parent, name, blocks):
@@ -110,7 +112,9 @@ class TemplateContext(object):
         return render
 
     def get(self, key, default=None):
-        """For dict compatibility"""
+        """Returns an item from the template context, if it doesn't exist
+        `default` is returned.
+        """
         if key in self.vars:
             return self.vars[key]
         if key in self.parent:
@@ -121,18 +125,11 @@ class TemplateContext(object):
         """Get a new dict with the exported variables."""
         return dict((k, self.vars[k]) for k in self.exported_vars)
 
-    def get_root(self):
-        """Return a new dict with all the non local variables."""
-        return dict(self.parent)
-
     def get_all(self):
-        """Return a copy of the complete context as dict."""
+        """Return a copy of the complete context as dict including the
+        global variables.
+        """
         return dict(self.parent, **self.vars)
-
-    def clone(self):
-        """Return a copy of the context without the locals."""
-        return self.__class__(self.environment, self.parent,
-                              self.name, self.blocks)
 
     def __contains__(self, name):
         return name in self.vars or name in self.parent

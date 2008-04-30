@@ -9,14 +9,14 @@
     :license: BSD, see LICENSE for more details.
 """
 import sys
+from jinja2.defaults import *
 from jinja2.lexer import Lexer
 from jinja2.parser import Parser
 from jinja2.optimizer import optimize
 from jinja2.compiler import generate
 from jinja2.runtime import Undefined, TemplateContext, concat
 from jinja2.debug import translate_exception
-from jinja2.utils import import_string, LRUCache, Markup
-from jinja2.defaults import DEFAULT_FILTERS, DEFAULT_TESTS, DEFAULT_NAMESPACE
+from jinja2.utils import import_string, LRUCache, Markup, missing
 
 
 # for direct template usage we have up to ten living environments
@@ -39,29 +39,35 @@ def get_spontaneous_environment(*args):
     return env
 
 
-def template_from_code(environment, code, globals, uptodate=None,
-                       template_class=None):
-    """Generate a new template object from code.  It's used in the
-    template constructor and the loader `load` implementation.
+def create_cache(size):
+    """Return the cache class for the given size."""
+    if size == 0:
+        return None
+    if size < 0:
+        return {}
+    return LRUCache(size)
+
+
+def load_extensions(environment, extensions):
+    """Load the extensions from the list and bind it to the environment.
+    Returns a new list of instanciated environments.
     """
-    t = object.__new__(template_class or environment.template_class)
-    namespace = {
-        'environment':          environment,
-        '__jinja_template__':   t
-    }
-    exec code in namespace
-    t.environment = environment
-    t.name = namespace['name']
-    t.filename = code.co_filename
-    t.root_render_func = namespace['root']
-    t.blocks = namespace['blocks']
-    t.globals = globals
+    result = []
+    for extension in extensions:
+        if isinstance(extension, basestring):
+            extension = import_string(extension)
+        result.append(extension(environment))
+    return result
 
-    # debug and loader helpers
-    t._debug_info = namespace['debug_info']
-    t._uptodate = uptodate
 
-    return t
+def _environment_sanity_check(environment):
+    """Perform a sanity check on the environment."""
+    assert issubclass(environment.undefined, Undefined), 'undefined must ' \
+           'be a subclass of undefined because filters depend on it.'
+    assert environment.block_start_string != \
+           environment.variable_start_string != \
+           environment.comment_start_string, 'block, variable and comment ' \
+           'start strings must be different'
 
 
 class Environment(object):
@@ -118,6 +124,20 @@ class Environment(object):
 
     `loader`
         The template loader for this environment.
+
+    `cache_size`
+        The size of the cache.  Per default this is ``50`` which means that if
+        more than 50 templates are loaded the loader will clean out the least
+        recently used template.  If the cache size is set to ``0`` templates are
+        recompiled all the time, if the cache size is ``-1`` the cache will not
+        be cleaned.
+
+    `auto_reload`
+        Some loaders load templates from locations where the template sources
+        may change (ie: file system or database).  If `auto_reload` is set to
+        `True` (default) every time a template is requested the loader checks
+        if the source changed and if yes, it will reload the template.  For
+        higher performance it's possible to disable that.
     """
 
     #: if this environment is sandboxed.  Modifying this variable won't make
@@ -125,25 +145,30 @@ class Environment(object):
     #: have a look at jinja2.sandbox
     sandboxed = False
 
+    #: True if the environment is just an overlay
+    overlay = False
+
     #: shared environments have this set to `True`.  A shared environment
     #: must not be modified
     shared = False
 
     def __init__(self,
-                 block_start_string='{%',
-                 block_end_string='%}',
-                 variable_start_string='{{',
-                 variable_end_string='}}',
-                 comment_start_string='{#',
-                 comment_end_string='#}',
-                 line_statement_prefix=None,
+                 block_start_string=BLOCK_START_STRING,
+                 block_end_string=BLOCK_END_STRING,
+                 variable_start_string=VARIABLE_START_STRING,
+                 variable_end_string=VARIABLE_END_STRING,
+                 comment_start_string=COMMENT_START_STRING,
+                 comment_end_string=COMMENT_END_STRING,
+                 line_statement_prefix=LINE_STATEMENT_PREFIX,
                  trim_blocks=False,
                  extensions=(),
                  optimized=True,
                  undefined=Undefined,
                  finalize=None,
                  autoescape=False,
-                 loader=None):
+                 loader=None,
+                 cache_size=50,
+                 auto_reload=True):
         # !!Important notice!!
         #   The constructor accepts quite a few arguments that should be
         #   passed by keyword rather than position.  However it's important to
@@ -153,14 +178,7 @@ class Environment(object):
         #       -   unittests
         #   If parameter changes are required only add parameters at the end
         #   and don't change the arguments (or the defaults!) of the arguments
-        #   up to (but excluding) loader.
-
-        # santity checks
-        assert issubclass(undefined, Undefined), 'undefined must be ' \
-               'a subclass of undefined because filters depend on it.'
-        assert block_start_string != variable_start_string != \
-               comment_start_string, 'block, variable and comment ' \
-               'start strings must be different'
+        #   existing already.
 
         # lexer / parser information
         self.block_start_string = block_start_string
@@ -185,16 +203,60 @@ class Environment(object):
 
         # set the loader provided
         self.loader = loader
-
-        # create lexer
-        self.lexer = Lexer(self)
+        self.cache = create_cache(cache_size)
+        self.auto_reload = auto_reload
 
         # load extensions
-        self.extensions = []
-        for extension in extensions:
-            if isinstance(extension, basestring):
-                extension = import_string(extension)
-            self.extensions.append(extension(self))
+        self.extensions = load_extensions(self, extensions)
+
+        _environment_sanity_check(self)
+
+    def overlay(self, block_start_string=missing, block_end_string=missing,
+                variable_start_string=missing, variable_end_string=missing,
+                comment_start_string=missing, comment_end_string=missing,
+                line_statement_prefix=missing, trim_blocks=missing,
+                extensions=missing, optimized=missing, undefined=missing,
+                finalize=missing, autoescape=missing, loader=missing,
+                cache_size=missing, auto_reload=missing):
+        """Create a new overlay environment that shares all the data with the
+        current environment except of cache and the overriden attributes.
+        Extensions cannot be removed for a overlayed environment.  A overlayed
+        environment automatically gets all the extensions of the environment it
+        is linked to plus optional extra extensions.
+
+        Creating overlays should happen after the initial environment was set
+        up completely.  Not all attributes are truly linked, some are just
+        copied over so modifications on the original environment may not shine
+        through.
+        """
+        args = dict(locals())
+        del args['self'], args['cache_size'], args['extensions']
+
+        rv = object.__new__(self.__class__)
+        rv.__dict__.update(self.__dict__)
+        rv.overlay = True
+        rv.linked_to = self
+
+        for key, value in args.iteritems():
+            if value is not missing:
+                setattr(rv, key, value)
+
+        if cache_size is not missing:
+            rv.cache = create_cache(cache_size)
+
+        rv.extensions = []
+        for extension in self.extensions:
+            rv.extensions.append(extension.bind(self))
+        if extensions is not missing:
+            rv.extensions.extend(load_extensions(extensions))
+
+        _environment_sanity_check(rv)
+        return rv
+
+    @property
+    def lexer(self):
+        """Return a fresh lexer for the environment."""
+        return Lexer(self)
 
     def subscribe(self, obj, argument):
         """Get an item or attribute of an object."""
@@ -279,15 +341,26 @@ class Environment(object):
             raise TypeError('no loader for this environment specified')
         if parent is not None:
             name = self.join_path(name, parent)
-        return self.loader.load(self, name, self.make_globals(globals))
+
+        if self.cache is not None:
+            template = self.cache.get(name)
+            if template is not None and (not self.auto_reload or \
+                                         template.is_up_to_date):
+                return template
+
+        template = self.loader.load(self, name, self.make_globals(globals))
+        if self.cache is not None:
+            self.cache[name] = template
+        return template
 
     def from_string(self, source, globals=None, template_class=None):
         """Load a template from a string.  This parses the source given and
         returns a :class:`Template` object.
         """
         globals = self.make_globals(globals)
-        return template_from_code(self, self.compile(source, globals=globals),
-                                  globals, None, template_class)
+        cls = template_class or self.template_class
+        return cls.from_code(self, self.compile(source, globals=globals),
+                             globals, None)
 
     def make_globals(self, d):
         """Return a dict for the globals."""
@@ -345,8 +418,32 @@ class Template(object):
             block_start_string, block_end_string, variable_start_string,
             variable_end_string, comment_start_string, comment_end_string,
             line_statement_prefix, trim_blocks, tuple(extensions), optimized,
-            undefined, finalize, autoescape)
+            undefined, finalize, autoescape, None, 0, False)
         return env.from_string(source, template_class=cls)
+
+    @classmethod
+    def from_code(cls, environment, code, globals, uptodate=None):
+        """Creates a template object from compiled code and the globals.  This
+        is used by the loaders and environment to create a template object.
+        """
+        t = object.__new__(cls)
+        namespace = {
+            'environment':          environment,
+            '__jinja_template__':   t
+        }
+        exec code in namespace
+        t.environment = environment
+        t.name = namespace['name']
+        t.filename = code.co_filename
+        t.root_render_func = namespace['root']
+        t.blocks = namespace['blocks']
+        t.globals = globals
+
+        # debug and loader helpers
+        t._debug_info = namespace['debug_info']
+        t._uptodate = uptodate
+
+        return t
 
     def render(self, *args, **kwargs):
         """This method accepts the same arguments as the `dict` constructor:

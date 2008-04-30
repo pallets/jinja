@@ -5,12 +5,15 @@
 
     Jinja loader classes.
 
+    XXX: move caching from the loaders to environment.get_template and add
+    environment overlays that allow to redefine escaping and other things but
+    shared the globals and filter mappings.
+
     :copyright: 2008 by Armin Ronacher.
     :license: BSD, see LICENSE for more details.
 """
 from os import path
 from jinja2.exceptions import TemplateNotFound
-from jinja2.environment import template_from_code
 from jinja2.utils import LRUCache
 
 
@@ -57,15 +60,6 @@ class BaseLoader(object):
                 return source, path, lambda: mtime != getmtime(path)
     """
 
-    def __init__(self, cache_size=50, auto_reload=True):
-        if cache_size == 0:
-            self.cache = None
-        elif cache_size < 0:
-            self.cache = {}
-        else:
-            self.cache = LRUCache(cache_size)
-        self.auto_reload = auto_reload
-
     def get_source(self, environment, template):
         """Get the template source, filename and reload helper for a template.
         It's passed the environment and template name and has to return a
@@ -95,19 +89,10 @@ class BaseLoader(object):
         """
         if globals is None:
             globals = {}
-
-        if self.cache is not None:
-            template = self.cache.get(name)
-            if template is not None and (not self.auto_reload or \
-                                         template.is_up_to_date):
-                return template
-
         source, filename, uptodate = self.get_source(environment, name)
         code = environment.compile(source, name, filename, globals)
-        template = template_from_code(environment, code, globals, uptodate)
-        if self.cache is not None:
-            self.cache[name] = template
-        return template
+        return environment.template_class.from_code(environment, code,
+                                                    globals, uptodate)
 
 
 class FileSystemLoader(BaseLoader):
@@ -125,9 +110,7 @@ class FileSystemLoader(BaseLoader):
     by setting the `encoding` parameter to something else.
     """
 
-    def __init__(self, searchpath, encoding='utf-8', cache_size=50,
-                 auto_reload=True):
-        BaseLoader.__init__(self, cache_size, auto_reload)
+    def __init__(self, searchpath, encoding='utf-8'):
         if isinstance(searchpath, basestring):
             searchpath = [searchpath]
         self.searchpath = list(searchpath)
@@ -165,8 +148,7 @@ class PackageLoader(BaseLoader):
     """
 
     def __init__(self, package_name, package_path='templates',
-                 encoding='utf-8', cache_size=50, auto_reload=True):
-        BaseLoader.__init__(self, cache_size, auto_reload)
+                 encoding='utf-8'):
         from pkg_resources import DefaultProvider, ResourceManager, get_provider
         provider = get_provider(package_name)
         self.encoding = encoding
@@ -201,8 +183,7 @@ class DictLoader(BaseLoader):
     Because auto reloading is rarely useful this is disabled per default.
     """
 
-    def __init__(self, mapping, cache_size=50, auto_reload=False):
-        BaseLoader.__init__(self, cache_size, auto_reload)
+    def __init__(self, mapping):
         self.mapping = mapping
 
     def get_source(self, environment, template):
@@ -230,8 +211,7 @@ class FunctionLoader(BaseLoader):
     return value.
     """
 
-    def __init__(self, load_func, cache_size=50, auto_reload=True):
-        BaseLoader.__init__(self, cache_size, auto_reload)
+    def __init__(self, load_func):
         self.load_func = load_func
 
     def get_source(self, environment, template):
@@ -245,9 +225,9 @@ class FunctionLoader(BaseLoader):
 
 class PrefixLoader(BaseLoader):
     """A loader that is passed a dict of loaders where each loader is bound
-    to a prefix.  The caching is independent of the actual loaders so the
-    per loader cache settings are ignored.  The prefix is delimited from the
-    template by a slash:
+    to a prefix.  The prefix is delimited from the template by a slash per
+    default, which can be changed by setting the `delimiter` argument to
+    something else.
 
     >>> loader = PrefixLoader({
     ...     'app1':     PackageLoader('mypackage.app1'),
@@ -258,9 +238,7 @@ class PrefixLoader(BaseLoader):
     by loading ``'app2/index.html'`` the file from the second.
     """
 
-    def __init__(self, mapping, delimiter='/', cache_size=50,
-                 auto_reload=True):
-        BaseLoader.__init__(self, cache_size, auto_reload)
+    def __init__(self, mapping, delimiter='/'):
         self.mapping = mapping
         self.delimiter = delimiter
 
@@ -276,8 +254,7 @@ class PrefixLoader(BaseLoader):
 class ChoiceLoader(BaseLoader):
     """This loader works like the `PrefixLoader` just that no prefix is
     specified.  If a template could not be found by one loader the next one
-    is tried.  Like for the `PrefixLoader` the cache settings of the actual
-    loaders don't matter as the choice loader does the caching.
+    is tried.
 
     >>> loader = ChoiceLoader([
     ...     FileSystemLoader('/path/to/user/templates'),
@@ -288,8 +265,7 @@ class ChoiceLoader(BaseLoader):
     from a different location.
     """
 
-    def __init__(self, loaders, cache_size=50, auto_reload=True):
-        BaseLoader.__init__(self, cache_size, auto_reload)
+    def __init__(self, loaders):
         self.loaders = loaders
 
     def get_source(self, environment, template):

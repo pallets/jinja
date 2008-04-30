@@ -137,7 +137,7 @@ latex_preamble = '''
 \definecolor{TitleColor}{rgb}{0.7,0,0}
 \definecolor{InnerLinkColor}{rgb}{0.7,0,0}
 \definecolor{OuterLinkColor}{rgb}{0.8,0,0}
-\definecolor{VerbatimColor}{rgb}{0.98,0.98,0.98}
+\definecolor{VerbatimColor}{rgb}{0.985,0.985,0.985}
 \definecolor{VerbatimBorderColor}{rgb}{0.8,0.8,0.8}
 '''
 

@@ -782,3 +782,24 @@ List of Builtin Tests
 ---------------------
 
 .. jinjatests::
+
+
+List of Global Functions
+------------------------
+
+The following functions are available in the global scope by default:
+
+.. function:: range([start,] stop[, step])
+
+    Return a list containing an arithmetic progression of integers.
+    range(i, j) returns [i, i+1, i+2, ..., j-1]; start (!) defaults to 0.
+    When step is given, it specifies the increment (or decrement).
+    For example, range(4) returns [0, 1, 2, 3].  The end point is omitted!
+    These are exactly the valid indices for a list of 4 elements.
+
+.. function:: lipsum(n=5, html=True, min=20, max=100)
+
+    Generates some lorem ipsum for the template.  Per default five paragraphs
+    with HTML are generated each paragraph between 20 and 100 words.  If html
+    is disabled regular text is returned.  This is useful to generate simple
+    contents for layout testing.

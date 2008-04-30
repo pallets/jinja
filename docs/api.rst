@@ -48,7 +48,7 @@ High Level API
 --------------
 
 .. autoclass:: jinja2.environment.Environment
-    :members: from_string, get_template, join_path
+    :members: from_string, get_template, join_path, overlay
 
     .. attribute:: shared
 
@@ -67,23 +67,33 @@ High Level API
     .. attribute:: filters
 
         A dict of filters for this environment.  As long as no template was
-        loaded it's safe to add new filters or remove old.
+        loaded it's safe to add new filters or remove old.  For custom filters
+        see :ref:`writing-filters`.
 
     .. attribute:: tests
 
         A dict of test funcitons for this environment.  As long as no
-        template way loaded it's safe to modify this dict.
+        template way loaded it's safe to modify this dict.  For custom tests
+        see :ref:`writing-tests`.
 
     .. attribute:: globals
 
         A dict of global variables.  These variables are always available
         in a template and (if the optimizer is enabled) may not be
         override by templates.  As long as no template was loaded it's safe
-        to modify this dict.
+        to modify this dict.  For more details see :ref:`global-namespace`.
 
 
 .. autoclass:: jinja2.Template
     :members: render, stream, generate, module
+
+    .. attribute:: globals
+
+        foo
+
+    .. attribute:: name
+
+        foo
 
 
 .. autoclass:: jinja2.environment.TemplateStream
@@ -110,29 +120,56 @@ disallows all operations beside testing if it's an undefined object.
 .. autoclass:: jinja2.runtime.StrictUndefined
 
 
+The Context
+-----------
+
+.. autoclass:: jinja2.runtime.TemplateContext
+    :members: super, get, get_exported, get_all
+
+    .. attribute:: parent
+
+        A dict of read only, global variables the template looks up.  These
+        can either come from another :class:`TemplateContext`, from the
+        :attr:`Environment.globals` or :attr:`Template.globals`.  It must not
+        be altered.
+
+    .. attribute:: vars
+
+        The template local variables.  This list contains environment and
+        context functions from the :attr:`parent` scope as well as local
+        modifications and exported variables from the template.  The template
+        will modify this dict during template evaluation but filters and
+        context functions are not allowed to modify it.
+
+    .. attribute:: environment
+
+        The environment that loaded the template.
+
+    .. attribute:: exported_vars
+
+        This set contains all the names the template exports.  The values for
+        the names are in the :attr:`vars` dict.  In order to get a copy of the
+        exported variables as dict, :meth:`get_exported` can be used.
+
+    .. attribute:: name
+
+        The load name of the template owning this context.
+
+    .. attribute:: blocks
+
+        A dict with the current mapping of blocks in the template.  The keys
+        in this dict are the names of the blocks, and the values a list of
+        blocks registered.  The last item in each list is the current active
+        block (latest in the inheritance chain).
+
+
 Loaders
 -------
 
 Loaders are responsible for loading templates from a resource such as the
-file system and for keeping the compiled modules in memory.  These work like
-Python's `sys.modules` which keeps the imported templates in memory.  Unlike
-`sys.modules` however this cache is limited in size by default and templates
-are automatically reloaded.  Each loader that extends :class:`BaseLoader`
-supports this caching and accepts two parameters to configure it:
-
-`cache_size`
-    The size of the cache.  Per default this is ``50`` which means that if
-    more than 50 templates are loaded the loader will clean out the least
-    recently used template.  If the cache size is set to ``0`` templates are
-    recompiled all the time, if the cache size is ``-1`` the cache will not
-    be cleaned.
-
-`auto_reload`
-    Some loaders load templates from locations where the template sources
-    may change (ie: file system or database).  If `auto_reload` is set to
-    `True` (default) every time a template is requested the loader checks
-    if the source changed and if yes, it will reload the template.  For
-    higher performance it's possible to disable that.
+file system.  The environment will keep the compiled modules in memory like
+Python's `sys.modules`.  Unlike `sys.modules` however this cache is limited in
+size by default and templates are automatically reloaded.
 
 .. autoclass:: jinja2.loaders.FileSystemLoader
 
@@ -189,3 +226,109 @@ Exceptions
 .. autoclass:: jinja2.exceptions.TemplateSyntaxError
 
 .. autoclass:: jinja2.exceptions.TemplateAssertionError
+
+
+.. _writing-filters:
+
+Custom Filters
+--------------
+
+Custom filters are just regular Python functions that take the left side of
+the filter as first argument and the the arguments passed to the filter as
+extra arguments or keyword arguments.
+
+For example in the filter ``{{ 42|myfilter(23) }}`` the function would be
+called with ``myfilter(42, 23)``.  Here for example a simple filter that can
+be applied to datetime objects to format them::
+
+    def datetimeformat(value, format='%H:%M / %d-%m-%Y'):
+        return value.strftime(format)
+
+You can register it on the template environment by updating the
+:attr:`~Environment.filters` dict on the environment::
+
+    environment.filters['datetimeformat'] = datetimeformat
+
+Inside the template it can then be used as follows:
+
+.. sourcecode:: jinja
+
+    written on: {{ article.pub_date|datetimeformat }}
+    publication date: {{ article.pub_date|datetimeformat('%d-%m-%Y') }}
+
+Filters can also be passed the current template context or environment.  This
+is useful if a filters wants to return an undefined value or check the current
+:attr:`~Environment.autoescape` setting.  For this purpose two decorators
+exist: :func:`environmentfilter` and :func:`contextfilter`.
+
+Here a small example filter that breaks a text into HTML line breaks and
+paragraphs and marks the return value as safe HTML string if autoescaping is
+enabled::
+
+    import re
+    from jinja2 import environmentfilter, Markup, escape
+
+    _paragraph_re = re.compile(r'(?:\r\n|\r|\n){2,}')
+
+    @environmentfilter
+    def nl2br(environment, value):
+        result = u'\n\n'.join(u'<p>%s</p>' % p.replace('\n', '<br>\n')
+                              for p in _paragraph_re.split(escape(value)))
+        if environment.autoescape:
+            result = Markup(result)
+        return result
+
+Context filters work the same just that the first argument is the current
+active :class:`TemplateContext` rather then the environment.
+
+
+.. _writing-tests:
+
+Custom Tests
+------------
+
+Tests work like filters just that there is no way for a filter to get access
+to the environment or context and that they can't be chained.  The return
+value of a filter should be `True` or `False`.  The purpose of a filter is to
+give the template designers the possibility to perform type and conformability
+checks.
+
+Here a simple filter that checks if a variable is a prime number::
+
+    import math
+
+    def is_prime(n):
+        if n == 2:
+            return True
+        for i in xrange(2, int(math.ceil(math.sqrt(n))) + 1):
+            if n % i == 0:
+                return False
+        return True
+        
+
+You can register it on the template environment by updating the
+:attr:`~Environment.tests` dict on the environment::
+
+    environment.tests['prime'] = is_prime
+
+A template designer can then use the test like this:
+
+.. sourcecode:: jinja
+
+    {% if 42 is prime %}
+        42 is a prime number
+    {% else %}
+        42 is not a prime number
+    {% endif %}
+
+
+.. _global-namespace:
+
+The Global Namespace
+--------------------
+
+Variables stored in the :attr:`Environment.globals` or :attr:`Template.globals`
+dicts are special as they are available for imported templates too and will be
+used by the optimizer in future releases to evaluates parts of the template at
+compile time.  This is the place where you can put variables and functions
+that should be available all the time.

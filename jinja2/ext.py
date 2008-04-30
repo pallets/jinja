@@ -26,13 +26,26 @@ GETTEXT_FUNCTIONS = ('_', 'gettext', 'ngettext')
 
 
 class Extension(object):
-    """Instances of this class store parser extensions."""
+    """Extensions can be used to add extra functionality to the Jinja template
+    system at the parser level.  This is a supported but currently
+    undocumented interface.  Custom extensions are bound to an environment but
+    may not store environment specific data on `self`.  The reason for this is
+    that an extension can be bound to another environment (for overlays) by
+    creating a copy and reassigning the `environment` attribute.
+    """
 
     #: if this extension parses this is the list of tags it's listening to.
     tags = set()
 
     def __init__(self, environment):
         self.environment = environment
+
+    def bind(self, environment):
+        """Create a copy of this extension bound to another environment."""
+        rv = object.__new__(self.__class__)
+        rv.__dict__.update(self.__dict__)
+        rv.environment = environment
+        return rv
 
     def parse(self, parser):
         """Called if one of the tags matched."""
@@ -289,8 +302,10 @@ def babel_extract(fileobj, keywords, comment_tags, options):
         options.get('trim_blocks', '').lower() in ('1', 'on', 'yes', 'true'),
         tuple(extensions),
         # fill with defaults so that environments are shared
-        # with other spontaneus environments.
-        True, Undefined, None, False
+        # with other spontaneus environments.  The rest of the
+        # arguments are optimizer, undefined, finalize, autoescape,
+        # loader, cache size and auto reloading setting
+        True, Undefined, None, False, None, 0, False
     )
 
     node = environment.parse(fileobj.read().decode(encoding))

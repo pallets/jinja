@@ -63,8 +63,8 @@ class GlobalLoader(BaseLoader):
             raise TemplateNotFound(name)
 
 
-loader = GlobalLoader(cache_size=0)
-simple_env = Environment(trim_blocks=True, loader=loader)
+loader = GlobalLoader()
+simple_env = Environment(trim_blocks=True, loader=loader, cache_size=0)
 
 
 class Module(py.test.collect.Module):

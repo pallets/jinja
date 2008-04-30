@@ -50,3 +50,13 @@ from jinja2.exceptions import TemplateError, UndefinedError, \
 # decorators and public utilities
 from jinja2.filters import environmentfilter, contextfilter
 from jinja2.utils import Markup, escape, environmentfunction, contextfunction
+
+__all__ = [
+    'Environment', 'Template', 'BaseLoader', 'FileSystemLoader',
+    'PackageLoader', 'DictLoader', 'FunctionLoader', 'PrefixLoader',
+    'ChoiceLoader', 'Undefined', 'DebugUndefined', 'StrictUndefined',
+    'TemplateError', 'UndefinedError', 'TemplateNotFound',
+    'TemplateSyntaxError', 'TemplateAssertionError', 'environmentfilter',
+    'contextfilter', 'Markup', 'escape', 'environmentfunction',
+    'contextfunction'
+]

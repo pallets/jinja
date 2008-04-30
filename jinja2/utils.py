@@ -25,6 +25,10 @@ _punctuation_re = re.compile(
 _simple_email_re = re.compile(r'^\S+@[a-zA-Z0-9._-]+\.[a-zA-Z0-9._-]+$')
 
 
+# special singleton representing missing values for the runtime
+missing = type('MissingType', (), {'__repr__': lambda x: 'missing'})()
+
+
 def contextfunction(f):
     """This decorator can be used to mark a callable as context callable.  A
     context callable is passed the active context as first argument if it
