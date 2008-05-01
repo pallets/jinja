@@ -29,7 +29,9 @@ class Token(tuple):
             return self.type
         elif self.type in reverse_operators:
             return reverse_operators[self.type]
-        return '%s:%s' % (self.type, self.value)
+        elif self.type is 'name':
+            return self.value
+        return self.type
 
     def test(self, expr):
         """Test a token against a token expression.  This can either be a
@@ -147,8 +149,15 @@ class TokenStream(object):
     def expect(self, expr):
         """Expect a given token type and return it"""
         if not self.current.test(expr):
+            if ':' in expr:
+                expr = expr.split(':')[1]
+            if self.current.type is 'eof':
+                raise TemplateSyntaxError('unexpected end of template, '
+                                          'expected %r.' % expr,
+                                          self.current.lineno,
+                                          self.filename)
             raise TemplateSyntaxError("expected token %r, got %r" %
-                                      (expr, self.current),
+                                      (expr, str(self.current)),
                                       self.current.lineno,
                                       self.filename)
         try:

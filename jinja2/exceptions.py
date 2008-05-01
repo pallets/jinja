@@ -29,11 +29,11 @@ class TemplateNotFound(IOError, LookupError, TemplateError):
 class TemplateSyntaxError(TemplateError):
     """Raised to tell the user that there is a problem with the template."""
 
-    def __init__(self, message, lineno, name):
+    def __init__(self, message, lineno, filename):
         TemplateError.__init__(self, '%s (line %s)' % (message, lineno))
         self.message = message
         self.lineno = lineno
-        self.name = name
+        self.filename = filename
 
 
 class TemplateAssertionError(TemplateSyntaxError):

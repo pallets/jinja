@@ -15,7 +15,8 @@ from jinja2.parser import Parser
 from jinja2.optimizer import optimize
 from jinja2.compiler import generate
 from jinja2.runtime import Undefined, Context, concat
-from jinja2.debug import translate_exception
+from jinja2.debug import translate_exception, translate_syntax_error
+from jinja2.exceptions import TemplateSyntaxError
 from jinja2.utils import import_string, LRUCache, Markup, missing
 
 
@@ -271,13 +272,17 @@ class Environment(object):
             except (TypeError, LookupError):
                 return self.undefined(obj=obj, name=argument)
 
-    def parse(self, source, name=None):
+    def parse(self, source, filename=None):
         """Parse the sourcecode and return the abstract syntax tree.  This
         tree of nodes is used by the compiler to convert the template into
         executable source- or bytecode.  This is useful for debugging or to
         extract information from templates.
         """
-        return Parser(self, source, name).parse()
+        try:
+            return Parser(self, source, filename).parse()
+        except TemplateSyntaxError, e:
+            exc_type, exc_value, tb = translate_syntax_error(e)
+            raise exc_type, exc_value, tb
 
     def lex(self, source, name=None):
         """Lex the given sourcecode and return a generator that yields
@@ -303,7 +308,7 @@ class Environment(object):
         mainly used internally.
         """
         if isinstance(source, basestring):
-            source = self.parse(source, name)
+            source = self.parse(source, filename)
         if self.optimized:
             node = optimize(source, self, globals or {})
         source = generate(node, self, name, filename)
