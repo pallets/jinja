@@ -284,7 +284,6 @@ class Environment(object):
         try:
             return Parser(self, source, filename).parse()
         except TemplateSyntaxError, e:
-            raise
             exc_type, exc_value, tb = translate_syntax_error(e)
             raise exc_type, exc_value, tb
 
