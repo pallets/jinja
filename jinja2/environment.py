@@ -5,7 +5,7 @@
 
     Provides a class that holds runtime and parsing time options.
 
-    :copyright: 2007 by Armin Ronacher.
+    :copyright: 2008 by Armin Ronacher.
     :license: BSD, see LICENSE for more details.
 """
 import sys
@@ -14,7 +14,7 @@ from jinja2.lexer import Lexer
 from jinja2.parser import Parser
 from jinja2.optimizer import optimize
 from jinja2.compiler import generate
-from jinja2.runtime import Undefined, TemplateContext, concat
+from jinja2.runtime import Undefined, Context, concat
 from jinja2.debug import translate_exception
 from jinja2.utils import import_string, LRUCache, Markup, missing
 
@@ -68,6 +68,7 @@ def _environment_sanity_check(environment):
            environment.variable_start_string != \
            environment.comment_start_string, 'block, variable and comment ' \
            'start strings must be different'
+    return environment
 
 
 class Environment(object):
@@ -147,6 +148,9 @@ class Environment(object):
 
     #: True if the environment is just an overlay
     overlay = False
+
+    #: the environment this environment is linked to if it is an overlay
+    linked_to = None
 
     #: shared environments have this set to `True`.  A shared environment
     #: must not be modified
@@ -250,8 +254,7 @@ class Environment(object):
         if extensions is not missing:
             rv.extensions.extend(load_extensions(extensions))
 
-        _environment_sanity_check(rv)
-        return rv
+        return _environment_sanity_check(rv)
 
     @property
     def lexer(self):
@@ -456,22 +459,16 @@ class Template(object):
         This will return the rendered template as unicode string.
         """
         try:
-            return concat(self.generate(*args, **kwargs))
+            return concat(self._generate(*args, **kwargs))
         except:
-            # hide the `generate` frame
-            exc_type, exc_value, tb = sys.exc_info()
-            raise exc_type, exc_value, tb.tb_next
+            exc_type, exc_value, tb = translate_exception(sys.exc_info())
+            raise exc_type, exc_value, tb
 
     def stream(self, *args, **kwargs):
         """Works exactly like :meth:`generate` but returns a
         :class:`TemplateStream`.
         """
-        try:
-            return TemplateStream(self.generate(*args, **kwargs))
-        except:
-            # hide the `generate` frame
-            exc_type, exc_value, tb = sys.exc_info()
-            raise exc_type, exc_value, tb.tb_next
+        return TemplateStream(self.generate(*args, **kwargs))
 
     def generate(self, *args, **kwargs):
         """For very large templates it can be useful to not render the whole
@@ -481,6 +478,14 @@ class Template(object):
 
         It accepts the same arguments as :meth:`render`.
         """
+        try:
+            for item in self._generate(*args, **kwargs):
+                yield item
+        except:
+            exc_type, exc_value, tb = translate_exception(sys.exc_info())
+            raise exc_type, exc_value, tb
+
+    def _generate(self, *args, **kwargs):
         # assemble the context
         context = dict(*args, **kwargs)
 
@@ -498,12 +503,7 @@ class Template(object):
                                      'will lead to unexpected results.' %
                     (plural, ', '.join(overrides), plural or ' a', plural))
 
-        try:
-            for event in self.root_render_func(self.new_context(context)):
-                yield event
-        except:
-            exc_type, exc_value, tb = translate_exception(sys.exc_info())
-            raise exc_type, exc_value, tb
+        return self.root_render_func(self.new_context(context))
 
     def new_context(self, vars=None, shared=False):
         """Create a new template context for this template.  The vars
@@ -519,8 +519,7 @@ class Template(object):
             parent = vars
         else:
             parent = dict(self.globals, **vars)
-        return TemplateContext(self.environment, parent, self.name,
-                               self.blocks)
+        return Context(self.environment, parent, self.name, self.blocks)
 
     @property
     def module(self):

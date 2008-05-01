@@ -16,8 +16,8 @@ from jinja2.exceptions import UndefinedError, TemplateRuntimeError
 
 
 # these variables are exported to the template runtime
-__all__ = ['LoopContext', 'TemplateContext', 'TemplateReference', 'Macro',
-           'TemplateRuntimeError', 'Markup', 'missing', 'concat', 'escape',
+__all__ = ['LoopContext', 'Context', 'TemplateReference', 'Macro', 'Markup',
+           'TemplateRuntimeError', 'missing', 'concat', 'escape',
            'markup_join', 'unicode_join']
 
 
@@ -58,7 +58,7 @@ def unicode_join(*args):
     return concat(imap(unicode, args))
 
 
-class TemplateContext(object):
+class Context(object):
     """The template context holds the variables of a template.  It stores the
     values passed to the template and also the names the template exports.
     Creating instances is neither supported nor useful as it's created
@@ -105,7 +105,8 @@ class TemplateContext(object):
                 raise IndexError()
         except LookupError:
             return self.environment.undefined('there is no parent block '
-                                              'called %r.' % name)
+                                              'called %r.' % name,
+                                              name='super')
         wrap = self.environment.autoescape and Markup or (lambda x: x)
         render = lambda: wrap(concat(blocks[pos](self)))
         render.__name__ = render.name = name
@@ -239,22 +240,19 @@ class Macro(object):
         self.caller = caller
 
     def __call__(self, *args, **kwargs):
-        if not self.catch_varargs and len(args) > self._argument_count:
-            raise TypeError('macro %r takes not more than %d argument(s)' %
-                            (self.name, len(self.arguments)))
         arguments = []
         for idx, name in enumerate(self.arguments):
             try:
                 value = args[idx]
-            except IndexError:
+            except:
                 try:
                     value = kwargs.pop(name)
-                except KeyError:
+                except:
                     try:
                         value = self.defaults[idx - self._argument_count]
-                    except IndexError:
+                    except:
                         value = self._environment.undefined(
-                            'parameter %r was not provided' % name)
+                            'parameter %r was not provided' % name, name=name)
             arguments.append(value)
 
         # it's important that the order of these arguments does not change
@@ -263,7 +261,8 @@ class Macro(object):
         if self.caller:
             caller = kwargs.pop('caller', None)
             if caller is None:
-                caller = self._environment.undefined('No caller defined')
+                caller = self._environment.undefined('No caller defined',
+                                                     name='caller')
             arguments.append(caller)
         if self.catch_kwargs:
             arguments.append(kwargs)
@@ -272,6 +271,9 @@ class Macro(object):
                             (self.name, iter(kwargs).next()))
         if self.catch_varargs:
             arguments.append(args[self._argument_count:])
+        elif len(args) > self._argument_count:
+            raise TypeError('macro %r takes not more than %d argument(s)' %
+                            (self.name, len(self.arguments)))
         return self._func(*arguments)
 
     def __repr__(self):

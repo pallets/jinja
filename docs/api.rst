@@ -123,13 +123,13 @@ disallows all operations beside testing if it's an undefined object.
 The Context
 -----------
 
-.. autoclass:: jinja2.runtime.TemplateContext
+.. autoclass:: jinja2.runtime.Context
     :members: super, get, get_exported, get_all
 
     .. attribute:: parent
 
         A dict of read only, global variables the template looks up.  These
-        can either come from another :class:`TemplateContext`, from the
+        can either come from another :class:`Context`, from the
         :attr:`Environment.globals` or :attr:`Template.globals`.  It must not
         be altered.
 
@@ -279,7 +279,7 @@ enabled::
         return result
 
 Context filters work the same just that the first argument is the current
-active :class:`TemplateContext` rather then the environment.
+active :class:`Context` rather then the environment.
 
 
 .. _writing-tests:

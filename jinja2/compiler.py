@@ -740,7 +740,8 @@ class CodeGenerator(NodeVisitor):
             self.writeline('if l_%s is missing:' % alias)
             self.indent()
             self.writeline('l_%s = environment.undefined(%r %% '
-                           'included_template.name)' %
+                           'included_template.name, '
+                           'name=included_template.name)' %
                            (alias, 'the template %r does not export '
                             'the requested name ' + repr(name)))
             self.outdent()
@@ -770,11 +771,11 @@ class CodeGenerator(NodeVisitor):
         # the expression pointing to the parent loop.  We make the
         # undefined a bit more debug friendly at the same time.
         parent_loop = 'loop' in aliases and aliases['loop'] \
-                      or "environment.undefined(%r)" % "'loop' is undefined. " \
-                         'the filter section of a loop as well as the ' \
-                         'else block doesn\'t have access to the special ' \
-                         "'loop' variable of the current loop.  Because " \
-                         'there is no parent loop it\'s undefined.'
+                      or "environment.undefined(%r, name='loop')" % "'loop' " \
+                         'is undefined. "the filter section of a loop as well ' \
+                         'as the else block doesn\'t have access to the ' \
+                         "special 'loop' variable of the current loop.  " \
+                         "Because there is no parent loop it's undefined."
 
         # if we have an extened loop and a node test, we filter in the
         # "outer frame".

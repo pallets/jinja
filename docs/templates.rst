@@ -797,6 +797,19 @@ The following functions are available in the global scope by default:
     For example, range(4) returns [0, 1, 2, 3].  The end point is omitted!
     These are exactly the valid indices for a list of 4 elements.
 
+    This is useful to repeat a template block multiple times for example
+    to fill a list.  Imagine you have 7 users in the list but you want to
+    render three empty items to enforce a height with CSS::
+
+        <ul>
+        {% for user in users %}
+            <li>{{ user.username }}</li>
+        {% endfor %}
+        {% for number in range(10 - users|count) %}
+            <li class="empty"><span>...</span></li>
+        {% endfor %}
+        </ul>
+
 .. function:: lipsum(n=5, html=True, min=20, max=100)
 
     Generates some lorem ipsum for the template.  Per default five paragraphs
