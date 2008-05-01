@@ -10,6 +10,10 @@
 """
 import re
 import string
+try:
+    from thread import allocate_lock
+except ImportError:
+    from dummy_thread import allocate_lock
 from collections import deque
 from copy import deepcopy
 from itertools import imap
@@ -308,6 +312,7 @@ class LRUCache(object):
         self._pop = self._queue.pop
         if hasattr(self._queue, 'remove'):
             self._remove = self._queue.remove
+        self._wlock = allocate_lock()
         self._append = self._queue.append
 
     def _remove(self, obj):
@@ -326,23 +331,29 @@ class LRUCache(object):
 
     def get(self, key, default=None):
         """Return an item from the cache dict or `default`"""
-        if key in self:
+        try:
             return self[key]
-        return default
+        except KeyError:
+            return default
 
     def setdefault(self, key, default=None):
         """Set `default` if the key is not in the cache otherwise
         leave unchanged. Return the value of this key.
         """
-        if key in self:
+        try:
             return self[key]
-        self[key] = default
-        return default
+        except KeyError:
+            self[key] = default
+            return default
 
     def clear(self):
         """Clear the cache."""
-        self._mapping.clear()
-        self._queue.clear()
+        self._wlock.acquire()
+        try:
+            self._mapping.clear()
+            self._queue.clear()
+        finally:
+            self._wlock.release()
 
     def __contains__(self, key):
         """Check if a key exists in this cache."""
@@ -374,19 +385,27 @@ class LRUCache(object):
         """Sets the value for an item. Moves the item up so that it
         has the highest priority then.
         """
-        if key in self._mapping:
-            self._remove(key)
-        elif len(self._mapping) == self.capacity:
-            del self._mapping[self._popleft()]
-        self._append(key)
-        self._mapping[key] = value
+        self._wlock.acquire()
+        try:
+            if key in self._mapping:
+                self._remove(key)
+            elif len(self._mapping) == self.capacity:
+                del self._mapping[self._popleft()]
+            self._append(key)
+            self._mapping[key] = value
+        finally:
+            self._wlock.release()
 
     def __delitem__(self, key):
         """Remove an item from the cache dict.
         Raise an `KeyError` if it does not exist.
         """
-        del self._mapping[key]
-        self._remove(key)
+        self._wlock.acquire()
+        try:
+            del self._mapping[key]
+            self._remove(key)
+        finally:
+            self._wlock.release()
 
     def __iter__(self):
         """Iterate over all values in the cache dict, ordered by
