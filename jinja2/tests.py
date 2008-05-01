@@ -22,7 +22,7 @@ def test_odd(value):
 
 
 def test_even(value):
-    """Return true of the variable is even."""
+    """Return true if the variable is even."""
     return value % 2 == 0
 
 

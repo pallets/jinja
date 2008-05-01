@@ -100,7 +100,7 @@ Beside filters there are also so called "tests" available.  Tests can be used
 to test a variable against a common expression.  To test a variable or
 expression you add `is` plus the name of the test after the variable.  For
 example to find out if a variable is defined you can do ``name is defined``
-which will then return true or false depening on if `name` is defined.
+which will then return true or false depending on if `name` is defined.
 
 Tests can accept arguments too.  If the test only takes one argument you can
 leave out the parentheses to group them.  For example the following two
@@ -109,7 +109,7 @@ expressions do the same::
     {% if loop.index is divisibleby 3 %}
     {% if loop.index is divisibleby(3) %}
 
-The :ref:`builtin-tests` below descibes all the builtin tests.
+The :ref:`builtin-tests` below describes all the builtin tests.
 
 
 Comments
@@ -275,7 +275,7 @@ of tainted values so the information if a value is safe or unsafe can get
 lost.  If the information is lost escaping will take place which means that
 you could end up with double escaped contents.
 
-Double escaping is easy to avoid however, just relay on the tools Jinja2
+Double escaping is easy to avoid however, just rely on the tools Jinja2
 provides and don't use builtin Python constructs such as the string modulo
 operator.
 
@@ -298,7 +298,7 @@ in the default syntax.
 For
 ~~~
 
-Loop over each item in a sequece.  For example, to display a list of users
+Loop over each item in a sequence.  For example, to display a list of users
 provided in a variable called `users`::
 
     <h1>Members</h1>
@@ -333,7 +333,7 @@ Inside of a for loop block you can access some special variables:
 |                       | sequences.  See the explanation below.            |
 +-----------------------+---------------------------------------------------+
 
-Within a for-loop, it's psosible to cycle among a list of strings/variables
+Within a for-loop, it's possible to cycle among a list of strings/variables
 each time through the loop by using the special `loop.cycle` helper::
 
     {% for row in rows %}
@@ -399,15 +399,16 @@ If can also be used as :ref:`inline expression <if-expression>` and for
 Macros
 ~~~~~~
 
-Macros comparable with functions in regular programming languages.  They are
-useful to put often used idoms into reusable functions to not repeat yourself.
+Macros are comparable with functions in regular programming languages.  They
+are useful to put often used idioms into reusable functions to not repeat
+yourself.
 
-Macros can be defined in helper templates with then are :ref:`imported <import>`
-or directly in the template where they are used.  There is one big difference
-between those two possibilities.  A macro that is defined in the template where
-it's also used has access to the context passed to the template.  A macro
-defined in another template and then imported can only access variables defined
-there or in the global context.
+Macros can be defined in helper templates which then are :ref:`imported
+<import>` or directly in the template where they are used.  There is one big
+difference between those two possibilities.  A macro that is defined in the
+template where it's also used has access to the context passed to the template.
+A macro defined in another template and then imported can only access variables
+defined there or in the global context.
 
 Here a small example of a macro that renders a form element::
 
@@ -421,13 +422,13 @@ The macro can then be called like a function in the namespace::
     <p>{{ input('username') }}</p>
     <p>{{ input('password', type='password') }}</p>
 
-If the macro was defiend in a different template you have to
+If the macro was defined in a different template you have to
 :ref:`import <import>` it first.
 
 Inside macros you have access to three special variables:
 
 `varargs`
-    If more positional arguments are passed to the macro then accepted by the
+    If more positional arguments are passed to the macro than accepted by the
     macro they end up in the special `varargs` variable as list of values.
 
 `kwargs`
@@ -435,8 +436,8 @@ Inside macros you have access to three special variables:
     arguments are stored in this special variable.
 
 `caller`
-    If the macro was called from a :ref:`call` tag the caller is stored in
-    this variable as macro which can be called.
+    If the macro was called from a :ref:`call<call>` tag the caller is stored
+    in this variable as macro which can be called.
 
 Macros also expose some of their internal details.  The following attributes
 are available on a macro object:
@@ -460,7 +461,7 @@ are available on a macro object:
 
 `caller`
     This is `true` if the macro accesses the special `caller` variable and may
-    be called from a :ref:`call` tag.
+    be called from a :ref:`call<call>` tag.
 
 
 .. _call:
@@ -650,7 +651,7 @@ for Python objects such as strings and numbers.  The following literals exist:
     used to represent items of two or more elements.  See the example above
     for more details.
 
-{'dict': 'of', 'keys': 'and', 'value': 'pairs'}:
+{'dict': 'of', 'key': 'and', 'value': 'pairs'}:
     A dict in Python is a structure that combines keys and values.  Keys must
     be unique and always have exactly one value.  Dicts are rarely used in
     templates, they are useful in some rare cases such as the :func:`xmlattr`

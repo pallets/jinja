@@ -91,6 +91,9 @@ class Environment(object):
     `variable_start_string`
         The string marking the begin of a print statement.
         Defaults to ``'{{'``.
+    
+    `variable_stop_string`
+        The string marking the end of a print statement. Defaults to ``'}}'``.
 
     `comment_start_string`
         The string marking the begin of a comment.  Defaults to ``'{#'``.

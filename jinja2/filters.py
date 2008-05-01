@@ -201,7 +201,7 @@ def do_default(value, default_value=u'', boolean=False):
 def do_join(environment, value, d=u''):
     """Return a string which is the concatenation of the strings in the
     sequence. The separator between elements is an empty string per
-    default, you can define ith with the optional parameter:
+    default, you can define it with the optional parameter:
 
     .. sourcecode:: jinja
 
@@ -242,7 +242,7 @@ def do_center(value, width=80):
 
 @environmentfilter
 def do_first(environment, seq):
-    """Return the frist item of a sequence."""
+    """Return the first item of a sequence."""
     try:
         return iter(seq).next()
     except StopIteration:

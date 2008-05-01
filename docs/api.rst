@@ -72,15 +72,15 @@ High Level API
 
     .. attribute:: tests
 
-        A dict of test funcitons for this environment.  As long as no
-        template way loaded it's safe to modify this dict.  For custom tests
+        A dict of test functions for this environment.  As long as no
+        template was loaded it's safe to modify this dict.  For custom tests
         see :ref:`writing-tests`.
 
     .. attribute:: globals
 
         A dict of global variables.  These variables are always available
         in a template and (if the optimizer is enabled) may not be
-        override by templates.  As long as no template was loaded it's safe
+        overridden by templates.  As long as no template was loaded it's safe
         to modify this dict.  For more details see :ref:`global-namespace`.
 
 

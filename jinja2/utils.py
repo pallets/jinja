@@ -408,14 +408,14 @@ class LRUCache(object):
 try:
     from jinja2._speedups import escape, soft_unicode
 except ImportError:
-    def escape(obj):
+    def escape(s):
         """Convert the characters &, <, >, and " in string s to HTML-safe
         sequences. Use this if you need to display text that might contain
         such characters in HTML.
         """
-        if hasattr(obj, '__html__'):
-            return obj.__html__()
-        return Markup(unicode(obj)
+        if hasattr(s, '__html__'):
+            return s.__html__()
+        return Markup(unicode(s)
             .replace('&', '&amp;')
             .replace('>', '&gt;')
             .replace('<', '&lt;')
