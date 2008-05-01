@@ -47,6 +47,18 @@ def environmentfunction(f):
     return f
 
 
+def clear_caches():
+    """Jinja2 keeps internal caches for environments and lexers.  These are
+    used so that Jinja2 doesn't have to recreate environments and lexers all
+    the time.  Normally you don't have to care about that but if you are
+    messuring memory consumption you may want to clean the caches.
+    """
+    from jinja2.environment import _spontaneous_environments
+    from jinja2.lexer import _lexer_cache
+    _spontaneous_environments.clear()
+    _lexer_cache.clear()
+
+
 def import_string(import_name, silent=False):
     """Imports an object based on a string.  This use useful if you want to
     use import paths as endpoints or something similar.  An import path can

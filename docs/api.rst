@@ -211,6 +211,8 @@ functions to a Jinja2 environment.
     in HTML.  This function will not escaped objects that do have an HTML
     representation such as already escaped data.
 
+.. autofunction:: jinja2.utils.clear_caches
+
 .. autoclass:: jinja2.utils.Markup
 
 

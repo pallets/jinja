@@ -3,7 +3,9 @@
     jinja2.debug
     ~~~~~~~~~~~~
 
-    Implements the debug interface for Jinja.
+    Implements the debug interface for Jinja.  This module does some pretty
+    ugly stuff with the Python traceback system in order to achieve tracebacks
+    with correct line numbers, locals and contents.
 
     :copyright: Copyright 2008 by Armin Ronacher.
     :license: BSD.

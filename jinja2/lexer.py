@@ -23,7 +23,7 @@ from jinja2.utils import LRUCache
 
 # cache for the lexers. Exists in order to be able to have multiple
 # environments with the same lexer
-_lexer_cache = LRUCache(10)
+_lexer_cache = LRUCache(50)
 
 # static regular expressions
 whitespace_re = re.compile(r'\s+(?um)')

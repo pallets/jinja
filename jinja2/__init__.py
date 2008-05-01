@@ -49,7 +49,8 @@ from jinja2.exceptions import TemplateError, UndefinedError, \
 
 # decorators and public utilities
 from jinja2.filters import environmentfilter, contextfilter
-from jinja2.utils import Markup, escape, environmentfunction, contextfunction
+from jinja2.utils import Markup, escape, clear_caches, \
+     environmentfunction, contextfunction
 
 __all__ = [
     'Environment', 'Template', 'BaseLoader', 'FileSystemLoader',
@@ -58,5 +59,5 @@ __all__ = [
     'TemplateError', 'UndefinedError', 'TemplateNotFound',
     'TemplateSyntaxError', 'TemplateAssertionError', 'environmentfilter',
     'contextfilter', 'Markup', 'escape', 'environmentfunction',
-    'contextfunction'
+    'contextfunction', 'clear_caches'
 ]
