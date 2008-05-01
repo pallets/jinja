@@ -154,6 +154,7 @@ def test_function_calls(env):
 
 def test_tuple_expr(env):
     for tmpl in TUPLETEMPLATES:
+        print tmpl
         assert env.from_string(tmpl)
 
 

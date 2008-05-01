@@ -13,11 +13,9 @@ from jinja2 import nodes
 from jinja2.exceptions import TemplateSyntaxError
 
 
-statement_end_tokens = set(['variable_end', 'block_end', 'in'])
 _statement_keywords = frozenset(['for', 'if', 'block', 'extends', 'print',
                                  'macro', 'include', 'from', 'import'])
-_compare_operators = frozenset(['eq', 'ne', 'lt', 'lteq', 'gt', 'gteq', 'in'])
-_tuple_edge_tokens = set(['rparen']) | statement_end_tokens
+_compare_operators = frozenset(['eq', 'ne', 'lt', 'lteq', 'gt', 'gteq'])
 
 
 class Parser(object):
@@ -39,19 +37,30 @@ class Parser(object):
             for tag in extension.tags:
                 self.extensions[tag] = extension.parse
 
+    def is_statement_end(self):
+        """Are we at the end of a statement?"""
+        if self.stream.current.type in ('variable_end', 'block_end'):
+            return True
+        return self.stream.current.test('name:in')
+
+    def is_tuple_end(self):
+        """Are we at the end of a tuple?"""
+        return self.stream.current.type is 'rparen' or self.is_statement_end()
+
     def parse_statement(self):
         """Parse a single statement."""
         token_type = self.stream.current.type
-        if token_type in _statement_keywords:
-            return getattr(self, 'parse_' + token_type)()
-        elif token_type is 'call':
-            return self.parse_call_block()
-        elif token_type is 'filter':
-            return self.parse_filter_block()
-        elif token_type is 'name':
-            ext = self.extensions.get(self.stream.current.value)
-            if ext is not None:
-                return ext(self)
+        if self.stream.current.type is 'name':
+            if self.stream.current.value in _statement_keywords:
+                return getattr(self, 'parse_' + self.stream.current.value)()
+            elif self.stream.current.value == 'call':
+                return self.parse_call_block()
+            elif self.stream.current.value == 'filter':
+                return self.parse_filter_block()
+            else:
+                ext = self.extensions.get(self.stream.current.value)
+                if ext is not None:
+                    return ext(self)
         lineno = self.stream.current.lineno
         expr = self.parse_tuple()
         if self.stream.current.type == 'assign':
@@ -91,41 +100,42 @@ class Parser(object):
 
     def parse_for(self):
         """Parse a for loop."""
-        lineno = self.stream.expect('for').lineno
+        lineno = self.stream.expect('name:for').lineno
         target = self.parse_tuple(simplified=True)
         if not target.can_assign():
             raise TemplateSyntaxError("can't assign to '%s'" %
                                       target.__class__.__name__.lower(),
                                       target.lineno, self.filename)
         target.set_ctx('store')
-        self.stream.expect('in')
+        self.stream.expect('name:in')
         iter = self.parse_tuple(no_condexpr=True)
         test = None
-        if self.stream.current.type is 'if':
+        if self.stream.current.type is 'name:if':
             self.stream.next()
             test = self.parse_expression()
-        body = self.parse_statements(('endfor', 'else'))
-        if self.stream.next().type is 'endfor':
+        body = self.parse_statements(('name:endfor', 'name:else'))
+        if self.stream.next().value == 'endfor':
             else_ = []
         else:
-            else_ = self.parse_statements(('endfor',), drop_needle=True)
+            else_ = self.parse_statements(('name:endfor',), drop_needle=True)
         return nodes.For(target, iter, body, else_, test, lineno=lineno)
 
     def parse_if(self):
         """Parse an if construct."""
-        node = result = nodes.If(lineno=self.stream.expect('if').lineno)
+        node = result = nodes.If(lineno=self.stream.expect('name:if').lineno)
         while 1:
             # TODO: exclude conditional expressions here
             node.test = self.parse_tuple()
-            node.body = self.parse_statements(('elif', 'else', 'endif'))
-            token_type = self.stream.next().type
-            if token_type is 'elif':
+            node.body = self.parse_statements(('name:elif', 'name:else',
+                                               'name:endif'))
+            token = self.stream.next()
+            if token.test('name:elif'):
                 new_node = nodes.If(lineno=self.stream.current.lineno)
                 node.else_ = [new_node]
                 node = new_node
                 continue
-            elif token_type is 'else':
-                node.else_ = self.parse_statements(('endif',),
+            elif token.test('name:else'):
+                node.else_ = self.parse_statements(('name:endif',),
                                                    drop_needle=True)
             else:
                 node.else_ = []
@@ -133,23 +143,23 @@ class Parser(object):
         return result
 
     def parse_block(self):
-        node = nodes.Block(lineno=self.stream.expect('block').lineno)
+        node = nodes.Block(lineno=self.stream.next().lineno)
         node.name = self.stream.expect('name').value
-        node.body = self.parse_statements(('endblock',), drop_needle=True)
+        node.body = self.parse_statements(('name:endblock',), drop_needle=True)
         return node
 
     def parse_extends(self):
-        node = nodes.Extends(lineno=self.stream.expect('extends').lineno)
+        node = nodes.Extends(lineno=self.stream.next().lineno)
         node.template = self.parse_expression()
         return node
 
     def parse_include(self):
-        node = nodes.Include(lineno=self.stream.expect('include').lineno)
+        node = nodes.Include(lineno=self.stream.next().lineno)
         node.template = self.parse_expression()
         return node
 
     def parse_import(self):
-        node = nodes.Import(lineno=self.stream.expect('import').lineno)
+        node = nodes.Import(lineno=self.stream.next().lineno)
         node.template = self.parse_expression()
         self.stream.expect('name:as')
         node.target = self.stream.expect('name').value
@@ -160,9 +170,9 @@ class Parser(object):
         return node
 
     def parse_from(self):
-        node = nodes.FromImport(lineno=self.stream.expect('from').lineno)
+        node = nodes.FromImport(lineno=self.stream.next().lineno)
         node.template = self.parse_expression()
-        self.stream.expect('import')
+        self.stream.expect('name:import')
         node.names = []
         while 1:
             if node.names:
@@ -217,7 +227,7 @@ class Parser(object):
         self.stream.expect('rparen')
 
     def parse_call_block(self):
-        node = nodes.CallBlock(lineno=self.stream.expect('call').lineno)
+        node = nodes.CallBlock(lineno=self.stream.next().lineno)
         if self.stream.current.type is 'lparen':
             self.parse_signature(node)
         else:
@@ -228,17 +238,18 @@ class Parser(object):
         if not isinstance(node.call, nodes.Call):
             raise TemplateSyntaxError('expected call', node.lineno,
                                       self.filename)
-        node.body = self.parse_statements(('endcall',), drop_needle=True)
+        node.body = self.parse_statements(('name:endcall',), drop_needle=True)
         return node
 
     def parse_filter_block(self):
-        node = nodes.FilterBlock(lineno=self.stream.expect('filter').lineno)
+        node = nodes.FilterBlock(lineno=self.stream.next().lineno)
         node.filter = self.parse_filter(None, start_inline=True)
-        node.body = self.parse_statements(('endfilter',), drop_needle=True)
+        node.body = self.parse_statements(('name:endfilter',),
+                                          drop_needle=True)
         return node
 
     def parse_macro(self):
-        node = nodes.Macro(lineno=self.stream.expect('macro').lineno)
+        node = nodes.Macro(lineno=self.stream.next().lineno)
         node.name = self.stream.expect('name').value
         # make sure that assignments to that name are allowed
         if not nodes.Name(node.name, 'store').can_assign():
@@ -246,13 +257,14 @@ class Parser(object):
                                       node.target, node.lineno,
                                       self.filename)
         self.parse_signature(node)
-        node.body = self.parse_statements(('endmacro',), drop_needle=True)
+        node.body = self.parse_statements(('name:endmacro',),
+                                          drop_needle=True)
         return node
 
     def parse_print(self):
-        node = nodes.Output(lineno=self.stream.expect('print').lineno)
+        node = nodes.Output(lineno=self.stream.next().lineno)
         node.nodes = []
-        while self.stream.current.type not in statement_end_tokens:
+        while not self.is_statement_end():
             if node.nodes:
                 self.stream.expect('comma')
             node.nodes.append(self.parse_expression())
@@ -267,10 +279,10 @@ class Parser(object):
     def parse_condexpr(self):
         lineno = self.stream.current.lineno
         expr1 = self.parse_or()
-        while self.stream.current.type is 'if':
+        while self.stream.current.test('name:if'):
             self.stream.next()
             expr2 = self.parse_or()
-            self.stream.expect('else')
+            self.stream.expect('name:else')
             expr3 = self.parse_condexpr()
             expr1 = nodes.CondExpr(expr2, expr1, expr3, lineno=lineno)
             lineno = self.stream.current.lineno
@@ -279,7 +291,7 @@ class Parser(object):
     def parse_or(self):
         lineno = self.stream.current.lineno
         left = self.parse_and()
-        while self.stream.current.type is 'or':
+        while self.stream.current.test('name:or'):
             self.stream.next()
             right = self.parse_and()
             left = nodes.Or(left, right, lineno=lineno)
@@ -289,7 +301,7 @@ class Parser(object):
     def parse_and(self):
         lineno = self.stream.current.lineno
         left = self.parse_compare()
-        while self.stream.current.type is 'and':
+        while self.stream.current.test('name:and'):
             self.stream.next()
             right = self.parse_compare()
             left = nodes.And(left, right, lineno=lineno)
@@ -305,7 +317,11 @@ class Parser(object):
             if token_type in _compare_operators:
                 self.stream.next()
                 ops.append(nodes.Operand(token_type, self.parse_add()))
-            elif token_type is 'not' and self.stream.look().type is 'in':
+            elif self.stream.current.test('name:in'):
+                self.stream.next()
+                ops.append(nodes.Operand('in', self.parse_add()))
+            elif self.stream.current.test('name:not') and \
+                 self.stream.look().test('name:in'):
                 self.stream.skip(2)
                 ops.append(nodes.Operand('notin', self.parse_add()))
             else:
@@ -398,7 +414,7 @@ class Parser(object):
     def parse_unary(self):
         token_type = self.stream.current.type
         lineno = self.stream.current.lineno
-        if token_type is 'not':
+        if token_type is 'name' and self.stream.current.value == 'not':
             self.stream.next()
             node = self.parse_unary()
             return nodes.Not(node, lineno=lineno)
@@ -442,8 +458,7 @@ class Parser(object):
         return node
 
     def parse_tuple(self, enforce=False, simplified=False, no_condexpr=False):
-        """
-        Parse multiple expressions into a tuple. This can also return
+        """Parse multiple expressions into a tuple. This can also return
         just one expression which is not a tuple. If you want to enforce
         a tuple, pass it enforce=True (currently unused).
         """
@@ -459,7 +474,7 @@ class Parser(object):
         while 1:
             if args:
                 self.stream.expect('comma')
-            if self.stream.current.type in _tuple_edge_tokens:
+            if self.is_tuple_end():
                 break
             args.append(parse())
             if self.stream.current.type is 'comma':
@@ -510,7 +525,7 @@ class Parser(object):
                 node = self.parse_call(node)
             elif token_type is 'pipe':
                 node = self.parse_filter(node)
-            elif token_type is 'is':
+            elif token_type is 'name' and self.stream.current.value == 'is':
                 node = self.parse_test(node)
             else:
                 break
@@ -638,8 +653,8 @@ class Parser(object):
         return node
 
     def parse_test(self, node):
-        token = self.stream.expect('is')
-        if self.stream.current.type is 'not':
+        token = self.stream.next()
+        if self.stream.current.test('name:not'):
             self.stream.next()
             negated = True
         else:
@@ -651,7 +666,7 @@ class Parser(object):
             args, kwargs, dyn_args, dyn_kwargs = self.parse_call(None)
         elif self.stream.current.type in ('name', 'string', 'integer',
                                           'float', 'lparen', 'lbracket',
-                                          'lbrace', 'regex'):
+                                          'lbrace'):
             args = [self.parse_expression()]
         else:
             args = []

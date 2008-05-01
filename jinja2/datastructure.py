@@ -14,9 +14,7 @@ from jinja2.exceptions import TemplateSyntaxError, TemplateRuntimeError
 
 
 class Token(tuple):
-    """
-    Token class.
-    """
+    """Token class."""
     __slots__ = ()
     lineno, type, value = (property(itemgetter(x)) for x in range(3))
 
@@ -62,8 +60,7 @@ class Token(tuple):
 
 
 class TokenStreamIterator(object):
-    """
-    The iterator for tokenstreams.  Iterate over the stream
+    """The iterator for tokenstreams.  Iterate over the stream
     until the eof token is reached.
     """
 
@@ -83,8 +80,7 @@ class TokenStreamIterator(object):
 
 
 class TokenStream(object):
-    """
-    A token stream wraps a generator and supports pushing tokens back.
+    """A token stream wraps a generator and supports pushing tokens back.
     It also provides some functions to expect tokens and similar stuff.
 
     Important note: Do never push more than one token back to the

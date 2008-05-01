@@ -91,7 +91,7 @@ class Environment(object):
     `variable_start_string`
         The string marking the begin of a print statement.
         Defaults to ``'{{'``.
-    
+
     `variable_stop_string`
         The string marking the end of a print statement. Defaults to ``'}}'``.
 
@@ -284,6 +284,7 @@ class Environment(object):
         try:
             return Parser(self, source, filename).parse()
         except TemplateSyntaxError, e:
+            raise
             exc_type, exc_value, tb = translate_syntax_error(e)
             raise exc_type, exc_value, tb
 

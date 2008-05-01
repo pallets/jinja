@@ -33,13 +33,6 @@ integer_re = re.compile(r'\d+')
 name_re = re.compile(r'\b[a-zA-Z_][a-zA-Z0-9_]*\b')
 float_re = re.compile(r'\d+\.\d+')
 
-# set of used keywords
-keywords = set(['and', 'block', 'elif', 'else', 'endblock', 'print',
-                'endfilter', 'endfor', 'endif', 'endmacro', 'endraw',
-                'extends', 'filter', 'for', 'if', 'in', 'include',
-                'is', 'macro', 'not', 'or', 'raw', 'call', 'endcall',
-                'from', 'import'])
-
 # bind operators to token types
 operators = {
     '+':            'add',
@@ -161,8 +154,6 @@ class Lexer(object):
             (whitespace_re, None, None),
             (float_re, 'float', None),
             (integer_re, 'integer', None),
-            (c(r'\b(?:%s)\b' % '|'.join(sorted(keywords, key=lambda x: -len(x)))),
-             'keyword', None),
             (name_re, 'name', None),
             (string_re, 'string', None),
             (operator_re, 'operator', None)
@@ -254,8 +245,7 @@ class Lexer(object):
     def tokenize(self, source, filename=None):
         """Works like `tokeniter` but returns a tokenstream of tokens and not
         a generator or token tuples.  Additionally all token values are already
-        converted into types and postprocessed. For example keywords are
-        already keyword tokens, not named tokens, comments are removed,
+        converted into types and postprocessed. For example comments are removed,
         integers and floats converted, strings unescaped etc.
         """
         source = unicode(source)
