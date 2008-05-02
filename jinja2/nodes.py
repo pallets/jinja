@@ -265,12 +265,12 @@ class Block(Stmt):
 
 class Include(Stmt):
     """A node that represents the include tag."""
-    fields = ('template',)
+    fields = ('template', 'with_context')
 
 
 class Import(Stmt):
     """A node that represents the import tag."""
-    fields = ('template', 'target')
+    fields = ('template', 'target', 'with_context')
 
 
 class FromImport(Stmt):
@@ -284,7 +284,7 @@ class FromImport(Stmt):
 
     The list of names may contain tuples if aliases are wanted.
     """
-    fields = ('template', 'names')
+    fields = ('template', 'names', 'with_context')
 
 
 class Trans(Stmt):

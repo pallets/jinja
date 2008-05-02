@@ -701,11 +701,17 @@ class CodeGenerator(NodeVisitor):
 
     def visit_Include(self, node, frame):
         """Handles includes."""
-        self.writeline('included_template = environment.get_template(', node)
-        self.visit(node.template, frame)
-        self.write(', %r)' % self.name)
-        self.writeline('for event in included_template.root_render_func('
-                       'included_template.new_context(context.parent, True)):')
+        if node.with_context:
+            self.writeline('template = environment.get_template(', node)
+            self.visit(node.template, frame)
+            self.write(', %r)' % self.name)
+            self.writeline('for event in template.root_render_func('
+                           'template.new_context(context.parent, True)):')
+        else:
+            self.writeline('for event in environment.get_template(', node)
+            self.visit(node.template, frame)
+            self.write(', %r).module._TemplateModule__body_stream:' %
+                       self.name)
         self.indent()
         if frame.buffer is None:
             self.writeline('yield event')
@@ -720,7 +726,11 @@ class CodeGenerator(NodeVisitor):
             self.write('context.vars[%r] = ' % node.target)
         self.write('environment.get_template(')
         self.visit(node.template, frame)
-        self.write(', %r).module' % self.name)
+        self.write(', %r).' % self.name)
+        if node.with_context:
+            self.write('make_module(context.parent, True)')
+        else:
+            self.write('module')
         if frame.toplevel and not node.target.startswith('__'):
             self.writeline('context.exported_vars.discard(%r)' % node.target)
 
@@ -729,7 +739,11 @@ class CodeGenerator(NodeVisitor):
         self.newline(node)
         self.write('included_template = environment.get_template(')
         self.visit(node.template, frame)
-        self.write(', %r).module' % self.name)
+        self.write(', %r).' % self.name)
+        if node.with_context:
+            self.write('make_module(context.parent, True)')
+        else:
+            self.write('module')
         for name in node.names:
             if isinstance(name, tuple):
                 name, alias = name

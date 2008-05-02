@@ -123,8 +123,7 @@ class Parser(object):
         """Parse an if construct."""
         node = result = nodes.If(lineno=self.stream.expect('name:if').lineno)
         while 1:
-            # TODO: exclude conditional expressions here
-            node.test = self.parse_tuple()
+            node.test = self.parse_tuple(no_condexpr=True)
             node.body = self.parse_statements(('name:elif', 'name:else',
                                                'name:endif'))
             token = self.stream.next()
@@ -152,10 +151,20 @@ class Parser(object):
         node.template = self.parse_expression()
         return node
 
+    def parse_import_context(self, node, default):
+        if (self.stream.current.test('name:with') or
+            self.stream.current.test('name:without')) and \
+           self.stream.look().test('name:context'):
+            node.with_context = self.stream.next().value == 'with'
+            self.stream.skip()
+        else:
+            node.with_context = default
+        return node
+
     def parse_include(self):
         node = nodes.Include(lineno=self.stream.next().lineno)
         node.template = self.parse_expression()
-        return node
+        return self.parse_import_context(node, True)
 
     def parse_import(self):
         node = nodes.Import(lineno=self.stream.next().lineno)
@@ -166,17 +175,28 @@ class Parser(object):
             raise TemplateSyntaxError('can\'t assign imported template '
                                       'to %r' % node.target, node.lineno,
                                       self.filename)
-        return node
+        return self.parse_import_context(node, False)
 
     def parse_from(self):
         node = nodes.FromImport(lineno=self.stream.next().lineno)
         node.template = self.parse_expression()
         self.stream.expect('name:import')
         node.names = []
+
+        def parse_context():
+            if self.stream.current.value in ('with', 'without') and \
+               self.stream.look().test('name:context'):
+                node.with_context = self.stream.next().value == 'with'
+                self.stream.skip()
+                return True
+            return False
+
         while 1:
             if node.names:
                 self.stream.expect('comma')
             if self.stream.current.type is 'name':
+                if parse_context():
+                    break
                 target = nodes.Name(self.stream.current.value, 'store')
                 if not target.can_assign():
                     raise TemplateSyntaxError('can\'t import object named %r'
@@ -198,12 +218,14 @@ class Parser(object):
                     node.names.append((target.name, alias.value))
                 else:
                     node.names.append(target.name)
-                if self.stream.current.type is not 'comma':
+                if parse_context() or self.stream.current.type is not 'comma':
                     break
             else:
                 break
-        if self.stream.current.type is 'comma':
-            self.stream.next()
+        if not hasattr(node, 'with_context'):
+            node.with_context = False
+            if self.stream.current.type is 'comma':
+                self.stream.next()
         return node
 
     def parse_signature(self, node):

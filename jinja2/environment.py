@@ -529,6 +529,12 @@ class Template(object):
             parent = dict(self.globals, **vars)
         return Context(self.environment, parent, self.name, self.blocks)
 
+    def make_module(self, vars=None, shared=False):
+        """Like the `module` property but always reevaluates the template
+        and it's possible to provide a context.
+        """
+        return TemplateModule(self, self.new_context(vars, shared))
+
     @property
     def module(self):
         """The template as module.  This is used for imports in the
@@ -543,7 +549,7 @@ class Template(object):
         """
         if hasattr(self, '_module'):
             return self._module
-        self._module = rv = TemplateModule(self, self.new_context())
+        self._module = rv = self.make_module()
         return rv
 
     def get_corresponding_lineno(self, lineno):
@@ -583,6 +589,10 @@ class TemplateModule(object):
     """
 
     def __init__(self, template, context):
+        # don't alter this attribute unless you change it in the
+        # compiler too.  The Include without context passing directly
+        # uses the mangled name.  The reason why we use a mangled one
+        # is to avoid name clashes with macros with those names.
         self.__body_stream = tuple(template.root_render_func(context))
         self.__dict__.update(context.get_exported())
         self.__name__ = template.name

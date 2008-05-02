@@ -218,7 +218,7 @@ class TokenStream(object):
         self.current = old_token
         return result
 
-    def skip(self, n):
+    def skip(self, n=1):
         """Got n tokens ahead."""
         for x in xrange(n):
             self.next()

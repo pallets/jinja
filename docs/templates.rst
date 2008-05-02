@@ -552,8 +552,9 @@ rendered contents of that file into the current namespace::
         Body
     {% include 'footer.html' %}
 
-Included templates have access to the current template variables minus local
-modifications.
+Included templates have access to the variables of the active context by
+default.  For more details about context behavior of imports and includes
+see :ref:`import-visibility`.
 
 .. _import:
 
@@ -564,7 +565,8 @@ Jinja2 supports putting often used code into macros.  These macros can go into
 different templates and get imported from there.  This works similar to the
 import statements in Python.  It's important to know that imports are cached
 and imported templates don't have access to the current template variables,
-just the globals.
+just the globals by defualt.  For more details about context behavior of
+imports and includes see :ref:`import-visibility`.
 
 There are two ways to import templates.  You can import the complete template
 into a variable or request specific macros / exported variables from it.
@@ -604,6 +606,25 @@ namespace::
         <dd>{{ input_field('password', type='password') }}</dd>
     </dl>
     <p>{{ textarea('comment') }}</p>
+
+
+.. _import-visibility:
+
+Import Context Behavior
+-----------------------
+
+Per default included templates are passed the current context and imported
+templates not.  The reason for this is that imports unlike includes are
+cached as imports are often used just as a module that holds macros.
+
+This however can be changed of course explicitly.  By adding `with context`
+or `without context` to the import/include directive the current context
+can be passed to the template and caching is disabled automatically.
+
+Here two examples::
+
+    {% from 'forms.html' import input with context %}
+    {% include 'header.html' without context %}
 
 
 .. _expressions:
