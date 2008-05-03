@@ -5,10 +5,6 @@
 
     Jinja loader classes.
 
-    XXX: move caching from the loaders to environment.get_template and add
-    environment overlays that allow to redefine escaping and other things but
-    shared the globals and filter mappings.
-
     :copyright: 2008 by Armin Ronacher.
     :license: BSD, see LICENSE for more details.
 """
@@ -259,7 +255,7 @@ class ChoiceLoader(BaseLoader):
     >>> loader = ChoiceLoader([
     ...     FileSystemLoader('/path/to/user/templates'),
     ...     PackageLoader('myapplication')
-    ])
+    .. ])
 
     This is useful if you want to allow users to override builtin templates
     from a different location.

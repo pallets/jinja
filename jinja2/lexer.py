@@ -137,7 +137,7 @@ class Token(tuple):
         token type or 'token_type:token_value'.  This can only test against
         string values!
         """
-        # here we do a regular string equality check as test_many is usually
+        # here we do a regular string equality check as test_any is usually
         # passed an iterable of not interned strings.
         if self.type == expr:
             return True
@@ -145,7 +145,7 @@ class Token(tuple):
             return expr.split(':', 1) == [self.type, self.value]
         return False
 
-    def test_many(self, iterable):
+    def test_any(self, *iterable):
         """Test against multiple token expressions."""
         for expr in iterable:
             if self.test(expr):

@@ -152,8 +152,7 @@ class Parser(object):
         return node
 
     def parse_import_context(self, node, default):
-        if (self.stream.current.test('name:with') or
-            self.stream.current.test('name:without')) and \
+        if self.stream.current.test_any('name:with', 'name:without') and \
            self.stream.look().test('name:context'):
             node.with_context = self.stream.next().value == 'with'
             self.stream.skip()
@@ -722,7 +721,7 @@ class Parser(object):
                 flush_data()
                 self.stream.next()
                 if end_tokens is not None and \
-                   self.stream.current.test_many(end_tokens):
+                   self.stream.current.test_any(*end_tokens):
                     return body
                 body.append(self.parse_statement())
                 self.stream.expect('block_end')

@@ -170,6 +170,14 @@ Loaders are responsible for loading templates from a resource such as the
 file system.  The environment will keep the compiled modules in memory like
 Python's `sys.modules`.  Unlike `sys.modules` however this cache is limited in
 size by default and templates are automatically reloaded.
+All loaders are subclasses of :class:`BaseLoader`.  If you want to create your
+
+own loader, subclass :class:`BaseLoader` and override `get_source`.
+
+.. autoclass:: jinja2.loaders.BaseLoader
+    :members: get_source, load
+
+Here a list of the builtin loaders Jinja2 provides:
 
 .. autoclass:: jinja2.loaders.FileSystemLoader
 
@@ -182,12 +190,6 @@ size by default and templates are automatically reloaded.
 .. autoclass:: jinja2.loaders.PrefixLoader
 
 .. autoclass:: jinja2.loaders.ChoiceLoader
-
-All loaders are subclasses of :class:`BaseLoader`.  If you want to create your
-own loader, subclass :class:`BaseLoader` and override `get_source`.
-
-.. autoclass:: jinja2.loaders.BaseLoader
-    :members: get_source, load
 
 
 Utilities

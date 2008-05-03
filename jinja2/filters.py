@@ -10,6 +10,7 @@
 """
 import re
 import math
+import textwrap
 from random import choice
 from operator import itemgetter
 from itertools import imap, groupby
@@ -94,7 +95,7 @@ def do_xmlattr(_environment, d, autospace=True):
 
     .. sourcecode:: html+jinja
 
-        <ul{{ {'class': 'my_list', 'missing': None,
+        <ul{{ {'class': 'my_list', 'missing': none,
                 'id': 'list-%d'|format(variable)}|xmlattr }}>
         ...
         </ul>
@@ -291,7 +292,8 @@ def do_pprint(value, verbose=False):
     return pformat(value, verbose=verbose)
 
 
-def do_urlize(value, trim_url_limit=None, nofollow=False):
+@environmentfilter
+def do_urlize(environment, value, trim_url_limit=None, nofollow=False):
     """Converts URLs in plain text into clickable links.
 
     If you pass the filter an additional integer it will shorten the urls
@@ -300,10 +302,13 @@ def do_urlize(value, trim_url_limit=None, nofollow=False):
 
     .. sourcecode:: jinja
 
-        {{ mytext|urlize(40, True) }}
+        {{ mytext|urlize(40, true) }}
             links are shortened to 40 chars and defined with rel="nofollow"
     """
-    return urlize(soft_unicode(value), trim_url_limit, nofollow)
+    rv = urlize(soft_unicode(value), trim_url_limit, nofollow)
+    if environment.autoescape:
+        rv = Markup(rv)
+    return rv
 
 
 def do_indent(s, width=4, indentfirst=False):
@@ -314,7 +319,7 @@ def do_indent(s, width=4, indentfirst=False):
 
     .. sourcecode:: jinja
 
-        {{ mytext|indent(2, True) }}
+        {{ mytext|indent(2, true) }}
             indent by two spaces and indent the first line too.
     """
     indention = ' ' * width
@@ -354,26 +359,16 @@ def do_truncate(s, length=255, killwords=False, end='...'):
     return u' '.join(result)
 
 
-def do_wordwrap(s, pos=79, hard=False):
+def do_wordwrap(s, width=79, break_long_words=True):
     """
     Return a copy of the string passed to the filter wrapped after
-    ``79`` characters. You can override this default using the first
-    parameter. If you set the second parameter to `true` Jinja will
-    also split words apart (usually a bad idea because it makes
-    reading hard).
+    ``79`` characters.  You can override this default using the first
+    parameter.  If you set the second parameter to `false` Jinja will not
+    split words apart if they are longer than `width`.
     """
-    if len(s) < pos:
-        return s
-    if hard:
-        return u'\n'.join(s[idx:idx + pos] for idx in
-                          xrange(0, len(s), pos))
-
-    # TODO: switch to wordwrap.wrap
-    # code from http://aspn.activestate.com/ASPN/Cookbook/Python/Recipe/148061
-    return reduce(lambda line, word, pos=pos: u'%s%s%s' %
-                  (line, u' \n'[(len(line)-line.rfind('\n') - 1 +
-                                len(word.split('\n', 1)[0]) >= pos)],
-                   word), s.split(' '))
+    return textwrap.wrap(s, width=width, expand_tabs=False,
+                         replace_whitespace=False,
+                         break_long_words=break_long_words)
 
 
 def do_wordcount(s):
@@ -416,10 +411,10 @@ def do_format(value, *args, **kwargs):
         {{ "%s - %s"|format("Hello?", "Foo!") }}
             -> Hello? - Foo!
     """
-    if kwargs:
-        kwargs.update(idx, arg in enumerate(args))
-        args = kwargs
-    return soft_unicode(value) % args
+    if args and kwargs:
+        raise FilterArgumentError('can\'t handle positional and keyword '
+                                  'arguments at the same time')
+    return soft_unicode(value) % (kwargs or args)
 
 
 def do_trim(value):
