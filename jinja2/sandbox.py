@@ -23,7 +23,8 @@ MAX_RANGE = 100000
 
 def safe_range(*args):
     """A range that can't generate ranges with a length of more than
-    MAX_RANGE items."""
+    MAX_RANGE items.
+    """
     rng = xrange(*args)
     if len(rng) > MAX_RANGE:
         raise OverflowError('range too big')
@@ -61,10 +62,11 @@ class SandboxedEnvironment(Environment):
     def is_safe_callable(self, obj):
         """Check if an object is safely callable.  Per default a function is
         considered safe unless the `unsafe_callable` attribute exists and is
-        truish.  Override this method to alter the behavior, but this won't
+        True.  Override this method to alter the behavior, but this won't
         affect the `unsafe` decorator from this module.
         """
-        return not getattr(obj, 'unsafe_callable', False)
+        return not (getattr(obj, 'unsafe_callable', False) or \
+                    getattr(obj, 'alters_data', False))
 
     def subscribe(self, obj, argument):
         """Subscribe an object from sandboxed code."""

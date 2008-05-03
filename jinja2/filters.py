@@ -11,11 +11,7 @@
 import re
 import math
 from random import choice
-try:
-    from operator import itemgetter
-except ImportError:
-    itemgetter = lambda a: lambda b: b[a]
-from urllib import urlencode, quote
+from operator import itemgetter
 from itertools import imap, groupby
 from jinja2.utils import Markup, escape, pformat, urlize, soft_unicode
 from jinja2.runtime import Undefined

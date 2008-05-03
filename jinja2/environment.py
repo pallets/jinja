@@ -14,10 +14,10 @@ from jinja2.lexer import Lexer
 from jinja2.parser import Parser
 from jinja2.optimizer import optimize
 from jinja2.compiler import generate
-from jinja2.runtime import Undefined, Context, concat
+from jinja2.runtime import Undefined, Context
 from jinja2.debug import translate_exception, translate_syntax_error
 from jinja2.exceptions import TemplateSyntaxError
-from jinja2.utils import import_string, LRUCache, Markup, missing
+from jinja2.utils import import_string, LRUCache, Markup, missing, concat
 
 
 # for direct template usage we have up to ten living environments
@@ -530,8 +530,11 @@ class Template(object):
         return Context(self.environment, parent, self.name, self.blocks)
 
     def make_module(self, vars=None, shared=False):
-        """Like the `module` property but always reevaluates the template
-        and it's possible to provide a context.
+        """This method works like the :attr:`module` attribute when called
+        without arguments but it will evaluate the template every call
+        rather then caching the template.  It's also possible to provide
+        a dict which is then used as context.  The arguments are the same
+        as fo the :meth:`new_context` method.
         """
         return TemplateModule(self, self.new_context(vars, shared))
 
@@ -593,7 +596,7 @@ class TemplateModule(object):
         # compiler too.  The Include without context passing directly
         # uses the mangled name.  The reason why we use a mangled one
         # is to avoid name clashes with macros with those names.
-        self.__body_stream = tuple(template.root_render_func(context))
+        self.__body_stream = list(template.root_render_func(context))
         self.__dict__.update(context.get_exported())
         self.__name__ = template.name
 

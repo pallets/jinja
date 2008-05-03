@@ -33,6 +33,29 @@ _simple_email_re = re.compile(r'^\S+@[a-zA-Z0-9._-]+\.[a-zA-Z0-9._-]+$')
 missing = type('MissingType', (), {'__repr__': lambda x: 'missing'})()
 
 
+# concatenate a list of strings and convert them to unicode.
+# unfortunately there is a bug in python 2.4 and lower that causes
+# unicode.join trash the traceback.
+try:
+    def _test_gen_bug():
+        raise TypeError(_test_gen_bug)
+        yield None
+    u''.join(_test_gen_bug())
+except TypeError, _error:
+    if _error.args and _error.args[0] is _test_gen_bug:
+        concat = u''.join
+    else:
+        def concat(gen):
+            try:
+                return u''.join(list(gen))
+            except:
+                # this hack is needed so that the current frame
+                # does not show up in the traceback.
+                exc_type, exc_value, tb = sys.exc_info()
+                raise exc_type, exc_value, tb.tb_next
+    del _test_gen_bug, _error
+
+
 def contextfunction(f):
     """This decorator can be used to mark a callable as context callable.  A
     context callable is passed the active context as first argument if it

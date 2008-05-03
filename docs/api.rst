@@ -85,7 +85,7 @@ High Level API
 
 
 .. autoclass:: jinja2.Template
-    :members: render, stream, generate, module
+    :members: render, stream, generate, make_module, module
 
     .. attribute:: globals
 

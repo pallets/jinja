@@ -11,7 +11,7 @@
 import sys
 from types import FunctionType
 from itertools import chain, imap
-from jinja2.utils import Markup, partial, soft_unicode, escape, missing
+from jinja2.utils import Markup, partial, soft_unicode, escape, missing, concat
 from jinja2.exceptions import UndefinedError, TemplateRuntimeError
 
 
@@ -19,27 +19,6 @@ from jinja2.exceptions import UndefinedError, TemplateRuntimeError
 __all__ = ['LoopContext', 'Context', 'TemplateReference', 'Macro', 'Markup',
            'TemplateRuntimeError', 'missing', 'concat', 'escape',
            'markup_join', 'unicode_join']
-
-
-# concatenate a list of strings and convert them to unicode.
-# unfortunately there is a bug in python 2.4 and lower that causes
-# unicode.join trash the traceback.
-try:
-    def _test_gen_bug():
-        raise TypeError(_test_gen_bug)
-        yield None
-    u''.join(_test_gen_bug())
-except TypeError, _error:
-    if _error.args and _error.args[0] is _test_gen_bug:
-        concat = u''.join
-    else:
-        def concat(gen):
-            try:
-                return u''.join(list(gen))
-            except:
-                exc_type, exc_value, tb = sys.exc_info()
-                raise exc_type, exc_value, tb.tb_next
-    del _test_gen_bug, _error
 
 
 def markup_join(*args):

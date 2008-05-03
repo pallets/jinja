@@ -18,7 +18,8 @@
 """
 from jinja2 import nodes
 from jinja2.visitor import NodeVisitor, NodeTransformer
-from jinja2.runtime import LoopContext, concat
+from jinja2.runtime import LoopContext
+from jinja2.utils import concat
 
 
 def optimize(node, environment, context_hint=None):

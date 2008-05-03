@@ -2,7 +2,10 @@
  * jinja2._speedups
  * ~~~~~~~~~~~~~~~~
  *
- * This module implements a few functions in C for better performance.
+ * This module implements a few functions in C for better performance.  It
+ * also defines a `tb_set_next` function that is used to patch the debug
+ * traceback.  If the speedups module is not compiled a ctypes implementation
+ * is used.
  *
  * :copyright: 2008 by Armin Ronacher.
  * :license: BSD.
@@ -129,15 +132,8 @@ escape(PyObject *self, PyObject *text)
 	/* we don't have to escape integers, bools or floats */
 	if (PyInt_CheckExact(text) || PyLong_CheckExact(text) ||
 	    PyFloat_CheckExact(text) || PyBool_Check(text) ||
-	    text == Py_None) {
-		PyObject *args = PyTuple_New(1);
-		if (!args) {
-			Py_DECREF(s);
-			return NULL;
-		}
-		PyTuple_SET_ITEM(args, 0, text);
-		return PyObject_CallObject(markup, args);
-	}
+	    text == Py_None)
+		return PyObject_CallFunctionObjArgs(markup, text, NULL);
 
 	/* if the object has an __html__ method that performs the escaping */
 	PyObject *html = PyObject_GetAttrString(text, "__html__");
@@ -160,7 +156,9 @@ escape(PyObject *self, PyObject *text)
 		s = escape_unicode((PyUnicodeObject*)text);
 
 	/* convert the unicode string into a markup object. */
-	return PyObject_CallFunctionObjArgs(markup, (PyObject*)s, NULL);
+	rv = PyObject_CallFunctionObjArgs(markup, (PyObject*)s, NULL);
+	Py_DECREF(s);
+	return rv;
 }
 
 

@@ -13,10 +13,10 @@
     :license: BSD, see LICENSE for more details.
 """
 import operator
+from copy import copy
 from types import FunctionType
 from itertools import chain, izip
 from collections import deque
-from copy import copy
 from jinja2.utils import Markup
 
 

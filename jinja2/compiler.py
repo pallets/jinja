@@ -17,8 +17,7 @@ from itertools import chain
 from jinja2 import nodes
 from jinja2.visitor import NodeVisitor, NodeTransformer
 from jinja2.exceptions import TemplateAssertionError
-from jinja2.runtime import concat
-from jinja2.utils import Markup
+from jinja2.utils import Markup, concat
 
 
 operators = {

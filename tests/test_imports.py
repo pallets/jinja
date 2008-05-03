@@ -13,7 +13,7 @@ test_env = Environment(loader=DictLoader(dict(
     module='{% macro test() %}[{{ foo }}|{{ bar }}]{% endmacro %}',
     header='[{{ foo }}|{{ 23 }}]'
 )))
-test_env.globals['bar'] = '23'
+test_env.globals['bar'] = 23
 
 
 def test_context_imports():
@@ -44,3 +44,5 @@ def test_trailing_comma():
     test_env.from_string('{% from "foo" import bar, baz with context %}')
     test_env.from_string('{% from "foo" import bar, baz, with context %}')
     test_env.from_string('{% from "foo" import bar, with context %}')
+    test_env.from_string('{% from "foo" import bar, with, context %}')
+    test_env.from_string('{% from "foo" import bar, with with context %}')
