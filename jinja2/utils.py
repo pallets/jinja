@@ -9,6 +9,7 @@
     :license: BSD, see LICENSE for more details.
 """
 import re
+import sys
 import string
 try:
     from thread import allocate_lock
