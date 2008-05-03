@@ -53,7 +53,7 @@ class BaseLoader(object):
                 mtime = getmtime(path)
                 with file(path) as f:
                     source = f.read().decode('utf-8')
-                return source, path, lambda: mtime != getmtime(path)
+                return source, path, lambda: mtime == getmtime(path)
     """
 
     def get_source(self, environment, template):
@@ -124,7 +124,7 @@ class FileSystemLoader(BaseLoader):
             finally:
                 f.close()
             old = path.getmtime(filename)
-            return contents, filename, lambda: path.getmtime(filename) != old
+            return contents, filename, lambda: path.getmtime(filename) == old
         raise TemplateNotFound(template)
 
 
@@ -164,7 +164,7 @@ class PackageLoader(BaseLoader):
             filename = self.provider.get_resource_filename(self.manager, p)
             mtime = path.getmtime(filename)
             def uptodate():
-                return path.getmtime(filename) != mtime
+                return path.getmtime(filename) == mtime
 
         source = self.provider.get_resource_string(self.manager, p)
         return source.decode(self.encoding), filename, uptodate
