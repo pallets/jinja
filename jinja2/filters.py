@@ -20,6 +20,7 @@ from jinja2.exceptions import FilterArgumentError
 
 
 _striptags_re = re.compile(r'(<!--.*?-->|<[^>]*>)')
+_word_re = re.compile(r'\w+')
 
 
 def contextfilter(f):
@@ -373,7 +374,7 @@ def do_wordwrap(s, width=79, break_long_words=True):
 
 def do_wordcount(s):
     """Count the words in that string."""
-    return len(s.split())
+    return len(_word_re.findall(s))
 
 
 def do_int(value, default=0):
