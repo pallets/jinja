@@ -109,7 +109,7 @@ class Parser(object):
         self.stream.expect('name:in')
         iter = self.parse_tuple(no_condexpr=True)
         test = None
-        if self.stream.current.type is 'name:if':
+        if self.stream.current.test('name:if'):
             self.stream.next()
             test = self.parse_expression()
         body = self.parse_statements(('name:endfor', 'name:else'))
