@@ -19,7 +19,6 @@ from jinja2.runtime import Undefined
 from jinja2.exceptions import FilterArgumentError
 
 
-_striptags_re = re.compile(r'(<!--.*?-->|<[^>]*>)')
 _word_re = re.compile(r'\w+')
 
 
@@ -428,7 +427,7 @@ def do_striptags(value):
     """
     if hasattr(value, '__html__'):
         value = value.__html__()
-    return u' '.join(_striptags_re.sub('', value).split())
+    return Markup(unicode(value)).striptags()
 
 
 def do_slice(value, slices, fill_with=None):

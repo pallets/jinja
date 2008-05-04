@@ -20,6 +20,13 @@ from jinja2.environment import Environment
 #: maximum number of items a range may produce
 MAX_RANGE = 100000
 
+#: attributes of function objects that are considered unsafe.
+UNSAFE_FUNCTION_ATTRIBUTES = set(['func_closure', 'func_code', 'func_dict',
+                                  'func_defaults', 'func_globals'])
+
+#: unsafe method attributes.  function attributes are unsafe for methods too
+UNSAFE_METHOD_ATTRIBUTES = set(['im_class', 'im_func', 'im_self'])
+
 
 def safe_range(*args):
     """A range that can't generate ranges with a length of more than
@@ -27,7 +34,8 @@ def safe_range(*args):
     """
     rng = xrange(*args)
     if len(rng) > MAX_RANGE:
-        raise OverflowError('range too big')
+        raise OverflowError('range too big, maximum size for range is %d' %
+                            MAX_RANGE)
     return rng
 
 
@@ -54,9 +62,10 @@ class SandboxedEnvironment(Environment):
         if attr.startswith('_'):
             return False
         if isinstance(obj, FunctionType):
-            return not attr.startswith('func_')
+            return attr not in UNSAFE_FUNCTION_ATTRIBUTES
         if isinstance(obj, MethodType):
-            return not attr.startswith('im_')
+            return attr not in UNSAFE_FUNCTION_ATTRIBUTES and \
+                   attr not in UNSAFE_METHOD_ATTRIBUTES
         return True
 
     def is_safe_callable(self, obj):

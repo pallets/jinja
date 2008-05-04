@@ -15,6 +15,7 @@ try:
     from thread import allocate_lock
 except ImportError:
     from dummy_thread import allocate_lock
+from htmlentitydefs import name2codepoint
 from collections import deque
 from copy import deepcopy
 from itertools import imap
@@ -28,7 +29,10 @@ _punctuation_re = re.compile(
     )
 )
 _simple_email_re = re.compile(r'^\S+@[a-zA-Z0-9._-]+\.[a-zA-Z0-9._-]+$')
-
+_striptags_re = re.compile(r'(<!--.*?-->|<[^>]*>)')
+_entity_re = re.compile(r'&([^;]+);')
+_entities = name2codepoint.copy()
+_entities['apos'] = 39
 
 # special singleton representing missing values for the runtime
 missing = type('MissingType', (), {'__repr__': lambda x: 'missing'})()
@@ -277,6 +281,27 @@ class Markup(unicode):
     def splitlines(self, *args, **kwargs):
         return map(self.__class__, unicode.splitlines(self, *args, **kwargs))
     splitlines.__doc__ = unicode.splitlines.__doc__
+
+    def unescape(self):
+        """Unescape markup."""
+        def handle_match(m):
+            name = m.group(1)
+            if name in _entities:
+                return unichr(_entities[name])
+            try:
+                if name[:2] in ('#x', '#X'):
+                    return unichr(int(name[2:], 16))
+                elif name.startswith('#'):
+                    return unichr(int(name[1:]))
+            except ValueError:
+                pass
+            return u''
+        return _entity_re.sub(handle_match, unicode(self))
+
+    def striptags(self):
+        """Strip tags and resolve enities."""
+        stripped = u' '.join(_striptags_re.sub('', self).split())
+        return Markup(stripped).unescape()
 
     def make_wrapper(name):
         orig = getattr(unicode, name)

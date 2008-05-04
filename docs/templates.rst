@@ -838,3 +838,8 @@ The following functions are available in the global scope by default:
     with HTML are generated each paragraph between 20 and 100 words.  If html
     is disabled regular text is returned.  This is useful to generate simple
     contents for layout testing.
+
+.. function:: dict(**items)
+
+    A convenient alternative to dict literals.  ``{'foo': 'bar'}`` is the same
+    as ``dict(foo='bar')``.

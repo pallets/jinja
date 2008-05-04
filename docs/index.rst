@@ -9,10 +9,3 @@ Contents:
    intro
    api
    templates
-
-Indices and tables
-==================
-
-* :ref:`genindex`
-* :ref:`modindex`
-* :ref:`search`
