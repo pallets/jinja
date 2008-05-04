@@ -12,7 +12,8 @@
     :copyright: Copyright 2008 by Armin Ronacher.
     :license: BSD.
 """
-from types import FunctionType, MethodType
+from types import FunctionType, MethodType, TracebackType, CodeType, \
+     FrameType, GeneratorType
 from jinja2.runtime import Undefined
 from jinja2.environment import Environment
 
@@ -66,6 +67,12 @@ class SandboxedEnvironment(Environment):
         if isinstance(obj, MethodType):
             return attr not in UNSAFE_FUNCTION_ATTRIBUTES and \
                    attr not in UNSAFE_METHOD_ATTRIBUTES
+        if isinstance(obj, type):
+            return attr != 'mro'
+        if isinstance(obj, (CodeType, TracebackType, FrameType)):
+            return False
+        if isinstance(obj, GeneratorType):
+            return attr != 'gi_frame'
         return True
 
     def is_safe_callable(self, obj):
@@ -96,7 +103,7 @@ class SandboxedEnvironment(Environment):
                                       ' unsafe.' % (
                     argument,
                     obj.__class__.__name__
-                ))
+                ), name=argument)
         return self.undefined(obj=obj, name=argument)
 
     def call(__self, __obj, *args, **kwargs):
