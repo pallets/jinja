@@ -76,7 +76,7 @@ pygments_style = 'jinjaext.JinjaStyle'
 # The style sheet to use for HTML and HTML Help pages. A file of that name
 # must exist either in Sphinx' static/ path, or in one of the custom paths
 # given in html_static_path.
-html_style = 'default.css'
+html_style = 'style.css'
 
 # The name for this set of Sphinx documents.  If None, it defaults to
 # "<project> v<release> documentation".
@@ -95,15 +95,11 @@ html_last_updated_fmt = '%b %d, %Y'
 # typographically correct entities.
 #html_use_smartypants = True
 
-# Custom sidebar templates, maps document names to template names.
-#html_sidebars = {}
+# use jinja2 for templates
+template_bridge = 'jinjaext.Jinja2Bridge'
 
-# Additional templates that should be rendered to pages, maps page names to
-# template names.
-#html_additional_pages = {}
-
-# If false, no module index is generated.
-#html_use_modindex = True
+# no modindex
+html_use_modindex = False
 
 # If true, the reST sources are included in the HTML build as _sources/<name>.
 #html_copy_source = True

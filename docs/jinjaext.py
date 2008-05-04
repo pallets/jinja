@@ -8,17 +8,20 @@
     :copyright: Copyright 2008 by Armin Ronacher.
     :license: BSD.
 """
+import os
 import re
 import inspect
+import jinja2
+from itertools import islice
 from types import BuiltinFunctionType
 from docutils import nodes
 from docutils.statemachine import ViewList
 from sphinx.ext.autodoc import prepare_docstring
-
-
+from sphinx.application import TemplateBridge
 from pygments.style import Style
 from pygments.token import Keyword, Name, Comment, String, Error, \
      Number, Operator, Generic
+from jinja2 import Environment, FileSystemLoader
 
 
 class JinjaStyle(Style):
@@ -59,6 +62,17 @@ class JinjaStyle(Style):
 
         Error:                      '#F00 bg:#FAA'
     }
+
+
+class Jinja2Bridge(TemplateBridge):
+
+    def init(self, builder):
+        path = builder.config.templates_path
+        self.env = Environment(loader=FileSystemLoader(path))
+
+    def render(self, template, context):
+        return self.env.get_template(template).render(context)
+
 
 _sig_re = re.compile(r'^[a-zA-Z_][a-zA-Z0-9_]*(\(.*?\))')
 
@@ -112,6 +126,28 @@ def dump_functions(mapping):
     return directive
 
 
+def jinja_changelog(dirname, arguments, options, content, lineno,
+                    content_offset, block_text, state, state_machine):
+    doc = ViewList()
+    changelog = file(os.path.join(os.path.dirname(jinja2.__file__), '..',
+                                  'CHANGES'))
+    try:
+        for line in islice(changelog, 3, None):
+            doc.append(line.rstrip(), '<jinjaext>')
+    finally:
+        changelog.close()
+    node = nodes.section()
+    # hack around title style bookkeeping
+    surrounding_title_styles = state.memo.title_styles
+    surrounding_section_level = state.memo.section_level
+    state.memo.title_styles = []
+    state.memo.section_level = 0
+    state.nested_parse(doc, content_offset, node, match_titles=1)
+    state.memo.title_styles = surrounding_title_styles
+    state.memo.section_level = surrounding_section_level
+    return node.children
+
+
 from jinja2.defaults import DEFAULT_FILTERS, DEFAULT_TESTS
 jinja_filters = dump_functions(DEFAULT_FILTERS)
 jinja_tests = dump_functions(DEFAULT_TESTS)
@@ -120,3 +156,4 @@ jinja_tests = dump_functions(DEFAULT_TESTS)
 def setup(app):
     app.add_directive('jinjafilters', jinja_filters, 0, (0, 0, 0))
     app.add_directive('jinjatests', jinja_tests, 0, (0, 0, 0))
+    app.add_directive('jinjachangelog', jinja_changelog, 0, (0, 0, 0))

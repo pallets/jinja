@@ -1,7 +1,7 @@
-Welcome to Jinja2's documentation!
-==================================
+Jinja2 Documentation
+====================
 
-Contents:
+Welcome in the Jinja2 documentation.
 
 .. toctree::
    :maxdepth: 2
@@ -9,3 +9,7 @@ Contents:
    intro
    api
    templates
+
+   changelog
+
+* :ref:`genindex`

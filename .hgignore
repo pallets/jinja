@@ -1,7 +1,7 @@
 ^instance$
 ^instance/
 ^jinja2/.*\.so$
-^docs/_.*
+^docs/_build
 ^(build|dist|Jinja2\.egg-info)/
 \.py[co]$
 \.DS_Store$
