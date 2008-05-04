@@ -8,7 +8,8 @@ body {
 }
 
 div.footer {
-    padding: 5px;
+    padding: 8px;
+    font-size: 11px;
     text-align: center;
 }
 
@@ -111,7 +112,7 @@ p, li, dd, dt, blockquote {
 }
 
 p {
-    line-height: 150%;
+    line-height: 20px;
     margin-bottom: 0;
     margin-top: 10px;
     text-align: justify;
@@ -136,6 +137,12 @@ li, dt {
 
 dt {
     font-weight: bold;
+    color: #000;
+}
+
+dd {
+    margin-top: 10px;
+    line-height: 20px;
 }
 
 th {
@@ -253,4 +260,25 @@ table.indextable {
 table.indextable td {
     vertical-align: top;
     width: 50%;
+}
+
+table.indextable dl dd {
+    font-size: 11px;
+}
+
+table.indextable dl dd a {
+    color: #000;
+}
+
+dl.function dt,
+dl.class dt {
+    font-weight: normal;
+}
+
+dt .descname {
+    font-weight: bold;
+}
+
+dl dt big {
+    font-size: 100%;
 }

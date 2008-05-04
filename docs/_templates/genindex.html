@@ -2,43 +2,35 @@
 {% title = 'Index' %}
 {% block body %}
 
-   <h1 id="index">Index</h1>
+  <h1 id="index">Index</h1>
 
-   {% for key, dummy in genindexentries -%}
-   <a href="#{{ key }}"><strong>{{ key }}</strong></a> {% if not loop.last %}| {% endif %}
-   {%- endfor %}
+  {% for key, dummy in genindexentries -%}
+  <a href="#{{ key }}"><strong>{{ key }}</strong></a> {% if not loop.last %}| {% endif %}
+  {%- endfor %}
+  <hr>
 
-   <hr />
-
-   {% for key, entries in genindexentries %}
-<h2 id="{{ key }}">{{ key }}</h2>
-<table class="indextable"><tr><td>
-<dl>
-{%- breakat = genindexcounts[loop.index0] // 2 %}
-{%- numcols = 1 %}
-{%- numitems = 0 %}
-{% for entryname, (links, subitems) in entries %}
-<dt>{%- if links -%}<a href="{{ links[0] }}">{{ entryname|e }}</a>
-  {%- for link in links[1:] %}, <a href="{{ link }}">[Link]</a>{% endfor -%}
-  {%- else -%}
-{{ entryname|e }}
-  {%- endif -%}</dt>
-  {%- if subitems %}
-  <dd><dl>
-    {%- for subentryname, subentrylinks in subitems %}
-    <dt><a href="{{ subentrylinks[0] }}">{{ subentryname|e }}</a>
-    {%- for link in subentrylinks[1:] %}, <a href="{{ link }}">[Link]</a>{% endfor -%}
-    </dt>
-    {%- endfor %}
-  </dl></dd>
-  {%- endif -%}
-{%- numitems = numitems + 1 + len(subitems) -%}
-{%- if numcols < 2 and numitems > breakat -%}
-{%- numcols = numcols+1 -%}
-</dl></td><td><dl>
-{%- endif -%}
-{%- endfor %}
-</dl></td></tr></table>
-{% endfor %}
+  {% for key, entries in genindexentries %}
+    <h2 id="{{ key }}">{{ key }}</h2>
+    <table class="indextable"><tr>
+    {%- for column in entries|slice(2) %}{% if column %}
+      <td><dl>
+      {%- for entryname, (links, subitems) in column %}
+        <dt>{% if links %}<a href="{{ links[0] }}">{{ entryname|e }}</a>
+          {% for link in links[1:] %}, <a href="{{ link }}">[Link]</a>{% endfor %}
+          {%- else %}{{ entryname|e }}{% endif %}</dt>
+        {%- if subitems %}
+        <dd><dl>
+          {%- for subentryname, subentrylinks in subitems %}
+          <dt><a href="{{ subentrylinks[0] }}">{{ subentryname|e }}</a>
+          {%- for link in subentrylinks[1:] %}, <a href="{{ link }}">[Link]</a>{% endfor -%}
+          </dt>
+          {%- endfor %}
+        </dl></dd>
+        {%- endif -%}
+      {%- endfor %}
+      </dl></td>
+    {%- endif %}{% endfor %}
+    </tr></table>
+  {% endfor %}
 
 {% endblock %}
