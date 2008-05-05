@@ -7,7 +7,7 @@
  * traceback.  If the speedups module is not compiled a ctypes implementation
  * is used.
  *
- * :copyright: 2008 by Armin Ronacher.
+ * :copyright: 2008 by Armin Ronacher, Mickaël Guérin.
  * :license: BSD.
  */
 
@@ -28,7 +28,7 @@ init_constants(void)
 	escaped_chars_delta_len['"'] = 5;
 	escaped_chars_repl['"'] = UNICHR("&quot;");
 
-	escaped_chars_delta_len['&'] = 3;
+	escaped_chars_delta_len['&'] = 4;
 	escaped_chars_repl['&'] = UNICHR("&amp;");
 	
 	escaped_chars_delta_len['<'] = 3;
