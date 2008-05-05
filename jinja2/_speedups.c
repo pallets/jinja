@@ -13,19 +13,30 @@
 
 #include <Python.h>
 
-
-static const char *samp = "&amp;", *slt = "&lt;", *sgt = "&gt;", *sqt = "&quot;";
-static Py_UNICODE *amp, *lt, *gt, *qt;
 static PyObject* markup;
 
+#define ESCAPED_CHARS_TABLE_SIZE 63
+
+static Py_ssize_t escaped_chars_delta_len[ESCAPED_CHARS_TABLE_SIZE];
+static Py_UNICODE *escaped_chars_repl[ESCAPED_CHARS_TABLE_SIZE];
 
 static int
 init_constants(void)
 {
-	amp = ((PyUnicodeObject*)PyUnicode_DecodeASCII(samp, 5, NULL))->str;
-	lt = ((PyUnicodeObject*)PyUnicode_DecodeASCII(slt, 4, NULL))->str;
-	gt = ((PyUnicodeObject*)PyUnicode_DecodeASCII(sgt, 4, NULL))->str;
-	qt = ((PyUnicodeObject*)PyUnicode_DecodeASCII(sqt, 6, NULL))->str;
+	memset(escaped_chars_delta_len, 0, sizeof (escaped_chars_delta_len));
+	/* memset(escaped_chars_repl, 0, sizeof (escaped_chars_repl)); */
+
+	escaped_chars_delta_len['"'] = 5;
+	escaped_chars_repl['"'] = ((PyUnicodeObject*)PyUnicode_DecodeASCII("&quot;", 6, NULL))->str;
+
+	escaped_chars_delta_len['&'] = 3;
+	escaped_chars_repl['&'] = ((PyUnicodeObject*)PyUnicode_DecodeASCII("&amp;", 5, NULL))->str;
+	
+	escaped_chars_delta_len['<'] = 3;
+	escaped_chars_repl['<'] = ((PyUnicodeObject*)PyUnicode_DecodeASCII("&lt;", 4, NULL))->str;
+	
+	escaped_chars_delta_len['>'] = 3;
+	escaped_chars_repl['>'] = ((PyUnicodeObject*)PyUnicode_DecodeASCII("&gt;", 4, NULL))->str;
 	
 	PyObject *module = PyImport_ImportModule("jinja2.utils");
 	if (!module)
@@ -40,29 +51,20 @@ static PyObject*
 escape_unicode(PyUnicodeObject *in)
 {
 	PyUnicodeObject *out;
+	Py_UNICODE *inp = in->str;
+	const Py_UNICODE *inp_end = in->str + in->length;
+	Py_UNICODE *next_escp;
 	Py_UNICODE *outp;
+	Py_ssize_t delta=0, erepl=0, delta_len=0;
 
 	/* First we need to figure out how long the escaped string will be */
-	int len = 0, erepl = 0, repl = 0;
-	Py_UNICODE *inp = in->str;
-	while (*(inp) || in->length > inp - in->str)
-		switch (*inp++) {
-		case '&':
-			len += 5;
+	while (*(inp) || inp < inp_end) {
+		if (*inp < ESCAPED_CHARS_TABLE_SIZE && escaped_chars_delta_len[*inp]) {
+			delta += escaped_chars_delta_len[*inp];
 			++erepl;
-			break;
-		case '"':
-			len += 6;
-			++erepl;
-			break;
-		case '<':
-		case '>':
-			len += 4;
-			++erepl;
-			break;
-		default:
-			++len;
 		}
+		++inp;
+	}
 
 	/* Do we need to escape anything at all? */
 	if (!erepl) {
@@ -70,44 +72,37 @@ escape_unicode(PyUnicodeObject *in)
 		return (PyObject*)in;
 	}
 
-	out = (PyUnicodeObject*)PyUnicode_FromUnicode(NULL, len);
+	out = (PyUnicodeObject*)PyUnicode_FromUnicode(NULL, in->length + delta);
 	if (!out)
 		return NULL;
 
 	outp = out->str;
 	inp = in->str;
-	while (*(inp) || in->length > inp - in->str) {
-		/* copy rest of string if we have replaced everything */
-		if (repl == erepl) {
-			Py_UNICODE_COPY(outp, inp, in->length - (inp - in->str));
-			break;
+	while (erepl-- > 0) {
+		/* look for the next sustitution */
+		next_escp = inp;
+		while (next_escp < inp_end) {
+			if (*next_escp < ESCAPED_CHARS_TABLE_SIZE && (delta_len = escaped_chars_delta_len[*next_escp])) {
+				++delta_len;
+				break;
+			}
+			++next_escp;
 		}
-		/* regular replacements */
-		switch (*inp) {
-		case '&':
-			Py_UNICODE_COPY(outp, amp, 5);
-			outp += 5;
-			++repl;
-			break;
-		case '"':
-			Py_UNICODE_COPY(outp, qt, 6);
-			outp += 6;
-			++repl;
-			break;
-		case '<':
-			Py_UNICODE_COPY(outp, lt, 4);
-			outp += 4;
-			++repl;
-			break;
-		case '>':
-			Py_UNICODE_COPY(outp, gt, 4);
-			outp += 4;
-			++repl;
-			break;
-		default:
-			*outp++ = *inp;
-		};
-		++inp;
+		
+		if (next_escp > inp) {
+			/* copy unescaped chars between inp and next_escp */
+			Py_UNICODE_COPY(outp, inp, next_escp-inp);
+			outp += next_escp-inp;
+		}
+
+		/* escape 'next_escp' */
+		Py_UNICODE_COPY(outp, escaped_chars_repl[*next_escp], delta_len);
+		outp += delta_len;
+
+		inp = next_escp + 1;
+	}
+	if (inp < inp_end) {
+		Py_UNICODE_COPY(outp, inp, in->length - (inp - in->str));
 	}
 
 	return (PyObject*)out;
