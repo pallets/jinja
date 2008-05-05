@@ -13,10 +13,10 @@
 
 #include <Python.h>
 
-static PyObject* markup;
-
 #define ESCAPED_CHARS_TABLE_SIZE 63
+#define UNICHR(x) (((PyUnicodeObject*)PyUnicode_DecodeASCII(x, strlen(x), NULL))->str);
 
+static PyObject* markup;
 static Py_ssize_t escaped_chars_delta_len[ESCAPED_CHARS_TABLE_SIZE];
 static Py_UNICODE *escaped_chars_repl[ESCAPED_CHARS_TABLE_SIZE];
 
@@ -24,19 +24,18 @@ static int
 init_constants(void)
 {
 	memset(escaped_chars_delta_len, 0, sizeof (escaped_chars_delta_len));
-	/* memset(escaped_chars_repl, 0, sizeof (escaped_chars_repl)); */
 
 	escaped_chars_delta_len['"'] = 5;
-	escaped_chars_repl['"'] = ((PyUnicodeObject*)PyUnicode_DecodeASCII("&quot;", 6, NULL))->str;
+	escaped_chars_repl['"'] = UNICHR("&quot;");
 
 	escaped_chars_delta_len['&'] = 3;
-	escaped_chars_repl['&'] = ((PyUnicodeObject*)PyUnicode_DecodeASCII("&amp;", 5, NULL))->str;
+	escaped_chars_repl['&'] = UNICHR("&amp;");
 	
 	escaped_chars_delta_len['<'] = 3;
-	escaped_chars_repl['<'] = ((PyUnicodeObject*)PyUnicode_DecodeASCII("&lt;", 4, NULL))->str;
+	escaped_chars_repl['<'] = UNICHR("&lt;");
 	
 	escaped_chars_delta_len['>'] = 3;
-	escaped_chars_repl['>'] = ((PyUnicodeObject*)PyUnicode_DecodeASCII("&gt;", 4, NULL))->str;
+	escaped_chars_repl['>'] = UNICHR("&gt;");
 	
 	PyObject *module = PyImport_ImportModule("jinja2.utils");
 	if (!module)
@@ -79,10 +78,11 @@ escape_unicode(PyUnicodeObject *in)
 	outp = out->str;
 	inp = in->str;
 	while (erepl-- > 0) {
-		/* look for the next sustitution */
+		/* look for the next substitution */
 		next_escp = inp;
 		while (next_escp < inp_end) {
-			if (*next_escp < ESCAPED_CHARS_TABLE_SIZE && (delta_len = escaped_chars_delta_len[*next_escp])) {
+			if (*next_escp < ESCAPED_CHARS_TABLE_SIZE &&
+			    (delta_len = escaped_chars_delta_len[*next_escp])) {
 				++delta_len;
 				break;
 			}
@@ -101,9 +101,8 @@ escape_unicode(PyUnicodeObject *in)
 
 		inp = next_escp + 1;
 	}
-	if (inp < inp_end) {
+	if (inp < inp_end)
 		Py_UNICODE_COPY(outp, inp, in->length - (inp - in->str));
-	}
 
 	return (PyObject*)out;
 }
@@ -186,10 +185,10 @@ tb_set_next(PyObject *self, PyObject *args)
 
 static PyMethodDef module_methods[] = {
 	{"escape", (PyCFunction)escape, METH_O,
-	 "escape(s) -> string\n\n"
+	 "escape(s) -> markup\n\n"
 	 "Convert the characters &, <, >, and \" in string s to HTML-safe\n"
 	 "sequences. Use this if you need to display text that might contain\n"
-	 "such characters in HTML."},
+	 "such characters in HTML.  Marks return value as markup string."},
 	{"soft_unicode", (PyCFunction)soft_unicode, METH_O,
 	 "soft_unicode(object) -> string\n\n"
          "Make a string unicode if it isn't already.  That way a markup\n"
