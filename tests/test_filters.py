@@ -110,7 +110,7 @@ def test_slice(env):
 def test_escape(env):
     tmpl = env.from_string(ESCAPE)
     out = tmpl.render()
-    assert out == '&lt;&quot;&gt;&amp;'
+    assert out == '&lt;&#34;&gt;&amp;'
 
 
 def test_striptags(env):

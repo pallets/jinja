@@ -23,20 +23,20 @@ static Py_UNICODE *escaped_chars_repl[ESCAPED_CHARS_TABLE_SIZE];
 static int
 init_constants(void)
 {
-	memset(escaped_chars_delta_len, 0, sizeof (escaped_chars_delta_len));
-
-	escaped_chars_delta_len['"'] = 5;
-	escaped_chars_repl['"'] = UNICHR("&quot;");
-
-	escaped_chars_delta_len['&'] = 4;
+	/* happing of characters to replace */
+	escaped_chars_repl['"'] = UNICHR("&#34;");
+	escaped_chars_repl['\''] = UNICHR("&#39;");
 	escaped_chars_repl['&'] = UNICHR("&amp;");
-	
-	escaped_chars_delta_len['<'] = 3;
 	escaped_chars_repl['<'] = UNICHR("&lt;");
-	
-	escaped_chars_delta_len['>'] = 3;
 	escaped_chars_repl['>'] = UNICHR("&gt;");
+
+	/* lengths of those characters when replaced - 1 */
+	memset(escaped_chars_delta_len, 0, sizeof (escaped_chars_delta_len));
+	escaped_chars_delta_len['"'] = escaped_chars_delta_len['\''] = \
+		escaped_chars_delta_len['&'] = 4;
+	escaped_chars_delta_len['<'] = escaped_chars_delta_len['>'] = 3;
 	
+	/* import markup type so that we can mark the return value */
 	PyObject *module = PyImport_ImportModule("jinja2.utils");
 	if (!module)
 		return 0;
@@ -109,16 +109,6 @@ escape_unicode(PyUnicodeObject *in)
 
 
 static PyObject*
-soft_unicode(PyObject *self, PyObject *s)
-{
-	if (!PyUnicode_Check(s))
-		return PyObject_Unicode(s);
-	Py_INCREF(s);
-	return s;
-}
-
-
-static PyObject*
 escape(PyObject *self, PyObject *text)
 {
 	PyObject *s = NULL, *rv = NULL;
@@ -156,6 +146,16 @@ escape(PyObject *self, PyObject *text)
 }
 
 
+static PyObject*
+soft_unicode(PyObject *self, PyObject *s)
+{
+	if (!PyUnicode_Check(s))
+		return PyObject_Unicode(s);
+	Py_INCREF(s);
+	return s;
+}
+
+
 static PyObject *
 tb_set_next(PyObject *self, PyObject *args)
 {
@@ -187,7 +187,7 @@ static PyMethodDef module_methods[] = {
 	{"escape", (PyCFunction)escape, METH_O,
 	 "escape(s) -> markup\n\n"
 	 "Convert the characters &, <, >, and \" in string s to HTML-safe\n"
-	 "sequences. Use this if you need to display text that might contain\n"
+	 "sequences.  Use this if you need to display text that might contain\n"
 	 "such characters in HTML.  Marks return value as markup string."},
 	{"soft_unicode", (PyCFunction)soft_unicode, METH_O,
 	 "soft_unicode(object) -> string\n\n"

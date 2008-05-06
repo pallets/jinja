@@ -103,7 +103,7 @@ class Environment(object):
 
     `line_statement_prefix`
         If given and a string, this will be used as prefix for line based
-        statements.
+        statements.  See also :ref:`line-statements`.
 
     `trim_blocks`
         If this is set to ``True`` the first newline after a block is

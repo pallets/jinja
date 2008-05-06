@@ -51,8 +51,10 @@ class Context(object):
     and are allowed to access the context read-only.
 
     The template context supports read only dict operations (`get`,
-    `__getitem__`, `__contains__`) however `__getitem__` doesn't fail with
-    a `KeyError` but returns an :attr:`Undefined` object.
+    `keys`, `values`, `items`, `iterkeys`, `itervalues`, `iteritems`,
+    `__getitem__`, `__contains__`).  Additionally there is a :meth:`resolve`
+    method that doesn't fail with a `KeyError` but returns an
+    :class:`Undefined` object for missing variables.
     """
 
     def __init__(self, environment, parent, name, blocks):
@@ -95,11 +97,20 @@ class Context(object):
         """Returns an item from the template context, if it doesn't exist
         `default` is returned.
         """
+        try:
+            return self[key]
+        except KeyError:
+            return default
+
+    def resolve(self, key):
+        """Looks up a variable like `__getitem__` or `get` but returns an
+        :class:`Undefined` object with the name of the name looked up.
+        """
         if key in self.vars:
             return self.vars[key]
         if key in self.parent:
             return self.parent[key]
-        return default
+        return self.environment.undefined(name=key)
 
     def get_exported(self):
         """Get a new dict with the exported variables."""
@@ -111,15 +122,29 @@ class Context(object):
         """
         return dict(self.parent, **self.vars)
 
+    def _all(meth):
+        def proxy(self):
+            return getattr(self.get_all(), meth)()
+        proxy.__doc__ = getattr(dict, meth).__doc__
+        proxy.__name__ = meth
+        return proxy
+
+    keys = _all('keys')
+    values = _all('values')
+    items = _all('items')
+    iterkeys = _all('iterkeys')
+    itervalues = _all('itervalues')
+    iteritems = _all('iteritems')
+    del _all
+
     def __contains__(self, name):
         return name in self.vars or name in self.parent
 
     def __getitem__(self, key):
+        """Lookup a variable or raise `KeyError`."""
         if key in self.vars:
             return self.vars[key]
-        if key in self.parent:
-            return self.parent[key]
-        return self.environment.undefined(name=key)
+        return self.parent[key]
 
     def __repr__(self):
         return '<%s %s of %r>' % (

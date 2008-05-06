@@ -303,6 +303,14 @@ class Markup(unicode):
         stripped = u' '.join(_striptags_re.sub('', self).split())
         return Markup(stripped).unescape()
 
+    @classmethod
+    def escape(cls, s):
+        """Escape the string.  Works like :func:`escape`."""
+        rv = escape(s)
+        if rv.__class__ is not cls:
+            return cls(rv)
+        return rv
+
     def make_wrapper(name):
         orig = getattr(unicode, name)
         def func(self, *args, **kwargs):
@@ -478,8 +486,8 @@ try:
     from jinja2._speedups import escape, soft_unicode
 except ImportError:
     def escape(s):
-        """Convert the characters &, <, >, and " in string s to HTML-safe
-        sequences. Use this if you need to display text that might contain
+        """Convert the characters &, <, >, ' and " in string s to HTML-safe
+        sequences.  Use this if you need to display text that might contain
         such characters in HTML.  Marks return value as markup string.
         """
         if hasattr(s, '__html__'):
@@ -488,6 +496,7 @@ except ImportError:
             .replace('&', '&amp;')
             .replace('>', '&gt;')
             .replace('<', '&lt;')
+            .replace("'", '&#39;')
             .replace('"', '&quot;')
         )
 

@@ -461,7 +461,7 @@ class CodeGenerator(NodeVisitor):
     def pull_locals(self, frame):
         """Pull all the references identifiers into the local scope."""
         for name in frame.identifiers.undeclared:
-            self.writeline('l_%s = context[%r]' % (name, name))
+            self.writeline('l_%s = context.resolve(%r)' % (name, name))
 
     def pull_dependencies(self, nodes):
         """Pull all the dependencies."""

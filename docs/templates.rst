@@ -126,6 +126,95 @@ yourself::
         {% endfor %}
     #}
 
+
+Whitespace Control
+------------------
+
+In the default configuration whitespace is not further modified by the
+template engine, so each whitespace (spaces, tabs, newlines etc.) is returned
+unchanged.  If the application configures Jinja to `trim_blocks` the first
+newline after a a template tag is removed automatically (like in PHP).
+
+But you can also strip whitespace in templates by hand.  If you put an minus
+sign (``-``) to the start or end of an block (for example a for tag), a
+comment or variable expression you can remove the whitespaces after or before
+that block::
+
+    {% for item in seq -%}
+        {{ item }}
+    {%- endfor %}
+    
+This will yield all elements without whitespace between them.  If `seq` was
+a list of numbers from ``1`` to ``9`` the output would be ``123456789``.
+
+Note that you must not use a whitespace between the tag and the minus sign:
+
+    valid:
+        {%- if foo -%}...{% endif %}
+
+    invalid:
+
+        {% - if foo - %}...{% endif %}
+
+If :ref:`line-statements` are enabled they strip leading whitespace
+automatically up to the beginning of the line.
+
+
+Escaping
+--------
+
+It is sometimes desirable or even necessary to have Jinja ignore parts it
+would otherwise handle as variables or blocks.  For example if the default
+syntax is used and you want to use ``{{`` as raw string in the template and
+not start a variable you have to use a trick.
+
+The easiest way is to output the variable delimiter (``{{``) by using a
+variable expression::
+
+    {{ '{{' }}
+
+For bigger sections it makes sense to mark a block `raw`.  For example to
+put Jinja syntax as example into a template you can use this snippet::
+
+    {% raw %}
+        <ul>
+        {% for item in seq %}
+            <li>{{ item }}</li>
+        {% endfor %}
+        </ul>
+    {% endraw %}
+
+
+.. _line-statements:
+
+Line Statements
+---------------
+
+If line statements are enabled by the application it's possible to mark a
+line as a statement.  For example if the line statement prefix is configured
+to ``#`` the following two examples are equivalent::
+
+    <ul>
+    # for item in seq
+        <li>{{ item }}</li>
+    # endfor
+    </ul>
+
+    <ul>
+    {% for item in seq %}
+        <li>{{ item }}</li>
+    {% endfor %}
+    </ul>
+
+The line statement prefix can appear anywhere on the line as long as no text
+precedes it.  For better readability statements that start a block (such as
+`for`, `if`, `elif` etc.) may end with a colon::
+
+    # for item in seq:
+        ...
+    # endif
+
+
 .. _template-inheritance:
 
 Template Inheritance
