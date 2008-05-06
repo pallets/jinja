@@ -26,7 +26,7 @@ div.header {
 div.relnav {
     border-bottom: 1px solid #ACACAC;
     background: url(navigation.png);
-    padding: 2px 20px 0 28px;
+    padding: 2px 20px 0 38px;
     line-height: 25px;
     color: #aaa;
     font-size: 12px;
@@ -45,8 +45,8 @@ div.relnav a:hover {
 #content {
     background-color: white;
     color: #111;
-    background-image: url(watermark.png);
-    padding: 0 0 10px 0;
+    background: url(watermark.png) -110px 0;
+    padding: 0;
     margin: 0;
 }
 
@@ -56,7 +56,7 @@ h1 {
 }
 
 h1.heading {
-    margin: 0 0 0 10px;
+    margin: 0 0 0 20px;
     padding: 0;
     height: 80px;
     background: url(jinjabanner.png) no-repeat;
@@ -93,8 +93,10 @@ h2.plain {
 #contentwrapper {
     max-width: 700px;
     padding: 0 18px 20px 18px;
+    margin: 0 0 0 10px;
     border-right: 1px solid #eee;
-    background: url(watermark_blur.png) 0 -114px;
+    border-left: 1px solid #eee;
+    background: url(watermark_blur.png) -120px -114px;
 }
 
 #contentwrapper h3,
