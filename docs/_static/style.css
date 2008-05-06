@@ -1,5 +1,5 @@
 body {
-    background-color: #333;
+    background-color: #222;
     margin: 0;
     padding: 0;
     font-family: 'Georgia', serif;
@@ -8,6 +8,7 @@ body {
 }
 
 div.footer {
+    border-top: 1px solid #111;
     padding: 8px;
     font-size: 11px;
     text-align: center;
@@ -20,33 +21,45 @@ div.footer a {
 div.header {
     background: url(headerbg.png) repeat-x;
     border-top: 6px solid #D20000;
-    border-bottom: 1px solid #ACACAC;
-    margin: -10px -10px 0 -10px;
 }
 
 div.relnav {
-    border-top: 1px solid #F1F1F1;
     border-bottom: 1px solid #ACACAC;
-    background-color: #ECECEC;
-    padding: 4px 20px 4px 28px;
-    margin: 0 -10px 10px -10px;
-    font-size: 13px;
+    background: url(navigation.png);
+    padding: 2px 20px 0 28px;
+    line-height: 25px;
+    color: #aaa;
+    font-size: 12px;
+}
+
+div.relnav a {
+    color: #eee;
+    font-weight: bold;
+    text-decoration: none;
+}
+
+div.relnav a:hover {
+    text-decoration: underline;
 }
 
 #content {
     background-color: white;
     color: #111;
     background-image: url(watermark.png);
-    padding: 10px;
+    padding: 0 0 10px 0;
     margin: 0;
 }
 
-h1.heading {
+h1 {
     margin: 0;
+    padding: 15px 0 0 0;
+}
+
+h1.heading {
+    margin: 0 0 0 10px;
     padding: 0;
     height: 80px;
-    background-image: url(jinjabanner.png);
-    background-repeat: no-repeat;
+    background: url(jinjabanner.png) no-repeat;
 }
 
 h1.heading a {
@@ -79,7 +92,9 @@ h2.plain {
 
 #contentwrapper {
     max-width: 700px;
-    padding: 0 0 20px 18px;
+    padding: 0 18px 20px 18px;
+    border-right: 1px solid #eee;
+    background: url(watermark_blur.png) 0 -114px;
 }
 
 #contentwrapper h3,
@@ -203,7 +218,7 @@ div.admonition p {
 }
 
 #toc {
-    margin: 20px -10px 10px 15px;
+    margin: 20px 0 10px 15px;
     padding: 10px;
     width: 200px;
     float: right;
