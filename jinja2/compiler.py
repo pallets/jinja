@@ -813,7 +813,7 @@ class CodeGenerator(NodeVisitor):
         # tests in not extended loops become a continue
         if not extended_loop and node.test is not None:
             self.indent()
-            self.writeline('if ')
+            self.writeline('if not ')
             self.visit(node.test, loop_frame)
             self.write(':')
             self.indent()
