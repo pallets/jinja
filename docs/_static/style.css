@@ -199,7 +199,8 @@ tt {
     font-family: 'Bitstream Vera Sans Mono', 'Monaco', monospace;
     color: black;
     padding: 1px 2px 1px 2px;
-    background-color: #f0f0f0;
+    background-color: #fafafa;
+    border-bottom: 1px solid #eee;
 }
 
 cite {
@@ -256,7 +257,7 @@ div.admonition p {
 }
 
 a.headerlink {
-    color: #A70000;
+    color: #B4B4B4;
     font-size: 0.8em;
     margin-left: 8px;
     padding: 0 4px 0 4px;
@@ -275,8 +276,8 @@ dt:hover > a.headerlink {
 }
 
 a.headerlink:hover {
-    background-color: #A70000;
-    color: white!important;
+    background-color: #B4B4B4;
+    color: #F0F0F0!important;
 }
 
 table.indextable {
@@ -303,6 +304,17 @@ dl.class dt {
 
 dt .descname {
     font-weight: bold;
+    margin-right: 4px;
+}
+
+dt .descname, dt .descclassname {
+    padding: 0;
+    background: transparent;
+    border-bottom: 1px solid #111;
+}
+
+dt .descclassname {
+    margin-left: 2px;
 }
 
 dl dt big {
