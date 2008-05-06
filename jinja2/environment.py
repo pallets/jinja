@@ -82,67 +82,69 @@ class Environment(object):
 
     Here the possible initialization parameters:
 
-    `block_start_string`
-        The string marking the begin of a block.  Defaults to ``'{%'``.
+        `block_start_string`
+            The string marking the begin of a block.  Defaults to ``'{%'``.
 
-    `block_end_string`
-        The string marking the end of a block.  Defaults to ``'%}'``.
+        `block_end_string`
+            The string marking the end of a block.  Defaults to ``'%}'``.
 
-    `variable_start_string`
-        The string marking the begin of a print statement.
-        Defaults to ``'{{'``.
+        `variable_start_string`
+            The string marking the begin of a print statement.
+            Defaults to ``'{{'``.
 
-    `variable_stop_string`
-        The string marking the end of a print statement. Defaults to ``'}}'``.
+        `variable_stop_string`
+            The string marking the end of a print statement.  Defaults to
+            ``'}}'``.
 
-    `comment_start_string`
-        The string marking the begin of a comment.  Defaults to ``'{#'``.
+        `comment_start_string`
+            The string marking the begin of a comment.  Defaults to ``'{#'``.
 
-    `comment_end_string`
-        The string marking the end of a comment.  Defaults to ``'#}'``.
+        `comment_end_string`
+            The string marking the end of a comment.  Defaults to ``'#}'``.
 
-    `line_statement_prefix`
-        If given and a string, this will be used as prefix for line based
-        statements.  See also :ref:`line-statements`.
+        `line_statement_prefix`
+            If given and a string, this will be used as prefix for line based
+            statements.  See also :ref:`line-statements`.
 
-    `trim_blocks`
-        If this is set to ``True`` the first newline after a block is
-        removed (block, not variable tag!).  Defaults to `False`.
+        `trim_blocks`
+            If this is set to ``True`` the first newline after a block is
+            removed (block, not variable tag!).  Defaults to `False`.
 
-    `extensions`
-        List of Jinja extensions to use.  This can either be import paths
-        as strings or extension classes.
+        `extensions`
+            List of Jinja extensions to use.  This can either be import paths
+            as strings or extension classes.
 
-    `optimized`
-        should the optimizer be enabled?  Default is `True`.
+        `optimized`
+            should the optimizer be enabled?  Default is `True`.
 
-    `undefined`
-        :class:`Undefined` or a subclass of it that is used to represent
-        undefined values in the template.
+        `undefined`
+            :class:`Undefined` or a subclass of it that is used to represent
+            undefined values in the template.
 
-    `finalize`
-        A callable that finalizes the variable.  Per default no finalizing
-        is applied.
+        `finalize`
+            A callable that finalizes the variable.  Per default no finalizing
+            is applied.
 
-    `autoescape`
-        If set to true the XML/HTML autoescaping feature is enabled.
+        `autoescape`
+            If set to true the XML/HTML autoescaping feature is enabled.
 
-    `loader`
-        The template loader for this environment.
+        `loader`
+            The template loader for this environment.
 
-    `cache_size`
-        The size of the cache.  Per default this is ``50`` which means that if
-        more than 50 templates are loaded the loader will clean out the least
-        recently used template.  If the cache size is set to ``0`` templates are
-        recompiled all the time, if the cache size is ``-1`` the cache will not
-        be cleaned.
+        `cache_size`
+            The size of the cache.  Per default this is ``50`` which means
+            that if more than 50 templates are loaded the loader will clean
+            out the least recently used template.  If the cache size is set to
+            ``0`` templates are recompiled all the time, if the cache size is
+            ``-1`` the cache will not be cleaned.
 
-    `auto_reload`
-        Some loaders load templates from locations where the template sources
-        may change (ie: file system or database).  If `auto_reload` is set to
-        `True` (default) every time a template is requested the loader checks
-        if the source changed and if yes, it will reload the template.  For
-        higher performance it's possible to disable that.
+        `auto_reload`
+            Some loaders load templates from locations where the template
+            sources may change (ie: file system or database).  If
+            `auto_reload` is set to `True` (default) every time a template is
+            requested the loader checks if the source changed and if yes, it
+            will reload the template.  For higher performance it's possible to
+            disable that.
     """
 
     #: if this environment is sandboxed.  Modifying this variable won't make

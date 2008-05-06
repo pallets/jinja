@@ -137,6 +137,10 @@ p, li, dd, dt, blockquote {
     color: #333;
 }
 
+blockquote {
+    margin: 10px 0 10px 20px;
+}
+
 p {
     line-height: 20px;
     margin-bottom: 0;
