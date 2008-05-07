@@ -306,7 +306,7 @@ def fail_with_undefined_error(self, *args, **kwargs):
             )
     else:
         hint = self._undefined_hint
-    raise UndefinedError(hint)
+    raise self._undefined_exception(hint)
 
 
 class Undefined(object):
@@ -323,12 +323,14 @@ class Undefined(object):
       ...
     jinja2.exceptions.UndefinedError: 'foo' is undefined
     """
-    __slots__ = ('_undefined_hint', '_undefined_obj', '_undefined_name')
+    __slots__ = ('_undefined_hint', '_undefined_obj', '_undefined_name',
+                 '_undefined_exception')
 
-    def __init__(self, hint=None, obj=None, name=None):
+    def __init__(self, hint=None, obj=None, name=None, exc=UndefinedError):
         self._undefined_hint = hint
         self._undefined_obj = obj
         self._undefined_name = name
+        self._undefined_exception = exc
 
     __add__ = __radd__ = __mul__ = __rmul__ = __div__ = __rdiv__ = \
     __realdiv__ = __rrealdiv__ = __floordiv__ = __rfloordiv__ = \

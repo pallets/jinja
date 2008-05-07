@@ -293,11 +293,13 @@ class Environment(object):
             exc_type, exc_value, tb = translate_syntax_error(e)
             raise exc_type, exc_value, tb
 
-    def lex(self, source, name=None):
+    def lex(self, source, filename=None):
         """Lex the given sourcecode and return a generator that yields
         tokens as tuples in the form ``(lineno, token_type, value)``.
+        This can be useful for :ref:`extension development <writing-extensions>`
+        and debugging templates.
         """
-        return self.lexer.tokeniter(source, name)
+        return self.lexer.tokeniter(source, filename)
 
     def compile(self, source, name=None, filename=None, globals=None,
                 raw=False):

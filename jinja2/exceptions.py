@@ -18,6 +18,12 @@ class UndefinedError(TemplateError):
     """Raised if a template tries to operate on :class:`Undefined`."""
 
 
+class SecurityError(TemplateError):
+    """Raised if a template tries to do something insecure if the
+    sandbox is enabled.
+    """
+
+
 class TemplateNotFound(IOError, LookupError, TemplateError):
     """Raised if a template does not exist."""
 

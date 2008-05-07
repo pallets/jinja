@@ -16,6 +16,7 @@ from types import FunctionType, MethodType, TracebackType, CodeType, \
      FrameType, GeneratorType
 from jinja2.runtime import Undefined
 from jinja2.environment import Environment
+from jinja2.exceptions import SecurityError
 
 
 #: maximum number of items a range may produce
@@ -41,13 +42,55 @@ def safe_range(*args):
 
 
 def unsafe(f):
-    """Mark a function as unsafe."""
+    """
+    Mark a function or method as unsafe::
+
+        @unsafe
+        def delete(self):
+            pass
+    """
     f.unsafe_callable = True
     return f
 
 
+def is_internal_attribute(obj, attr):
+    """Test if the attribute given is an internal python attribute.  For
+    example this function returns `True` for the `func_code` attribute of
+    python objects.  This is useful if the environment method
+    :meth:`~SandboxedEnvironment.is_safe_attribute` is overriden.
+
+    >>> from jinja2.sandbox import is_internal_attribute
+    >>> is_internal_attribute(lambda: None, "func_code")
+    True
+    >>> is_internal_attribute((lambda x:x).func_code, 'co_code')
+    True
+    >>> is_internal_attribute(str, "upper")
+    False
+    """
+    if isinstance(obj, FunctionType):
+        return attr in UNSAFE_FUNCTION_ATTRIBUTES
+    if isinstance(obj, MethodType):
+        return attr in UNSAFE_FUNCTION_ATTRIBUTES or \
+               attr in UNSAFE_METHOD_ATTRIBUTES
+    if isinstance(obj, type):
+        return attr == 'mro'
+    if isinstance(obj, (CodeType, TracebackType, FrameType)):
+        return True
+    if isinstance(obj, GeneratorType):
+        return attr == 'gi_frame'
+    return attr.startswith('__')
+
+
 class SandboxedEnvironment(Environment):
-    """The sandboxed environment"""
+    """The sandboxed environment.  It works like the regular environment but
+    tells the compiler to generate sandboxed code.  Additionally subclasses of
+    this environment may override the methods that tell the runtime what
+    attributes or functions are safe to access.
+
+    If the template tries to access insecure code a :exc:`SecurityError` is
+    raised.  However also other exceptions may occour during the rendering so
+    the caller has to ensure that all exceptions are catched.
+    """
     sandboxed = True
 
     def __init__(self, *args, **kwargs):
@@ -58,22 +101,10 @@ class SandboxedEnvironment(Environment):
         """The sandboxed environment will call this method to check if the
         attribute of an object is safe to access.  Per default all attributes
         starting with an underscore are considered private as well as the
-        special attributes of functions and methods.
+        special attributes of internal python objects as returned by the
+        :func:`is_internal_attribute` function.
         """
-        if attr.startswith('_'):
-            return False
-        if isinstance(obj, FunctionType):
-            return attr not in UNSAFE_FUNCTION_ATTRIBUTES
-        if isinstance(obj, MethodType):
-            return attr not in UNSAFE_FUNCTION_ATTRIBUTES and \
-                   attr not in UNSAFE_METHOD_ATTRIBUTES
-        if isinstance(obj, type):
-            return attr != 'mro'
-        if isinstance(obj, (CodeType, TracebackType, FrameType)):
-            return False
-        if isinstance(obj, GeneratorType):
-            return attr != 'gi_frame'
-        return True
+        return not (attr.startswith('_') or is_internal_attribute(obj, attr))
 
     def is_safe_callable(self, obj):
         """Check if an object is safely callable.  Per default a function is
@@ -103,7 +134,7 @@ class SandboxedEnvironment(Environment):
                                       ' unsafe.' % (
                     argument,
                     obj.__class__.__name__
-                ), name=argument)
+                ), name=argument, exc=SecurityError)
         return self.undefined(obj=obj, name=argument)
 
     def call(__self, __obj, *args, **kwargs):
@@ -111,5 +142,5 @@ class SandboxedEnvironment(Environment):
         # the double prefixes are to avoid double keyword argument
         # errors when proxying the call.
         if not __self.is_safe_callable(__obj):
-            raise TypeError('%r is not safely callable' % (__obj,))
+            raise SecurityError('%r is not safely callable' % (__obj,))
         return __obj(*args, **kwargs)

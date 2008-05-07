@@ -35,14 +35,14 @@ test_unsafe = '''
 >>> env.from_string("{{ foo.foo() }}").render(foo=MODULE.PrivateStuff())
 Traceback (most recent call last):
     ...
-TypeError: <bound method PrivateStuff.foo of PrivateStuff> is not safely callable
+SecurityError: <bound method PrivateStuff.foo of PrivateStuff> is not safely callable
 >>> env.from_string("{{ foo.bar() }}").render(foo=MODULE.PrivateStuff())
 u'23'
 
 >>> env.from_string("{{ foo._foo() }}").render(foo=MODULE.PublicStuff())
 Traceback (most recent call last):
     ...
-UndefinedError: access to attribute '_foo' of 'PublicStuff' object is unsafe.
+SecurityError: access to attribute '_foo' of 'PublicStuff' object is unsafe.
 >>> env.from_string("{{ foo.bar() }}").render(foo=MODULE.PublicStuff())
 u'23'
 
@@ -53,7 +53,7 @@ u''
 >>> env.from_string("{{ foo.__class__.__subclasses__() }}").render(foo=42)
 Traceback (most recent call last):
     ...
-UndefinedError: access to attribute '__class__' of 'int' object is unsafe.
+SecurityError: access to attribute '__class__' of 'int' object is unsafe.
 '''
 
 

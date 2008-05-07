@@ -48,7 +48,7 @@ High Level API
 --------------
 
 .. autoclass:: jinja2.environment.Environment([options])
-    :members: from_string, get_template, join_path, parse
+    :members: from_string, get_template, join_path, parse, lex
 
     .. attribute:: shared
 
@@ -174,6 +174,8 @@ The Context
         block (latest in the inheritance chain).
 
 
+.. _loaders:
+
 Loaders
 -------
 
@@ -232,15 +234,15 @@ functions to a Jinja2 environment.
 Exceptions
 ----------
 
-.. autoclass:: jinja2.exceptions.TemplateError
+.. autoexception:: jinja2.exceptions.TemplateError
 
-.. autoclass:: jinja2.exceptions.UndefinedError
+.. autoexception:: jinja2.exceptions.UndefinedError
 
-.. autoclass:: jinja2.exceptions.TemplateNotFound
+.. autoexception:: jinja2.exceptions.TemplateNotFound
 
-.. autoclass:: jinja2.exceptions.TemplateSyntaxError
+.. autoexception:: jinja2.exceptions.TemplateSyntaxError
 
-.. autoclass:: jinja2.exceptions.TemplateAssertionError
+.. autoexception:: jinja2.exceptions.TemplateAssertionError
 
 
 .. _writing-filters:

@@ -10,9 +10,11 @@ fast and secure.
 
    intro
    api
+   sandbox
    templates
    extensions
    integration
+   switching
 
    changelog
 
