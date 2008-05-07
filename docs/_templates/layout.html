@@ -41,6 +41,7 @@
     {%- if prev %}
     <link rel="prev" title="{{ prev.title|striptags }}" href="{{ prev.link|e }}">
     {%- endif %}
+    {% block extrahead %}{% endblock %}
   </head>
   <body>
     <div id="content">

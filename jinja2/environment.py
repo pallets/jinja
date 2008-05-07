@@ -112,7 +112,8 @@ class Environment(object):
 
         `extensions`
             List of Jinja extensions to use.  This can either be import paths
-            as strings or extension classes.
+            as strings or extension classes.  For more information have a
+            look at :ref:`the extensions documentation <jinja-extensions>`.
 
         `optimized`
             should the optimizer be enabled?  Default is `True`.
@@ -282,6 +283,9 @@ class Environment(object):
         tree of nodes is used by the compiler to convert the template into
         executable source- or bytecode.  This is useful for debugging or to
         extract information from templates.
+
+        If you are :ref:`developing Jinja2 extensions <writing-extensions>`
+        this gives you a good overview of the node tree generated.
         """
         try:
             return Parser(self, source, filename).parse()

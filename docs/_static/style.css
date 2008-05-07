@@ -81,17 +81,6 @@ h1.heading span {
     display: none;
 }
 
-h2.subheading {
-    margin: -55px 0 35px 200px;
-    font-weight: normal;
-    font-size: 30px;
-    color: #444;
-}
-
-h2.plain {
-    margin: 0;
-}
-
 #jinjalogo {
     background-image: url(jinjalogo.png);
     background-repeat: no-repeat;
@@ -108,15 +97,15 @@ h2.plain {
     background: url(watermark_blur.png) -120px -114px;
 }
 
-#contentwrapper h3,
-#contentwrapper h3 a {
-    color: #b41717;
-    font-size: 26px;
-    margin: 20px 0 0 -5px;
+#contentwrapper h2,
+#contentwrapper h2 a {
+    color: #222;
+    font-size: 24px;
+    margin: 20px 0 0 0;
 }
 
-#contentwrapper h4,
-#contentwrapper h4 a {
+#contentwrapper h3,
+#contentwrapper h3 a {
     color: #b41717;
     font-size: 20px;
     margin: 20px 0 0 0;
@@ -323,4 +312,25 @@ dt .descclassname {
 
 dl dt big {
     font-size: 100%;
+}
+
+ul.search {
+    margin: 10px 0 0 30px;
+    padding: 0;
+}
+
+ul.search li {
+    margin: 10px 0 0 0;
+    padding: 0;
+}
+
+ul.search div.context {
+    font-size: 12px;
+    padding: 4px 0 0 20px;
+    color: #888;
+}
+
+span.highlight {
+    background-color: #eee;
+    border: 1px solid #ccc;
 }

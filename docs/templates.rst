@@ -928,7 +928,77 @@ The following functions are available in the global scope by default:
     is disabled regular text is returned.  This is useful to generate simple
     contents for layout testing.
 
-.. function:: dict(**items)
+.. function:: dict(\**items)
 
     A convenient alternative to dict literals.  ``{'foo': 'bar'}`` is the same
     as ``dict(foo='bar')``.
+
+
+Extensions
+----------
+
+The following sections cover the built-in Jinja2 extensions that may be
+enabled by the application.  The application could also provide further
+extensions not covered by this documentation.  In that case there should
+be a separate document explaining the extensions.
+
+.. _i18n-in-templates:
+
+i18n
+~~~~
+
+If the i18n extension is enabled it's possible to mark parts in the template
+as translatable.  To mark a section as translatable you can use `trans`::
+
+    <p>{% trans %}Hello {{ user }}!{% endtrans %}</p>
+
+To translate a template expression --- say, using template filters or just
+accessing an attribute of an object --- you need to bind the expression to a
+name for use within the translation block::
+
+    <p>{% trans user=user.username %}Hello {{ user }}!{% endtrans %}</p>
+
+If you need to bind more than one expression inside a `trans` tag, separate
+the pieces with a comma (``,``)::
+
+    {% trans book_title=book.title, author=author.name %}
+    This is {{ book_title }} by {{ author }}
+    {% endtrans %}
+
+Inside trans tags no statements are allowed, only variable tags are.
+
+To pluralize, specify both the singular and plural forms with the `pluralize`
+tag, which appears between `trans` and `endtrans`::
+
+    {% trans count=list|length %}
+    There is {{ count }} {{ name }} object.
+    {% pluralize %}
+    There are {{ count }} {{ name }} objects.
+    {% endtrans %}
+
+Per default the first variable in a block is used to determine the correct
+singular or plural form.  If that doesn't work out you can specify the name
+which should be used for pluralizing by adding it as parameter to `pluralize`::
+
+    {% trans ..., user_count=users|length %}...
+    {% pluralize user_count %}...{% endtrans %}
+
+It's also possible to translate strings in expressions.  For that purpose
+three functions exist:
+
+_   `gettext`: translate a single string
+-   `ngettext`: translate a pluralizable string
+-   `_`: alias for `gettext`
+
+For example you can print a translated string easily this way::
+
+    {{ _('Hello World!') }}
+
+To use placeholders you can use the `format` filter::
+
+    {{ _('Hello %(user)s!')|format(user=user.username) }}
+        or
+    {{ _('Hello %s')|format(user.username) }}
+
+For multiple placeholders always use keyword arguments to `format` as other
+languages may not use the words in the same order.

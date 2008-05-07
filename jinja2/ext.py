@@ -15,7 +15,7 @@ from jinja2 import nodes
 from jinja2.environment import get_spontaneous_environment
 from jinja2.runtime import Undefined, concat
 from jinja2.exceptions import TemplateAssertionError, TemplateSyntaxError
-from jinja2.utils import import_string, Markup
+from jinja2.utils import contextfunction, import_string, Markup
 
 
 # the only real useful gettext functions for a Jinja template.  Note
@@ -74,14 +74,14 @@ class CacheExtension(Extension):
         )
 
 
-class TransExtension(Extension):
+class InternationalizationExtension(Extension):
     """This extension adds gettext support to Jinja."""
     tags = set(['trans'])
 
     def __init__(self, environment):
         Extension.__init__(self, environment)
         environment.globals.update({
-            '_':        lambda x: x,
+            '_':        contextfunction(lambda c, x: c['gettext'](x)),
             'gettext':  lambda x: x,
             'ngettext': lambda s, p, n: (s, p)[n != 1]
         })
@@ -284,11 +284,11 @@ def babel_extract(fileobj, keywords, comment_tags, options):
         if not extension:
             continue
         extension = import_string(extension)
-        if extension is TransExtension:
+        if extension is InternationalizationExtension:
             have_trans_extension = True
         extensions.append(extension)
     if not have_trans_extension:
-        extensions.append(TransExtension)
+        extensions.append(InternationalizationExtension)
 
     environment = get_spontaneous_environment(
         options.get('block_start_string', '{%'),
@@ -310,3 +310,8 @@ def babel_extract(fileobj, keywords, comment_tags, options):
     node = environment.parse(fileobj.read().decode(encoding))
     for lineno, func, message in extract_from_ast(node, keywords):
         yield lineno, func, message, []
+
+
+#: nicer import names
+i18n = InternationalizationExtension
+cache = CacheExtension

@@ -11,7 +11,13 @@ fast and secure.
    intro
    api
    templates
+   extensions
+   integration
 
    changelog
 
+If you can't find the information you're looking for, have a look at the
+index of try to find it using the search function:
+
 * :ref:`genindex`
+* :ref:`search`

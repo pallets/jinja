@@ -46,7 +46,7 @@ def ngettext(context, s, p, n):
 
 i18n_env = Environment(
     loader=DictLoader(templates),
-    extensions=['jinja2.ext.TransExtension']
+    extensions=['jinja2.ext.i18n']
 )
 i18n_env.globals.update({
     '_':            gettext,

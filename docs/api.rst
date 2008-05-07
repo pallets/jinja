@@ -47,8 +47,8 @@ To render it with some variables, just call the :meth:`render` method::
 High Level API
 --------------
 
-.. autoclass:: jinja2.environment.Environment
-    :members: from_string, get_template, join_path, overlay
+.. autoclass:: jinja2.environment.Environment([options])
+    :members: from_string, get_template, join_path, parse
 
     .. attribute:: shared
 
@@ -83,17 +83,28 @@ High Level API
         overridden by templates.  As long as no template was loaded it's safe
         to modify this dict.  For more details see :ref:`global-namespace`.
 
+    .. automethod:: overlay([options])
+
 
 .. autoclass:: jinja2.Template
-    :members: render, stream, generate, make_module, module
+    :members: make_module, module, new_context
 
     .. attribute:: globals
 
-        foo
+        The dict with the globals of that template.  It's unsafe to modify
+        this dict as it may be shared with other templates or the environment
+        that loaded the template.
 
     .. attribute:: name
 
-        foo
+        The loading name of the template.  If the template was loaded from a
+        string this is `None`.
+
+    .. automethod:: render([context])
+
+    .. automethod:: generate([context])
+
+    .. automethod:: stream([context])
 
 
 .. autoclass:: jinja2.environment.TemplateStream
