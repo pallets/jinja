@@ -179,7 +179,7 @@ a:hover {
 }
 
 pre {
-    background-color: #f9f9f9;
+    background: #ededed url(metal.png);
     border-top: 1px solid #ccc;
     border-bottom: 1px solid #ccc;
     padding: 5px;
@@ -296,7 +296,8 @@ table.indextable dl dd a {
 
 dl.function dt,
 dl.class dt,
-dl.exception dt {
+dl.exception dt,
+dl.method dt {
     font-weight: normal;
 }
 

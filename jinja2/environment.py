@@ -222,6 +222,15 @@ class Environment(object):
 
         _environment_sanity_check(self)
 
+    def extend(self, **attributes):
+        """Add the items to the instance of the environment if they do not exist
+        yet.  This is used by :ref:`extensions <writing-extensions>` to register
+        callbacks and configuration values without breaking inheritance.
+        """
+        for key, value in attributes.iteritems():
+            if not hasattr(self, key):
+                setattr(self, key, value)
+
     def overlay(self, block_start_string=missing, block_end_string=missing,
                 variable_start_string=missing, variable_end_string=missing,
                 comment_start_string=missing, comment_end_string=missing,

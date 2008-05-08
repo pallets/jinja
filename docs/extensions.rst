@@ -3,8 +3,6 @@
 Extensions
 ==========
 
-.. module:: jinja2.ext
-
 Jinja2 supports extensions that can add extra filters, tests, globals or even
 extend the parser.  The main motivation of extensions is it to move often used
 code into a reusable class like adding support for internationalization.
@@ -32,9 +30,46 @@ used in combination with `gettext`_ or `babel`_.  If the i18n extension is
 enabled Jinja2 provides a `trans` statement that marks the wrapped string as
 translatable and calls `gettext`.
 
-After enabling dummy `_`, `gettext` and `ngettext` functions are added to
-the template globals.  A internationalized application has to override those
-methods with more useful versions.
+After enabling dummy `_` function that forwards calls to `gettext` is added
+to the environment globals.  An internationalized application then has to
+provide at least an `gettext` and optoinally a `ngettext` function into the
+namespace.  Either globally or for each rendering.
+
+After enabling of the extension the environment provides the following
+additional methods:
+
+.. method:: jinja2.Environment.install_gettext_translations(translations)
+
+    Installs a translation globally for that environment.  The tranlations
+    object provided must implement at least `ugettext` and `ungettext`.
+    The `gettext.NullTranslations` and `gettext.GNUTranslations` classes
+    as well as `Babel`_\s `Translations` class are supported.
+
+.. method:: jinja2.Environment.install_null_translations()
+
+    Install dummy gettext functions.  This is useful if you want to prepare
+    the application for internationalization but don't want to implement the
+    full internationalization system yet.
+
+.. method:: jinja2.Environment.uninstall_gettext_translations()
+
+    Uninstall the translations again.
+
+.. method:: jinja2.Environment.extract_translations(source)
+
+    Extract localizable strings from the given template node or source.
+
+    For every string found this function yields a ``(lineno, function,
+    message)`` tuple, where:
+
+    * `lineno` is the number of the line on which the string was found,
+    * `function` is the name of the `gettext` function used (if the
+      string was extracted from embedded Python code), and
+    *  `message` is the string itself (a `unicode` object, or a tuple
+       of `unicode` objects for functions with multiple string arguments).
+
+    If `Babel`_ is installed :ref:`the babel integration <babel-integration>`
+    can be used to extract strings for babel.
 
 For a web application that is available in multiple languages but gives all
 the users the same language (for example a multilingual forum software
@@ -43,46 +78,24 @@ translation methods to the environment at environment generation time::
 
     translations = get_gettext_translations()
     env = Environment(extensions=['jinja.ext.i18n'])
-    env.globals.update(
-        gettext=translations.ugettext,
-        ngettext=translations.ungettext
-    )
+    env.install_gettext_translations(translations)
 
 The `get_gettext_translations` function would return the translator for the
-current configuration.  Keep in mind that Jinja2 uses unicode internally so
-you must pass the `ugettext` and `ungettext` functions to the template.
-
-The default `_` function injected by the extension calls `gettext`
-automatically.
-
-If you want to pass the gettext function into the context at render time
-because you don't know the language/translations earlier and the optimizer
-is enabled (which it is per default), you have to unregister the `gettext`
-and `ugettext` functions first::
-
-    del env.globals['gettext'], env.globals['ugettext']
-
-Jinja2 also provides a way to extract recognized strings.  For one the
-`jinja.ext` module provides a function that can return all the occurences
-of gettext calls in a node (as returned by :meth:`Environment.parse`):
-
-.. autofunction:: extract_from_ast
-
-If `babel`_ is installed :ref:`the babel integration <babel-integration>`
-can be used to.
+current configuration.  (For example by using `gettext.find`)
 
 The usage of the `i18n` extension for template designers is covered as part
 :ref:`of the template documentation <i18n-in-templates>`.
 
-
 .. _gettext: http://docs.python.org/dev/library/gettext
-.. _babel: http://babel.edgewall.org/
+.. _Babel: http://babel.edgewall.org/
 
 
 .. _writing-extensions:
 
 Writing Extensions
 ------------------
+
+.. module:: jinja2.ext
 
 By writing extensions you can add custom tags to Jinja2.  This is a non trival
 task and usually not needed as the default tags and expressions cover all
@@ -92,32 +105,19 @@ useful, another one would be fragment caching.
 Example Extension
 ~~~~~~~~~~~~~~~~~
 
-The following example implements a `cache` tag for Jinja2:
+The following example implements a `cache` tag for Jinja2 by using the
+`Werkzeug`_ caching contrib module:
 
 .. literalinclude:: cache_extension.py
     :language: python
 
-In order to use the cache extension it makes sense to subclass the environment
-to implement the `add_fragment_to_cache` and `load_fragment_from_cache`
-methods.  The following example shows how to use the `Werkzeug`_ caching
-with the extension from above::
+And here is how you use it in an environment::
 
     from jinja2 import Environment
     from werkzeug.contrib.cache import SimpleCache
 
-    cache = SimpleCache()
-    cache_prefix = 'tempalte_fragment/'
-
-    class MyEnvironment(Environment):
-
-        def __init__(self):
-            Environment.__init__(self, extensions=[CacheExtension])
-
-        def add_fragment_to_cache(self, key, value, timeout):
-            cache.add(cache_prefix + key, value, timeout)
-
-        def load_fragment_from_cache(self, key):
-            return cache.get(cache_prefix + key)
+    env = Environment(extensions=[FragmentCacheExtension])
+    env.fragment_cache = SimpleCache()
 
 .. _Werkzeug: http://werkzeug.pocoo.org/
 
@@ -147,8 +147,8 @@ expressions of different types.  The following methods may be used by
 extensions:
 
 .. autoclass:: jinja2.parser.Parser
-    :members: parse_expression, parse_tuple, parse_statements, ignore_colon,
-              free_identifier
+    :members: parse_expression, parse_tuple, parse_statements, skip_colon,
+              skip_comma, free_identifier
 
     .. attribute:: filename
 

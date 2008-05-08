@@ -40,6 +40,17 @@ class Extension(object):
     may not store environment specific data on `self`.  The reason for this is
     that an extension can be bound to another environment (for overlays) by
     creating a copy and reassigning the `environment` attribute.
+
+    As extensions are created by the environment they cannot accept any
+    arguments for configuration.  One may want to work around that by using
+    a factory function, but that is not possible as extensions are identified
+    by their import name.  The correct way to configure the extension is
+    storing the configuration values on the environment.  Because this way the
+    environment ends up acting as central configuration storage the
+    attributes may clash which is why extensions have to ensure that the names
+    they choose for configuration are not too generic.  ``prefix`` for example
+    is a terrible name, ``fragment_cache_prefix`` on the other hand is a good
+    name as includes the name of the extension (fragment cache).
     """
     __metaclass__ = ExtensionRegistry
 
@@ -74,49 +85,40 @@ class Extension(object):
         return nodes.ExtensionAttribute(self.identifier, name, lineno=lineno)
 
 
-class CacheExtension(Extension):
-    """An example extension that adds cacheable blocks."""
-    tags = set(['cache'])
-
-    def __init__(self, environment):
-        Extension.__init__(self, environment)
-        environment.globals['__cache_ext_support'] = self.cache_support
-
-    def cache_support(self, name, timeout, caller):
-        """Helper for the cache_fragment function."""
-        if not hasattr(environment, 'cache_support'):
-            return caller()
-        args = [name]
-        if timeout is not None:
-            args.append(timeout)
-        return self.environment.cache_support(generate=caller, *args)
-
-    def parse(self, parser):
-        lineno = parser.stream.next().lineno
-        args = [parser.parse_expression()]
-        if parser.stream.current.type is 'comma':
-            parser.stream.next()
-            args.append(parser.parse_expression())
-        else:
-            args.append(nodes.Const(None, lineno=lineno))
-        body = parser.parse_statements(('name:endcache',), drop_needle=True)
-        return nodes.CallBlock(
-            nodes.Call(nodes.Name('__cache_ext_support', 'load', lineno=lineno),
-            args, [], None, None), [], [], body, lineno=lineno
-        )
-
-
 class InternationalizationExtension(Extension):
-    """This extension adds gettext support to Jinja."""
+    """This extension adds gettext support to Jinja2."""
     tags = set(['trans'])
 
     def __init__(self, environment):
         Extension.__init__(self, environment)
-        environment.globals.update({
-            '_':        contextfunction(lambda c, x: c['gettext'](x)),
-            'gettext':  lambda x: x,
-            'ngettext': lambda s, p, n: (s, p)[n != 1]
-        })
+        environment.globals['_'] = contextfunction(lambda c, x: c['gettext'](x))
+        environment.extend(
+            install_gettext_translations=self._install,
+            install_null_translations=self._install_null,
+            uninstall_gettext_translations=self._uninstall,
+            extract_translations=self._extract
+        )
+
+    def _install(self, translations):
+        self.environment.globals.update(
+            gettext=translations.ugettext,
+            ngettext=translations.ungettext
+        )
+
+    def _install_null(self):
+        self.environment.globals.update(
+            gettext=lambda x: x,
+            ngettext=lambda s, p, n: (n != 1 and (p,) or (s,))[0]
+        )
+
+    def _uninstall(self, translations):
+        for key in 'gettext', 'ngettext':
+            self.environment.globals.pop(key, None)
+
+    def _extract(self, source, gettext_functions=GETTEXT_FUNCTIONS):
+        if isinstance(source, basestring):
+            source = self.environment.parse(source)
+        return extract_from_ast(source, gettext_functions)
 
     def parse(self, parser):
         """Parse a translatable tag."""
@@ -132,7 +134,7 @@ class InternationalizationExtension(Extension):
                 parser.stream.expect('comma')
 
             # skip colon for python compatibility
-            if parser.ignore_colon():
+            if parser.skip_colon():
                 break
 
             name = parser.stream.expect('name')

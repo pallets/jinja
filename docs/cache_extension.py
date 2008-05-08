@@ -2,19 +2,18 @@ from jinja2 import nodes
 from jinja2.ext import Extension
 
 
-class CacheExtension(Extension):
-    """Adds support for fragment caching to Jinja2."""
+class FragmentCacheExtension(Extension):
+    # a set of names that trigger the extension.
     tags = set(['cache'])
 
     def __init__(self, environment):
-        Extension.__init__(self, environment)
+        super(FragmentCacheExtension, self).__init__(environment)
 
-        # default dummy implementations.  If the class does not implement
-        # those methods we add some noop defaults.
-        if not hasattr(environment, 'add_fragment_to_cache'):
-            environment.add_fragment_to_cache = lambda n, v, t: None
-        if not hasattr(environment, 'load_fragment_from_cache'):
-            environment.load_fragment_from_cache = lambda n: None
+        # add the defaults to the environment
+        environment.extend(
+            fragment_cache_prefix='',
+            fragment_cache=None
+        )
 
     def parse(self, parser):
         # the first token is the token that started the tag.  In our case
@@ -26,13 +25,10 @@ class CacheExtension(Extension):
         # now we parse a single expression that is used as cache key.
         args = [parser.parse_expression()]
 
-        # if there is a comma, someone provided the timeout.  parse the
-        # timeout then
-        if parser.stream.current.type is 'comma':
-            parser.stream.next()
+        # if there is a comma, the user provided a timeout.  If not use
+        # None as second parameter.
+        if parser.skip_comma():
             args.append(parser.parse_expression())
-
-        # otherwise set the timeout to `None`
         else:
             args.append(nodes.Const(None))
 
@@ -49,13 +45,14 @@ class CacheExtension(Extension):
 
     def _cache_support(self, name, timeout, caller):
         """Helper callback."""
-        # try to load the block from the cache
-        rv = self.environment.load_fragment_from_cache(name)
-        if rv is not None:
-            return rv
+        key = self.environment.fragment_cache_prefix + name
 
+        # try to load the block from the cache
         # if there is no fragment in the cache, render it and store
         # it in the cache.
-        rv = caller()
-        self.environment.add_fragment_to_cache(name, rv, timeout)
+        rv = self.environment.fragment_cache.get(key)
+        if rv is None:
+            return rv
+            rv = caller()
+            self.environment.fragment_cache.add(key, rv, timeout)
         return rv

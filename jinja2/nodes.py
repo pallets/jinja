@@ -742,7 +742,8 @@ class ImportedName(Expr):
 
 class InternalName(Expr):
     """An internal name in the compiler.  You cannot create these nodes
-    yourself but the parser provides a `free_identifier` method that creates
+    yourself but the parser provides a
+    :meth:`~jinja2.parser.Parser.free_identifier` method that creates
     a new identifier for you.  This identifier is not available from the
     template and is not threated specially by the compiler.
     """

@@ -48,7 +48,7 @@ High Level API
 --------------
 
 .. autoclass:: jinja2.environment.Environment([options])
-    :members: from_string, get_template, join_path, parse, lex
+    :members: from_string, get_template, join_path, parse, lex, extend
 
     .. attribute:: shared
 

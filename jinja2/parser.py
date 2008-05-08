@@ -42,9 +42,16 @@ class Parser(object):
                                             'rparen') or \
                self.stream.current.test('name:in')
 
-    def ignore_colon(self):
+    def skip_colon(self):
         """If there is a colon, skip it and return `True`, else `False`."""
         if self.stream.current.type is 'colon':
+            self.stream.next()
+            return True
+        return False
+
+    def skip_comma(self):
+        """If there is a comma, skip it and return `True`, else `False`."""
+        if self.stream.current.type is 'comma':
             self.stream.next()
             return True
         return False
@@ -100,7 +107,7 @@ class Parser(object):
         can be set to `True` and the end token is removed.
         """
         # the first token may be a colon for python compatibility
-        self.ignore_colon()
+        self.skip_colon()
 
         # in the future it would be possible to add whole code sections
         # by adding some sort of end of statement token and parsing those here.
