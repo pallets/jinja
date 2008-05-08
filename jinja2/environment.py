@@ -51,13 +51,13 @@ def create_cache(size):
 
 def load_extensions(environment, extensions):
     """Load the extensions from the list and bind it to the environment.
-    Returns a new list of instanciated environments.
+    Returns a dict of instanciated environments.
     """
-    result = []
+    result = {}
     for extension in extensions:
         if isinstance(extension, basestring):
             extension = import_string(extension)
-        result.append(extension(environment))
+        result[extension.identifier] = extension(environment)
     return result
 
 
@@ -255,11 +255,11 @@ class Environment(object):
         if cache_size is not missing:
             rv.cache = create_cache(cache_size)
 
-        rv.extensions = []
-        for extension in self.extensions:
-            rv.extensions.append(extension.bind(self))
+        rv.extensions = {}
+        for key, value in self.extensions.iteritems():
+            rv.extensions[key] = value.bind(rv)
         if extensions is not missing:
-            rv.extensions.extend(load_extensions(extensions))
+            rv.extensions.update(load_extensions(extensions))
 
         return _environment_sanity_check(rv)
 

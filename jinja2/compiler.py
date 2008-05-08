@@ -41,6 +41,8 @@ else:
 
 def generate(node, environment, name, filename, stream=None):
     """Generate the python source for a node tree."""
+    if not isinstance(node, nodes.Template):
+        raise TypeError('Can\'t compile non template nodes')
     generator = CodeGenerator(environment, name, filename, stream)
     generator.visit(node)
     if stream is None:
@@ -305,6 +307,9 @@ class CodeGenerator(NodeVisitor):
         self.filename = filename
         self.stream = stream
 
+        # aliases for imports
+        self.import_aliases = {}
+
         # a registry for all blocks.  Because blocks are moved out
         # into the global python scope they are registered here
         self.blocks = {}
@@ -558,7 +563,6 @@ class CodeGenerator(NodeVisitor):
         from jinja2.runtime import __all__ as exported
         self.writeline('from __future__ import division')
         self.writeline('from jinja2.runtime import ' + ', '.join(exported))
-        self.writeline('name = %r' % self.name)
 
         # do we have an extends tag at all?  If not, we can save some
         # overhead by just not processing any inheritance code.
@@ -571,6 +575,21 @@ class CodeGenerator(NodeVisitor):
                                              block.name, block.lineno,
                                              self.name)
             self.blocks[block.name] = block
+
+        # find all imports and import them
+        for import_ in node.find_all(nodes.ImportedName):
+            if import_.importname not in self.import_aliases:
+                imp = import_.importname
+                self.import_aliases[imp] = alias = self.temporary_identifier()
+                if '.' in imp:
+                    module, obj = imp.rsplit('.', 1)
+                    self.writeline('from %s import %s as %s' %
+                                   (module, obj, alias))
+                else:
+                    self.writeline('import %s as %s' % (imp, alias))
+
+        # add the load name
+        self.writeline('name = %r' % self.name)
 
         # generate the root render function.
         self.writeline('def root(context, environment=environment):', extra=1)
@@ -1069,6 +1088,18 @@ class CodeGenerator(NodeVisitor):
         self.write('Markup(')
         self.visit(node.expr, frame)
         self.write(')')
+
+    def visit_EnvironmentAttribute(self, node, frame):
+        self.write('environment.' + node.name)
+
+    def visit_ExtensionAttribute(self, node, frame):
+        self.write('environment.extensions[%r].%s' % (node.identifier, node.attr))
+
+    def visit_ImportedName(self, node, frame):
+        self.write(self.import_aliases[node.importname])
+
+    def visit_InternalName(self, node, frame):
+        self.write(node.name)
 
     def visit_Const(self, node, frame):
         val = node.value

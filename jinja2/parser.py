@@ -18,9 +18,8 @@ _compare_operators = frozenset(['eq', 'ne', 'lt', 'lteq', 'gt', 'gteq'])
 
 
 class Parser(object):
-    """The template parser class.
-
-    Transforms sourcecode into an abstract syntax tree.
+    """This is the central parsing class Jinja2 uses.  It's passed to
+    extensions and can be used to parse expressions or statements.
     """
 
     def __init__(self, environment, source, filename=None):
@@ -30,21 +29,32 @@ class Parser(object):
         self.source = unicode(source)
         self.filename = filename
         self.closed = False
-        self.stream = environment.lexer.tokenize(source, filename)
+        self.stream = environment.lexer.tokenize(self.source, filename)
         self.extensions = {}
-        for extension in environment.extensions:
+        for extension in environment.extensions.itervalues():
             for tag in extension.tags:
                 self.extensions[tag] = extension.parse
-
-    def is_statement_end(self):
-        """Are we at the end of a statement?"""
-        if self.stream.current.type in ('variable_end', 'block_end'):
-            return True
-        return self.stream.current.test('name:in')
+        self._last_identifier = 0
 
     def is_tuple_end(self):
         """Are we at the end of a tuple?"""
-        return self.stream.current.type is 'rparen' or self.is_statement_end()
+        return self.stream.current.type in ('variable_end', 'block_end',
+                                            'rparen') or \
+               self.stream.current.test('name:in')
+
+    def ignore_colon(self):
+        """If there is a colon, skip it and return `True`, else `False`."""
+        if self.stream.current.type is 'colon':
+            self.stream.next()
+            return True
+        return False
+
+    def free_identifier(self, lineno=None):
+        """Return a new free identifier as :class:`~jinja2.nodes.InternalName`."""
+        self._last_identifier += 1
+        rv = object.__new__(nodes.InternalName)
+        nodes.Node.__init__(rv, 'fi%d' % self._last_identifier, lineno=lineno)
+        return rv
 
     def parse_statement(self):
         """Parse a single statement."""
@@ -82,11 +92,15 @@ class Parser(object):
     def parse_statements(self, end_tokens, drop_needle=False):
         """Parse multiple statements into a list until one of the end tokens
         is reached.  This is used to parse the body of statements as it also
-        parses template data if appropriate.
+        parses template data if appropriate.  The parser checks first if the
+        current token is a colon and skips it if there is one.  Then it checks
+        for the block end and parses until if one of the `end_tokens` is
+        reached.  Per default the active token in the stream at the end of
+        the call is the matched end token.  If this is not wanted `drop_needle`
+        can be set to `True` and the end token is removed.
         """
         # the first token may be a colon for python compatibility
-        if self.stream.current.type is 'colon':
-            self.stream.next()
+        self.ignore_colon()
 
         # in the future it would be possible to add whole code sections
         # by adding some sort of end of statement token and parsing those here.
@@ -284,14 +298,17 @@ class Parser(object):
     def parse_print(self):
         node = nodes.Output(lineno=self.stream.next().lineno)
         node.nodes = []
-        while not self.is_statement_end():
+        while self.stream.current.type is not 'block_end':
             if node.nodes:
                 self.stream.expect('comma')
             node.nodes.append(self.parse_expression())
         return node
 
     def parse_expression(self, no_condexpr=False):
-        """Parse an expression."""
+        """Parse an expression.  Per default all expressions are parsed, if
+        the optional `no_condexpr` parameter is set to `True` conditional
+        expressions are not parsed.
+        """
         if no_condexpr:
             return self.parse_or()
         return self.parse_condexpr()
@@ -477,10 +494,15 @@ class Parser(object):
             node = self.parse_postfix(node)
         return node
 
-    def parse_tuple(self, enforce=False, simplified=False, no_condexpr=False):
-        """Parse multiple expressions into a tuple. This can also return
-        just one expression which is not a tuple. If you want to enforce
-        a tuple, pass it enforce=True (currently unused).
+    def parse_tuple(self, simplified=False, no_condexpr=False):
+        """Works like `parse_expression` but if multiple expressions are
+        delimited by a comma a :class:`~jinja2.nodes.Tuple` node is created.
+        This method could also return a regular expression instead of a tuple
+        if no commas where found.
+
+        The default parsing mode is a full tuple.  If `simplified` is `True`
+        only names and literals are parsed.  The `no_condexpr` parameter is
+        forwarded to :meth:`parse_expression`.
         """
         lineno = self.stream.current.lineno
         if simplified:
@@ -503,9 +525,6 @@ class Parser(object):
                 break
             lineno = self.stream.current.lineno
         if not is_tuple and args:
-            if enforce:
-                raise TemplateSyntaxError('tuple expected', lineno,
-                                          self.filename)
             return args[0]
         return nodes.Tuple(args, 'load', lineno=lineno)
 
@@ -723,7 +742,11 @@ class Parser(object):
                 if end_tokens is not None and \
                    self.stream.current.test_any(*end_tokens):
                     return body
-                body.append(self.parse_statement())
+                rv = self.parse_statement()
+                if isinstance(rv, list):
+                    body.extend(rv)
+                else:
+                    body.append(rv)
                 self.stream.expect('block_end')
             else:
                 raise AssertionError('internal parsing error')

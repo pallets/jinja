@@ -22,17 +22,15 @@ example creates a Jinja2 environment with the i18n extension loaded::
     jinja_env = Environment(extensions=['jinja.ext.i18n'])
 
 
-Built-in Extensions
--------------------
-
 .. _i18n-extension:
 
-i18n
-~~~~
+i18n Extension
+--------------
 
-The i18n extension can be used in combination with `gettext`_ or `babel`_.
-If the i18n extension is enabled Jinja2 provides a `trans` statement that
-marks the wrapped string as translatable and calls `gettext`.
+Jinja2 currently comes with one extension, the i18n extension.  It can be
+used in combination with `gettext`_ or `babel`_.  If the i18n extension is
+enabled Jinja2 provides a `trans` statement that marks the wrapped string as
+translatable and calls `gettext`.
 
 After enabling dummy `_`, `gettext` and `ngettext` functions are added to
 the template globals.  A internationalized application has to override those
@@ -80,9 +78,127 @@ The usage of the `i18n` extension for template designers is covered as part
 .. _gettext: http://docs.python.org/dev/library/gettext
 .. _babel: http://babel.edgewall.org/
 
+
 .. _writing-extensions:
 
 Writing Extensions
 ------------------
 
-TODO
+By writing extensions you can add custom tags to Jinja2.  This is a non trival
+task and usually not needed as the default tags and expressions cover all
+common use cases.  The i18n extension is a good example of why extensions are
+useful, another one would be fragment caching.
+
+Example Extension
+~~~~~~~~~~~~~~~~~
+
+The following example implements a `cache` tag for Jinja2:
+
+.. literalinclude:: cache_extension.py
+    :language: python
+
+In order to use the cache extension it makes sense to subclass the environment
+to implement the `add_fragment_to_cache` and `load_fragment_from_cache`
+methods.  The following example shows how to use the `Werkzeug`_ caching
+with the extension from above::
+
+    from jinja2 import Environment
+    from werkzeug.contrib.cache import SimpleCache
+
+    cache = SimpleCache()
+    cache_prefix = 'tempalte_fragment/'
+
+    class MyEnvironment(Environment):
+
+        def __init__(self):
+            Environment.__init__(self, extensions=[CacheExtension])
+
+        def add_fragment_to_cache(self, key, value, timeout):
+            cache.add(cache_prefix + key, value, timeout)
+
+        def load_fragment_from_cache(self, key):
+            return cache.get(cache_prefix + key)
+
+.. _Werkzeug: http://werkzeug.pocoo.org/
+
+Extension API
+~~~~~~~~~~~~~
+
+Extensions always have to extend the :class:`jinja2.ext.Extension` class:
+
+.. autoclass:: Extension
+    :members: parse, attr
+
+    .. attribute:: identifier
+
+        The identifier of the extension.  This is always the true import name
+        of the extension class and must not be changed.
+
+    .. attribute:: tags
+
+        If the extension implements custom tags this is a set of tag names
+        the extension is listening for.
+
+Parser API
+~~~~~~~~~~
+
+The parser passed to :meth:`Extension.parse` provides ways to parse
+expressions of different types.  The following methods may be used by
+extensions:
+
+.. autoclass:: jinja2.parser.Parser
+    :members: parse_expression, parse_tuple, parse_statements, ignore_colon,
+              free_identifier
+
+    .. attribute:: filename
+
+        The filename of the template the parser processes.  This is **not**
+        the load name of the template which is unavailable at parsing time.
+        For templates that were not loaded form the file system this is
+        `None`.
+
+    .. attribute:: stream
+
+        The current :class:`~jinja2.lexer.TokenStream`
+
+.. autoclass:: jinja2.lexer.TokenStream
+   :members: push, look, eos, skip, next, expect
+
+   .. attribute:: current
+
+        The current :class:`~jinja2.lexer.Token`.
+
+.. autoclass:: jinja2.lexer.Token
+    :members: test, test_any
+
+    .. attribute:: lineno
+
+        The line number of the token
+
+    .. attribute:: type
+
+        The type of the token.  This string is interned so you may compare
+        it with arbitrary strings using the `is` operator.
+
+    .. attribute:: value
+
+        The value of the token.
+
+AST
+~~~
+
+The AST (Abstract Syntax Tree) is used to represent a template after parsing.
+It's build of nodes that the compiler then converts into executable Python
+code objects.  Extensions that provide custom statements can return nodes to
+execute custom Python code.
+
+The list below describes all nodes that are currently available.  The AST may
+change between Jinja2 versions but will stay backwards compatible.
+
+For more information have a look at the repr of :meth:`jinja2.Environment.parse`.
+
+.. module:: jinja2.nodes
+
+.. jinjanodes::
+
+.. autoexception:: Impossible

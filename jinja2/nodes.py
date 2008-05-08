@@ -48,6 +48,10 @@ _cmpop_to_func = {
 }
 
 
+# if this is `True` no new Node classes can be created.
+_node_setup_finished = False
+
+
 class Impossible(Exception):
     """Raised if the node could not perform a requested action."""
 
@@ -58,6 +62,8 @@ class NodeType(type):
     automatically forwarded to the child."""
 
     def __new__(cls, name, bases, d):
+        if __debug__ and _node_setup_finished:
+            raise TypeError('Can\'t create custom node types.')
         for attr in 'fields', 'attributes':
             storage = []
             storage.extend(getattr(bases[0], attr, ()))
@@ -65,18 +71,34 @@ class NodeType(type):
             assert len(bases) == 1, 'multiple inheritance not allowed'
             assert len(storage) == len(set(storage)), 'layout conflict'
             d[attr] = tuple(storage)
+        d.setdefault('abstract', False)
         return type.__new__(cls, name, bases, d)
 
 
 class Node(object):
-    """Baseclass for all Jinja nodes."""
+    """Baseclass for all Jinja2 nodes.  There are a number of nodes available
+    of different types.  There are three major types:
+
+    -   :class:`Stmt`: statements
+    -   :class:`Expr`: expressions
+    -   :class:`Helper`: helper nodes
+    -   :class:`Template`: the outermost wrapper node
+
+    All nodes have fields and attributes.  Fields may be other nodes, lists,
+    or arbitrary values.  Fields are passed to the constructor as regular
+    positional arguments, attributes as keyword arguments.  Each node has
+    two attributes: `lineno` (the line number of the node) and `environment`.
+    The `environment` attribute is set at the end of the parsing process for
+    all nodes automatically.
+    """
     __metaclass__ = NodeType
     fields = ()
     attributes = ('lineno', 'environment')
+    abstract = True
 
-    def __init__(self, *args, **kw):
-        if args:
-            if len(args) != len(self.fields):
+    def __init__(self, *fields, **attributes):
+        if fields:
+            if len(fields) != len(self.fields):
                 if not self.fields:
                     raise TypeError('%r takes 0 arguments' %
                                     self.__class__.__name__)
@@ -85,16 +107,19 @@ class Node(object):
                     len(self.fields),
                     len(self.fields) != 1 and 's' or ''
                 ))
-            for name, arg in izip(self.fields, args):
+            for name, arg in izip(self.fields, fields):
                 setattr(self, name, arg)
         for attr in self.attributes:
-            setattr(self, attr, kw.pop(attr, None))
-        if kw:
-            raise TypeError('unknown keyword argument %r' %
-                            iter(kw).next())
+            setattr(self, attr, attributes.pop(attr, None))
+        if attributes:
+            raise TypeError('unknown attribute %r' %
+                            iter(attributes).next())
 
     def iter_fields(self, exclude=()):
-        """Iterate over all fields."""
+        """This method iterates over all fields that are defined and yields
+        ``(key, value)`` tuples.  Optionally a parameter of ignored fields
+        can be provided.
+        """
         for name in self.fields:
             if name not in exclude:
                 try:
@@ -103,7 +128,10 @@ class Node(object):
                     pass
 
     def iter_child_nodes(self, exclude=()):
-        """Iterate over all child nodes."""
+        """Iterates over all direct child nodes of the node.  This iterates
+        over all fields and yields the values of they are nodes.  If the value
+        of a field is a list all the nodes in that list are returned.
+        """
         for field, item in self.iter_fields(exclude):
             if isinstance(item, list):
                 for n in item:
@@ -113,7 +141,9 @@ class Node(object):
                 yield item
 
     def find(self, node_type):
-        """Find the first node of a given type."""
+        """Find the first node of a given type.  If no such node exists the
+        return value is `None`.
+        """
         for result in self.find_all(node_type):
             return result
 
@@ -161,6 +191,7 @@ class Node(object):
             if 'ctx' in node.fields:
                 node.ctx = ctx
             todo.extend(node.iter_child_nodes())
+        return self
 
     def set_lineno(self, lineno, override=False):
         """Set the line numbers of the node and children."""
@@ -171,6 +202,7 @@ class Node(object):
                 if node.lineno is None or override:
                     node.lineno = lineno
             todo.extend(node.iter_child_nodes())
+        return self
 
     def set_environment(self, environment):
         """Set the environment for all nodes."""
@@ -179,6 +211,7 @@ class Node(object):
             node = todo.popleft()
             node.environment = environment
             todo.extend(node.iter_child_nodes())
+        return self
 
     def __repr__(self):
         return '%s(%s)' % (
@@ -190,14 +223,18 @@ class Node(object):
 
 class Stmt(Node):
     """Base node for all statements."""
+    abstract = True
 
 
 class Helper(Node):
     """Nodes that exist in a specific context only."""
+    abstract = True
 
 
 class Template(Node):
-    """Node that represents a template."""
+    """Node that represents a template.  This must be the outermost node that
+    is passed to the compiler.
+    """
     fields = ('body',)
 
 
@@ -229,22 +266,33 @@ class Extends(Stmt):
 
 
 class For(Stmt):
-    """A node that represents a for loop"""
+    """The for loop.  `target` is the target for the iteration (usually a
+    :class:`Name` or :class:`Tuple`), `iter` the iterable.  `body` is a list
+    of nodes that are used as loop-body, and `else_` a list of nodes for the
+    `else` block.  If no else node exists it has to be an empty list.
+
+    For filtered nodes an expression can be stored as `test`, otherwise `None`.
+    """
     fields = ('target', 'iter', 'body', 'else_', 'test')
 
 
 class If(Stmt):
-    """A node that represents an if condition."""
+    """If `test` is true, `body` is rendered, else `else_`."""
     fields = ('test', 'body', 'else_')
 
 
 class Macro(Stmt):
-    """A node that represents a macro."""
+    """A macro definition.  `name` is the name of the macro, `args` a list of
+    arguments and `defaults` a list of defaults if there are any.  `body` is
+    a list of nodes for the macro body.
+    """
     fields = ('name', 'args', 'defaults', 'body')
 
 
 class CallBlock(Stmt):
-    """A node that represents am extended macro call."""
+    """Like a macro without a name but a call instead.  `call` is called with
+    the unnamed macro as `caller` argument this node holds.
+    """
     fields = ('call', 'args', 'defaults', 'body')
 
 
@@ -287,13 +335,8 @@ class FromImport(Stmt):
     fields = ('template', 'names', 'with_context')
 
 
-class Trans(Stmt):
-    """A node for translatable sections."""
-    fields = ('singular', 'plural', 'indicator', 'replacements')
-
-
 class ExprStmt(Stmt):
-    """A statement that evaluates an expression to None."""
+    """A statement that evaluates an expression and discards the result."""
     fields = ('node',)
 
 
@@ -304,10 +347,21 @@ class Assign(Stmt):
 
 class Expr(Node):
     """Baseclass for all expressions."""
+    abstract = True
 
     def as_const(self):
         """Return the value of the expression as constant or raise
-        `Impossible` if this was not possible.
+        :exc:`Impossible` if this was not possible:
+
+        >>> Add(Const(23), Const(42)).as_const()
+        65
+        >>> Add(Const(23), Name('var', 'load')).as_const()
+        Traceback (most recent call last):
+          ...
+        Impossible
+
+        This requires the `environment` attribute of all nodes to be
+        set to the environment that created the nodes.
         """
         raise Impossible()
 
@@ -343,19 +397,17 @@ class UnaryExpr(Expr):
 
 
 class Name(Expr):
-    """any name such as {{ foo }}"""
+    """Looks up a name or stores a value in a name.
+    The `ctx` of the node can be one of the following values:
+
+    -   `store`: store a value in the name
+    -   `load`: load that name
+    -   `param`: like `store` but if the name was defined as function parameter.
+    """
     fields = ('name', 'ctx')
 
     def can_assign(self):
         return self.name not in ('true', 'false', 'none')
-
-
-class MarkSafe(Expr):
-    """Mark the wrapped expression as safe (Markup)"""
-    fields = ('expr',)
-
-    def as_const(self):
-        return Markup(self.expr.as_const())
 
 
 class Literal(Expr):
@@ -363,7 +415,11 @@ class Literal(Expr):
 
 
 class Const(Literal):
-    """any constat such as {{ "foo" }}"""
+    """All constant values.  The parser will return this node for simple
+    constants such as ``42`` or ``"foo"`` but it can be used to store more
+    complex values such as lists too.  Only constants with a safe
+    representation (objects where ``eval(repr(x)) == x`` is true).
+    """
     fields = ('value',)
 
     def as_const(self):
@@ -383,7 +439,8 @@ class Const(Literal):
 
 class Tuple(Literal):
     """For loop unpacking and some other things like multiple arguments
-    for subscripts.
+    for subscripts.  Like for :class:`Name` `ctx` specifies if the tuple
+    is used for loading the names or storing.
     """
     fields = ('items', 'ctx')
 
@@ -398,7 +455,7 @@ class Tuple(Literal):
 
 
 class List(Literal):
-    """any list literal such as {{ [1, 2, 3] }}"""
+    """Any list literal such as ``[1, 2, 3]``"""
     fields = ('items',)
 
     def as_const(self):
@@ -406,7 +463,9 @@ class List(Literal):
 
 
 class Dict(Literal):
-    """any dict literal such as {{ {1: 2, 3: 4} }}"""
+    """Any dict literal such as ``{1: 2, 3: 4}``.  The items must be a list of
+    :class:`Pair` nodes.
+    """
     fields = ('items',)
 
     def as_const(self):
@@ -422,12 +481,14 @@ class Pair(Helper):
 
 
 class Keyword(Helper):
-    """A key, value pair for keyword arguments."""
+    """A key, value pair for keyword arguments where key is a string."""
     fields = ('key', 'value')
 
 
 class CondExpr(Expr):
-    """{{ foo if bar else baz }}"""
+    """A conditional expression (inline if expression).  (``{{
+    foo if bar else baz }}``)
+    """
     fields = ('test', 'expr1', 'expr2')
 
     def as_const(self):
@@ -437,7 +498,9 @@ class CondExpr(Expr):
 
 
 class Filter(Expr):
-    """{{ foo|bar|baz }}"""
+    """This node applies a filter on an expression.  `name` is the name of
+    the filter, the rest of the fields are the same as for :class:`Call`.
+    """
     fields = ('node', 'name', 'args', 'kwargs', 'dyn_args', 'dyn_kwargs')
 
     def as_const(self, obj=None):
@@ -469,12 +532,19 @@ class Filter(Expr):
 
 
 class Test(Expr):
-    """{{ foo is lower }}"""
+    """Applies a test on an expression.  `name` is the name of the test, the
+    rest of the fields are the same as for :class:`Call`.
+    """
     fields = ('node', 'name', 'args', 'kwargs', 'dyn_args', 'dyn_kwargs')
 
 
 class Call(Expr):
-    """{{ foo(bar) }}"""
+    """Calls an expression.  `args` is a list of arguments, `kwargs` a list
+    of keyword arguments (list of :class:`Keyword` nodes), and `dyn_args`
+    and `dyn_kwargs` has to be either `None` or a node that is used as
+    node for dynamic positional (``*args``) or keyword (``**kwargs``)
+    arguments.
+    """
     fields = ('node', 'args', 'kwargs', 'dyn_args', 'dyn_kwargs')
 
     def as_const(self):
@@ -506,7 +576,9 @@ class Call(Expr):
 
 
 class Subscript(Expr):
-    """{{ foo.bar }} and {{ foo['bar'] }} etc."""
+    """Subscribe an expression by an argument.  This node performs a dict
+    and an attribute lookup on the object whatever succeeds.
+    """
     fields = ('node', 'arg', 'ctx')
 
     def as_const(self):
@@ -523,7 +595,9 @@ class Subscript(Expr):
 
 
 class Slice(Expr):
-    """1:2:3 etc."""
+    """Represents a slice object.  This must only be used as argument for
+    :class:`Subscript`.
+    """
     fields = ('start', 'stop', 'step')
 
     def as_const(self):
@@ -535,7 +609,9 @@ class Slice(Expr):
 
 
 class Concat(Expr):
-    """For {{ foo ~ bar }}.  Concatenates strings."""
+    """Concatenates the list of expressions provided after converting them to
+    unicode.
+    """
     fields = ('nodes',)
 
     def as_const(self):
@@ -543,7 +619,9 @@ class Concat(Expr):
 
 
 class Compare(Expr):
-    """{{ foo == bar }}, {{ foo >= bar }} etc."""
+    """Compares an expression with some other expressions.  `ops` must be a
+    list of :class:`Operand`\s.
+    """
     fields = ('expr', 'ops')
 
     def as_const(self):
@@ -559,47 +637,54 @@ class Compare(Expr):
 
 
 class Operand(Helper):
-    """Operator + expression."""
+    """Holds an operator and an expression."""
     fields = ('op', 'expr')
+
+if __debug__:
+    Operand.__doc__ += '\nThe following operators are available: ' + \
+        ', '.join(sorted('``%s``' % x for x in set(_binop_to_func) |
+                  set(_uaop_to_func) | set(_cmpop_to_func)))
 
 
 class Mul(BinExpr):
-    """{{ foo * bar }}"""
+    """Multiplies the left with the right node."""
     operator = '*'
 
 
 class Div(BinExpr):
-    """{{ foo / bar }}"""
+    """Divides the left by the right node."""
     operator = '/'
 
 
 class FloorDiv(BinExpr):
-    """{{ foo // bar }}"""
+    """Divides the left by the right node and truncates conver the
+    result into an integer by truncating.
+    """
     operator = '//'
 
 
 class Add(BinExpr):
-    """{{ foo + bar }}"""
+    """Add the left to the right node."""
     operator = '+'
 
 
 class Sub(BinExpr):
-    """{{ foo - bar }}"""
+    """Substract the right from the left node."""
     operator = '-'
 
 
 class Mod(BinExpr):
-    """{{ foo % bar }}"""
+    """Left modulo right."""
     operator = '%'
 
 
 class Pow(BinExpr):
-    """{{ foo ** bar }}"""
+    """Left to the power of right."""
     operator = '**'
 
 
 class And(BinExpr):
-    """{{ foo and bar }}"""
+    """Short circuited AND."""
     operator = 'and'
 
     def as_const(self):
@@ -607,7 +692,7 @@ class And(BinExpr):
 
 
 class Or(BinExpr):
-    """{{ foo or bar }}"""
+    """Short circuited OR."""
     operator = 'or'
 
     def as_const(self):
@@ -615,15 +700,66 @@ class Or(BinExpr):
 
 
 class Not(UnaryExpr):
-    """{{ not foo }}"""
+    """Negate the expression."""
     operator = 'not'
 
 
 class Neg(UnaryExpr):
-    """{{ -foo }}"""
+    """Make the expression negative."""
     operator = '-'
 
 
 class Pos(UnaryExpr):
-    """{{ +foo }}"""
+    """Make the expression positive (noop for most expressions)"""
     operator = '+'
+
+
+# Helpers for extensions
+
+
+class EnvironmentAttribute(Expr):
+    """Loads an attribute from the environment object.  This is useful for
+    extensions that want to call a callback stored on the environment.
+    """
+    fields = ('name',)
+
+
+class ExtensionAttribute(Expr):
+    """Returns the attribute of an extension bound to the environment.
+    The identifier is the identifier of the :class:`Extension`.
+    """
+    fields = ('identifier', 'attr')
+
+
+class ImportedName(Expr):
+    """If created with an import name the import name is returned on node
+    access.  For example ``ImportedName('cgi.escape')`` returns the `escape`
+    function from the cgi module on evaluation.  Imports are optimized by the
+    compiler so there is no need to assign them to local variables.
+    """
+    fields = ('importname',)
+
+
+class InternalName(Expr):
+    """An internal name in the compiler.  You cannot create these nodes
+    yourself but the parser provides a `free_identifier` method that creates
+    a new identifier for you.  This identifier is not available from the
+    template and is not threated specially by the compiler.
+    """
+    fields = ('name',)
+
+    def __init__(self):
+        raise TypeError('Can\'t create internal names.  Use the '
+                        '`free_identifier` method on a parser.')
+
+
+class MarkSafe(Expr):
+    """Mark the wrapped expression as safe (wrap it as `Markup`)."""
+    fields = ('expr',)
+
+    def as_const(self):
+        return Markup(self.expr.as_const())
+
+
+# and close down
+_node_setup_finished = True

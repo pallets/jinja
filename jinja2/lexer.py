@@ -134,8 +134,8 @@ class Token(tuple):
 
     def test(self, expr):
         """Test a token against a token expression.  This can either be a
-        token type or 'token_type:token_value'.  This can only test against
-        string values!
+        token type or ``'token_type:token_value'``.  This can only test
+        against string values and types.
         """
         # here we do a regular string equality check as test_any is usually
         # passed an iterable of not interned strings.
@@ -181,13 +181,9 @@ class TokenStreamIterator(object):
 
 
 class TokenStream(object):
-    """A token stream wraps a generator and supports pushing tokens back.
-    It also provides some functions to expect tokens and similar stuff.
-
-    Important note: Do never push more than one token back to the
-                    stream.  Although the stream object won't stop you
-                    from doing so, the behavior is undefined. Multiple
-                    pushed tokens are only used internally!
+    """A token stream is an iterable that yields :class:`Token`\s.  The
+    parser however does not iterate over it but calls :meth:`next` to go
+    one token ahead.  The current active token is stored as :attr:`current`.
     """
 
     def __init__(self, generator, filename):
@@ -201,7 +197,7 @@ class TokenStream(object):
         return TokenStreamIterator(self)
 
     def __nonzero__(self):
-        """Are we at the end of the tokenstream?"""
+        """Are we at the end of the stream?"""
         return bool(self._pushed) or self.current.type != 'eof'
 
     eos = property(lambda x: not x.__nonzero__(), doc=__nonzero__.__doc__)
@@ -244,7 +240,9 @@ class TokenStream(object):
         self._next = None
 
     def expect(self, expr):
-        """Expect a given token type and return it"""
+        """Expect a given token type and return it.  This accepts the same
+        argument as :meth:`jinja2.lexer.Token.test`.
+        """
         if not self.current.test(expr):
             if ':' in expr:
                 expr = expr.split(':')[1]

@@ -24,6 +24,19 @@ from pygments.token import Keyword, Name, Comment, String, Error, \
 from jinja2 import Environment, FileSystemLoader
 
 
+def parse_rst(state, content_offset, doc):
+    node = nodes.section()
+    # hack around title style bookkeeping
+    surrounding_title_styles = state.memo.title_styles
+    surrounding_section_level = state.memo.section_level
+    state.memo.title_styles = []
+    state.memo.section_level = 0
+    state.nested_parse(doc, content_offset, node, match_titles=1)
+    state.memo.title_styles = surrounding_title_styles
+    state.memo.section_level = surrounding_section_level
+    return node.children
+
+
 class JinjaStyle(Style):
     title = 'Jinja Style'
     default_style = ""
@@ -136,16 +149,7 @@ def jinja_changelog(dirname, arguments, options, content, lineno,
             doc.append(line.rstrip(), '<jinjaext>')
     finally:
         changelog.close()
-    node = nodes.section()
-    # hack around title style bookkeeping
-    surrounding_title_styles = state.memo.title_styles
-    surrounding_section_level = state.memo.section_level
-    state.memo.title_styles = []
-    state.memo.section_level = 0
-    state.nested_parse(doc, content_offset, node, match_titles=1)
-    state.memo.title_styles = surrounding_title_styles
-    state.memo.section_level = surrounding_section_level
-    return node.children
+    return parse_rst(state, content_offset, doc)
 
 
 from jinja2.defaults import DEFAULT_FILTERS, DEFAULT_TESTS
@@ -153,7 +157,36 @@ jinja_filters = dump_functions(DEFAULT_FILTERS)
 jinja_tests = dump_functions(DEFAULT_TESTS)
 
 
+def jinja_nodes(dirname, arguments, options, content, lineno,
+                content_offset, block_text, state, state_machine):
+    from jinja2.nodes import Node
+    doc = ViewList()
+    def walk(node, indent):
+        p = ' ' * indent
+        sig = ', '.join(node.fields)
+        doc.append(p + '.. autoclass:: %s(%s)' % (node.__name__, sig), '')
+        if node.abstract:
+            members = []
+            for key, name in node.__dict__.iteritems():
+                if not key.startswith('_') and callable(name):
+                    members.append(key)
+            if members:
+                members.sort()
+                doc.append('%s :members: %s' % (p, ', '.join(members)), '')
+        else:
+            doc.append('', '')
+            doc.append(p + ' :Node type: :class:`%s`' % node.__base__.__name__, '')
+        doc.append('', '')
+        children = node.__subclasses__()
+        children.sort(key=lambda x: x.__name__.lower())
+        for child in children:
+            walk(child, indent)
+    walk(Node, 0)
+    return parse_rst(state, content_offset, doc)
+
+
 def setup(app):
     app.add_directive('jinjafilters', jinja_filters, 0, (0, 0, 0))
     app.add_directive('jinjatests', jinja_tests, 0, (0, 0, 0))
     app.add_directive('jinjachangelog', jinja_changelog, 0, (0, 0, 0))
+    app.add_directive('jinjanodes', jinja_nodes, 0, (0, 0, 0))

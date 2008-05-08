@@ -24,6 +24,15 @@ from jinja2.utils import contextfunction, import_string, Markup
 GETTEXT_FUNCTIONS = ('_', 'gettext', 'ngettext')
 
 
+class ExtensionRegistry(type):
+    """Gives the extension a unique identifier."""
+
+    def __new__(cls, name, bases, d):
+        rv = type.__new__(cls, name, bases, d)
+        rv.identifier = rv.__module__ + '.' + rv.__name__
+        return rv
+
+
 class Extension(object):
     """Extensions can be used to add extra functionality to the Jinja template
     system at the parser level.  This is a supported but currently
@@ -32,6 +41,7 @@ class Extension(object):
     that an extension can be bound to another environment (for overlays) by
     creating a copy and reassigning the `environment` attribute.
     """
+    __metaclass__ = ExtensionRegistry
 
     #: if this extension parses this is the list of tags it's listening to.
     tags = set()
@@ -47,7 +57,21 @@ class Extension(object):
         return rv
 
     def parse(self, parser):
-        """Called if one of the tags matched."""
+        """If any of the :attr:`tags` matched this method is called with the
+        parser as first argument.  The token the parser stream is pointing at
+        is the name token that matched.  This method has to return one or a
+        list of multiple nodes.
+        """
+
+    def attr(self, name, lineno=None):
+        """Return an attribute node for the current extension.  This is useful
+        to pass callbacks to template code::
+
+            nodes.Call(self.attr('_my_callback'), args, kwargs, None, None)
+
+        That would call `self._my_callback` when the template is evaluated.
+        """
+        return nodes.ExtensionAttribute(self.identifier, name, lineno=lineno)
 
 
 class CacheExtension(Extension):
@@ -56,10 +80,16 @@ class CacheExtension(Extension):
 
     def __init__(self, environment):
         Extension.__init__(self, environment)
-        def dummy_cache_support(name, timeout=None, caller=None):
-            if caller is not None:
-                return caller()
-        environment.globals['cache_support'] = dummy_cache_support
+        environment.globals['__cache_ext_support'] = self.cache_support
+
+    def cache_support(self, name, timeout, caller):
+        """Helper for the cache_fragment function."""
+        if not hasattr(environment, 'cache_support'):
+            return caller()
+        args = [name]
+        if timeout is not None:
+            args.append(timeout)
+        return self.environment.cache_support(generate=caller, *args)
 
     def parse(self, parser):
         lineno = parser.stream.next().lineno
@@ -67,10 +97,12 @@ class CacheExtension(Extension):
         if parser.stream.current.type is 'comma':
             parser.stream.next()
             args.append(parser.parse_expression())
+        else:
+            args.append(nodes.Const(None, lineno=lineno))
         body = parser.parse_statements(('name:endcache',), drop_needle=True)
         return nodes.CallBlock(
-            nodes.Call(nodes.Name('cache_support', 'load'), args, [], None, None),
-            [], [], body
+            nodes.Call(nodes.Name('__cache_ext_support', 'load', lineno=lineno),
+            args, [], None, None), [], [], body, lineno=lineno
         )
 
 
@@ -90,10 +122,6 @@ class InternationalizationExtension(Extension):
         """Parse a translatable tag."""
         lineno = parser.stream.next().lineno
 
-        # skip colon for python compatibility
-        if parser.stream.current.type is 'colon':
-            parser.stream.next()
-
         # find all the variables referenced.  Additionally a variable can be
         # defined in the body of the trans block too, but this is checked at
         # a later state.
@@ -102,6 +130,11 @@ class InternationalizationExtension(Extension):
         while parser.stream.current.type is not 'block_end':
             if variables:
                 parser.stream.expect('comma')
+
+            # skip colon for python compatibility
+            if parser.ignore_colon():
+                break
+
             name = parser.stream.expect('name')
             if name.value in variables:
                 raise TemplateAssertionError('translatable variable %r defined '
@@ -116,6 +149,7 @@ class InternationalizationExtension(Extension):
                 variables[name.value] = var = nodes.Name(name.value, 'load')
             if plural_expr is None:
                 plural_expr = var
+
         parser.stream.expect('block_end')
 
         plural = plural_names = None
@@ -314,4 +348,3 @@ def babel_extract(fileobj, keywords, comment_tags, options):
 
 #: nicer import names
 i18n = InternationalizationExtension
-cache = CacheExtension
