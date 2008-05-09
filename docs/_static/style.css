@@ -134,7 +134,6 @@ p {
     line-height: 20px;
     margin-bottom: 0;
     margin-top: 10px;
-    text-align: justify;
 }
 
 hr {
@@ -254,7 +253,7 @@ div.admonition p {
 }
 
 a.headerlink {
-    color: #B4B4B4;
+    color: #B4B4B4!important;
     font-size: 0.8em;
     margin-left: 8px;
     padding: 0 4px 0 4px;
