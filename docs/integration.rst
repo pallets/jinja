@@ -40,20 +40,31 @@ automatically.
 
 .. _mapping file: http://babel.edgewall.org/wiki/Documentation/messages.html#extraction-method-mapping-and-configuration
 
-Django
-------
-
-TODO
-
 Pylons
 ------
 
-TODO
+With `Pylons`_ 0.9.7 onwards it's incredible easy to integrate Jinja into a
+Pylons powered application.
 
-WSGI
-----
+The template engine is configured in `config/environment.py`.  The configuration
+for Jinja2 looks something like that::
 
-TODO
+    from jinja2 import Environment, PackageLoader
+    config['pylons.app_globals'].jinja_env = Environment(
+        loader=PackageLoader('yourapplication', 'templates')
+    )
+
+After that you can render Jinja templates by using the `render_jinja` function
+from the `pylons.templating` module.
+
+Additionally it's a good idea to set the Pylons' `c` object into strict mode.
+Per default any attribute to not existing attributes on the `c` object return
+an empty string and not an undefined object.  To change this just use this
+snippet and add it into your `config/environment.py`::
+
+    config['pylons.strict_c'] = True
+
+.. _Pylons: http://www.pylonshq.com/
 
 TextMate
 --------

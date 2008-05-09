@@ -2,6 +2,7 @@
 " Language:	Jinja template
 " Maintainer:	Armin Ronacher <armin.ronacher@active-4.com>
 " Last Change:	2008 May 9
+" Version:      1.1
 "
 " Known Bugs:
 "   because of odd limitations dicts and the modulo operator
