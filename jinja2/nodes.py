@@ -727,6 +727,9 @@ class EnvironmentAttribute(Expr):
 class ExtensionAttribute(Expr):
     """Returns the attribute of an extension bound to the environment.
     The identifier is the identifier of the :class:`Extension`.
+
+    This node is usually constructed by calling the
+    :meth:`~jinja2.ext.Extension.attr` method on an extension.
     """
     fields = ('identifier', 'attr')
 

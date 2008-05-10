@@ -102,6 +102,13 @@ task and usually not needed as the default tags and expressions cover all
 common use cases.  The i18n extension is a good example of why extensions are
 useful, another one would be fragment caching.
 
+When writing extensions you have to keep in mind that you are working with the
+Jinja2 template compiler which does not validate the node tree you are possing
+to it.  If the AST is malformed you will get all kinds of compiler or runtime
+errors that are horrible to debug.  Always make sure you are using the nodes
+you create correctly.  The API documentation below shows which nodes exist and
+how to use them.
+
 Example Extension
 ~~~~~~~~~~~~~~~~~
 

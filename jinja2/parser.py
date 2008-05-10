@@ -676,18 +676,21 @@ class Parser(object):
                           lineno=token.lineno)
 
     def parse_filter(self, node, start_inline=False):
-        lineno = self.stream.current.type
         while self.stream.current.type == 'pipe' or start_inline:
             if not start_inline:
                 self.stream.next()
             token = self.stream.expect('name')
+            name = token.value
+            while self.stream.current.type is 'dot':
+                self.stream.next()
+                name += '.' + self.stream.expect('name').value
             if self.stream.current.type is 'lparen':
                 args, kwargs, dyn_args, dyn_kwargs = self.parse_call(None)
             else:
                 args = []
                 kwargs = []
                 dyn_args = dyn_kwargs = None
-            node = nodes.Filter(node, token.value, args, kwargs, dyn_args,
+            node = nodes.Filter(node, name, args, kwargs, dyn_args,
                                 dyn_kwargs, lineno=token.lineno)
             start_inline = False
         return node
@@ -700,6 +703,9 @@ class Parser(object):
         else:
             negated = False
         name = self.stream.expect('name').value
+        while self.stream.current.type is 'dot':
+            self.stream.next()
+            name += '.' + self.stream.expect('name').value
         dyn_args = dyn_kwargs = None
         kwargs = []
         if self.stream.current.type is 'lparen':

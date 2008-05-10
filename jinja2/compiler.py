@@ -325,6 +325,10 @@ class CodeGenerator(NodeVisitor):
         # the current line number
         self.code_lineno = 1
 
+        # registry of all filters and tests (global, not block local)
+        self.tests = {}
+        self.filters = {}
+
         # the debug information
         self.debug_info = []
         self._write_debug_info = None
@@ -473,10 +477,13 @@ class CodeGenerator(NodeVisitor):
         visitor = DependencyFinderVisitor()
         for node in nodes:
             visitor.visit(node)
-        for name in visitor.filters:
-            self.writeline('f_%s = environment.filters[%r]' % (name, name))
-        for name in visitor.tests:
-            self.writeline('t_%s = environment.tests[%r]' % (name, name))
+        for dependency in 'filters', 'tests':
+            mapping = getattr(self, dependency)
+            for name in getattr(visitor, dependency):
+                if name not in mapping:
+                    mapping[name] = self.temporary_identifier()
+                self.writeline('%s = environment.%s[%r]' %
+                               (mapping[name], dependency, name))
 
     def collect_shadowed(self, frame):
         """This function returns all the shadowed variables in a dict
@@ -1215,7 +1222,7 @@ class CodeGenerator(NodeVisitor):
             self.visit(node.step, frame)
 
     def visit_Filter(self, node, frame, initial=None):
-        self.write('f_%s(' % node.name)
+        self.write(self.filters[node.name] + '(')
         func = self.environment.filters.get(node.name)
         if func is None:
             raise TemplateAssertionError('no filter named %r' % node.name,
@@ -1234,7 +1241,7 @@ class CodeGenerator(NodeVisitor):
         self.write(')')
 
     def visit_Test(self, node, frame):
-        self.write('t_%s(' % node.name)
+        self.write(self.tests[node.name] + '(')
         if node.name not in self.environment.tests:
             raise TemplateAssertionError('no test named %r' % node.name,
                                          node.lineno, self.filename)
