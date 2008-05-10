@@ -12,7 +12,6 @@
 """
 import sys
 from types import CodeType
-from jinja2.compiler import unmask_identifier
 
 
 def translate_exception(exc_info):
@@ -67,13 +66,7 @@ def fake_exc_info(exc_info, filename, lineno, tb_back=None):
         locals = {}
     for name, value in real_locals.iteritems():
         if name.startswith('l_'):
-            try:
-                locals[str(unmask_identifier(name))] = value
-            except UnicodeError:
-                # bummer.  someone actually used an unicode identifier.
-                # there is no way this can be added back into the python
-                # layer with python < 3.  we have to ignore it...
-                pass
+            locals[name[2:]] = value
 
     # if there is a local called __jinja_exception__, we get
     # rid of it to not break the debug functionality.

@@ -8,13 +8,12 @@
     :copyright: Copyright 2008 by Armin Ronacher.
     :license: GNU GPL.
 """
-import string
 from time import time
 from copy import copy
 from random import randrange
 from keyword import iskeyword
 from cStringIO import StringIO
-from itertools import chain, takewhile
+from itertools import chain
 from jinja2 import nodes
 from jinja2.visitor import NodeVisitor, NodeTransformer
 from jinja2.exceptions import TemplateAssertionError
@@ -39,8 +38,6 @@ except SyntaxError:
 else:
     have_condexpr = True
 
-_safe_ident_chars = set(string.letters + '0123456789')
-
 
 def generate(node, environment, name, filename, stream=None):
     """Generate the python source for a node tree."""
@@ -50,30 +47,6 @@ def generate(node, environment, name, filename, stream=None):
     generator.visit(node)
     if stream is None:
         return generator.stream.getvalue()
-
-
-def mask_identifier(ident):
-    """Mask an identifier properly for python source code."""
-    rv = ['l_']
-    for char in ident:
-        if char in _safe_ident_chars:
-            rv.append(char)
-        else:
-            rv.append('_%x_' % ord(char))
-    return str(''.join(rv))
-
-
-def unmask_identifier(ident):
-    """Unmask an identifier."""
-    if not ident.startswith('l_'):
-        return ident
-    rv = []
-    i = iter(ident[2:])
-    for c in i:
-        if c == '_':
-            c = unichr(int(concat(takewhile(lambda c: c != '_', i)), 16))
-        rv.append(c)
-    return ''.join(rv)
 
 
 def has_safe_repr(value):
@@ -497,8 +470,7 @@ class CodeGenerator(NodeVisitor):
     def pull_locals(self, frame):
         """Pull all the references identifiers into the local scope."""
         for name in frame.identifiers.undeclared:
-            self.writeline('%s = context.resolve(%r)' % (mask_identifier(name),
-                                                         name))
+            self.writeline('l_%s = context.resolve(%r)' % (name, name))
 
     def pull_dependencies(self, nodes):
         """Pull all the dependencies."""
@@ -524,7 +496,7 @@ class CodeGenerator(NodeVisitor):
         aliases = {}
         for name in frame.identifiers.find_shadowed():
             aliases[name] = ident = self.temporary_identifier()
-            self.writeline('%s = %s' % (ident, mask_identifier(name)))
+            self.writeline('%s = l_%s' % (ident, name))
         return aliases
 
     def function_scoping(self, node, frame, children=None):
@@ -573,8 +545,7 @@ class CodeGenerator(NodeVisitor):
         func_frame.accesses_kwargs = False
         func_frame.accesses_varargs = False
         func_frame.accesses_caller = False
-        func_frame.arguments = args = [mask_identifier(x.name)
-                                       for x in node.args]
+        func_frame.arguments = args = ['l_' + x.name for x in node.args]
 
         undeclared = find_undeclared(children, ('caller', 'kwargs', 'varargs'))
 
@@ -775,7 +746,7 @@ class CodeGenerator(NodeVisitor):
 
     def visit_Import(self, node, frame):
         """Visit regular imports."""
-        self.writeline(mask_identifier(node.target) + ' = ', node)
+        self.writeline('l_%s = ' % node.target, node)
         if frame.toplevel:
             self.write('context.vars[%r] = ' % node.target)
         self.write('environment.get_template(')
@@ -803,19 +774,18 @@ class CodeGenerator(NodeVisitor):
                 name, alias = name
             else:
                 alias = name
-            self.writeline('%s = getattr(included_template, '
-                           '%r, missing)' % (mask_identifier(alias), name))
-            self.writeline('if %s is missing:' % mask_identifier(alias))
+            self.writeline('l_%s = getattr(included_template, '
+                           '%r, missing)' % (alias, name))
+            self.writeline('if l_%s is missing:' % alias)
             self.indent()
-            self.writeline('%s = environment.undefined(%r %% '
+            self.writeline('l_%s = environment.undefined(%r %% '
                            'included_template.name, '
                            'name=included_template.name)' %
-                           (mask_identifier(alias), 'the template %r does '
-                            'not export the requested name ' + repr(name)))
+                           (alias, 'the template %r does not export '
+                            'the requested name ' + repr(name)))
             self.outdent()
             if frame.toplevel:
-                self.writeline('context.vars[%r] = %s' %
-                               (alias, mask_identifier(alias)))
+                self.writeline('context.vars[%r] = l_%s' % (alias, alias))
                 if not alias.startswith('__'):
                     self.writeline('context.exported_vars.discard(%r)' % alias)
 
@@ -889,7 +859,7 @@ class CodeGenerator(NodeVisitor):
 
         # reset the aliases if there are any.
         for name, alias in aliases.iteritems():
-            self.writeline('%s = %s' % (mask_identifier(name), alias))
+            self.writeline('l_%s = %s' % (name, alias))
 
     def visit_If(self, node, frame):
         if_frame = frame.soft()
@@ -927,8 +897,8 @@ class CodeGenerator(NodeVisitor):
         arg_tuple = ', '.join(repr(x.name) for x in node.args)
         if len(node.args) == 1:
             arg_tuple += ','
-        self.write('%s = Macro(environment, macro, %r, (%s), (' %
-                   (mask_identifier(node.name), node.name, arg_tuple))
+        self.write('l_%s = Macro(environment, macro, %r, (%s), (' %
+                   (node.name, node.name, arg_tuple))
         for arg in node.defaults:
             self.visit(arg, macro_frame)
             self.write(', ')
@@ -1112,15 +1082,14 @@ class CodeGenerator(NodeVisitor):
         # make sure toplevel assignments are added to the context.
         if frame.toplevel:
             for name in assignment_frame.assigned_names:
-                self.writeline('context.vars[%r] = %s' %
-                               (name, mask_identifier(name)))
+                self.writeline('context.vars[%r] = l_%s' % (name, name))
                 if not name.startswith('__'):
                     self.writeline('context.exported_vars.add(%r)' % name)
 
     def visit_Name(self, node, frame):
         if node.ctx == 'store' and frame.toplevel:
             frame.assigned_names.add(node.name)
-        self.write(mask_identifier(node.name))
+        self.write('l_' + node.name)
 
     def visit_MarkSafe(self, node, frame):
         self.write('Markup(')
