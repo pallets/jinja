@@ -62,9 +62,9 @@ test_restricted = '''
 >>> env.from_string("{% for item.attribute in seq %}...{% endfor %}")
 Traceback (most recent call last):
     ...
-TemplateSyntaxError: can't assign to 'subscript' (line 1)
+TemplateSyntaxError: expected token 'in', got '.' (line 1)
 >>> env.from_string("{% for foo, bar.baz in seq %}...{% endfor %}")
 Traceback (most recent call last):
     ...
-TemplateSyntaxError: can't assign to 'tuple' (line 1)
+TemplateSyntaxError: expected token 'in', got '.' (line 1)
 '''

@@ -121,14 +121,9 @@ class Parser(object):
     def parse_for(self):
         """Parse a for loop."""
         lineno = self.stream.expect('name:for').lineno
-        target = self.parse_tuple(simplified=True)
-        if not target.can_assign():
-            raise TemplateSyntaxError("can't assign to '%s'" %
-                                      target.__class__.__name__.lower(),
-                                      target.lineno, self.filename)
-        target.set_ctx('store')
+        target = self.parse_assign_target()
         self.stream.expect('name:in')
-        iter = self.parse_tuple(no_condexpr=True)
+        iter = self.parse_tuple(with_condexpr=False)
         test = None
         if self.stream.current.test('name:if'):
             self.stream.next()
@@ -144,7 +139,7 @@ class Parser(object):
         """Parse an if construct."""
         node = result = nodes.If(lineno=self.stream.expect('name:if').lineno)
         while 1:
-            node.test = self.parse_tuple(no_condexpr=True)
+            node.test = self.parse_tuple(with_condexpr=False)
             node.body = self.parse_statements(('name:elif', 'name:else',
                                                'name:endif'))
             token = self.stream.next()
@@ -190,11 +185,7 @@ class Parser(object):
         node = nodes.Import(lineno=self.stream.next().lineno)
         node.template = self.parse_expression()
         self.stream.expect('name:as')
-        node.target = self.stream.expect('name').value
-        if not nodes.Name(node.target, 'store').can_assign():
-            raise TemplateSyntaxError('can\'t assign imported template '
-                                      'to %r' % node.target, node.lineno,
-                                      self.filename)
+        node.target = self.parse_assign_target(name_only=True).name
         return self.parse_import_context(node, False)
 
     def parse_from(self):
@@ -217,25 +208,16 @@ class Parser(object):
             if self.stream.current.type is 'name':
                 if parse_context():
                     break
-                target = nodes.Name(self.stream.current.value, 'store')
-                if not target.can_assign():
-                    raise TemplateSyntaxError('can\'t import object named %r'
-                                              % target.name, target.lineno,
-                                              self.filename)
-                elif target.name.startswith('__'):
+                target = self.parse_assign_target(name_only=True)
+                if target.name.startswith('__'):
                     raise TemplateAssertionError('names starting with two '
                                                  'underscores can not be '
                                                  'imported', target.lineno,
                                                  self.filename)
-                self.stream.next()
                 if self.stream.current.test('name:as'):
                     self.stream.next()
-                    alias = self.stream.expect('name')
-                    if not nodes.Name(alias.value, 'store').can_assign():
-                        raise TemplateSyntaxError('can\'t name imported '
-                                                  'object %r.' % alias.value,
-                                                  alias.lineno, self.filename)
-                    node.names.append((target.name, alias.value))
+                    alias = self.parse_assign_target(name_only=True)
+                    node.names.append((target.name, alias.name))
                 else:
                     node.names.append(target.name)
                 if parse_context() or self.stream.current.type is not 'comma':
@@ -255,12 +237,7 @@ class Parser(object):
         while self.stream.current.type is not 'rparen':
             if args:
                 self.stream.expect('comma')
-            token = self.stream.expect('name')
-            arg = nodes.Name(token.value, 'param', lineno=token.lineno)
-            if not arg.can_assign():
-                raise TemplateSyntaxError("can't assign to '%s'" %
-                                          arg.name, arg.lineno,
-                                          self.filename)
+            arg = self.parse_assign_target(name_only=True)
             if self.stream.current.type is 'assign':
                 self.stream.next()
                 defaults.append(self.parse_expression())
@@ -291,12 +268,7 @@ class Parser(object):
 
     def parse_macro(self):
         node = nodes.Macro(lineno=self.stream.next().lineno)
-        node.name = self.stream.expect('name').value
-        # make sure that assignments to that name are allowed
-        if not nodes.Name(node.name, 'store').can_assign():
-            raise TemplateSyntaxError('can\'t assign macro to %r' %
-                                      node.target, node.lineno,
-                                      self.filename)
+        node.name = self.parse_assign_target(name_only=True).name
         self.parse_signature(node)
         node.body = self.parse_statements(('name:endmacro',),
                                           drop_needle=True)
@@ -311,14 +283,36 @@ class Parser(object):
             node.nodes.append(self.parse_expression())
         return node
 
-    def parse_expression(self, no_condexpr=False):
+    def parse_assign_target(self, with_tuple=True, name_only=False):
+        """Parse an assignment target.  As Jinja2 allows assignments to
+        tuples, this function can parse all allowed assignment targets.  Per
+        default assignments to tuples are parsed, that can be disable however
+        by setting `with_tuple` to `False`.  If only assignments to names are
+        wanted `name_only` can be set to `True`.
+        """
+        if name_only:
+            token = self.stream.expect('name')
+            target = nodes.Name(token.value, 'store', lineno=token.lineno)
+        else:
+            if with_tuple:
+                target = self.parse_tuple(simplified=True)
+            else:
+                target = self.parse_primary(with_postfix=False)
+            target.set_ctx('store')
+        if not target.can_assign():
+            raise TemplateSyntaxError('can\'t assign to %r' %
+                                      target.__class__.__name__.lower(),
+                                      target.lineno, self.filename)
+        return target
+
+    def parse_expression(self, with_condexpr=True):
         """Parse an expression.  Per default all expressions are parsed, if
-        the optional `no_condexpr` parameter is set to `True` conditional
+        the optional `with_condexpr` parameter is set to `False` conditional
         expressions are not parsed.
         """
-        if no_condexpr:
-            return self.parse_or()
-        return self.parse_condexpr()
+        if with_condexpr:
+            return self.parse_condexpr()
+        return self.parse_or()
 
     def parse_condexpr(self):
         lineno = self.stream.current.lineno
@@ -472,7 +466,7 @@ class Parser(object):
             return nodes.Pos(node, lineno=lineno)
         return self.parse_primary()
 
-    def parse_primary(self, parse_postfix=True):
+    def parse_primary(self, with_postfix=True):
         token = self.stream.current
         if token.type is 'name':
             if token.value in ('true', 'false'):
@@ -497,11 +491,11 @@ class Parser(object):
             raise TemplateSyntaxError("unexpected token '%s'" %
                                       (token,), token.lineno,
                                       self.filename)
-        if parse_postfix:
+        if with_postfix:
             node = self.parse_postfix(node)
         return node
 
-    def parse_tuple(self, simplified=False, no_condexpr=False):
+    def parse_tuple(self, simplified=False, with_condexpr=True):
         """Works like `parse_expression` but if multiple expressions are
         delimited by a comma a :class:`~jinja2.nodes.Tuple` node is created.
         This method could also return a regular expression instead of a tuple
@@ -513,11 +507,11 @@ class Parser(object):
         """
         lineno = self.stream.current.lineno
         if simplified:
-            parse = self.parse_primary
-        elif no_condexpr:
-            parse = lambda: self.parse_expression(no_condexpr=True)
-        else:
+            parse = lambda: self.parse_primary(with_postfix=False)
+        elif with_condexpr:
             parse = self.parse_expression
+        else:
+            parse = lambda: self.parse_expression(with_condexpr=False)
         args = []
         is_tuple = False
         while 1:
@@ -741,7 +735,7 @@ class Parser(object):
                 self.stream.next()
             elif token.type is 'variable_begin':
                 self.stream.next()
-                add_data(self.parse_tuple())
+                add_data(self.parse_tuple(with_condexpr=True))
                 self.stream.expect('variable_end')
             elif token.type is 'block_begin':
                 flush_data()

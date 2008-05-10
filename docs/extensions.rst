@@ -17,7 +17,7 @@ extension pass a list of extension classes or import paths to the
 `environment` parameter of the :class:`Environment` constructor.  The following
 example creates a Jinja2 environment with the i18n extension loaded::
 
-    jinja_env = Environment(extensions=['jinja.ext.i18n'])
+    jinja_env = Environment(extensions=['jinja2.ext.i18n'])
 
 
 .. _i18n-extension:
@@ -147,8 +147,8 @@ expressions of different types.  The following methods may be used by
 extensions:
 
 .. autoclass:: jinja2.parser.Parser
-    :members: parse_expression, parse_tuple, parse_statements, skip_colon,
-              skip_comma, free_identifier
+    :members: parse_expression, parse_tuple, parse_assign_target,
+              parse_statements, skip_colon, skip_comma, free_identifier
 
     .. attribute:: filename
 

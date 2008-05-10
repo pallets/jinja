@@ -62,6 +62,10 @@ Context
     modifications nor is it a singleton.  As inheritance is dynamic now
     multiple context objects may exist during template evaluation.
 
+Filters and Tests
+    Filters and tests are regular functions now.  It's no longer necessary
+    and allowed to use factory functions.
+
 
 Templates
 ~~~~~~~~~
