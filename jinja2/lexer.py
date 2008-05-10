@@ -31,7 +31,7 @@ whitespace_re = re.compile(r'\s+(?um)')
 string_re = re.compile(r"('([^'\\]*(?:\\.[^'\\]*)*)'"
                        r'|"([^"\\]*(?:\\.[^"\\]*)*)")(?ms)')
 integer_re = re.compile(r'\d+')
-name_re = re.compile(r'\b[a-zA-Z_][a-zA-Z0-9_]*\b')
+name_re = re.compile(r'\b[^\W\d]\w*\b(?u)')
 float_re = re.compile(r'\d+\.\d+')
 
 # bind operators to token types
@@ -88,6 +88,13 @@ unicode_escapes = {
 }
 
 
+def _trystr(s):
+    try:
+        return str(s)
+    except UnicodeError:
+        return s
+
+
 def unescape_string(lineno, filename, s):
     r"""Unescape a string. Supported escapes:
         \a, \n, \r\, \f, \v, \\, \", \', \0
@@ -95,7 +102,8 @@ def unescape_string(lineno, filename, s):
         \x00, \u0000, \U00000000, \N{...}
     """
     try:
-        return s.encode('ascii', 'backslashreplace').decode('unicode-escape')
+        return _trystr(s.encode('ascii', 'backslashreplace')
+                        .decode('unicode-escape'))
     except UnicodeError, e:
         msg = str(e).split(':')[-1].strip()
         raise TemplateSyntaxError(msg, lineno, filename)
@@ -409,20 +417,13 @@ class Lexer(object):
                 elif token in ('raw_begin', 'raw_end'):
                     continue
                 elif token == 'data':
-                    try:
-                        value = str(value)
-                    except UnicodeError:
-                        pass
+                    value = _trystr(value)
                 elif token == 'keyword':
                     token = value
                 elif token == 'name':
-                    value = str(value)
+                    value = _trystr(value)
                 elif token == 'string':
                     value = unescape_string(lineno, filename, value[1:-1])
-                    try:
-                        value = str(value)
-                    except UnicodeError:
-                        pass
                 elif token == 'integer':
                     value = int(value)
                 elif token == 'float':

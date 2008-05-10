@@ -68,15 +68,17 @@ High Level API
 
         A dict of filters for this environment.  As long as no template was
         loaded it's safe to add new filters or remove old.  For custom filters
-        see :ref:`writing-filters`.  For valid filter names have a look at
-        :ref:`identifier-naming`.
+        see :ref:`writing-filters`.  Unlike regular identifiers filters and
+        tests may contain dots to group functions with similar functionality.
+        For example `to.unicode` is a valid name for a filter.
 
     .. attribute:: tests
 
         A dict of test functions for this environment.  As long as no
         template was loaded it's safe to modify this dict.  For custom tests
-        see :ref:`writing-tests`.  For valid test names have a look at
-        :ref:`identifier-naming`.
+        see :ref:`writing-tests`. Unlike regular identifiers filters and
+        tests may contain dots to group functions with similar functionality.
+        For example `check.positive` is a valid name for a test.
 
     .. attribute:: globals
 
@@ -84,7 +86,6 @@ High Level API
         in a template and (if the optimizer is enabled) may not be
         overridden by templates.  As long as no template was loaded it's safe
         to modify this dict.  For more details see :ref:`global-namespace`.
-        For valid object names have a look at :ref:`identifier-naming`.
 
     .. automethod:: overlay([options])
 
@@ -112,24 +113,6 @@ High Level API
 
 .. autoclass:: jinja2.environment.TemplateStream
     :members: disable_buffering, enable_buffering
-
-
-.. _identifier-naming:
-
-Notes on Identifiers
-~~~~~~~~~~~~~~~~~~~~
-
-Jinja2 uses the regular Python 2.x naming rules.  Valid identifiers have to
-match ``[a-zA-Z_][a-zA-Z0-9_]*``.  As a matter of fact non ASCII characters
-are currently not allowed.  This limitation will probably go away as soon as
-unicode identifiers are fully specified for Python 3.
-
-Filters and tests are looked up in separate namespaces and have slightly
-modified identifier syntax.  Filters and tests may contain dots to group
-filters and tests by topic.  For example it's perfectly valid to add a
-function into the filter dict and call it `to.unicode`.  The regular
-expression for filter and test identifiers is
-``[a-zA-Z_][a-zA-Z0-9_]*(\.[a-zA-Z_][a-zA-Z0-9_]*)*```.
 
 
 Undefined Types
