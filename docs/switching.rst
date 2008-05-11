@@ -124,11 +124,11 @@ Conditions
 
 In Django you can use the following constructs to check for equality::
 
-    {% ifequals foo "bar" %}
+    {% ifequal foo "bar" %}
         ...
     {% else %}
         ...
-    {% endifequals %}
+    {% endifequal %}
 
 In Jinja2 you can use the normal if statement in combination with operators::
 
