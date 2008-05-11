@@ -455,6 +455,22 @@ by using `else`::
     {% endif %}
     </ul>
 
+It is also possible to use loops recursively.  This is useful if you are
+dealing with recursive data such as sitemaps.  To use loops recursively you
+basically have to add the `recursive` modifier to the loop definition and
+call the `loop` variable with the new iterable where you want to recurse.
+
+The following example implements a sitemap with recursive loops::
+
+    <ul class="sitemap">
+    {%- for item in sitemap recursive %}
+        <li><a href="{{ item.href|e }}">{{ item.title }}</a>
+        {%- if item.children -%}
+            <ul class="submenu">{{ loop(item.children) }}</ul>
+        {%- endif %}</li>
+    {%- endfor %}
+    </ul>
+
 
 If
 ~~
