@@ -155,7 +155,7 @@ extensions:
 
 .. autoclass:: jinja2.parser.Parser
     :members: parse_expression, parse_tuple, parse_assign_target,
-              parse_statements, skip_colon, skip_comma, free_identifier
+              parse_statements, free_identifier
 
     .. attribute:: filename
 
@@ -169,7 +169,7 @@ extensions:
         The current :class:`~jinja2.lexer.TokenStream`
 
 .. autoclass:: jinja2.lexer.TokenStream
-   :members: push, look, eos, skip, next, expect
+   :members: push, look, eos, skip, next, next_if, skip_if, expect
 
    .. attribute:: current
 

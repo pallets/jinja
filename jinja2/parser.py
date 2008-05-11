@@ -36,24 +36,12 @@ class Parser(object):
                 self.extensions[tag] = extension.parse
         self._last_identifier = 0
 
-    def is_tuple_end(self):
+    def is_tuple_end(self, extra_end_rules=None):
         """Are we at the end of a tuple?"""
-        return self.stream.current.type in ('variable_end', 'block_end',
-                                            'rparen') or \
-               self.stream.current.test('name:in')
-
-    def skip_colon(self):
-        """If there is a colon, skip it and return `True`, else `False`."""
-        if self.stream.current.type is 'colon':
-            self.stream.next()
+        if self.stream.current.type in ('variable_end', 'block_end', 'rparen'):
             return True
-        return False
-
-    def skip_comma(self):
-        """If there is a comma, skip it and return `True`, else `False`."""
-        if self.stream.current.type is 'comma':
-            self.stream.next()
-            return True
+        elif extra_end_rules is not None:
+            return self.stream.current.test_any(extra_end_rules)
         return False
 
     def free_identifier(self, lineno=None):
@@ -107,7 +95,7 @@ class Parser(object):
         can be set to `True` and the end token is removed.
         """
         # the first token may be a colon for python compatibility
-        self.skip_colon()
+        self.stream.skip_if('colon')
 
         # in the future it would be possible to add whole code sections
         # by adding some sort of end of statement token and parsing those here.
@@ -121,19 +109,21 @@ class Parser(object):
     def parse_for(self):
         """Parse a for loop."""
         lineno = self.stream.expect('name:for').lineno
-        target = self.parse_assign_target()
+        target = self.parse_assign_target(extra_end_rules=('name:in',))
         self.stream.expect('name:in')
-        iter = self.parse_tuple(with_condexpr=False)
+        iter = self.parse_tuple(with_condexpr=False,
+                                extra_end_rules=('name:recursive',))
         test = None
-        if self.stream.current.test('name:if'):
-            self.stream.next()
+        if self.stream.skip_if('name:if'):
             test = self.parse_expression()
+        recursive = self.stream.skip_if('name:recursive')
         body = self.parse_statements(('name:endfor', 'name:else'))
         if self.stream.next().value == 'endfor':
             else_ = []
         else:
             else_ = self.parse_statements(('name:endfor',), drop_needle=True)
-        return nodes.For(target, iter, body, else_, test, lineno=lineno)
+        return nodes.For(target, iter, body, else_, test,
+                         recursive, lineno=lineno)
 
     def parse_if(self):
         """Parse an if construct."""
@@ -214,8 +204,7 @@ class Parser(object):
                                                  'underscores can not be '
                                                  'imported', target.lineno,
                                                  self.filename)
-                if self.stream.current.test('name:as'):
-                    self.stream.next()
+                if self.stream.skip_if('name:as'):
                     alias = self.parse_assign_target(name_only=True)
                     node.names.append((target.name, alias.name))
                 else:
@@ -226,8 +215,7 @@ class Parser(object):
                 break
         if not hasattr(node, 'with_context'):
             node.with_context = False
-            if self.stream.current.type is 'comma':
-                self.stream.next()
+            self.stream.skip_if('comma')
         return node
 
     def parse_signature(self, node):
@@ -238,8 +226,7 @@ class Parser(object):
             if args:
                 self.stream.expect('comma')
             arg = self.parse_assign_target(name_only=True)
-            if self.stream.current.type is 'assign':
-                self.stream.next()
+            if self.stream.skip_if('assign'):
                 defaults.append(self.parse_expression())
             args.append(arg)
         self.stream.expect('rparen')
@@ -283,19 +270,22 @@ class Parser(object):
             node.nodes.append(self.parse_expression())
         return node
 
-    def parse_assign_target(self, with_tuple=True, name_only=False):
+    def parse_assign_target(self, with_tuple=True, name_only=False,
+                            extra_end_rules=None):
         """Parse an assignment target.  As Jinja2 allows assignments to
         tuples, this function can parse all allowed assignment targets.  Per
         default assignments to tuples are parsed, that can be disable however
         by setting `with_tuple` to `False`.  If only assignments to names are
-        wanted `name_only` can be set to `True`.
+        wanted `name_only` can be set to `True`.  The `extra_end_rules`
+        parameter is forwarded to the tuple parsing function.
         """
         if name_only:
             token = self.stream.expect('name')
             target = nodes.Name(token.value, 'store', lineno=token.lineno)
         else:
             if with_tuple:
-                target = self.parse_tuple(simplified=True)
+                target = self.parse_tuple(simplified=True,
+                                          extra_end_rules=extra_end_rules)
             else:
                 target = self.parse_primary(with_postfix=False)
             target.set_ctx('store')
@@ -317,8 +307,7 @@ class Parser(object):
     def parse_condexpr(self):
         lineno = self.stream.current.lineno
         expr1 = self.parse_or()
-        while self.stream.current.test('name:if'):
-            self.stream.next()
+        while self.stream.skip_if('name:if'):
             expr2 = self.parse_or()
             self.stream.expect('name:else')
             expr3 = self.parse_condexpr()
@@ -329,8 +318,7 @@ class Parser(object):
     def parse_or(self):
         lineno = self.stream.current.lineno
         left = self.parse_and()
-        while self.stream.current.test('name:or'):
-            self.stream.next()
+        while self.stream.skip_if('name:or'):
             right = self.parse_and()
             left = nodes.Or(left, right, lineno=lineno)
             lineno = self.stream.current.lineno
@@ -339,8 +327,7 @@ class Parser(object):
     def parse_and(self):
         lineno = self.stream.current.lineno
         left = self.parse_compare()
-        while self.stream.current.test('name:and'):
-            self.stream.next()
+        while self.stream.skip_if('name:and'):
             right = self.parse_compare()
             left = nodes.And(left, right, lineno=lineno)
             lineno = self.stream.current.lineno
@@ -355,8 +342,7 @@ class Parser(object):
             if token_type in _compare_operators:
                 self.stream.next()
                 ops.append(nodes.Operand(token_type, self.parse_add()))
-            elif self.stream.current.test('name:in'):
-                self.stream.next()
+            elif self.stream.skip_if('name:in'):
                 ops.append(nodes.Operand('in', self.parse_add()))
             elif self.stream.current.test('name:not') and \
                  self.stream.look().test('name:in'):
@@ -495,7 +481,8 @@ class Parser(object):
             node = self.parse_postfix(node)
         return node
 
-    def parse_tuple(self, simplified=False, with_condexpr=True):
+    def parse_tuple(self, simplified=False, with_condexpr=True,
+                    extra_end_rules=None):
         """Works like `parse_expression` but if multiple expressions are
         delimited by a comma a :class:`~jinja2.nodes.Tuple` node is created.
         This method could also return a regular expression instead of a tuple
@@ -504,6 +491,11 @@ class Parser(object):
         The default parsing mode is a full tuple.  If `simplified` is `True`
         only names and literals are parsed.  The `no_condexpr` parameter is
         forwarded to :meth:`parse_expression`.
+
+        Because tuples do not require delimiters and may end in a bogus comma
+        an extra hint is needed that marks the end of a tuple.  For example
+        for loops support tuples between `for` and `in`.  In that case the
+        `extra_end_rules` is set to ``['name:in']``.
         """
         lineno = self.stream.current.lineno
         if simplified:
@@ -517,7 +509,7 @@ class Parser(object):
         while 1:
             if args:
                 self.stream.expect('comma')
-            if self.is_tuple_end():
+            if self.is_tuple_end(extra_end_rules):
                 break
             args.append(parse())
             if self.stream.current.type is 'comma':

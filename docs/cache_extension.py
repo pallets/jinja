@@ -27,7 +27,7 @@ class FragmentCacheExtension(Extension):
 
         # if there is a comma, the user provided a timeout.  If not use
         # None as second parameter.
-        if parser.skip_comma():
+        if parser.stream.skip_if('comma'):
             args.append(parser.parse_expression())
         else:
             args.append(nodes.Const(None))

@@ -145,7 +145,7 @@ class InternationalizationExtension(Extension):
                 parser.stream.expect('comma')
 
             # skip colon for python compatibility
-            if parser.skip_colon():
+            if parser.stream.skip_if('colon'):
                 break
 
             name = parser.stream.expect('name')

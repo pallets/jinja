@@ -281,7 +281,8 @@ The ``{% extends %}`` tag is the key here. It tells the template engine that
 this template "extends" another template.  When the template system evaluates
 this template, first it locates the parent.  The extends tag should be the
 first tag in the template.  Everything before it is printed out normally and
-may cause confusion.
+may cause confusion.  For details about this behavior and how to take
+advantage of it, see :ref:`null-master-fallback`.
 
 The filename of the template depends on the template loader.  For example the
 :class:`FileSystemLoader` allows you to access other templates by giving the

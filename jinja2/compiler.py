@@ -1175,8 +1175,8 @@ class CodeGenerator(NodeVisitor):
     del binop, uaop
 
     def visit_Concat(self, node, frame):
-        self.write('%s((' % self.environment.autoescape and
-                   'markup_join' or 'unicode_join')
+        self.write('%s((' % (self.environment.autoescape and
+                             'markup_join' or 'unicode_join'))
         for arg in node.nodes:
             self.visit(arg, frame)
             self.write(', ')

@@ -15,6 +15,7 @@ fast and secure.
    extensions
    integration
    switching
+   tricks
 
    changelog
 

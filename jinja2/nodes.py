@@ -273,7 +273,7 @@ class For(Stmt):
 
     For filtered nodes an expression can be stored as `test`, otherwise `None`.
     """
-    fields = ('target', 'iter', 'body', 'else_', 'test')
+    fields = ('target', 'iter', 'body', 'else_', 'test', 'recursive')
 
 
 class If(Stmt):
