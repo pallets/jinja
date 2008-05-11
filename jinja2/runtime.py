@@ -205,11 +205,15 @@ class LoopContext(object):
     def __iter__(self):
         return self
 
-    def __call__(self, iterable):
+    def loop(self, iterable):
         if self._recurse is None:
             raise TypeError('Tried to call non recursive loop.  Maybe you '
-                            'forgot the "recursive" keyword.')
+                            "forgot the 'recursive' modifier.")
         return self._recurse(iterable, self._recurse)
+
+    # a nifty trick to enhance the error message if someone tried to call
+    # the the loop without or with too many arguments.
+    __call__ = loop; del loop
 
     def next(self):
         self.index0 += 1

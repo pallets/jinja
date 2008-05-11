@@ -534,7 +534,7 @@ class CodeGenerator(NodeVisitor):
             raise TemplateAssertionError('It\'s not possible to set and '
                                          'access variables derived from '
                                          'an outer scope! (affects: %s' %
-                                         vars, node.lineno, self.name)
+                                         vars, node.lineno, self.filename)
 
         # remove variables from a closure from the frame's undeclared
         # identifiers.
@@ -585,7 +585,7 @@ class CodeGenerator(NodeVisitor):
             if block.name in self.blocks:
                 raise TemplateAssertionError('block %r defined twice' %
                                              block.name, block.lineno,
-                                             self.name)
+                                             self.filename)
             self.blocks[block.name] = block
 
         # find all imports and import them
@@ -601,7 +601,7 @@ class CodeGenerator(NodeVisitor):
                     self.writeline('import %s as %s' % (imp, alias))
 
         # add the load name
-        self.writeline('name = %r' % self.name)
+        self.writeline('name = %r' % self.filename)
 
         # generate the root render function.
         self.writeline('def root(context, environment=environment):', extra=1)
@@ -688,7 +688,7 @@ class CodeGenerator(NodeVisitor):
         if not frame.toplevel:
             raise TemplateAssertionError('cannot use extend from a non '
                                          'top-level scope', node.lineno,
-                                         self.name)
+                                         self.filename)
 
         # if the number of extends statements in general is zero so
         # far, we don't have to add a check if something extended

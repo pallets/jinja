@@ -21,6 +21,9 @@ CYCLING = '''{% for item in seq %}{{ loop.cycle('<1>', '<2>') }}{% endfor %}\
 SCOPE = '''{% for item in seq %}{% endfor %}{{ item }}'''
 VARLEN = '''{% for item in iter %}{{ item }}{% endfor %}'''
 NONITER = '''{% for item in none %}...{% endfor %}'''
+RECURSIVE = '''{% for item in seq recursive -%}
+    [{{ item.a }}{% if item.b %}[{{ loop(item.b) }}]{% endif %}]
+{%- endfor %}'''
 
 
 def test_simple(env):
@@ -79,3 +82,12 @@ def test_varlen(env):
 def test_noniter(env):
     tmpl = env.from_string(NONITER)
     raises(TypeError, tmpl.render)
+
+
+def test_recursive(env):
+    tmpl = env.from_string(RECURSIVE)
+    assert tmpl.render(seq=[
+        dict(a=1, b=[dict(a=1), dict(a=2)]),
+        dict(a=2, b=[dict(a=1), dict(a=2)]),
+        dict(a=3, b=[dict(a='a')])
+    ]) == '[1[[1][2]]][2[[1][2]]][3[[a]]]'
