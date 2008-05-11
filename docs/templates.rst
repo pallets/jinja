@@ -212,7 +212,7 @@ precedes it.  For better readability statements that start a block (such as
 
     # for item in seq:
         ...
-    # endif
+    # endfor
 
 
 .. _template-inheritance:

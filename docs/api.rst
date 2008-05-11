@@ -184,7 +184,6 @@ file system.  The environment will keep the compiled modules in memory like
 Python's `sys.modules`.  Unlike `sys.modules` however this cache is limited in
 size by default and templates are automatically reloaded.
 All loaders are subclasses of :class:`BaseLoader`.  If you want to create your
-
 own loader, subclass :class:`BaseLoader` and override `get_source`.
 
 .. autoclass:: jinja2.loaders.BaseLoader
