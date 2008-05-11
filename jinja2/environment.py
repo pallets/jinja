@@ -15,7 +15,6 @@ from jinja2.parser import Parser
 from jinja2.optimizer import optimize
 from jinja2.compiler import generate
 from jinja2.runtime import Undefined, Context
-from jinja2.debug import translate_exception, translate_syntax_error
 from jinja2.exceptions import TemplateSyntaxError
 from jinja2.utils import import_string, LRUCache, Markup, missing, concat
 
@@ -299,6 +298,7 @@ class Environment(object):
         try:
             return Parser(self, source, filename).parse()
         except TemplateSyntaxError, e:
+            from jinja2.debug import translate_syntax_error
             exc_type, exc_value, tb = translate_syntax_error(e)
             raise exc_type, exc_value, tb
 
@@ -486,6 +486,7 @@ class Template(object):
         try:
             return concat(self._generate(*args, **kwargs))
         except:
+            from jinja2.debug import translate_exception
             exc_type, exc_value, tb = translate_exception(sys.exc_info())
             raise exc_type, exc_value, tb
 
@@ -507,6 +508,7 @@ class Template(object):
             for item in self._generate(*args, **kwargs):
                 yield item
         except:
+            from jinja2.debug import translate_exception
             exc_type, exc_value, tb = translate_exception(sys.exc_info())
             raise exc_type, exc_value, tb
 

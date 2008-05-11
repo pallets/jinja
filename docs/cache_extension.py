@@ -38,10 +38,8 @@ class FragmentCacheExtension(Extension):
 
         # now return a `CallBlock` node that calls our _cache_support
         # helper method on this extension.
-        return nodes.CallBlock(
-            nodes.Call(self.attr('_cache_support'), args, [], None, None),
-            [], [], body
-        ).set_lineno(lineno)
+        return nodes.CallBlock(self.call_method('_cache_support', args),
+                               [], [], body).set_lineno(lineno)
 
     def _cache_support(self, name, timeout, caller):
         """Helper callback."""

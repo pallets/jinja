@@ -73,6 +73,7 @@ class Extension(object):
         is the name token that matched.  This method has to return one or a
         list of multiple nodes.
         """
+        raise NotImplementedError()
 
     def attr(self, name, lineno=None):
         """Return an attribute node for the current extension.  This is useful
@@ -83,6 +84,16 @@ class Extension(object):
         That would call `self._my_callback` when the template is evaluated.
         """
         return nodes.ExtensionAttribute(self.identifier, name, lineno=lineno)
+
+    def call_method(self, name, args=None, kwargs=None, dyn_args=None,
+                    dyn_kwargs=None, lineno=None):
+        """Call a method of the extension."""
+        if args is None:
+            args = []
+        if kwargs is None:
+            kwargs = []
+        return nodes.Call(self.attr(name, lineno=lineno), args, kwargs,
+                          dyn_args, dyn_kwargs, lineno=lineno)
 
 
 class InternationalizationExtension(Extension):

@@ -719,7 +719,8 @@ class CodeGenerator(NodeVisitor):
         # if this extends statement was in the root level we can take
         # advantage of that information and simplify the generated code
         # in the top level from this point onwards
-        self.has_known_extends = True
+        if frame.rootlevel:
+            self.has_known_extends = True
 
         # and now we have one more
         self.extends_so_far += 1
