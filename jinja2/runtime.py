@@ -178,10 +178,11 @@ class TemplateReference(object):
 class LoopContext(object):
     """A loop context for dynamic iteration."""
 
-    def __init__(self, iterable, enforce_length=False):
+    def __init__(self, iterable, enforce_length=False, recurse=None):
         self._iterable = iterable
         self._next = iter(iterable).next
         self._length = None
+        self._recurse = recurse
         self.index0 = -1
         if enforce_length:
             len(self)
@@ -203,6 +204,12 @@ class LoopContext(object):
 
     def __iter__(self):
         return self
+
+    def __call__(self, iterable):
+        if self._recurse is None:
+            raise TypeError('Tried to call non recursive loop.  Maybe you '
+                            'forgot the "recursive" keyword.')
+        return self._recurse(iterable, self._recurse)
 
     def next(self):
         self.index0 += 1
