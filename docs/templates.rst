@@ -625,10 +625,10 @@ Inside code blocks you can also assign values to variables.  Assignments at
 top level (outside of blocks, macros or loops) are exported from the template
 like top level macros and can be imported by other templates.
 
-Assignments are just written in code blocks like any other statement just
-without explicit keyword::
+Assignments use the `set` tag and can have multiple targets::
 
-    {% navigation = [('index.html', 'Index'), ('about.html', 'About')] %}
+    {% set navigation = [('index.html', 'Index'), ('about.html', 'About')] %}
+    {% set key, value = call_something() %}
 
 
 Extends
