@@ -168,14 +168,17 @@ def jinja_nodes(dirname, arguments, options, content, lineno,
         if node.abstract:
             members = []
             for key, name in node.__dict__.iteritems():
-                if not key.startswith('_') and callable(name):
+                if not key.startswith('_') and \
+                   not hasattr(node.__base__, key) and callable(name):
                     members.append(key)
             if members:
                 members.sort()
                 doc.append('%s :members: %s' % (p, ', '.join(members)), '')
-        else:
+        if node.__base__ != object:
             doc.append('', '')
-            doc.append(p + ' :Node type: :class:`%s`' % node.__base__.__name__, '')
+            doc.append('%s :Node type: :class:`%s`' %
+                       (p, node.__base__.__name__), '')
+            # XXX: sphinx bug?  Expr gives a rst warning
         doc.append('', '')
         children = node.__subclasses__()
         children.sort(key=lambda x: x.__name__.lower())

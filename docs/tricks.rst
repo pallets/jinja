@@ -65,12 +65,12 @@ child template::
 The layout template can then access `active_page`.  Additionally it makes
 sense to defined a default for that variable::
 
-    {% navigation_bar = [
+    {% set navigation_bar = [
         ('/', 'index', 'Index'),
         ('/downloads/', 'downloads', 'Downloads'),
         ('/about/', 'about', 'About')
     ] -%}
-    {% active_page = active_page|default('index') -%}
+    {% set active_page = active_page|default('index') -%}
     ...
     <ul id="navigation">
     {% for href, id, caption in navigation_bar %}

@@ -43,6 +43,7 @@ def generate(node, environment, name, filename, stream=None):
     """Generate the python source for a node tree."""
     if not isinstance(node, nodes.Template):
         raise TypeError('Can\'t compile non template nodes')
+    node.freeze()
     generator = CodeGenerator(environment, name, filename, stream)
     generator.visit(node)
     if stream is None:
@@ -1138,10 +1139,25 @@ class CodeGenerator(NodeVisitor):
 
         # make sure toplevel assignments are added to the context.
         if frame.toplevel:
-            for name in assignment_frame.assigned_names:
+            public_names = [x for x in assignment_frame.assigned_names
+                            if not x.startswith('__')]
+            if len(assignment_frame.assigned_names) == 1:
+                name = iter(assignment_frame.assigned_names).next()
                 self.writeline('context.vars[%r] = l_%s' % (name, name))
-                if not name.startswith('__'):
-                    self.writeline('context.exported_vars.add(%r)' % name)
+            else:
+                self.writeline('context.vars.update({')
+                for idx, name in enumerate(assignment_frame.assigned_names):
+                    if idx:
+                        self.write(', ')
+                    self.write('%r: l_%s' % (name, name))
+                self.write('})')
+            if public_names:
+                if len(public_names) == 1:
+                    self.writeline('context.exported_vars.add(%r)' %
+                                   public_names[0])
+                else:
+                    self.writeline('context.exported_vars.update((%s))' %
+                                   ', '.join(map(repr, public_names)))
 
     def visit_Name(self, node, frame):
         if node.ctx == 'store' and frame.toplevel:

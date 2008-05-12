@@ -77,17 +77,17 @@ class Extension(object):
 
     def attr(self, name, lineno=None):
         """Return an attribute node for the current extension.  This is useful
-        to pass callbacks to template code::
+        to pass constants on extensions to generated template code::
 
-            nodes.Call(self.attr('_my_callback'), args, kwargs, None, None)
-
-        That would call `self._my_callback` when the template is evaluated.
+            self.attr('_my_attribute', lineno=lineno)
         """
         return nodes.ExtensionAttribute(self.identifier, name, lineno=lineno)
 
     def call_method(self, name, args=None, kwargs=None, dyn_args=None,
                     dyn_kwargs=None, lineno=None):
-        """Call a method of the extension."""
+        """Call a method of the extension.  This is a shortcut for
+        :meth:`attr` + :class:`jinja2.nodes.Call`.
+        """
         if args is None:
             args = []
         if kwargs is None:

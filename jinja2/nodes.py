@@ -90,13 +90,20 @@ class Node(object):
     two attributes: `lineno` (the line number of the node) and `environment`.
     The `environment` attribute is set at the end of the parsing process for
     all nodes automatically.
+
+    Nodes can be frozen which makes them hashable.  The compiler freezes the
+    nodes automatically.  Modifications on frozen nodes are possible but not
+    allowed.
     """
     __metaclass__ = NodeType
     fields = ()
     attributes = ('lineno', 'environment')
     abstract = True
+    frozen = False
 
     def __init__(self, *fields, **attributes):
+        if self.abstract:
+            raise TypeError('abstract nodes are not instanciable')
         if fields:
             if len(fields) != len(self.fields):
                 if not self.fields:
@@ -212,6 +219,30 @@ class Node(object):
             node.environment = environment
             todo.extend(node.iter_child_nodes())
         return self
+
+    def freeze(self):
+        """Freeze the complete node tree which makes them hashable.
+        This happens automatically on compilation.  Frozen nodes must not be
+        modified any further.  Extensions may not freeze nodes that appear
+        in the final node tree (ie: nodes that are returned from the extension
+        parse method).
+        """
+        todo = deque([self])
+        while todo:
+            node = todo.popleft()
+            node.frozen = True
+            todo.extend(node.iter_child_nodes())
+
+    def __eq__(self, other):
+        return type(self) is type(other) and self.__dict__ == other.__dict__
+
+    def __ne__(self, other):
+        return not self.__eq__(other)
+
+    def __hash__(self):
+        if not self.frozen:
+            raise TypeError('unfrozen nodes are unhashable')
+        return hash(tuple(self.__dict__.items()))
 
     def __repr__(self):
         return '%s(%s)' % (
@@ -374,6 +405,7 @@ class BinExpr(Expr):
     """Baseclass for all binary expressions."""
     fields = ('left', 'right')
     operator = None
+    abstract = True
 
     def as_const(self):
         f = _binop_to_func[self.operator]
@@ -387,6 +419,7 @@ class UnaryExpr(Expr):
     """Baseclass for all unary expressions."""
     fields = ('node',)
     operator = None
+    abstract = True
 
     def as_const(self):
         f = _uaop_to_func[self.operator]
@@ -412,6 +445,7 @@ class Name(Expr):
 
 class Literal(Expr):
     """Baseclass for literals."""
+    abstract = True
 
 
 class Const(Literal):
