@@ -787,9 +787,9 @@ class CodeGenerator(NodeVisitor):
             self.indent()
             self.writeline('l_%s = environment.undefined(%r %% '
                            'included_template.name, '
-                           'name=included_template.name)' %
+                           'name=%r)' %
                            (alias, 'the template %r does not export '
-                            'the requested name ' + repr(name)))
+                            'the requested name ' + repr(name), name))
             self.outdent()
             if frame.toplevel:
                 self.writeline('context.vars[%r] = l_%s' % (alias, alias))

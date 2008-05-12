@@ -13,7 +13,8 @@ from jinja2.exceptions import TemplateSyntaxError
 
 
 _statement_keywords = frozenset(['for', 'if', 'block', 'extends', 'print',
-                                 'macro', 'include', 'from', 'import'])
+                                 'macro', 'include', 'from', 'import',
+                                 'set'])
 _compare_operators = frozenset(['eq', 'ne', 'lt', 'lteq', 'gt', 'gteq'])
 
 
@@ -53,36 +54,21 @@ class Parser(object):
 
     def parse_statement(self):
         """Parse a single statement."""
-        token_type = self.stream.current.type
-        if self.stream.current.type is 'name':
-            if self.stream.current.value in _statement_keywords:
-                return getattr(self, 'parse_' + self.stream.current.value)()
-            elif self.stream.current.value == 'call':
-                return self.parse_call_block()
-            elif self.stream.current.value == 'filter':
-                return self.parse_filter_block()
-            else:
-                ext = self.extensions.get(self.stream.current.value)
-                if ext is not None:
-                    return ext(self)
-        lineno = self.stream.current.lineno
-        expr = self.parse_tuple()
-        if self.stream.current.type == 'assign':
-            result = self.parse_assign(expr)
-        else:
-            result = nodes.ExprStmt(expr, lineno=lineno)
-        return result
-
-    def parse_assign(self, target):
-        """Parse an assign statement."""
-        lineno = self.stream.expect('assign').lineno
-        if not target.can_assign():
-            raise TemplateSyntaxError("can't assign to '%s'" %
-                                      target.__class__.__name__.lower(),
-                                      target.lineno, self.filename)
-        expr = self.parse_tuple()
-        target.set_ctx('store')
-        return nodes.Assign(target, expr, lineno=lineno)
+        token = self.stream.current
+        if token.type is not 'name':
+            raise TemplateSyntaxError('tag name expected', token.lineno,
+                                      self.filename)
+        if token.value in _statement_keywords:
+            return getattr(self, 'parse_' + self.stream.current.value)()
+        if token.value == 'call':
+            return self.parse_call_block()
+        if token.value == 'filter':
+            return self.parse_filter_block()
+        ext = self.extensions.get(token.value)
+        if ext is not None:
+            return ext(self)
+        raise TemplateSyntaxError('unknown tag %r' % token.value,
+                                  token.lineno, self.filename)
 
     def parse_statements(self, end_tokens, drop_needle=False):
         """Parse multiple statements into a list until one of the end tokens
@@ -105,6 +91,14 @@ class Parser(object):
         if drop_needle:
             self.stream.next()
         return result
+
+    def parse_set(self):
+        """Parse an assign statement."""
+        lineno = self.stream.next().lineno
+        target = self.parse_assign_target()
+        self.stream.expect('assign')
+        expr = self.parse_tuple()
+        return nodes.Assign(target, expr, lineno=lineno)
 
     def parse_for(self):
         """Parse a for loop."""

@@ -48,10 +48,3 @@ unlike locals and filters/tests which are always pulled.  We're not doing that
 for filters/tests/locals as nested scopes may access it and testing is too
 complicated for the tiny performance improvement but easy for attribute
 lookups, keeping the complexity of the whole thing in mind.
-
-Use `set` for Assignments
--------------------------
-
-The keyword-less way to assign variabeles is a left-over from the days when
-it was possible to use Jinja2 like a regular programming language without
-necessary template end/start delimiters to group statements.

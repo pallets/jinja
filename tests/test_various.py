@@ -13,10 +13,10 @@ UNPACKING = '''{% for a, b, c in [[1, 2, 3]] %}{{ a }}|{{ b }}|{{ c }}{% endfor 
 RAW = '''{% raw %}{{ FOO }} and {% BAR %}{% endraw %}'''
 CONST = '''{{ true }}|{{ false }}|{{ none }}|\
 {{ none is defined }}|{{ missing is defined }}'''
-LOCALSET = '''{% foo = 0 %}\
-{% for item in [1, 2] %}{% foo = 1 %}{% endfor %}\
+LOCALSET = '''{% set foo = 0 %}\
+{% for item in [1, 2] %}{% set foo = 1 %}{% endfor %}\
 {{ foo }}'''
-CONSTASS1 = '''{% true = 42 %}'''
+CONSTASS1 = '''{% set true = 42 %}'''
 CONSTASS2 = '''{% for none in seq %}{% endfor %}'''
 
 

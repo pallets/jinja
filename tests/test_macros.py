@@ -40,7 +40,7 @@ COMPLEXCALL = '''\
 '''
 
 CALLERUNDEFINED = '''\
-{% caller = 42 %}\
+{% set caller = 42 %}\
 {% macro test() %}{{ caller is not defined }}{% endmacro %}\
 {{ test() }}\
 '''

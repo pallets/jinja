@@ -25,7 +25,8 @@ LINE_STATEMENT_PREFIX = None
 DEFAULT_NAMESPACE = {
     'range':        xrange,
     'dict':         lambda **kw: kw,
-    'lipsum':       generate_lorem_ipsum
+    'lipsum':       generate_lorem_ipsum,
+    'void':         lambda *a: u''
 }
 
 
