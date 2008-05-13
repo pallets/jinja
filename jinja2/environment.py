@@ -310,17 +310,13 @@ class Environment(object):
         """
         return self.lexer.tokeniter(source, filename)
 
-    def compile(self, source, name=None, filename=None, globals=None,
-                raw=False):
+    def compile(self, source, name=None, filename=None, raw=False):
         """Compile a node or template source code.  The `name` parameter is
         the load name of the template after it was joined using
         :meth:`join_path` if necessary, not the filename on the file system.
         the `filename` parameter is the estimated filename of the template on
         the file system.  If the template came from a database or memory this
-        can be omitted.  The `globals` parameter can be used to provide extra
-        variables at compile time for the template.  In the future the
-        optimizer will be able to evaluate parts of the template at compile
-        time based on those variables.
+        can be omitted.
 
         The return value of this method is a python code object.  If the `raw`
         parameter is `True` the return value will be a string with python
@@ -330,7 +326,7 @@ class Environment(object):
         if isinstance(source, basestring):
             source = self.parse(source, filename)
         if self.optimized:
-            node = optimize(source, self, globals or {})
+            node = optimize(source, self)
         source = generate(node, self, name, filename)
         if raw:
             return source
@@ -358,9 +354,8 @@ class Environment(object):
         If the `parent` parameter is not `None`, :meth:`join_path` is called
         to get the real template name before loading.
 
-        The `globals` parameter can be used to provide compile-time globals.
-        In the future this will allow the optimizer to render parts of the
-        templates at compile-time.
+        The `globals` parameter can be used to provide temlate wide globals.
+        These variables are available in the context at render time.
 
         If the template does not exist a :exc:`TemplateNotFound` exception is
         raised.
@@ -387,8 +382,7 @@ class Environment(object):
         """
         globals = self.make_globals(globals)
         cls = template_class or self.template_class
-        return cls.from_code(self, self.compile(source, globals=globals),
-                             globals, None)
+        return cls.from_code(self, self.compile(source), globals, None)
 
     def make_globals(self, d):
         """Return a dict for the globals."""
@@ -513,24 +507,8 @@ class Template(object):
             raise exc_type, exc_value, tb
 
     def _generate(self, *args, **kwargs):
-        # assemble the context
-        context = dict(*args, **kwargs)
-
-        # if the environment is using the optimizer locals may never
-        # override globals as optimizations might have happened
-        # depending on values of certain globals.  This assertion goes
-        # away if the python interpreter is started with -O
-        if __debug__ and self.environment.optimized:
-            overrides = set(context) & set(self.globals)
-            if overrides:
-                plural = len(overrides) != 1 and 's' or ''
-                raise AssertionError('the per template variable%s %s '
-                                     'override%s global variable%s. '
-                                     'With an enabled optimizer this '
-                                     'will lead to unexpected results.' %
-                    (plural, ', '.join(overrides), plural or ' a', plural))
-
-        return self.root_render_func(self.new_context(context))
+        """Creates a new context and generates the template."""
+        return self.root_render_func(self.new_context(dict(*args, **kwargs)))
 
     def new_context(self, vars=None, shared=False):
         """Create a new template context for this template.  The vars
@@ -668,8 +646,10 @@ class TemplateStream(object):
             while 1:
                 try:
                     while c_size < size:
-                        push(next())
-                        c_size += 1
+                        c = next()
+                        push(c)
+                        if c:
+                            c_size += 1
                 except StopIteration:
                     if not c_size:
                         return

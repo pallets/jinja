@@ -3,17 +3,6 @@ Todo Before Release
 
 This has to be implemented before the release:
 
-Drop special casing template globals
-------------------------------------
-
-The idea some time ago was to partially evaluate templates at compile time.
-For that we decided to not allow globals being overridden by locals as the
-static compiler could have changed semantics.  Turns out that the static
-compiler blows up the complexity to something nobody wants to support which
-means that this restriction is kinda pointless.
-
-That should go for good.
-
 Pull Attributes Onces
 ---------------------
 

@@ -86,7 +86,7 @@ class BaseLoader(object):
         if globals is None:
             globals = {}
         source, filename, uptodate = self.get_source(environment, name)
-        code = environment.compile(source, name, filename, globals)
+        code = environment.compile(source, name, filename)
         return environment.template_class.from_code(environment, code,
                                                     globals, uptodate)
 

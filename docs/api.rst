@@ -81,8 +81,7 @@ High Level API
     .. attribute:: globals
 
         A dict of global variables.  These variables are always available
-        in a template and (if the optimizer is enabled) may not be
-        overridden by templates.  As long as no template was loaded it's safe
+        in a template.  As long as no template was loaded it's safe
         to modify this dict.  For more details see :ref:`global-namespace`.
         For valid object names have a look at :ref:`identifier-naming`.
 
@@ -364,8 +363,9 @@ A template designer can then use the test like this:
 The Global Namespace
 --------------------
 
-Variables stored in the :attr:`Environment.globals` or :attr:`Template.globals`
-dicts are special as they are available for imported templates too and will be
-used by the optimizer in future releases to evaluates parts of the template at
-compile time.  This is the place where you can put variables and functions
-that should be available all the time.
+Variables stored in the :attr:`Environment.globals` dict are special as they
+are available for imported templates too, even if they are imported without
+context.  This is the place where you can put variables and functions
+that should be available all the time.  Additionally :attr:`Template.globals`
+exist that are variables available to a specific template that are available
+to all :meth:`~Template.render` calls.
