@@ -278,13 +278,15 @@ class Environment(object):
 
     def subscribe(self, obj, argument):
         """Get an item or attribute of an object."""
-        try:
-            return getattr(obj, str(argument))
-        except (AttributeError, UnicodeError):
+        if isinstance(argument, basestring):
             try:
-                return obj[argument]
-            except (TypeError, LookupError):
-                return self.undefined(obj=obj, name=argument)
+                return getattr(obj, str(argument))
+            except (AttributeError, UnicodeError):
+                pass
+        try:
+            return obj[argument]
+        except (TypeError, LookupError):
+            return self.undefined(obj=obj, name=argument)
 
     def parse(self, source, filename=None):
         """Parse the sourcecode and return the abstract syntax tree.  This

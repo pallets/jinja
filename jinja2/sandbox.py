@@ -118,14 +118,15 @@ class SandboxedEnvironment(Environment):
     def subscribe(self, obj, argument):
         """Subscribe an object from sandboxed code."""
         is_unsafe = False
-        try:
-            value = getattr(obj, str(argument))
-        except (AttributeError, UnicodeError):
-            pass
-        else:
-            if self.is_safe_attribute(obj, argument, value):
-                return value
-            is_unsafe = True
+        if isinstance(argument, basestring):
+            try:
+                value = getattr(obj, str(argument))
+            except (AttributeError, UnicodeError):
+                pass
+            else:
+                if self.is_safe_attribute(obj, argument, value):
+                    return value
+                is_unsafe = True
         try:
             return obj[argument]
         except (TypeError, LookupError):
