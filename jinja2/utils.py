@@ -497,7 +497,7 @@ except ImportError:
             .replace('>', '&gt;')
             .replace('<', '&lt;')
             .replace("'", '&#39;')
-            .replace('"', '&quot;')
+            .replace('"', '&#34;')
         )
 
     def soft_unicode(s):

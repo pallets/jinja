@@ -35,11 +35,10 @@ class ExtensionRegistry(type):
 
 class Extension(object):
     """Extensions can be used to add extra functionality to the Jinja template
-    system at the parser level.  This is a supported but currently
-    undocumented interface.  Custom extensions are bound to an environment but
-    may not store environment specific data on `self`.  The reason for this is
-    that an extension can be bound to another environment (for overlays) by
-    creating a copy and reassigning the `environment` attribute.
+    system at the parser level.  Custom extensions are bound to an environment
+    but may not store environment specific data on `self`.  The reason for
+    this is that an extension can be bound to another environment (for
+    overlays) by creating a copy and reassigning the `environment` attribute.
 
     As extensions are created by the environment they cannot accept any
     arguments for configuration.  One may want to work around that by using

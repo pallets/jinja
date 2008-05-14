@@ -712,7 +712,7 @@ class CodeGenerator(NodeVisitor):
                 raise CompilerExit()
             self.outdent()
 
-        self.writeline('parent_template = environment.get_template(', node, 1)
+        self.writeline('parent_template = environment.get_template(', node)
         self.visit(node.template, frame)
         self.write(', %r)' % self.name)
         self.writeline('for name, parent_block in parent_template.'
