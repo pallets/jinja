@@ -737,7 +737,7 @@ class CodeGenerator(NodeVisitor):
                 self.writeline('if parent_template is None:')
                 self.indent()
                 level += 1
-        self.writeline('for event in context.blocks[%r][-1](context):' %
+        self.writeline('for event in context.blocks[%r][0](context):' %
                        node.name, node)
         self.indent()
         if frame.buffer is None:
@@ -781,7 +781,7 @@ class CodeGenerator(NodeVisitor):
                        'blocks.iteritems():')
         self.indent()
         self.writeline('context.blocks.setdefault(name, []).'
-                       'insert(0, parent_block)')
+                       'append(parent_block)')
         self.outdent()
 
         # if this extends statement was in the root level we can take

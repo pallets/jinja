@@ -81,15 +81,13 @@ class Context(object):
         """Render a parent block."""
         try:
             blocks = self.blocks[name]
-            pos = blocks.index(current) - 1
-            if pos < 0:
-                raise IndexError()
+            block = blocks[blocks.index(current) + 1]
         except LookupError:
             return self.environment.undefined('there is no parent block '
                                               'called %r.' % name,
                                               name='super')
         wrap = self.environment.autoescape and Markup or (lambda x: x)
-        render = lambda: wrap(concat(blocks[pos](self)))
+        render = lambda: wrap(concat(block(self)))
         render.__name__ = render.name = name
         return render
 
