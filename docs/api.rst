@@ -369,3 +369,32 @@ context.  This is the place where you can put variables and functions
 that should be available all the time.  Additionally :attr:`Template.globals`
 exist that are variables available to a specific template that are available
 to all :meth:`~Template.render` calls.
+
+
+Jinja2 Semantics
+----------------
+
+Jinja2 behaves like regular Python code in the runtime with some additional
+restrictions that allow the template engine to optimize some common idoms.
+The context is semi immutable.  Only Jinja2 itself may modify it, if other
+code (such as :func:`contextfunction`\s) modify it the changes won't show up
+as expected.
+
+Another change to regular Python is that Jinja2 sees attributes as immutable.
+It assumes that every time it accesses `foo.bar`, bar will look the same as
+long as `foo` was not overriden.  In some situations Jinja will take advantage
+of that to internally substitute continuous lookups to the same attributes
+with a copy of the attribute.
+
+For example in the following template the `post.user` attribute is looked up
+once:
+
+.. sourcecode:: html+jinja
+
+    {% if post.user %}
+        <h3>{{ post.user.username }}</h3>
+        <p>Location: {{ post.user.location }}</p>
+    {% endif %}
+
+That said, the objects passed to the template may not generate different
+values every time a property is accessed.

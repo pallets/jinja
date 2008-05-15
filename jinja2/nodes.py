@@ -234,7 +234,8 @@ class Node(object):
             todo.extend(node.iter_child_nodes())
 
     def __eq__(self, other):
-        return type(self) is type(other) and self.__dict__ == other.__dict__
+        return type(self) is type(other) and \
+               tuple(self.iter_fields()) == tuple(other.iter_fields())
 
     def __ne__(self, other):
         return not self.__eq__(other)
@@ -242,7 +243,7 @@ class Node(object):
     def __hash__(self):
         if not self.frozen:
             raise TypeError('unfrozen nodes are unhashable')
-        return hash(tuple(self.__dict__.items()))
+        return hash(tuple(self.iter_fields()))
 
     def __repr__(self):
         return '%s(%s)' % (
