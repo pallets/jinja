@@ -270,10 +270,10 @@ class FrameIdentifierVisitor(NodeVisitor):
         self.generic_visit(node)
         if isinstance(node.arg, nodes.Const) and \
            isinstance(node.arg.value, basestring) and \
-           (isinstance(node.node, nodes.Name) and
+           ((isinstance(node.node, nodes.Name) and
             node.node.name not in (self.identifiers.declared_locally |
                                    self.identifiers.declared_parameter)) or \
-           node.node in self.identifiers.static_subscribes:
+            node.node in self.identifiers.static_subscribes):
             if node in self.identifiers.static_subscribes:
                 self.identifiers.static_subscribes[node] += 1
             else:
