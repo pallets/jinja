@@ -3,7 +3,9 @@
     RealWorldish Benchmark
     ~~~~~~~~~~~~~~~~~~~~~~
 
-    A more real-world benchmark of Jinja2.
+    A more real-world benchmark of Jinja2.  Like the other benchmark in the
+    Jinja2 repository this has no real-world usefulnes (despite the name).
+    Just go away and ignore it.  NOW!
 
     :copyright: Copyright 2008 by Armin Ronacher.
     :license: BSD.

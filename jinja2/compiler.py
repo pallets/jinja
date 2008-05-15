@@ -534,7 +534,7 @@ class CodeGenerator(NodeVisitor):
                                                  is nodes.Subscript)
             for node, count in static_subscribes:
                 ident = self.temporary_identifier()
-                self.writeline(ident + ' = ')
+                self.writeline(ident + ' = ', node)
                 self.visit(node, frame)
                 frame.overlays[node] = (ident, count)
 
@@ -556,9 +556,6 @@ class CodeGenerator(NodeVisitor):
         in the form name: alias and will write the required assignments
         into the current scope.  No indentation takes place.
         """
-        # make sure we "backup" overridden, local identifiers
-        # TODO: we should probably optimize this and check if the
-        # identifier is in use afterwards.
         aliases = {}
         for name in frame.identifiers.find_shadowed():
             aliases[name] = ident = self.temporary_identifier()
@@ -1190,7 +1187,9 @@ class CodeGenerator(NodeVisitor):
                 self.writeline('%s.append(' % frame.buffer)
             self.write(repr(concat(format)) + ' % (')
             idx = -1
+            self.indent()
             for argument in arguments:
+                self.newline()
                 close = 0
                 if self.environment.autoescape:
                     self.write('escape(')
@@ -1200,7 +1199,8 @@ class CodeGenerator(NodeVisitor):
                     close += 1
                 self.visit(argument, frame)
                 self.write(')' * close + ', ')
-            self.write(')')
+            self.outdent()
+            self.writeline(')')
             if frame.buffer is not None:
                 self.write(')')
 
