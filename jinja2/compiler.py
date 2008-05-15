@@ -1122,16 +1122,19 @@ class CodeGenerator(NodeVisitor):
                     self.writeline('%s.append(' % frame.buffer)
                 else:
                     self.writeline('%s.extend((' % frame.buffer)
+                self.indent()
             for item in body:
                 if isinstance(item, list):
                     val = repr(concat(item))
                     if frame.buffer is None:
                         self.writeline('yield ' + val)
                     else:
-                        self.write(val + ', ')
+                        self.writeline(val + ', ')
                 else:
                     if frame.buffer is None:
                         self.writeline('yield ')
+                    else:
+                        self.newline(item)
                     close = 1
                     if self.environment.autoescape:
                         self.write('escape(')
@@ -1146,7 +1149,8 @@ class CodeGenerator(NodeVisitor):
                         self.write(', ')
             if frame.buffer is not None:
                 # close the open parentheses
-                self.write(len(body) == 1 and ')' or '))')
+                self.outdent()
+                self.writeline(len(body) == 1 and ')' or '))')
 
         # otherwise we create a format string as this is faster in that case
         else:
@@ -1164,9 +1168,7 @@ class CodeGenerator(NodeVisitor):
                 self.writeline('%s.append(' % frame.buffer)
             self.write(repr(concat(format)) + ' % (')
             idx = -1
-            self.indent()
             for argument in arguments:
-                self.newline(argument)
                 close = 0
                 if self.environment.autoescape:
                     self.write('escape(')
@@ -1175,9 +1177,8 @@ class CodeGenerator(NodeVisitor):
                     self.write('environment.finalize(')
                     close += 1
                 self.visit(argument, frame)
-                self.write(')' * close + ',')
-            self.outdent()
-            self.writeline(')')
+                self.write(')' * close + ', ')
+            self.write(')')
             if frame.buffer is not None:
                 self.write(')')
 
