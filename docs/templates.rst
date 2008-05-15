@@ -509,13 +509,6 @@ Macros are comparable with functions in regular programming languages.  They
 are useful to put often used idioms into reusable functions to not repeat
 yourself.
 
-Macros can be defined in helper templates which then are :ref:`imported
-<import>` or directly in the template where they are used.  There is one big
-difference between those two possibilities.  A macro that is defined in the
-template where it's also used has access to the context passed to the template.
-A macro defined in another template and then imported can only access variables
-defined there or in the global context.
-
 Here a small example of a macro that renders a form element::
 
     {% macro input(name, value='', type='text', size=20) -%}
