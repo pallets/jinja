@@ -609,7 +609,7 @@ class TemplateModule(object):
         if self.__name__ is None:
             name = 'memory:%x' % id(self)
         else:
-            name = repr(self.name)
+            name = repr(self.__name__)
         return '<%s %s>' % (self.__class__.__name__, name)
 
 

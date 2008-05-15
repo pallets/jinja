@@ -21,10 +21,10 @@ __all__ = ['LoopContext', 'Context', 'TemplateReference', 'Macro', 'Markup',
            'markup_join', 'unicode_join']
 
 
-def markup_join(*args):
+def markup_join(seq):
     """Concatenation that escapes if necessary and converts to unicode."""
     buf = []
-    iterator = imap(soft_unicode, args)
+    iterator = imap(soft_unicode, seq)
     for arg in iterator:
         buf.append(arg)
         if hasattr(arg, '__html__'):
@@ -32,9 +32,9 @@ def markup_join(*args):
     return concat(buf)
 
 
-def unicode_join(*args):
+def unicode_join(seq):
     """Simple args to unicode conversion and concatenation."""
-    return concat(imap(unicode, args))
+    return concat(imap(unicode, seq))
 
 
 class Context(object):

@@ -273,6 +273,9 @@ class FrameIdentifierVisitor(NodeVisitor):
         if isinstance(node.arg, nodes.Const) and \
            isinstance(node.arg.value, basestring) and \
            ((isinstance(node.node, nodes.Name) and
+            # this code ignores parameter declared names as the may only
+            # occour at the very beginning of a scope and we pull the
+            # attributes afterwards.
             node.node.name not in (self.identifiers.declared_locally)) or
             node.node in self.identifiers.static_subscribes):
             if node in self.identifiers.static_subscribes:
@@ -281,7 +284,6 @@ class FrameIdentifierVisitor(NodeVisitor):
                 self.identifiers.static_subscribes[node] = 1
 
     def visit_Macro(self, node):
-        self.generic_visit(node)
         self.identifiers.declared_locally.add(node.name)
 
     def visit_Import(self, node):
@@ -665,7 +667,7 @@ class CodeGenerator(NodeVisitor):
                     self.writeline('import %s as %s' % (imp, alias))
 
         # add the load name
-        self.writeline('name = %r' % self.filename)
+        self.writeline('name = %r' % self.name)
 
         # generate the root render function.
         self.writeline('def root(context, environment=environment):', extra=1)
@@ -849,7 +851,7 @@ class CodeGenerator(NodeVisitor):
             self.writeline('if l_%s is missing:' % alias)
             self.indent()
             self.writeline('l_%s = environment.undefined(%r %% '
-                           'included_template.name, '
+                           'included_template.__name__, '
                            'name=%r)' %
                            (alias, 'the template %r does not export '
                             'the requested name ' + repr(name), name))
