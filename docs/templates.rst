@@ -1012,3 +1012,13 @@ To use placeholders you can use the `format` filter::
 
 For multiple placeholders always use keyword arguments to `format` as other
 languages may not use the words in the same order.
+
+
+do
+~~
+
+If the expression-statement extension is loaded a tag called `do` is available
+that works exactly like the regular variable expression (``{{ ... }}``) just
+that it doesn't print anything.  This can be used to modify lists:
+
+    {% do navigation.append('a string') %}

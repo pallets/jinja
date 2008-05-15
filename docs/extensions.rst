@@ -25,6 +25,8 @@ example creates a Jinja2 environment with the i18n extension loaded::
 i18n Extension
 --------------
 
+**Import name:** `jinja2.ext.i18n`
+
 Jinja2 currently comes with one extension, the i18n extension.  It can be
 used in combination with `gettext`_ or `babel`_.  If the i18n extension is
 enabled Jinja2 provides a `trans` statement that marks the wrapped string as
@@ -88,6 +90,16 @@ The usage of the `i18n` extension for template designers is covered as part
 
 .. _gettext: http://docs.python.org/dev/library/gettext
 .. _Babel: http://babel.edgewall.org/
+
+
+do
+~~
+
+**Import name:** `jinja2.ext.do`
+
+The do aka expression-statement extension adds a simple `do` tag to the
+template engine that works like a variable expression but ignores the
+return value.
 
 
 .. _writing-extensions:

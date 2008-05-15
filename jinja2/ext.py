@@ -277,6 +277,18 @@ class InternationalizationExtension(Extension):
         return nodes.Output([node])
 
 
+class ExprStmtExtension(Extension):
+    """Adds a `do` tag to Jinja2 that works like the print statement just
+    that it doesn't print the return value.
+    """
+    tags = set(['do'])
+
+    def parse(self, parser):
+        node = nodes.ExprStmt(lineno=parser.stream.next().lineno)
+        node.node = parser.parse_tuple()
+        return node
+
+
 def extract_from_ast(node, gettext_functions=GETTEXT_FUNCTIONS):
     """Extract localizable strings from the given template node.
 
@@ -360,3 +372,4 @@ def babel_extract(fileobj, keywords, comment_tags, options):
 
 #: nicer import names
 i18n = InternationalizationExtension
+do = ExprStmtExtension
