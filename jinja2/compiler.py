@@ -254,8 +254,10 @@ class FrameIdentifierVisitor(NodeVisitor):
 
     def visit_Name(self, node):
         """All assignments to names go through this function."""
-        if node.ctx in ('store', 'param'):
+        if node.ctx == 'store':
             self.identifiers.declared_locally.add(node.name)
+        elif node.ctx == 'param':
+            self.identifiers.declared_parameter.add(node.name)
         elif node.ctx == 'load' and not \
              self.identifiers.is_declared(node.name, self.hard_scope):
             self.identifiers.undeclared.add(node.name)
@@ -271,8 +273,7 @@ class FrameIdentifierVisitor(NodeVisitor):
         if isinstance(node.arg, nodes.Const) and \
            isinstance(node.arg.value, basestring) and \
            ((isinstance(node.node, nodes.Name) and
-            node.node.name not in (self.identifiers.declared_locally |
-                                   self.identifiers.declared_parameter)) or \
+            node.node.name not in (self.identifiers.declared_locally)) or
             node.node in self.identifiers.static_subscribes):
             if node in self.identifiers.static_subscribes:
                 self.identifiers.static_subscribes[node] += 1

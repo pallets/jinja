@@ -121,8 +121,7 @@ class Context(object):
         return dict(self.parent, **self.vars)
 
     def _all(meth):
-        def proxy(self):
-            return getattr(self.get_all(), meth)()
+        proxy = lambda self: getattr(self.get_all(), meth)()
         proxy.__doc__ = getattr(dict, meth).__doc__
         proxy.__name__ = meth
         return proxy
