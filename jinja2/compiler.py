@@ -841,6 +841,9 @@ class CodeGenerator(NodeVisitor):
             self.write('make_module(context.parent, True)')
         else:
             self.write('module')
+
+        var_names = []
+        discarded_names = []
         for name in node.names:
             if isinstance(name, tuple):
                 name, alias = name
@@ -857,9 +860,25 @@ class CodeGenerator(NodeVisitor):
                             'the requested name ' + repr(name), name))
             self.outdent()
             if frame.toplevel:
-                self.writeline('context.vars[%r] = l_%s' % (alias, alias))
+                var_names.append(alias)
                 if not alias.startswith('__'):
-                    self.writeline('context.exported_vars.discard(%r)' % alias)
+                    discarded_names.append(alias)
+
+        if var_names:
+            if len(var_names) == 1:
+                name = var_names[0]
+                self.writeline('context.vars[%r] = l_%s' % (name, name))
+            else:
+                self.writeline('context.vars.update({%s})' % ', '.join(
+                    '%r: l_%s' % (name, name) for name in var_names
+                ))
+        if discarded_names:
+            if len(discarded_names) == 1:
+                self.writeline('context.exported_vars.discard(%r)' %
+                               discarded_names[0])
+            else:
+                self.writeline('context.exported_vars.difference_'
+                               'update((%s))' % ', '.join(map(repr, discarded_names)))
 
     def visit_For(self, node, frame):
         # when calculating the nodes for the inner frame we have to exclude
