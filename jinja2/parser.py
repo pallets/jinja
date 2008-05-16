@@ -23,11 +23,12 @@ class Parser(object):
     extensions and can be used to parse expressions or statements.
     """
 
-    def __init__(self, environment, source, filename=None):
+    def __init__(self, environment, source, name=None, filename=None):
         self.environment = environment
         if isinstance(filename, unicode):
             filename = filename.encode('utf-8')
         self.source = unicode(source)
+        self.name = name
         self.filename = filename
         self.closed = False
         self.stream = environment.lexer.tokenize(self.source, filename)
@@ -36,6 +37,15 @@ class Parser(object):
             for tag in extension.tags:
                 self.extensions[tag] = extension.parse
         self._last_identifier = 0
+
+    def fail(self, msg, lineno=None, exc=TemplateSyntaxError):
+        """Convenience method that raises `exc` with the message, passed
+        line number or last line number as well as the current name and
+        filename.
+        """
+        if lineno is None:
+            lineno = self.stream.current.lineno
+        raise TemplateSyntaxError(msg, lineno, self.name, self.filename)
 
     def is_tuple_end(self, extra_end_rules=None):
         """Are we at the end of a tuple?"""
@@ -56,8 +66,7 @@ class Parser(object):
         """Parse a single statement."""
         token = self.stream.current
         if token.type is not 'name':
-            raise TemplateSyntaxError('tag name expected', token.lineno,
-                                      self.filename)
+            self.fail('tag name expected', token.lineno)
         if token.value in _statement_keywords:
             return getattr(self, 'parse_' + self.stream.current.value)()
         if token.value == 'call':
@@ -67,8 +76,7 @@ class Parser(object):
         ext = self.extensions.get(token.value)
         if ext is not None:
             return ext(self)
-        raise TemplateSyntaxError('unknown tag %r' % token.value,
-                                  token.lineno, self.filename)
+        self.fail('unknown tag %r' % token.value, token.lineno)
 
     def parse_statements(self, end_tokens, drop_needle=False):
         """Parse multiple statements into a list until one of the end tokens
@@ -194,10 +202,9 @@ class Parser(object):
                     break
                 target = self.parse_assign_target(name_only=True)
                 if target.name.startswith('__'):
-                    raise TemplateAssertionError('names starting with two '
-                                                 'underscores can not be '
-                                                 'imported', target.lineno,
-                                                 self.filename)
+                    self.fail('names starting with two underscores can not '
+                              'be imported', target.lineno,
+                              exc=TemplateAssertionError)
                 if self.stream.skip_if('name:as'):
                     alias = self.parse_assign_target(name_only=True)
                     node.names.append((target.name, alias.name))
@@ -236,8 +243,7 @@ class Parser(object):
 
         node.call = self.parse_expression()
         if not isinstance(node.call, nodes.Call):
-            raise TemplateSyntaxError('expected call', node.lineno,
-                                      self.filename)
+            self.fail('expected call', node.lineno)
         node.body = self.parse_statements(('name:endcall',), drop_needle=True)
         return node
 
@@ -285,9 +291,8 @@ class Parser(object):
                 target = self.parse_primary(with_postfix=False)
             target.set_ctx('store')
         if not target.can_assign():
-            raise TemplateSyntaxError('can\'t assign to %r' %
-                                      target.__class__.__name__.lower(),
-                                      target.lineno, self.filename)
+            self.fail('can\'t assign to %r' % target.__class__.
+                      __name__.lower(), target.lineno)
         return target
 
     def parse_expression(self, with_condexpr=True):
@@ -469,9 +474,7 @@ class Parser(object):
         elif token.type is 'lbrace':
             node = self.parse_dict()
         else:
-            raise TemplateSyntaxError("unexpected token '%s'" %
-                                      (token,), token.lineno,
-                                      self.filename)
+            self.fail("unexpected token '%s'" % (token,), token.lineno)
         if with_postfix:
             node = self.parse_postfix(node)
         return node
@@ -563,8 +566,7 @@ class Parser(object):
         if token.type is 'dot':
             attr_token = self.stream.current
             if attr_token.type not in ('name', 'integer'):
-                raise TemplateSyntaxError('expected name or number',
-                                          attr_token.lineno, self.filename)
+                self.fail('expected name or number', attr_token.lineno)
             arg = nodes.Const(attr_token.value, lineno=attr_token.lineno)
             self.stream.next()
         elif token.type is 'lbracket':
@@ -579,8 +581,7 @@ class Parser(object):
             else:
                 arg = nodes.Tuple(args, self.lineno, self.filename)
         else:
-            raise TemplateSyntaxError('expected subscript expression',
-                                      self.lineno, self.filename)
+            self.fail('expected subscript expression', self.lineno)
         return nodes.Subscript(node, arg, 'load', lineno=token.lineno)
 
     def parse_subscribed(self):
@@ -623,9 +624,8 @@ class Parser(object):
 
         def ensure(expr):
             if not expr:
-                raise TemplateSyntaxError('invalid syntax for function '
-                                          'call expression', token.lineno,
-                                          self.filename)
+                self.fail('invalid syntax for function call expression',
+                          token.lineno)
 
         while self.stream.current.type is not 'rparen':
             if require_comma:

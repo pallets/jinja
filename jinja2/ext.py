@@ -149,9 +149,9 @@ class InternationalizationExtension(Extension):
 
             name = parser.stream.expect('name')
             if name.value in variables:
-                raise TemplateAssertionError('translatable variable %r defined '
-                                             'twice.' % name.value, name.lineno,
-                                             parser.filename)
+                parser.fail('translatable variable %r defined twice.' %
+                            name.value, name.lineno,
+                            exc=TemplateAssertionError)
 
             # expressions
             if parser.stream.current.type is 'assign':
@@ -202,8 +202,7 @@ class InternationalizationExtension(Extension):
         if not have_plural:
             plural_expr = None
         elif plural_expr is None:
-            raise TemplateAssertionError('pluralize without variables',
-                                         lineno, parser.filename)
+            parser.fail('pluralize without variables', lineno)
 
         if variables:
             variables = nodes.Dict([nodes.Pair(nodes.Const(x, lineno=lineno), y)
@@ -236,15 +235,10 @@ class InternationalizationExtension(Extension):
                 elif parser.stream.current.test('name:pluralize'):
                     if allow_pluralize:
                         break
-                    raise TemplateSyntaxError('a translatable section can '
-                                              'have only one pluralize '
-                                              'section',
-                                              parser.stream.current.lineno,
-                                              parser.filename)
-                raise TemplateSyntaxError('control structures in translatable'
-                                          ' sections are not allowed.',
-                                          parser.stream.current.lineno,
-                                          parser.filename)
+                    parser.fail('a translatable section can have only one '
+                                'pluralize section')
+                parser.fail('control structures in translatable sections are '
+                            'not allowed')
             else:
                 assert False, 'internal parser error'
 

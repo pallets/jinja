@@ -167,7 +167,7 @@ extensions:
 
 .. autoclass:: jinja2.parser.Parser
     :members: parse_expression, parse_tuple, parse_assign_target,
-              parse_statements, free_identifier
+              parse_statements, free_identifier, fail
 
     .. attribute:: filename
 

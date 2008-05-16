@@ -69,37 +69,6 @@ assert len(operators) == len(reverse_operators), 'operators dropped'
 operator_re = re.compile('(%s)' % '|'.join(re.escape(x) for x in
                          sorted(operators, key=lambda x: -len(x))))
 
-simple_escapes = {
-    'a':    '\a',
-    'n':    '\n',
-    'r':    '\r',
-    'f':    '\f',
-    't':    '\t',
-    'v':    '\v',
-    '\\':   '\\',
-    '"':    '"',
-    "'":    "'",
-    '0':    '\x00'
-}
-unicode_escapes = {
-    'x':    2,
-    'u':    4,
-    'U':    8
-}
-
-
-def unescape_string(lineno, filename, s):
-    r"""Unescape a string. Supported escapes:
-        \a, \n, \r\, \f, \v, \\, \", \', \0
-
-        \x00, \u0000, \U00000000, \N{...}
-    """
-    try:
-        return s.encode('ascii', 'backslashreplace').decode('unicode-escape')
-    except UnicodeError, e:
-        msg = str(e).split(':')[-1].strip()
-        raise TemplateSyntaxError(msg, lineno, filename)
-
 
 class Failure(object):
     """Class that raises a `TemplateSyntaxError` if called.
@@ -186,10 +155,11 @@ class TokenStream(object):
     one token ahead.  The current active token is stored as :attr:`current`.
     """
 
-    def __init__(self, generator, filename):
+    def __init__(self, generator, name, filename):
         self._next = generator.next
         self._pushed = deque()
         self.current = Token(1, 'initial', '')
+        self.name = name
         self.filename = filename
         self.next()
 
@@ -258,11 +228,11 @@ class TokenStream(object):
                 raise TemplateSyntaxError('unexpected end of template, '
                                           'expected %r.' % expr,
                                           self.current.lineno,
-                                          self.filename)
+                                          self.name, self.filename)
             raise TemplateSyntaxError("expected token %r, got %r" %
                                       (expr, str(self.current)),
                                       self.current.lineno,
-                                      self.filename)
+                                      self.name, self.filename)
         try:
             return self.current
         finally:
@@ -398,7 +368,7 @@ class Lexer(object):
             ] + tag_rules
         }
 
-    def tokenize(self, source, filename=None):
+    def tokenize(self, source, name=None, filename=None):
         """Works like `tokeniter` but returns a tokenstream of tokens and not
         a generator or token tuples.  Additionally all token values are already
         converted into types and postprocessed. For example comments are removed,
@@ -406,7 +376,7 @@ class Lexer(object):
         """
         source = unicode(source)
         def generate():
-            for lineno, token, value in self.tokeniter(source, filename):
+            for lineno, token, value in self.tokeniter(source, name, filename):
                 if token in ('comment_begin', 'comment', 'comment_end'):
                     continue
                 elif token == 'linestatement_begin':
@@ -426,7 +396,17 @@ class Lexer(object):
                 elif token == 'name':
                     value = str(value)
                 elif token == 'string':
-                    value = unescape_string(lineno, filename, value[1:-1])
+                    # try to unescape string
+                    try:
+                        value = value[1:-1] \
+                            .encode('ascii', 'backslashreplace') \
+                            .decode('unicode-escape')
+                    except Exception, e:
+                        msg = str(e).split(':')[-1].strip()
+                        raise TemplateSyntaxError(msg, lineno, name, filename)
+                    # if we can express it as bytestring (ascii only)
+                    # we do that for support of semi broken APIs
+                    # as datetime.datetime.strftime
                     try:
                         value = str(value)
                     except UnicodeError:
@@ -438,9 +418,9 @@ class Lexer(object):
                 elif token == 'operator':
                     token = operators[value]
                 yield Token(lineno, token, value)
-        return TokenStream(generate(), filename)
+        return TokenStream(generate(), name, filename)
 
-    def tokeniter(self, source, filename=None):
+    def tokeniter(self, source, name, filename=None):
         """This method tokenizes the text and returns the tokens in a
         generator.  Use this method if you just want to tokenize a template.
         The output you get is not compatible with the input the jinja parser
@@ -520,14 +500,15 @@ class Lexer(object):
                         elif data in ('}', ')', ']'):
                             if not balancing_stack:
                                 raise TemplateSyntaxError('unexpected "%s"' %
-                                                          data, lineno,
+                                                          data, lineno, name,
                                                           filename)
                             expected_op = balancing_stack.pop()
                             if expected_op != data:
                                 raise TemplateSyntaxError('unexpected "%s", '
                                                           'expected "%s"' %
                                                           (data, expected_op),
-                                                          lineno, filename)
+                                                          lineno, name,
+                                                          filename)
                     # yield items
                     if tokens is not None:
                         yield lineno, tokens, data
@@ -576,4 +557,4 @@ class Lexer(object):
                 # something went wrong
                 raise TemplateSyntaxError('unexpected char %r at %d' %
                                           (source[pos], pos), lineno,
-                                          filename)
+                                          name, filename)

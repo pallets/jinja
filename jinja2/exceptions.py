@@ -35,10 +35,15 @@ class TemplateNotFound(IOError, LookupError, TemplateError):
 class TemplateSyntaxError(TemplateError):
     """Raised to tell the user that there is a problem with the template."""
 
-    def __init__(self, message, lineno, filename):
-        TemplateError.__init__(self, '%s (line %s)' % (message, lineno))
+    def __init__(self, message, lineno, name=None, filename=None):
+        if name is not None:
+            extra = '%s, line %d' % (name, lineno)
+        else:
+            extra = 'line %d' % lineno
+        TemplateError.__init__(self, '%s (%s)' % (message, extra))
         self.message = message
         self.lineno = lineno
+        self.name = name
         self.filename = filename
 
 

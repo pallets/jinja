@@ -597,7 +597,8 @@ class CodeGenerator(NodeVisitor):
             raise TemplateAssertionError('It\'s not possible to set and '
                                          'access variables derived from '
                                          'an outer scope! (affects: %s' %
-                                         vars, node.lineno, self.filename)
+                                         vars, node.lineno, self.name,
+                                         self.filename)
 
         # remove variables from a closure from the frame's undeclared
         # identifiers.
@@ -648,7 +649,7 @@ class CodeGenerator(NodeVisitor):
             if block.name in self.blocks:
                 raise TemplateAssertionError('block %r defined twice' %
                                              block.name, block.lineno,
-                                             self.filename)
+                                             self.name, self.filename)
             self.blocks[block.name] = block
 
         # find all imports and import them
@@ -751,7 +752,7 @@ class CodeGenerator(NodeVisitor):
         if not frame.toplevel:
             raise TemplateAssertionError('cannot use extend from a non '
                                          'top-level scope', node.lineno,
-                                         self.filename)
+                                         self.name, self.filename)
 
         # if the number of extends statements in general is zero so
         # far, we don't have to add a check if something extended
@@ -1392,7 +1393,8 @@ class CodeGenerator(NodeVisitor):
         func = self.environment.filters.get(node.name)
         if func is None:
             raise TemplateAssertionError('no filter named %r' % node.name,
-                                         node.lineno, self.filename)
+                                         node.lineno, self.name,
+                                         self.filename)
         if getattr(func, 'contextfilter', False):
             self.write('context, ')
         elif getattr(func, 'environmentfilter', False):
@@ -1410,7 +1412,8 @@ class CodeGenerator(NodeVisitor):
         self.write(self.tests[node.name] + '(')
         if node.name not in self.environment.tests:
             raise TemplateAssertionError('no test named %r' % node.name,
-                                         node.lineno, self.filename)
+                                         node.lineno, self.name,
+                                         self.filename)
         self.visit(node.node, frame)
         self.signature(node, frame)
         self.write(')')

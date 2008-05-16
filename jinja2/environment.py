@@ -288,7 +288,7 @@ class Environment(object):
         except (TypeError, LookupError):
             return self.undefined(obj=obj, name=argument)
 
-    def parse(self, source, filename=None):
+    def parse(self, source, name=None, filename=None):
         """Parse the sourcecode and return the abstract syntax tree.  This
         tree of nodes is used by the compiler to convert the template into
         executable source- or bytecode.  This is useful for debugging or to
@@ -298,19 +298,19 @@ class Environment(object):
         this gives you a good overview of the node tree generated.
         """
         try:
-            return Parser(self, source, filename).parse()
+            return Parser(self, source, name, filename).parse()
         except TemplateSyntaxError, e:
             from jinja2.debug import translate_syntax_error
             exc_type, exc_value, tb = translate_syntax_error(e)
             raise exc_type, exc_value, tb
 
-    def lex(self, source, filename=None):
+    def lex(self, source, name=None, filename=None):
         """Lex the given sourcecode and return a generator that yields
         tokens as tuples in the form ``(lineno, token_type, value)``.
         This can be useful for :ref:`extension development <writing-extensions>`
         and debugging templates.
         """
-        return self.lexer.tokeniter(source, filename)
+        return self.lexer.tokeniter(source, name, filename)
 
     def compile(self, source, name=None, filename=None, raw=False):
         """Compile a node or template source code.  The `name` parameter is
@@ -326,7 +326,7 @@ class Environment(object):
         mainly used internally.
         """
         if isinstance(source, basestring):
-            source = self.parse(source, filename)
+            source = self.parse(source, name, filename)
         if self.optimized:
             node = optimize(source, self)
         source = generate(node, self, name, filename)
