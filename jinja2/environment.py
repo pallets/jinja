@@ -280,9 +280,14 @@ class Environment(object):
         """Get an item or attribute of an object."""
         if isinstance(argument, basestring):
             try:
-                return getattr(obj, str(argument))
-            except (AttributeError, UnicodeError):
+                attr = str(argument)
+            except:
                 pass
+            else:
+                try:
+                    return getattr(obj, attr)
+                except AttributeError:
+                    pass
         try:
             return obj[argument]
         except (TypeError, LookupError):

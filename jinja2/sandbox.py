@@ -120,13 +120,18 @@ class SandboxedEnvironment(Environment):
         is_unsafe = False
         if isinstance(argument, basestring):
             try:
-                value = getattr(obj, str(argument))
-            except (AttributeError, UnicodeError):
+                attr = str(argument)
+            except:
                 pass
             else:
-                if self.is_safe_attribute(obj, argument, value):
-                    return value
-                is_unsafe = True
+                try:
+                    value = getattr(obj, attr)
+                except AttributeError:
+                    pass
+                else:
+                    if self.is_safe_attribute(obj, argument, value):
+                        return value
+                    is_unsafe = True
         try:
             return obj[argument]
         except (TypeError, LookupError):

@@ -1297,18 +1297,10 @@ class CodeGenerator(NodeVisitor):
             self.visit(node.arg, frame)
             self.write(']')
             return
-        try:
-            const = node.arg.as_const()
-            have_const = True
-        except nodes.Impossible:
-            have_const = False
         self.write('environment.subscribe(')
         self.visit(node.node, frame)
         self.write(', ')
-        if have_const:
-            self.write(repr(const))
-        else:
-            self.visit(node.arg, frame)
+        self.visit(node.arg, frame)
         self.write(')')
 
     def visit_Slice(self, node, frame):
