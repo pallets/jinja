@@ -107,9 +107,6 @@ class Identifiers(object):
         # names that are declared by parameters
         self.declared_parameter = set()
 
-        # static subscribes
-        self.static_subscribes = {}
-
     def add_special(self, name):
         """Register a special name like `loop`."""
         self.undeclared.discard(name)
@@ -151,9 +148,6 @@ class Frame(object):
 
         # the name of the block we're in, otherwise None.
         self.block = parent and parent.block or None
-
-        # node overlays.  see `CodeGenerator.overlay` for more details
-        self.overlays = {}
 
         # the parent of this frame
         self.parent = parent
@@ -261,27 +255,6 @@ class FrameIdentifierVisitor(NodeVisitor):
         elif node.ctx == 'load' and not \
              self.identifiers.is_declared(node.name, self.hard_scope):
             self.identifiers.undeclared.add(node.name)
-
-    def visit_Subscript(self, node):
-        """Under some circumstances subscripts are aliased with local names:
-
-        - the subscript node is either already aliased or a name that was not
-          reassigned.
-        - and the subscription argument is a constant string.
-        """
-        self.generic_visit(node)
-        if isinstance(node.arg, nodes.Const) and \
-           isinstance(node.arg.value, basestring) and \
-           ((isinstance(node.node, nodes.Name) and
-            # this code ignores parameter declared names as the may only
-            # occour at the very beginning of a scope and we pull the
-            # attributes afterwards.
-            node.node.name not in (self.identifiers.declared_locally)) or
-            node.node in self.identifiers.static_subscribes):
-            if node in self.identifiers.static_subscribes:
-                self.identifiers.static_subscribes[node] += 1
-            else:
-                self.identifiers.static_subscribes[node] = 1
 
     def visit_Macro(self, node):
         self.identifiers.declared_locally.add(node.name)
@@ -497,46 +470,10 @@ class CodeGenerator(NodeVisitor):
             self.write('**')
             self.visit(node.dyn_kwargs, frame)
 
-    def overlay(self, node, frame):
-        """Visit an overlay and return `True` or `False` if the overlay
-        does not exist or is exhausted.  An overlay is used to replace a
-        node with another one (or an identifier) N times.  This is for
-        example used to replace static subscribes before reassignments
-        of a name that occour more than one time.  If a node has overlays
-        it's important that this method is called, otherwise the count
-        will be out of sync and the generated code is broken.
-        """
-        if node not in frame.overlays:
-            return False
-        overlay, count = frame.overlays[node]
-        if count is not None and count <= 0:
-            return False
-        if isinstance(overlay, basestring):
-            self.write(overlay)
-        else:
-            self.visit(overlay, frame)
-        frame.overlays[node] = (overlay, count - 1)
-        return True
-
     def pull_locals(self, frame):
         """Pull all the references identifiers into the local scope."""
         for name in frame.identifiers.undeclared:
             self.writeline('l_%s = context.resolve(%r)' % (name, name))
-
-        # find all the static subscribes with a count > 2 and
-        # order them properly so that subscribes depending on other
-        # subscribes are handled later.
-        static_subscribes = [(node, count) for node, count in
-                             frame.identifiers.static_subscribes.items() if
-                             count >= 2]
-        if static_subscribes:
-            static_subscribes.sort(key=lambda x: type(x[0].node)
-                                                 is nodes.Subscript)
-            for node, count in static_subscribes:
-                ident = self.temporary_identifier()
-                self.writeline(ident + ' = ', node)
-                self.visit(node, frame)
-                frame.overlays[node] = (ident, count)
 
     def pull_dependencies(self, nodes):
         """Pull all the dependencies."""
@@ -1350,10 +1287,6 @@ class CodeGenerator(NodeVisitor):
         self.visit(node.expr, frame)
 
     def visit_Subscript(self, node, frame):
-        # subscripts can have overlays
-        if self.overlay(node, frame):
-            return
-
         # slices or integer subscriptions bypass the subscribe
         # method if we can determine that at compile time.
         if isinstance(node.arg, nodes.Slice) or \

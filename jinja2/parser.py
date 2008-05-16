@@ -25,8 +25,6 @@ class Parser(object):
 
     def __init__(self, environment, source, name=None, filename=None):
         self.environment = environment
-        if isinstance(filename, unicode):
-            filename = filename.encode('utf-8')
         self.source = unicode(source)
         self.name = name
         self.filename = filename

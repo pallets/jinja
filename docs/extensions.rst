@@ -172,9 +172,13 @@ extensions:
     .. attribute:: filename
 
         The filename of the template the parser processes.  This is **not**
-        the load name of the template which is unavailable at parsing time.
+        the load name of the template.  For the load name see :attr:`name`.
         For templates that were not loaded form the file system this is
         `None`.
+
+    .. attribute:: name
+
+        The load name of the template.
 
     .. attribute:: stream
 

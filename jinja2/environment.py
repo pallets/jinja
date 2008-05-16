@@ -297,6 +297,8 @@ class Environment(object):
         If you are :ref:`developing Jinja2 extensions <writing-extensions>`
         this gives you a good overview of the node tree generated.
         """
+        if isinstance(filename, unicode):
+            filename = filename.encode('utf-8')
         try:
             return Parser(self, source, name, filename).parse()
         except TemplateSyntaxError, e:
@@ -330,6 +332,7 @@ class Environment(object):
         if self.optimized:
             node = optimize(source, self)
         source = generate(node, self, name, filename)
+        #print source
         if raw:
             return source
         if filename is None:
