@@ -12,6 +12,10 @@
     :copyright: Copyright 2008 by Armin Ronacher.
     :license: BSD.
 """
+import operator
+from UserDict import UserDict, DictMixin
+from UserList import UserList
+from sets import Set, ImmutableSet
 from types import FunctionType, MethodType, TracebackType, CodeType, \
      FrameType, GeneratorType
 from jinja2.runtime import Undefined
@@ -28,6 +32,20 @@ UNSAFE_FUNCTION_ATTRIBUTES = set(['func_closure', 'func_code', 'func_dict',
 
 #: unsafe method attributes.  function attributes are unsafe for methods too
 UNSAFE_METHOD_ATTRIBUTES = set(['im_class', 'im_func', 'im_self'])
+
+SET_TYPES = (ImmutableSet, Set, set)
+MODIFYING_SET_ATTRIBUTES = set([
+    'add', 'clear', 'difference_update', 'discard', 'pop', 'remove',
+    'symmetric_difference_update', 'update'
+])
+
+DICT_TYPES = (UserDict, DictMixin, dict)
+MODIFYING_DICT_ATTRIBUTES = set(['clear', 'pop', 'popitem', 'setdefault',
+                                 'update'])
+
+LIST_TYPES = (UserList, list)
+MODIFYING_LIST_ATTRIBUTES = set(['append', 'reverse', 'insert', 'sort',
+                                 'extend', 'remove'])
 
 
 def safe_range(*args):
@@ -79,6 +97,35 @@ def is_internal_attribute(obj, attr):
     if isinstance(obj, GeneratorType):
         return attr == 'gi_frame'
     return attr.startswith('__')
+
+
+def modifies_builtin_mutable(obj, attr):
+    """This function checks if an attribute on a builtin mutable object
+    (list, dict or set) would modify it if called.  It also supports
+    the "user"-versions of the objects (`sets.Set`, `UserDict.*` etc.)
+
+    >>> modifies_builtin_mutable({}, "clear")
+    True
+    >>> modifies_builtin_mutable({}, "keys")
+    False
+    >>> modifies_builtin_mutable([], "append")
+    True
+    >>> modifies_builtin_mutable([], "index")
+    False
+
+    If called with an unsupported object (such as unicode) `False` is
+    returned.
+
+    >>> modifies_builtin_mutable("foo", "upper")
+    False
+    """
+    if isinstance(obj, LIST_TYPES):
+        return attr in MODIFYING_LIST_ATTRIBUTES
+    elif isinstance(obj, DICT_TYPES):
+        return attr in MODIFYING_DICT_ATTRIBUTES
+    elif isinstance(obj, SET_TYPES):
+        return attr in MODIFYING_SET_ATTRIBUTES
+    return False
 
 
 class SandboxedEnvironment(Environment):
@@ -150,3 +197,15 @@ class SandboxedEnvironment(Environment):
         if not __self.is_safe_callable(__obj):
             raise SecurityError('%r is not safely callable' % (__obj,))
         return __obj(*args, **kwargs)
+
+
+class ImmutableSandboxedEnvironment(SandboxedEnvironment):
+    """Works exactly like the regular `SandboxedEnvironment` but does not
+    permit modifications on the builtin mutable objects `list`, `set`, and
+    `dict` by using the :func:`modifies_builtin_mutable` function.
+    """
+
+    def is_safe_attribute(self, obj, attr, value):
+        if not SandboxedEnvironment.is_safe_attribute(self, obj, attr, value):
+            return False
+        return not modifies_builtin_mutable(obj, attr)

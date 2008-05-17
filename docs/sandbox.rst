@@ -20,8 +20,12 @@ SecurityError: access to attribute 'func_code' of 'function' object is unsafe.
 .. autoclass:: SandboxedEnvironment([options])
     :members: is_safe_attribute, is_safe_callable
 
+.. autoclass:: ImmutableSandboxedEnvironment([options])
+
 .. autoexception:: SecurityError
 
 .. autofunction:: unsafe
 
 .. autofunction:: is_internal_attribute
+
+.. autofunction:: modifies_builtin_mutable
