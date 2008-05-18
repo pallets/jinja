@@ -357,6 +357,19 @@ class CodeGenerator(NodeVisitor):
         self._last_identifier += 1
         return 't%d' % self._last_identifier
 
+    def buffer(self, frame):
+        """Enable buffering for the frame from that point onwards."""
+        frame.buffer = buf = self.temporary_identifier()
+        self.writeline('%s = []' % buf)
+        return buf
+
+    def return_buffer_contents(self, frame):
+        """Return the buffer contents of the frame."""
+        if self.environment.autoescape:
+            self.writeline('return Markup(concat(%s))' % frame.buffer)
+        else:
+            self.writeline('return concat(%s)' % frame.buffer)
+
     def indent(self):
         """Indent by one."""
         self._indentation += 1
@@ -748,7 +761,7 @@ class CodeGenerator(NodeVisitor):
         if frame.buffer is None:
             self.writeline('yield event')
         else:
-            self.writeline('%s.append(event)' % frame.buffer)
+            self.writeline('%s(event)' % frame.buffer)
         self.outdent()
 
     def visit_Import(self, node, frame):
@@ -839,10 +852,9 @@ class CodeGenerator(NodeVisitor):
 
         # otherwise we set up a buffer and add a function def
         else:
-            loop_frame.buffer = buf = self.temporary_identifier()
             self.writeline('def loop(reciter, loop_render_func):', node)
             self.indent()
-            self.writeline('%s = []' % buf, node)
+            self.buffer(loop_frame)
             aliases = {}
 
         self.pull_locals(loop_frame)
@@ -919,10 +931,7 @@ class CodeGenerator(NodeVisitor):
         # if the node was recursive we have to return the buffer contents
         # and start the iteration code
         if node.recursive:
-            if self.environment.autoescape:
-                self.writeline('return Markup(concat(%s))' % buf)
-            else:
-                self.writeline('return concat(%s)' % buf)
+            self.return_buffer_contents(loop_frame)
             self.outdent()
             if frame.buffer is None:
                 self.writeline('yield loop(', node)
@@ -951,15 +960,11 @@ class CodeGenerator(NodeVisitor):
         macro_frame = self.function_scoping(node, frame)
         args = macro_frame.arguments
         self.writeline('def macro(%s):' % ', '.join(args), node)
-        macro_frame.buffer = buf = self.temporary_identifier()
         self.indent()
+        self.buffer(macro_frame)
         self.pull_locals(macro_frame)
-        self.writeline('%s = []' % buf)
         self.blockvisit(node.body, macro_frame)
-        if self.environment.autoescape:
-            self.writeline('return Markup(concat(%s))' % buf)
-        else:
-            self.writeline("return concat(%s)" % buf)
+        self.return_buffer_contents(macro_frame)
         self.outdent()
         self.newline()
         if frame.toplevel:
@@ -985,15 +990,11 @@ class CodeGenerator(NodeVisitor):
                                            (exclude=('call',)))
         args = call_frame.arguments
         self.writeline('def call(%s):' % ', '.join(args), node)
-        call_frame.buffer = buf = self.temporary_identifier()
         self.indent()
         self.pull_locals(call_frame)
-        self.writeline('%s = []' % buf)
+        self.buffer(call_frame)
         self.blockvisit(node.body, call_frame)
-        if self.environment.autoescape:
-            self.writeline("return Markup(concat(%s))" % buf)
-        else:
-            self.writeline('return concat(%s)' % buf)
+        self.return_buffer_contents(call_frame)
         self.outdent()
         arg_tuple = ', '.join(repr(x.name) for x in node.args)
         if len(node.args) == 1:
@@ -1022,9 +1023,8 @@ class CodeGenerator(NodeVisitor):
 
         aliases = self.collect_shadowed(filter_frame)
         self.pull_locals(filter_frame)
-        filter_frame.buffer = buf = self.temporary_identifier()
+        self.buffer(filter_frame)
 
-        self.writeline('%s = []' % buf, node)
         for child in node.body:
             self.visit(child, filter_frame)
 
@@ -1032,7 +1032,8 @@ class CodeGenerator(NodeVisitor):
             self.writeline('yield ', node)
         else:
             self.writeline('%s.append(' % frame.buffer, node)
-        self.visit_Filter(node.filter, filter_frame, 'concat(%s)' % buf)
+        self.visit_Filter(node.filter, filter_frame, 'concat(%s)'
+                          % filter_frame.buffer)
         if frame.buffer is not None:
             self.write(')')
 
@@ -1070,9 +1071,8 @@ class CodeGenerator(NodeVisitor):
             else:
                 body.append([const])
 
-        # if we have less than 3 nodes or less than 6 and a buffer we
-        # yield or extend/append
-        if len(body) < 3 or (frame.buffer is not None and len(body) < 6):
+        # if we have less than 3 nodes or a buffer we yield or extend/append
+        if len(body) < 3 or frame.buffer is not None:
             if frame.buffer is not None:
                 # for one item we append, for more we extend
                 if len(body) == 1:
@@ -1089,7 +1089,7 @@ class CodeGenerator(NodeVisitor):
                         self.writeline(val + ', ')
                 else:
                     if frame.buffer is None:
-                        self.writeline('yield ')
+                        self.writeline('yield ', item)
                     else:
                         self.newline(item)
                     close = 1
@@ -1119,15 +1119,12 @@ class CodeGenerator(NodeVisitor):
                 else:
                     format.append('%s')
                     arguments.append(item)
-            if frame.buffer is None:
-                self.writeline('yield ')
-            else:
-                self.writeline('%s.append(' % frame.buffer)
+            self.writeline('yield ')
             self.write(repr(concat(format)) + ' % (')
             idx = -1
             self.indent()
             for argument in arguments:
-                self.newline()
+                self.newline(argument)
                 close = 0
                 if self.environment.autoescape:
                     self.write('escape(')
@@ -1139,8 +1136,6 @@ class CodeGenerator(NodeVisitor):
                 self.write(')' * close + ', ')
             self.outdent()
             self.writeline(')')
-            if frame.buffer is not None:
-                self.write(')')
 
         if outdent_later:
             self.outdent()
@@ -1187,27 +1182,9 @@ class CodeGenerator(NodeVisitor):
             frame.assigned_names.add(node.name)
         self.write('l_' + node.name)
 
-    def visit_MarkSafe(self, node, frame):
-        self.write('Markup(')
-        self.visit(node.expr, frame)
-        self.write(')')
-
-    def visit_EnvironmentAttribute(self, node, frame):
-        self.write('environment.' + node.name)
-
-    def visit_ExtensionAttribute(self, node, frame):
-        self.write('environment.extensions[%r].%s' % (node.identifier, node.attr))
-
-    def visit_ImportedName(self, node, frame):
-        self.write(self.import_aliases[node.importname])
-
-    def visit_InternalName(self, node, frame):
-        self.write(node.name)
-
     def visit_Const(self, node, frame):
         val = node.value
         if isinstance(val, float):
-            # XXX: add checks for infinity and nan
             self.write(str(val))
         else:
             self.write(repr(val))
@@ -1372,3 +1349,28 @@ class CodeGenerator(NodeVisitor):
     def visit_Keyword(self, node, frame):
         self.write(node.key + '=')
         self.visit(node.value, frame)
+
+    # Unused nodes for extensions
+
+    def visit_MarkSafe(self, node, frame):
+        self.write('Markup(')
+        self.visit(node.expr, frame)
+        self.write(')')
+
+    def visit_EnvironmentAttribute(self, node, frame):
+        self.write('environment.' + node.name)
+
+    def visit_ExtensionAttribute(self, node, frame):
+        self.write('environment.extensions[%r].%s' % (node.identifier, node.attr))
+
+    def visit_ImportedName(self, node, frame):
+        self.write(self.import_aliases[node.importname])
+
+    def visit_InternalName(self, node, frame):
+        self.write(node.name)
+
+    def visit_Continue(self, node, frame):
+        self.writeline('continue', node)
+
+    def visit_Break(self, node, frame):
+        self.writeline('break', node)

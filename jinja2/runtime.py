@@ -185,7 +185,7 @@ class LoopContext(object):
             len(self)
 
     def cycle(self, *args):
-        """A replacement for the old ``{% cycle %}`` tag."""
+        """Cycles among the arguments with the current loop index."""
         if not args:
             raise TypeError('no items for cycling given')
         return args[self.index0 % len(args)]
@@ -200,7 +200,7 @@ class LoopContext(object):
         return self.length
 
     def __iter__(self):
-        return self
+        return LoopContextIterator(self)
 
     def loop(self, iterable):
         if self._recurse is None:
@@ -212,16 +212,17 @@ class LoopContext(object):
     # the the loop without or with too many arguments.
     __call__ = loop; del loop
 
-    def next(self):
-        self.index0 += 1
-        return self._next(), self
-
     @property
     def length(self):
         if self._length is None:
             try:
+                # first try to get the length from the iterable (if the
+                # iterable is a sequence)
                 length = len(self._iterable)
             except TypeError:
+                # if that's not possible (ie: iterating over a generator)
+                # we have to convert the iterable into a sequence and
+                # use the length of that.
                 self._iterable = tuple(self._iterable)
                 self._next = iter(self._iterable).next
                 length = len(tuple(self._iterable)) + self.index0 + 1
@@ -234,6 +235,22 @@ class LoopContext(object):
             self.index,
             self.length
         )
+
+
+class LoopContextIterator(object):
+    """The iterator for a loop context."""
+    __slots__ = ('context',)
+
+    def __init__(self, context):
+        self.context = context
+
+    def __iter__(self):
+        return self
+
+    def next(self):
+        ctx = self.context
+        ctx.index0 += 1
+        return ctx._next(), ctx
 
 
 class Macro(object):

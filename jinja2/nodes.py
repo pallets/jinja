@@ -800,5 +800,13 @@ class MarkSafe(Expr):
         return Markup(self.expr.as_const())
 
 
+class Continue(Stmt):
+    """Continue a loop."""
+
+
+class Break(Stmt):
+    """Break a loop."""
+
+
 # and close down
 _node_setup_finished = True

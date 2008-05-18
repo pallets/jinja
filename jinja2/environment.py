@@ -337,7 +337,6 @@ class Environment(object):
         if self.optimized:
             node = optimize(source, self)
         source = generate(node, self, name, filename)
-        #print source
         if raw:
             return source
         if filename is None:

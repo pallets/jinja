@@ -41,8 +41,7 @@ class Article(object):
         self.title = generate_lorem_ipsum(1, False, 5, 10)
         self.user = choice(users)
         self.body = generate_lorem_ipsum()
-        self.pub_date = datetime.utcfromtimestamp(randrange(1000000000,
-                                                            2000000000))
+        self.pub_date = datetime.utcfromtimestamp(randrange(10 ** 9, 2 * 10 ** 9))
 
 
 class User(object):
