@@ -79,7 +79,7 @@ installed for a French community) may load the translations once and add the
 translation methods to the environment at environment generation time::
 
     translations = get_gettext_translations()
-    env = Environment(extensions=['jinja.ext.i18n'])
+    env = Environment(extensions=['jinja2.ext.i18n'])
     env.install_gettext_translations(translations)
 
 The `get_gettext_translations` function would return the translator for the

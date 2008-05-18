@@ -1,9 +1,9 @@
-Tipps and Tricks
-================
+Tips and Tricks
+===============
 
 .. highlight:: html+jinja
 
-This part of the documentation shows some tipps and tricks for Jinja2
+This part of the documentation shows some tips and tricks for Jinja2
 templates.
 
 

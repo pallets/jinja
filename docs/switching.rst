@@ -70,25 +70,14 @@ Filters and Tests
 Templates
 ~~~~~~~~~
 
-Jinja2 has mostly the same syntax as Jinja1.  The only difference is that
-assigning variables doesn't use `set` as keyword now.  The following
-example shows a Jinja1 variable assignment::
+Jinja2 has mostly the same syntax as Jinja1.  What's different is that
+macros require parentheses around the argument list now.
 
-    {% set foo = 42 %}
-
-In Jinja2 the `set` is ommited::
-
-    {% foo = 42 %}
-
-Additionally macros require parentheses around the argument list now.
-
-Jinja2 allows dynamic inheritance now and dynamic includes.  The old helper
-function `rendertemplate` is gone now, `include` can be used instead.
-Additionally includes no longer import macros and variable assignments, for
+Additionally Jinja2 allows dynamic inheritance now and dynamic includes.
+The old helper function `rendertemplate` is gone now, `include` can be used
+instead.  Includes no longer import macros and variable assignments, for
 that the new `import` tag is used.  This concept is explained in the
 :ref:`import` documentation.
-
-Currently there is no support for the `recursive` modifier of for loops!
 
 
 Django

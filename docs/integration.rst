@@ -21,7 +21,7 @@ in its Babel extraction method `mapping file`_:
 
 .. sourcecode:: ini
 
-    [jinja: **/templates/**.html]
+    [jinja2: **/templates/**.html]
     encoding = utf-8
 
 The syntax related options of the :class:`Environment` are also available as
@@ -30,7 +30,7 @@ that templates use ``%`` as `line_statement_prefix` you can use this code:
 
 .. sourcecode:: ini
 
-    [jinja: **/templates/**.html]
+    [jinja2: **/templates/**.html]
     encoding = utf-8
     line_statement_prefix = %
 
