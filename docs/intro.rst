@@ -72,7 +72,7 @@ Installing the development version
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
 1.  Install `mercurial`_
-2.  ``svn co http://dev.pocoo.org/hg/jinja2-main jinja2``
+2.  ``hg clone http://dev.pocoo.org/hg/jinja2-main jinja2``
 3.  ``cd jinja2``
 4.  ``ln -s jinja2 /usr/lib/python2.X/site-packages``
 

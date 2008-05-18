@@ -604,7 +604,7 @@ class TemplateModule(object):
         self.__name__ = template.name
 
     __html__ = lambda x: Markup(concat(x._body_stream))
-    __unicode__ = lambda x: unicode(concat(x._body_stream))
+    __unicode__ = lambda x: concat(x._body_stream)
 
     def __str__(self):
         return unicode(self).encode('utf-8')

@@ -140,10 +140,13 @@ class Context(object):
         return name in self.vars or name in self.parent
 
     def __getitem__(self, key):
-        """Lookup a variable or raise `KeyError`."""
-        if key in self.vars:
-            return self.vars[key]
-        return self.parent[key]
+        """Lookup a variable or raise `KeyError` if the variable is
+        undefined.
+        """
+        item = self.resolve(key)
+        if isinstance(item, Undefined):
+            raise KeyError(key)
+        return item
 
     def __repr__(self):
         return '<%s %s of %r>' % (
