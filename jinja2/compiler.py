@@ -642,7 +642,7 @@ class CodeGenerator(NodeVisitor):
                 self.writeline('if parent_template is not None:')
             self.indent()
             self.writeline('for event in parent_template.'
-                           'root_render_func(context):')
+                           '_root_render_func(context):')
             self.indent()
             self.writeline('yield event')
             self.outdent(2 + (not self.has_known_extends))
@@ -750,12 +750,12 @@ class CodeGenerator(NodeVisitor):
             self.writeline('template = environment.get_template(', node)
             self.visit(node.template, frame)
             self.write(', %r)' % self.name)
-            self.writeline('for event in template.root_render_func('
+            self.writeline('for event in template._root_render_func('
                            'template.new_context(context.parent, True)):')
         else:
             self.writeline('for event in environment.get_template(', node)
             self.visit(node.template, frame)
-            self.write(', %r).module._TemplateModule__body_stream:' %
+            self.write(', %r).module._body_stream:' %
                        self.name)
         self.indent()
         if frame.buffer is None:

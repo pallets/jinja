@@ -464,11 +464,14 @@ class Template(object):
         }
         exec code in namespace
         t.environment = environment
+        t.globals = globals
         t.name = namespace['name']
         t.filename = code.co_filename
-        t.root_render_func = namespace['root']
         t.blocks = namespace['blocks']
-        t.globals = globals
+
+        # render function and module 
+        t._root_render_func = namespace['root']
+        t._module = None
 
         # debug and loader helpers
         t._debug_info = namespace['debug_info']
@@ -486,8 +489,9 @@ class Template(object):
 
         This will return the rendered template as unicode string.
         """
+        vars = dict(*args, **kwargs)
         try:
-            return concat(self._generate(*args, **kwargs))
+            return concat(self._root_render_func(self.new_context(vars)))
         except:
             from jinja2.debug import translate_exception
             exc_type, exc_value, tb = translate_exception(sys.exc_info())
@@ -507,17 +511,14 @@ class Template(object):
 
         It accepts the same arguments as :meth:`render`.
         """
+        vars = dict(*args, **kwargs)
         try:
-            for item in self._generate(*args, **kwargs):
-                yield item
+            for event in self._root_render_func(self.new_context(vars)):
+                yield event
         except:
             from jinja2.debug import translate_exception
             exc_type, exc_value, tb = translate_exception(sys.exc_info())
             raise exc_type, exc_value, tb
-
-    def _generate(self, *args, **kwargs):
-        """Creates a new context and generates the template."""
-        return self.root_render_func(self.new_context(dict(*args, **kwargs)))
 
     def new_context(self, vars=None, shared=False):
         """Create a new template context for this template.  The vars
@@ -556,7 +557,7 @@ class Template(object):
         >>> t.module.foo()
         u'42'
         """
-        if hasattr(self, '_module'):
+        if self._module is not None:
             return self._module
         self._module = rv = self.make_module()
         return rv
@@ -598,16 +599,12 @@ class TemplateModule(object):
     """
 
     def __init__(self, template, context):
-        # don't alter this attribute unless you change it in the
-        # compiler too.  The Include without context passing directly
-        # uses the mangled name.  The reason why we use a mangled one
-        # is to avoid name clashes with macros with those names.
-        self.__body_stream = list(template.root_render_func(context))
+        self._body_stream = list(template._root_render_func(context))
         self.__dict__.update(context.get_exported())
         self.__name__ = template.name
 
-    __html__ = lambda x: Markup(concat(x.__body_stream))
-    __unicode__ = lambda x: unicode(concat(x.__body_stream))
+    __html__ = lambda x: Markup(concat(x._body_stream))
+    __unicode__ = lambda x: unicode(concat(x._body_stream))
 
     def __str__(self):
         return unicode(self).encode('utf-8')

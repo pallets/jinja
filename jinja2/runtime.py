@@ -56,6 +56,8 @@ class Context(object):
     method that doesn't fail with a `KeyError` but returns an
     :class:`Undefined` object for missing variables.
     """
+    __slots__ = ('parent', 'vars', 'environment', 'exported_vars', 'name',
+                 'blocks')
 
     def __init__(self, environment, parent, name, blocks):
         self.parent = parent
