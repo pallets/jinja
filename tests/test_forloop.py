@@ -24,6 +24,12 @@ NONITER = '''{% for item in none %}...{% endfor %}'''
 RECURSIVE = '''{% for item in seq recursive -%}
     [{{ item.a }}{% if item.b %}<{{ loop(item.b) }}>{% endif %}]
 {%- endfor %}'''
+LOOPLOOP = '''{% for row in table %}
+    {%- set rowloop = loop -%}
+    {% for cell in row -%}
+        [{{ rowloop.index }}|{{ loop.index }}]
+    {%- endfor %}
+{%- endfor %}'''
 
 
 def test_simple(env):
@@ -91,3 +97,8 @@ def test_recursive(env):
         dict(a=2, b=[dict(a=1), dict(a=2)]),
         dict(a=3, b=[dict(a='a')])
     ]) == '[1<[1][2]>][2<[1][2]>][3<[a]>]'
+
+
+def test_looploop(env):
+    tmpl = env.from_string(LOOPLOOP)
+    assert tmpl.render(table=['ab', 'cd']) == '[1|1][1|2][2|1][2|2]'
