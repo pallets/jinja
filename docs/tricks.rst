@@ -79,3 +79,22 @@ sense to defined a default for that variable::
     {% endfor %}
     </ul>
     ...
+
+.. _accessing-the-parent-loop:
+
+Accessing the parent Loop
+-------------------------
+
+The special `loop` variable always points to the innermost loop.  If it's
+desired to have access to an outer loop it's possible to alias it::
+
+    <table>
+    {% for row in table %}
+      <tr>
+      {% set rowloop = loop %}
+      {% for cell in row %}
+        <td id="cell-{{ rowloop.index }}-{{ loop.index }}>{{ cell }}</td>
+      {% endfor %}
+      </tr>
+    {% endfor %}
+    </table>

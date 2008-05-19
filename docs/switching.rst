@@ -79,6 +79,10 @@ instead.  Includes no longer import macros and variable assignments, for
 that the new `import` tag is used.  This concept is explained in the
 :ref:`import` documentation.
 
+Another small change happened in the `for`-tag.  The special loop variable
+doesn't have a `parent` attribute, instead you have to alias the loop
+yourself.  See :ref:`accessing-the-parent-loop` for more details.
+
 
 Django
 ------

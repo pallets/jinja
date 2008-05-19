@@ -469,13 +469,13 @@ class LRUCache(object):
         """Iterate over all values in the cache dict, ordered by
         the most recent usage.
         """
-        return reversed(self._queue)
+        return reversed(tuple(self._queue))
 
     def __reversed__(self):
         """Iterate over the values in the cache dict, oldest items
         coming first.
         """
-        return iter(self._queue)
+        return iter(tuple(self._queue))
 
     __copy__ = copy
 
