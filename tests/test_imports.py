@@ -46,3 +46,18 @@ def test_trailing_comma():
     test_env.from_string('{% from "foo" import bar, with context %}')
     test_env.from_string('{% from "foo" import bar, with, context %}')
     test_env.from_string('{% from "foo" import bar, with with context %}')
+
+
+def test_exports():
+    m = test_env.from_string('''
+        {% macro toplevel() %}...{% endmacro %}
+        {% macro __private() %}...{% endmacro %}
+        {% set variable = 42 %}
+        {% for item in [1] %}
+            {% macro notthere() %}{% endmacro %}
+        {% endfor %}
+    ''').module
+    assert m.toplevel() == '...'
+    assert not hasattr(m, '__missing')
+    assert m.variable == 42
+    assert not hasattr(m, 'notthere')

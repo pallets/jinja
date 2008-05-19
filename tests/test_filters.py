@@ -13,6 +13,7 @@
     :copyright: 2007 by Armin Ronacher.
     :license: BSD, see LICENSE for more details.
 """
+from jinja2 import Markup
 
 CAPITALIZE = '''{{ "foo bar"|capitalize }}'''
 CENTER = '''{{ "foo"|center(9) }}'''
@@ -67,7 +68,6 @@ GROUPBY = '''{% for grouper, list in [{'foo': 1, 'bar': 2},
 {{ grouper }}: {{ list|join(', ') }}
 {% endfor %}'''
 FILTERTAG = '''{% filter upper|replace('FOO', 'foo') %}foobar{% endfilter %}'''
-
 
 
 def test_capitalize(env):
@@ -291,3 +291,13 @@ def test_groupby(env):
 def test_filtertag(env):
     tmpl = env.from_string(FILTERTAG)
     assert tmpl.render() == 'fooBAR'
+
+
+def test_replace(env):
+    tmpl = env.from_string('{{ "foo"|replace("o", 42)}}')
+    assert tmpl.render() == 'f4242'
+
+
+def test_forceescape(env):
+    tmpl = env.from_string('{{ x|forceescape }}')
+    assert tmpl.render(x=Markup('<div />')) == u'&lt;div /&gt;'

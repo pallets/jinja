@@ -30,18 +30,6 @@ def test_raw(env):
     assert tmpl.render() == '{{ FOO }} and {% BAR %}'
 
 
-def test_lru_cache():
-    from jinja2.utils import LRUCache
-    d = LRUCache(3)
-    d["a"] = 1
-    d["b"] = 2
-    d["c"] = 3
-    d["a"]
-    d["d"] = 4
-    assert len(d) == 3
-    assert 'a' in d and 'c' in d and 'd' in d and 'b' not in d
-
-
 def test_const(env):
     tmpl = env.from_string(CONST)
     assert tmpl.render() == 'True|False|None|True|False'

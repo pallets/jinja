@@ -93,3 +93,8 @@ def test_super():
 
 def test_working(env):
     tmpl = env.get_template('working')
+
+
+def test_reuse_blocks(env):
+    tmpl = env.from_string('{{ self.foo() }}|{% block foo %}42{% endblock %}|{{ self.foo() }}')
+    assert tmpl.render() == '42|42|42'

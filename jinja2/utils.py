@@ -465,11 +465,35 @@ class LRUCache(object):
         finally:
             self._wlock.release()
 
-    def __iter__(self):
-        """Iterate over all values in the cache dict, ordered by
+    def items(self):
+        """Return a list of items."""
+        result = [(key, self._mapping[key]) for key in list(self._queue)]
+        result.reverse()
+        return result
+
+    def iteritems(self):
+        """Iterate over all items."""
+        return iter(self.items())
+
+    def values(self):
+        """Return a list of all values."""
+        return [x[1] for x in self.items()]
+
+    def itervalue(self):
+        """Iterate over all values."""
+        return iter(self.values())
+
+    def keys(self):
+        """Return a list of all keys ordered by most recent usage."""
+        return list(self)
+
+    def iterkeys(self):
+        """Iterate over all keys in the cache dict, ordered by
         the most recent usage.
         """
         return reversed(tuple(self._queue))
+
+    __iter__ = iterkeys
 
     def __reversed__(self):
         """Iterate over the values in the cache dict, oldest items
