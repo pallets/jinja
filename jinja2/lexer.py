@@ -92,10 +92,7 @@ class Token(tuple):
         return tuple.__new__(cls, (lineno, intern(str(type)), value))
 
     def __str__(self):
-        from jinja.lexer import keywords, reverse_operators
-        if self.type in keywords:
-            return self.type
-        elif self.type in reverse_operators:
+        if self.type in reverse_operators:
             return reverse_operators[self.type]
         elif self.type is 'name':
             return self.value

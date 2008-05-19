@@ -355,7 +355,7 @@ class CodeGenerator(NodeVisitor):
     def temporary_identifier(self):
         """Get a new unique identifier."""
         self._last_identifier += 1
-        return 't%d' % self._last_identifier
+        return 't_%d' % self._last_identifier
 
     def buffer(self, frame):
         """Enable buffering for the frame from that point onwards."""

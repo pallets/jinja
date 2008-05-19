@@ -48,10 +48,6 @@ _cmpop_to_func = {
 }
 
 
-# if this is `True` no new Node classes can be created.
-_node_setup_finished = False
-
-
 class Impossible(Exception):
     """Raised if the node could not perform a requested action."""
 
@@ -62,8 +58,6 @@ class NodeType(type):
     automatically forwarded to the child."""
 
     def __new__(cls, name, bases, d):
-        if __debug__ and _node_setup_finished:
-            raise TypeError('Can\'t create custom node types.')
         for attr in 'fields', 'attributes':
             storage = []
             storage.extend(getattr(bases[0], attr, ()))
@@ -808,5 +802,7 @@ class Break(Stmt):
     """Break a loop."""
 
 
-# and close down
-_node_setup_finished = True
+# make sure nobody creates custom nodes
+def _failing_new(*args, **kwargs):
+    raise TypeError('can\'t create custom node types')
+NodeType.__new__ = staticmethod(_failing_new); del _failing_new
