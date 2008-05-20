@@ -364,7 +364,9 @@ class LRUCache(object):
         self.capacity = capacity
         self._mapping = {}
         self._queue = deque()
+        self._postinit()
 
+    def _postinit(self):
         # alias all queue methods for faster lookup
         self._popleft = self._queue.popleft
         self._pop = self._queue.pop
@@ -379,6 +381,20 @@ class LRUCache(object):
             if item == obj:
                 del self._queue[idx]
                 break
+
+    def __getstate__(self):
+        return {
+            'capacity':     self.capacity,
+            '_mapping':     self._mapping,
+            '_queue':       self._queue
+        }
+
+    def __setstate__(self, d):
+        self.__dict__.update(d)
+        self._postinit()
+
+    def __getnewargs__(self):
+        return (self.capacity,)
 
     def copy(self):
         """Return an shallow copy of the instance."""
