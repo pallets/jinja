@@ -199,8 +199,8 @@ class Parser(object):
                 if parse_context():
                     break
                 target = self.parse_assign_target(name_only=True)
-                if target.name.startswith('__'):
-                    self.fail('names starting with two underscores can not '
+                if target.name.startswith('_'):
+                    self.fail('names starting with an underline can not '
                               'be imported', target.lineno,
                               exc=TemplateAssertionError)
                 if self.stream.skip_if('name:as'):

@@ -624,10 +624,10 @@ class CodeGenerator(NodeVisitor):
         for arg in node.defaults:
             self.visit(arg, frame)
             self.write(', ')
-        self.write('), %s, %s, %s)' % (
-            frame.accesses_kwargs and '1' or '0',
-            frame.accesses_varargs and '1' or '0',
-            frame.accesses_caller and '1' or '0'
+        self.write('), %r, %r, %r)' % (
+            bool(frame.accesses_kwargs),
+            bool(frame.accesses_varargs),
+            bool(frame.accesses_caller)
         ))
 
     # -- Statement Visitors
@@ -815,7 +815,7 @@ class CodeGenerator(NodeVisitor):
             self.write('make_module(context.parent, True)')
         else:
             self.write('module')
-        if frame.toplevel and not node.target.startswith('__'):
+        if frame.toplevel and not node.target.startswith('_'):
             self.writeline('context.exported_vars.discard(%r)' % node.target)
 
     def visit_FromImport(self, node, frame):
@@ -848,7 +848,7 @@ class CodeGenerator(NodeVisitor):
             self.outdent()
             if frame.toplevel:
                 var_names.append(alias)
-                if not alias.startswith('__'):
+                if not alias.startswith('_'):
                     discarded_names.append(alias)
 
         if var_names:
@@ -996,7 +996,7 @@ class CodeGenerator(NodeVisitor):
         macro_frame = self.macro_body(node, frame)
         self.newline()
         if frame.toplevel:
-            if not node.name.startswith('__'):
+            if not node.name.startswith('_'):
                 self.write('context.exported_vars.add(%r)' % node.name)
             self.writeline('context.vars[%r] = ' % node.name)
         self.write('l_%s = ' % node.name)
@@ -1149,7 +1149,7 @@ class CodeGenerator(NodeVisitor):
         # make sure toplevel assignments are added to the context.
         if frame.toplevel:
             public_names = [x for x in assignment_frame.assigned_names
-                            if not x.startswith('__')]
+                            if not x.startswith('_')]
             if len(assignment_frame.assigned_names) == 1:
                 name = iter(assignment_frame.assigned_names).next()
                 self.writeline('context.vars[%r] = l_%s' % (name, name))

@@ -706,6 +706,9 @@ namespace::
     </dl>
     <p>{{ textarea('comment') }}</p>
 
+Macros and variables starting with one ore more underscores are private and
+cannot be imported.
+
 
 .. _import-visibility:
 
