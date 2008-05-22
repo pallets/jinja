@@ -588,8 +588,8 @@ used::
     {% endcall %}
 
 It's also possible to pass arguments back to the call block.  This makes it
-useful as replacement for loops.  It is however not possible to call a
-call block with another call block.
+useful as replacement for loops.  Generally speaking a call block works
+exactly like an macro, just that it doesn't have a name.
 
 Here an example of how a call block can be used with arguments::
 

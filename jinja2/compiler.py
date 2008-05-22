@@ -8,9 +8,7 @@
     :copyright: Copyright 2008 by Armin Ronacher.
     :license: GNU GPL.
 """
-from time import time
 from copy import copy
-from random import randrange
 from keyword import iskeyword
 from cStringIO import StringIO
 from itertools import chain
@@ -352,6 +350,8 @@ class CodeGenerator(NodeVisitor):
         # the current indentation
         self._indentation = 0
 
+    # -- Various compilation helpers
+
     def fail(self, msg, lineno):
         """Fail with a `TemplateAssertionError`."""
         raise TemplateAssertionError(msg, lineno, self.name, self.filename)
@@ -380,6 +380,24 @@ class CodeGenerator(NodeVisitor):
     def outdent(self, step=1):
         """Outdent by step."""
         self._indentation -= step
+
+    def start_write(self, frame, node=None):
+        """Yield or write into the frame buffer."""
+        if frame.buffer is None:
+            self.writeline('yield ', node)
+        else:
+            self.writeline('%s.append(' % frame.buffer, node)
+
+    def end_write(self, frame):
+        """End the writing process started by `start_write`."""
+        if frame.buffer is not None:
+            self.write(')')
+
+    def simple_write(self, s, frame, node=None):
+        """Simple shortcut for start_write + write + end_write."""
+        self.start_write(frame, node)
+        self.write(s)
+        self.end_write(frame)
 
     def blockvisit(self, nodes, frame, force_generator=True):
         """Visit a list of nodes as block in a frame.  If the current frame
@@ -582,7 +600,37 @@ class CodeGenerator(NodeVisitor):
             args.append('l_varargs')
         return func_frame
 
-    # -- Visitors
+    def macro_body(self, node, frame, children=None):
+        """Dump the function def of a macro or call block."""
+        frame = self.function_scoping(node, frame, children)
+        args = frame.arguments
+        self.writeline('def macro(%s):' % ', '.join(args), node)
+        self.indent()
+        self.buffer(frame)
+        self.pull_locals(frame)
+        self.blockvisit(node.body, frame)
+        self.return_buffer_contents(frame)
+        self.outdent()
+        return frame
+
+    def macro_def(self, node, frame):
+        """Dump the macro definition for the def created by macro_body."""
+        arg_tuple = ', '.join(repr(x.name) for x in node.args)
+        name = getattr(node, 'name', None)
+        if len(node.args) == 1:
+            arg_tuple += ','
+        self.write('Macro(environment, macro, %r, (%s), (' %
+                   (name, arg_tuple))
+        for arg in node.defaults:
+            self.visit(arg, frame)
+            self.write(', ')
+        self.write('), %s, %s, %s)' % (
+            frame.accesses_kwargs and '1' or '0',
+            frame.accesses_varargs and '1' or '0',
+            frame.accesses_caller and '1' or '0'
+        ))
+
+    # -- Statement Visitors
 
     def visit_Template(self, node, frame=None):
         assert frame is None, 'no root frame allowed'
@@ -689,10 +737,7 @@ class CodeGenerator(NodeVisitor):
         self.writeline('for event in context.blocks[%r][0](context):' %
                        node.name, node)
         self.indent()
-        if frame.buffer is None:
-            self.writeline('yield event')
-        else:
-            self.writeline('%s.append(event)' % frame.buffer)
+        self.simple_write('event', frame)
         self.outdent(level)
 
     def visit_Extends(self, node, frame):
@@ -755,10 +800,7 @@ class CodeGenerator(NodeVisitor):
             self.write(', %r).module._body_stream:' %
                        self.name)
         self.indent()
-        if frame.buffer is None:
-            self.writeline('yield event')
-        else:
-            self.writeline('%s(event)' % frame.buffer)
+        self.simple_write('event', frame)
         self.outdent()
 
     def visit_Import(self, node, frame):
@@ -930,14 +972,11 @@ class CodeGenerator(NodeVisitor):
         if node.recursive:
             self.return_buffer_contents(loop_frame)
             self.outdent()
-            if frame.buffer is None:
-                self.writeline('yield loop(', node)
-            else:
-                self.writeline('%s.append(loop(' % frame.buffer, node)
+            self.start_write(frame, node)
+            self.write('loop(')
             self.visit(node.iter, frame)
             self.write(', loop)')
-            if frame.buffer is not None:
-                self.write(')')
+            self.end_write(frame)
 
     def visit_If(self, node, frame):
         if_frame = frame.soft()
@@ -954,65 +993,24 @@ class CodeGenerator(NodeVisitor):
             self.outdent()
 
     def visit_Macro(self, node, frame):
-        macro_frame = self.function_scoping(node, frame)
-        args = macro_frame.arguments
-        self.writeline('def macro(%s):' % ', '.join(args), node)
-        self.indent()
-        self.buffer(macro_frame)
-        self.pull_locals(macro_frame)
-        self.blockvisit(node.body, macro_frame)
-        self.return_buffer_contents(macro_frame)
-        self.outdent()
+        macro_frame = self.macro_body(node, frame)
         self.newline()
         if frame.toplevel:
             if not node.name.startswith('__'):
                 self.write('context.exported_vars.add(%r)' % node.name)
             self.writeline('context.vars[%r] = ' % node.name)
-        arg_tuple = ', '.join(repr(x.name) for x in node.args)
-        if len(node.args) == 1:
-            arg_tuple += ','
-        self.write('l_%s = Macro(environment, macro, %r, (%s), (' %
-                   (node.name, node.name, arg_tuple))
-        for arg in node.defaults:
-            self.visit(arg, macro_frame)
-            self.write(', ')
-        self.write('), %s, %s, %s)' % (
-            macro_frame.accesses_kwargs and '1' or '0',
-            macro_frame.accesses_varargs and '1' or '0',
-            macro_frame.accesses_caller and '1' or '0'
-        ))
+        self.write('l_%s = ' % node.name)
+        self.macro_def(node, macro_frame)
 
     def visit_CallBlock(self, node, frame):
-        call_frame = self.function_scoping(node, frame, node.iter_child_nodes
-                                           (exclude=('call',)))
-        args = call_frame.arguments
-        self.writeline('def call(%s):' % ', '.join(args), node)
-        self.indent()
-        self.pull_locals(call_frame)
-        self.buffer(call_frame)
-        self.blockvisit(node.body, call_frame)
-        self.return_buffer_contents(call_frame)
-        self.outdent()
-        arg_tuple = ', '.join(repr(x.name) for x in node.args)
-        if len(node.args) == 1:
-            arg_tuple += ','
-        self.writeline('caller = Macro(environment, call, None, (%s), (' %
-                       arg_tuple)
-        for arg in node.defaults:
-            self.visit(arg, call_frame)
-            self.write(', ')
-        self.write('), %s, %s, 0)' % (
-            call_frame.accesses_kwargs and '1' or '0',
-            call_frame.accesses_varargs and '1' or '0'
-        ))
-        if frame.buffer is None:
-            self.writeline('yield ', node)
-        else:
-            self.writeline('%s.append(' % frame.buffer, node)
+        call_frame = self.macro_body(node, frame, node.iter_child_nodes
+                                     (exclude=('call',)))
+        self.writeline('caller = ')
+        self.macro_def(node, call_frame)
+        self.start_write(frame, node)
         self.visit_Call(node.call, call_frame,
                         extra_kwargs={'caller': 'caller'})
-        if frame.buffer is not None:
-            self.write(')')
+        self.end_write(frame)
 
     def visit_FilterBlock(self, node, frame):
         filter_frame = frame.inner()
@@ -1025,14 +1023,10 @@ class CodeGenerator(NodeVisitor):
         for child in node.body:
             self.visit(child, filter_frame)
 
-        if frame.buffer is None:
-            self.writeline('yield ', node)
-        else:
-            self.writeline('%s.append(' % frame.buffer, node)
+        self.start_write(frame, node)
         self.visit_Filter(node.filter, filter_frame, 'concat(%s)'
                           % filter_frame.buffer)
-        if frame.buffer is not None:
-            self.write(')')
+        self.end_write(frame)
 
     def visit_ExprStmt(self, node, frame):
         self.newline(node)
@@ -1174,6 +1168,8 @@ class CodeGenerator(NodeVisitor):
                     self.writeline('context.exported_vars.update((%s))' %
                                    ', '.join(map(repr, public_names)))
 
+    # -- Expression Visitors
+
     def visit_Name(self, node, frame):
         if node.ctx == 'store' and frame.toplevel:
             frame.assigned_names.add(node.name)
@@ -1270,12 +1266,12 @@ class CodeGenerator(NodeVisitor):
             self.write('[')
             self.visit(node.arg, frame)
             self.write(']')
-            return
-        self.write('environment.subscribe(')
-        self.visit(node.node, frame)
-        self.write(', ')
-        self.visit(node.arg, frame)
-        self.write(')')
+        else:
+            self.write('environment.subscribe(')
+            self.visit(node.node, frame)
+            self.write(', ')
+            self.visit(node.arg, frame)
+            self.write(')')
 
     def visit_Slice(self, node, frame):
         if node.start is not None:
@@ -1343,7 +1339,7 @@ class CodeGenerator(NodeVisitor):
         self.write(node.key + '=')
         self.visit(node.value, frame)
 
-    # Unused nodes for extensions
+    # -- Unused nodes for extensions
 
     def visit_MarkSafe(self, node, frame):
         self.write('Markup(')
