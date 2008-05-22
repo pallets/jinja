@@ -274,7 +274,7 @@ class Lexer(object):
 
         # lexing rules for tags
         tag_rules = [
-            (whitespace_re, None, None),
+            (whitespace_re, 'whitespace', None),
             (float_re, 'float', None),
             (integer_re, 'integer', None),
             (name_re, 'name', None),
@@ -374,7 +374,8 @@ class Lexer(object):
         source = unicode(source)
         def generate():
             for lineno, token, value in self.tokeniter(source, name, filename):
-                if token in ('comment_begin', 'comment', 'comment_end'):
+                if token in ('comment_begin', 'comment', 'comment_end',
+                             'whitespace'):
                     continue
                 elif token == 'linestatement_begin':
                     token = 'block_begin'
@@ -453,14 +454,8 @@ class Lexer(object):
                 # tuples support more options
                 if isinstance(tokens, tuple):
                     for idx, token in enumerate(tokens):
-                        # hidden group
-                        if token is None:
-                            g = m.group(idx)
-                            if g:
-                                lineno += g.count('\n')
-                            continue
                         # failure group
-                        elif token.__class__ is Failure:
+                        if token.__class__ is Failure:
                             raise token(lineno, filename)
                         # bygroup is a bit more complex, in that case we
                         # yield for the current token the first named
@@ -507,8 +502,7 @@ class Lexer(object):
                                                           lineno, name,
                                                           filename)
                     # yield items
-                    if tokens is not None:
-                        yield lineno, tokens, data
+                    yield lineno, tokens, data
                     lineno += data.count('\n')
 
                 # fetch new position into new variable so that we can check
