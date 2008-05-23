@@ -107,3 +107,27 @@ def test_preserve_blocks():
     }))
     tmpl = env.get_template('b')
     assert tmpl.render() == 'BA'
+
+
+def test_dynamic_inheritance():
+    env = Environment(loader=DictLoader({
+        'master1': 'MASTER1{% block x %}{% endblock %}',
+        'master2': 'MASTER2{% block x %}{% endblock %}',
+        'child': '{% extends master %}{% block x %}CHILD{% endblock %}'
+    }))
+    tmpl = env.get_template('child')
+    for m in range(1, 3):
+        assert tmpl.render(master='master%d' % m) == 'MASTER%dCHILD' % m
+
+
+def test_multi_inheritance():
+    env = Environment(loader=DictLoader({
+        'master1': 'MASTER1{% block x %}{% endblock %}',
+        'master2': 'MASTER2{% block x %}{% endblock %}',
+        'child': '''{% if master %}{% extends master %}{% else %}{% extends
+                    'master1' %}{% endif %}{% block x %}CHILD{% endblock %}'''
+    }))
+    tmpl = env.get_template('child')
+    assert tmpl.render(master='master2') == 'MASTER2CHILD'
+    assert tmpl.render(master='master1') == 'MASTER1CHILD'
+    assert tmpl.render() == 'MASTER1CHILD'

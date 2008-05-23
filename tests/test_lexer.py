@@ -58,3 +58,12 @@ def test_operators(env):
         stream = env.lexer.tokenize('{{ %s }}' % test)
         stream.next()
         assert stream.current.type == expect
+
+
+def test_normalizing():
+    from jinja2 import Environment
+    for seq in '\r', '\r\n', '\n':
+        env = Environment(newline_sequence=seq)
+        tmpl = env.from_string('1\n2\r\n3\n4\n')
+        result = tmpl.render()
+        assert result.replace(seq, 'X') == '1X2X3X4'
