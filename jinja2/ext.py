@@ -283,6 +283,17 @@ class ExprStmtExtension(Extension):
         return node
 
 
+class LoopControlExtension(Extension):
+    """Adds break and continue to the template engine."""
+    tags = set(['break', 'continue'])
+
+    def parse(self, parser):
+        token = parser.stream.next()
+        if token.value == 'break':
+            return nodes.Break(lineno=token.lineno)
+        return nodes.Continue(lineno=token.lineno)
+
+
 def extract_from_ast(node, gettext_functions=GETTEXT_FUNCTIONS):
     """Extract localizable strings from the given template node.
 
@@ -367,3 +378,4 @@ def babel_extract(fileobj, keywords, comment_tags, options):
 #: nicer import names
 i18n = InternationalizationExtension
 do = ExprStmtExtension
+loopcontrols = LoopControlExtension

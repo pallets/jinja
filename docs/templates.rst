@@ -1025,3 +1025,25 @@ that works exactly like the regular variable expression (``{{ ... }}``) just
 that it doesn't print anything.  This can be used to modify lists::
 
     {% do navigation.append('a string') %}
+
+
+Loop Controls
+~~~~~~~~~~~~~
+
+If the application enables the :ref:`loopcontrols-extension` it's possible to
+use `break` and `continue` in loops.  When `break` is reached, the loop is
+terminated, if `continue` is eached the processing is stopped and continues
+with the next iteration.
+
+Here a loop that skips every second item::
+
+    {% for user in users %}
+        {%- if loop.index is even %}{% continue %}{% endif %}
+        ...
+    {% endfor %}
+
+Likewise a look that stops processing after the 10th iteration::
+
+    {% for user in users %}
+        {%- if loop.index >= 10 %}{% break %}{% endif %}
+    {%- endfor %}

@@ -1018,8 +1018,8 @@ class CodeGenerator(NodeVisitor):
         self.macro_def(node, macro_frame)
 
     def visit_CallBlock(self, node, frame):
-        call_frame = self.macro_body(node, frame, node.iter_child_nodes
-                                     (exclude=('call',)))
+        children = node.iter_child_nodes(exclude=('call',))
+        call_frame = self.macro_body(node, frame, children)
         self.writeline('caller = ')
         self.macro_def(node, call_frame)
         self.start_write(frame, node)
@@ -1305,14 +1305,12 @@ class CodeGenerator(NodeVisitor):
 
         # if the filter node is None we are inside a filter block
         # and want to write to the current buffer
-        if node.node is None:
-            if self.environment.autoescape:
-                tmpl = 'Markup(concat(%s))'
-            else:
-                tmpl = 'concat(%s)'
-            self.write(tmpl % frame.buffer)
-        else:
+        if node.node is not None:
             self.visit(node.node, frame)
+        elif self.environment.autoescape:
+            self.write('Markup(concat(%s))' % frame.buffer)
+        else:
+            self.write('concat(%s)' % frame.buffer)
         self.signature(node, frame)
         self.write(')')
 

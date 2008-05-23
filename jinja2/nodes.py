@@ -118,8 +118,10 @@ class Node(object):
 
     def iter_fields(self, exclude=None, only=None):
         """This method iterates over all fields that are defined and yields
-        ``(key, value)`` tuples.  Optionally a parameter of ignored fields
-        can be provided.
+        ``(key, value)`` tuples.  Per default all fields are returned, but
+        it's possible to limit that to some fields by providing the `only`
+        parameter or to exclude some using the `exclude` parameter.  Both
+        should be sets or tuples of field names.
         """
         for name in self.fields:
             if (exclude is only is None) or \

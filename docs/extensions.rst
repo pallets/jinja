@@ -101,6 +101,17 @@ The do aka expression-statement extension adds a simple `do` tag to the
 template engine that works like a variable expression but ignores the
 return value.
 
+.. _loopcontrols-extension:
+
+loopcontrols
+~~~~~~~~~~~~
+
+**Import name:** `jinja2.ext.loopcontrols`
+
+This extension adds support for `break` and `continue` in loops.  After
+enabling Jinja2 provides those two keywords which work exactly like in
+Python.
+
 
 .. _writing-extensions:
 
