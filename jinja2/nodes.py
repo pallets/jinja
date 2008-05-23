@@ -116,24 +116,26 @@ class Node(object):
             raise TypeError('unknown attribute %r' %
                             iter(attributes).next())
 
-    def iter_fields(self, exclude=()):
+    def iter_fields(self, exclude=None, only=None):
         """This method iterates over all fields that are defined and yields
         ``(key, value)`` tuples.  Optionally a parameter of ignored fields
         can be provided.
         """
         for name in self.fields:
-            if name not in exclude:
+            if (exclude is only is None) or \
+               (exclude is not None and name not in exclude) or \
+               (only is not None and name in only):
                 try:
                     yield name, getattr(self, name)
                 except AttributeError:
                     pass
 
-    def iter_child_nodes(self, exclude=()):
+    def iter_child_nodes(self, exclude=None, only=None):
         """Iterates over all direct child nodes of the node.  This iterates
         over all fields and yields the values of they are nodes.  If the value
         of a field is a list all the nodes in that list are returned.
         """
-        for field, item in self.iter_fields(exclude):
+        for field, item in self.iter_fields(exclude, only):
             if isinstance(item, list):
                 for n in item:
                     if isinstance(n, Node):
@@ -529,6 +531,9 @@ class CondExpr(Expr):
 class Filter(Expr):
     """This node applies a filter on an expression.  `name` is the name of
     the filter, the rest of the fields are the same as for :class:`Call`.
+
+    If the `node` of a filter is `None` the contents of the last buffer are
+    filtered.  Buffers are created by macros and filter blocks.
     """
     fields = ('node', 'name', 'args', 'kwargs', 'dyn_args', 'dyn_kwargs')
 

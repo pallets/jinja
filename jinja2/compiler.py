@@ -533,6 +533,11 @@ class CodeGenerator(NodeVisitor):
             self.writeline('%s = l_%s' % (ident, name))
         return aliases
 
+    def restore_shadowed(self, aliases):
+        """Restore all aliases."""
+        for name, alias in aliases.iteritems():
+            self.writeline('l_%s = %s' % (name, alias))
+
     def function_scoping(self, node, frame, children=None,
                          find_special=True):
         """In Jinja a few statements require the help of anonymous
@@ -870,8 +875,7 @@ class CodeGenerator(NodeVisitor):
     def visit_For(self, node, frame):
         # when calculating the nodes for the inner frame we have to exclude
         # the iterator contents from it
-        children = list(node.iter_child_nodes(exclude=('iter',)))
-
+        children = node.iter_child_nodes(exclude=('iter',))
         if node.recursive:
             loop_frame = self.function_scoping(node, frame, children,
                                                find_special=False)
@@ -879,10 +883,20 @@ class CodeGenerator(NodeVisitor):
             loop_frame = frame.inner()
             loop_frame.inspect(children)
 
-        undeclared = find_undeclared(children, ('loop',))
-        extended_loop = node.recursive or node.else_ or 'loop' in undeclared
-        if extended_loop:
-            loop_frame.identifiers.add_special('loop')
+        # try to figure out if we have an extended loop.  An extended loop
+        # is necessary if the loop is in recursive mode if the special loop
+        # variable is accessed in the body.
+        extended_loop = node.recursive or 'loop' in \
+                        find_undeclared(node.iter_child_nodes(
+                            only=('body',)), ('loop',))
+
+        # make sure the loop variable is a special one and raise a template
+        # assertion error if a loop tries to write to loop
+        loop_frame.identifiers.add_special('loop')
+        for name in node.find_all(nodes.Name):
+            if name.ctx == 'store' and name.name == 'loop':
+                self.fail('Can\'t assign to special loop variable '
+                          'in for-loop target', name.lineno)
 
         # if we don't have an recursive loop we have to find the shadowed
         # variables at that point
@@ -898,21 +912,23 @@ class CodeGenerator(NodeVisitor):
 
         self.pull_locals(loop_frame)
         if node.else_:
-            self.writeline('l_loop = None')
+            iteration_indicator = self.temporary_identifier()
+            self.writeline('%s = 1' % iteration_indicator)
 
-        self.newline(node)
-        self.writeline('for ')
+        # Create a fake parent loop if the else or test section of a
+        # loop is accessing the special loop variable and no parent loop
+        # exists.
+        if 'loop' not in aliases and 'loop' in find_undeclared(
+           node.iter_child_nodes(only=('else_', 'test')), ('loop',)):
+            self.writeline("l_loop = environment.undefined(%r, name='loop')" %
+                "'loop' is undefined. the filter section of a loop as well " \
+                "as the else block doesn't have access to the special 'loop' "
+                "variable of the current loop.  Because there is no parent "
+                "loop it's undefined.")
+
+        self.writeline('for ', node)
         self.visit(node.target, loop_frame)
         self.write(extended_loop and ', l_loop in LoopContext(' or ' in ')
-
-        # the expression pointing to the parent loop.  We make the
-        # undefined a bit more debug friendly at the same time.
-        parent_loop = 'loop' in aliases and aliases['loop'] \
-                      or "environment.undefined(%r, name='loop')" % "'loop' " \
-                         'is undefined. "the filter section of a loop as well ' \
-                         'as the else block doesn\'t have access to the ' \
-                         "special 'loop' variable of the current loop.  " \
-                         "Because there is no parent loop it's undefined."
 
         # if we have an extened loop and a node test, we filter in the
         # "outer frame".
@@ -928,7 +944,6 @@ class CodeGenerator(NodeVisitor):
                 self.visit(node.iter, loop_frame)
             self.write(' if (')
             test_frame = loop_frame.copy()
-            self.writeline('l_loop = ' + parent_loop)
             self.visit(node.test, test_frame)
             self.write('))')
 
@@ -954,18 +969,18 @@ class CodeGenerator(NodeVisitor):
 
         self.indent()
         self.blockvisit(node.body, loop_frame, force_generator=True)
+        if node.else_:
+            self.writeline('%s = 0' % iteration_indicator)
         self.outdent()
 
         if node.else_:
-            self.writeline('if l_loop is None:')
+            self.writeline('if %s:' % iteration_indicator)
             self.indent()
-            self.writeline('l_loop = ' + parent_loop)
             self.blockvisit(node.else_, loop_frame, force_generator=False)
             self.outdent()
 
         # reset the aliases if there are any.
-        for name, alias in aliases.iteritems():
-            self.writeline('l_%s = %s' % (name, alias))
+        self.restore_shadowed(aliases)
 
         # if the node was recursive we have to return the buffer contents
         # and start the iteration code
@@ -1008,25 +1023,20 @@ class CodeGenerator(NodeVisitor):
         self.writeline('caller = ')
         self.macro_def(node, call_frame)
         self.start_write(frame, node)
-        self.visit_Call(node.call, call_frame,
-                        extra_kwargs={'caller': 'caller'})
+        self.visit_Call(node.call, call_frame, forward_caller=True)
         self.end_write(frame)
 
     def visit_FilterBlock(self, node, frame):
         filter_frame = frame.inner()
         filter_frame.inspect(node.iter_child_nodes())
-
         aliases = self.collect_shadowed(filter_frame)
         self.pull_locals(filter_frame)
         self.buffer(filter_frame)
-
-        for child in node.body:
-            self.visit(child, filter_frame)
-
+        self.blockvisit(node.body, filter_frame, force_generator=False)
         self.start_write(frame, node)
-        self.visit_Filter(node.filter, filter_frame, 'concat(%s)'
-                          % filter_frame.buffer)
+        self.visit_Filter(node.filter, filter_frame)
         self.end_write(frame)
+        self.restore_shadowed(aliases)
 
     def visit_ExprStmt(self, node, frame):
         self.newline(node)
@@ -1283,7 +1293,7 @@ class CodeGenerator(NodeVisitor):
             self.write(':')
             self.visit(node.step, frame)
 
-    def visit_Filter(self, node, frame, initial=None):
+    def visit_Filter(self, node, frame):
         self.write(self.filters[node.name] + '(')
         func = self.environment.filters.get(node.name)
         if func is None:
@@ -1292,10 +1302,15 @@ class CodeGenerator(NodeVisitor):
             self.write('context, ')
         elif getattr(func, 'environmentfilter', False):
             self.write('environment, ')
-        if isinstance(node.node, nodes.Filter):
-            self.visit_Filter(node.node, frame, initial)
-        elif node.node is None:
-            self.write(initial)
+
+        # if the filter node is None we are inside a filter block
+        # and want to write to the current buffer
+        if node.node is None:
+            if self.environment.autoescape:
+                tmpl = 'Markup(concat(%s))'
+            else:
+                tmpl = 'concat(%s)'
+            self.write(tmpl % frame.buffer)
         else:
             self.visit(node.node, frame)
         self.signature(node, frame)
@@ -1327,11 +1342,12 @@ class CodeGenerator(NodeVisitor):
             self.visit(node.expr2, frame)
             self.write(')')
 
-    def visit_Call(self, node, frame, extra_kwargs=None):
+    def visit_Call(self, node, frame, forward_caller=False):
         if self.environment.sandboxed:
             self.write('environment.call(')
         self.visit(node.node, frame)
         self.write(self.environment.sandboxed and ', ' or '(')
+        extra_kwargs = forward_caller and {'caller': 'caller'} or None
         self.signature(node, frame, False, extra_kwargs)
         self.write(')')
 

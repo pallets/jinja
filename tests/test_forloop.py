@@ -7,6 +7,7 @@
     :license: BSD, see LICENSE for more details.
 """
 from py.test import raises
+from jinja2.exceptions import UndefinedError
 
 
 SIMPLE = '''{% for item in seq %}{{ item }}{% endfor %}'''
@@ -30,6 +31,10 @@ LOOPLOOP = '''{% for row in table %}
         [{{ rowloop.index }}|{{ loop.index }}]
     {%- endfor %}
 {%- endfor %}'''
+LOOPERROR1 = '''\
+{% for item in [1] if loop.index == 0 %}...{% endfor %}'''
+LOOPERROR2 = '''\
+{% for item in [] %}...{% else %}{{ loop }}{% endfor %}'''
 
 
 def test_simple(env):
@@ -102,3 +107,10 @@ def test_recursive(env):
 def test_looploop(env):
     tmpl = env.from_string(LOOPLOOP)
     assert tmpl.render(table=['ab', 'cd']) == '[1|1][1|2][2|1][2|2]'
+
+
+def test_loop_errors(env):
+    tmpl = env.from_string(LOOPERROR1)
+    raises(UndefinedError, tmpl.render)
+    tmpl = env.from_string(LOOPERROR2)
+    assert tmpl.render() == ''
