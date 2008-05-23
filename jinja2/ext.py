@@ -12,6 +12,7 @@
 """
 from collections import deque
 from jinja2 import nodes
+from jinja2.defaults import *
 from jinja2.environment import get_spontaneous_environment
 from jinja2.runtime import Undefined, concat
 from jinja2.exceptions import TemplateAssertionError, TemplateSyntaxError
@@ -343,31 +344,26 @@ def babel_extract(fileobj, keywords, comment_tags, options):
     :return: an iterator over ``(lineno, funcname, message, comments)`` tuples.
              (comments will be empty currently)
     """
-    encoding = options.get('encoding', 'utf-8')
-
-    have_trans_extension = False
-    extensions = []
+    extensions = set()
     for extension in options.get('extensions', '').split(','):
         extension = extension.strip()
         if not extension:
             continue
-        extension = import_string(extension)
-        if extension is InternationalizationExtension:
-            have_trans_extension = True
-        extensions.append(extension)
-    if not have_trans_extension:
-        extensions.append(InternationalizationExtension)
+        extensions.add(import_string(extension))
+    if InternationalizationExtension not in extensions:
+        extensions.add(InternationalizationExtension)
 
     environment = get_spontaneous_environment(
-        options.get('block_start_string', '{%'),
-        options.get('block_end_string', '%}'),
-        options.get('variable_start_string', '{{'),
-        options.get('variable_end_string', '}}'),
-        options.get('comment_start_string', '{#'),
-        options.get('comment_end_string', '#}'),
-        options.get('line_statement_prefix') or None,
-        options.get('trim_blocks', '').lower() in ('1', 'on', 'yes', 'true'),
-        '\n', frozenset(extensions),
+        options.get('block_start_string', BLOCK_START_STRING),
+        options.get('block_end_string', BLOCK_END_STRING),
+        options.get('variable_start_string', VARIABLE_START_STRING),
+        options.get('variable_end_string', VARIABLE_END_STRING),
+        options.get('comment_start_string', COMMENT_START_STRING),
+        options.get('comment_end_string', COMMENT_END_STRING),
+        options.get('line_statement_prefix') or LINE_STATEMENT_PREFIX,
+        str(options.get('trim_blocks', TRIM_BLOCKS)).lower() in \
+            ('1', 'on', 'yes', 'true'),
+        NEWLINE_SEQUENCE, frozenset(extensions),
         # fill with defaults so that environments are shared
         # with other spontaneus environments.  The rest of the
         # arguments are optimizer, undefined, finalize, autoescape,
@@ -375,7 +371,8 @@ def babel_extract(fileobj, keywords, comment_tags, options):
         True, Undefined, None, False, None, 0, False
     )
 
-    node = environment.parse(fileobj.read().decode(encoding))
+    source = fileobj.read().decode(options.get('encoding', 'utf-8'))
+    node = environment.parse(source)
     for lineno, func, message in extract_from_ast(node, keywords):
         yield lineno, func, message, []
 
