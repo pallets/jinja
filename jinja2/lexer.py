@@ -33,6 +33,7 @@ string_re = re.compile(r"('([^'\\]*(?:\\.[^'\\]*)*)'"
 integer_re = re.compile(r'\d+')
 name_re = re.compile(r'\b[a-zA-Z_][a-zA-Z0-9_]*\b')
 float_re = re.compile(r'\d+\.\d+')
+newline_re = re.compile(r'(\r\n|\r|\n)')
 
 # bind operators to token types
 operators = {
@@ -249,7 +250,8 @@ class LexerMeta(type):
                environment.comment_start_string,
                environment.comment_end_string,
                environment.line_statement_prefix,
-               environment.trim_blocks)
+               environment.trim_blocks,
+               environment.newline_sequence)
         lexer = _lexer_cache.get(key)
         if lexer is None:
             lexer = type.__call__(cls, environment)
@@ -308,6 +310,8 @@ class Lexer(object):
         # block suffix if trimming is enabled
         block_suffix_re = environment.trim_blocks and '\\n?' or ''
 
+        self.newline_sequence = environment.newline_sequence
+
         # global lexing rules
         self.rules = {
             'root': [
@@ -365,6 +369,10 @@ class Lexer(object):
             ] + tag_rules
         }
 
+    def _normalize_newlines(self, value):
+        """Called for strings and template data to normlize it to unicode."""
+        return newline_re.sub(self.newline_sequence, value)
+
     def tokenize(self, source, name=None, filename=None):
         """Works like `tokeniter` but returns a tokenstream of tokens and not
         a generator or token tuples.  Additionally all token values are already
@@ -384,10 +392,7 @@ class Lexer(object):
                 elif token in ('raw_begin', 'raw_end'):
                     continue
                 elif token == 'data':
-                    try:
-                        value = str(value)
-                    except UnicodeError:
-                        pass
+                    value = self._normalize_newlines(value)
                 elif token == 'keyword':
                     token = value
                 elif token == 'name':
@@ -395,7 +400,7 @@ class Lexer(object):
                 elif token == 'string':
                     # try to unescape string
                     try:
-                        value = value[1:-1] \
+                        value = self._normalize_newlines(value[1:-1]) \
                             .encode('ascii', 'backslashreplace') \
                             .decode('unicode-escape')
                     except Exception, e:
@@ -424,7 +429,7 @@ class Lexer(object):
         wants.  The parser uses the `tokenize` function with returns a
         `TokenStream` and postprocessed tokens.
         """
-        source = u'\n'.join(unicode(source).splitlines())
+        source = '\n'.join(unicode(source).splitlines())
         pos = 0
         lineno = 1
         stack = ['root']

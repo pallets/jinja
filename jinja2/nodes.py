@@ -84,16 +84,11 @@ class Node(object):
     two attributes: `lineno` (the line number of the node) and `environment`.
     The `environment` attribute is set at the end of the parsing process for
     all nodes automatically.
-
-    Nodes can be frozen which makes them hashable.  The compiler freezes the
-    nodes automatically.  Modifications on frozen nodes are possible but not
-    allowed.
     """
     __metaclass__ = NodeType
     fields = ()
     attributes = ('lineno', 'environment')
     abstract = True
-    frozen = False
 
     def __init__(self, *fields, **attributes):
         if self.abstract:
@@ -218,30 +213,12 @@ class Node(object):
             todo.extend(node.iter_child_nodes())
         return self
 
-    def freeze(self):
-        """Freeze the complete node tree which makes them hashable.
-        This happens automatically on compilation.  Frozen nodes must not be
-        modified any further.  Extensions may not freeze nodes that appear
-        in the final node tree (ie: nodes that are returned from the extension
-        parse method).
-        """
-        todo = deque([self])
-        while todo:
-            node = todo.popleft()
-            node.frozen = True
-            todo.extend(node.iter_child_nodes())
-
     def __eq__(self, other):
         return type(self) is type(other) and \
                tuple(self.iter_fields()) == tuple(other.iter_fields())
 
     def __ne__(self, other):
         return not self.__eq__(other)
-
-    def __hash__(self):
-        if not self.frozen:
-            raise TypeError('unfrozen nodes are unhashable')
-        return hash(tuple(self.iter_fields()))
 
     def __repr__(self):
         return '%s(%s)' % (

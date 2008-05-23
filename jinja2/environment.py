@@ -68,11 +68,13 @@ def _environment_sanity_check(environment):
            environment.variable_start_string != \
            environment.comment_start_string, 'block, variable and comment ' \
            'start strings must be different'
+    assert environment.newline_sequence in ('\r', '\r\n', '\n'), \
+           'newline_sequence set to unknown line ending string.'
     return environment
 
 
 class Environment(object):
-    """The core component of Jinja is the `Environment`.  It contains
+    r"""The core component of Jinja is the `Environment`.  It contains
     important shared variables like configuration, filters, tests,
     globals and others.  Instances of this class may be modified if
     they are not shared and if no template was loaded so far.
@@ -108,6 +110,12 @@ class Environment(object):
         `trim_blocks`
             If this is set to ``True`` the first newline after a block is
             removed (block, not variable tag!).  Defaults to `False`.
+
+        `newline_sequence`
+            The sequence that starts a newline.  Must be one of ``'\r'``,
+            ``'\n'`` or ``'\r\n'``.  The default is ``'\n'`` which is a
+            useful default for Linux and OS X systems as well as web
+            applications.
 
         `extensions`
             List of Jinja extensions to use.  This can either be import paths
@@ -171,6 +179,7 @@ class Environment(object):
                  comment_end_string=COMMENT_END_STRING,
                  line_statement_prefix=LINE_STATEMENT_PREFIX,
                  trim_blocks=False,
+                 newline_sequence='\n',
                  extensions=(),
                  optimized=True,
                  undefined=Undefined,
@@ -199,6 +208,7 @@ class Environment(object):
         self.comment_end_string = comment_end_string
         self.line_statement_prefix = line_statement_prefix
         self.trim_blocks = trim_blocks
+        self.newline_sequence = newline_sequence
 
         # runtime information
         self.undefined = undefined
@@ -440,6 +450,7 @@ class Template(object):
                 comment_end_string='#}',
                 line_statement_prefix=None,
                 trim_blocks=False,
+                newline_sequence='\n',
                 extensions=(),
                 optimized=True,
                 undefined=Undefined,
@@ -448,8 +459,9 @@ class Template(object):
         env = get_spontaneous_environment(
             block_start_string, block_end_string, variable_start_string,
             variable_end_string, comment_start_string, comment_end_string,
-            line_statement_prefix, trim_blocks, tuple(extensions), optimized,
-            undefined, finalize, autoescape, None, 0, False)
+            line_statement_prefix, trim_blocks, newline_sequence,
+            frozenset(extensions), optimized, undefined, finalize,
+            autoescape, None, 0, False)
         return env.from_string(source, template_class=cls)
 
     @classmethod
@@ -541,7 +553,7 @@ class Template(object):
         without arguments but it will evaluate the template every call
         rather then caching the template.  It's also possible to provide
         a dict which is then used as context.  The arguments are the same
-        as fo the :meth:`new_context` method.
+        as for the :meth:`new_context` method.
         """
         return TemplateModule(self, self.new_context(vars, shared))
 

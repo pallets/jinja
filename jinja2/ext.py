@@ -367,7 +367,7 @@ def babel_extract(fileobj, keywords, comment_tags, options):
         options.get('comment_end_string', '#}'),
         options.get('line_statement_prefix') or None,
         options.get('trim_blocks', '').lower() in ('1', 'on', 'yes', 'true'),
-        tuple(extensions),
+        '\n', frozenset(extensions),
         # fill with defaults so that environments are shared
         # with other spontaneus environments.  The rest of the
         # arguments are optimizer, undefined, finalize, autoescape,

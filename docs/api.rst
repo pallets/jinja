@@ -44,6 +44,15 @@ To render it with some variables, just call the :meth:`render` method::
     print template.render(the='variables', go='here')
 
 
+Unicode
+-------
+
+Jinja2 is using unicode internally which means that you have to pass unicode
+objects to the render function or bytestrings that only consist of ASCII
+characters.  Additionally newlines are normalized to one end of line
+sequence which is per default UNIX style (``\n``).
+
+
 High Level API
 --------------
 
@@ -260,6 +269,27 @@ Exceptions
 .. autoexception:: jinja2.exceptions.TemplateNotFound
 
 .. autoexception:: jinja2.exceptions.TemplateSyntaxError
+
+    .. attribute:: message
+
+        The error message as utf-8 bytestring.
+
+    .. attribute:: lineno
+
+        The line number where the error occurred
+
+    .. attribute:: name
+
+        The load name for the template as unicode string.
+
+    .. attribute:: filename
+
+        The filename that loaded the template as bytestring in the encoding
+        of the file system (most likely utf-8 or mbcs on Windows systems).
+
+    The reason why the filename and error message are bytestrings and not
+    unicode strings is that Python 2.x is not using unicode for exceptions
+    and tracebacks as well as the compiler.  This will change with Python 3.
 
 .. autoexception:: jinja2.exceptions.TemplateAssertionError
 

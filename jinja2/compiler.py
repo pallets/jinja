@@ -41,7 +41,6 @@ def generate(node, environment, name, filename, stream=None):
     """Generate the python source for a node tree."""
     if not isinstance(node, nodes.Template):
         raise TypeError('Can\'t compile non template nodes')
-    node.freeze()
     generator = CodeGenerator(environment, name, filename, stream)
     generator.visit(node)
     if stream is None:
