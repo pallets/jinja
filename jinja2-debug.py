@@ -13,7 +13,8 @@ import sys
 import jinja2
 from werkzeug import script
 
-env = jinja2.Environment(extensions=['jinja2.ext.i18n', 'jinja2.ext.do'])
+env = jinja2.Environment(extensions=['jinja2.ext.i18n', 'jinja2.ext.do',
+                                     'jinja2.ext.loopcontrols'])
 
 def shell_init_func():
     def _compile(x):

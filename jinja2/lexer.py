@@ -371,7 +371,6 @@ class Lexer(object):
         converted into types and postprocessed. For example comments are removed,
         integers and floats converted, strings unescaped etc.
         """
-        source = unicode(source)
         def generate():
             for lineno, token, value in self.tokeniter(source, name, filename):
                 if token in ('comment_begin', 'comment', 'comment_end',
@@ -425,7 +424,7 @@ class Lexer(object):
         wants.  The parser uses the `tokenize` function with returns a
         `TokenStream` and postprocessed tokens.
         """
-        source = '\n'.join(source.splitlines())
+        source = u'\n'.join(unicode(source).splitlines())
         pos = 0
         lineno = 1
         stack = ['root']

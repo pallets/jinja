@@ -25,7 +25,7 @@ GETTEXT_FUNCTIONS = ('_', 'gettext', 'ngettext')
 
 
 class ExtensionRegistry(type):
-    """Gives the extension a unique identifier."""
+    """Gives the extension an unique identifier."""
 
     def __new__(cls, name, bases, d):
         rv = type.__new__(cls, name, bases, d)
@@ -95,13 +95,18 @@ class Extension(object):
                           dyn_args, dyn_kwargs, lineno=lineno)
 
 
+@contextfunction
+def _gettext_alias(context, string):
+    return context.resolve('gettext')(string)
+
+
 class InternationalizationExtension(Extension):
     """This extension adds gettext support to Jinja2."""
     tags = set(['trans'])
 
     def __init__(self, environment):
         Extension.__init__(self, environment)
-        environment.globals['_'] = contextfunction(lambda c, x: c['gettext'](x))
+        environment.globals['_'] = _gettext_alias
         environment.extend(
             install_gettext_translations=self._install,
             install_null_translations=self._install_null,
