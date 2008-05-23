@@ -234,6 +234,11 @@ class Markup(unicode):
     """
     __slots__ = ()
 
+    def __new__(cls, base=u''):
+        if hasattr(base, '__html__'):
+            base = base.__html__()
+        return unicode.__new__(cls, base)
+
     def __html__(self):
         return self
 

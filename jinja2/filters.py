@@ -74,7 +74,7 @@ def do_replace(environment, s, old, new, count=None):
         s = escape(s)
     else:
         s = soft_unicode(s)
-    return s.replace(old, new, count)
+    return s.replace(soft_unicode(old), soft_unicode(new), count)
 
 
 def do_upper(s):

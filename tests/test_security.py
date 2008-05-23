@@ -8,6 +8,7 @@
 """
 from jinja2.sandbox import SandboxedEnvironment, \
      ImmutableSandboxedEnvironment, unsafe
+from jinja2 import Markup, escape
 
 
 class PrivateStuff(object):
@@ -82,3 +83,33 @@ Traceback (most recent call last):
     ...
 SecurityError: access to attribute 'clear' of 'dict' object is unsafe.
 '''
+
+def test_markup_operations():
+    # adding two strings should escape the unsafe one
+    unsafe = '<script type="application/x-some-script">alert("foo");</script>'
+    safe = Markup('<em>username</em>')
+    assert unsafe + safe == unicode(escape(unsafe)) + unicode(safe)
+
+    # string interpolations are safe to use too
+    assert Markup('<em>%s</em>') % '<bad user>' == \
+           '<em>&lt;bad user&gt;</em>'
+    assert Markup('<em>%(username)s</em>') % {
+        'username': '<bad user>'
+    } == '<em>&lt;bad user&gt;</em>'
+
+    # an escaped object is markup too
+    assert type(Markup('foo') + 'bar') is Markup
+
+    # and it implements __html__ by returning itself
+    x = Markup("foo")
+    assert x.__html__() is x
+
+    # it also knows how to treat __html__ objects
+    class Foo(object):
+        def __html__(self):
+            return '<em>awesome</em>'
+        def __unicode__(self):
+            return 'awesome'
+    assert Markup(Foo()) == '<em>awesome</em>'
+    assert Markup('<strong>%s</strong>') % Foo() == \
+           '<strong><em>awesome</em></strong>'

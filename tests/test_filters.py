@@ -3,17 +3,11 @@
     unit test for the filters
     ~~~~~~~~~~~~~~~~~~~~~~~~~
 
-    Missing tests:
-
-    -   wordcount
-    -   rst
-    -   markdown
-    -   textile
-
-    :copyright: 2007 by Armin Ronacher.
+    :copyright: 2008 by Armin Ronacher.
     :license: BSD, see LICENSE for more details.
 """
-from jinja2 import Markup
+from jinja2 import Markup, Environment
+
 
 CAPITALIZE = '''{{ "foo bar"|capitalize }}'''
 CENTER = '''{{ "foo"|center(9) }}'''
@@ -164,6 +158,10 @@ def test_join(env):
     out = tmpl.render()
     assert out == '1|2|3'
 
+    env2 = Environment(autoescape=True)
+    tmpl = env2.from_string('{{ ["<foo>", "<span>foo</span>"|safe]|join }}')
+    assert tmpl.render() == '&lt;foo&gt;<span>foo</span>'
+
 
 def test_last(env):
     tmpl = env.from_string(LAST)
@@ -293,9 +291,18 @@ def test_filtertag(env):
     assert tmpl.render() == 'fooBAR'
 
 
-def test_replace(env):
-    tmpl = env.from_string('{{ "foo"|replace("o", 42)}}')
-    assert tmpl.render() == 'f4242'
+def test_replace():
+    env = Environment()
+    tmpl = env.from_string('{{ string|replace("o", 42) }}')
+    assert tmpl.render(string='<foo>') == '<f4242>'
+
+    env = Environment(autoescape=True)
+    tmpl = env.from_string('{{ string|replace("o", 42) }}')
+    assert tmpl.render(string='<foo>') == '&lt;f4242&gt;'
+    tmpl = env.from_string('{{ string|replace("<", 42) }}')
+    assert tmpl.render(string='<foo>') == '42foo&gt;'
+    tmpl = env.from_string('{{ string|replace("o", ">x<") }}')
+    assert tmpl.render(string=Markup('foo')) == 'f&gt;x&lt;&gt;x&lt;'
 
 
 def test_forceescape(env):
