@@ -98,3 +98,12 @@ def test_working(env):
 def test_reuse_blocks(env):
     tmpl = env.from_string('{{ self.foo() }}|{% block foo %}42{% endblock %}|{{ self.foo() }}')
     assert tmpl.render() == '42|42|42'
+
+
+def test_preserve_blocks():
+    env = Environment(loader=DictLoader({
+        'a': '{% if false %}{% block x %}A{% endblock %}{% endif %}{{ self.x() }}',
+        'b': '{% extends "a" %}{% block x %}B{{ super() }}{% endblock %}'
+    }))
+    tmpl = env.get_template('b')
+    assert tmpl.render() == 'BA'

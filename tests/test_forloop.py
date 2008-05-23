@@ -35,6 +35,11 @@ LOOPERROR1 = '''\
 {% for item in [1] if loop.index == 0 %}...{% endfor %}'''
 LOOPERROR2 = '''\
 {% for item in [] %}...{% else %}{{ loop }}{% endfor %}'''
+LOOPFILTER = '''\
+{% for item in range(10) if item is even %}[{{ item }}]{% endfor %}'''
+EXTENDEDLOOPFILTER = '''\
+{% for item in range(10) if item is even %}[{{ loop.index
+}}:{{ item }}]{% endfor %}'''
 
 
 def test_simple(env):
@@ -114,3 +119,10 @@ def test_loop_errors(env):
     raises(UndefinedError, tmpl.render)
     tmpl = env.from_string(LOOPERROR2)
     assert tmpl.render() == ''
+
+
+def test_loop_filter(env):
+    tmpl = env.from_string(LOOPFILTER)
+    assert tmpl.render() == '[0][2][4][6][8]'
+    tmpl = env.from_string(EXTENDEDLOOPFILTER)
+    assert tmpl.render() == '[1:0][2:2][3:4][4:6][5:8]'

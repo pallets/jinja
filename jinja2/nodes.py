@@ -767,7 +767,7 @@ class ExtensionAttribute(Expr):
     This node is usually constructed by calling the
     :meth:`~jinja2.ext.Extension.attr` method on an extension.
     """
-    fields = ('identifier', 'attr')
+    fields = ('identifier', 'name')
 
 
 class ImportedName(Expr):
@@ -799,6 +799,10 @@ class MarkSafe(Expr):
 
     def as_const(self):
         return Markup(self.expr.as_const())
+
+
+class ContextReference(Expr):
+    """Returns the current template context."""
 
 
 class Continue(Stmt):

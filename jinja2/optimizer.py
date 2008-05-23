@@ -34,6 +34,10 @@ class Optimizer(NodeTransformer):
 
     def visit_If(self, node):
         """Eliminate dead code."""
+        # do not optimize ifs that have a block inside so that it doesn't
+        # break super().
+        if node.find(nodes.Block) is not None:
+            return self.generic_visit(node)
         try:
             val = self.visit(node.test).as_const()
         except nodes.Impossible:

@@ -31,3 +31,16 @@ def test_else(env):
 def test_empty(env):
     tmpl = env.from_string(EMPTY)
     assert tmpl.render() == '[]'
+
+
+def test_complete(env):
+    tmpl = env.from_string('{% if a %}A{% elif b %}B{% elif c == d %}'
+                           'C{% else %}D{% endif %}')
+    assert tmpl.render(a=0, b=False, c=42, d=42.0) == 'C'
+
+
+def test_no_scope(env):
+    tmpl = env.from_string('{% if a %}{% set foo = 1 %}{% endif %}{{ foo }}')
+    assert tmpl.render(a=True) == '1'
+    tmpl = env.from_string('{% if true %}{% set foo = 1 %}{% endif %}{{ foo }}')
+    assert tmpl.render() == '1'

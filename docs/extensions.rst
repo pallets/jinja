@@ -92,19 +92,19 @@ The usage of the `i18n` extension for template designers is covered as part
 .. _Babel: http://babel.edgewall.org/
 
 
-do
-~~
+Expression Statement
+--------------------
 
 **Import name:** `jinja2.ext.do`
 
-The do aka expression-statement extension adds a simple `do` tag to the
+The "do" aka expression-statement extension adds a simple `do` tag to the
 template engine that works like a variable expression but ignores the
 return value.
 
 .. _loopcontrols-extension:
 
-loopcontrols
-~~~~~~~~~~~~
+Loop Controls
+-------------
 
 **Import name:** `jinja2.ext.loopcontrols`
 
@@ -148,6 +148,17 @@ And here is how you use it in an environment::
 
     env = Environment(extensions=[FragmentCacheExtension])
     env.fragment_cache = SimpleCache()
+
+Inside the template it's then possible to mark blocks as cacheable.  The
+following example caches a sidebar for 300 seconds:
+
+.. sourcecode:: html+jinja
+
+    {% cache 'sidebar', 300 %}
+    <div class="sidebar">
+        ...
+    </div>
+    {% endcache %}
 
 .. _Werkzeug: http://werkzeug.pocoo.org/
 

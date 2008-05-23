@@ -678,11 +678,11 @@ class CodeGenerator(NodeVisitor):
         self.indent()
         if have_extends:
             self.writeline('parent_template = None')
-        self.pull_locals(frame)
-        self.pull_dependencies(node.body)
         if 'self' in find_undeclared(node.body, ('self',)):
             frame.identifiers.add_special('self')
             self.writeline('l_self = TemplateReference(context)')
+        self.pull_locals(frame)
+        self.pull_dependencies(node.body)
         self.blockvisit(node.body, frame)
         self.outdent()
 
@@ -1364,13 +1364,16 @@ class CodeGenerator(NodeVisitor):
         self.write('environment.' + node.name)
 
     def visit_ExtensionAttribute(self, node, frame):
-        self.write('environment.extensions[%r].%s' % (node.identifier, node.attr))
+        self.write('environment.extensions[%r].%s' % (node.identifier, node.name))
 
     def visit_ImportedName(self, node, frame):
         self.write(self.import_aliases[node.importname])
 
     def visit_InternalName(self, node, frame):
         self.write(node.name)
+
+    def visit_ContextReference(self, node, frame):
+        self.write('context')
 
     def visit_Continue(self, node, frame):
         self.writeline('continue', node)

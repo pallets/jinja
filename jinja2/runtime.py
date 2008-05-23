@@ -163,7 +163,7 @@ class TemplateReference(object):
         self.__context = context
 
     def __getitem__(self, name):
-        func = self.__context.blocks[name][-1]
+        func = self.__context.blocks[name][0]
         wrap = self.__context.environment.autoescape and \
                Markup or (lambda x: x)
         render = lambda: wrap(concat(func(self.__context)))

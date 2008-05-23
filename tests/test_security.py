@@ -6,7 +6,8 @@
     :copyright: 2007 by Armin Ronacher.
     :license: BSD, see LICENSE for more details.
 """
-from jinja2.sandbox import SandboxedEnvironment, unsafe
+from jinja2.sandbox import SandboxedEnvironment, \
+     ImmutableSandboxedEnvironment, unsafe
 
 
 class PrivateStuff(object):
@@ -67,4 +68,17 @@ TemplateSyntaxError: expected token 'in', got '.' (line 1)
 Traceback (most recent call last):
     ...
 TemplateSyntaxError: expected token 'in', got '.' (line 1)
+'''
+
+
+test_immutable_environment = '''
+>>> env = MODULE.ImmutableSandboxedEnvironment()
+>>> env.from_string('{{ [].append(23) }}').render()
+Traceback (most recent call last):
+    ...
+SecurityError: access to attribute 'append' of 'list' object is unsafe.
+>>> env.from_string('{{ {1:2}.clear() }}').render()
+Traceback (most recent call last):
+    ...
+SecurityError: access to attribute 'clear' of 'dict' object is unsafe.
 '''

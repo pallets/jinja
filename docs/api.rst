@@ -109,7 +109,7 @@ High Level API
     .. automethod:: stream([context])
 
 
-.. autoclass:: jinja2.environment.TemplateStream
+.. autoclass:: jinja2.environment.TemplateStream()
     :members: disable_buffering, enable_buffering
 
 
@@ -154,7 +154,7 @@ disallows all operations beside testing if it's an undefined object.
 The Context
 -----------
 
-.. autoclass:: jinja2.runtime.Context
+.. autoclass:: jinja2.runtime.Context()
     :members: resolve, get_exported, get_all
 
     .. attribute:: parent
