@@ -190,13 +190,13 @@ class SandboxedEnvironment(Environment):
                 ), name=argument, exc=SecurityError)
         return self.undefined(obj=obj, name=argument)
 
-    def call(__self, __obj, *args, **kwargs):
+    def call(__self, __context, __obj, *args, **kwargs):
         """Call an object from sandboxed code."""
         # the double prefixes are to avoid double keyword argument
         # errors when proxying the call.
         if not __self.is_safe_callable(__obj):
             raise SecurityError('%r is not safely callable' % (__obj,))
-        return __obj(*args, **kwargs)
+        return __context.call(__obj, *args, **kwargs)
 
 
 class ImmutableSandboxedEnvironment(SandboxedEnvironment):

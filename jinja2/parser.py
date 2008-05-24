@@ -150,6 +150,7 @@ class Parser(object):
         node = nodes.Block(lineno=self.stream.next().lineno)
         node.name = self.stream.expect('name').value
         node.body = self.parse_statements(('name:endblock',), drop_needle=True)
+        self.stream.skip_if('name:' + node.name)
         return node
 
     def parse_extends(self):

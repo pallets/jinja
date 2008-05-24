@@ -64,8 +64,8 @@ except TypeError, _error:
 
 def contextfunction(f):
     """This decorator can be used to mark a callable as context callable.  A
-    context callable is passed the active context as first argument if it
-    was directly stored in the context.
+    context callable is passed the active context as first argument when
+    called from the template.
     """
     f.contextfunction = True
     return f
@@ -74,7 +74,7 @@ def contextfunction(f):
 def environmentfunction(f):
     """This decorator can be used to mark a callable as environment callable.
     A environment callable is passed the current environment as first argument
-    if it was directly stored in the context.
+    when called from the template.
     """
     f.environmentfunction = True
     return f

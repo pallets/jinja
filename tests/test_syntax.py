@@ -6,6 +6,7 @@
     :copyright: 2007 by Armin Ronacher.
     :license: BSD, see LICENSE for more details.
 """
+from py.test import raises
 from jinja2 import Environment, DictLoader
 from jinja2.exceptions import TemplateSyntaxError
 
@@ -143,11 +144,7 @@ def test_function_calls(env):
     ]
     for should_fail, sig in tests:
         if should_fail:
-            try:
-                print env.from_string('{{ foo(%s) }}' % sig)
-            except TemplateSyntaxError:
-                continue
-            assert False, 'expected syntax error'
+            raises(TemplateSyntaxError, env.from_string, '{{ foo(%s) }}' % sig)
         else:
             env.from_string('foo(%s)' % sig)
 
@@ -161,3 +158,8 @@ def test_tuple_expr(env):
 def test_trailing_comma(env):
     tmpl = env.from_string(TRAILINGCOMMA)
     assert tmpl.render().lower() == '(1, 2)|[1, 2]|{1: 2}'
+
+
+def test_block_end_name(env):
+    env.from_string('{% block foo %}...{% endblock foo %}')
+    raises(TemplateSyntaxError, env.from_string, '{% block x %}{% endblock y %}')

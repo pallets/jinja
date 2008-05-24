@@ -66,14 +66,6 @@ class Context(object):
         self.exported_vars = set()
         self.name = name
 
-        # bind functions to the context of environment if required
-        for name, obj in parent.iteritems():
-            if type(obj) is FunctionType:
-                if getattr(obj, 'contextfunction', 0):
-                    vars[name] = partial(obj, self)
-                elif getattr(obj, 'environmentfunction', 0):
-                    vars[name] = partial(obj, environment)
-
         # create the initial mapping of blocks.  Whenever template inheritance
         # takes place the runtime will update this mapping with the new blocks
         # from the template.
@@ -121,6 +113,17 @@ class Context(object):
         global variables.
         """
         return dict(self.parent, **self.vars)
+
+    def call(__self, __obj, *args, **kwargs):
+        """Called by the template code to inject the current context
+        or environment as first arguments.  Then forwards the call to
+        the object with the arguments and keyword arguments.
+        """
+        if getattr(__obj, 'contextfunction', 0):
+            args = (__self,) + args
+        elif getattr(__obj, 'environmentfunction', 0):
+            args = (__self.environment,) + args
+        return __obj(*args, **kwargs)
 
     def _all(meth):
         proxy = lambda self: getattr(self.get_all(), meth)()

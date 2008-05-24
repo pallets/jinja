@@ -14,7 +14,6 @@
 """
 import operator
 from copy import copy
-from types import FunctionType
 from itertools import chain, izip
 from collections import deque
 from jinja2.utils import Markup
@@ -550,11 +549,10 @@ class Call(Expr):
 
         # don't evaluate context functions
         args = [x.as_const() for x in self.args]
-        if type(obj) is FunctionType:
-            if getattr(obj, 'contextfunction', False):
-                raise Impossible()
-            elif obj.environmentfunction:
-                args.insert(0, self.environment)
+        if getattr(obj, 'contextfunction', False):
+            raise Impossible()
+        elif getattr(obj, 'environmentfunction', False):
+            args.insert(0, self.environment)
 
         kwargs = dict(x.as_const() for x in self.kwargs)
         if self.dyn_args is not None:

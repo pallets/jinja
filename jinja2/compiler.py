@@ -438,21 +438,13 @@ class CodeGenerator(NodeVisitor):
             self._write_debug_info = node.lineno
             self._last_line = node.lineno
 
-    def signature(self, node, frame, have_comma=True, extra_kwargs=None):
+    def signature(self, node, frame, extra_kwargs=None):
         """Writes a function call to the stream for the current node.
-        Per default it will write a leading comma but this can be
-        disabled by setting have_comma to False.  The extra keyword
+        A leading comma is added automatically.  The extra keyword
         arguments may not include python keywords otherwise a syntax
         error could occour.  The extra keyword arguments should be given
         as python dict.
         """
-        have_comma = have_comma and [True] or []
-        def touch_comma():
-            if have_comma:
-                self.write(', ')
-            else:
-                have_comma.append(True)
-
         # if any of the given keyword arguments is a python keyword
         # we have to make sure that no invalid call is created.
         kwarg_workaround = False
@@ -462,28 +454,25 @@ class CodeGenerator(NodeVisitor):
                 break
 
         for arg in node.args:
-            touch_comma()
+            self.write(', ')
             self.visit(arg, frame)
 
         if not kwarg_workaround:
             for kwarg in node.kwargs:
-                touch_comma()
+                self.write(', ')
                 self.visit(kwarg, frame)
             if extra_kwargs is not None:
                 for key, value in extra_kwargs.iteritems():
-                    touch_comma()
-                    self.write('%s=%s' % (key, value))
+                    self.write(', %s=%s' % (key, value))
         if node.dyn_args:
-            touch_comma()
-            self.write('*')
+            self.write(', *')
             self.visit(node.dyn_args, frame)
 
         if kwarg_workaround:
-            touch_comma()
             if node.dyn_kwargs is not None:
-                self.write('**dict({')
+                self.write(', **dict({')
             else:
-                self.write('**{')
+                self.write(', **{')
             for kwarg in node.kwargs:
                 self.write('%r: ' % kwarg.key)
                 self.visit(kwarg.value, frame)
@@ -499,8 +488,7 @@ class CodeGenerator(NodeVisitor):
                 self.write('}')
 
         elif node.dyn_kwargs is not None:
-            touch_comma()
-            self.write('**')
+            self.write(', **')
             self.visit(node.dyn_kwargs, frame)
 
     def pull_locals(self, frame):
@@ -1353,11 +1341,12 @@ class CodeGenerator(NodeVisitor):
 
     def visit_Call(self, node, frame, forward_caller=False):
         if self.environment.sandboxed:
-            self.write('environment.call(')
+            self.write('environment.call(context, ')
+        else:
+            self.write('context.call(')
         self.visit(node.node, frame)
-        self.write(self.environment.sandboxed and ', ' or '(')
         extra_kwargs = forward_caller and {'caller': 'caller'} or None
-        self.signature(node, frame, False, extra_kwargs)
+        self.signature(node, frame, extra_kwargs)
         self.write(')')
 
     def visit_Keyword(self, node, frame):

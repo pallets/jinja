@@ -17,6 +17,7 @@ fast and secure.
    switching
    tricks
 
+   faq
    changelog
 
 If you can't find the information you're looking for, have a look at the

@@ -326,6 +326,21 @@ This gives back the results of the parent block::
     {% endblock %}
 
 
+Named Block End-Tags
+~~~~~~~~~~~~~~~~~~~~
+
+Jinja2 allows you to put the name of the block after the end tag for better
+readability::
+
+    {% block sidebar %}
+        {% block inner_sidebar %}
+            ...
+        {% endblock inner_sidebar %}
+    {% endblock sidebar %}
+
+However the name after the `endblock` word must match the block name.
+
+
 HTML Escaping
 -------------
 
