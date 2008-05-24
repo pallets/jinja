@@ -70,3 +70,11 @@ def test_extension_nodes():
 
 def test_identifier():
     assert TestExtension.identifier == __name__ + '.TestExtension'
+
+
+def test_rebinding():
+    original = Environment(extensions=[TestExtension])
+    overlay = original.overlay()
+    for env in original, overlay:
+        for ext in env.extensions.itervalues():
+            assert ext.environment is env

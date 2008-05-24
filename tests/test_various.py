@@ -6,6 +6,9 @@
     :copyright: 2007 by Armin Ronacher.
     :license: BSD, see LICENSE for more details.
 """
+import gc
+from py.test import raises
+from jinja2 import escape
 from jinja2.exceptions import TemplateSyntaxError
 
 
@@ -37,14 +40,21 @@ def test_const(env):
 
 def test_const_assign(env):
     for tmpl in CONSTASS1, CONSTASS2:
-        try:
-            env.from_string(tmpl)
-        except TemplateSyntaxError:
-            pass
-        else:
-            raise AssertionError('expected syntax error')
+        raises(TemplateSyntaxError, env.from_string, tmpl)
 
 
 def test_localset(env):
     tmpl = env.from_string(LOCALSET)
     assert tmpl.render() == '0'
+
+
+def test_markup_leaks():
+    counts = set()
+    for count in xrange(20):
+        for item in xrange(1000):
+            escape("foo")
+            escape("<foo>")
+            escape(u"foo")
+            escape(u"<foo>")
+        counts.add(len(gc.get_objects()))
+    assert len(counts) == 1, 'ouch, c extension seems to leak objects'

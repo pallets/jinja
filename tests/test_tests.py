@@ -6,6 +6,8 @@
     :copyright: 2007 by Armin Ronacher.
     :license: BSD, see LICENSE for more details.
 """
+from jinja2 import Environment, Markup
+
 
 DEFINED = '''{{ missing is defined }}|{{ true is defined }}'''
 EVEN = '''{{ 1 is even }}|{{ 2 is even }}'''
@@ -17,6 +19,19 @@ SEQUENCE = '''{{ [1, 2, 3] is sequence }}|\
 UPPER = '''{{ "FOO" is upper }}|{{ "foo" is upper }}'''
 SAMEAS = '''{{ foo is sameas false }}|{{ 0 is sameas false }}'''
 NOPARENFORARG1 = '''{{ foo is sameas none }}'''
+TYPECHECKS = '''\
+{{ 42 is undefined }}
+{{ 42 is defined }}
+{{ 42 is none }}
+{{ none is none }}
+{{ 42 is number }}
+{{ 42 is string }}
+{{ "foo" is string }}
+{{ "foo" is sequence }}
+{{ [1] is sequence }}
+{{ range is callable }}
+{{ 42 is callable }}
+{{ range(5) is iterable }}'''
 
 
 def test_defined(env):
@@ -29,14 +44,19 @@ def test_even(env):
     assert tmpl.render() == 'False|True'
 
 
+def test_odd(env):
+    tmpl = env.from_string(ODD)
+    assert tmpl.render() == 'True|False'
+
+
 def test_lower(env):
     tmpl = env.from_string(LOWER)
     assert tmpl.render() == 'True|False'
 
 
-def test_odd(env):
-    tmpl = env.from_string(ODD)
-    assert tmpl.render() == 'True|False'
+def test_typechecks(env):
+    tmpl = env.from_string(TYPECHECKS)
+    assert tmpl.render() == ''
 
 
 def test_sequence(env):
@@ -54,6 +74,20 @@ def test_sameas(env):
     assert tmpl.render(foo=False) == 'True|False'
 
 
+def test_typechecks(env):
+    tmpl = env.from_string(TYPECHECKS)
+    assert tmpl.render() == (
+        'False\nTrue\nFalse\nTrue\nTrue\nFalse\n'
+        'True\nTrue\nTrue\nTrue\nFalse\nTrue'
+    )
+
+
 def test_no_paren_for_arg1(env):
     tmpl = env.from_string(NOPARENFORARG1)
     assert tmpl.render(foo=None) == 'True'
+
+
+def test_escaped():
+    env = Environment(autoescape=True)
+    tmpl = env.from_string('{{ x is escaped }}|{{ y is escaped }}')
+    assert tmpl.render(x='foo', y=Markup('foo')) == 'False|True'

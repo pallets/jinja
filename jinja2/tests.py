@@ -42,14 +42,14 @@ def test_defined(value):
             variable is not defined
         {% endif %}
 
-    See the ``default`` filter for a simple way to set undefined
+    See the :func:`default` filter for a simple way to set undefined
     variables.
     """
     return not isinstance(value, Undefined)
 
 
 def test_undefined(value):
-    """Like `defined` but the other way round."""
+    """Like :func:`defined` but the other way round."""
     return isinstance(value, Undefined)
 
 

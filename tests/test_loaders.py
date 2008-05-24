@@ -11,6 +11,7 @@ from py.test import raises
 import time
 import tempfile
 from jinja2 import Environment, loaders
+from jinja2.loaders import split_template_path
 from jinja2.exceptions import TemplateNotFound
 
 
@@ -101,3 +102,9 @@ def test_caching():
     assert 'one' in env.cache
     assert 'two' not in env.cache
     assert 'three' in env.cache
+
+
+def test_split_template_path():
+    assert split_template_path('foo/bar') == ['foo', 'bar']
+    assert split_template_path('./foo/bar') == ['foo', 'bar']
+    raises(TemplateNotFound, split_template_path, '../foo')

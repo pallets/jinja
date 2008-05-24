@@ -7,7 +7,7 @@
     :license: BSD, see LICENSE for more details.
 """
 from py.test import raises
-from jinja2.exceptions import UndefinedError
+from jinja2.exceptions import UndefinedError, TemplateSyntaxError
 
 
 SIMPLE = '''{% for item in seq %}{{ item }}{% endfor %}'''
@@ -40,6 +40,8 @@ LOOPFILTER = '''\
 EXTENDEDLOOPFILTER = '''\
 {% for item in range(10) if item is even %}[{{ loop.index
 }}:{{ item }}]{% endfor %}'''
+LOOPUNASSIGNABLE = '''\
+{% for loop in seq %}...{% endfor %}'''
 
 
 def test_simple(env):
@@ -126,3 +128,7 @@ def test_loop_filter(env):
     assert tmpl.render() == '[0][2][4][6][8]'
     tmpl = env.from_string(EXTENDEDLOOPFILTER)
     assert tmpl.render() == '[1:0][2:2][3:4][4:6][5:8]'
+
+
+def test_loop_unassignable(env):
+    raises(TemplateSyntaxError, env.from_string, LOOPUNASSIGNABLE)
