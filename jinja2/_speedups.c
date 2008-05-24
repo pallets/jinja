@@ -92,7 +92,7 @@ escape_unicode(PyUnicodeObject *in)
 		if (next_escp > inp) {
 			/* copy unescaped chars between inp and next_escp */
 			Py_UNICODE_COPY(outp, inp, next_escp-inp);
-			outp += next_escp-inp;
+			outp += next_escp - inp;
 		}
 
 		/* escape 'next_escp' */
