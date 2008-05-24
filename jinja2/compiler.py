@@ -15,7 +15,7 @@ from itertools import chain
 from jinja2 import nodes
 from jinja2.visitor import NodeVisitor, NodeTransformer
 from jinja2.exceptions import TemplateAssertionError
-from jinja2.utils import Markup, concat
+from jinja2.utils import Markup, concat, escape
 
 
 operators = {
@@ -1062,8 +1062,20 @@ class CodeGenerator(NodeVisitor):
         body = []
         for child in node.nodes:
             try:
-                const = unicode(child.as_const())
+                const = child.as_const()
+            except nodes.Impossible:
+                body.append(child)
+                continue
+            try:
+                if self.environment.autoescape:
+                    if hasattr(const, '__html__'):
+                        const = const.__html__()
+                    else:
+                        const = escape(const)
+                const = unicode(const)
             except:
+                # if something goes wrong here we evaluate the node
+                # at runtime for easier debugging
                 body.append(child)
                 continue
             if body and isinstance(body[-1], list):

@@ -308,3 +308,11 @@ def test_replace():
 def test_forceescape(env):
     tmpl = env.from_string('{{ x|forceescape }}')
     assert tmpl.render(x=Markup('<div />')) == u'&lt;div /&gt;'
+
+
+def test_safe():
+    env = Environment(autoescape=True)
+    tmpl = env.from_string('{{ "<div>foo</div>"|safe }}')
+    assert tmpl.render() == '<div>foo</div>'
+    tmpl = env.from_string('{{ "<div>foo</div>" }}')
+    assert tmpl.render() == '&lt;div&gt;foo&lt;/div&gt;'

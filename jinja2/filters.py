@@ -578,8 +578,7 @@ def do_groupby(environment, value, attribute):
 
 class _GroupTuple(tuple):
     __slots__ = ()
-    grouper = property(itemgetter(0))
-    list = property(itemgetter(1))
+    grouper, list = (property(itemgetter(x)) for x in xrange(2))
 
     def __new__(cls, (key, value)):
         return tuple.__new__(cls, (key, list(value)))

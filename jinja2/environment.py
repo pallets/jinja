@@ -642,8 +642,7 @@ class TemplateStream(object):
 
     def __init__(self, gen):
         self._gen = gen
-        self._next = gen.next
-        self.buffered = False
+        self.disable_buffering()
 
     def disable_buffering(self):
         """Disable the output buffering."""

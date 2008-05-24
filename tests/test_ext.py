@@ -66,3 +66,7 @@ def test_extension_nodes():
     env = Environment(extensions=[TestExtension])
     tmpl = env.from_string('{% test %}')
     assert tmpl.render() == 'False|42|23|{}'
+
+
+def test_identifier():
+    assert TestExtension.identifier == __name__ + '.TestExtension'

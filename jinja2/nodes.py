@@ -251,21 +251,6 @@ class Output(Stmt):
     """
     fields = ('nodes',)
 
-    def optimized_nodes(self):
-        """Try to optimize the nodes."""
-        buffer = []
-        for node in self.nodes:
-            try:
-                const = unicode(node.as_const())
-            except:
-                buffer.append(node)
-            else:
-                if buffer and isinstance(buffer[-1], unicode):
-                    buffer[-1] += const
-                else:
-                    buffer.append(const)
-        return buffer
-
 
 class Extends(Stmt):
     """Represents an extends statement."""

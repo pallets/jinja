@@ -195,7 +195,7 @@ class TokenStream(object):
             return self.next()
 
     def skip_if(self, expr):
-        """Like `next_if` but only returns `True` or `False`."""
+        """Like :meth:`next_if` but only returns `True` or `False`."""
         return self.next_if(expr) is not None
 
     def next(self):

@@ -113,3 +113,8 @@ def test_markup_operations():
     assert Markup(Foo()) == '<em>awesome</em>'
     assert Markup('<strong>%s</strong>') % Foo() == \
            '<strong><em>awesome</em></strong>'
+
+    # escaping and unescaping
+    assert escape('"<>&\'') == '&#34;&lt;&gt;&amp;&#39;'
+    assert Markup("<em>Foo &amp; Bar</em>").striptags() == "Foo & Bar"
+    assert Markup("&lt;test&gt;").unescape() == "<test>"
