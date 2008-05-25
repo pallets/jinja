@@ -20,6 +20,7 @@ from timeit import Timer
 from jinja2 import Environment, FileSystemLoader
 from jinja2.utils import generate_lorem_ipsum
 from mako.lookup import TemplateLookup
+from genshi.template import TemplateLoader as GenshiTemplateLoader
 
 
 def dateformat(x):
@@ -29,6 +30,7 @@ def dateformat(x):
 jinja_env = Environment(loader=FileSystemLoader(join(ROOT, 'jinja')))
 jinja_env.filters['dateformat'] = dateformat
 mako_lookup = TemplateLookup(directories=[join(ROOT, 'mako')])
+genshi_loader = GenshiTemplateLoader([join(ROOT, 'genshi')])
 
 class Article(object):
 
@@ -65,6 +67,7 @@ context = dict(users=users, articles=articles, page_navigation=navigation)
 
 jinja_template = jinja_env.get_template('index.html')
 mako_template = mako_lookup.get_template('index.html')
+genshi_template = genshi_loader.load('index.html')
 
 
 def test_jinja():
@@ -80,9 +83,13 @@ def test_django():
     django_template.render(DjangoContext(context))
 
 
+def test_genshi():
+    genshi_template.generate(**context).render('html', doctype='html')
+
+
 if __name__ == '__main__':
     sys.stdout.write('Realworldish Benchmark:\n')
-    for test in 'jinja', 'mako', 'django':
+    for test in 'jinja', 'mako', 'django', 'genshi':
         t = Timer(setup='from __main__ import test_%s as bench' % test,
                   stmt='bench()')
         sys.stdout.write(' >> %-20s<running>' % test)
