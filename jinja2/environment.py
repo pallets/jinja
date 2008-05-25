@@ -654,11 +654,10 @@ class TemplateStream(object):
         if size <= 1:
             raise ValueError('buffer size too small')
 
-        def generator():
+        def generator(next):
             buf = []
             c_size = 0
             push = buf.append
-            next = self._gen.next
 
             while 1:
                 try:
@@ -675,7 +674,7 @@ class TemplateStream(object):
                 c_size = 0
 
         self.buffered = True
-        self._next = generator().next
+        self._next = generator(self._gen.next).next
 
     def __iter__(self):
         return self
