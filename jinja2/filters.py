@@ -598,6 +598,11 @@ def do_mark_safe(value):
     return Markup(value)
 
 
+def do_mark_unsafe(value):
+    """Mark a value as unsafe.  This is the reverse operation for :func:`safe`."""
+    return unicode(value)
+
+
 def do_reverse(value):
     """Reverse the object or return an iterator the iterates over it the other
     way round.

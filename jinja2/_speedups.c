@@ -2,10 +2,11 @@
  * jinja2._speedups
  * ~~~~~~~~~~~~~~~~
  *
- * This module implements a few functions in C for better performance.  It
- * also defines a `tb_set_next` function that is used to patch the debug
- * traceback.  If the speedups module is not compiled a ctypes implementation
- * is used.
+ * This module implements functions for automatic escaping in C for better
+ * performance.  Additionally it defines a `tb_set_next` function to patch the
+ * debug traceback.  If the speedups module is not compiled a ctypes
+ * implementation of `tb_set_next` and Python implementations of the other
+ * functions are used.
  *
  * :copyright: 2008 by Armin Ronacher, Mickaël Guérin.
  * :license: BSD.

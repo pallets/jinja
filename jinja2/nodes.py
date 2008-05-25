@@ -431,6 +431,16 @@ class Const(Literal):
         return cls(value, lineno=lineno, environment=environment)
 
 
+class TemplateData(Literal):
+    """A constant template string."""
+    fields = ('data',)
+
+    def as_const(self):
+        if self.environment.autoescape:
+            return Markup(self.data)
+        return self.data
+
+
 class Tuple(Literal):
     """For loop unpacking and some other things like multiple arguments
     for subscripts.  Like for :class:`Name` `ctx` specifies if the tuple

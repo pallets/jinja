@@ -405,7 +405,7 @@ class Environment(object):
 
     def make_globals(self, d):
         """Return a dict for the globals."""
-        if d is None:
+        if not d:
             return self.globals
         return dict(self.globals, **d)
 
@@ -482,7 +482,7 @@ class Template(object):
         t.blocks = namespace['blocks']
 
         # render function and module 
-        t._root_render_func = namespace['root']
+        t.root_render_func = namespace['root']
         t._module = None
 
         # debug and loader helpers
@@ -503,7 +503,7 @@ class Template(object):
         """
         vars = dict(*args, **kwargs)
         try:
-            return concat(self._root_render_func(self.new_context(vars)))
+            return concat(self.root_render_func(self.new_context(vars)))
         except:
             from jinja2.debug import translate_exception
             exc_type, exc_value, tb = translate_exception(sys.exc_info())
@@ -525,7 +525,7 @@ class Template(object):
         """
         vars = dict(*args, **kwargs)
         try:
-            for event in self._root_render_func(self.new_context(vars)):
+            for event in self.root_render_func(self.new_context(vars)):
                 yield event
         except:
             from jinja2.debug import translate_exception
@@ -533,7 +533,7 @@ class Template(object):
             raise exc_type, exc_value, tb
 
     def new_context(self, vars=None, shared=False):
-        """Create a new template context for this template.  The vars
+        """Create a new :class:`Context` for this template.  The vars
         provided will be passed to the template.  Per default the globals
         are added to the context, if shared is set to `True` the data
         provided is used as parent namespace.  This is used to share the
@@ -611,12 +611,12 @@ class TemplateModule(object):
     """
 
     def __init__(self, template, context):
-        self._body_stream = list(template._root_render_func(context))
+        self._body_stream = list(template.root_render_func(context))
         self.__dict__.update(context.get_exported())
         self.__name__ = template.name
 
-    __html__ = lambda x: Markup(concat(x._body_stream))
     __unicode__ = lambda x: concat(x._body_stream)
+    __html__ = lambda x: Markup(concat(x._body_stream))
 
     def __str__(self):
         return unicode(self).encode('utf-8')

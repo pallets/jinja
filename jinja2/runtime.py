@@ -110,7 +110,7 @@ class Context(object):
 
     def get_all(self):
         """Return a copy of the complete context as dict including the
-        global variables.
+        exported variables.
         """
         return dict(self.parent, **self.vars)
 

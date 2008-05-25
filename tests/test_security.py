@@ -6,6 +6,7 @@
     :copyright: 2007 by Armin Ronacher.
     :license: BSD, see LICENSE for more details.
 """
+from jinja2 import Environment
 from jinja2.sandbox import SandboxedEnvironment, \
      ImmutableSandboxedEnvironment, unsafe
 from jinja2 import Markup, escape
@@ -118,3 +119,16 @@ def test_markup_operations():
     assert escape('"<>&\'') == '&#34;&lt;&gt;&amp;&#39;'
     assert Markup("<em>Foo &amp; Bar</em>").striptags() == "Foo & Bar"
     assert Markup("&lt;test&gt;").unescape() == "<test>"
+
+
+def test_template_data():
+    env = Environment(autoescape=True)
+    t = env.from_string('{% macro say_hello(name) %}'
+                        '<p>Hello {{ name }}!</p>{% endmacro %}'
+                        '{{ say_hello("<blink>foo</blink>") }}')
+    escaped_out = '<p>Hello &lt;blink&gt;foo&lt;/blink&gt;!</p>'
+    assert t.render() == escaped_out
+    assert unicode(t.module) == escaped_out
+    assert escape(t.module) == escaped_out
+    assert t.module.say_hello('<blink>foo</blink>') == escaped_out
+    assert escape(t.module.say_hello('<blink>foo</blink>')) == escaped_out

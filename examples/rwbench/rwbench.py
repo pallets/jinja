@@ -81,4 +81,4 @@ if __name__ == '__main__':
                   stmt='bench()')
         sys.stdout.write(' >> %-20s<running>' % test)
         sys.stdout.flush()
-        sys.stdout.write('\r    %-20s%.4f seconds\n' % (test, t.timeit(number=50) / 50))
+        sys.stdout.write('\r    %-20s%.4f seconds\n' % (test, t.timeit(number=200) / 200))

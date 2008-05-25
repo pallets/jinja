@@ -5,7 +5,6 @@ This page answers some of the often asked questions about Jinja.
 
 .. highlight:: html+jinja
 
-
 Why is it called Jinja?
 -----------------------
 
@@ -21,7 +20,11 @@ performance of a template depends on many factors and you would have to
 benchmark different engines in different situations.  The benchmarks from the
 testsuite show that Jinja2 has a similar performance to `Mako`_ and is more
 than 20 times faster than Django's template engine or Genshi.  These numbers
-should be taken with tons of salt!
+should be taken with tons of salt as the benchmarks that took these numbers
+only test a few performance related situations such as looping.  They are
+not a good indicator for the templates used in the average application.
+Additionally you should keep in mind that for most web applications
+templates are clearly not the bottleneck.
 
 .. _Mako: http://www.makotemplates.org/
 
@@ -121,3 +124,24 @@ If you want to modify the context write a function that returns a variable
 instead that one can assign to a variable by using set::
 
     {% set comments = get_latest_comments() %}
+
+I don't have the _speedups Module.  Is Jinja slower now?
+--------------------------------------------------------
+
+To achieve a good performance with automatic escaping enabled the escaping
+function is implemented also written in pure C and used if Jinja2 was
+installed with the speedups module which automatically happens if a C
+compiled is available on the system.  It won't affect templates without
+auto escaping much if that feature is not enabled.  You may however
+experience werid tracebacks if you are using a Python installation, for
+more information see the next FAQ item.
+
+My tracebacks look weird.  What's happening?
+--------------------------------------------
+
+If the speedups module is not compiled and you are using a Python installation
+without ctypes (Python 2.4 without ctypes, Jython or Google's AppEngine)
+Jinja2 is unable to provide correct debugging information and the traceback
+may be incomplete.  There is currently no good workaround for Jython or
+the AppEngine as ctypes is unavailable there and it's not possible to use
+the speedups extension.

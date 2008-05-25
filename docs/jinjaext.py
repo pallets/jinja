@@ -48,7 +48,7 @@ class JinjaStyle(Style):
         Keyword:                    'bold #B80000',
         Keyword.Type:               '#808080',
 
-        Operator.Word:              '#333333',
+        Operator.Word:              'bold #B80000',
 
         Name.Builtin:               '#333333',
         Name.Function:              '#333333',

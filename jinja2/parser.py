@@ -723,7 +723,8 @@ class Parser(object):
             token = self.stream.current
             if token.type is 'data':
                 if token.value:
-                    add_data(nodes.Const(token.value, lineno=token.lineno))
+                    add_data(nodes.TemplateData(token.value,
+                                                lineno=token.lineno))
                 self.stream.next()
             elif token.type is 'variable_begin':
                 self.stream.next()
