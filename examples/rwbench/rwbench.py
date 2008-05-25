@@ -12,6 +12,8 @@
 """
 import sys
 from os.path import join, dirname, abspath
+ROOT = abspath(dirname(__file__))
+
 from random import choice, randrange
 from datetime import datetime
 from timeit import Timer
@@ -20,18 +22,13 @@ from jinja2.utils import generate_lorem_ipsum
 from mako.lookup import TemplateLookup
 
 
-ROOT = abspath(dirname(__file__))
-
-
 def dateformat(x):
     return x.strftime('%Y-%m-%d')
 
 
 jinja_env = Environment(loader=FileSystemLoader(join(ROOT, 'jinja')))
 jinja_env.filters['dateformat'] = dateformat
-
 mako_lookup = TemplateLookup(directories=[join(ROOT, 'mako')])
-
 
 class Article(object):
 
@@ -42,6 +39,7 @@ class Article(object):
         self.user = choice(users)
         self.body = generate_lorem_ipsum()
         self.pub_date = datetime.utcfromtimestamp(randrange(10 ** 9, 2 * 10 ** 9))
+        self.published = True
 
 
 class User(object):
@@ -57,8 +55,10 @@ navigation = [
     ('index',           'Index'),
     ('about',           'About'),
     ('foo?bar=1',       'Foo with Bar'),
-    ('foo?bar=2&s=x',   'Foo with X')
-]
+    ('foo?bar=2&s=x',   'Foo with X'),
+    ('blah',            'Blub Blah'),
+    ('hehe',            'Haha'),
+] * 5
 
 context = dict(users=users, articles=articles, page_navigation=navigation)
 
@@ -74,9 +74,15 @@ def test_mako():
     mako_template.render_unicode(**context)
 
 
+from djangoext import django_loader, DjangoContext
+django_template = django_loader.get_template('index.html')
+def test_django():
+    django_template.render(DjangoContext(context))
+
+
 if __name__ == '__main__':
     sys.stdout.write('Realworldish Benchmark:\n')
-    for test in 'jinja', 'mako':
+    for test in 'jinja', 'mako', 'django':
         t = Timer(setup='from __main__ import test_%s as bench' % test,
                   stmt='bench()')
         sys.stdout.write(' >> %-20s<running>' % test)

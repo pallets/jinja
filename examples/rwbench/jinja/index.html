@@ -2,7 +2,7 @@
 {% from "helpers.html" import input_field, textarea, form %}
 {% block page_title %}Index Page{% endblock %}
 {% block body %}
-  {%- for article in articles %}
+  {%- for article in articles if article.published %}
   <div class="article">
     <h2><a href="{{ article.href|e }}">{{ article.title|e }}</a></h2>
     <p class="meta">written by <a href="{{ article.user.href|e
@@ -20,7 +20,10 @@
       <dd>{{ input_field('url') }}</dd>
       <dt>Comment</dd>
       <dd>{{ textarea('comment') }}</dd>
+      <dt>Captcha</dt>
+      <dd>{{ input_field('captcha') }}</dd>
     </dl>
     {{ input_field(type='submit', value='Submit') }}
+    {{ input_field('cancel', type='submit', value='Cancel') }}
   {%- endcall %}
 {% endblock %}
