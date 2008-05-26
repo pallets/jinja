@@ -117,10 +117,6 @@ class Context(object):
         return dict(self.parent, **self.vars)
 
     def call(__self, __obj, *args, **kwargs):
-        """Called by the template code to inject the current context
-        or environment as first arguments.  Then forwards the call to
-        the object with the arguments and keyword arguments.
-        """
         if __debug__:
             __traceback_hide__ = True
         if isinstance(__obj, _context_function_types):

@@ -157,7 +157,7 @@ soft_unicode(PyObject *self, PyObject *s)
 }
 
 
-static PyObject *
+static PyObject*
 tb_set_next(PyObject *self, PyObject *args)
 {
 	PyTracebackObject *tb, *old;

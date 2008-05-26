@@ -13,9 +13,6 @@
     :license: BSD.
 """
 import operator
-from UserDict import UserDict, DictMixin
-from UserList import UserList
-from sets import Set, ImmutableSet
 from types import FunctionType, MethodType, TracebackType, CodeType, \
      FrameType, GeneratorType
 from jinja2.runtime import Undefined
@@ -33,19 +30,40 @@ UNSAFE_FUNCTION_ATTRIBUTES = set(['func_closure', 'func_code', 'func_dict',
 #: unsafe method attributes.  function attributes are unsafe for methods too
 UNSAFE_METHOD_ATTRIBUTES = set(['im_class', 'im_func', 'im_self'])
 
-SET_TYPES = (ImmutableSet, Set, set)
-MODIFYING_SET_ATTRIBUTES = set([
-    'add', 'clear', 'difference_update', 'discard', 'pop', 'remove',
-    'symmetric_difference_update', 'update'
-])
 
-DICT_TYPES = (UserDict, DictMixin, dict)
-MODIFYING_DICT_ATTRIBUTES = set(['clear', 'pop', 'popitem', 'setdefault',
-                                 'update'])
+from collections import deque
+from sets import Set, ImmutableSet
+from UserDict import UserDict, DictMixin
+from UserList import UserList
+_mutable_set_types = (ImmutableSet, Set, set)
+_mutable_mapping_types = (UserDict, DictMixin, dict)
+_mutable_sequence_types = (UserList, list)
 
-LIST_TYPES = (UserList, list)
-MODIFYING_LIST_ATTRIBUTES = set(['append', 'reverse', 'insert', 'sort',
-                                 'extend', 'remove'])
+#: register Python 2.6 abstract base classes
+try:
+    from collections import MutableSet, MutableMapping, MutableSequence
+    _mutable_set_types += (MutableSet,)
+    _mutable_mapping_types += (MutableMapping,)
+    _mutable_sequence_types += (MutableSequence,)
+except ImportError:
+    pass
+
+_mutable_spec = (
+    (_mutable_set_types, frozenset([
+        'add', 'clear', 'difference_update', 'discard', 'pop', 'remove',
+        'symmetric_difference_update', 'update'
+    ])),
+    (_mutable_mapping_types, frozenset([
+        'clear', 'pop', 'popitem', 'setdefault', 'update'
+    ])),
+    (_mutable_sequence_types, frozenset([
+        'append', 'reverse', 'insert', 'sort', 'extend', 'remove'
+    ])),
+    (deque, frozenset([
+        'append', 'appendleft', 'clear', 'extend', 'extendleft', 'pop',
+        'popleft', 'remove', 'rotate'
+    ]))
+)
 
 
 def safe_range(*args):
@@ -86,45 +104,48 @@ def is_internal_attribute(obj, attr):
     False
     """
     if isinstance(obj, FunctionType):
-        return attr in UNSAFE_FUNCTION_ATTRIBUTES
-    if isinstance(obj, MethodType):
-        return attr in UNSAFE_FUNCTION_ATTRIBUTES or \
-               attr in UNSAFE_METHOD_ATTRIBUTES
-    if isinstance(obj, type):
-        return attr == 'mro'
-    if isinstance(obj, (CodeType, TracebackType, FrameType)):
+        if attr in UNSAFE_FUNCTION_ATTRIBUTES:
+            return True
+    elif isinstance(obj, MethodType):
+        if attr in UNSAFE_FUNCTION_ATTRIBUTES or \
+           attr in UNSAFE_METHOD_ATTRIBUTES:
+            return True
+    elif isinstance(obj, type):
+        if attr == 'mro':
+            return True
+    elif isinstance(obj, (CodeType, TracebackType, FrameType)):
         return True
-    if isinstance(obj, GeneratorType):
-        return attr == 'gi_frame'
+    elif isinstance(obj, GeneratorType):
+        if attr == 'gi_frame':
+            return True
     return attr.startswith('__')
 
 
-def modifies_builtin_mutable(obj, attr):
+def modifies_known_mutable(obj, attr):
     """This function checks if an attribute on a builtin mutable object
-    (list, dict or set) would modify it if called.  It also supports
-    the "user"-versions of the objects (`sets.Set`, `UserDict.*` etc.)
+    (list, dict, set or deque) would modify it if called.  It also supports
+    the "user"-versions of the objects (`sets.Set`, `UserDict.*` etc.) and
+    with Python 2.6 onwards the abstract base classes `MutableSet`,
+    `MutableMapping`, and `MutableSequence`.
 
-    >>> modifies_builtin_mutable({}, "clear")
+    >>> modifies_known_mutable({}, "clear")
     True
-    >>> modifies_builtin_mutable({}, "keys")
+    >>> modifies_known_mutable({}, "keys")
     False
-    >>> modifies_builtin_mutable([], "append")
+    >>> modifies_known_mutable([], "append")
     True
-    >>> modifies_builtin_mutable([], "index")
+    >>> modifies_known_mutable([], "index")
     False
 
     If called with an unsupported object (such as unicode) `False` is
     returned.
 
-    >>> modifies_builtin_mutable("foo", "upper")
+    >>> modifies_known_mutable("foo", "upper")
     False
     """
-    if isinstance(obj, LIST_TYPES):
-        return attr in MODIFYING_LIST_ATTRIBUTES
-    elif isinstance(obj, DICT_TYPES):
-        return attr in MODIFYING_DICT_ATTRIBUTES
-    elif isinstance(obj, SET_TYPES):
-        return attr in MODIFYING_SET_ATTRIBUTES
+    for typespec, unsafe in _mutable_spec:
+        if isinstance(obj, typespec):
+            return attr in unsafe
     return False
 
 
@@ -199,10 +220,10 @@ class SandboxedEnvironment(Environment):
 class ImmutableSandboxedEnvironment(SandboxedEnvironment):
     """Works exactly like the regular `SandboxedEnvironment` but does not
     permit modifications on the builtin mutable objects `list`, `set`, and
-    `dict` by using the :func:`modifies_builtin_mutable` function.
+    `dict` by using the :func:`modifies_known_mutable` function.
     """
 
     def is_safe_attribute(self, obj, attr, value):
         if not SandboxedEnvironment.is_safe_attribute(self, obj, attr, value):
             return False
-        return not modifies_builtin_mutable(obj, attr)
+        return not modifies_known_mutable(obj, attr)

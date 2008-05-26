@@ -120,7 +120,7 @@ setup(
     ],
     packages=['jinja2'],
     data_files=[
-        ##('docs', list(list_files('docs/_build/html')))
+        ('docs', list(list_files('docs/_build/html')))
     ],
     features={
         'speedups': Feature("optional C speed-enhancements",

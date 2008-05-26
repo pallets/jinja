@@ -253,9 +253,9 @@ class Markup(unicode):
         return NotImplemented
 
     def __mul__(self, num):
-        if not isinstance(num, (int, long)):
-            return NotImplemented
-        return self.__class__(unicode.__mul__(self, num))
+        if isinstance(num, (int, long)):
+            return self.__class__(unicode.__mul__(self, num))
+        return NotImplemented
     __rmul__ = __mul__
 
     def __mod__(self, arg):
@@ -319,17 +319,13 @@ class Markup(unicode):
     def make_wrapper(name):
         orig = getattr(unicode, name)
         def func(self, *args, **kwargs):
-            args = list(args)
-            for idx, arg in enumerate(args):
-                if hasattr(arg, '__html__') or isinstance(arg, basestring):
-                    args[idx] = escape(arg)
-            for name, arg in kwargs.iteritems():
-                if hasattr(arg, '__html__') or isinstance(arg, basestring):
-                    kwargs[name] = escape(arg)
+            args = _escape_argspec(list(args), enumerate(args))
+            _escape_argspec(kwargs, kwargs.iteritems())
             return self.__class__(orig(self, *args, **kwargs))
         func.__name__ = orig.__name__
         func.__doc__ = orig.__doc__
         return func
+
     for method in '__getitem__', '__getslice__', 'capitalize', \
                   'title', 'lower', 'upper', 'replace', 'ljust', \
                   'rjust', 'lstrip', 'rstrip', 'center', 'strip', \
@@ -338,11 +334,22 @@ class Markup(unicode):
 
     # new in python 2.5
     if hasattr(unicode, 'partition'):
-        locals().update(
-            partition=make_wrapper('partition'),
-            rpartition=make_wrapper('rpartition')
-        )
+        partition = make_wrapper('partition'),
+        rpartition = make_wrapper('rpartition')
+
+    # new in python 2.6
+    if hasattr(unicode, 'format'):
+        format = make_wrapper('format')
+
     del method, make_wrapper
+
+
+def _escape_argspec(obj, iterable):
+    """Helper for various string-wrapped functions."""
+    for key, value in iterable:
+        if hasattr(value, '__html__') or isinstance(value, basestring):
+            obj[key] = escape(value)
+    return obj
 
 
 class _MarkupEscapeHelper(object):

@@ -28,4 +28,4 @@ SecurityError: access to attribute 'func_code' of 'function' object is unsafe.
 
 .. autofunction:: is_internal_attribute
 
-.. autofunction:: modifies_builtin_mutable
+.. autofunction:: modifies_known_mutable
