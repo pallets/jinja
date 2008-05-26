@@ -164,30 +164,27 @@ class SandboxedEnvironment(Environment):
 
     def subscribe(self, obj, argument):
         """Subscribe an object from sandboxed code."""
-        is_unsafe = False
-        if isinstance(argument, basestring):
-            try:
-                attr = str(argument)
-            except:
-                pass
-            else:
-                try:
-                    value = getattr(obj, attr)
-                except AttributeError:
-                    pass
-                else:
-                    if self.is_safe_attribute(obj, argument, value):
-                        return value
-                    is_unsafe = True
         try:
             return obj[argument]
         except (TypeError, LookupError):
-            if is_unsafe:
-                return self.undefined('access to attribute %r of %r object is'
-                                      ' unsafe.' % (
-                    argument,
-                    obj.__class__.__name__
-                ), name=argument, exc=SecurityError)
+            if isinstance(argument, basestring):
+                try:
+                    attr = str(argument)
+                except:
+                    pass
+                else:
+                    try:
+                        value = getattr(obj, attr)
+                    except AttributeError:
+                        pass
+                    else:
+                        if self.is_safe_attribute(obj, argument, value):
+                            return value
+                        return self.undefined('access to attribute %r of %r '
+                                              'object is unsafe.' % (
+                            argument,
+                            obj.__class__.__name__
+                        ), name=argument, exc=SecurityError)
         return self.undefined(obj=obj, name=argument)
 
     def call(__self, __context, __obj, *args, **kwargs):

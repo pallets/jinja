@@ -58,3 +58,13 @@ def test_markup_leaks():
             escape(u"<foo>")
         counts.add(len(gc.get_objects()))
     assert len(counts) == 1, 'ouch, c extension seems to leak objects'
+
+
+def test_item_before_attribute():
+    from jinja2 import Environment
+    from jinja2.sandbox import SandboxedEnvironment
+
+    for env in Environment(), SandboxedEnvironment():
+        tmpl = env.from_string('{{ foo.items() }}')
+        assert tmpl.render(foo={'items': lambda: 42}) == '42'
+        assert tmpl.render(foo={}) == '[]'

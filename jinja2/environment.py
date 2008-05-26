@@ -288,19 +288,19 @@ class Environment(object):
 
     def subscribe(self, obj, argument):
         """Get an item or attribute of an object."""
-        if isinstance(argument, basestring):
-            try:
-                attr = str(argument)
-            except:
-                pass
-            else:
-                try:
-                    return getattr(obj, attr)
-                except AttributeError:
-                    pass
         try:
             return obj[argument]
         except (TypeError, LookupError):
+            if isinstance(argument, basestring):
+                try:
+                    attr = str(argument)
+                except:
+                    pass
+                else:
+                    try:
+                        return getattr(obj, attr)
+                    except AttributeError:
+                        pass
             return self.undefined(obj=obj, name=argument)
 
     def parse(self, source, name=None, filename=None):
