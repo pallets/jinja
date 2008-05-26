@@ -9,6 +9,7 @@
     :license: GNU GPL.
 """
 import sys
+from types import FunctionType, MethodType
 from itertools import chain, imap
 from jinja2.utils import Markup, partial, soft_unicode, escape, missing, concat
 from jinja2.exceptions import UndefinedError, TemplateRuntimeError
@@ -18,6 +19,8 @@ from jinja2.exceptions import UndefinedError, TemplateRuntimeError
 __all__ = ['LoopContext', 'Context', 'TemplateReference', 'Macro', 'Markup',
            'TemplateRuntimeError', 'missing', 'concat', 'escape',
            'markup_join', 'unicode_join']
+
+_context_function_types = (FunctionType, MethodType)
 
 
 def markup_join(seq):
@@ -118,10 +121,13 @@ class Context(object):
         or environment as first arguments.  Then forwards the call to
         the object with the arguments and keyword arguments.
         """
-        if getattr(__obj, 'contextfunction', 0):
-            args = (__self,) + args
-        elif getattr(__obj, 'environmentfunction', 0):
-            args = (__self.environment,) + args
+        if __debug__:
+            __traceback_hide__ = True
+        if isinstance(__obj, _context_function_types):
+            if getattr(__obj, 'contextfunction', 0):
+                args = (__self,) + args
+            elif getattr(__obj, 'environmentfunction', 0):
+                args = (__self.environment,) + args
         return __obj(*args, **kwargs)
 
     def _all(meth):

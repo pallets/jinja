@@ -16,7 +16,7 @@ from operator import itemgetter
 from itertools import imap, groupby
 from jinja2.utils import Markup, escape, pformat, urlize, soft_unicode
 from jinja2.runtime import Undefined
-from jinja2.exceptions import FilterArgumentError
+from jinja2.exceptions import FilterArgumentError, SecurityError
 
 
 _word_re = re.compile(r'\w+')
@@ -620,7 +620,29 @@ def do_reverse(value):
             raise FilterArgumentError('argument must be iterable')
 
 
+@environmentfilter
+def do_attr(environment, obj, name):
+    """Get an attribute of an object.  ``foo|attr("bar")`` works like
+    ``foo["bar"]`` just that always an attribute is returned.  This is useful
+    if data structures are passed to the template that have an item that hides
+    an attribute with the same name.  For example a dict ``{'items': []}``
+    that obviously hides the item method of a dict.
+    """
+    try:
+        value = getattr(obj, name)
+    except AttributeError:
+        return environment.undefined(obj=obj, name=name)
+    if environment.sandboxed and not \
+       environment.is_safe_attribute(obj, name, value):
+        return environment.undefined('access to attribute %r of %r '
+                                     'object is unsafe.' % (
+            name, obj.__class__.__name__
+        ), name=name, obj=obj, exc=SecurityError)
+    return value
+
+
 FILTERS = {
+    'attr':                 do_attr,
     'replace':              do_replace,
     'upper':                do_upper,
     'lower':                do_lower,

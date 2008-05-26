@@ -68,3 +68,5 @@ def test_item_before_attribute():
         tmpl = env.from_string('{{ foo.items() }}')
         assert tmpl.render(foo={'items': lambda: 42}) == '42'
         assert tmpl.render(foo={}) == '[]'
+        tmpl = env.from_string('{{ foo|attr("items")() }}')
+        assert tmpl.render(foo={'items': None}) == "[('items', None)]"

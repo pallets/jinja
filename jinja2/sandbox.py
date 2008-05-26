@@ -184,7 +184,7 @@ class SandboxedEnvironment(Environment):
                                               'object is unsafe.' % (
                             argument,
                             obj.__class__.__name__
-                        ), name=argument, exc=SecurityError)
+                        ), name=argument, obj=obj, exc=SecurityError)
         return self.undefined(obj=obj, name=argument)
 
     def call(__self, __context, __obj, *args, **kwargs):

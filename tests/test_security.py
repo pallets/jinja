@@ -6,10 +6,12 @@
     :copyright: 2007 by Armin Ronacher.
     :license: BSD, see LICENSE for more details.
 """
+from py.test import raises
 from jinja2 import Environment
 from jinja2.sandbox import SandboxedEnvironment, \
      ImmutableSandboxedEnvironment, unsafe
 from jinja2 import Markup, escape
+from jinja2.exceptions import SecurityError
 
 
 class PrivateStuff(object):
@@ -132,3 +134,9 @@ def test_template_data():
     assert escape(t.module) == escaped_out
     assert t.module.say_hello('<blink>foo</blink>') == escaped_out
     assert escape(t.module.say_hello('<blink>foo</blink>')) == escaped_out
+
+
+def test_attr_filter():
+    env = SandboxedEnvironment()
+    tmpl = env.from_string('{{ 42|attr("__class__")|attr("__subclasses__")() }}')
+    raises(SecurityError, tmpl.render)
