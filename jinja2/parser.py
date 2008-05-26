@@ -29,7 +29,7 @@ class Parser(object):
         self.name = name
         self.filename = filename
         self.closed = False
-        self.stream = environment.lexer.tokenize(self.source, filename)
+        self.stream = environment.lexer.tokenize(self.source, name, filename)
         self.extensions = {}
         for extension in environment.extensions.itervalues():
             for tag in extension.tags:
@@ -43,7 +43,7 @@ class Parser(object):
         """
         if lineno is None:
             lineno = self.stream.current.lineno
-        raise TemplateSyntaxError(msg, lineno, self.name, self.filename)
+        raise exc(msg, lineno, self.name, self.filename)
 
     def is_tuple_end(self, extra_end_rules=None):
         """Are we at the end of a tuple?"""

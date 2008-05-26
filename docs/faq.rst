@@ -21,10 +21,10 @@ benchmark different engines in different situations.  The benchmarks from the
 testsuite show that Jinja2 has a similar performance to `Mako`_ and is between
 10 and 20 times faster than Django's template engine or Genshi.  These numbers
 should be taken with tons of salt as the benchmarks that took these numbers
-only test a few performance related situations such as looping.  They are
-not a good indicator for the templates used in the average application.
-Additionally you should keep in mind that for most web applications
-templates are clearly not the bottleneck.
+only test a few performance related situations such as looping.  Generally
+speaking the performance of a template engine doesn't matter much as the
+usual bottleneck in a web application is either the database or the application
+code.
 
 .. _Mako: http://www.makotemplates.org/
 

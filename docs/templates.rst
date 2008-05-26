@@ -149,10 +149,11 @@ a list of numbers from ``1`` to ``9`` the output would be ``123456789``.
 
 Note that you must not use a whitespace between the tag and the minus sign:
 
-    valid:
+    valid::
+
         {%- if foo -%}...{% endif %}
 
-    invalid:
+    invalid::
 
         {% - if foo - %}...{% endif %}
 
@@ -1032,8 +1033,8 @@ For multiple placeholders always use keyword arguments to `format` as other
 languages may not use the words in the same order.
 
 
-do
-~~
+Expression Statement
+~~~~~~~~~~~~~~~~~~~~
 
 If the expression-statement extension is loaded a tag called `do` is available
 that works exactly like the regular variable expression (``{{ ... }}``) just

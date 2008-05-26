@@ -15,7 +15,8 @@ Jinja2 uses a central object called the template :class:`Environment`.
 Instances of this class are used to store the configuration, global objects
 and are used to load templates from the file system or other locations.
 Even if you are creating templates from string by using the constructor of
-:class:`Template` class, an environment is created automatically for you.
+:class:`Template` class, an environment is created automatically for you,
+albeit a shared one.
 
 Most applications will create one :class:`Environment` object on application
 initialization and use that to load templates.  In some cases it's however
@@ -43,6 +44,10 @@ To render it with some variables, just call the :meth:`render` method::
 
     print template.render(the='variables', go='here')
 
+Using a template loader rather then passing strings to :class:`Template`
+or :meth:`Environment.from_string` has multiple advantages.  Besides being
+a lot easier to use it also enables template inheritance.
+
 
 Unicode
 -------
@@ -52,6 +57,40 @@ objects to the render function or bytestrings that only consist of ASCII
 characters.  Additionally newlines are normalized to one end of line
 sequence which is per default UNIX style (``\n``).
 
+Python 2.x supports two ways of representing string objects.  One is the
+`str` type and the other is the `unicode` type, both of which extend a type
+called `basestring`.  Unfortunately the default is `str` which should not
+be used to store text based information unless only ASCII characters are
+used.  With Python 2.6 it is possible to my `unicode` the default on a per
+module level and with Python 3 it will be the default.
+
+To explicitly use a unicode string you have to prefix the string literal
+with a `u`: ``u'Hänsel und Gretel sagen Hallo'``.  That way Python will
+store the string as unicode by decoding the string with the character
+encoding from the current Python module.  If no encoding is specified this
+defaults to 'ASCII' which means that you can't use any non ASCII identifier.
+
+To set a better module encoding add the following comment to the first or
+second line of the Python module using the unicode literal::
+
+    # -*- coding: utf-8 -*-
+
+We recommend utf-8 as Encoding for Python modules and templates as it's
+possible to represent every Unicode character in utf-8 and because it's
+backwards compatible to ASCII.  For Jinja2 the default encoding of templates
+is assumed to be utf-8.
+
+It is not possible to use Jinja2 to process non unicode data.  The reason
+for this is that Jinja2 uses Unicode already on the language level.  For
+example Jinja2 treats the non-breaking space as valid whitespace inside
+expressions which requires knowledge of the encoding or operating on an
+unicode string.
+
+For more details about unicode in Python have a look at the excellent
+`Unicode documentation`_.
+
+
+.. _Unicode documentation: http://docs.python.org/dev/howto/unicode.html
 
 High Level API
 --------------
@@ -448,7 +487,8 @@ Low Level API
 
 The low level API exposes functionality that can be useful to understand some
 implementation details, debugging purposes or advanced :ref:`extension
-<jinja-extensions>` techniques.
+<jinja-extensions>` techniques.  Unless you know exactly what you are doing we
+don't recommend using any of those.
 
 .. automethod:: Environment.lex
 

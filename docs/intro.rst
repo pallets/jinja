@@ -34,7 +34,8 @@ Prerequisites
 
 Jinja2 needs at least **Python 2.4** to run.  Additionally a working C-compiler
 that can create python extensions should be installed for the debugger.  If no
-C-compiler is available the `ctypes`_ module should be installed.
+C-compiler is available and you are using Python 2.4 the `ctypes`_ module
+should be installed.
 
 .. _ctypes: http://python.net/crew/theller/ctypes/
 
@@ -97,8 +98,9 @@ Basic API Usage
 This section gives you a brief introduction to the Python API for Jinja2 templates.
 
 The most basic way to create a template and render it is through
-:class:`Template`.  This however is not the recommended way to work with it,
-but the easiest
+:class:`Template`.  This however is not the recommended way to work with it if
+your templates are not loaded from strings but the file system or another data
+source:
 
 >>> from jinja2 import Template
 >>> template = Template('Hello {{ name }}!')
@@ -110,3 +112,7 @@ object that provides a method called :meth:`~Template.render` which when
 called with a dict or keyword arguments expands the template.  The dict
 or keywords arguments passed to the template are the so-called "context"
 of the template.
+
+What you can see here is that Jinja2 is using unicode internally and the
+return value is an unicode string.  So make sure that your application is
+indeed using unicode internally.

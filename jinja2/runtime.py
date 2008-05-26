@@ -9,7 +9,6 @@
     :license: GNU GPL.
 """
 import sys
-from types import FunctionType
 from itertools import chain, imap
 from jinja2.utils import Markup, partial, soft_unicode, escape, missing, concat
 from jinja2.exceptions import UndefinedError, TemplateRuntimeError
