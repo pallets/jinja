@@ -95,20 +95,21 @@ snapshot::
 Basic API Usage
 ---------------
 
-This section gives you a brief introduction to the Python API for Jinja2 templates.
+This section gives you a brief introduction to the Python API for Jinja2
+templates.
 
 The most basic way to create a template and render it is through
-:class:`Template`.  This however is not the recommended way to work with it if
-your templates are not loaded from strings but the file system or another data
-source:
+:class:`~jinja2.Template`.  This however is not the recommended way to
+work with it if your templates are not loaded from strings but the file
+system or another data source:
 
 >>> from jinja2 import Template
 >>> template = Template('Hello {{ name }}!')
 >>> template.render(name='John Doe')
 u'Hello John Doe!'
 
-By creating an instance of :class:`Template` you get back a new template
-object that provides a method called :meth:`~Template.render` which when
+By creating an instance of :class:`~jinja2.Template` you get back a new template
+object that provides a method called :meth:`~jinja2.Template.render` which when
 called with a dict or keyword arguments expands the template.  The dict
 or keywords arguments passed to the template are the so-called "context"
 of the template.
