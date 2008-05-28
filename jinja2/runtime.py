@@ -117,6 +117,11 @@ class Context(object):
         return dict(self.parent, **self.vars)
 
     def call(__self, __obj, *args, **kwargs):
+        """Call the callable with the arguments and keyword arguments
+        provided but inject the active context or environment as first
+        argument if the callable is a :func:`contextfunction` or
+        :func:`environmentfunction`.
+        """
         if __debug__:
             __traceback_hide__ = True
         if isinstance(__obj, _context_function_types):
@@ -158,6 +163,14 @@ class Context(object):
             repr(self.get_all()),
             self.name
         )
+
+
+# register the context as mutable mapping if possible
+try:
+    from collections import MutableMapping
+    MutableMapping.register(Context)
+except ImportError:
+    pass
 
 
 class TemplateReference(object):
@@ -321,28 +334,6 @@ class Macro(object):
         )
 
 
-def fail_with_undefined_error(self, *args, **kwargs):
-    """Regular callback function for undefined objects that raises an
-    `UndefinedError` on call.
-    """
-    if self._undefined_hint is None:
-        if self._undefined_obj is None:
-            hint = '%r is undefined' % self._undefined_name
-        elif not isinstance(self._undefined_name, basestring):
-            hint = '%r object has no element %r' % (
-                self._undefined_obj.__class__.__name__,
-                self._undefined_name
-            )
-        else:
-            hint = '%r object has no attribute %r' % (
-                self._undefined_obj.__class__.__name__,
-                self._undefined_name
-            )
-    else:
-        hint = self._undefined_hint
-    raise self._undefined_exception(hint)
-
-
 class Undefined(object):
     """The default undefined type.  This undefined type can be printed and
     iterated over, but every other access will raise an :exc:`UndefinedError`:
@@ -366,17 +357,35 @@ class Undefined(object):
         self._undefined_name = name
         self._undefined_exception = exc
 
+    def _fail_with_undefined_error(self, *args, **kwargs):
+        """Regular callback function for undefined objects that raises an
+        `UndefinedError` on call.
+        """
+        if self._undefined_hint is None:
+            if self._undefined_obj is None:
+                hint = '%r is undefined' % self._undefined_name
+            elif not isinstance(self._undefined_name, basestring):
+                hint = '%r object has no element %r' % (
+                    self._undefined_obj.__class__.__name__,
+                    self._undefined_name
+                )
+            else:
+                hint = '%r object has no attribute %r' % (
+                    self._undefined_obj.__class__.__name__,
+                    self._undefined_name
+                )
+        else:
+            hint = self._undefined_hint
+        raise self._undefined_exception(hint)
+
     __add__ = __radd__ = __mul__ = __rmul__ = __div__ = __rdiv__ = \
     __realdiv__ = __rrealdiv__ = __floordiv__ = __rfloordiv__ = \
     __mod__ = __rmod__ = __pos__ = __neg__ = __call__ = \
     __getattr__ = __getitem__ = __lt__ = __le__ = __gt__ = __ge__ = \
-        fail_with_undefined_error
+    __int__ = __float__ = __complex__ = _fail_with_undefined_error
 
     def __str__(self):
         return self.__unicode__().encode('utf-8')
-
-    def __repr__(self):
-        return 'Undefined'
 
     def __unicode__(self):
         return u''
@@ -390,6 +399,9 @@ class Undefined(object):
 
     def __nonzero__(self):
         return False
+
+    def __repr__(self):
+        return 'Undefined'
 
 
 class DebugUndefined(Undefined):
@@ -439,7 +451,7 @@ class StrictUndefined(Undefined):
     """
     __slots__ = ()
     __iter__ = __unicode__ = __len__ = __nonzero__ = __eq__ = __ne__ = \
-        fail_with_undefined_error
+        Undefined._fail_with_undefined_error
 
 
 # remove remaining slots attributes, after the metaclass did the magic they

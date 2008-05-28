@@ -174,6 +174,13 @@ operator.  Here are some examples::
         hmm. {{ user.username|e }} looks pretty normal
     {% endif %}
 
+Loops
+~~~~~
+
+For loops work very similar to Django, the only incompatibility is that in
+Jinja2 the special variable for the loop context is called `loop` and not
+`forloop` like in Django.
+
 
 Mako
 ----

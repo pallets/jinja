@@ -163,3 +163,11 @@ def test_trailing_comma(env):
 def test_block_end_name(env):
     env.from_string('{% block foo %}...{% endblock foo %}')
     raises(TemplateSyntaxError, env.from_string, '{% block x %}{% endblock y %}')
+
+
+def test_contant_casing(env):
+    for const in True, False, None:
+        tmpl = env.from_string('{{ %s }}|{{ %s }}|{{ %s }}' % (
+            str(const), str(const).lower(), str(const).upper()
+        ))
+        assert tmpl.render() == '%s|%s|' % (const, const)

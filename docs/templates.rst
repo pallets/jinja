@@ -147,18 +147,20 @@ that block::
 This will yield all elements without whitespace between them.  If `seq` was
 a list of numbers from ``1`` to ``9`` the output would be ``123456789``.
 
-Note that you must not use a whitespace between the tag and the minus sign:
+If :ref:`line-statements` are enabled they strip leading whitespace
+automatically up to the beginning of the line.
 
-    valid::
+.. admonition:: Note
+
+    You must not use a whitespace between the tag and the minus sign.
+
+    **valid**::
 
         {%- if foo -%}...{% endif %}
 
-    invalid::
+    **invalid**::
 
         {% - if foo - %}...{% endif %}
-
-If :ref:`line-statements` are enabled they strip leading whitespace
-automatically up to the beginning of the line.
 
 
 Escaping
@@ -797,8 +799,16 @@ for Python objects such as strings and numbers.  The following literals exist:
     filter.
 
 true / false:
-    true is always true and false is always false.  Keep in mind that those
-    literals are lowercase!
+    true is always true and false is always false.
+
+.. admonition:: Note
+
+    The special constants `true`, `false` and `none` are indeed lowercase.
+    Because that caused confusion in the past, when writing `True` expands
+    to an undefined variable that is considered false, all three of them can
+    be written in title case too (`True`, `False`, and `None`).  However for
+    consistency (all Jinja identifiers are lowercase) you should use the
+    lowercase versions.
 
 Math
 ~~~~
@@ -854,12 +864,12 @@ not
 (expr)
     group an expression.
 
-Note that there is no support for any bit operations or something similar.
+.. admonition:: Note
 
--   special note regarding ``not``: The ``is`` and ``in`` operators support
-    negation using an infix notation too: ``foo is not bar`` and
-    ``foo not in bar`` instead of ``not foo is bar`` and ``not foo in bar``.
-    All other expressions require a prefix notation: ``not (foo and bar).``
+    The ``is`` and ``in`` operators support negation using an infix notation
+    too: ``foo is not bar`` and ``foo not in bar`` instead of ``not foo is bar``
+    and ``not foo in bar``.  All other expressions require a prefix notation:
+    ``not (foo and bar).``
 
 
 Other Operators

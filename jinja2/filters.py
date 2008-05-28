@@ -23,8 +23,8 @@ _word_re = re.compile(r'\w+')
 
 
 def contextfilter(f):
-    """Decorator for marking context dependent filters. The current context
-    argument will be passed as first argument.
+    """Decorator for marking context dependent filters. The current
+    :class:`Context` will be passed as first argument.
     """
     if getattr(f, 'environmentfilter', False):
         raise TypeError('filter already marked as environment filter')
@@ -33,8 +33,8 @@ def contextfilter(f):
 
 
 def environmentfilter(f):
-    """Decorator for marking evironment dependent filters.  The environment
-    used for the template is passed to the filter as first argument.
+    """Decorator for marking evironment dependent filters.  The current
+    :class:`Environment` is passed to the filter as first argument.
     """
     if getattr(f, 'contextfilter', False):
         raise TypeError('filter already marked as context filter')
@@ -578,7 +578,8 @@ def do_groupby(environment, value, attribute):
 
 class _GroupTuple(tuple):
     __slots__ = ()
-    grouper, list = (property(itemgetter(x)) for x in xrange(2))
+    grouper = property(itemgetter(0))
+    list = property(itemgetter(1))
 
     def __new__(cls, (key, value)):
         return tuple.__new__(cls, (key, list(value)))

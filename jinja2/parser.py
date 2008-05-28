@@ -454,9 +454,10 @@ class Parser(object):
     def parse_primary(self, with_postfix=True):
         token = self.stream.current
         if token.type is 'name':
-            if token.value in ('true', 'false'):
-                node = nodes.Const(token.value == 'true', lineno=token.lineno)
-            elif token.value == 'none':
+            if token.value in ('true', 'false', 'True', 'False'):
+                node = nodes.Const(token.value in ('true', 'True'),
+                                   lineno=token.lineno)
+            elif token.value in ('none', 'None'):
                 node = nodes.Const(None, lineno=token.lineno)
             else:
                 node = nodes.Name(token.value, 'load', lineno=token.lineno)

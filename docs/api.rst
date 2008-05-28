@@ -95,6 +95,11 @@ For more details about unicode in Python have a look at the excellent
 High Level API
 --------------
 
+The high-level API is the API you will use in the application to load and
+render Jinja2 templates.  The :ref:`low-level-api` on the other side is only
+useful if you want to dig deeper into Jinja2 or :ref:`develop extensions
+<jinja-extensions>`.
+
 .. autoclass:: Environment([options])
     :members: from_string, get_template, join_path, extend
 
@@ -171,7 +176,7 @@ High Level API
         possibility to enhance the error message.
 
 .. autoclass:: Template
-    :members: make_module, module, new_context
+    :members: module, make_module
 
     .. attribute:: globals
 
@@ -233,11 +238,61 @@ disallows all operations beside testing if it's an undefined object.
 
 .. autoclass:: jinja2.runtime.Undefined()
 
+    .. attribute:: _undefined_hint
+
+        Either `None` or an unicode string with the error message for
+        the undefined object.
+
+    .. attribute:: _undefined_obj
+
+        Either `None` or the owner object that caused the undefined object
+        to be created (for example because an attribute does not exist).
+
+    .. attribute:: _undefined_name
+
+        The name for the undefined variable / attribute or just `None`
+        if no such information exists.
+
+    .. attribute:: _undefined_exception
+
+        The exception that the undefined object wants to raise.  This
+        is usually one of :exc:`UndefinedError` or :exc:`SecurityError`.
+
+    .. method:: _fail_with_undefined_error(\*args, \**kwargs)
+
+        When called with any arguments this method raises
+        :attr:`_undefined_exception` with an error message generated
+        from the undefined hints stored on the undefined object.
+
 .. autoclass:: jinja2.runtime.DebugUndefined()
 
 .. autoclass:: jinja2.runtime.StrictUndefined()
 
 Undefined objects are created by calling :attr:`undefined`.
+
+.. admonition:: Implementation
+
+    :class:`Undefined` objects are implemented by overriding the special
+    `__underscore__` methods.  For example the default :class:`Undefined`
+    class implements `__unicode__` in a way that it returns an empty
+    string, however `__int__` and others still fail with an exception.  To
+    allow conversion to int by returning ``0`` you can implement your own::
+
+        class NullUndefined(Undefined):
+            def __int__(self):
+                return 0
+            def __float__(self):
+                return 0.0
+
+    To disallow a method, just override it and raise
+    :attr:`_undefined_exception`.  Because this is a very common idom in
+    undefined objects there is the helper method
+    :meth:`_fail_with_undefined_error`.  That does that automatically.  Here
+    a class that works like the regular :class:`UndefinedError` but chokes
+    on iteration::
+
+        class NonIterableUndefined(Undefined):
+            __iter__ = Undefined._fail_with_undefined_error
 
 
 The Context
@@ -282,6 +337,20 @@ The Context
         in this dict are the names of the blocks, and the values a list of
         blocks registered.  The last item in each list is the current active
         block (latest in the inheritance chain).
+
+    .. automethod:: jinja2.runtime.Context.call(callable, \*args, \**kwargs)
+
+
+.. admonition:: Implementation
+
+    Context is immutable for the same reason Python's frame locals are
+    immutable inside functions.  Both Jinja2 and Python are not using the
+    context / frame locals as data storage for variables but only as primary
+    data source.
+
+    When a template accesses a variable the template does not define, Jinja2
+    looks up the variable in the context, after that the variable is treated
+    as if it was defined in the template.
 
 
 .. _loaders:
@@ -330,12 +399,16 @@ functions to a Jinja2 environment.
 
 .. function:: escape(s)
 
-    Convert the characters &, <, >, and " in string s to HTML-safe sequences.
-    Use this if you need to display text that might contain such characters
-    in HTML.  This function will not escaped objects that do have an HTML
-    representation such as already escaped data.
+    Convert the characters ``&``, ``<``, ``>``, ``'``, and ``"`` in string `s`
+    to HTML-safe sequences.  Use this if you need to display text that might
+    contain such characters in HTML.  This function will not escaped objects
+    that do have an HTML representation such as already escaped data.
+
+    The return value is a :class:`Markup` string.
 
 .. autofunction:: jinja2.utils.clear_caches
+
+.. autofunction:: jinja2.utils.is_undefined
 
 .. autoclass:: jinja2.utils.Markup
 
@@ -482,6 +555,8 @@ exist that are variables available to a specific template that are available
 to all :meth:`~Template.render` calls.
 
 
+.. _low-level-api:
+
 Low Level API
 -------------
 
@@ -518,3 +593,10 @@ don't recommend using any of those.
 
     This attribute is `False` if there is a newer version of the template
     available, otherwise `True`.
+
+.. admonition:: Note
+
+    The low-level API is fragile.  Future Jinja2 versions will not change it
+    in a backwards incompatible way but modifications in the Jinja core may
+    shine through.  For example if Jinja2 introduces a new AST node in later
+    versions that may be returned by :meth:`~Environment.parse`.

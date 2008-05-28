@@ -400,7 +400,8 @@ class Name(Expr):
     fields = ('name', 'ctx')
 
     def can_assign(self):
-        return self.name not in ('true', 'false', 'none')
+        return self.name not in ('true', 'false', 'none',
+                                 'True', 'False', 'None')
 
 
 class Literal(Expr):

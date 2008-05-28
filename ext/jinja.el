@@ -43,12 +43,12 @@
    '("\\({{ ?\\)\\([^|]*?\\)\\(|.*?\\)? ?}}" . (1 font-lock-variable-name-face))
    ;; keywords and builtins
    (cons (rx word-start
-             (or "in" "as" "reversed" "recursive" "not" "and" "or"
-                 "if" "else" "import" "with" "without" "context")
+             (or "in" "as" "recursive" "not" "and" "or" "if" "else"
+                 "import" "with" "without" "context")
              word-end)
          font-lock-keyword-face)
    (cons (rx word-start
-             (or "true" "false" "null" "loop" "block" "super" "forloop")
+             (or "true" "false" "none" "loop" "self" "super")
              word-end)
          font-lock-builtin-face)
    ;; tests

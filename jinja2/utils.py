@@ -63,21 +63,45 @@ except TypeError, _error:
 
 
 def contextfunction(f):
-    """This decorator can be used to mark a callable as context callable.  A
-    context callable is passed the active context as first argument when
-    called from the template.
+    """This decorator can be used to mark a function or method context callable.
+    A context callable is passed the active :class:`Context` as first argument when
+    called from the template.  This is useful if a function wants to get access
+    to the context or functions provided on the context object.  For example
+    a function that returns a sorted list of template variables the current
+    template exports could look like this::
+
+        @contextcallable
+        def get_exported_names(context):
+            return sorted(context.exported_vars)
     """
     f.contextfunction = True
     return f
 
 
 def environmentfunction(f):
-    """This decorator can be used to mark a callable as environment callable.
-    A environment callable is passed the current environment as first argument
-    when called from the template.
+    """This decorator can be used to mark a function or method as environment
+    callable.  This decorator works exactly like the :func:`contextfunction`
+    decorator just that the first argument is the active :class:`Environment`
+    and not context.
     """
     f.environmentfunction = True
     return f
+
+
+def is_undefined(obj):
+    """Check if the object passed is undefined.  This does nothing more than
+    performing an instance check against :class:`Undefined` but looks nicer.
+    This can be used for custom filters or tests that want to react to
+    undefined variables.  For example a custom default filter can look like
+    this::
+
+        def default(var, default=''):
+            if is_undefined(var):
+                return default
+            return var
+    """
+    from jinja2.runtime import Undefined
+    return isinstance(obj, Undefined)
 
 
 def clear_caches():
@@ -530,6 +554,14 @@ class LRUCache(object):
         return iter(tuple(self._queue))
 
     __copy__ = copy
+
+
+# register the LRU cache as mutable mapping if possible
+try:
+    from collections import MutableMapping
+    MutableMapping.register(LRUCache)
+except ImportError:
+    pass
 
 
 # we have to import it down here as the speedups module imports the

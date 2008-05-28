@@ -187,7 +187,7 @@ tb_set_next(PyObject *self, PyObject *args)
 static PyMethodDef module_methods[] = {
 	{"escape", (PyCFunction)escape, METH_O,
 	 "escape(s) -> markup\n\n"
-	 "Convert the characters &, <, >, and \" in string s to HTML-safe\n"
+	 "Convert the characters &, <, >, ', and \" in string s to HTML-safe\n"
 	 "sequences.  Use this if you need to display text that might contain\n"
 	 "such characters in HTML.  Marks return value as markup string."},
 	{"soft_unicode", (PyCFunction)soft_unicode, METH_O,

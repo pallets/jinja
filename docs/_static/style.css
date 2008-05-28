@@ -209,20 +209,25 @@ cite {
 
 div.admonition {
     margin: 10px 0 10px 0;
-    padding: 10px;
+    padding: 10px 10px 10px 60px;
     border: 1px solid #ccc;
-    background-color: #f8f8f8;
 }
 
 div.admonition p.admonition-title {
-    margin: -3px 0 5px 0;
+    background-color: #b41717;
+    color: white;
+    margin: -10px -10px 10px -60px;
+    padding: 4px 10px 4px 10px;
     font-weight: bold;
-    color: #b41717;
-    font-size: 16px;
+    font-size: 15px;
 }
 
-div.admonition p {
-    margin: 0 0 0 40px;
+div.admonition-note {
+    background: url(note.png) no-repeat 10px 40px;
+}
+
+div.admonition-implementation {
+    background: url(implementation.png) no-repeat 10px 40px;
 }
 
 #toc {
@@ -296,7 +301,8 @@ table.indextable dl dd a {
 dl.function dt,
 dl.class dt,
 dl.exception dt,
-dl.method dt {
+dl.method dt,
+dl.attribute dt {
     font-weight: normal;
 }
 
