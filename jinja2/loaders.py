@@ -23,7 +23,7 @@ def split_template_path(template):
            or (path.altsep and path.altsep in piece) or \
            piece == path.pardir:
             raise TemplateNotFound(template)
-        elif piece != '.':
+        elif piece and piece != '.':
             pieces.append(piece)
     return pieces
 

@@ -49,13 +49,16 @@ from distutils.command.build_ext import build_ext
 from distutils.errors import CCompilerError, DistutilsPlatformError
 
 
-def list_files(path):
-    for fn in os.listdir(path):
-        if fn.startswith('.'):
-            continue
-        fn = os.path.join(path, fn)
-        if os.path.isfile(fn):
-            yield fn
+data_files = []
+documentation_path = 'docs/_build/html'
+if os.path.exists(documentation_path):
+    documentation_files = []
+    for fn in os.listdir(documentation_path):
+        if not fn.startswith('.'):
+            fn = os.path.join(documentation_path, fn)
+            if os.path.isfile(fn):
+                documentation_files.append(fn)
+    data_files.append(('docs', documentation_files))
 
 
 def get_terminal_width():
@@ -91,7 +94,6 @@ class optional_build_ext(build_ext):
         print """WARNING:
 An optional C extension could not be compiled, speedups will not be
 available."""
-        print '*' * width
 
 
 setup(
@@ -119,9 +121,7 @@ setup(
         'Topic :: Text Processing :: Markup :: HTML'
     ],
     packages=['jinja2'],
-    data_files=[
-        ('docs', list(list_files('docs/_build/html')))
-    ],
+    data_files=data_files,
     features={
         'speedups': Feature("optional C speed-enhancements",
             standard=True,

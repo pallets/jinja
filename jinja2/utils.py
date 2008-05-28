@@ -70,7 +70,7 @@ def contextfunction(f):
     a function that returns a sorted list of template variables the current
     template exports could look like this::
 
-        @contextcallable
+        @contextfunction
         def get_exported_names(context):
             return sorted(context.exported_vars)
     """
@@ -248,13 +248,48 @@ def generate_lorem_ipsum(n=5, html=True, min=20, max=100):
 
 
 class Markup(unicode):
-    """Marks a string as being safe for inclusion in HTML/XML output without
+    r"""Marks a string as being safe for inclusion in HTML/XML output without
     needing to be escaped.  This implements the `__html__` interface a couple
-    of frameworks and web applications use.
+    of frameworks and web applications use.  :class:`Markup` is a direct
+    subclass of `unicode` and provides all the methods of `unicode` just that
+    it escapes arguments passed and always returns `Markup`.
 
     The `escape` function returns markup objects so that double escaping can't
     happen.  If you want to use autoescaping in Jinja just set the finalizer
     of the environment to `escape`.
+
+    The constructor of the :class:`Markup` class can be used for three
+    different things:  When passed an unicode object it's assumed to be safe,
+    when passed an object with an HTML representation (has an `__html__`
+    method) that representation is used, otherwise the object passed is
+    converted into a unicode string and then assumed to be safe:
+
+    >>> Markup("Hello <em>World</em>!")
+    Markup(u'Hello <em>World</em>!')
+    >>> class Foo(object):
+    ...  def __html__(self):
+    ...   return '<a href="#">foo</a>'
+    ... 
+    >>> Markup(Foo())
+    Markup(u'<a href="#">foo</a>')
+
+    If you want object passed being always treated as unsafe you can use the
+    :meth:`escape` classmethod to create a :class:`Markup` object:
+
+    >>> Markup.escape("Hello <em>World</em>!")
+    Markup(u'Hello &lt;em&gt;World&lt;/em&gt;!')
+
+    Operations on a markup string are markup aware which means that all
+    arguments are passed through the :func:`escape` function:
+
+    >>> em = Markup("<em>%s</em>")
+    >>> em % "foo & bar"
+    Markup(u'<em>foo &amp; bar</em>')
+    >>> strong = Markup("<strong>%(text)s</strong>")
+    >>> strong % {'text': '<blink>hacker here</blink>'}
+    Markup(u'<strong>&lt;blink&gt;hacker here&lt;/blink&gt;</strong>')
+    >>> Markup("<em>Hello</em> ") + "<foo>"
+    Markup(u'<em>Hello</em> &lt;foo&gt;')
     """
     __slots__ = ()
 
@@ -312,7 +347,12 @@ class Markup(unicode):
     splitlines.__doc__ = unicode.splitlines.__doc__
 
     def unescape(self):
-        """Unescape markup."""
+        r"""Unescape markup again into an unicode string.  This also resolves
+        known HTML4 and XHTML entities:
+
+        >>> Markup("Main &raquo; <em>About</em>").unescape()
+        u'Main \xbb <em>About</em>'
+        """
         def handle_match(m):
             name = m.group(1)
             if name in _entities:
@@ -328,13 +368,22 @@ class Markup(unicode):
         return _entity_re.sub(handle_match, unicode(self))
 
     def striptags(self):
-        """Strip tags and resolve enities."""
+        r"""Unescape markup into an unicode string and strip all tags.  This
+        also resolves known HTML4 and XHTML entities.  Whitespace is
+        normalized to one:
+
+        >>> Markup("Main &raquo;  <em>About</em>").striptags()
+        u'Main \xbb About'
+        """
         stripped = u' '.join(_striptags_re.sub('', self).split())
         return Markup(stripped).unescape()
 
     @classmethod
     def escape(cls, s):
-        """Escape the string.  Works like :func:`escape`."""
+        """Escape the string.  Works like :func:`escape` with the difference
+        that for subclasses of :class:`Markup` this function would return the
+        correct subclass.
+        """
         rv = escape(s)
         if rv.__class__ is not cls:
             return cls(rv)
@@ -392,9 +441,10 @@ class _MarkupEscapeHelper(object):
 
 class LRUCache(object):
     """A simple LRU Cache implementation."""
-    # this is fast for small capacities (something around 200) but doesn't
-    # scale.  But as long as it's only used for the database connections in
-    # a non request fallback it's fine.
+
+    # this is fast for small capacities (something below 1000) but doesn't
+    # scale.  But as long as it's only used as storage for templates this
+    # won't do any harm.
 
     def __init__(self, capacity):
         self.capacity = capacity

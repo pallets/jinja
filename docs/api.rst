@@ -89,6 +89,20 @@ unicode string.
 For more details about unicode in Python have a look at the excellent
 `Unicode documentation`_.
 
+Another important thing is how Jinja2 is handling string literals in
+templates.  A naive implementation would be using unicode strings for
+all string literals but it turned out in the past that this is problematic
+as some libraries are typechecking against `str` explicitly.  For example
+`datetime.strftime` does not accept unicode arguments.  To not break it
+completely Jinja2 is returning `str` for strings that fit into ASCII and
+for everything else `unicode`:
+
+>>> m = Template(u"{% set a, b = 'foo', 'föö' %}").module
+>>> m.a
+'foo'
+>>> m.b
+u'f\xf6\xf6'
+
 
 .. _Unicode documentation: http://docs.python.org/dev/howto/unicode.html
 
@@ -140,7 +154,7 @@ useful if you want to dig deeper into Jinja2 or :ref:`develop extensions
 
     .. automethod:: overlay([options])
 
-    .. method:: undefined([hint,] [obj,] name[, exc])
+    .. method:: undefined([hint, obj, name, exc])
 
         Creates a new :class:`Undefined` object for `name`.  This is useful
         for filters or functions that may return undefined objects for
@@ -285,11 +299,11 @@ Undefined objects are created by calling :attr:`undefined`.
                 return 0.0
 
     To disallow a method, just override it and raise
-    :attr:`_undefined_exception`.  Because this is a very common idom in
-    undefined objects there is the helper method
-    :meth:`_fail_with_undefined_error`.  That does that automatically.  Here
-    a class that works like the regular :class:`UndefinedError` but chokes
-    on iteration::
+    :attr:`~Undefined._undefined_exception`.  Because this is a very common
+    idom in undefined objects there is the helper method
+    :meth:`~Undefined._fail_with_undefined_error` that does the error raising
+    automatically.  Here a class that works like the regular :class:`Undefined`
+    but chokes on iteration::
 
         class NonIterableUndefined(Undefined):
             __iter__ = Undefined._fail_with_undefined_error
@@ -410,7 +424,14 @@ functions to a Jinja2 environment.
 
 .. autofunction:: jinja2.utils.is_undefined
 
-.. autoclass:: jinja2.utils.Markup
+.. autoclass:: jinja2.utils.Markup([string])
+    :members: escape, unescape, striptags
+
+.. admonition:: Note
+
+    The Jinja2 :class:`Markup` class is compatible with at least Pylons and
+    Genshi.  It's expected that more template engines and framework will pick
+    up the `__html__` concept soon.
 
 
 Exceptions
@@ -596,7 +617,7 @@ don't recommend using any of those.
 
 .. admonition:: Note
 
-    The low-level API is fragile.  Future Jinja2 versions will not change it
-    in a backwards incompatible way but modifications in the Jinja core may
-    shine through.  For example if Jinja2 introduces a new AST node in later
-    versions that may be returned by :meth:`~Environment.parse`.
+    The low-level API is fragile.  Future Jinja2 versions will try not to
+    change it in a backwards incompatible way but modifications in the Jinja2
+    core may shine through.  For example if Jinja2 introduces a new AST node
+    in later versions that may be returned by :meth:`~Environment.parse`.
