@@ -32,7 +32,7 @@ syn keyword jinjaStatement containedin=jinjaTagBlock contained block skipwhite n
 
 " Variable Names
 syn match jinjaVariable containedin=jinjaVarBlock,jinjaTagBlock,jinjaNested contained skipwhite /[a-zA-Z_][a-zA-Z0-9_]*/
-syn keyword jinjaSpecial containedin=jinjaVarBlock,jinjaTagBlock,jinjaNested contained false true none loop super caller varargs kwargs
+syn keyword jinjaSpecial containedin=jinjaVarBlock,jinjaTagBlock,jinjaNested contained false true none False True None loop super caller varargs kwargs
 
 " Filters
 syn match jinjaOperator "|" containedin=jinjaVarBlock,jinjaTagBlock,jinjaNested contained nextgroup=jinjaFilter
