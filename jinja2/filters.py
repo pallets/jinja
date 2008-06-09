@@ -366,9 +366,9 @@ def do_wordwrap(s, width=79, break_long_words=True):
     parameter.  If you set the second parameter to `false` Jinja will not
     split words apart if they are longer than `width`.
     """
-    return textwrap.wrap(s, width=width, expand_tabs=False,
-                         replace_whitespace=False,
-                         break_long_words=break_long_words)
+    return u'\n'.join(textwrap.wrap(s, width=width, expand_tabs=False,
+                                   replace_whitespace=False,
+                                   break_long_words=break_long_words))
 
 
 def do_wordcount(s):
