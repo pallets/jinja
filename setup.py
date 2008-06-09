@@ -35,9 +35,9 @@ Jinja2==dev``.
 
 .. _sandboxed: http://en.wikipedia.org/wiki/Sandbox_(computer_security)
 .. _Django: http://www.djangoproject.com/
-.. _jinja webpage: http://jinja2.pocoo.org/
-.. _documentation: http://jinja2.pocoo.org/documentation/index.html
-.. _Jinja tip: http://dev.pocoo.org/hg/jinja2-main/archive/tip.tar.gz#egg=Jinja2-dev
+.. _jinja2 webpage: http://jinja.pocoo.org/
+.. _documentation: http://jinja.pocoo.org/2/documentation/
+.. _Jinja2 tip: http://dev.pocoo.org/hg/jinja2-main/archive/tip.tar.gz#egg=Jinja2-dev
 """
 import os
 import sys
