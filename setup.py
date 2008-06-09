@@ -110,7 +110,7 @@ setup(
     # in form of html and txt files it's a better idea to extract the files
     zip_safe=False,
     classifiers=[
-        'Development Status :: 4 Beta',
+        'Development Status :: 4 - Beta',
         'Environment :: Web Environment',
         'Intended Audience :: Developers',
         'License :: OSI Approved :: BSD License',
