@@ -98,7 +98,7 @@ available."""
 
 setup(
     name='Jinja2',
-    version='2.0dev',
+    version='2.0rc1',
     url='http://jinja.pocoo.org/',
     license='BSD',
     author='Armin Ronacher',
