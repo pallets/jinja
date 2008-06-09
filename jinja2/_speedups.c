@@ -31,6 +31,7 @@ static Py_UNICODE *escaped_chars_repl[ESCAPED_CHARS_TABLE_SIZE];
 static int
 init_constants(void)
 {
+	PyObject *module;
 	/* happing of characters to replace */
 	escaped_chars_repl['"'] = UNICHR("&#34;");
 	escaped_chars_repl['\''] = UNICHR("&#39;");
@@ -45,7 +46,7 @@ init_constants(void)
 	escaped_chars_delta_len['<'] = escaped_chars_delta_len['>'] = 3;
 	
 	/* import markup type so that we can mark the return value */
-	PyObject *module = PyImport_ImportModule("jinja2.utils");
+	module = PyImport_ImportModule("jinja2.utils");
 	if (!module)
 		return 0;
 	markup = PyObject_GetAttrString(module, "Markup");
@@ -119,7 +120,7 @@ escape_unicode(PyUnicodeObject *in)
 static PyObject*
 escape(PyObject *self, PyObject *text)
 {
-	PyObject *s = NULL, *rv = NULL;
+	PyObject *s = NULL, *rv = NULL, *html;
 
 	/* we don't have to escape integers, bools or floats */
 	if (PyInt_CheckExact(text) || PyLong_CheckExact(text) ||
@@ -128,7 +129,7 @@ escape(PyObject *self, PyObject *text)
 		return PyObject_CallFunctionObjArgs(markup, text, NULL);
 
 	/* if the object has an __html__ method that performs the escaping */
-	PyObject *html = PyObject_GetAttrString(text, "__html__");
+	html = PyObject_GetAttrString(text, "__html__");
 	if (html) {
 		rv = PyObject_CallObject(html, NULL);
 		Py_DECREF(html);
