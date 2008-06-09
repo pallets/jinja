@@ -28,14 +28,14 @@ Philosophy
 Application logic is for the controller but don't try to make the life
 for the template designer too hard by giving him too few functionality.
 
-For more informations visit the new `jinja2 webpage`_ and `documentation`_.
+For more informations visit the new `Jinja2 webpage`_ and `documentation`_.
 
 The `Jinja2 tip`_ is installable via `easy_install` with ``easy_install
 Jinja2==dev``.
 
 .. _sandboxed: http://en.wikipedia.org/wiki/Sandbox_(computer_security)
 .. _Django: http://www.djangoproject.com/
-.. _jinja2 webpage: http://jinja.pocoo.org/
+.. _Jinja2 webpage: http://jinja.pocoo.org/
 .. _documentation: http://jinja.pocoo.org/2/documentation/
 .. _Jinja2 tip: http://dev.pocoo.org/hg/jinja2-main/archive/tip.tar.gz#egg=Jinja2-dev
 """
