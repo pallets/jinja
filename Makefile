@@ -14,8 +14,11 @@ test:
 test-coverage:
 	@(cd tests; py.test -C $(TESTS))
 
-documentation:
-	@(cd docs; ./generate.py)
+html-documentation:
+	@(cd docs; make html)
+
+pdf-documentation:
+	@(cd docs; make latex; cd _build/latex; make all-pdf)
 
 webpage:
 	@(cd ../www; ./generate.py)

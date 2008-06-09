@@ -293,10 +293,12 @@ class Markup(unicode):
     """
     __slots__ = ()
 
-    def __new__(cls, base=u''):
+    def __new__(cls, base=u'', encoding=None, errors='strict'):
         if hasattr(base, '__html__'):
             base = base.__html__()
-        return unicode.__new__(cls, base)
+        if encoding is None:
+            return unicode.__new__(cls, base)
+        return unicode.__new__(cls, base, encoding, errors)
 
     def __html__(self):
         return self
@@ -434,7 +436,7 @@ class _MarkupEscapeHelper(object):
     __getitem__ = lambda s, x: _MarkupEscapeHelper(s.obj[x])
     __unicode__ = lambda s: unicode(escape(s.obj))
     __str__ = lambda s: str(escape(s.obj))
-    __repr__ = lambda s: str(repr(escape(s.obj)))
+    __repr__ = lambda s: str(escape(repr(s.obj)))
     __int__ = lambda s: int(s.obj)
     __float__ = lambda s: float(s.obj)
 

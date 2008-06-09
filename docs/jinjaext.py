@@ -178,7 +178,6 @@ def jinja_nodes(dirname, arguments, options, content, lineno,
             doc.append('', '')
             doc.append('%s :Node type: :class:`%s`' %
                        (p, node.__base__.__name__), '')
-            # XXX: sphinx bug?  Expr gives a rst warning
         doc.append('', '')
         children = node.__subclasses__()
         children.sort(key=lambda x: x.__name__.lower())
@@ -188,8 +187,30 @@ def jinja_nodes(dirname, arguments, options, content, lineno,
     return parse_rst(state, content_offset, doc)
 
 
+def inject_toc(app, doctree, docname):
+    titleiter = iter(doctree.traverse(nodes.title))
+    try:
+        # skip first title, we are not interested in that one
+        titleiter.next()
+        title = titleiter.next()
+        # and check if there is at least another title
+        titleiter.next()
+    except StopIteration:
+        return
+    tocnode = nodes.section('')
+    tocnode['classes'].append('toc')
+    toctitle = nodes.section('')
+    toctitle['classes'].append('toctitle')
+    toctitle.append(nodes.title(text='Table Of Contents'))
+    tocnode.append(toctitle)
+    tocnode += doctree.document.settings.env.get_toc_for(docname)[0][1]
+    title.parent.insert(title.parent.children.index(title), tocnode)
+
+
 def setup(app):
     app.add_directive('jinjafilters', jinja_filters, 0, (0, 0, 0))
     app.add_directive('jinjatests', jinja_tests, 0, (0, 0, 0))
     app.add_directive('jinjachangelog', jinja_changelog, 0, (0, 0, 0))
     app.add_directive('jinjanodes', jinja_nodes, 0, (0, 0, 0))
+    # uncomment for inline toc.  links are broken unfortunately
+    ##app.connect('doctree-resolved', inject_toc)

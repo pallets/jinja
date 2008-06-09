@@ -128,13 +128,10 @@ instead that one can assign to a variable by using set::
 I don't have the _speedups Module.  Is Jinja slower now?
 --------------------------------------------------------
 
-To achieve a good performance with automatic escaping enabled the escaping
-function is implemented also written in pure C and used if Jinja2 was
-installed with the speedups module which automatically happens if a C
-compiled is available on the system.  It won't affect templates without
-auto escaping much if that feature is not enabled.  You may however
-experience werid tracebacks if you are using a Python installation, for
-more information see the next FAQ item.
+To achieve a good performance with automatic escaping enabled, the escaping
+function is also implemented in pure C and used if Jinja2 was installed with
+the speedups module.  This happens automatically if a C compiler is available
+on the system during installation.
 
 My tracebacks look weird.  What's happening?
 --------------------------------------------
@@ -145,3 +142,14 @@ Jinja2 is unable to provide correct debugging information and the traceback
 may be incomplete.  There is currently no good workaround for Jython or
 the AppEngine as ctypes is unavailable there and it's not possible to use
 the speedups extension.
+
+Why is there no Python 2.3 support?
+-----------------------------------
+
+Python 2.3 is missing a lot of features that are used heavily in Jinja2.  This
+decision was made as with the upcoming Python 2.6 and 3.0 versions it becomes
+harder to maintain the code for older Python versions.  If you really need
+Python 2.3 support you either have to use `Jinja 1`_ or other templating
+engines that still support 2.3.
+
+.. _Jinja 1: http://jinja.pocoo.org/1/

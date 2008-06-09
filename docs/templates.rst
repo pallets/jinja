@@ -218,6 +218,19 @@ precedes it.  For better readability statements that start a block (such as
     # endfor
 
 
+.. admonition:: Note
+
+    Line statements can span multiple lines if there are open parentheses,
+    braces or brackets::
+
+        <ul>
+        # for href, caption in [('index.html', 'Index'),
+                                ('about.html', 'About')]:
+            <li><a href="{{ href }}">{{ caption }}</a></li>
+        # endfor
+        </ul>
+
+
 .. _template-inheritance:
 
 Template Inheritance
