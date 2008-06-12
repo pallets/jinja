@@ -67,7 +67,7 @@ def test_item_and_attribute():
     for env in Environment(), SandboxedEnvironment():
         tmpl = env.from_string('{{ foo.items() }}')
         assert tmpl.render(foo={'items': 42}) == "[('items', 42)]"
-        tmpl = env.from_string('{{ foo|attr("items") }}')
+        tmpl = env.from_string('{{ foo|attr("items")() }}')
         assert tmpl.render(foo={'items': 42}) == "[('items', 42)]"
         tmpl = env.from_string('{{ foo["items"] }}')
         assert tmpl.render(foo={'items': 42}) == '42'

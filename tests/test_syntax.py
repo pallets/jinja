@@ -171,3 +171,8 @@ def test_contant_casing(env):
             str(const), str(const).lower(), str(const).upper()
         ))
         assert tmpl.render() == '%s|%s|' % (const, const)
+
+
+def test_test_chaining(env):
+    raises(TemplateSyntaxError, env.from_string, '{{ foo is string is sequence }}')
+    env.from_string('{{ 42 is string or 42 is number }}').render() == 'True'

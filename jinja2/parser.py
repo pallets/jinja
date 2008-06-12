@@ -703,7 +703,11 @@ class Parser(object):
             args, kwargs, dyn_args, dyn_kwargs = self.parse_call(None)
         elif self.stream.current.type in ('name', 'string', 'integer',
                                           'float', 'lparen', 'lbracket',
-                                          'lbrace'):
+                                          'lbrace') and not \
+             self.stream.current.test_any('name:else', 'name:or',
+                                          'name:and'):
+            if self.stream.current.test('name:is'):
+                self.fail('You cannot chain multiple tests with is')
             args = [self.parse_expression()]
         else:
             args = []
