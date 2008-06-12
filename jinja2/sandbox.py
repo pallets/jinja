@@ -183,7 +183,7 @@ class SandboxedEnvironment(Environment):
         return not (getattr(obj, 'unsafe_callable', False) or \
                     getattr(obj, 'alters_data', False))
 
-    def subscribe(self, obj, argument):
+    def getitem(self, obj, argument):
         """Subscribe an object from sandboxed code."""
         try:
             return obj[argument]
@@ -201,12 +201,33 @@ class SandboxedEnvironment(Environment):
                     else:
                         if self.is_safe_attribute(obj, argument, value):
                             return value
-                        return self.undefined('access to attribute %r of %r '
-                                              'object is unsafe.' % (
-                            argument,
-                            obj.__class__.__name__
-                        ), name=argument, obj=obj, exc=SecurityError)
+                        return self.unsafe_undefined(obj, argument)
         return self.undefined(obj=obj, name=argument)
+
+    def getattr(self, obj, attribute):
+        """Subscribe an object from sandboxed code and prefer the
+        attribute.  The attribute passed *must* be a bytestring.
+        """
+        try:
+            value = getattr(obj, attribute)
+        except AttributeError:
+            try:
+                return obj[argument]
+            except (TypeError, LookupError):
+                pass
+        else:
+            if self.is_safe_attribute(obj, attribute, value):
+                return value
+            return self.unsafe_undefined(obj, attribute)
+        return self.undefined(obj=obj, name=argument)
+
+    def unsafe_undefined(self, obj, attribute):
+        """Return an undefined object for unsafe attributes."""
+        return self.undefined('access to attribute %r of %r '
+                              'object is unsafe.' % (
+            attribute,
+            obj.__class__.__name__
+        ), name=attribute, obj=obj, exc=SecurityError)
 
     def call(__self, __context, __obj, *args, **kwargs):
         """Call an object from sandboxed code."""

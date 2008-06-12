@@ -572,7 +572,7 @@ def do_groupby(environment, value, attribute):
     attribute and the `list` contains all the objects that have this grouper
     in common.
     """
-    expr = lambda x: environment.subscribe(x, attribute)
+    expr = lambda x: environment.getitem(x, attribute)
     return sorted(map(_GroupTuple, groupby(sorted(value, key=expr), expr)))
 
 
@@ -624,10 +624,10 @@ def do_reverse(value):
 @environmentfilter
 def do_attr(environment, obj, name):
     """Get an attribute of an object.  ``foo|attr("bar")`` works like
-    ``foo["bar"]`` just that always an attribute is returned.  This is useful
-    if data structures are passed to the template that have an item that hides
-    an attribute with the same name.  For example a dict ``{'items': []}``
-    that obviously hides the item method of a dict.
+    ``foo["bar"]`` just that always an attribute is returned and items are not
+    looked up.
+
+    See :ref:`Notes on subscribing <notes-on-subscribing>` for more details.
     """
     try:
         value = getattr(obj, name)
@@ -635,10 +635,7 @@ def do_attr(environment, obj, name):
         return environment.undefined(obj=obj, name=name)
     if environment.sandboxed and not \
        environment.is_safe_attribute(obj, name, value):
-        return environment.undefined('access to attribute %r of %r '
-                                     'object is unsafe.' % (
-            name, obj.__class__.__name__
-        ), name=name, obj=obj, exc=SecurityError)
+        return environment.unsafe_undefined(obj, name)
     return value
 
 

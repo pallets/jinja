@@ -565,11 +565,16 @@ class Parser(object):
         token = self.stream.next()
         if token.type is 'dot':
             attr_token = self.stream.current
-            if attr_token.type not in ('name', 'integer'):
+            self.stream.next()
+            if attr_token.type is 'name':
+                return nodes.Getattr(node, attr_token.value, 'load',
+                                     lineno=token.lineno)
+            elif attr_token.type is not 'integer':
                 self.fail('expected name or number', attr_token.lineno)
             arg = nodes.Const(attr_token.value, lineno=attr_token.lineno)
-            self.stream.next()
-        elif token.type is 'lbracket':
+            return nodes.Getitem(node, arg, 'load', lineno=token.lineno)
+        if token.type is 'lbracket':
+            priority_on_attribute = False
             args = []
             while self.stream.current.type is not 'rbracket':
                 if args:
@@ -580,9 +585,8 @@ class Parser(object):
                 arg = args[0]
             else:
                 arg = nodes.Tuple(args, self.lineno, self.filename)
-        else:
-            self.fail('expected subscript expression', self.lineno)
-        return nodes.Subscript(node, arg, 'load', lineno=token.lineno)
+            return nodes.Getitem(node, arg, 'load', lineno=token.lineno)
+        self.fail('expected subscript expression', self.lineno)
 
     def parse_subscribed(self):
         lineno = self.stream.current.lineno

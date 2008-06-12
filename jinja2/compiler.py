@@ -1268,7 +1268,12 @@ class CodeGenerator(NodeVisitor):
         self.write(' %s ' % operators[node.op])
         self.visit(node.expr, frame)
 
-    def visit_Subscript(self, node, frame):
+    def visit_Getattr(self, node, frame):
+        self.write('environment.getattr(')
+        self.visit(node.node, frame)
+        self.write(', %r)' % node.attr)
+
+    def visit_Getitem(self, node, frame):
         # slices or integer subscriptions bypass the subscribe
         # method if we can determine that at compile time.
         if isinstance(node.arg, nodes.Slice) or \
@@ -1279,7 +1284,7 @@ class CodeGenerator(NodeVisitor):
             self.visit(node.arg, frame)
             self.write(']')
         else:
-            self.write('environment.subscribe(')
+            self.write('environment.getitem(')
             self.visit(node.node, frame)
             self.write(', ')
             self.visit(node.arg, frame)

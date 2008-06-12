@@ -5,4 +5,16 @@ Version 2.0
 -----------
 (codename to be selected, release around July 2008)
 
-- initial release of Jinja2
+- the subscribing of objects (looking up attributes and items) changed from
+  slightly.  It's now possible to give attributes or items a higher priority
+  by either using dot-notation lookup or the bracket syntax.  This also
+  changed the AST slightly.  `Subscript` is gone and was replaced with
+  :class:`~jinja2.nodes.Getitem` and :class:`~jinja2.nodes.Getattr`.
+
+  For more information see :ref:`the implementation details <notes-on-subscribing>`.
+
+Version 2.0rc1
+--------------
+(no codename, released on July 9th 2008)
+
+- first release of Jinja2

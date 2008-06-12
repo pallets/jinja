@@ -227,6 +227,10 @@ div.admonition p.admonition-title {
     font-size: 15px;
 }
 
+div.admonition p.admonition-title a {
+    color: white!important;
+}
+
 div.admonition-note {
     background: url(note.png) no-repeat 10px 40px;
 }

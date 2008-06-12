@@ -74,6 +74,29 @@ value.  What you can do with that kind of value depends on the application
 configuration, the default behavior is that it evaluates to an empty string
 if printed and that you can iterate over it, but every other operation fails.
 
+.. _notes-on-subscribing:
+
+.. admonition:: Implementation
+
+    The process of looking up attributes and items of objects is called
+    "subscribing" an object.  For convenience sake ``foo.bar`` in Jinja2
+    does the following things on the Python layer:
+
+    -   check if there is an attribute called `bar` on `foo`.
+    -   if there is not, check if there is an item ``'bar'`` in `foo`.
+    -   if there is not, return an undefined object.
+
+    ``foo['bar']`` on the other hand works mostly the same with the a small
+    difference in the order:
+
+    -   check if there is an item ``'bar'`` in `foo`.
+    -   if there is not, check if there is an attribute called `bar` on `foo`.
+    -   if there is not, return an undefined object.
+
+    This is important if an object has an item or attribute with the same
+    name.  Additionally there is the :func:`attr` filter that just looks up
+    attributes.
+
 .. _filters:
 
 Filters

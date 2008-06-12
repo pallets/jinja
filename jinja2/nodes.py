@@ -582,7 +582,7 @@ class Call(Expr):
             raise Impossible()
 
 
-class Subscript(Expr):
+class Getitem(Expr):
     """Subscribe an expression by an argument.  This node performs a dict
     and an attribute lookup on the object whatever succeeds.
     """
@@ -592,8 +592,24 @@ class Subscript(Expr):
         if self.ctx != 'load':
             raise Impossible()
         try:
-            return self.environment.subscribe(self.node.as_const(),
-                                              self.arg.as_const())
+            return self.environment.getitem(self.node.as_const(),
+                                            self.arg.as_const())
+        except:
+            raise Impossible()
+
+    def can_assign(self):
+        return False
+
+
+class Getattr(Expr):
+    """Subscribe an attribute."""
+    fields = ('node', 'attr', 'ctx')
+
+    def as_const(self):
+        if self.ctx != 'load':
+            raise Impossible()
+        try:
+            return self.environment.getattr(self.node.as_const(), arg)
         except:
             raise Impossible()
 

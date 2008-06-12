@@ -286,8 +286,8 @@ class Environment(object):
         """Return a fresh lexer for the environment."""
         return Lexer(self)
 
-    def subscribe(self, obj, argument):
-        """Get an item or attribute of an object."""
+    def getitem(self, obj, argument):
+        """Get an item or attribute of an object but prefer the item."""
         try:
             return obj[argument]
         except (TypeError, LookupError):
@@ -302,6 +302,19 @@ class Environment(object):
                     except AttributeError:
                         pass
             return self.undefined(obj=obj, name=argument)
+
+    def getattr(self, obj, attribute):
+        """Get an item or attribute of an object but prefer the attribute.
+        Unlike :meth:`getitem` the attribute *must* be a bytestring.
+        """
+        try:
+            return getattr(obj, attribute)
+        except AttributeError:
+            pass
+        try:
+            return obj[attribute]
+        except (TypeError, LookupError):
+            return self.undefined(obj=obj, name=attribute)
 
     def parse(self, source, name=None, filename=None):
         """Parse the sourcecode and return the abstract syntax tree.  This

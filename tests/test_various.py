@@ -60,13 +60,14 @@ def test_markup_leaks():
     assert len(counts) == 1, 'ouch, c extension seems to leak objects'
 
 
-def test_item_before_attribute():
+def test_item_and_attribute():
     from jinja2 import Environment
     from jinja2.sandbox import SandboxedEnvironment
 
     for env in Environment(), SandboxedEnvironment():
         tmpl = env.from_string('{{ foo.items() }}')
-        assert tmpl.render(foo={'items': lambda: 42}) == '42'
-        assert tmpl.render(foo={}) == '[]'
-        tmpl = env.from_string('{{ foo|attr("items")() }}')
-        assert tmpl.render(foo={'items': None}) == "[('items', None)]"
+        assert tmpl.render(foo={'items': 42}) == "[('items', 42)]"
+        tmpl = env.from_string('{{ foo|attr("items") }}')
+        assert tmpl.render(foo={'items': 42}) == "[('items', 42)]"
+        tmpl = env.from_string('{{ foo["items"] }}')
+        assert tmpl.render(foo={'items': 42}) == '42'
