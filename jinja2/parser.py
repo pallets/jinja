@@ -25,11 +25,10 @@ class Parser(object):
 
     def __init__(self, environment, source, name=None, filename=None):
         self.environment = environment
-        self.source = unicode(source)
+        self.stream = environment._tokenize(source, name, filename)
         self.name = name
         self.filename = filename
         self.closed = False
-        self.stream = environment.lexer.tokenize(self.source, name, filename)
         self.extensions = {}
         for extension in environment.extensions.itervalues():
             for tag in extension.tags:

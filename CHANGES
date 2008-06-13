@@ -13,6 +13,10 @@ Version 2.0
 
   For more information see :ref:`the implementation details <notes-on-subscribing>`.
 
+- added support for preprocessing and token stream filtering for extensions.
+  This would allow extensions to allow simplified gettext calls in template
+  data and something similar.
+
 Version 2.0rc1
 --------------
 (no codename, released on July 9th 2008)

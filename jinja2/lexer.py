@@ -133,17 +133,17 @@ class TokenStreamIterator(object):
     """
 
     def __init__(self, stream):
-        self._stream = stream
+        self.stream = stream
 
     def __iter__(self):
         return self
 
     def next(self):
-        token = self._stream.current
+        token = self.stream.current
         if token.type == 'eof':
-            self._stream.close()
+            self.stream.close()
             raise StopIteration()
-        self._stream.next(False)
+        self.stream.next()
         return token
 
 
@@ -154,11 +154,12 @@ class TokenStream(object):
     """
 
     def __init__(self, generator, name, filename):
-        self._next = generator.next
+        self._next = iter(generator).next
         self._pushed = deque()
-        self.current = Token(1, 'initial', '')
         self.name = name
         self.filename = filename
+        self.closed = False
+        self.current = Token(1, 'initial', '')
         self.next()
 
     def __iter__(self):
@@ -214,6 +215,7 @@ class TokenStream(object):
         """Close the stream."""
         self.current = Token(self.current.lineno, 'eof', '')
         self._next = None
+        self.closed = True
 
     def expect(self, expr):
         """Expect a given token type and return it.  This accepts the same
@@ -374,60 +376,60 @@ class Lexer(object):
         return newline_re.sub(self.newline_sequence, value)
 
     def tokenize(self, source, name=None, filename=None):
-        """Works like `tokeniter` but returns a tokenstream of tokens and not
-        a generator or token tuples.  Additionally all token values are already
-        converted into types and postprocessed. For example comments are removed,
-        integers and floats converted, strings unescaped etc.
+        """Calls tokeniter + tokenize and wraps it in a token stream.
+        This is currently only used for unittests.
         """
-        def generate():
-            for lineno, token, value in self.tokeniter(source, name, filename):
-                if token in ('comment_begin', 'comment', 'comment_end',
-                             'whitespace'):
-                    continue
-                elif token == 'linestatement_begin':
-                    token = 'block_begin'
-                elif token == 'linestatement_end':
-                    token = 'block_end'
-                # we are not interested in those tokens in the parser
-                elif token in ('raw_begin', 'raw_end'):
-                    continue
-                elif token == 'data':
-                    value = self._normalize_newlines(value)
-                elif token == 'keyword':
-                    token = value
-                elif token == 'name':
+        stream = self.tokeniter(source, name, filename)
+        return TokenStream(self.wrap(stream, name, filename), name, filename)
+
+    def wrap(self, stream, name=None, filename=None):
+        """This is called with the stream as returned by `tokenize` and wraps
+        every token in a :class:`Token` and converts the value.
+        """
+        for lineno, token, value in stream:
+            if token in ('comment_begin', 'comment', 'comment_end',
+                         'whitespace'):
+                continue
+            elif token == 'linestatement_begin':
+                token = 'block_begin'
+            elif token == 'linestatement_end':
+                token = 'block_end'
+            # we are not interested in those tokens in the parser
+            elif token in ('raw_begin', 'raw_end'):
+                continue
+            elif token == 'data':
+                value = self._normalize_newlines(value)
+            elif token == 'keyword':
+                token = value
+            elif token == 'name':
+                value = str(value)
+            elif token == 'string':
+                # try to unescape string
+                try:
+                    value = self._normalize_newlines(value[1:-1]) \
+                        .encode('ascii', 'backslashreplace') \
+                        .decode('unicode-escape')
+                except Exception, e:
+                    msg = str(e).split(':')[-1].strip()
+                    raise TemplateSyntaxError(msg, lineno, name, filename)
+                # if we can express it as bytestring (ascii only)
+                # we do that for support of semi broken APIs
+                # as datetime.datetime.strftime
+                try:
                     value = str(value)
-                elif token == 'string':
-                    # try to unescape string
-                    try:
-                        value = self._normalize_newlines(value[1:-1]) \
-                            .encode('ascii', 'backslashreplace') \
-                            .decode('unicode-escape')
-                    except Exception, e:
-                        msg = str(e).split(':')[-1].strip()
-                        raise TemplateSyntaxError(msg, lineno, name, filename)
-                    # if we can express it as bytestring (ascii only)
-                    # we do that for support of semi broken APIs
-                    # as datetime.datetime.strftime
-                    try:
-                        value = str(value)
-                    except UnicodeError:
-                        pass
-                elif token == 'integer':
-                    value = int(value)
-                elif token == 'float':
-                    value = float(value)
-                elif token == 'operator':
-                    token = operators[value]
-                yield Token(lineno, token, value)
-        return TokenStream(generate(), name, filename)
+                except UnicodeError:
+                    pass
+            elif token == 'integer':
+                value = int(value)
+            elif token == 'float':
+                value = float(value)
+            elif token == 'operator':
+                token = operators[value]
+            yield Token(lineno, token, value)
 
     def tokeniter(self, source, name, filename=None):
         """This method tokenizes the text and returns the tokens in a
         generator.  Use this method if you just want to tokenize a template.
-        The output you get is not compatible with the input the jinja parser
-        wants.  The parser uses the `tokenize` function with returns a
-        `TokenStream` and postprocessed tokens.
         """
         source = '\n'.join(unicode(source).splitlines())
         pos = 0

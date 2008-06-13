@@ -168,7 +168,7 @@ Extension API
 Extensions always have to extend the :class:`jinja2.ext.Extension` class:
 
 .. autoclass:: Extension
-    :members: parse, attr, call_method
+    :members: preprocess, filter_stream, parse, attr, call_method
 
     .. attribute:: identifier
 

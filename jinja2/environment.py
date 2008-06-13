@@ -10,7 +10,7 @@
 """
 import sys
 from jinja2.defaults import *
-from jinja2.lexer import Lexer
+from jinja2.lexer import Lexer, TokenStream
 from jinja2.parser import Parser
 from jinja2.optimizer import optimize
 from jinja2.compiler import generate
@@ -339,8 +339,35 @@ class Environment(object):
         tokens as tuples in the form ``(lineno, token_type, value)``.
         This can be useful for :ref:`extension development <writing-extensions>`
         and debugging templates.
+
+        This does not perform preprocessing.  If you want the preprocessing
+        of the extensions to be applied you have to filter source through
+        the :meth:`preprocess` method.
         """
-        return self.lexer.tokeniter(source, name, filename)
+        return self.lexer.tokeniter(unicode(source), name, filename)
+
+    def preprocess(self, source, name=None, filename=None):
+        """Preprocesses the source with all extensions.  This is automatically
+        called for all parsing and compiling methods but *not* for :meth:`lex`
+        because there you usually only want the actual source tokenized.
+        """
+        return reduce(lambda s, e: e.preprocess(s, name, filename),
+                      self.extensions.itervalues(), unicode(source))
+
+    def _tokenize(self, source, name, filename=None):
+        """Called by the parser to do the preprocessing and filtering
+        for all the extensions.  Returns a :class:`~jinja2.lexer.TokenStream`.
+        """
+        def _stream(iterable):
+            if not isinstance(iterable, TokenStream):
+                iterable = TokenStream(iterable, name, filename)
+            return iterable
+        source = self.preprocess(source, name, filename)
+        tokeniter = self.lexer.tokeniter(source, name, filename)
+        stream = _stream(self.lexer.wrap(tokeniter, name, filename))
+        for ext in self.extensions.itervalues():
+            stream = _stream(ext.filter_stream(stream))
+        return stream
 
     def compile(self, source, name=None, filename=None, raw=False):
         """Compile a node or template source code.  The `name` parameter is

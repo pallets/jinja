@@ -16,6 +16,7 @@ from jinja2.defaults import *
 from jinja2.environment import get_spontaneous_environment
 from jinja2.runtime import Undefined, concat
 from jinja2.exceptions import TemplateAssertionError, TemplateSyntaxError
+from jinja2.lexer import Token
 from jinja2.utils import contextfunction, import_string, Markup
 
 
@@ -66,6 +67,21 @@ class Extension(object):
         rv.__dict__.update(self.__dict__)
         rv.environment = environment
         return rv
+
+    def preprocess(self, source, name, filename=None):
+        """This method is called before the actual lexing and can be used to
+        preprocess the source.  The `filename` is optional.  The return value
+        must be the preprocessed source.
+        """
+        return source
+
+    def filter_stream(self, stream):
+        """It's passed a :class:`~jinja2.lexer.TokenStream` that can be used
+        to filter tokens returned.  This method has to return an iterable of
+        :class:`~jinja2.lexer.Token`\s, but it doesn't have to return a
+        :class:`~jinja2.lexer.TokenStream`.
+        """
+        return stream
 
     def parse(self, parser):
         """If any of the :attr:`tags` matched this method is called with the

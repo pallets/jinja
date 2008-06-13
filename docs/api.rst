@@ -590,6 +590,8 @@ don't recommend using any of those.
 
 .. automethod:: Environment.parse
 
+.. automethod:: Environment.preprocess
+
 .. automethod:: Template.new_context
 
 .. method:: Template.root_render_func(context)
