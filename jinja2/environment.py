@@ -358,15 +358,12 @@ class Environment(object):
         """Called by the parser to do the preprocessing and filtering
         for all the extensions.  Returns a :class:`~jinja2.lexer.TokenStream`.
         """
-        def _stream(iterable):
-            if not isinstance(iterable, TokenStream):
-                iterable = TokenStream(iterable, name, filename)
-            return iterable
         source = self.preprocess(source, name, filename)
-        tokeniter = self.lexer.tokeniter(source, name, filename)
-        stream = _stream(self.lexer.wrap(tokeniter, name, filename))
+        stream = self.lexer.tokenize(source, name, filename)
         for ext in self.extensions.itervalues():
-            stream = _stream(ext.filter_stream(stream))
+            stream = ext.filter_stream(stream)
+            if not isinstance(stream, TokenStream):
+                stream = TokenStream(stream, name, filename)
         return stream
 
     def compile(self, source, name=None, filename=None, raw=False):

@@ -6,11 +6,16 @@
     :copyright: 2008 by Armin Ronacher.
     :license: BSD, see LICENSE for more details.
 """
+import re
 from jinja2 import Environment, nodes
-from jinja2.ext import Extension
+from jinja2.ext import Extension, Token
 
 
 importable_object = 23
+
+
+_line_re = re.compile(r'(\r\n|\r|\n)')
+_gettext_re = re.compile(r'_\((([^)\\]*(?:\\.[^)\\]*)*))\)(?s)')
 
 
 class TestExtension(Extension):
@@ -32,6 +37,48 @@ class TestExtension(Extension):
             imported_object,
             context.blocks
         )
+
+
+class PreprocessorExtension(Extension):
+
+    def preprocess(self, source, name, filename=None):
+        return source.replace('[[TEST]]', '({{ foo }})')
+
+
+class StreamFilterExtension(Extension):
+
+    def filter_stream(self, stream):
+        for token in stream:
+            if token.type is 'data':
+                for t in self.interpolate(token):
+                    yield t
+            else:
+                yield token
+
+    def count_lines(self, value):
+        return len(_line_re.findall(value))
+
+    def interpolate(self, token):
+        pos = 0
+        end = len(token.value)
+        lineno = token.lineno
+        while 1:
+            match = _gettext_re.search(token.value, pos)
+            if match is None:
+                break
+            value = token.value[pos:match.start()]
+            if value:
+                yield Token(lineno, 'data', value)
+            lineno += self.count_lines(token.value)
+            yield Token(lineno, 'variable_begin', None)
+            yield Token(lineno, 'name', 'gettext')
+            yield Token(lineno, 'lparen', None)
+            yield Token(lineno, 'string', match.group(1))
+            yield Token(lineno, 'rparen', None)
+            yield Token(lineno, 'variable_end', None)
+            pos = match.end()
+        if pos < end:
+            yield Token(lineno, 'data', token.value[pos:])
 
 
 def test_loop_controls():
@@ -78,3 +125,16 @@ def test_rebinding():
     for env in original, overlay:
         for ext in env.extensions.itervalues():
             assert ext.environment is env
+
+
+def test_preprocessor_extension():
+    env = Environment(extensions=[PreprocessorExtension])
+    tmpl = env.from_string('{[[TEST]]}')
+    assert tmpl.render(foo=42) == '{(42)}'
+
+
+def test_streamfilter_extension():
+    env = Environment(extensions=[StreamFilterExtension])
+    env.globals['gettext'] = lambda x: x.title()
+    tmpl = env.from_string('Foo _(bar) Baz')
+    assert tmpl.render() == 'Foo Bar Baz'

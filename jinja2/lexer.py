@@ -377,7 +377,6 @@ class Lexer(object):
 
     def tokenize(self, source, name=None, filename=None):
         """Calls tokeniter + tokenize and wraps it in a token stream.
-        This is currently only used for unittests.
         """
         stream = self.tokeniter(source, name, filename)
         return TokenStream(self.wrap(stream, name, filename), name, filename)
