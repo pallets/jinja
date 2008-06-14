@@ -16,7 +16,6 @@ from jinja2.defaults import *
 from jinja2.environment import get_spontaneous_environment
 from jinja2.runtime import Undefined, concat
 from jinja2.exceptions import TemplateAssertionError, TemplateSyntaxError
-from jinja2.lexer import Token
 from jinja2.utils import contextfunction, import_string, Markup
 
 
@@ -80,6 +79,10 @@ class Extension(object):
         to filter tokens returned.  This method has to return an iterable of
         :class:`~jinja2.lexer.Token`\s, but it doesn't have to return a
         :class:`~jinja2.lexer.TokenStream`.
+
+        In the `ext` folder of the Jinja2 source distribution there is a file
+        called `inlinegettext.py` which implements a filter that utilizes this
+        method.
         """
         return stream
 
@@ -261,6 +264,8 @@ class InternationalizationExtension(Extension):
                                 'pluralize section')
                 parser.fail('control structures in translatable sections are '
                             'not allowed')
+            elif parser.stream.eos:
+                parser.fail('unclosed translation block')
             else:
                 assert False, 'internal parser error'
 

@@ -229,6 +229,11 @@ extensions:
 
         The value of the token.
 
+There is also a utility function in the lexer module that can count newline
+characters in strings:
+
+.. autofunction:: jinja2.lexer.count_newlines
+
 AST
 ~~~
 

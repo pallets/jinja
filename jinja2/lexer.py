@@ -71,6 +71,13 @@ operator_re = re.compile('(%s)' % '|'.join(re.escape(x) for x in
                          sorted(operators, key=lambda x: -len(x))))
 
 
+def count_newlines(value):
+    """Count the number of newline characters in the string.  This is
+    useful for extensions that filter a stream.
+    """
+    return len(newline_re.findall(value))
+
+
 class Failure(object):
     """Class that raises a `TemplateSyntaxError` if called.
     Used by the `Lexer` to specify known errors.

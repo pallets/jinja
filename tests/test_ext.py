@@ -8,14 +8,14 @@
 """
 import re
 from jinja2 import Environment, nodes
-from jinja2.ext import Extension, Token
+from jinja2.ext import Extension
+from jinja2.lexer import Token, count_newlines
 
 
 importable_object = 23
 
 
-_line_re = re.compile(r'(\r\n|\r|\n)')
-_gettext_re = re.compile(r'_\((([^)\\]*(?:\\.[^)\\]*)*))\)(?s)')
+_gettext_re = re.compile(r'_\((.*?)\)')
 
 
 class TestExtension(Extension):
@@ -55,9 +55,6 @@ class StreamFilterExtension(Extension):
             else:
                 yield token
 
-    def count_lines(self, value):
-        return len(_line_re.findall(value))
-
     def interpolate(self, token):
         pos = 0
         end = len(token.value)
@@ -69,7 +66,7 @@ class StreamFilterExtension(Extension):
             value = token.value[pos:match.start()]
             if value:
                 yield Token(lineno, 'data', value)
-            lineno += self.count_lines(token.value)
+            lineno += count_newlines(token.value)
             yield Token(lineno, 'variable_begin', None)
             yield Token(lineno, 'name', 'gettext')
             yield Token(lineno, 'lparen', None)
