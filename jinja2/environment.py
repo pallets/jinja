@@ -681,6 +681,33 @@ class TemplateStream(object):
         self._gen = gen
         self.disable_buffering()
 
+    def dump(self, fp, encoding=None, errors='strict'):
+        """Dump the complete stream into a file or file-like object.
+        Per default unicode strings are written, if you want to encode
+        before writing specifiy an `encoding`.
+
+        Example usage::
+
+            Template('Hello {{ name }}!').stream(name='foo').dump('hello.html')
+        """
+        close = False
+        if isinstance(fp, basestring):
+            fp = file(fp, 'w')
+            close = True
+        try:
+            if encoding is not None:
+                iterable = (x.encode(encoding, errors) for x in self)
+            else:
+                iterable = self
+            if hasattr(fp, 'writelines'):
+                fp.writelines(iterable)
+            else:
+                for item in iterable:
+                    fp.write(item)
+        finally:
+            if close:
+                fp.close()
+
     def disable_buffering(self):
         """Disable the output buffering."""
         self._next = self._gen.next

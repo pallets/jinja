@@ -216,7 +216,7 @@ useful if you want to dig deeper into Jinja2 or :ref:`develop extensions
 
 
 .. autoclass:: jinja2.environment.TemplateStream()
-    :members: disable_buffering, enable_buffering
+    :members: disable_buffering, enable_buffering, dump
 
 
 .. _identifier-naming:

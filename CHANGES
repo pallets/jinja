@@ -17,6 +17,8 @@ Version 2.0
   This would allow extensions to allow simplified gettext calls in template
   data and something similar.
 
+- added :meth:`jinja2.environment.TemplateStream.dump`.
+
 Version 2.0rc1
 --------------
 (no codename, released on July 9th 2008)
