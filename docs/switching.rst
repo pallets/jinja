@@ -181,6 +181,27 @@ For loops work very similar to Django, the only incompatibility is that in
 Jinja2 the special variable for the loop context is called `loop` and not
 `forloop` like in Django.
 
+Cycle
+~~~~~
+
+The ``{% cycle %}`` tag does not exist in Jinja because of it's implicit
+nature.  However you can achieve mostly the same by using the `cycle`
+method on a loop object.
+
+The following Django template::
+
+    {% for user in users %}
+        <li class="{% cycle 'odd' 'even' %}">{{ user }}</li>
+    {% endfor %}
+
+Would look like this in Jinja::
+
+    {% for user in users %}
+        <li class="{{ loop.cycle('odd', 'even') }}">{{ user }}</li>
+    {% endfor %}
+
+There is no equivalent of ``{% cycle ... as variable %}``.
+
 
 Mako
 ----
