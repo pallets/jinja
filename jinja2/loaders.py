@@ -9,6 +9,10 @@
     :license: BSD, see LICENSE for more details.
 """
 from os import path
+try:
+    from hashlib import sha1
+except ImportError:
+    from sha import new as sha1
 from jinja2.exceptions import TemplateNotFound
 from jinja2.utils import LRUCache
 
@@ -42,8 +46,7 @@ class BaseLoader(object):
 
         class MyLoader(BaseLoader):
 
-            def __init__(self, path, cache_size=50, auto_reload=True):
-                BaseLoader.__init__(self, cache_size, auto_reload)
+            def __init__(self, path):
                 self.path = path
 
             def get_source(self, environment, template):

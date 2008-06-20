@@ -93,7 +93,7 @@ class Environment(object):
             The string marking the begin of a print statement.
             Defaults to ``'{{'``.
 
-        `variable_stop_string`
+        `variable_end_string`
             The string marking the end of a print statement.  Defaults to
             ``'}}'``.
 
