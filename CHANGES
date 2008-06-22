@@ -19,6 +19,9 @@ Version 2.0
 
 - added :meth:`jinja2.environment.TemplateStream.dump`.
 
+- added support for implicit string literal concatenation.
+  ``{{ "foo" "bar" }}`` is equivalent to ``{{ "foobar" }}``
+
 Version 2.0rc1
 --------------
 (no codename, released on July 9th 2008)

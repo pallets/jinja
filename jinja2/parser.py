@@ -461,7 +461,15 @@ class Parser(object):
             else:
                 node = nodes.Name(token.value, 'load', lineno=token.lineno)
             self.stream.next()
-        elif token.type in ('integer', 'float', 'string'):
+        elif token.type is 'string':
+            self.stream.next()
+            buf = [token.value]
+            lineno = token.lineno
+            while self.stream.current.type is 'string':
+                buf.append(self.stream.current.value)
+                self.stream.next()
+            node = nodes.Const(''.join(buf), lineno=lineno)
+        elif token.type in ('integer', 'float'):
             self.stream.next()
             node = nodes.Const(token.value, lineno=token.lineno)
         elif token.type is 'lparen':
