@@ -59,7 +59,7 @@ too.  How a variable looks like, heavily depends on the application providing
 those.
 
 You can use a dot (``.``) to access attributes of a variable, alternative the
-so-called "subscribe" syntax (``[]``) can be used.  The following lines do
+so-called "subscript" syntax (``[]``) can be used.  The following lines do
 the same::
 
     {{ foo.bar }}
@@ -74,13 +74,12 @@ value.  What you can do with that kind of value depends on the application
 configuration, the default behavior is that it evaluates to an empty string
 if printed and that you can iterate over it, but every other operation fails.
 
-.. _notes-on-subscribing:
+.. _notes-on-subscriptions:
 
 .. admonition:: Implementation
 
-    The process of looking up attributes and items of objects is called
-    "subscribing" an object.  For convenience sake ``foo.bar`` in Jinja2
-    does the following things on the Python layer:
+    For convenience sake ``foo.bar`` in Jinja2 does the following things on
+    the Python layer:
 
     -   check if there is an attribute called `bar` on `foo`.
     -   if there is not, check if there is an item ``'bar'`` in `foo`.

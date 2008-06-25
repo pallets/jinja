@@ -316,7 +316,7 @@ class FromImport(Stmt):
     """A node that represents the from import tag.  It's important to not
     pass unsafe names to the name attribute.  The compiler translates the
     attribute lookups directly into getattr calls and does *not* use the
-    subscribe callback of the interface.  As exported variables may not
+    subscript callback of the interface.  As exported variables may not
     start with double underscores (which the parser asserts) this is not a
     problem for regular Jinja code, but if this node is used in an extension
     extra care must be taken.
@@ -583,9 +583,7 @@ class Call(Expr):
 
 
 class Getitem(Expr):
-    """Subscribe an expression by an argument.  This node performs a dict
-    and an attribute lookup on the object whatever succeeds.
-    """
+    """Get an attribute or item from an expression and prefer the item."""
     fields = ('node', 'arg', 'ctx')
 
     def as_const(self):
@@ -602,7 +600,9 @@ class Getitem(Expr):
 
 
 class Getattr(Expr):
-    """Subscribe an attribute."""
+    """Get an attribute or item from an expression that is a ascii-only
+    bytestring and prefer the attribute.
+    """
     fields = ('node', 'attr', 'ctx')
 
     def as_const(self):
