@@ -627,7 +627,7 @@ def do_attr(environment, obj, name):
     ``foo["bar"]`` just that always an attribute is returned and items are not
     looked up.
 
-    See :ref:`Notes on subscribing <notes-on-subscribing>` for more details.
+    See :ref:`Notes on subscriptions <notes-on-subscriptions>` for more details.
     """
     try:
         value = getattr(obj, name)

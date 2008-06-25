@@ -11,7 +11,7 @@ Version 2.0
   changed the AST slightly.  `Subscript` is gone and was replaced with
   :class:`~jinja2.nodes.Getitem` and :class:`~jinja2.nodes.Getattr`.
 
-  For more information see :ref:`the implementation details <notes-on-subscribing>`.
+  For more information see :ref:`the implementation details <notes-on-subscriptions>`.
 
 - added support for preprocessing and token stream filtering for extensions.
   This would allow extensions to allow simplified gettext calls in template
