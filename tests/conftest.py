@@ -18,6 +18,7 @@ from jinja2 import Environment
 from jinja2.loaders import BaseLoader
 from jinja2.exceptions import TemplateNotFound
 
+
 try:
     # This code adds support for coverage.py (see
     # http://nedbatchelder.com/code/modules/coverage.html).
@@ -67,6 +68,20 @@ loader = GlobalLoader()
 simple_env = Environment(trim_blocks=True, loader=loader, cache_size=0)
 
 
+class Directory(py.test.collect.Directory):
+
+    def run(self):
+        rv = super(Directory, self).run()
+        if self.fspath.basename == 'tests':
+            rv.append('doctests')
+        return rv
+
+    def join(self, name):
+        if name == 'doctests':
+            return JinjaDocTestModule(name, parent=self)
+        return super(Directory, self).join(name)
+
+
 class Module(py.test.collect.Module):
 
     def __init__(self, *args, **kwargs):
@@ -94,15 +109,41 @@ class JinjaTestFunction(py.test.collect.Function):
 
 class JinjaDocTest(py.test.collect.Item):
 
+    def __init__(self, *args, **kwargs):
+        realmod = kwargs.pop('realmod', False)
+        super(JinjaDocTest, self).__init__(*args, **kwargs)
+        self.realmod = realmod
+
     def run(self):
-        mod = py.std.types.ModuleType(self.name)
-        mod.__doc__ = self.obj
+        if self.realmod:
+            mod = __import__(self.name, None, None, [''])
+        else:
+            mod = py.std.types.ModuleType(self.name)
+            mod.__doc__ = self.obj
+            mod.env = self.parent.env
+            mod.MODULE = self.parent.obj
         self.execute(mod)
 
     def execute(self, mod):
-        mod.env = self.parent.env
-        mod.MODULE = self.parent.obj
         failed, tot = py.compat.doctest.testmod(mod, verbose=True)
         if failed:
             py.test.fail('doctest %s: %s failed out of %s' % (
                          self.fspath, failed, tot))
+
+
+class JinjaDocTestModule(py.test.collect.Module):
+
+    def __init__(self, *args, **kwargs):
+        super(JinjaDocTestModule, self).__init__(*args, **kwargs)
+        self.doctest_modules = [
+            'jinja2.environment', 'jinja2.compiler', 'jinja2.parser',
+            'jinja2.lexer', 'jinja2.ext', 'jinja2.sandbox',
+            'jinja2.filters', 'jinja2.tests', 'jinja2.utils',
+            'jinja2.runtime'
+        ]
+
+    def run(self):
+        return self.doctest_modules
+
+    def join(self, name):
+        return JinjaDocTest(name, parent=self, realmod=True)

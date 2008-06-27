@@ -346,7 +346,7 @@ class Undefined(object):
     >>> foo + 42
     Traceback (most recent call last):
       ...
-    jinja2.exceptions.UndefinedError: 'foo' is undefined
+    UndefinedError: 'foo' is undefined
     """
     __slots__ = ('_undefined_hint', '_undefined_obj', '_undefined_name',
                  '_undefined_exception')
@@ -415,7 +415,7 @@ class DebugUndefined(Undefined):
     >>> foo + 42
     Traceback (most recent call last):
       ...
-    jinja2.exceptions.UndefinedError: 'foo' is undefined
+    UndefinedError: 'foo' is undefined
     """
     __slots__ = ()
 
@@ -439,15 +439,15 @@ class StrictUndefined(Undefined):
     >>> str(foo)
     Traceback (most recent call last):
       ...
-    jinja2.exceptions.UndefinedError: 'foo' is undefined
+    UndefinedError: 'foo' is undefined
     >>> not foo
     Traceback (most recent call last):
       ...
-    jinja2.exceptions.UndefinedError: 'foo' is undefined
+    UndefinedError: 'foo' is undefined
     >>> foo + 42
     Traceback (most recent call last):
       ...
-    jinja2.exceptions.UndefinedError: 'foo' is undefined
+    UndefinedError: 'foo' is undefined
     """
     __slots__ = ()
     __iter__ = __unicode__ = __len__ = __nonzero__ = __eq__ = __ne__ = \

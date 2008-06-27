@@ -257,7 +257,7 @@ class ChoiceLoader(BaseLoader):
 
     >>> loader = ChoiceLoader([
     ...     FileSystemLoader('/path/to/user/templates'),
-    ...     PackageLoader('myapplication')
+    ...     PackageLoader('mypackage')
     ... ])
 
     This is useful if you want to allow users to override builtin templates

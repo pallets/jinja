@@ -321,8 +321,28 @@ class LoopControlExtension(Extension):
         return nodes.Continue(lineno=token.lineno)
 
 
-def extract_from_ast(node, gettext_functions=GETTEXT_FUNCTIONS):
-    """Extract localizable strings from the given template node.
+def extract_from_ast(node, gettext_functions=GETTEXT_FUNCTIONS,
+                     babel_style=True):
+    """Extract localizable strings from the given template node.  Per
+    default this function returns matches in babel style that means non string
+    parameters as well as keyword arguments are returned as `None`.  This
+    allows Babel to figure out what you really meant if you are using
+    gettext functions that allow keyword arguments for placeholder expansion.
+    If you don't want that behavior set the `babel_style` parameter to `False`
+    which causes only strings to be returned and parameters are always stored
+    in tuples.  As a consequence invalid gettext calls (calls without a single
+    string parameter or string parameters after non-string parameters) are
+    skipped.
+
+    This example explains the behavior:
+
+    >>> from jinja2 import Environment
+    >>> env = Environment()
+    >>> node = env.parse('{{ (_("foo"), _(), ngettext("foo", "bar", 42)) }}')
+    >>> list(extract_from_ast(node))
+    [(1, '_', 'foo'), (1, '_', ()), (1, 'ngettext', ('foo', 'bar', None))]
+    >>> list(extract_from_ast(node, babel_style=False))
+    [(1, '_', ('foo',)), (1, 'ngettext', ('foo', 'bar'))]
 
     For every string found this function yields a ``(lineno, function,
     message)`` tuple, where:
@@ -346,10 +366,22 @@ def extract_from_ast(node, gettext_functions=GETTEXT_FUNCTIONS):
             else:
                 strings.append(None)
 
-        if len(strings) == 1:
-            strings = strings[0]
+        for arg in node.kwargs:
+            strings.append(None)
+        if node.dyn_args is not None:
+            strings.append(None)
+        if node.dyn_kwargs is not None:
+            strings.append(None)
+
+        if not babel_style:
+            strings = tuple(x for x in strings if x is not None)
+            if not strings:
+                continue
         else:
-            strings = tuple(strings)
+            if len(strings) == 1:
+                strings = strings[0]
+            else:
+                strings = tuple(strings)
         yield node.lineno, node.node.name, strings
 
 
