@@ -425,7 +425,11 @@ def babel_extract(fileobj, keywords, comment_tags, options):
     )
 
     source = fileobj.read().decode(options.get('encoding', 'utf-8'))
-    node = environment.parse(source)
+    try:
+        node = environment.parse(source)
+    except TemplateSyntaxError, e:
+        # skip templates with syntax errors
+        return
     for lineno, func, message in extract_from_ast(node, keywords):
         yield lineno, func, message, []
 
