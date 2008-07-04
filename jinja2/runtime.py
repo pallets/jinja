@@ -197,14 +197,19 @@ class TemplateReference(object):
 class LoopContext(object):
     """A loop context for dynamic iteration."""
 
-    def __init__(self, iterable, enforce_length=False, recurse=None):
-        self._iterable = iterable
-        self._next = iter(iterable).next
-        self._length = None
+    def __init__(self, iterable, recurse=None):
+        self._iterator = iter(iterable)
         self._recurse = recurse
         self.index0 = -1
-        if enforce_length:
-            len(self)
+
+        # try to get the length of the iterable early.  This must be done
+        # here because there are some broken iterators around where there
+        # __len__ is the number of iterations left (i'm looking at your
+        # listreverseiterator!).
+        try:
+            self._length = len(iterable)
+        except (TypeError, AttributeError):
+            self._length = None
 
     def cycle(self, *args):
         """Cycles among the arguments with the current loop index."""
@@ -213,7 +218,7 @@ class LoopContext(object):
         return args[self.index0 % len(args)]
 
     first = property(lambda x: x.index0 == 0)
-    last = property(lambda x: x.revindex0 == 0)
+    last = property(lambda x: x.index0 + 1 == x.length)
     index = property(lambda x: x.index0 + 1)
     revindex = property(lambda x: x.length - x.index0)
     revindex0 = property(lambda x: x.length - x.index)
@@ -237,18 +242,13 @@ class LoopContext(object):
     @property
     def length(self):
         if self._length is None:
-            try:
-                # first try to get the length from the iterable (if the
-                # iterable is a sequence)
-                length = len(self._iterable)
-            except TypeError:
-                # if that's not possible (ie: iterating over a generator)
-                # we have to convert the iterable into a sequence and
-                # use the length of that.
-                self._iterable = tuple(self._iterable)
-                self._next = iter(self._iterable).next
-                length = len(tuple(self._iterable)) + self.index0 + 1
-            self._length = length
+            # if was not possible to get the length of the iterator when
+            # the loop context was created (ie: iterating over a generator)
+            # we have to convert the iterable into a sequence and use the
+            # length of that.
+            iterable = tuple(self._iterator)
+            self._iterator = iter(iterable)
+            self._length = len(iterable) + self.index0 + 1
         return self._length
 
     def __repr__(self):
@@ -272,7 +272,7 @@ class LoopContextIterator(object):
     def next(self):
         ctx = self.context
         ctx.index0 += 1
-        return ctx._next(), ctx
+        return ctx._iterator.next(), ctx
 
 
 class Macro(object):

@@ -499,6 +499,11 @@ class CondExpr(Expr):
     def as_const(self):
         if self.test.as_const():
             return self.expr1.as_const()
+
+        # if we evaluate to an undefined object, we better do that at runtime
+        if self.expr2 is None:
+            raise Impossible()
+
         return self.expr2.as_const()
 
 

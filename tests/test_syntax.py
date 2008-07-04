@@ -8,7 +8,7 @@
 """
 from py.test import raises
 from jinja2 import Environment, DictLoader
-from jinja2.exceptions import TemplateSyntaxError
+from jinja2.exceptions import TemplateSyntaxError, UndefinedError
 
 
 CALL = '''{{ foo('a', c='d', e='f', *['b'], **{'g': 'h'}) }}'''
@@ -122,6 +122,14 @@ def test_django_attr(env):
 def test_conditional_expression(env):
     tmpl = env.from_string(CONDEXPR)
     assert tmpl.render() == '0'
+
+
+def test_short_conditional_expression(env):
+    tmpl = env.from_string('<{{ 1 if false }}>')
+    assert tmpl.render() == '<>'
+
+    tmpl = env.from_string('<{{ (1 if false).bar }}>')
+    raises(UndefinedError, tmpl.render)
 
 
 def test_filter_priority(env):

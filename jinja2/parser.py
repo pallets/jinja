@@ -307,8 +307,10 @@ class Parser(object):
         expr1 = self.parse_or()
         while self.stream.skip_if('name:if'):
             expr2 = self.parse_or()
-            self.stream.expect('name:else')
-            expr3 = self.parse_condexpr()
+            if self.stream.skip_if('name:else'):
+                expr3 = self.parse_condexpr()
+            else:
+                expr3 = None
             expr1 = nodes.CondExpr(expr2, expr1, expr3, lineno=lineno)
             lineno = self.stream.current.lineno
         return expr1

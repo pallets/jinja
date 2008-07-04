@@ -19,8 +19,13 @@ Version 2.0
 
 - added :meth:`jinja2.environment.TemplateStream.dump`.
 
-- added support for implicit string literal concatenation.
+- added missing support for implicit string literal concatenation.
   ``{{ "foo" "bar" }}`` is equivalent to ``{{ "foobar" }}``
+
+- `else` is optional for conditional expressions.  If not given it evaluates
+  to `false`.
+
+- improved error reporting for undefined values by providing a position.
 
 Version 2.0rc1
 --------------

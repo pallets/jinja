@@ -622,6 +622,13 @@ class CodeGenerator(NodeVisitor):
             bool(frame.accesses_caller)
         ))
 
+    def position(self, node):
+        """Return a human readable position for the node."""
+        rv = 'line %d' % node.lineno
+        if self.name is not None:
+            rv += ' in' + repr(self.name)
+        return rv
+
     # -- Statement Visitors
 
     def visit_Template(self, node, frame=None):
@@ -835,8 +842,11 @@ class CodeGenerator(NodeVisitor):
             self.writeline('l_%s = environment.undefined(%r %% '
                            'included_template.__name__, '
                            'name=%r)' %
-                           (alias, 'the template %r does not export '
-                            'the requested name ' + repr(name), name))
+                           (alias, 'the template %%r (imported on %s) does '
+                           'not export the requested name %s' % (
+                                self.position(node),
+                                repr(name)
+                           ), name))
             self.outdent()
             if frame.toplevel:
                 var_names.append(alias)
@@ -908,10 +918,11 @@ class CodeGenerator(NodeVisitor):
         if 'loop' not in aliases and 'loop' in find_undeclared(
            node.iter_child_nodes(only=('else_', 'test')), ('loop',)):
             self.writeline("l_loop = environment.undefined(%r, name='loop')" %
-                "'loop' is undefined. the filter section of a loop as well " \
-                "as the else block doesn't have access to the special 'loop' "
-                "variable of the current loop.  Because there is no parent "
-                "loop it's undefined.")
+                ("'loop' is undefined. the filter section of a loop as well "
+                 "as the else block doesn't have access to the special 'loop'"
+                 " variable of the current loop.  Because there is no parent "
+                 "loop it's undefined.  Happened in loop on %s" %
+                 self.position(node)))
 
         self.writeline('for ', node)
         self.visit(node.target, loop_frame)
@@ -1330,13 +1341,20 @@ class CodeGenerator(NodeVisitor):
         self.write(')')
 
     def visit_CondExpr(self, node, frame):
+        def write_expr2():
+            if node.expr2 is not None:
+                return self.visit(node.expr2, frame)
+            self.write('environment.undefined(%r)' % ('the inline if-'
+                       'expression on %s evaluated to false and '
+                       'no else section was defined.' % self.position(node)))
+
         if not have_condexpr:
             self.write('((')
             self.visit(node.test, frame)
             self.write(') and (')
             self.visit(node.expr1, frame)
             self.write(',) or (')
-            self.visit(node.expr2, frame)
+            write_expr2()
             self.write(',))[0]')
         else:
             self.write('(')
@@ -1344,7 +1362,7 @@ class CodeGenerator(NodeVisitor):
             self.write(' if ')
             self.visit(node.test, frame)
             self.write(' else ')
-            self.visit(node.expr2, frame)
+            write_expr2()
             self.write(')')
 
     def visit_Call(self, node, frame, forward_caller=False):

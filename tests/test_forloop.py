@@ -116,6 +116,12 @@ def test_looploop(env):
     assert tmpl.render(table=['ab', 'cd']) == '[1|1][1|2][2|1][2|2]'
 
 
+def test_reversed_bug(env):
+    tmpl = env.from_string('{% for i in items %}{{ i }}{% if not loop.last %}'
+                           ',{% endif %}{% endfor %}')
+    assert tmpl.render(items=reversed([3, 2, 1])) == '1,2,3'
+
+
 def test_loop_errors(env):
     tmpl = env.from_string(LOOPERROR1)
     raises(UndefinedError, tmpl.render)
