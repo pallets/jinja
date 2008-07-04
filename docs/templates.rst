@@ -952,6 +952,11 @@ variable is defined, otherwise from the default layout template::
 The general syntax is ``<do something> if <something is true> else <do
 something else>``.
 
+The `else` part is optional.  If not provided the else block implicitly
+evaluates into an undefined object::
+
+    {{ '[%s]' % page.title if page.title }}
+
 
 .. _builtin-filters:
 
