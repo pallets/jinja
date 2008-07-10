@@ -313,7 +313,7 @@ class Environment(object):
             pass
         try:
             return obj[attribute]
-        except (TypeError, LookupError):
+        except (TypeError, LookupError, AttributeError):
             return self.undefined(obj=obj, name=attribute)
 
     def parse(self, source, name=None, filename=None):
