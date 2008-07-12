@@ -24,7 +24,12 @@ FILESIZEFORMAT = '{{ 100|filesizeformat }}|\
 {{ 1000|filesizeformat }}|\
 {{ 1000000|filesizeformat }}|\
 {{ 1000000000|filesizeformat }}|\
-{{ 1000000000000|filesizeformat }}'
+{{ 1000000000000|filesizeformat }}|\
+{{ 100|filesizeformat(true) }}|\
+{{ 1000|filesizeformat(true) }}|\
+{{ 1000000|filesizeformat(true) }}|\
+{{ 1000000000|filesizeformat(true) }}|\
+{{ 1000000000000|filesizeformat(true) }}'
 FIRST = '''{{ foo|first }}'''
 FLOAT = '''{{ "42"|float }}|{{ "ajsghasjgd"|float }}|{{ "32.32"|float }}'''
 FORMAT = '''{{ "%s|%s"|format("a", "b") }}'''
@@ -118,7 +123,10 @@ def test_striptags(env):
 def test_filesizeformat(env):
     tmpl = env.from_string(FILESIZEFORMAT)
     out = tmpl.render()
-    assert out == '100 Bytes|1000 Bytes|976.6 KB|953.7 MB|931.3 GB'
+    assert out == (
+        '100 Bytes|1.0 KB|1.0 MB|1.0 GB|1000.0 GB|'
+        '100 Bytes|1000 Bytes|976.6 KiB|953.7 MiB|931.3 GiB'
+    )
 
 
 def test_first(env):

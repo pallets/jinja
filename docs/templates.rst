@@ -664,6 +664,17 @@ Here an example of how a call block can be used with arguments::
     {% endcall %}
 
 
+Filters
+~~~~~~~
+
+Filter sections allow you to apply regular Jinja2 filters on a block of
+template data.  Just wrap the code in the special `filter` section::
+
+    {% filter upper %}
+        This text becomes uppercase
+    {% endfilter %}
+
+
 Assignments
 ~~~~~~~~~~~
 

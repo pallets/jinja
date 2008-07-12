@@ -264,23 +264,22 @@ def do_random(environment, seq):
         return environment.undefined('No random item, sequence was empty.')
 
 
-def do_filesizeformat(value):
+def do_filesizeformat(value, binary=False):
     """Format the value like a 'human-readable' file size (i.e. 13 KB,
-    4.1 MB, 102 bytes, etc).
+    4.1 MB, 102 bytes, etc).  Per default decimal prefixes are used (mega,
+    giga etc.), if the second parameter is set to `True` the binary
+    prefixes are (mebi, gibi).
     """
-    # fail silently
-    try:
-        bytes = float(value)
-    except TypeError:
-        bytes = 0
-
-    if bytes < 1024:
+    bytes = float(value)
+    base = binary and 1024 or 1000
+    middle = binary and 'i' or ''
+    if bytes < base:
         return "%d Byte%s" % (bytes, bytes != 1 and 's' or '')
-    elif bytes < 1024 * 1024:
-        return "%.1f KB" % (bytes / 1024)
-    elif bytes < 1024 * 1024 * 1024:
-        return "%.1f MB" % (bytes / (1024 * 1024))
-    return "%.1f GB" % (bytes / (1024 * 1024 * 1024))
+    elif bytes < base * base:
+        return "%.1f K%sB" % (bytes / base, middle)
+    elif bytes < base * base * base:
+        return "%.1f M%sB" % (bytes / (base * base), middle)
+    return "%.1f G%sB" % (bytes / (base * base * base), middle)
 
 
 def do_pprint(value, verbose=False):
