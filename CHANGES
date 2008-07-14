@@ -30,6 +30,8 @@ Version 2.0
 - `filesizeformat` filter uses decimal prefixes now per default and can be
   set to binary mode with the second parameter.
 
+- fixed bug in finalizer
+
 Version 2.0rc1
 --------------
 (no codename, released on June 9th 2008)

@@ -71,3 +71,16 @@ def test_item_and_attribute():
         assert tmpl.render(foo={'items': 42}) == "[('items', 42)]"
         tmpl = env.from_string('{{ foo["items"] }}')
         assert tmpl.render(foo={'items': 42}) == '42'
+
+
+def test_finalizer():
+    from jinja2 import Environment
+    def finalize_none_empty(value):
+        if value is None:
+            value = u''
+        return value
+    env = Environment(finalize=finalize_none_empty)
+    tmpl = env.from_string('{% for item in seq %}|{{ item }}{% endfor %}')
+    assert tmpl.render(seq=(None, 1, "foo")) == '||1|foo'
+    tmpl = env.from_string('<{{ none }}>')
+    assert tmpl.render() == '<>'

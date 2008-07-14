@@ -1045,6 +1045,11 @@ class CodeGenerator(NodeVisitor):
         if self.has_known_extends and frame.toplevel:
             return
 
+        if self.environment.finalize:
+            finalize = lambda x: unicode(self.environment.finalize(x))
+        else:
+            finalize = unicode
+
         self.newline(node)
 
         # if we are in the toplevel scope and there was already an extends
@@ -1071,7 +1076,7 @@ class CodeGenerator(NodeVisitor):
                         const = const.__html__()
                     else:
                         const = escape(const)
-                const = unicode(const)
+                const = finalize(const)
             except:
                 # if something goes wrong here we evaluate the node
                 # at runtime for easier debugging
