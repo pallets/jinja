@@ -41,8 +41,6 @@ Jinja2==dev``.
 """
 import os
 import sys
-import ez_setup
-ez_setup.use_setuptools()
 
 from setuptools import setup, Extension, Feature
 from distutils.command.build_ext import build_ext
