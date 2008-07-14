@@ -6,7 +6,7 @@
     Compiles nodes into python code.
 
     :copyright: Copyright 2008 by Armin Ronacher.
-    :license: GNU GPL.
+    :license: BSD.
 """
 from copy import copy
 from keyword import iskeyword

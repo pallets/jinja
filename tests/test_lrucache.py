@@ -6,7 +6,7 @@
     This module tests the LRU Cache
 
     :copyright: Copyright 2008 by Armin Ronacher.
-    :license: GNU GPL.
+    :license: BSD.
 """
 import thread
 import time

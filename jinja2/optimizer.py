@@ -14,7 +14,7 @@
     The solution would be a second syntax tree that has the scoping rules stored.
 
     :copyright: Copyright 2008 by Christoph Hack, Armin Ronacher.
-    :license: GNU GPL.
+    :license: BSD.
 """
 from jinja2 import nodes
 from jinja2.visitor import NodeTransformer

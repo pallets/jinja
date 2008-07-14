@@ -6,7 +6,7 @@
     This module implements a visitor for the nodes.
 
     :copyright: Copyright 2008 by Armin Ronacher.
-    :license: GNU GPL.
+    :license: BSD.
 """
 from jinja2.nodes import Node
 
