@@ -47,6 +47,11 @@ from distutils.command.build_ext import build_ext
 from distutils.errors import CCompilerError, DistutilsPlatformError
 
 
+#: don't change the variable and assignment.  the fabfile parses this
+#: file to get the version for deployment from it.
+VERSION = '2.0'
+
+
 data_files = []
 documentation_path = 'docs/_build/html'
 if os.path.exists(documentation_path):
@@ -96,7 +101,7 @@ available."""
 
 setup(
     name='Jinja2',
-    version='2.0rc1',
+    version=VERSION,
     url='http://jinja.pocoo.org/',
     license='BSD',
     author='Armin Ronacher',
