@@ -3,7 +3,7 @@ Jinja2 Changelog
 
 Version 2.0
 -----------
-(codename to be selected, release around July 2008)
+(codename jinjavitus, released on July 17th 2008)
 
 - the subscribing of objects (looking up attributes and items) changed from
   slightly.  It's now possible to give attributes or items a higher priority
