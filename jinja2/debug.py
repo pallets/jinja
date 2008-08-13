@@ -11,7 +11,7 @@
     :license: BSD.
 """
 import sys
-from types import CodeType
+from jinja2.utils import CodeType
 
 
 def translate_exception(exc_info):

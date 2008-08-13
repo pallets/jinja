@@ -10,7 +10,7 @@
 """
 import sys
 from jinja2.defaults import *
-from jinja2.lexer import Lexer, TokenStream
+from jinja2.lexer import get_lexer, TokenStream
 from jinja2.parser import Parser
 from jinja2.optimizer import optimize
 from jinja2.compiler import generate
@@ -281,10 +281,7 @@ class Environment(object):
 
         return _environment_sanity_check(rv)
 
-    @property
-    def lexer(self):
-        """Return a fresh lexer for the environment."""
-        return Lexer(self)
+    lexer = property(get_lexer, doc="The lexer for this environment.")
 
     def getitem(self, obj, argument):
         """Get an item or attribute of an object but prefer the item."""

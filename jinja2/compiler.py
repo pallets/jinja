@@ -8,14 +8,12 @@
     :copyright: Copyright 2008 by Armin Ronacher.
     :license: BSD.
 """
-from copy import copy
-from keyword import iskeyword
 from cStringIO import StringIO
 from itertools import chain
 from jinja2 import nodes
 from jinja2.visitor import NodeVisitor, NodeTransformer
 from jinja2.exceptions import TemplateAssertionError
-from jinja2.utils import Markup, concat, escape
+from jinja2.utils import Markup, concat, escape, is_python_keyword
 
 
 operators = {
@@ -164,8 +162,10 @@ class Frame(object):
 
     def copy(self):
         """Create a copy of the current one."""
-        rv = copy(self)
-        rv.identifiers = copy(self.identifiers)
+        rv = object.__new__(self.__class__)
+        rv.__dict__.update(self.__dict__)
+        rv.identifiers = object.__new__(self.identifiers.__class__)
+        rv.identifiers.__dict__.update(self.identifiers.__dict__)
         return rv
 
     def inspect(self, nodes, hard_scope=False):
@@ -186,9 +186,11 @@ class Frame(object):
         standalone thing as it shares the resources with the frame it
         was created of, but it's not a rootlevel frame any longer.
         """
-        rv = copy(self)
+        rv = self.copy()
         rv.rootlevel = False
         return rv
+
+    __copy__ = copy
 
 
 class VisitorExit(RuntimeError):
@@ -449,7 +451,7 @@ class CodeGenerator(NodeVisitor):
         # we have to make sure that no invalid call is created.
         kwarg_workaround = False
         for kwarg in chain((x.key for x in node.kwargs), extra_kwargs or ()):
-            if iskeyword(kwarg):
+            if is_python_keyword(kwarg):
                 kwarg_workaround = True
                 break
 

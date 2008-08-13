@@ -13,11 +13,11 @@
     :license: BSD.
 """
 import operator
-from types import FunctionType, MethodType, TracebackType, CodeType, \
-     FrameType, GeneratorType
 from jinja2.runtime import Undefined
 from jinja2.environment import Environment
 from jinja2.exceptions import SecurityError
+from jinja2.utils import FunctionType, MethodType, TracebackType, CodeType, \
+     FrameType, GeneratorType
 
 
 #: maximum number of items a range may produce

@@ -10,14 +10,11 @@
 """
 import re
 import sys
-import string
 try:
     from thread import allocate_lock
 except ImportError:
     from dummy_thread import allocate_lock
-from htmlentitydefs import name2codepoint
 from collections import deque
-from copy import deepcopy
 from itertools import imap
 
 
@@ -31,8 +28,8 @@ _punctuation_re = re.compile(
 _simple_email_re = re.compile(r'^\S+@[a-zA-Z0-9._-]+\.[a-zA-Z0-9._-]+$')
 _striptags_re = re.compile(r'(<!--.*?-->|<[^>]*>)')
 _entity_re = re.compile(r'&([^;]+);')
-_entities = name2codepoint.copy()
-_entities['apos'] = 39
+_letters = 'abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ'
+_digits = '0123456789'
 
 # special singleton representing missing values for the runtime
 missing = type('MissingType', (), {'__repr__': lambda x: 'missing'})()
@@ -60,6 +57,40 @@ except TypeError, _error:
     else:
         concat = _concat
     del _test_gen_bug, _error
+
+
+# ironpython without stdlib doesn't have keyword
+try:
+    from keyword import iskeyword as is_python_keyword
+except ImportError:
+    _py_identifier_re = re.compile(r'^[a-zA-Z_][a-zA-Z0-9]*$')
+    def is_python_keyword(name):
+        if _py_identifier_re.search(name) is None:
+            return False
+        try:
+            exec name + " = 42"
+        except SyntaxError:
+            return False
+        return True
+
+
+# common types.  These do exist in the special types module too which however
+# does not exist in IronPython out of the box.
+class _C(object):
+    def method(self): pass
+def _func():
+    yield None
+FunctionType = type(_func)
+GeneratorType = type(_func())
+MethodType = type(_C.method)
+CodeType = type(_C.method.func_code)
+try:
+    raise TypeError()
+except TypeError:
+    _tb = sys.exc_info()[2]
+    TracebackType = type(_tb)
+    FrameType = type(_tb.tb_frame)
+del _C, _tb, _func
 
 
 def contextfunction(f):
@@ -179,7 +210,7 @@ def urlize(text, trim_url_limit=None, nofollow=False):
                 '@' not in middle and
                 not middle.startswith('http://') and
                 len(middle) > 0 and
-                middle[0] in string.letters + string.digits and (
+                middle[0] in _letters + _digits and (
                     middle.endswith('.org') or
                     middle.endswith('.net') or
                     middle.endswith('.com')
@@ -355,10 +386,11 @@ class Markup(unicode):
         >>> Markup("Main &raquo; <em>About</em>").unescape()
         u'Main \xbb <em>About</em>'
         """
+        from jinja2.constants import HTML_ENTITIES
         def handle_match(m):
             name = m.group(1)
-            if name in _entities:
-                return unichr(_entities[name])
+            if name in HTML_ENTITIES:
+                return unichr(HTML_ENTITIES[name])
             try:
                 if name[:2] in ('#x', '#X'):
                     return unichr(int(name[2:], 16))

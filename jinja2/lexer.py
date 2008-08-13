@@ -15,7 +15,6 @@
     :license: BSD, see LICENSE for more details.
 """
 import re
-import unicodedata
 from operator import itemgetter
 from collections import deque
 from jinja2.exceptions import TemplateSyntaxError
@@ -27,9 +26,9 @@ from jinja2.utils import LRUCache
 _lexer_cache = LRUCache(50)
 
 # static regular expressions
-whitespace_re = re.compile(r'\s+(?um)')
+whitespace_re = re.compile(r'\s+', re.U)
 string_re = re.compile(r"('([^'\\]*(?:\\.[^'\\]*)*)'"
-                       r'|"([^"\\]*(?:\\.[^"\\]*)*)")(?ms)')
+                       r'|"([^"\\]*(?:\\.[^"\\]*)*)")', re.S)
 integer_re = re.compile(r'\d+')
 name_re = re.compile(r'\b[a-zA-Z_][a-zA-Z0-9_]*\b')
 float_re = re.compile(r'\d+\.\d+')
@@ -246,26 +245,22 @@ class TokenStream(object):
             self.next()
 
 
-class LexerMeta(type):
-    """Metaclass for the lexer that caches instances for
-    the same configuration in a weak value dictionary.
-    """
-
-    def __call__(cls, environment):
-        key = (environment.block_start_string,
-               environment.block_end_string,
-               environment.variable_start_string,
-               environment.variable_end_string,
-               environment.comment_start_string,
-               environment.comment_end_string,
-               environment.line_statement_prefix,
-               environment.trim_blocks,
-               environment.newline_sequence)
-        lexer = _lexer_cache.get(key)
-        if lexer is None:
-            lexer = type.__call__(cls, environment)
-            _lexer_cache[key] = lexer
-        return lexer
+def get_lexer(environment):
+    """Return a lexer which is probably cached."""
+    key = (environment.block_start_string,
+           environment.block_end_string,
+           environment.variable_start_string,
+           environment.variable_end_string,
+           environment.comment_start_string,
+           environment.comment_end_string,
+           environment.line_statement_prefix,
+           environment.trim_blocks,
+           environment.newline_sequence)
+    lexer = _lexer_cache.get(key)
+    if lexer is None:
+        lexer = Lexer(environment)
+        _lexer_cache[key] = lexer
+    return lexer
 
 
 class Lexer(object):
@@ -275,8 +270,6 @@ class Lexer(object):
     Note that the lexer is not automatically bound to an environment.
     Multiple environments can share the same lexer.
     """
-
-    __metaclass__ = LexerMeta
 
     def __init__(self, environment):
         # shortcuts
