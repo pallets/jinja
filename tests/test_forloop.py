@@ -138,3 +138,9 @@ def test_loop_filter(env):
 
 def test_loop_unassignable(env):
     raises(TemplateSyntaxError, env.from_string, LOOPUNASSIGNABLE)
+
+
+def test_scoped_special_var(env):
+    t = env.from_string('{% for s in seq %}[{{ loop.first }}{% for c in s %}'
+                        '|{{ loop.first }}{% endfor %}]{% endfor %}')
+    assert t.render(seq=('ab', 'cd')) == '[True|True|False][False|True|False]'

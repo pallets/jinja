@@ -115,10 +115,13 @@ class Identifiers(object):
             return False
         return name in self.declared
 
-    def find_shadowed(self):
-        """Find all the shadowed names."""
+    def find_shadowed(self, extra=()):
+        """Find all the shadowed names.  extra is an iterable of variables
+        that may be defined with `add_special` which may occour scoped.
+        """
         return (self.declared | self.outer_undeclared) & \
-               (self.declared_locally | self.declared_parameter)
+               (self.declared_locally | self.declared_parameter) | \
+               set(x for x in extra if self.is_declared(x))
 
 
 class Frame(object):
@@ -511,13 +514,15 @@ class CodeGenerator(NodeVisitor):
                 self.writeline('%s = environment.%s[%r]' %
                                (mapping[name], dependency, name))
 
-    def collect_shadowed(self, frame):
+    def collect_shadowed(self, frame, extra_vars=()):
         """This function returns all the shadowed variables in a dict
         in the form name: alias and will write the required assignments
         into the current scope.  No indentation takes place.
+
+        `extra_vars` is passed to `Identifiers.find_shadowed`.
         """
         aliases = {}
-        for name in frame.identifiers.find_shadowed():
+        for name in frame.identifiers.find_shadowed(extra_vars):
             aliases[name] = ident = self.temporary_identifier()
             self.writeline('%s = l_%s' % (ident, name))
         return aliases
@@ -889,18 +894,11 @@ class CodeGenerator(NodeVisitor):
                         find_undeclared(node.iter_child_nodes(
                             only=('body',)), ('loop',))
 
-        # make sure the loop variable is a special one and raise a template
-        # assertion error if a loop tries to write to loop
-        loop_frame.identifiers.add_special('loop')
-        for name in node.find_all(nodes.Name):
-            if name.ctx == 'store' and name.name == 'loop':
-                self.fail('Can\'t assign to special loop variable '
-                          'in for-loop target', name.lineno)
-
         # if we don't have an recursive loop we have to find the shadowed
-        # variables at that point
+        # variables at that point.  Because loops can be nested but the loop
+        # variable is a special one we have to enforce aliasing for it.
         if not node.recursive:
-            aliases = self.collect_shadowed(loop_frame)
+            aliases = self.collect_shadowed(loop_frame, ('loop',))
 
         # otherwise we set up a buffer and add a function def
         else:
@@ -908,6 +906,14 @@ class CodeGenerator(NodeVisitor):
             self.indent()
             self.buffer(loop_frame)
             aliases = {}
+
+        # make sure the loop variable is a special one and raise a template
+        # assertion error if a loop tries to write to loop
+        loop_frame.identifiers.add_special('loop')
+        for name in node.find_all(nodes.Name):
+            if name.ctx == 'store' and name.name == 'loop':
+                self.fail('Can\'t assign to special loop variable '
+                          'in for-loop target', name.lineno)
 
         self.pull_locals(loop_frame)
         if node.else_:
