@@ -909,7 +909,8 @@ class CodeGenerator(NodeVisitor):
 
         # make sure the loop variable is a special one and raise a template
         # assertion error if a loop tries to write to loop
-        loop_frame.identifiers.add_special('loop')
+        if extended_loop:
+            loop_frame.identifiers.add_special('loop')
         for name in node.find_all(nodes.Name):
             if name.ctx == 'store' and name.name == 'loop':
                 self.fail('Can\'t assign to special loop variable '
