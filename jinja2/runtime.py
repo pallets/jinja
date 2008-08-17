@@ -10,7 +10,8 @@
 """
 import sys
 from itertools import chain, imap
-from jinja2.utils import Markup, partial, soft_unicode, escape, missing, concat
+from jinja2.utils import Markup, partial, soft_unicode, escape, missing, \
+     concat, MethodType, FunctionType
 from jinja2.exceptions import UndefinedError, TemplateRuntimeError
 
 
@@ -20,12 +21,8 @@ __all__ = ['LoopContext', 'Context', 'TemplateReference', 'Macro', 'Markup',
            'markup_join', 'unicode_join']
 
 
-#: get the types we support for context functions.  We do not use types because
-#: IronPython doesn't provide that module out of the box.
-class _C(object):
-    meth = lambda: None
-_context_function_types = (type(lambda: None), type(_C.meth))
-del _C
+#: the types we support for context functions
+_context_function_types = (FunctionType, MethodType)
 
 
 def markup_join(seq):

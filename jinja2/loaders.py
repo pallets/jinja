@@ -8,7 +8,11 @@
     :copyright: 2008 by Armin Ronacher.
     :license: BSD, see LICENSE for more details.
 """
-from os import path
+try:
+    from os import path
+except ImportError:
+    # support for iron python without standard library
+    from _ipysupport import path
 try:
     from hashlib import sha1
 except ImportError:
