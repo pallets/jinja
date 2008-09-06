@@ -124,6 +124,13 @@ class InternationalizationExtension(Extension):
     """This extension adds gettext support to Jinja2."""
     tags = set(['trans'])
 
+    # TODO: the i18n extension is currently reevaluating values in a few
+    # situations.  Take this example:
+    #   {% trans count=something() %}{{ count }} foo{% pluralize
+    #     %}{{ count }} fooss{% endtrans %}
+    # something is called twice here.  One time for the gettext value and
+    # the other time for the n-parameter of the ngettext function.
+
     def __init__(self, environment):
         Extension.__init__(self, environment)
         environment.globals['_'] = _gettext_alias
@@ -205,7 +212,12 @@ class InternationalizationExtension(Extension):
             have_plural = True
             parser.stream.next()
             if parser.stream.current.type is not 'block_end':
-                plural_expr = parser.parse_expression()
+                name = parser.stream.expect('name')
+                if name.value not in variables:
+                    parser.fail('unknown variable %r for pluralization' %
+                                name.value, name.lineno,
+                                exc=TemplateAssertionError)
+                plural_expr = variables[name.value]
             parser.stream.expect('block_end')
             plural_names, plural = self._parse_block(parser, False)
             parser.stream.next()

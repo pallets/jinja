@@ -9,6 +9,9 @@ Version 2.1
   change an inner loop overwrote the loop variable from the outer one after
   iteration.
 
+- fixed a bug with the i18n extension that caused the explicit pluralization
+  block to look up the wrong variable.
+
 Version 2.0
 -----------
 (codename jinjavitus, released on July 17th 2008)
