@@ -407,7 +407,7 @@ class Environment(object):
         If the `parent` parameter is not `None`, :meth:`join_path` is called
         to get the real template name before loading.
 
-        The `globals` parameter can be used to provide temlate wide globals.
+        The `globals` parameter can be used to provide template wide globals.
         These variables are available in the context at render time.
 
         If the template does not exist a :exc:`TemplateNotFound` exception is
