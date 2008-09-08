@@ -135,6 +135,8 @@ class Environment(object):
 
         `autoescape`
             If set to true the XML/HTML autoescaping feature is enabled.
+            For more details about auto escaping see
+            :class:`~jinja2.utils.Markup`.
 
         `loader`
             The template loader for this environment.
