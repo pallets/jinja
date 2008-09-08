@@ -286,8 +286,8 @@ class Markup(unicode):
     it escapes arguments passed and always returns `Markup`.
 
     The `escape` function returns markup objects so that double escaping can't
-    happen.  If you want to use autoescaping in Jinja just set the finalizer
-    of the environment to `escape`.
+    happen.  If you want to use autoescaping in Jinja just enable the
+    autoescaping feature in the environment.
 
     The constructor of the :class:`Markup` class can be used for three
     different things:  When passed an unicode object it's assumed to be safe,
