@@ -26,7 +26,7 @@ LITERALS = '''{{ [] }}|{{ {} }}|{{ () }}'''
 BOOL = '''{{ true and false }}|{{ false or true }}|{{ not false }}'''
 GROUPING = '''{{ (true and false) or (false and true) and not false }}'''
 CONDEXPR = '''{{ 0 if true else 1 }}'''
-DJANGOATTR = '''{{ [1, 2, 3].0 }}'''
+DJANGOATTR = '''{{ [1, 2, 3].0 }}|{{ [[1]].0.0 }}'''
 FILTERPRIORITY = '''{{ "foo"|upper + "bar"|upper }}'''
 TUPLETEMPLATES = [
     '{{ () }}',
@@ -116,7 +116,7 @@ def test_grouping(env):
 
 def test_django_attr(env):
     tmpl = env.from_string(DJANGOATTR)
-    assert tmpl.render() == '1'
+    assert tmpl.render() == '1|1'
 
 
 def test_conditional_expression(env):

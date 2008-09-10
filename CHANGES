@@ -12,6 +12,8 @@ Version 2.1
 - fixed a bug with the i18n extension that caused the explicit pluralization
   block to look up the wrong variable.
 
+- fixed a limitation in the lexer that made ``{{ foo.0.0 }}`` impossible.
+
 Version 2.0
 -----------
 (codename jinjavitus, released on July 17th 2008)
