@@ -528,13 +528,13 @@ active :class:`Context` rather then the environment.
 Custom Tests
 ------------
 
-Tests work like filters just that there is no way for a filter to get access
+Tests work like filters just that there is no way for a test to get access
 to the environment or context and that they can't be chained.  The return
-value of a filter should be `True` or `False`.  The purpose of a filter is to
+value of a test should be `True` or `False`.  The purpose of a test is to
 give the template designers the possibility to perform type and conformability
 checks.
 
-Here a simple filter that checks if a variable is a prime number::
+Here a simple test that checks if a variable is a prime number::
 
     import math
 
