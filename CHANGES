@@ -14,6 +14,10 @@ Version 2.1
 
 - fixed a limitation in the lexer that made ``{{ foo.0.0 }}`` impossible.
 
+- index based subscribing of variables with a constant value returns an
+  undefined object now instead of raising an index error.  This was a bug
+  caused by eager optimizing.
+
 Version 2.0
 -----------
 (codename jinjavitus, released on July 17th 2008)

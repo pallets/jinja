@@ -1299,11 +1299,8 @@ class CodeGenerator(NodeVisitor):
         self.write(', %r)' % node.attr)
 
     def visit_Getitem(self, node, frame):
-        # slices or integer subscriptions bypass the getitem
-        # method if we can determine that at compile time.
-        if isinstance(node.arg, nodes.Slice) or \
-           (isinstance(node.arg, nodes.Const) and
-            isinstance(node.arg.value, (int, long))):
+        # slices bypass the environment getitem method.
+        if isinstance(node.arg, nodes.Slice):
             self.visit(node.node, frame)
             self.write('[')
             self.visit(node.arg, frame)

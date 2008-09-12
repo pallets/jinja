@@ -6,6 +6,9 @@
     :copyright: 2008 by Armin Ronacher.
     :license: BSD, see LICENSE for more details.
 """
+from py.test import raises
+from jinja2 import Template
+from jinja2.exceptions import UndefinedError
 
 
 test_default_undefined = '''
@@ -72,3 +75,8 @@ Traceback (most recent call last):
   ...
 UndefinedError: 'missing' is undefined
 '''
+
+
+def test_indexing_gives_undefined():
+    t = Template("{{ var[42].foo }}")
+    raises(UndefinedError, t.render, var=0)
