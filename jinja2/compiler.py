@@ -1051,7 +1051,7 @@ class CodeGenerator(NodeVisitor):
 
     def visit_Output(self, node, frame):
         # if we have a known extends statement, we don't output anything
-        if self.has_known_extends and frame.toplevel:
+        if self.has_known_extends and frame.block is None:
             return
 
         if self.environment.finalize:
@@ -1061,11 +1061,11 @@ class CodeGenerator(NodeVisitor):
 
         self.newline(node)
 
-        # if we are in the toplevel scope and there was already an extends
+        # if we are not in a block and there was already an extends
         # statement we have to add a check that disables our yield(s) here
         # so that they don't appear in the output.
         outdent_later = False
-        if frame.toplevel and self.extends_so_far != 0:
+        if frame.block is None and self.extends_so_far != 0:
             self.writeline('if parent_template is None:')
             self.indent()
             outdent_later = True

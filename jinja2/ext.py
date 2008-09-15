@@ -142,10 +142,13 @@ class InternationalizationExtension(Extension):
         )
 
     def _install(self, translations):
-        self.environment.globals.update(
-            gettext=translations.ugettext,
-            ngettext=translations.ungettext
-        )
+        gettext = getattr(translations, 'ugettext', None)
+        if gettext is None:
+            gettext = translations.gettext
+        ngettext = getattr(translations, 'ungettext', None)
+        if ngettext is None:
+            ngettext = translations.ngettext
+        self.environment.globals.update(gettext=gettext, ngettext=ngettext)
 
     def _install_null(self):
         self.environment.globals.update(

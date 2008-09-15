@@ -18,6 +18,14 @@ Version 2.1
   undefined object now instead of raising an index error.  This was a bug
   caused by eager optimizing.
 
+- the i18n extension looks up `foo.ugettext` now followed by `foo.gettext`
+  if an translations object is installed.  This makes dealing with custom
+  translations classes easier.
+
+- fixed a confusing behavior with conditional extending.  loops were partially
+  executed under some conditions even though they were not part of a visible
+  area.
+
 Version 2.0
 -----------
 (codename jinjavitus, released on July 17th 2008)
