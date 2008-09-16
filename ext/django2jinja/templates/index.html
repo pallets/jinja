@@ -1,0 +1,16 @@
+{% extends "layout.html" %}
+{% block title %}Foo{% endblock %}
+{% block page-body %}
+    Hello {{ name|cut:"d"|escape }}!
+
+    {% for item in seq reversed %}
+        {% if forloop.index|divisibleby:2 %}
+            <li>{{ item }}</li>
+        {% endif %}
+    {% endfor %}
+    {% ifequal foo bar %}
+        haha
+    {% else %}
+        hmm
+    {% endifequal %}
+{% endblock %}
