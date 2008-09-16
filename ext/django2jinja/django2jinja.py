@@ -12,7 +12,6 @@ import sys
 import re
 from jinja2.defaults import *
 from django.conf import settings
-settings.configure(TEMPLATE_DEBUG=True, TEMPLATE_DIRS=['templates'])
 from django.template import defaulttags as core_tags, loader, TextNode, \
      FilterExpression, libraries, Variable, loader_tags
 from django.template.debug import DebugVariableNode as VariableNode
@@ -255,4 +254,5 @@ def extends(node, writer):
 
 
 if __name__ == '__main__':
+    settings.configure(TEMPLATE_DEBUG=True, TEMPLATE_DIRS=['templates'])
     Writer().body(loader.get_template('index.html'))
