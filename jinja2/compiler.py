@@ -138,6 +138,10 @@ class Frame(object):
         # situations.
         self.rootlevel = False
 
+        # An extends statement flags the frame as silent if it occours.
+        # This is used to suppress unwanted output.
+        self.silent = False
+
         # inside some tags we are using a buffer rather than yield statements.
         # this for example affects {% filter %} or {% macro %}.  If a frame
         # is buffered this variable points to the name of the list used as
@@ -403,13 +407,15 @@ class CodeGenerator(NodeVisitor):
         self.write(s)
         self.end_write(frame)
 
-    def blockvisit(self, nodes, frame, force_generator=True):
+    def blockvisit(self, nodes, frame):
         """Visit a list of nodes as block in a frame.  If the current frame
         is no buffer a dummy ``if 0: yield None`` is written automatically
         unless the force_generator parameter is set to False.
         """
-        if frame.buffer is None and force_generator:
+        if frame.buffer is None:
             self.writeline('if 0: yield None')
+        else:
+            self.writeline('pass')
         try:
             for node in nodes:
                 self.visit(node, frame)
@@ -751,6 +757,7 @@ class CodeGenerator(NodeVisitor):
         if not frame.toplevel:
             self.fail('cannot use extend from a non top-level scope',
                       node.lineno)
+        frame.silent = True
 
         # if the number of extends statements in general is zero so
         # far, we don't have to add a check if something extended
@@ -975,7 +982,7 @@ class CodeGenerator(NodeVisitor):
             self.outdent(2)
 
         self.indent()
-        self.blockvisit(node.body, loop_frame, force_generator=True)
+        self.blockvisit(node.body, loop_frame)
         if node.else_:
             self.writeline('%s = 0' % iteration_indicator)
         self.outdent()
@@ -983,7 +990,7 @@ class CodeGenerator(NodeVisitor):
         if node.else_:
             self.writeline('if %s:' % iteration_indicator)
             self.indent()
-            self.blockvisit(node.else_, loop_frame, force_generator=False)
+            self.blockvisit(node.else_, loop_frame)
             self.outdent()
 
         # reset the aliases if there are any.
@@ -1039,7 +1046,7 @@ class CodeGenerator(NodeVisitor):
         aliases = self.collect_shadowed(filter_frame)
         self.pull_locals(filter_frame)
         self.buffer(filter_frame)
-        self.blockvisit(node.body, filter_frame, force_generator=False)
+        self.blockvisit(node.body, filter_frame)
         self.start_write(frame, node)
         self.visit_Filter(node.filter, filter_frame)
         self.end_write(frame)
@@ -1051,7 +1058,8 @@ class CodeGenerator(NodeVisitor):
 
     def visit_Output(self, node, frame):
         # if we have a known extends statement, we don't output anything
-        if self.has_known_extends and frame.block is None:
+        # if we are in a silent section
+        if self.has_known_extends and frame.silent:
             return
 
         if self.environment.finalize:
@@ -1065,7 +1073,7 @@ class CodeGenerator(NodeVisitor):
         # statement we have to add a check that disables our yield(s) here
         # so that they don't appear in the output.
         outdent_later = False
-        if frame.block is None and self.extends_so_far != 0:
+        if frame.silent and self.extends_so_far != 0:
             self.writeline('if parent_template is None:')
             self.indent()
             outdent_later = True

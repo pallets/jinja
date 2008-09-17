@@ -28,6 +28,8 @@ Version 2.1
 
 - added `sort` filter that works like `dictsort` but for arbitrary sequences.
 
+- fixed a bug with empty statements in macros.
+
 Version 2.0
 -----------
 (codename jinjavitus, released on July 17th 2008)
