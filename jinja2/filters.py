@@ -137,7 +137,7 @@ def do_title(s):
 
 
 def do_dictsort(value, case_sensitive=False, by='key'):
-    """ Sort a dict and yield (key, value) pairs. Because python dicts are
+    """Sort a dict and yield (key, value) pairs. Because python dicts are
     unsorted you may want to use this function to order them by either
     key or value:
 
@@ -162,13 +162,32 @@ def do_dictsort(value, case_sensitive=False, by='key'):
                                   '"key" or "value"')
     def sort_func(item):
         value = item[pos]
-        if isinstance(value, basestring):
-            value = unicode(value)
-            if not case_sensitive:
-                value = value.lower()
+        if isinstance(value, basestring) and not case_sensitive:
+            value = value.lower()
         return value
 
     return sorted(value.items(), key=sort_func)
+
+
+def do_sort(value, case_sensitive=False):
+    """Sort an iterable.  If the iterable is made of strings the second
+    parameter can be used to control the case sensitiveness of the
+    comparison which is disabled by default.
+
+    .. sourcecode:: jinja
+
+        {% for item in iterable|sort %}
+            ...
+        {% endfor %}
+    """
+    if not case_sensitive:
+        def sort_func(item):
+            if isinstance(item, basestring):
+                item = item.lower()
+            return item
+    else:
+        sort_func = None
+    return sorted(seq, key=sort_func)
 
 
 def do_default(value, default_value=u'', boolean=False):
@@ -653,6 +672,7 @@ FILTERS = {
     'join':                 do_join,
     'count':                len,
     'dictsort':             do_dictsort,
+    'sort':                 do_sort,
     'length':               len,
     'reverse':              do_reverse,
     'center':               do_center,

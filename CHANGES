@@ -26,6 +26,8 @@ Version 2.1
   executed under some conditions even though they were not part of a visible
   area.
 
+- added `sort` filter that works like `dictsort` but for arbitrary sequences.
+
 Version 2.0
 -----------
 (codename jinjavitus, released on July 17th 2008)
