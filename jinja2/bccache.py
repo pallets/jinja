@@ -208,7 +208,8 @@ class FileSystemBytecodeCache(BytecodeCache):
             f.close()
 
     def clear(self):
-        for filename in filter(listdir(self.directory), self.pattern % '*'):
+        files = fnmatch.filter(listdir(self.directory), self.pattern % '*')
+        for filename in files:
             try:
                 remove(path.join(self.directory, filename))
             except OSError:

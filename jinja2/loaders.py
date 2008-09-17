@@ -211,7 +211,7 @@ class DictLoader(BaseLoader):
     def get_source(self, environment, template):
         if template in self.mapping:
             source = self.mapping[template]
-            return source, None, lambda: source != self.mapping[template]
+            return source, None, lambda: source != self.mapping.get(template)
         raise TemplateNotFound(template)
 
 
