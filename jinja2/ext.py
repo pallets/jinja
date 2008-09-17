@@ -435,8 +435,9 @@ def babel_extract(fileobj, keywords, comment_tags, options):
         # fill with defaults so that environments are shared
         # with other spontaneus environments.  The rest of the
         # arguments are optimizer, undefined, finalize, autoescape,
-        # loader, cache size and auto reloading setting
-        True, Undefined, None, False, None, 0, False
+        # loader, cache size, auto reloading setting and the
+        # bytecode cache
+        True, Undefined, None, False, None, 0, False, None
     )
 
     source = fileobj.read().decode(options.get('encoding', 'utf-8'))

@@ -89,7 +89,20 @@ class BaseLoader(object):
         if globals is None:
             globals = {}
         source, filename, uptodate = self.get_source(environment, name)
-        code = environment.compile(source, name, filename)
+
+        code = bucket = None
+        if environment.bytecode_cache is not None:
+            bucket = environment.bytecode_cache.get_bucket(environment, name,
+                                                           source)
+            code = bucket.code
+
+        if code is None:
+            code = environment.compile(source, name, filename)
+
+        if bucket and bucket.code is None:
+            bucket.code = code
+            bucket.write_back()
+
         return environment.template_class.from_code(environment, code,
                                                     globals, uptodate)
 
