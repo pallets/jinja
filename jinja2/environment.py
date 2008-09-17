@@ -160,6 +160,8 @@ class Environment(object):
             If set to a bytecode cache object, this object will provide a
             cache for the internal Jinja bytecode so that templates don't
             have to be parsed if they were not changed.
+
+            See :ref:`bytecode-cache` for more information.
     """
 
     #: if this environment is sandboxed.  Modifying this variable won't make

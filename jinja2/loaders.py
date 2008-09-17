@@ -86,22 +86,32 @@ class BaseLoader(object):
         loaders (such as :class:`PrefixLoader` or :class:`ChoiceLoader`)
         will not call this method but `get_source` directly.
         """
+        code = None
         if globals is None:
             globals = {}
+
+        # first we try to get the source for this template together
+        # with the filename and the uptodate function.
         source, filename, uptodate = self.get_source(environment, name)
 
-        code = bucket = None
-        if environment.bytecode_cache is not None:
-            bucket = environment.bytecode_cache.get_bucket(environment, name,
-                                                           source)
+        # try to load the code from the bytecode cache if there is a
+        # bytecode cache configured.
+        bbc = environment.bytecode_cache
+        if bbc is not None:
+            bucket = bcc.get_bucket(environment, name, filename, source)
             code = bucket.code
 
+        # if we don't have code so far (not cached, no longer up to
+        # date) etc. we compile the template
         if code is None:
             code = environment.compile(source, name, filename)
 
-        if bucket and bucket.code is None:
+        # if the bytecode cache is available and the bucket doesn't
+        # have a code so far, we give the bucket the new code and put
+        # it back to the bytecode cache.
+        if bbc is not None and bucket.code is None:
             bucket.code = code
-            bucket.write_back()
+            bbc.set_bucket(bucket)
 
         return environment.template_class.from_code(environment, code,
                                                     globals, uptodate)

@@ -30,6 +30,8 @@ Version 2.1
 
 - fixed a bug with empty statements in macros.
 
+- implemented a bytecode cache system.  (:ref:`bytecode-cache`)
+
 Version 2.0
 -----------
 (codename jinjavitus, released on July 17th 2008)

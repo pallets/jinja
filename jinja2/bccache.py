@@ -14,9 +14,11 @@
     :copyright: Copyright 2008 by Armin Ronacher.
     :license: BSD.
 """
-from os import path
+from os import path, listdir, remove
 import marshal
+import tempfile
 import cPickle as pickle
+import fnmatch
 from cStringIO import StringIO
 try:
     from hashlib import sha1
@@ -29,128 +31,185 @@ bc_magic = 'j2' + pickle.dumps(bc_version, 2)
 
 
 class Bucket(object):
-    """Buckets are used to store the bytecode for one template.  It's
-    initialized by the bytecode cache with the checksum for the code
-    as well as the unique key.
+    """Buckets are used to store the bytecode for one template.  It's created
+    and initialized by the bytecode cache and passed to the loading functions.
 
-    The bucket then provides method to load the bytecode from file(-like)
-    objects and strings or dump it again.
+    The buckets get an internal checksum from the cache assigned and use this
+    to automatically reject outdated cache material.  Individual bytecode
+    cache subclasses don't have to care about cache invalidation.
     """
 
-    def __init__(self, cache, environment, key, checksum):
-        self._cache = cache
+    def __init__(self, environment, key, checksum):
         self.environment = environment
         self.key = key
         self.checksum = checksum
         self.reset()
 
     def reset(self):
-        """Resets the bucket (unloads the code)."""
+        """Resets the bucket (unloads the bytecode)."""
         self.code = None
 
-    def load(self, f):
-        """Loads bytecode from a f."""
+    def load_bytecode(self, f):
+        """Loads bytecode from a file or file like object."""
         # make sure the magic header is correct
         magic = f.read(len(bc_magic))
         if magic != bc_magic:
             self.reset()
             return
         # the source code of the file changed, we need to reload
-        checksum = pickle.load(f)
+        checksum = pickle.load_bytecode(f)
         if self.checksum != checksum:
             self.reset()
             return
-        # now load the code.  Because marshal is not able to load
+        # now load_bytecode the code.  Because marshal is not able to load_bytecode
         # from arbitrary streams we have to work around that
         if isinstance(f, file):
-            self.code = marshal.load(f)
+            self.code = marshal.load_bytecode(f)
         else:
             self.code = marshal.loads(f.read())
 
-    def dump(self, f):
-        """Dump the bytecode into f."""
+    def write_bytecode(self, f):
+        """Dump the bytecode into the file or file like object passed."""
         if self.code is None:
             raise TypeError('can\'t write empty bucket')
         f.write(bc_magic)
-        pickle.dump(self.checksum, f, 2)
+        pickle.write_bytecode(self.checksum, f, 2)
         if isinstance(f, file):
-            marshal.dump(self.code, f)
+            marshal.write_bytecode(self.code, f)
         else:
             f.write(marshal.dumps(self.code))
 
-    def loads(self, string):
+    def bytecode_from_string(self, string):
         """Load bytecode from a string."""
-        self.load(StringIO(string))
+        self.load_bytecode(StringIO(string))
 
-    def dumps(self):
+    def bytecode_to_string(self):
         """Return the bytecode as string."""
         out = StringIO()
-        self.dump(out)
+        self.write_bytecode(out)
         return out.getvalue()
-
-    def write_back(self):
-        """Write the bucket back to the cache."""
-        self._cache.dump_bucket(self)
 
 
 class BytecodeCache(object):
     """To implement your own bytecode cache you have to subclass this class
-    and override :meth:`load_bucket` and :meth:`dump_bucket`.  Both of these
-    methods are passed a :class:`Bucket` that they have to load or dump.
+    and override :meth:`load_bytecode` and :meth:`dump_bytecode`.  Both of
+    these methods are passed a :class:`~jinja2.bccache.Bucket`.
+
+    A very basic bytecode cache that saves the bytecode on the file system::
+
+        from os import path
+
+        class MyCache(BytecodeCache):
+
+            def __init__(self, directory):
+                self.directory = directory
+
+            def load_bytecode(self, bucket):
+                filename = path.join(self.directory, bucket.key)
+                if path.exists(filename):
+                    with file(filename, 'rb') as f:
+                        bucket.load_bytecode(f)
+
+            def dump_bytecode(self, bucket):
+                filename = path.join(self.directory, bucket.key)
+                with file(filename, 'wb') as f:
+                    bucket.write_bytecode(f)
+
+    A more advanced version of a filesystem based bytecode cache is part of
+    Jinja2.
     """
 
-    def load_bucket(self, bucket):
-        """Subclasses have to override this method to load bytecode
-        into a bucket.
+    def load_bytecode(self, bucket):
+        """Subclasses have to override this method to load bytecode into a
+        bucket.  If they are not able to find code in the cache for the
+        bucket, it must not do anything.
         """
         raise NotImplementedError()
 
-    def dump_bucket(self, bucket):
-        """Subclasses have to override this method to write the
-        bytecode from a bucket back to the cache.
+    def dump_bytecode(self, bucket):
+        """Subclasses have to override this method to write the bytecode
+        from a bucket back to the cache.  If it unable to do so it must not
+        fail silently but raise an exception.
         """
         raise NotImplementedError()
 
-    def get_cache_key(self, name):
-        """Return the unique hash key for this template name."""
-        return sha1(name.encode('utf-8')).hexdigest()
+    def clear(self):
+        """Clears the cache.  This method is not used by Jinja2 but should be
+        implemented to allow applications to clear the bytecode cache used
+        by a particular environment.
+        """
+
+    def get_cache_key(self, name, filename=None):
+        """Returns the unique hash key for this template name."""
+        hash = sha1(name.encode('utf-8'))
+        if filename is not None:
+            if isinstance(filename, unicode):
+                filename = filename.encode('utf-8')
+            hash.update('|' + filename)
+        return hash.hexdigest()
 
     def get_source_checksum(self, source):
-        """Return a checksum for the source."""
+        """Returns a checksum for the source."""
         return sha1(source.encode('utf-8')).hexdigest()
 
-    def get_bucket(self, environment, name, source):
-        """Return a cache bucket."""
-        key = self.get_cache_key(name)
+    def get_bucket(self, environment, name, filename, source):
+        """Return a cache bucket for the given template.  All arguments are
+        mandatory but filename may be `None`.
+        """
+        key = self.get_cache_key(name, filename)
         checksum = self.get_source_checksum(source)
-        bucket = Bucket(self, environment, key, checksum)
-        self.load_bucket(bucket)
+        bucket = Bucket(environment, key, checksum)
+        self.load_bytecode(bucket)
         return bucket
 
+    def set_bucket(self, bucket):
+        """Put the bucket into the cache."""
+        self.dump_bytecode(bucket)
 
-class FileSystemCache(BytecodeCache):
-    """A bytecode cache that stores bytecode on the filesystem."""
 
-    def __init__(self, directory, pattern='%s.jbc'):
+class FileSystemBytecodeCache(BytecodeCache):
+    """A bytecode cache that stores bytecode on the filesystem.  It accepts
+    two arguments: The directory where the cache items are stored and a
+    pattern string that is used to build the filename.
+
+    If no directory is specified the system temporary items folder is used.
+
+    The pattern can be used to have multiple separate caches operate on the
+    same directory.  The default pattern is ``'__jinja2_%s.cache'``.  ``%s``
+    is replaced with the cache key.
+
+    >>> bcc = FileSystemBytecodeCache('/tmp/jinja_cache', '%s.cache')
+    """
+
+    def __init__(self, directory=None, pattern='__jinja2_%s.cache'):
+        if directory is None:
+            directory = tempfile.gettempdir()
         self.directory = directory
         self.pattern = pattern
 
     def _get_cache_filename(self, bucket):
         return path.join(self.directory, self.pattern % bucket.key)
 
-    def load_bucket(self, bucket):
+    def load_bytecode(self, bucket):
         filename = self._get_cache_filename(bucket)
         if path.exists(filename):
             f = file(filename, 'rb')
             try:
-                bucket.load(f)
+                bucket.load_bytecode(f)
             finally:
                 f.close()
 
-    def dump_bucket(self, bucket):
+    def dump_bytecode(self, bucket):
         filename = self._get_cache_filename(bucket)
         f = file(filename, 'wb')
         try:
-            bucket.dump(f)
+            bucket.write_bytecode(f)
         finally:
             f.close()
+
+    def clear(self):
+        for filename in filter(listdir(self.directory), self.pattern % '*'):
+            try:
+                remove(path.join(self.directory, filename))
+            except OSError:
+                pass
