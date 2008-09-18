@@ -61,7 +61,7 @@ class Context(object):
     :class:`Undefined` object for missing variables.
     """
     __slots__ = ('parent', 'vars', 'environment', 'exported_vars', 'name',
-                 'blocks')
+                 'blocks', '__weakref__')
 
     def __init__(self, environment, parent, name, blocks):
         self.parent = parent

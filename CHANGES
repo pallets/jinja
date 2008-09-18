@@ -32,6 +32,8 @@ Version 2.1
 
 - implemented a bytecode cache system.  (:ref:`bytecode-cache`)
 
+- the template context is now weakref-able
+
 Version 2.0
 -----------
 (codename jinjavitus, released on July 17th 2008)
