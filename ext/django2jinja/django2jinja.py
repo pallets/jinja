@@ -45,8 +45,10 @@ import sys
 from jinja2.defaults import *
 from django.conf import settings
 from django.template import defaulttags as core_tags, loader, TextNode, \
-     FilterExpression, libraries, Variable, loader_tags
+     FilterExpression, libraries, Variable, loader_tags, TOKEN_TEXT, \
+     TOKEN_VAR
 from django.template.debug import DebugVariableNode as VariableNode
+from django.templatetags import i18n as i18n_tags
 from StringIO import StringIO
 
 
@@ -314,10 +316,15 @@ def text_node(writer, node):
 
 @node(Variable)
 def variable(writer, node):
+    if node.translate:
+        writer.warn('i18n system used, make sure to install translations', node)
+        writer.write('_(')
     if node.literal is not None:
         writer.literal(node.literal)
     else:
         writer.variable(node.var)
+    if node.translate:
+        writer.write(')')
 
 
 @node(VariableNode)
@@ -585,6 +592,90 @@ def regroup(writer, node):
 @node(core_tags.LoadNode)
 def warn_load(writer, node):
     writer.warn('load statement used which was ignored on conversion', node)
+
+
+@node(i18n_tags.GetAvailableLanguagesNode)
+def get_available_languages(writer, node):
+    writer.warn('make sure to provide a get_available_languages function', node)
+    writer.tag('set %s = get_available_languages()' %
+               writer.translate_variable_name(node.variable))
+
+
+@node(i18n_tags.GetCurrentLanguageNode)
+def get_current_language(writer, node):
+    writer.warn('make sure to provide a get_current_language function', node)
+    writer.tag('set %s = get_current_language()' %
+               writer.translate_variable_name(node.variable))
+
+
+@node(i18n_tags.GetCurrentLanguageBidiNode)
+def get_current_language_bidi(writer, node):
+    writer.warn('make sure to provide a get_current_language_bidi function', node)
+    writer.tag('set %s = get_current_language_bidi()' %
+               writer.translate_variable_name(node.variable))
+
+
+@node(i18n_tags.TranslateNode)
+def simple_gettext(writer, node):
+    writer.warn('i18n system used, make sure to install translations', node)
+    writer.start_variable()
+    writer.write('_(')
+    writer.node(node.value)
+    writer.write(')')
+    writer.end_variable()
+
+
+@node(i18n_tags.BlockTranslateNode)
+def translate_block(writer, node):
+    first_var = []
+    variables = set()
+
+    def touch_var(name):
+        variables.add(name)
+        if not first_var:
+            first_var.append(name)
+
+    def dump_token_list(tokens):
+        for token in tokens:
+            if token.token_type == TOKEN_TEXT:
+                writer.write(token.contents)
+            elif token.token_type == TOKEN_VAR:
+                writer.print_expr(token.contents)
+                touch_var(token.contents)
+
+    writer.warn('i18n system used, make sure to install translations', node)
+    writer.start_block()
+    writer.write('trans')
+    idx = -1
+    for idx, (key, var) in enumerate(node.extra_context.items()):
+        if idx:
+            writer.write(',')
+        writer.write(' %s=' % key)
+        touch_var(key)
+        writer.node(var.filter_expression)
+
+    have_plural = False
+    plural_var = None
+    if node.plural and node.countervar and node.counter:
+        have_plural = True
+        plural_var = node.countervar
+        if plural_var not in variables:
+            if idx > -1:
+                writer.write(',')
+            touch_var(plural_var)
+            writer.write(' %s=' % plural_var)
+            writer.node(node.counter)
+
+    writer.end_block()
+    dump_token_list(node.singular)
+    if node.plural and node.countervar and node.counter:
+        writer.start_block()
+        writer.write('pluralize')
+        if node.countervar != first_var[0]:
+            writer.write(' ' + node.countervar)
+        writer.end_block()
+        dump_token_list(node.plural)
+    writer.tag('endtrans')
 
 
 # get rid of node now, it shouldn't be used normally

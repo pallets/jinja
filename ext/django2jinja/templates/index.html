@@ -1,4 +1,5 @@
 {% extends "layout.html" %}
+{% load i18n %}
 {% block title %}Foo{% endblock %}
 {% block page-body %}
   {{ block.super }}
@@ -32,6 +33,26 @@
   {% endwith %}
 
   <pre>{% debug %}</pre>
+
+  {% blocktrans with book|title as book_t and author|title as author_t %}
+  This is {{ book_t }} by {{ author_t }}
+  {% endblocktrans %}
+
+  {% blocktrans count list|length as counter %}
+  There is only one {{ name }} object.
+  {% plural %}
+  There are {{ counter }} {{ name }} objects.
+  {% endblocktrans %}
+
+  {% blocktrans with name|escape as name count list|length as counter %}
+  There is only one {{ name }} object.
+  {% plural %}
+  There are {{ counter }} {{ name }} objects.
+  {% endblocktrans %}
+
+  {% blocktrans %}This string will have {{ value }} inside.{% endblocktrans %}
+
+  <p>{% trans "This is the title." %}</p>
 
   {% regroup people by gender as grouped %}
 {% endblock %}
