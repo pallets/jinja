@@ -14,7 +14,7 @@
     :copyright: Copyright 2008 by Armin Ronacher.
     :license: BSD.
 """
-from os import path, listdir, remove
+from os import path, listdir
 import marshal
 import tempfile
 import cPickle as pickle
@@ -208,6 +208,10 @@ class FileSystemBytecodeCache(BytecodeCache):
             f.close()
 
     def clear(self):
+        # imported lazily here because google app-engine doesn't support
+        # write access on the file system and the function does not exist
+        # normally.
+        from os import remove
         files = fnmatch.filter(listdir(self.directory), self.pattern % '*')
         for filename in files:
             try:
