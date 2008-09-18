@@ -96,8 +96,8 @@ class BaseLoader(object):
 
         # try to load the code from the bytecode cache if there is a
         # bytecode cache configured.
-        bbc = environment.bytecode_cache
-        if bbc is not None:
+        bcc = environment.bytecode_cache
+        if bcc is not None:
             bucket = bcc.get_bucket(environment, name, filename, source)
             code = bucket.code
 
@@ -109,9 +109,9 @@ class BaseLoader(object):
         # if the bytecode cache is available and the bucket doesn't
         # have a code so far, we give the bucket the new code and put
         # it back to the bytecode cache.
-        if bbc is not None and bucket.code is None:
+        if bcc is not None and bucket.code is None:
             bucket.code = code
-            bbc.set_bucket(bucket)
+            bcc.set_bucket(bucket)
 
         return environment.template_class.from_code(environment, code,
                                                     globals, uptodate)

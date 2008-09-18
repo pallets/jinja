@@ -57,14 +57,14 @@ class Bucket(object):
             self.reset()
             return
         # the source code of the file changed, we need to reload
-        checksum = pickle.load_bytecode(f)
+        checksum = pickle.load(f)
         if self.checksum != checksum:
             self.reset()
             return
-        # now load_bytecode the code.  Because marshal is not able to load_bytecode
+        # now load the code.  Because marshal is not able to load
         # from arbitrary streams we have to work around that
         if isinstance(f, file):
-            self.code = marshal.load_bytecode(f)
+            self.code = marshal.load(f)
         else:
             self.code = marshal.loads(f.read())
 
@@ -73,9 +73,9 @@ class Bucket(object):
         if self.code is None:
             raise TypeError('can\'t write empty bucket')
         f.write(bc_magic)
-        pickle.write_bytecode(self.checksum, f, 2)
+        pickle.dump(self.checksum, f, 2)
         if isinstance(f, file):
-            marshal.write_bytecode(self.code, f)
+            marshal.dump(self.code, f)
         else:
             f.write(marshal.dumps(self.code))
 
@@ -179,6 +179,8 @@ class FileSystemBytecodeCache(BytecodeCache):
     is replaced with the cache key.
 
     >>> bcc = FileSystemBytecodeCache('/tmp/jinja_cache', '%s.cache')
+
+    This bytecode cache supports clearing of the cache using the clear method.
     """
 
     def __init__(self, directory=None, pattern='__jinja2_%s.cache'):
@@ -218,3 +220,62 @@ class FileSystemBytecodeCache(BytecodeCache):
                 remove(path.join(self.directory, filename))
             except OSError:
                 pass
+
+
+class MemcachedBytecodeCache(BytecodeCache):
+    """This class implements a bytecode cache that uses a memcache cache for
+    storing the information.  It does not enforce a specific memcache library
+    (tummy's memcache or cmemcache) but will accept any class that provides
+    the minimal interface required.
+
+    Libraries compatible with this class:
+
+    -   `werkzeug <http://werkzeug.pocoo.org/>`_.contrib.cache
+    -   `python-memcached <http://www.tummy.com/Community/software/python-memcached/>`_
+    -   `cmemcache <http://gijsbert.org/cmemcache/>`_
+
+    (Unfortunately the django cache interface is not compatible because it
+    does not support storing binary data, only unicode.  You can however pass
+    the underlaying cache client to the bytecode cache which is available
+    as `django.core.cache.cache._client`.)
+
+    The minimal interface for the client passed to the constructor is this:
+
+    .. class:: MinimalClientInterface
+
+        .. method:: set(key, value[, timeout])
+
+            Stores the bytecode in the cache.  `value` is a string and
+            `timeout` the timeout of the key.  If timeout is not provided
+            a default timeout or no timeout should be assumed, if it's
+            provided it's an integer with the number of seconds the cache
+            item should exist.
+
+        .. method:: get(key)
+
+            Returns the value for the cache key.  If the item does not
+            exist in the cache the return value must be `None`.
+
+    The other arguments to the constructor are the prefix for all keys that
+    is added before the actual cache key and the timeout for the bytecode in
+    the cache system.  We recommend a high (or no) timeout.
+
+    This bytecode cache does not support clearing of used items in the cache.
+    The clear method is a no-operation function.
+    """
+
+    def __init__(self, client, prefix='jinja2/bytecode/', timeout=None):
+        self.client = client
+        self.prefix = prefix
+        self.timeout = timeout
+
+    def load_bytecode(self, bucket):
+        code = self.client.get(self.prefix + bucket.key)
+        if code is not None:
+            bucket.bytecode_from_string(code)
+
+    def dump_bytecode(self, bucket):
+        args = (self.prefix + bucket.key, bucket.bytecode_to_string())
+        if self.timeout is not None:
+            args += (self.timeout,)
+        self.client.set(*args)

@@ -436,6 +436,8 @@ Builtin bytecode caches:
 
 .. autoclass:: jinja2.FileSystemBytecodeCache
 
+.. autoclass:: jinja2.MemcachedBytecodeCache
+
 
 Utilities
 ---------

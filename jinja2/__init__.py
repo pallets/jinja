@@ -41,7 +41,8 @@ from jinja2.loaders import BaseLoader, FileSystemLoader, PackageLoader, \
      DictLoader, FunctionLoader, PrefixLoader, ChoiceLoader
 
 # bytecode caches
-from jinja2.bccache import BytecodeCache, FileSystemBytecodeCache
+from jinja2.bccache import BytecodeCache, FileSystemBytecodeCache, \
+     MemcachedBytecodeCache
 
 # undefined types
 from jinja2.runtime import Undefined, DebugUndefined, StrictUndefined
