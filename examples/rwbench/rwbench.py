@@ -78,8 +78,10 @@ def test_mako():
 
 
 from djangoext import django_loader, DjangoContext
-django_template = django_loader.get_template('index.html')
 def test_django():
+    # not cached because django is not thread safe and does
+    # not cache by itself so it would be unfair to cache it here.
+    django_template = django_loader.get_template('index.html')
     django_template.render(DjangoContext(context))
 
 

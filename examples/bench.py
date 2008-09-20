@@ -61,7 +61,7 @@ try:
 except ImportError:
     test_django = None
 else:
-    django_template = DjangoTemplate("""\
+    django_template = """\
 <!doctype html>
 <html>
   <head>
@@ -89,13 +89,16 @@ else:
     </div>
   </body>
 </html>\
-""")
+"""
 
     def test_django():
         c = DjangoContext(context)
         c['navigation'] = [('index.html', 'Index'), ('downloads.html', 'Downloads'),
                            ('products.html', 'Products')]
-        django_template.render(c)
+        # recompile template each rendering because that's what django
+        # is doing in normal situations too.  Django is not thread safe
+        # so we can't cache it in regular apps either.
+        DjangoTemplate(django_template).render(c)
 
 try:
     from mako.template import Template as MakoTemplate

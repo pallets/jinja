@@ -346,7 +346,6 @@ If you want to print a block multiple times you can however use the special
     <h1>{{ self.title() }}</h1>
     {% block body %}{% endblock %}
 
-
 Unlike Python Jinja does not support multiple inheritance.  So you can only have
 one extends tag called per rendering.
 
@@ -614,6 +613,9 @@ are available on a macro object:
 `caller`
     This is `true` if the macro accesses the special `caller` variable and may
     be called from a :ref:`call<call>` tag.
+
+If a macro name starts with an underscore it's not exported and can't
+be imported.
 
 
 .. _call:

@@ -413,7 +413,7 @@ def if_equal(writer, node):
 
 @node(loader_tags.BlockNode)
 def block(writer, node):
-    writer.tag('block ' + node.name.replace('-', '_'))
+    writer.tag('block ' + node.name.replace('-', '_').rstrip('_'))
     node = node
     while node.parent is not None:
         node = node.parent
