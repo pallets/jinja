@@ -24,9 +24,9 @@ _spontaneous_environments = LRUCache(10)
 
 
 def get_spontaneous_environment(*args):
-    """Return a new spontaneus environment.  A spontaneus environment is an
-    unnamed and unaccessable (in theory) environment that is used for
-    template generated from a string and not from the file system.
+    """Return a new spontaneous environment.  A spontaneous environment is an
+    unnamed and unaccessible (in theory) environment that is used for
+    templates generated from a string and not from the file system.
     """
     try:
         env = _spontaneous_environments.get(args)
@@ -528,7 +528,7 @@ class Template(object):
         t.filename = code.co_filename
         t.blocks = namespace['blocks']
 
-        # render function and module 
+        # render function and module
         t.root_render_func = namespace['root']
         t._module = None
 

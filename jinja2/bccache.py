@@ -236,7 +236,7 @@ class MemcachedBytecodeCache(BytecodeCache):
 
     (Unfortunately the django cache interface is not compatible because it
     does not support storing binary data, only unicode.  You can however pass
-    the underlaying cache client to the bytecode cache which is available
+    the underlying cache client to the bytecode cache which is available
     as `django.core.cache.cache._client`.)
 
     The minimal interface for the client passed to the constructor is this:
