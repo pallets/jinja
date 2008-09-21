@@ -82,4 +82,4 @@ def render_to_response(template_name, context=None, request=None,
                        processors=None, mimetype=None):
     """Render a template into a response object."""
     return HttpResponse(render_to_string(template_name, context, request,
-                                         processors), mimetype=None)
+                                         processors), mimetype=mimetype)
