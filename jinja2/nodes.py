@@ -464,6 +464,9 @@ class Keyword(Helper):
     """A key, value pair for keyword arguments where key is a string."""
     fields = ('key', 'value')
 
+    def as_const(self):
+        return self.key, self.value.as_const()
+
 
 class CondExpr(Expr):
     """A conditional expression (inline if expression).  (``{{
