@@ -138,9 +138,9 @@ class Frame(object):
         # situations.
         self.rootlevel = False
 
-        # An extends statement flags the frame as silent if it occours.
-        # This is used to suppress unwanted output.
-        self.silent = False
+        # in some dynamic inheritance situations the compiler needs to add
+        # write tests around output statements.
+        self.require_output_check = parent and parent.require_output_check
 
         # inside some tags we are using a buffer rather than yield statements.
         # this for example affects {% filter %} or {% macro %}.  If a frame
@@ -682,6 +682,7 @@ class CodeGenerator(NodeVisitor):
         frame = Frame()
         frame.inspect(node.body)
         frame.toplevel = frame.rootlevel = True
+        frame.require_output_check = have_extends and not self.has_known_extends
         self.indent()
         if have_extends:
             self.writeline('parent_template = None')
@@ -757,7 +758,6 @@ class CodeGenerator(NodeVisitor):
         if not frame.toplevel:
             self.fail('cannot use extend from a non top-level scope',
                       node.lineno)
-        frame.silent = True
 
         # if the number of extends statements in general is zero so
         # far, we don't have to add a check if something extended
@@ -773,12 +773,12 @@ class CodeGenerator(NodeVisitor):
                 self.indent()
             self.writeline('raise TemplateRuntimeError(%r)' %
                            'extended multiple times')
+            self.outdent()
 
             # if we have a known extends already we don't need that code here
             # as we know that the template execution will end here.
             if self.has_known_extends:
                 raise CompilerExit()
-            self.outdent()
 
         self.writeline('parent_template = environment.get_template(', node)
         self.visit(node.template, frame)
@@ -1058,8 +1058,8 @@ class CodeGenerator(NodeVisitor):
 
     def visit_Output(self, node, frame):
         # if we have a known extends statement, we don't output anything
-        # if we are in a silent section
-        if self.has_known_extends and frame.silent:
+        # if we are in a require_output_check section
+        if self.has_known_extends and frame.require_output_check:
             return
 
         if self.environment.finalize:
@@ -1069,11 +1069,9 @@ class CodeGenerator(NodeVisitor):
 
         self.newline(node)
 
-        # if we are not in a block and there was already an extends
-        # statement we have to add a check that disables our yield(s) here
-        # so that they don't appear in the output.
+        # if we are inside a frame that requires output checking, we do so
         outdent_later = False
-        if frame.silent and self.extends_so_far != 0:
+        if frame.require_output_check:
             self.writeline('if parent_template is None:')
             self.indent()
             outdent_later = True
