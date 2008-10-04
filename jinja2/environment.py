@@ -579,13 +579,13 @@ class Template(object):
             exc_type, exc_value, tb = translate_exception(sys.exc_info())
             raise exc_type, exc_value, tb
 
-    def new_context(self, vars=None, shared=False):
+    def new_context(self, vars=None, shared=False, locals=None):
         """Create a new :class:`Context` for this template.  The vars
         provided will be passed to the template.  Per default the globals
-        are added to the context, if shared is set to `True` the data
-        provided is used as parent namespace.  This is used to share the
-        same globals in multiple contexts without consuming more memory.
-        (This works because the context does not modify the parent dict)
+        are added to the context.  If shared is set to `True` the data
+        is passed as it to the context without adding the globals.
+
+        `locals` can be a dict of local variables for internal usage.
         """
         if vars is None:
             vars = {}
@@ -593,16 +593,22 @@ class Template(object):
             parent = vars
         else:
             parent = dict(self.globals, **vars)
+        if locals:
+            if shared:
+                parent = dict(parent)
+            for key, value in locals.iteritems():
+                if key[:2] == 'l_' and value is not missing:
+                    parent[key[2:]] = value
         return Context(self.environment, parent, self.name, self.blocks)
 
-    def make_module(self, vars=None, shared=False):
+    def make_module(self, vars=None, shared=False, locals=None):
         """This method works like the :attr:`module` attribute when called
         without arguments but it will evaluate the template every call
         rather then caching the template.  It's also possible to provide
         a dict which is then used as context.  The arguments are the same
         as for the :meth:`new_context` method.
         """
-        return TemplateModule(self, self.new_context(vars, shared))
+        return TemplateModule(self, self.new_context(vars, shared, locals))
 
     @property
     def module(self):

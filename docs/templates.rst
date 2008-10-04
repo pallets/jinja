@@ -794,6 +794,19 @@ Here two examples::
     {% from 'forms.html' import input with context %}
     {% include 'header.html' without context %}
 
+.. admonition:: Note
+
+    In Jinja 2.0 the context that was passed to the included template
+    did not include variables define in the template.  As a matter of
+    fact this did not work::
+
+        {% for box in boxes %}
+            {% include "render_box.html" %}
+        {% endfor %}
+
+    The included template ``render_box.html`` is not able to access
+    `box` in Jinja 2.0, but in Jinja 2.1.
+
 
 .. _expressions:
 

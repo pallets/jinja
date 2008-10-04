@@ -40,6 +40,14 @@ def test_context_include():
     assert t.render(foo=42) == '[|23]'
 
 
+def test_context_include_with_overrides():
+    env = Environment(loader=DictLoader(dict(
+        main="{% for item in [1, 2, 3] %}{% include 'item' %}{% endfor %}",
+        item="{{ item }}"
+    )))
+    assert env.get_template("main").render() == "123"
+
+
 def test_trailing_comma():
     test_env.from_string('{% from "foo" import bar, baz with context %}')
     test_env.from_string('{% from "foo" import bar, baz, with context %}')

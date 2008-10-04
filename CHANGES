@@ -34,6 +34,9 @@ Version 2.1
 
 - the template context is now weakref-able
 
+- inclusions and imports "with context" forward all variables now, not only
+  the initial context.
+
 Version 2.0
 -----------
 (codename jinjavitus, released on July 17th 2008)

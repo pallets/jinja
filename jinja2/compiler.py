@@ -520,10 +520,13 @@ class CodeGenerator(NodeVisitor):
                 self.writeline('%s = environment.%s[%r]' %
                                (mapping[name], dependency, name))
 
-    def collect_shadowed(self, frame, extra_vars=()):
+    def push_scope(self, frame, extra_vars=()):
         """This function returns all the shadowed variables in a dict
         in the form name: alias and will write the required assignments
         into the current scope.  No indentation takes place.
+
+        This also predefines locally declared variables from the loop
+        body because under some circumstances it may be the case that
 
         `extra_vars` is passed to `Identifiers.find_shadowed`.
         """
@@ -531,12 +534,24 @@ class CodeGenerator(NodeVisitor):
         for name in frame.identifiers.find_shadowed(extra_vars):
             aliases[name] = ident = self.temporary_identifier()
             self.writeline('%s = l_%s' % (ident, name))
+        to_declare = set()
+        for name in frame.identifiers.declared_locally:
+            if name not in aliases:
+                to_declare.add('l_' + name)
+        if to_declare:
+            self.writeline(' = '.join(to_declare) + ' = missing')
         return aliases
 
-    def restore_shadowed(self, aliases):
-        """Restore all aliases."""
+    def pop_scope(self, aliases, frame):
+        """Restore all aliases and delete unused variables."""
         for name, alias in aliases.iteritems():
             self.writeline('l_%s = %s' % (name, alias))
+        to_delete = set()
+        for name in frame.identifiers.declared_locally:
+            if name not in aliases:
+                to_delete.add('l_' + name)
+        if to_delete:
+            self.writeline('del ' + ', '.join(to_delete))
 
     def function_scoping(self, node, frame, children=None,
                          find_special=True):
@@ -806,7 +821,8 @@ class CodeGenerator(NodeVisitor):
             self.visit(node.template, frame)
             self.write(', %r)' % self.name)
             self.writeline('for event in template.root_render_func('
-                           'template.new_context(context.parent, True)):')
+                           'template.new_context(context.parent, True, '
+                           'locals())):')
         else:
             self.writeline('for event in environment.get_template(', node)
             self.visit(node.template, frame)
@@ -825,7 +841,7 @@ class CodeGenerator(NodeVisitor):
         self.visit(node.template, frame)
         self.write(', %r).' % self.name)
         if node.with_context:
-            self.write('make_module(context.parent, True)')
+            self.write('make_module(context.parent, True, locals())')
         else:
             self.write('module')
         if frame.toplevel and not node.target.startswith('_'):
@@ -905,7 +921,7 @@ class CodeGenerator(NodeVisitor):
         # variables at that point.  Because loops can be nested but the loop
         # variable is a special one we have to enforce aliasing for it.
         if not node.recursive:
-            aliases = self.collect_shadowed(loop_frame, ('loop',))
+            aliases = self.push_scope(loop_frame, ('loop',))
 
         # otherwise we set up a buffer and add a function def
         else:
@@ -994,7 +1010,7 @@ class CodeGenerator(NodeVisitor):
             self.outdent()
 
         # reset the aliases if there are any.
-        self.restore_shadowed(aliases)
+        self.pop_scope(aliases, loop_frame)
 
         # if the node was recursive we have to return the buffer contents
         # and start the iteration code
@@ -1043,14 +1059,14 @@ class CodeGenerator(NodeVisitor):
     def visit_FilterBlock(self, node, frame):
         filter_frame = frame.inner()
         filter_frame.inspect(node.iter_child_nodes())
-        aliases = self.collect_shadowed(filter_frame)
+        aliases = self.push_scope(filter_frame)
         self.pull_locals(filter_frame)
         self.buffer(filter_frame)
         self.blockvisit(node.body, filter_frame)
         self.start_write(frame, node)
         self.visit_Filter(node.filter, filter_frame)
         self.end_write(frame)
-        self.restore_shadowed(aliases)
+        self.pop_scope(aliases, filter_frame)
 
     def visit_ExprStmt(self, node, frame):
         self.newline(node)
