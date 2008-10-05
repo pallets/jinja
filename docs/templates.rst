@@ -482,6 +482,9 @@ each time through the loop by using the special `loop.cycle` helper::
         <li class="{{ loop.cycle('odd', 'even') }}">{{ row }}</li>
     {% endfor %}
 
+With Jinja 2.1 an extra `cycle` helper exists that allows loop-unbound
+cycling.  For more information have a look at the :ref:`builtin-globals`.
+
 .. _loop-filtering:
 
 Unlike in Python it's not possible to `break` or `continue` in a loop.  You
@@ -999,6 +1002,7 @@ List of Builtin Tests
 
 .. jinjatests::
 
+.. _builtin-globals:
 
 List of Global Functions
 ------------------------
@@ -1037,6 +1041,44 @@ The following functions are available in the global scope by default:
 
     A convenient alternative to dict literals.  ``{'foo': 'bar'}`` is the same
     as ``dict(foo='bar')``.
+
+.. class:: cycler(\*items)
+
+    The cycler allows you to cycle among values similar to how `loop.cycle`
+    works.  Unlike `loop.cycle` however you can use this cycler outside of
+    loops or over multiple loops.
+
+    This is for example very useful if you want to show a list of folders and
+    files, with the folders on top, but both in the same list with alteranting
+    row colors.
+
+    The following example shows how `cycler` can be used::
+
+        {% set row_class = cycler('odd', 'even') %}
+        <ul class="browser">
+        {% for folder in folders %}
+          <li class="folder {{ row_class.next() }}">{{ folder|e }}</li>
+        {% endfor %}
+        {% for filename in files %}
+          <li class="file {{ row_class.next() }}">{{ filename|e }}</li>
+        {% endfor %}
+        </ul>
+
+    A cycler has the following attributes and methods:
+
+    .. method:: reset()
+
+        Resets the cycle to the first item.
+
+    .. method:: next()
+
+        Goes one item a head and returns the then current item.
+
+    .. attribute:: current
+
+        Returns the current item.
+    
+    **new in Jinja 2.1**
 
 
 Extensions

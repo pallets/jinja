@@ -35,24 +35,6 @@ def translate_exception(exc_info):
     return exc_info[:2] + (result_tb or initial_tb,)
 
 
-def translate_syntax_error(error):
-    """When passed a syntax error it will generate a new traceback with
-    more debugging information.
-    """
-    filename = error.filename
-    if filename is None:
-        filename = '<template>'
-    elif isinstance(filename, unicode):
-        filename = filename.encode('utf-8')
-    code = compile('\n' * (error.lineno - 1) + 'raise __jinja_exception__',
-                   filename, 'exec')
-    try:
-        exec code in {'__jinja_exception__': error}
-    except:
-        exc_info = sys.exc_info()
-        return exc_info[:2] + (exc_info[2].tb_next,)
-
-
 def fake_exc_info(exc_info, filename, lineno, tb_back=None):
     """Helper for `translate_exception`."""
     exc_type, exc_value, tb = exc_info

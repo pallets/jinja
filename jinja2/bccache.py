@@ -24,6 +24,7 @@ try:
     from hashlib import sha1
 except ImportError:
     from sha import new as sha1
+from jinja2.utils import open_if_exists
 
 
 bc_version = 1
@@ -193,17 +194,15 @@ class FileSystemBytecodeCache(BytecodeCache):
         return path.join(self.directory, self.pattern % bucket.key)
 
     def load_bytecode(self, bucket):
-        filename = self._get_cache_filename(bucket)
-        if path.exists(filename):
-            f = file(filename, 'rb')
+        f = open_if_exists(self._get_cache_filename(bucket), 'rb')
+        if f is not None:
             try:
                 bucket.load_bytecode(f)
             finally:
                 f.close()
 
     def dump_bytecode(self, bucket):
-        filename = self._get_cache_filename(bucket)
-        f = file(filename, 'wb')
+        f = file(self._get_cache_filename(bucket), 'wb')
         try:
             bucket.write_bytecode(f)
         finally:

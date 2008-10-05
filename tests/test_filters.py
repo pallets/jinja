@@ -152,8 +152,8 @@ def test_indent(env):
     tmpl = env.from_string(INDENT)
     text = '\n'.join([' '.join(['foo', 'bar'] * 2)] * 2)
     out = tmpl.render(foo=text)
-    assert out == 'foo bar foo bar\n  foo bar foo bar|  ' \
-                  'foo bar foo bar\n  foo bar foo bar'
+    assert out == ('foo bar foo bar\n  foo bar foo bar|  '
+                   'foo bar foo bar\n  foo bar foo bar')
 
 
 def test_int(env):

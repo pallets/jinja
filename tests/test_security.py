@@ -11,7 +11,7 @@ from jinja2 import Environment
 from jinja2.sandbox import SandboxedEnvironment, \
      ImmutableSandboxedEnvironment, unsafe
 from jinja2 import Markup, escape
-from jinja2.exceptions import SecurityError
+from jinja2.exceptions import SecurityError, TemplateSyntaxError
 
 
 class PrivateStuff(object):
@@ -62,17 +62,12 @@ SecurityError: access to attribute '__class__' of 'int' object is unsafe.
 '''
 
 
-test_restricted = '''
->>> env = MODULE.SandboxedEnvironment()
->>> env.from_string("{% for item.attribute in seq %}...{% endfor %}")
-Traceback (most recent call last):
-    ...
-TemplateSyntaxError: expected token 'in', got '.' (line 1)
->>> env.from_string("{% for foo, bar.baz in seq %}...{% endfor %}")
-Traceback (most recent call last):
-    ...
-TemplateSyntaxError: expected token 'in', got '.' (line 1)
-'''
+def test_restricted():
+    env = SandboxedEnvironment()
+    raises(TemplateSyntaxError, env.from_string,
+           "{% for item.attribute in seq %}...{% endfor %}")
+    raises(TemplateSyntaxError, env.from_string,
+           "{% for foo, bar.baz in seq %}...{% endfor %}")
 
 
 test_immutable_environment = '''
@@ -86,6 +81,7 @@ Traceback (most recent call last):
     ...
 SecurityError: access to attribute 'clear' of 'dict' object is unsafe.
 '''
+
 
 def test_markup_operations():
     # adding two strings should escape the unsafe one

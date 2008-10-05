@@ -10,6 +10,7 @@
 """
 import re
 import sys
+import errno
 try:
     from thread import allocate_lock
 except ImportError:
@@ -170,6 +171,17 @@ def import_string(import_name, silent=False):
         return getattr(__import__(module, None, None, [obj]), obj)
     except (ImportError, AttributeError):
         if not silent:
+            raise
+
+
+def open_if_exists(filename, mode='r'):
+    """Returns a file descriptor for the filename if that file exists,
+    otherwise `None`.
+    """
+    try:
+        return file(filename, mode)
+    except IOError, e:
+        if e.errno not in (errno.ENOENT, errno.EISDIR):
             raise
 
 
@@ -646,6 +658,31 @@ try:
     MutableMapping.register(LRUCache)
 except ImportError:
     pass
+
+
+class Cycler(object):
+    """A cycle helper for templates."""
+
+    def __init__(self, *items):
+        if not items:
+            raise RuntimeError('at least one item has to be provided')
+        self.items = items
+        self.reset()
+
+    def reset(self):
+        """Resets the cycle."""
+        self.pos = 0
+
+    @property
+    def current(self):
+        """Returns the current item."""
+        return self.items[self.pos]
+
+    def next(self):
+        """Goes one item ahead and returns it."""
+        rv = self.current
+        self.pos = (self.pos + 1) % len(self.items)
+        return rv
 
 
 # we have to import it down here as the speedups module imports the

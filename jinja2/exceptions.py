@@ -26,22 +26,35 @@ class TemplateSyntaxError(TemplateError):
     """Raised to tell the user that there is a problem with the template."""
 
     def __init__(self, message, lineno, name=None, filename=None):
-        if name is not None:
-            extra = '%s, line %d' % (name.encode('utf-8'), lineno)
-        else:
-            extra = 'line %d' % lineno
-        # if the message was provided as unicode we have to encode it
-        # to utf-8 explicitly
-        if isinstance(message, unicode):
-            message = message.encode('utf-8')
-        # otherwise make sure it's a in fact valid utf-8
-        else:
-            message = message.decode('utf-8', 'ignore').encode('utf-8')
-        TemplateError.__init__(self, '%s (%s)' % (message, extra))
-        self.message = message
+        if not isinstance(message, unicode):
+            message = message.decode('utf-8', 'replace')
+        TemplateError.__init__(self, message.encode('utf-8'))
         self.lineno = lineno
         self.name = name
         self.filename = filename
+        self.source = None
+        self.message = message
+
+    def __unicode__(self):
+        location = 'line %d' % self.lineno
+        name = self.filename or self.name
+        if name:
+            location = 'File "%s", %s' % (name, location)
+        lines = [self.message, '  ' + location]
+
+        # if the source is set, add the line to the output
+        if self.source is not None:
+            try:
+                line = self.source.splitlines()[self.lineno - 1]
+            except IndexError:
+                line = None
+            if line:
+                lines.append('    ' + line.strip())
+
+        return u'\n'.join(lines)
+
+    def __str__(self):
+        return unicode(self).encode('utf-8')
 
 
 class TemplateAssertionError(TemplateSyntaxError):

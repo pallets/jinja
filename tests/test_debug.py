@@ -31,7 +31,7 @@ test_syntax_error = '''
 >>> tmpl = MODULE.env.get_template('syntaxerror.html')
 Traceback (most recent call last):
   ...
-  File "loaderres/templates/syntaxerror.html", line 4, in <module>
+TemplateSyntaxError: unknown tag 'endif'
+  File "loaderres/templates/syntaxerror.html", line 4
     {% endif %}
-TemplateSyntaxError: unknown tag 'endif' (syntaxerror.html, line 4)
 '''

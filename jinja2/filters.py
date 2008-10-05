@@ -339,10 +339,11 @@ def do_indent(s, width=4, indentfirst=False):
         {{ mytext|indent(2, true) }}
             indent by two spaces and indent the first line too.
     """
-    indention = ' ' * width
+    indention = u' ' * width
+    rv = (u'\n' + indention).join(s.splitlines())
     if indentfirst:
-        return u'\n'.join(indention + line for line in s.splitlines())
-    return s.replace('\n', '\n' + indention)
+        rv = indention + rv
+    return rv
 
 
 def do_truncate(s, length=255, killwords=False, end='...'):
@@ -648,13 +649,20 @@ def do_attr(environment, obj, name):
     See :ref:`Notes on subscriptions <notes-on-subscriptions>` for more details.
     """
     try:
-        value = getattr(obj, name)
-    except AttributeError:
-        return environment.undefined(obj=obj, name=name)
-    if environment.sandboxed and not \
-       environment.is_safe_attribute(obj, name, value):
-        return environment.unsafe_undefined(obj, name)
-    return value
+        name = str(name)
+    except UnicodeError:
+        pass
+    else:
+        try:
+            value = getattr(obj, name)
+        except AttributeError:
+            pass
+        else:
+            if environment.sandboxed and not \
+               environment.is_safe_attribute(obj, name, value):
+                return environment.unsafe_undefined(obj, name)
+            return value
+    return environment.undefined(obj=obj, name=name)
 
 
 FILTERS = {

@@ -9,6 +9,7 @@
 import gc
 from py.test import raises
 from jinja2 import escape
+from jinja2.utils import Cycler
 from jinja2.exceptions import TemplateSyntaxError
 
 
@@ -84,3 +85,15 @@ def test_finalizer():
     assert tmpl.render(seq=(None, 1, "foo")) == '||1|foo'
     tmpl = env.from_string('<{{ none }}>')
     assert tmpl.render() == '<>'
+
+
+def test_cycler():
+    items = 1, 2, 3
+    c = Cycler(*items)
+    for item in items + items:
+        assert c.current == item
+        assert c.next() == item
+    c.next()
+    assert c.current == 2
+    c.reset()
+    assert c.current == 1

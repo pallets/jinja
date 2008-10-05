@@ -14,7 +14,7 @@ try:
 except ImportError:
     from sha import new as sha1
 from jinja2.exceptions import TemplateNotFound
-from jinja2.utils import LRUCache
+from jinja2.utils import LRUCache, open_if_exists
 
 
 def split_template_path(template):
@@ -142,9 +142,9 @@ class FileSystemLoader(BaseLoader):
         pieces = split_template_path(template)
         for searchpath in self.searchpath:
             filename = path.join(searchpath, *pieces)
-            if not path.isfile(filename):
+            f = open_if_exists(filename)
+            if f is None:
                 continue
-            f = file(filename)
             try:
                 contents = f.read().decode(self.encoding)
             finally:
@@ -171,7 +171,8 @@ class PackageLoader(BaseLoader):
 
     def __init__(self, package_name, package_path='templates',
                  encoding='utf-8'):
-        from pkg_resources import DefaultProvider, ResourceManager, get_provider
+        from pkg_resources import DefaultProvider, ResourceManager, \
+                                  get_provider
         provider = get_provider(package_name)
         self.encoding = encoding
         self.manager = ResourceManager()

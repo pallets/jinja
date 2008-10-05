@@ -59,8 +59,9 @@ from jinja2.utils import Markup, escape, clear_caches, \
 __all__ = [
     'Environment', 'Template', 'BaseLoader', 'FileSystemLoader',
     'PackageLoader', 'DictLoader', 'FunctionLoader', 'PrefixLoader',
-    'ChoiceLoader', 'Undefined', 'DebugUndefined', 'StrictUndefined',
-    'TemplateError', 'UndefinedError', 'TemplateNotFound',
+    'ChoiceLoader', 'BytecodeCache', 'FileSystemBytecodeCache',
+    'MemcachedBytecodeCache', 'Undefined', 'DebugUndefined',
+    'StrictUndefined', 'TemplateError', 'UndefinedError', 'TemplateNotFound',
     'TemplateSyntaxError', 'TemplateAssertionError', 'environmentfilter',
     'contextfilter', 'Markup', 'escape', 'environmentfunction',
     'contextfunction', 'clear_caches', 'is_undefined'

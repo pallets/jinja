@@ -37,6 +37,8 @@ Version 2.1
 - inclusions and imports "with context" forward all variables now, not only
   the initial context.
 
+- added a cycle helper called `cycle`.
+
 Version 2.0
 -----------
 (codename jinjavitus, released on July 17th 2008)

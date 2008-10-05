@@ -165,10 +165,10 @@ class Context(object):
         )
 
 
-# register the context as mutable mapping if possible
+# register the context as mapping if possible
 try:
-    from collections import MutableMapping
-    MutableMapping.register(Context)
+    from collections import Mapping
+    Mapping.register(Context)
 except ImportError:
     pass
 
@@ -409,7 +409,7 @@ class Undefined(object):
     __int__ = __float__ = __complex__ = _fail_with_undefined_error
 
     def __str__(self):
-        return self.__unicode__().encode('utf-8')
+        return unicode(self).encode('utf-8')
 
     def __unicode__(self):
         return u''

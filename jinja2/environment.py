@@ -48,6 +48,15 @@ def create_cache(size):
     return LRUCache(size)
 
 
+def copy_cache(cache):
+    """Create an empty copy of the given cache."""
+    if cache is None:
+        return Noe
+    elif type(cache) is dict:
+        return {}
+    return LRUCache(cache.capacity)
+
+
 def load_extensions(environment, extensions):
     """Load the extensions from the list and bind it to the environment.
     Returns a dict of instanciated environments.
@@ -285,6 +294,8 @@ class Environment(object):
 
         if cache_size is not missing:
             rv.cache = create_cache(cache_size)
+        else:
+            rv.cache = copy_cache(self.cache)
 
         rv.extensions = {}
         for key, value in self.extensions.iteritems():
@@ -340,9 +351,8 @@ class Environment(object):
         try:
             return Parser(self, source, name, filename).parse()
         except TemplateSyntaxError, e:
-            from jinja2.debug import translate_syntax_error
-            exc_type, exc_value, tb = translate_syntax_error(e)
-            raise exc_type, exc_value, tb
+            e.source = source
+            raise e
 
     def lex(self, source, name=None, filename=None):
         """Lex the given sourcecode and return a generator that yields
@@ -354,7 +364,12 @@ class Environment(object):
         of the extensions to be applied you have to filter source through
         the :meth:`preprocess` method.
         """
-        return self.lexer.tokeniter(unicode(source), name, filename)
+        source = unicode(source)
+        try:
+            return self.lexer.tokeniter(source, name, filename)
+        except TemplateSyntaxError, e:
+            e.source = source
+            raise e
 
     def preprocess(self, source, name=None, filename=None):
         """Preprocesses the source with all extensions.  This is automatically
@@ -594,6 +609,8 @@ class Template(object):
         else:
             parent = dict(self.globals, **vars)
         if locals:
+            # if the parent is shared a copy should be created because
+            # we don't want to modify the dict passed
             if shared:
                 parent = dict(parent)
             for key, value in locals.iteritems():
