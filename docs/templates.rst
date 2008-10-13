@@ -1080,6 +1080,26 @@ The following functions are available in the global scope by default:
     
     **new in Jinja 2.1**
 
+.. class:: joiner(sep=', ')
+
+    A tiny helper that can be use to "join" multiple sections.  A joiner is
+    passed a string and will return that string every time it's calld, except
+    the first time in which situation it returns an empty string.  You can
+    use this to join things::
+
+        {% set pipe = joiner("|") %}
+        {% if categories %} {{ pipe() }}
+            Categories: {{ categories|join(", ") }}
+        {% endif %}
+        {% if author %} {{ pipe() }}
+            Author: {{ author() }}
+        {% endif %}
+        {% if can_edit %} {{ pipe() }}
+            <a href="?action=edit">Edit</a>
+        {% endif %}
+
+    **new in Jinja 2.1**
+
 
 Extensions
 ----------

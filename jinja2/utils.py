@@ -685,6 +685,20 @@ class Cycler(object):
         return rv
 
 
+class Joiner(object):
+    """A joining helper for templates."""
+
+    def __init__(self, sep=u', '):
+        self.sep = sep
+        self.used = False
+
+    def __call__(self):
+        if not self.used:
+            self.used = True
+            return u''
+        return self.sep
+
+
 # we have to import it down here as the speedups module imports the
 # markup type which is define above.
 try:

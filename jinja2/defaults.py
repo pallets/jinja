@@ -8,7 +8,7 @@
     :copyright: 2007-2008 by Armin Ronacher.
     :license: BSD, see LICENSE for more details.
 """
-from jinja2.utils import generate_lorem_ipsum, Cycler
+from jinja2.utils import generate_lorem_ipsum, Cycler, Joiner
 
 
 # defaults for the parser / lexer
@@ -30,7 +30,8 @@ DEFAULT_NAMESPACE = {
     'range':        xrange,
     'dict':         lambda **kw: kw,
     'lipsum':       generate_lorem_ipsum,
-    'cycler':       Cycler
+    'cycler':       Cycler,
+    'joiner':       Joiner
 }
 
 

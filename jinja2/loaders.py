@@ -149,8 +149,14 @@ class FileSystemLoader(BaseLoader):
                 contents = f.read().decode(self.encoding)
             finally:
                 f.close()
-            old = path.getmtime(filename)
-            return contents, filename, lambda: path.getmtime(filename) == old
+
+            mtime = path.getmtime(filename)
+            def uptodate():
+                try:
+                    return path.getmtime(filename) == mtime
+                except OSError:
+                    return False
+            return contents, filename, uptodate
         raise TemplateNotFound(template)
 
 
@@ -191,7 +197,10 @@ class PackageLoader(BaseLoader):
             filename = self.provider.get_resource_filename(self.manager, p)
             mtime = path.getmtime(filename)
             def uptodate():
-                return path.getmtime(filename) == mtime
+                try:
+                    return path.getmtime(filename) == mtime
+                except OSError:
+                    return False
 
         source = self.provider.get_resource_string(self.manager, p)
         return source.decode(self.encoding), filename, uptodate
