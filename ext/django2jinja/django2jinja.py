@@ -33,7 +33,36 @@
         writer = Writer()
         writer.node_handlers[MyNode] = write_my_node
         convert_templates('/path/to/output/folder', writer=writer)
-
+    
+    Here is an example hos to automatically translate your django
+    variables to jinja2::
+        
+        import re
+        # List of tuple (Match pattern, Replace pattern, Exclusion pattern)
+        
+        var_re  = ((re.compile(r"(u|user)\.is_authenticated"), r"\1.is_authenticated()", None),
+                  (re.compile(r"\.non_field_errors"), r".non_field_errors()", None),
+                  (re.compile(r"\.label_tag"), r".label_tag()", None),
+                  (re.compile(r"\.as_dl"), r".as_dl()", None),
+                  (re.compile(r"\.as_table"), r".as_table()", None),
+                  (re.compile(r"\.as_widget"), r".as_widget()", None),
+                  (re.compile(r"\.as_hidden"), r".as_hidden()", None),
+                  
+                  (re.compile(r"\.get_([0-9_\w]+)_url"), r".get_\1_url()", None),
+                  (re.compile(r"\.url"), r".url()", re.compile(r"(form|calendar).url")),
+                  (re.compile(r"\.get_([0-9_\w]+)_display"), r".get_\1_display()", None),
+                  (re.compile(r"loop\.counter"), r"loop.index", None),
+                  (re.compile(r"loop\.revcounter"), r"loop.revindex", None),
+                  (re.compile(r"request\.GET\.([0-9_\w]+)"), r"request.GET.get('\1', '')", None),
+                  (re.compile(r"request\.get_host"), r"request.get_host()", None),
+                  
+                  (re.compile(r"\.all(?!_)"), r".all()", None),
+                  (re.compile(r"\.all\.0"), r".all()[0]", None),
+                  (re.compile(r"\.([0-9])($|\s+)"), r"[\1]\2", None),
+                  (re.compile(r"\.items"), r".items()", None),
+        )
+        writer = Writer(var_re=var_re)
+        
     For details about the writing process have a look at the module code.
 
     :copyright: Copyright 2008 by Armin Ronacher.
@@ -127,7 +156,9 @@ class Writer(object):
                  comment_end_string=COMMENT_END_STRING,
                  initial_autoescape=True,
                  use_jinja_autoescape=False,
-                 custom_node_handlers=None):
+                 custom_node_handlers=None,
+                 var_re=[],
+                 env=None):
         if stream is None:
             stream = sys.stdout
         if error_stream is None:
@@ -145,9 +176,10 @@ class Writer(object):
         self.use_jinja_autoescape = use_jinja_autoescape
         self.node_handlers = dict(_node_handlers,
                                   **(custom_node_handlers or {}))
-
         self._loop_depth = 0
         self._filters_warned = set()
+        self.var_re = var_re
+        self.env = env
 
     def enter_loop(self):
         """Increments the loop depth so that write functions know if they
@@ -278,7 +310,13 @@ class Writer(object):
     def translate_variable_name(self, var):
         """Performs variable name translation."""
         if self.in_loop and var == 'forloop' or var.startswith('forloop.'):
-            return var[3:]
+            var = var[3:]
+        
+        for reg, rep, unless in self.var_re:
+            no_unless = unless and unless.search(var) or True
+            if reg.search(var) and no_unless:
+                var = reg.sub(rep, var)
+                break
         return var
 
     def get_filter_name(self, filter):
@@ -294,7 +332,7 @@ class Writer(object):
     def node(self, node):
         """Invokes the node handler for a node."""
         for cls, handler in self.node_handlers.iteritems():
-            if type(node) is cls:
+            if type(node) is cls or type(node).__name__ == cls:
                 handler(self, node)
                 break
         else:
@@ -381,7 +419,10 @@ def for_loop(writer, node):
 def if_condition(writer, node):
     writer.start_block()
     writer.write('if ')
-    join_with = core_tags.IfNode.LinkTypes.or_ and 'or' or 'and'
+    join_with = 'and'
+    if node.link_type == core_tags.IfNode.LinkTypes.or_:
+        join_with = 'or'
+    
     for idx, (ifnot, expr) in enumerate(node.bool_exprs):
         if idx:
             writer.write(' %s ' % join_with)
@@ -401,7 +442,10 @@ def if_equal(writer, node):
     writer.start_block()
     writer.write('if ')
     writer.node(node.var1)
-    writer.write(' == ')
+    if node.negate:
+        writer.write(' != ')
+    else:
+        writer.write(' == ')
     writer.node(node.var2)
     writer.end_block()
     writer.body(node.nodelist_true)
@@ -677,6 +721,45 @@ def translate_block(writer, node):
         dump_token_list(node.plural)
     writer.tag('endtrans')
 
+@node("SimpleNode")
+def simple_tag(writer, node):
+    """Check if the simple tag exist as a filter in """
+    name = node.tag_name
+    if writer.env and \
+       name not in writer.env.filters and \
+       name not in writer._filters_warned:
+        writer._filters_warned.add(name)
+        writer.warn('Filter %s probably doesn\'t exist in Jinja' %
+                    name)
+        
+    if not node.vars_to_resolve:
+        # No argument, pass the request
+        writer.start_variable()
+        writer.write('request|')
+        writer.write(name)
+        writer.end_variable()
+        return 
+    
+    first_var =  node.vars_to_resolve[0]
+    args = node.vars_to_resolve[1:]
+    writer.start_variable()
+    
+    # Copied from Writer.filters()
+    writer.node(first_var)
+    
+    writer.write('|')
+    writer.write(name)
+    if args:
+        writer.write('(')
+        for idx, var in enumerate(args):
+            if idx:
+                writer.write(', ')
+            if var.var:
+                writer.node(var)
+            else:
+                writer.literal(var.literal)
+        writer.write(')')
+    writer.end_variable()   
 
 # get rid of node now, it shouldn't be used normally
 del node
