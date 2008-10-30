@@ -131,3 +131,38 @@ def test_multi_inheritance():
     assert tmpl.render(master='master2') == 'MASTER2CHILD'
     assert tmpl.render(master='master1') == 'MASTER1CHILD'
     assert tmpl.render() == 'MASTER1CHILD'
+
+
+def test_fixed_macro_scoping_bug():
+    assert Environment(loader=DictLoader({
+        'test.html': '''\
+    {% extends 'details.html' %}
+
+    {% macro my_macro() %}
+    my_macro
+    {% endmacro %}
+
+    {% block inner_box %}
+        {{ my_macro() }}
+    {% endblock %}
+        ''',
+        'details.html': '''\
+    {% extends 'standard.html' %}
+
+    {% macro my_macro() %}
+    my_macro
+    {% endmacro %}
+
+    {% block content %}
+        {% block outer_box %}
+            outer_box
+            {% block inner_box %}
+                inner_box
+            {% endblock %}
+        {% endblock %}
+    {% endblock %}
+    ''',
+        'standard.html': '''
+    {% block content %}&nbsp;{% endblock %}
+    '''
+    })).get_template("test.html").render().split() == [u'outer_box', u'my_macro']

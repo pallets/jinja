@@ -623,6 +623,8 @@ class CodeGenerator(NodeVisitor):
     def macro_body(self, node, frame, children=None):
         """Dump the function def of a macro or call block."""
         frame = self.function_scoping(node, frame, children)
+        # macros are delayed, they never require output checks
+        frame.require_output_check = False
         args = frame.arguments
         self.writeline('def macro(%s):' % ', '.join(args), node)
         self.indent()
