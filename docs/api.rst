@@ -115,7 +115,7 @@ useful if you want to dig deeper into Jinja2 or :ref:`develop extensions
 <jinja-extensions>`.
 
 .. autoclass:: Environment([options])
-    :members: from_string, get_template, join_path, extend
+    :members: from_string, get_template, join_path, extend, compile_expression
 
     .. attribute:: shared
 

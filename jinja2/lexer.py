@@ -375,10 +375,10 @@ class Lexer(object):
         """Called for strings and template data to normlize it to unicode."""
         return newline_re.sub(self.newline_sequence, value)
 
-    def tokenize(self, source, name=None, filename=None):
+    def tokenize(self, source, name=None, filename=None, state=None):
         """Calls tokeniter + tokenize and wraps it in a token stream.
         """
-        stream = self.tokeniter(source, name, filename)
+        stream = self.tokeniter(source, name, filename, state)
         return TokenStream(self.wrap(stream, name, filename), name, filename)
 
     def wrap(self, stream, name=None, filename=None):
@@ -426,7 +426,7 @@ class Lexer(object):
                 token = operators[value]
             yield Token(lineno, token, value)
 
-    def tokeniter(self, source, name, filename=None):
+    def tokeniter(self, source, name, filename=None, state=None):
         """This method tokenizes the text and returns the tokens in a
         generator.  Use this method if you just want to tokenize a template.
         """
@@ -434,7 +434,12 @@ class Lexer(object):
         pos = 0
         lineno = 1
         stack = ['root']
-        statetokens = self.rules['root']
+        if state is not None and state != 'root':
+            assert state in ('variable', 'block'), 'invalid state'
+            stack.append(state + '_begin')
+        else:
+            state = 'root'
+        statetokens = self.rules[stack[-1]]
         source_length = len(source)
 
         balancing_stack = []

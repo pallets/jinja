@@ -9,6 +9,7 @@
     :license: BSD, see LICENSE for more details.
 """
 import sys
+from jinja2 import nodes
 from jinja2.defaults import *
 from jinja2.lexer import get_lexer, TokenStream
 from jinja2.parser import Parser
@@ -16,7 +17,8 @@ from jinja2.optimizer import optimize
 from jinja2.compiler import generate
 from jinja2.runtime import Undefined, Context
 from jinja2.exceptions import TemplateSyntaxError
-from jinja2.utils import import_string, LRUCache, Markup, missing, concat
+from jinja2.utils import import_string, LRUCache, Markup, missing, \
+     concat, consume
 
 
 # for direct template usage we have up to ten living environments
@@ -379,12 +381,12 @@ class Environment(object):
         return reduce(lambda s, e: e.preprocess(s, name, filename),
                       self.extensions.itervalues(), unicode(source))
 
-    def _tokenize(self, source, name, filename=None):
+    def _tokenize(self, source, name, filename=None, state=None):
         """Called by the parser to do the preprocessing and filtering
         for all the extensions.  Returns a :class:`~jinja2.lexer.TokenStream`.
         """
         source = self.preprocess(source, name, filename)
-        stream = self.lexer.tokenize(source, name, filename)
+        stream = self.lexer.tokenize(source, name, filename, state)
         for ext in self.extensions.itervalues():
             stream = ext.filter_stream(stream)
             if not isinstance(stream, TokenStream):
@@ -407,8 +409,8 @@ class Environment(object):
         if isinstance(source, basestring):
             source = self.parse(source, name, filename)
         if self.optimized:
-            node = optimize(source, self)
-        source = generate(node, self, name, filename)
+            source = optimize(source, self)
+        source = generate(source, self, name, filename)
         if raw:
             return source
         if filename is None:
@@ -416,6 +418,48 @@ class Environment(object):
         elif isinstance(filename, unicode):
             filename = filename.encode('utf-8')
         return compile(source, filename, 'exec')
+
+    def compile_expression(self, source, undefined_to_none=True):
+        """A handy helper method that returns a callable that accepts keyword
+        arguments that appear as variables in the expression.  If called it
+        returns the result of the expression.
+
+        This is useful if applications want to use the same rules as Jinja
+        in template "configuration files" or similar situations.
+
+        Example usage:
+
+        >>> env = Environment()
+        >>> expr = env.compile_expression('foo == 42')
+        >>> expr(foo=23)
+        False
+        >>> expr(foo=42)
+        True
+
+        Per default the return value is converted to `None` if the
+        expression returns an undefined value.  This can be changed
+        by setting `undefined_to_none` to `False`.
+
+        >>> env.compile_expression('var')() is None
+        True
+        >>> env.compile_expression('var', undefined_to_none=False)()
+        Undefined
+
+        **new in Jinja 2.1**
+        """
+        parser = Parser(self, source, state='variable')
+        try:
+            expr = parser.parse_expression()
+            if not parser.stream.eos:
+                raise TemplateSyntaxError('chunk after expression',
+                                          parser.stream.current.lineno,
+                                          None, None)
+        except TemplateSyntaxError, e:
+            e.source = source
+            raise e
+        body = [nodes.Assign(nodes.Name('result', 'store'), expr, lineno=1)]
+        template = self.from_string(nodes.Template(body, lineno=1))
+        return TemplateExpression(template, undefined_to_none)
 
     def join_path(self, template, parent):
         """Join a template with the parent.  By default all the lookups are
@@ -697,6 +741,25 @@ class TemplateModule(object):
         else:
             name = repr(self.__name__)
         return '<%s %s>' % (self.__class__.__name__, name)
+
+
+class TemplateExpression(object):
+    """The :meth:`jinja2.Environment.compile_expression` method returns an
+    instance of this object.  It encapsulates the expression-like access
+    to the template with an expression it wraps.
+    """
+
+    def __init__(self, template, undefined_to_none):
+        self._template = template
+        self._undefined_to_none = undefined_to_none
+
+    def __call__(self, *args, **kwargs):
+        context = self._template.new_context(dict(*args, **kwargs))
+        consume(self._template.root_render_func(context))
+        rv = context.vars['result']
+        if self._undefined_to_none and isinstance(rv, Undefined):
+            rv = None
+        return rv
 
 
 class TemplateStream(object):

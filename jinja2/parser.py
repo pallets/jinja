@@ -23,9 +23,10 @@ class Parser(object):
     extensions and can be used to parse expressions or statements.
     """
 
-    def __init__(self, environment, source, name=None, filename=None):
+    def __init__(self, environment, source, name=None, filename=None,
+                 state=None):
         self.environment = environment
-        self.stream = environment._tokenize(source, name, filename)
+        self.stream = environment._tokenize(source, name, filename, state)
         self.name = name
         self.filename = filename
         self.closed = False

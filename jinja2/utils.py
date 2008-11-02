@@ -136,6 +136,12 @@ def is_undefined(obj):
     return isinstance(obj, Undefined)
 
 
+def consume(iterable):
+    """Consumes an iterable without doing anything with it."""
+    for event in iterable:
+        pass
+
+
 def clear_caches():
     """Jinja2 keeps internal caches for environments and lexers.  These are
     used so that Jinja2 doesn't have to recreate environments and lexers all

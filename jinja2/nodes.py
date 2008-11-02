@@ -262,11 +262,6 @@ class CallBlock(Stmt):
     fields = ('call', 'args', 'defaults', 'body')
 
 
-class Set(Stmt):
-    """Allows defining own variables."""
-    fields = ('name', 'expr')
-
-
 class FilterBlock(Stmt):
     """Node for filter sections."""
     fields = ('body', 'filter')
