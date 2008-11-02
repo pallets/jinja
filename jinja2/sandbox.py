@@ -212,14 +212,14 @@ class SandboxedEnvironment(Environment):
             value = getattr(obj, attribute)
         except AttributeError:
             try:
-                return obj[argument]
+                return obj[attribute]
             except (TypeError, LookupError):
                 pass
         else:
             if self.is_safe_attribute(obj, attribute, value):
                 return value
             return self.unsafe_undefined(obj, attribute)
-        return self.undefined(obj=obj, name=argument)
+        return self.undefined(obj=obj, name=attribute)
 
     def unsafe_undefined(self, obj, attribute):
         """Return an undefined object for unsafe attributes."""
