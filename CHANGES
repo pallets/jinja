@@ -44,6 +44,8 @@ Version 2.1
 - added a `compile_expression` method to the environment that allows compiling
   of Jinja expressions into callable Python objects.
 
+- fixed an escaping bug in urlize
+
 Version 2.0
 -----------
 (codename jinjavitus, released on July 17th 2008)

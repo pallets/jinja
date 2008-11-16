@@ -218,7 +218,7 @@ def urlize(text, trim_url_limit=None, nofollow=False):
     trim_url = lambda x, limit=trim_url_limit: limit is not None \
                          and (x[:limit] + (len(x) >=limit and '...'
                          or '')) or x
-    words = _word_split_re.split(text)
+    words = _word_split_re.split(unicode(escape(text)))
     nofollow_attr = nofollow and ' rel="nofollow"' or ''
     for i, word in enumerate(words):
         match = _punctuation_re.match(word)

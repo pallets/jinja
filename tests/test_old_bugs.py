@@ -28,3 +28,8 @@ def test_extends_output_bugs():
                         '{% for item in [1, 2, 3] %}({{ item }}){% endfor %}')
     assert t.render(expr=False) == '[[title]](1)(2)(3)'
     assert t.render(expr=True) == '((title))'
+
+
+def test_urlize_filter_escaping(env):
+    tmpl = env.from_string('{{ "http://www.example.org/<foo"|urlize }}')
+    assert tmpl.render() == '<a href="http://www.example.org/&lt;foo">http://www.example.org/&lt;foo</a>'

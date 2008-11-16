@@ -322,7 +322,7 @@ def do_urlize(environment, value, trim_url_limit=None, nofollow=False):
         {{ mytext|urlize(40, true) }}
             links are shortened to 40 chars and defined with rel="nofollow"
     """
-    rv = urlize(soft_unicode(value), trim_url_limit, nofollow)
+    rv = urlize(value, trim_url_limit, nofollow)
     if environment.autoescape:
         rv = Markup(rv)
     return rv
