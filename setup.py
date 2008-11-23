@@ -49,7 +49,7 @@ from distutils.errors import CCompilerError, DistutilsPlatformError
 
 #: don't change the variable and assignment.  the fabfile parses this
 #: file to get the version for deployment from it.
-VERSION = '2.1'
+VERSION = '2.2'
 
 
 data_files = []
