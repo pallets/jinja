@@ -37,6 +37,13 @@ that can create python extensions should be installed for the debugger.  If no
 C-compiler is available and you are using Python 2.4 the `ctypes`_ module
 should be installed.
 
+If you don't have a working C compiler and you are trying to install the source
+release you will get a compiler error.  This however can be circumvented by
+passing the ``--without-speedups`` command line argument to the setup script.
+
+For more details about that have a look at the :ref:`disable-speedups`
+section below.
+
 .. _ctypes: http://python.net/crew/theller/ctypes/
 
 
@@ -49,12 +56,16 @@ with the Python egg or tarball.
 As a Python egg (via easy_install)
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
-You can install the most recent Jinja2 version using `easy_install`_::
+You can install the most recent Jinja2 version using `easy_install`_ or `pip`_::
 
     sudo easy_install Jinja2
+    sudo pip install Jinja2
 
 This will install a Jinja2 egg in your Python installation's site-packages
 directory.
+
+(If you are installing from the windows command line omit the `sudo` and make
+sure to run the command as user with administrator rights)
 
 From the tarball release
 ~~~~~~~~~~~~~~~~~~~~~~~~~
@@ -86,10 +97,31 @@ snapshot::
 
     sudo easy_install Jinja2==dev
 
+Or the new `pip`_ command::
+
+    sudo pip install Jinja2==dev
+
 .. _download page: http://jinja.pocoo.org/2/download
 .. _setuptools: http://peak.telecommunity.com/DevCenter/setuptools
 .. _easy_install: http://peak.telecommunity.com/DevCenter/EasyInstall
+.. _pip: http://pypi.python.org/pypi/pip
 .. _mercurial: http://www.selenic.com/mercurial/
+
+.. _disable-speedups:
+
+Disable the speedups Module
+~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+By default Jinja2 will try to compile the speedups module.  This of course
+will fail if you don't have the Python headers or a working compiler.  This
+is often the case if you are installing Jinja2 from a windows machine.
+
+You can disable the speedups extension when installing using the
+``--without-speedups`` flag::
+
+    sudo python setup.py install --without-speedups
+
+You can also pass this parameter to `easy_install` or `pip`.
 
 
 Basic API Usage
