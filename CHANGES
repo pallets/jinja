@@ -3,7 +3,7 @@ Jinja2 Changelog
 
 Version 2.1
 -----------
-(codename to be selected, release date yet unknown)
+(codename Yasuzō, released on November 23rd 2008)
 
 - fixed a bug with nested loops and the special loop variable.  Before the
   change an inner loop overwrote the loop variable from the outer one after
