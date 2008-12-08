@@ -53,7 +53,7 @@ def create_cache(size):
 def copy_cache(cache):
     """Create an empty copy of the given cache."""
     if cache is None:
-        return Noe
+        return None
     elif type(cache) is dict:
         return {}
     return LRUCache(cache.capacity)

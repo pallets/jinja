@@ -146,7 +146,7 @@ def jinja_changelog(dirname, arguments, options, content, lineno,
                                   'CHANGES'))
     try:
         for line in islice(changelog, 3, None):
-            doc.append(line.rstrip(), '<jinjaext>')
+            doc.append(line.rstrip().decode('utf-8'), '<jinjaext>')
     finally:
         changelog.close()
     return parse_rst(state, content_offset, doc)
