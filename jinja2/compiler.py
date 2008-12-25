@@ -656,7 +656,7 @@ class CodeGenerator(NodeVisitor):
         """Return a human readable position for the node."""
         rv = 'line %d' % node.lineno
         if self.name is not None:
-            rv += ' in' + repr(self.name)
+            rv += ' in ' + repr(self.name)
         return rv
 
     # -- Statement Visitors
@@ -1012,7 +1012,8 @@ class CodeGenerator(NodeVisitor):
             self.outdent()
 
         # reset the aliases if there are any.
-        self.pop_scope(aliases, loop_frame)
+        if not node.recursive:
+            self.pop_scope(aliases, loop_frame)
 
         # if the node was recursive we have to return the buffer contents
         # and start the iteration code

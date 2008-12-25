@@ -1,9 +1,11 @@
 Jinja2 Changelog
 ================
 
-Version 2.2
------------
-(codename to be selected, release date yet unknown)
+Version 2.1.1
+-------------
+(Bugfix release)
+
+- Fixed a translation error caused by looping over empty recursive loops.
 
 Version 2.1
 -----------

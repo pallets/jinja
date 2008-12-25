@@ -153,3 +153,10 @@ def test_scoped_loop_var(env):
     t = env.from_string('{% for x in seq %}{% for y in seq %}'
                         '{{ loop.first }}{% endfor %}{% endfor %}')
     assert t.render(seq='ab') == 'TrueFalseTrueFalse'
+
+
+def test_recursive_empty_loop_iter(env):
+    t = env.from_string('''
+    {%- for item in foo recursive -%}{%- endfor -%}
+    ''')
+    assert t.render(dict(foo=[])) == ''
