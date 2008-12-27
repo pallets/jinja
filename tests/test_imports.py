@@ -6,7 +6,9 @@
     :copyright: 2007 by Armin Ronacher.
     :license: BSD, see LICENSE for more details.
 """
+from py.test import raises
 from jinja2 import Environment, DictLoader
+from jinja2.exceptions import TemplateNotFound
 
 
 test_env = Environment(loader=DictLoader(dict(
@@ -38,6 +40,15 @@ def test_context_include():
     assert t.render(foo=42) == '[42|23]'
     t = test_env.from_string('{% include "header" without context %}')
     assert t.render(foo=42) == '[|23]'
+
+
+def test_include_ignoring_missing():
+    t = test_env.from_string('{% include "missing" %}')
+    raises(TemplateNotFound, t.render)
+    for extra in '', 'with context', 'without context':
+        t = test_env.from_string('{% include "missing" ignore missing ' +
+                                 extra + ' %}')
+        assert t.render() == ''
 
 
 def test_context_include_with_overrides():

@@ -12,13 +12,14 @@ import sys
 from itertools import chain, imap
 from jinja2.utils import Markup, partial, soft_unicode, escape, missing, \
      concat, MethodType, FunctionType
-from jinja2.exceptions import UndefinedError, TemplateRuntimeError
+from jinja2.exceptions import UndefinedError, TemplateRuntimeError, \
+     TemplateNotFound
 
 
 # these variables are exported to the template runtime
 __all__ = ['LoopContext', 'Context', 'TemplateReference', 'Macro', 'Markup',
            'TemplateRuntimeError', 'missing', 'concat', 'escape',
-           'markup_join', 'unicode_join']
+           'markup_join', 'unicode_join', 'TemplateNotFound']
 
 
 #: the types we support for context functions

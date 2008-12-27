@@ -1,6 +1,13 @@
 Jinja2 Changelog
 ================
 
+Version 2.2
+-----------
+(codename unknown, release date yet unknown)
+
+- Include statements can now be marked with ``ignore missing`` to skip
+  non existing templates.
+
 Version 2.1.1
 -------------
 (Bugfix release)

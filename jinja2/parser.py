@@ -170,6 +170,12 @@ class Parser(object):
     def parse_include(self):
         node = nodes.Include(lineno=self.stream.next().lineno)
         node.template = self.parse_expression()
+        if self.stream.current.test('name:ignore') and \
+           self.stream.look().test('name:missing'):
+            node.ignore_missing = True
+            self.stream.skip(2)
+        else:
+            node.ignore_missing = False
         return self.parse_import_context(node, True)
 
     def parse_import(self):

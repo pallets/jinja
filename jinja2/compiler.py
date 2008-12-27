@@ -818,21 +818,34 @@ class CodeGenerator(NodeVisitor):
 
     def visit_Include(self, node, frame):
         """Handles includes."""
+        if node.ignore_missing:
+            self.writeline('try:')
+            self.indent()
+        self.writeline('template = environment.get_template(', node)
+        self.visit(node.template, frame)
+        self.write(', %r)' % self.name)
+        if node.ignore_missing:
+            self.outdent()
+            self.writeline('except TemplateNotFound:')
+            self.indent()
+            self.writeline('pass')
+            self.outdent()
+            self.writeline('else:')
+            self.indent()
+
         if node.with_context:
-            self.writeline('template = environment.get_template(', node)
-            self.visit(node.template, frame)
-            self.write(', %r)' % self.name)
             self.writeline('for event in template.root_render_func('
                            'template.new_context(context.parent, True, '
                            'locals())):')
         else:
-            self.writeline('for event in environment.get_template(', node)
-            self.visit(node.template, frame)
-            self.write(', %r).module._body_stream:' %
-                       self.name)
+            self.writeline('for event in template.module._body_stream:')
+
         self.indent()
         self.simple_write('event', frame)
         self.outdent()
+
+        if node.ignore_missing:
+            self.outdent()
 
     def visit_Import(self, node, frame):
         """Visit regular imports."""
