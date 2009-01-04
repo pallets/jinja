@@ -6,7 +6,7 @@
     An example extension for Jinja2 that supports inline gettext calls.
     Requires the i18n extension to be loaded.
 
-    :copyright: Copyright 2008 by Armin Ronacher.
+    :copyright: (c) 2009 by the Jinja Team.
     :license: BSD.
 """
 import re

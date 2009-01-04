@@ -5,7 +5,7 @@
 
     Jinja test functions. Used with the "is" operator.
 
-    :copyright: 2007 by Armin Ronacher.
+    :copyright: (c) 2009 by the Jinja Team.
     :license: BSD, see LICENSE for more details.
 """
 import re

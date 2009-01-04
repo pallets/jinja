@@ -13,7 +13,7 @@
 
     The solution would be a second syntax tree that has the scoping rules stored.
 
-    :copyright: Copyright 2008 by Christoph Hack, Armin Ronacher.
+    :copyright: (c) 2009 by the Jinja Team.
     :license: BSD.
 """
 from jinja2 import nodes

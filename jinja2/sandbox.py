@@ -9,7 +9,7 @@
 
     The behavior can be changed by subclassing the environment.
 
-    :copyright: Copyright 2008 by Armin Ronacher.
+    :copyright: (c) 2009 by the Jinja Team.
     :license: BSD.
 """
 import operator

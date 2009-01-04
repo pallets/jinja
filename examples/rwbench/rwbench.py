@@ -7,7 +7,7 @@
     Jinja2 repository this has no real-world usefulnes (despite the name).
     Just go away and ignore it.  NOW!
 
-    :copyright: Copyright 2008 by Armin Ronacher.
+    :copyright: (c) 2009 by the Jinja Team.
     :license: BSD.
 """
 import sys

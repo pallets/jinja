@@ -5,7 +5,7 @@
 
     Implements the template parser.
 
-    :copyright: 2008 by Armin Ronacher.
+    :copyright: (c) 2009 by the Jinja Team.
     :license: BSD, see LICENSE for more details.
 """
 from jinja2 import nodes

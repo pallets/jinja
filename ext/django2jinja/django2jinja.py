@@ -65,7 +65,7 @@
         
     For details about the writing process have a look at the module code.
 
-    :copyright: Copyright 2008 by Armin Ronacher.
+    :copyright: (c) 2009 by the Jinja Team.
     :license: BSD.
 """
 import re

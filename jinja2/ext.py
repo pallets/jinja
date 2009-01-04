@@ -7,7 +7,7 @@
     tags work.  By default two example extensions exist: an i18n and a cache
     extension.
 
-    :copyright: Copyright 2008 by Armin Ronacher.
+    :copyright: (c) 2009 by the Jinja Team.
     :license: BSD.
 """
 from collections import deque

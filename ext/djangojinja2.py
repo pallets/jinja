@@ -15,7 +15,7 @@
     `JINJA2_CACHE_SIZE`     The size of the Jinja2 template cache.
     ======================= =============================================
 
-    :copyright: Copyright 2008 by Armin Ronacher.
+    :copyright: (c) 2009 by the Jinja Team.
     :license: BSD.
 """
 from itertools import chain

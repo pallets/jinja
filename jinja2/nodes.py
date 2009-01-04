@@ -9,7 +9,7 @@
     `get_nodes` used by the parser and translator in order to normalize
     python and jinja nodes.
 
-    :copyright: 2008 by Armin Ronacher.
+    :copyright: (c) 2009 by the Jinja Team.
     :license: BSD, see LICENSE for more details.
 """
 import operator

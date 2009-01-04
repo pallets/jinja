@@ -7,7 +7,7 @@
     ugly stuff with the Python traceback system in order to achieve tracebacks
     with correct line numbers, locals and contents.
 
-    :copyright: Copyright 2008 by Armin Ronacher.
+    :copyright: (c) 2009 by the Jinja Team.
     :license: BSD.
 """
 import sys

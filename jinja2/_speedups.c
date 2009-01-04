@@ -8,7 +8,7 @@
  * implementation of `tb_set_next` and Python implementations of the other
  * functions are used.
  *
- * :copyright: 2008 by Armin Ronacher, Mickaël Guérin.
+ * :copyright: (c) 2009 by the Jinja Team.
  * :license: BSD.
  */
 

@@ -6,7 +6,7 @@
     IronPython support library.  This library exports functionality from
     the CLR to Python that is normally available in the standard library.
 
-    :copyright: Copyright 2008 by Armin Ronacher.
+    :copyright: (c) 2009 by the Jinja Team.
     :license: BSD.
 """
 from System import DateTime

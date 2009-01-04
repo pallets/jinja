@@ -1,10 +1,30 @@
-Jinja is written and maintained by Armin Ronacher <armin.ronacher@active-4.com>.
+Jinja is written and maintained by the Jinja Team and various
+contributors:
 
-Other contributors (as mentionend in :copyright:s) are:
+Lead Developer:
 
 - Armin Ronacher <armin.ronacher@active-4.com>
+
+Developers:
+
+- Christoph Hack
 - Georg Brandl
-- Lawrence Journal-World.
+
+Contributors:
+
 - Bryan McLemore
 - Mickaël Guérin <kael@crocobox.org>
 - Cameron Knight
+- Lawrence Journal-World.
+- David Cramer
+
+Patches and suggestions:
+
+- Ronny Pfannschmidt
+- Axel Böhm
+- Alexey Melchakov
+- Bryan McLemore
+- Clovis Fabricio (nosklo)
+- Cameron Knight
+- Peter van Dijk (Habbie)
+- Stefan Ebner

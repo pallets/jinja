@@ -1,6 +1,7 @@
 ;;; jinja.el --- Jinja mode highlighting
 ;;
 ;; Author: Georg Brandl
+;; Copyright: (c) 2009 by the Jinja Team
 ;; Last modified: 2008-05-22 23:04 by gbr
 ;;
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;

@@ -5,7 +5,7 @@
 
     Configure py.test for support stuff.
 
-    :copyright: 2007 by Armin Ronacher, Alexander Schremmer.
+    :copyright: (c) 2009 by the Jinja Team.
     :license: BSD, see LICENSE for more details.
 """
 

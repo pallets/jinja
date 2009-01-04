@@ -5,7 +5,7 @@
 
     Jinja default filters and tags.
 
-    :copyright: 2007-2008 by Armin Ronacher.
+    :copyright: (c) 2009 by the Jinja Team.
     :license: BSD, see LICENSE for more details.
 """
 from jinja2.utils import generate_lorem_ipsum, Cycler, Joiner
