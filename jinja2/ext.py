@@ -174,7 +174,7 @@ class InternationalizationExtension(Extension):
         # a later state.
         plural_expr = None
         variables = {}
-        while parser.stream.current.type is not 'block_end':
+        while parser.stream.current.type != 'block_end':
             if variables:
                 parser.stream.expect('comma')
 
@@ -189,7 +189,7 @@ class InternationalizationExtension(Extension):
                             exc=TemplateAssertionError)
 
             # expressions
-            if parser.stream.current.type is 'assign':
+            if parser.stream.current.type == 'assign':
                 parser.stream.next()
                 variables[name.value] = var = parser.parse_expression()
             else:
@@ -214,7 +214,7 @@ class InternationalizationExtension(Extension):
         if parser.stream.current.test('name:pluralize'):
             have_plural = True
             parser.stream.next()
-            if parser.stream.current.type is not 'block_end':
+            if parser.stream.current.type != 'block_end':
                 name = parser.stream.expect('name')
                 if name.value not in variables:
                     parser.fail('unknown variable %r for pluralization' %
@@ -259,16 +259,16 @@ class InternationalizationExtension(Extension):
         referenced = []
         buf = []
         while 1:
-            if parser.stream.current.type is 'data':
+            if parser.stream.current.type == 'data':
                 buf.append(parser.stream.current.value.replace('%', '%%'))
                 parser.stream.next()
-            elif parser.stream.current.type is 'variable_begin':
+            elif parser.stream.current.type == 'variable_begin':
                 parser.stream.next()
                 name = parser.stream.expect('name').value
                 referenced.append(name)
                 buf.append('%%(%s)s' % name)
                 parser.stream.expect('variable_end')
-            elif parser.stream.current.type is 'block_begin':
+            elif parser.stream.current.type == 'block_begin':
                 parser.stream.next()
                 if parser.stream.current.test('name:endtrans'):
                     break
