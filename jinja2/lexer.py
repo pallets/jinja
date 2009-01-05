@@ -101,7 +101,7 @@ class Token(tuple):
     def __str__(self):
         if self.type in reverse_operators:
             return reverse_operators[self.type]
-        elif self.type is 'name':
+        elif self.type == 'name':
             return self.value
         return self.type
 
@@ -210,7 +210,7 @@ class TokenStream(object):
         rv = self.current
         if self._pushed:
             self.current = self._pushed.popleft()
-        elif self.current.type is not 'eof':
+        elif self.current.type != 'eof':
             try:
                 self.current = self._next()
             except StopIteration:
@@ -230,7 +230,7 @@ class TokenStream(object):
         if not self.current.test(expr):
             if ':' in expr:
                 expr = expr.split(':')[1]
-            if self.current.type is 'eof':
+            if self.current.type == 'eof':
                 raise TemplateSyntaxError('unexpected end of template, '
                                           'expected %r.' % expr,
                                           self.current.lineno,
