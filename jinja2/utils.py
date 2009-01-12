@@ -589,7 +589,13 @@ class LRUCache(object):
         """
         rv = self._mapping[key]
         if self._queue[-1] != key:
-            self._remove(key)
+            try:
+                self._remove(key)
+            except:
+                # if something removed the key from the container
+                # when we read, ignore the ValueError that we would
+                # get otherwise.
+                pass
             self._append(key)
         return rv
 
