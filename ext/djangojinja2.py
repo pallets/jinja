@@ -20,6 +20,7 @@
 """
 from itertools import chain
 from django.conf import settings
+from django.http import HttpResponse
 from django.core.exceptions import ImproperlyConfigured
 from django.template.context import get_standard_processors
 from django.template import TemplateDoesNotExist
