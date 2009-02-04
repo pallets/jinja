@@ -551,7 +551,10 @@ class CodeGenerator(NodeVisitor):
             if name not in aliases:
                 to_delete.add('l_' + name)
         if to_delete:
-            self.writeline('del ' + ', '.join(to_delete))
+            # we cannot use the del statement here because enclosed
+            # scopes can trigger a SyntaxError:
+            #   a = 42; b = lambda: a; del a
+            self.writeline(' = '.join(to_delete) + ' = missing')
 
     def function_scoping(self, node, frame, children=None,
                          find_special=True):

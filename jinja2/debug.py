@@ -11,7 +11,7 @@
     :license: BSD.
 """
 import sys
-from jinja2.utils import CodeType
+from jinja2.utils import CodeType, missing
 
 
 def translate_exception(exc_info):
@@ -47,7 +47,7 @@ def fake_exc_info(exc_info, filename, lineno, tb_back=None):
     else:
         locals = {}
     for name, value in real_locals.iteritems():
-        if name.startswith('l_'):
+        if name.startswith('l_') and value is not missing:
             locals[name[2:]] = value
 
     # if there is a local called __jinja_exception__, we get

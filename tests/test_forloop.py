@@ -160,3 +160,18 @@ def test_recursive_empty_loop_iter(env):
     {%- for item in foo recursive -%}{%- endfor -%}
     ''')
     assert t.render(dict(foo=[])) == ''
+
+
+def test_call_in_loop(env):
+    t = env.from_string('''
+    {%- macro do_something() -%}
+        [{{ caller() }}]
+    {%- endmacro %}
+
+    {%- for i in [1, 2, 3] %}
+        {%- call do_something() -%}
+            {{ i }}
+        {%- endcall %}
+    {%- endfor -%}
+    ''')
+    assert t.render() == '[1][2][3]'
