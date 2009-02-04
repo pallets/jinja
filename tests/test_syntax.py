@@ -189,3 +189,9 @@ def test_test_chaining(env):
 def test_string_concatenation(env):
     tmpl = env.from_string('{{ "foo" "bar" "baz" }}')
     assert tmpl.render() == 'foobarbaz'
+
+
+def test_notin(env):
+    bar = xrange(100)
+    tmpl = env.from_string('''{{ not 42 in bar }}''')
+    assert tmpl.render(bar=bar) == unicode(not 42 in bar)

@@ -7,6 +7,9 @@ Version 2.2
 
 - Include statements can now be marked with ``ignore missing`` to skip
   non existing templates.
+- Priority of `not` raised.  It's now possible to write `not foo in bar`
+  as an alias to `foo not in bar` like in python.  Previously the grammar
+  required parentheses (`not (foo in bar)`) which was odd.
 
 Version 2.1.1
 -------------

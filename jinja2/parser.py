@@ -333,12 +333,18 @@ class Parser(object):
 
     def parse_and(self):
         lineno = self.stream.current.lineno
-        left = self.parse_compare()
+        left = self.parse_not()
         while self.stream.skip_if('name:and'):
-            right = self.parse_compare()
+            right = self.parse_not()
             left = nodes.And(left, right, lineno=lineno)
             lineno = self.stream.current.lineno
         return left
+
+    def parse_not(self):
+        if self.stream.current.test('name:not'):
+            lineno = self.stream.next().lineno
+            return nodes.Not(self.parse_not(), lineno=lineno)
+        return self.parse_compare()
 
     def parse_compare(self):
         lineno = self.stream.current.lineno
@@ -445,10 +451,6 @@ class Parser(object):
     def parse_unary(self):
         token_type = self.stream.current.type
         lineno = self.stream.current.lineno
-        if token_type == 'name' and self.stream.current.value == 'not':
-            self.stream.next()
-            node = self.parse_unary()
-            return nodes.Not(node, lineno=lineno)
         if token_type == 'sub':
             self.stream.next()
             node = self.parse_unary()

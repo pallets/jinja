@@ -5,3 +5,4 @@
 ^(build|dist|Jinja2\.egg-info)/
 \.py[co]$
 \.DS_Store$
+^env/
