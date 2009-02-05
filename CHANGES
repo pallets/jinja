@@ -12,6 +12,7 @@ Version 2.2
   required parentheses (`not (foo in bar)`) which was odd.
 - Fixed a bug that caused syntax errors when defining macros or using the
   `{% call %}` tag inside loops.
+- Fixed a bug in the parser that made ``{{ foo[1, 2] }}`` impossible.
 
 Version 2.1.1
 -------------

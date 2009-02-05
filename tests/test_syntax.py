@@ -195,3 +195,11 @@ def test_notin(env):
     bar = xrange(100)
     tmpl = env.from_string('''{{ not 42 in bar }}''')
     assert tmpl.render(bar=bar) == unicode(not 42 in bar)
+
+
+def test_implicit_subscribed_tuple(env):
+    class Foo(object):
+        def __getitem__(self, x):
+            return x
+    t = env.from_string('{{ foo[1, 2] }}')
+    assert t.render(foo=Foo()) == u'(1, 2)'

@@ -602,7 +602,7 @@ class Parser(object):
             if len(args) == 1:
                 arg = args[0]
             else:
-                arg = nodes.Tuple(args, self.lineno, self.filename)
+                arg = nodes.Tuple(args, 'load', lineno=token.lineno)
             return nodes.Getitem(node, arg, 'load', lineno=token.lineno)
         self.fail('expected subscript expression', self.lineno)
 
