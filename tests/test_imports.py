@@ -13,7 +13,8 @@ from jinja2.exceptions import TemplateNotFound
 
 test_env = Environment(loader=DictLoader(dict(
     module='{% macro test() %}[{{ foo }}|{{ bar }}]{% endmacro %}',
-    header='[{{ foo }}|{{ 23 }}]'
+    header='[{{ foo }}|{{ 23 }}]',
+    o_printer='({{ o }})'
 )))
 test_env.globals['bar'] = 23
 
@@ -80,3 +81,16 @@ def test_exports():
     assert not hasattr(m, '__missing')
     assert m.variable == 42
     assert not hasattr(m, 'notthere')
+
+
+def test_unoptimized_scopes():
+    t = test_env.from_string("""
+        {% macro outer(o) %}
+        {% macro inner() %}
+        {% include "o_printer" %}
+        {% endmacro %}
+        {{ inner() }}
+        {% endmacro %}
+        {{ outer("FOO") }}
+    """)
+    assert t.render().strip() == '(FOO)'

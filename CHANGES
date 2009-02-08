@@ -13,6 +13,8 @@ Version 2.2
 - Fixed a bug that caused syntax errors when defining macros or using the
   `{% call %}` tag inside loops.
 - Fixed a bug in the parser that made ``{{ foo[1, 2] }}`` impossible.
+- Made it possible to refer to names from outer scopes in included templates
+  that were unused in the callers frame (#327)
 
 Version 2.1.1
 -------------

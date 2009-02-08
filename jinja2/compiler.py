@@ -520,6 +520,16 @@ class CodeGenerator(NodeVisitor):
                 self.writeline('%s = environment.%s[%r]' %
                                (mapping[name], dependency, name))
 
+    def unoptimize_scope(self, frame):
+        """Disable Python optimizations for the frame."""
+        # XXX: this is not that nice but it has no real overhead.  It
+        # mainly works because python finds the locals before dead code
+        # is removed.  If that breaks we have to add a dummy function
+        # that just accepts the arguments and does nothing.
+        if frame.identifiers.declared:
+            self.writeline('if 0: dummy(%s)' % ', '.join(
+                'l_' + name for name in frame.identifiers.declared))
+
     def push_scope(self, frame, extra_vars=()):
         """This function returns all the shadowed variables in a dict
         in the form name: alias and will write the required assignments
@@ -821,6 +831,8 @@ class CodeGenerator(NodeVisitor):
 
     def visit_Include(self, node, frame):
         """Handles includes."""
+        if node.with_context:
+            self.unoptimize_scope(frame)
         if node.ignore_missing:
             self.writeline('try:')
             self.indent()
@@ -852,6 +864,8 @@ class CodeGenerator(NodeVisitor):
 
     def visit_Import(self, node, frame):
         """Visit regular imports."""
+        if node.with_context:
+            self.unoptimize_scope(frame)
         self.writeline('l_%s = ' % node.target, node)
         if frame.toplevel:
             self.write('context.vars[%r] = ' % node.target)
