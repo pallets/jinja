@@ -175,3 +175,12 @@ def test_call_in_loop(env):
     {%- endfor -%}
     ''')
     assert t.render() == '[1][2][3]'
+
+
+def test_scoping_bug(env):
+    t = env.from_string('''
+    {%- for item in foo %}...{{ item }}...{% endfor %}
+    {%- macro item(a) %}...{{ a }}...{% endmacro %}
+    {{- item(2) -}}
+    ''')
+    assert t.render(foo=(1,)) == '...1......2...'

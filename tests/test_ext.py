@@ -135,3 +135,26 @@ def test_streamfilter_extension():
     env.globals['gettext'] = lambda x: x.title()
     tmpl = env.from_string('Foo _(bar) Baz')
     assert tmpl.render() == 'Foo Bar Baz'
+
+
+class WithExtension(Extension):
+    tags = frozenset(['with'])
+
+    def parse(self, parser):
+        lineno = parser.stream.next().lineno
+        value = parser.parse_expression()
+        parser.stream.expect('name:as')
+        name = parser.stream.expect('name')
+
+        body = parser.parse_statements(['name:endwith'], drop_needle=True)
+        body.insert(0, nodes.Assign(nodes.Name(name.value, 'store'), value))
+        return nodes.Scope(body)
+
+
+def test_with_extension():
+    env = Environment(extensions=[WithExtension])
+    t = env.from_string('{{ a }}{% with 2 as a %}{{ a }}{% endwith %}{{ a }}')
+    assert t.render(a=1) == '121'
+
+    t = env.from_string('{% with 2 as a %}{{ a }}{% endwith %}{{ a }}')
+    assert t.render(a=3) == '23'

@@ -115,14 +115,6 @@ class Identifiers(object):
             return False
         return name in self.declared
 
-    def find_shadowed(self, extra=()):
-        """Find all the shadowed names.  extra is an iterable of variables
-        that may be defined with `add_special` which may occour scoped.
-        """
-        return (self.declared | self.outer_undeclared) & \
-               (self.declared_locally | self.declared_parameter) | \
-               set(x for x in extra if self.is_declared(x))
-
 
 class Frame(object):
     """Holds compile time information for us."""
@@ -151,15 +143,17 @@ class Frame(object):
         # the name of the block we're in, otherwise None.
         self.block = parent and parent.block or None
 
+        # a set of actually assigned names
+        self.assigned_names = set()
+
         # the parent of this frame
         self.parent = parent
 
         if parent is not None:
             self.identifiers.declared.update(
                 parent.identifiers.declared |
-                parent.identifiers.declared_locally |
                 parent.identifiers.declared_parameter |
-                parent.identifiers.undeclared
+                parent.assigned_names
             )
             self.identifiers.outer_undeclared.update(
                 parent.identifiers.undeclared -
@@ -183,6 +177,15 @@ class Frame(object):
         visitor = FrameIdentifierVisitor(self.identifiers, hard_scope)
         for node in nodes:
             visitor.visit(node)
+
+    def find_shadowed(self, extra=()):
+        """Find all the shadowed names.  extra is an iterable of variables
+        that may be defined with `add_special` which may occour scoped.
+        """
+        i = self.identifiers
+        return (i.declared | i.outer_undeclared) & \
+               (i.declared_locally | i.declared_parameter) | \
+               set(x for x in extra if i.is_declared(x))
 
     def inner(self):
         """Return an inner frame."""
@@ -294,6 +297,9 @@ class FrameIdentifierVisitor(NodeVisitor):
 
     def visit_FilterBlock(self, node):
         self.visit(node.filter)
+
+    def visit_Scope(self, node):
+        """Stop visiting at scopes."""
 
     def visit_Block(self, node):
         """Stop visiting at blocks."""
@@ -538,10 +544,10 @@ class CodeGenerator(NodeVisitor):
         This also predefines locally declared variables from the loop
         body because under some circumstances it may be the case that
 
-        `extra_vars` is passed to `Identifiers.find_shadowed`.
+        `extra_vars` is passed to `Frame.find_shadowed`.
         """
         aliases = {}
-        for name in frame.identifiers.find_shadowed(extra_vars):
+        for name in frame.find_shadowed(extra_vars):
             aliases[name] = ident = self.temporary_identifier()
             self.writeline('%s = l_%s' % (ident, name))
         to_declare = set()
@@ -878,6 +884,7 @@ class CodeGenerator(NodeVisitor):
             self.write('module')
         if frame.toplevel and not node.target.startswith('_'):
             self.writeline('context.exported_vars.discard(%r)' % node.target)
+        frame.assigned_names.add(node.target)
 
     def visit_FromImport(self, node, frame):
         """Visit named imports."""
@@ -914,6 +921,7 @@ class CodeGenerator(NodeVisitor):
                 var_names.append(alias)
                 if not alias.startswith('_'):
                     discarded_names.append(alias)
+            frame.assigned_names.add(alias)
 
         if var_names:
             if len(var_names) == 1:
@@ -1079,6 +1087,7 @@ class CodeGenerator(NodeVisitor):
             self.writeline('context.vars[%r] = ' % node.name)
         self.write('l_%s = ' % node.name)
         self.macro_def(node, macro_frame)
+        frame.assigned_names.add(node.name)
 
     def visit_CallBlock(self, node, frame):
         children = node.iter_child_nodes(exclude=('call',))
@@ -1228,7 +1237,7 @@ class CodeGenerator(NodeVisitor):
         # names here.
         if frame.toplevel:
             assignment_frame = frame.copy()
-            assignment_frame.assigned_names = set()
+            assignment_frame.toplevel_assignments = set()
         else:
             assignment_frame = frame
         self.visit(node.target, assignment_frame)
@@ -1237,14 +1246,14 @@ class CodeGenerator(NodeVisitor):
 
         # make sure toplevel assignments are added to the context.
         if frame.toplevel:
-            public_names = [x for x in assignment_frame.assigned_names
+            public_names = [x for x in assignment_frame.toplevel_assignments
                             if not x.startswith('_')]
-            if len(assignment_frame.assigned_names) == 1:
-                name = iter(assignment_frame.assigned_names).next()
+            if len(assignment_frame.toplevel_assignments) == 1:
+                name = iter(assignment_frame.toplevel_assignments).next()
                 self.writeline('context.vars[%r] = l_%s' % (name, name))
             else:
                 self.writeline('context.vars.update({')
-                for idx, name in enumerate(assignment_frame.assigned_names):
+                for idx, name in enumerate(assignment_frame.toplevel_assignments):
                     if idx:
                         self.write(', ')
                     self.write('%r: l_%s' % (name, name))
@@ -1261,8 +1270,9 @@ class CodeGenerator(NodeVisitor):
 
     def visit_Name(self, node, frame):
         if node.ctx == 'store' and frame.toplevel:
-            frame.assigned_names.add(node.name)
+            frame.toplevel_assignments.add(node.name)
         self.write('l_' + node.name)
+        frame.assigned_names.add(node.name)
 
     def visit_Const(self, node, frame):
         val = node.value
@@ -1472,3 +1482,11 @@ class CodeGenerator(NodeVisitor):
 
     def visit_Break(self, node, frame):
         self.writeline('break', node)
+
+    def visit_Scope(self, node, frame):
+        scope_frame = frame.inner()
+        scope_frame.inspect(node.iter_child_nodes())
+        aliases = self.push_scope(scope_frame)
+        self.pull_locals(scope_frame)
+        self.blockvisit(node.body, scope_frame)
+        self.pop_scope(aliases, scope_frame)

@@ -15,6 +15,9 @@ Version 2.2
 - Fixed a bug in the parser that made ``{{ foo[1, 2] }}`` impossible.
 - Made it possible to refer to names from outer scopes in included templates
   that were unused in the callers frame (#327)
+- Fixed a bug that caused internal errors if names where used as iteration
+  variable and regular variable *after* the loop if that variable was unused
+  *before* the loop.  (#331)
 
 Version 2.1.1
 -------------

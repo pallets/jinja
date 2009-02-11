@@ -778,6 +778,11 @@ class Break(Stmt):
     """Break a loop."""
 
 
+class Scope(Stmt):
+    """An artificial scope."""
+    fields = ('body',)
+
+
 # make sure nobody creates custom nodes
 def _failing_new(*args, **kwargs):
     raise TypeError('can\'t create custom node types')
