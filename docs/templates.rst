@@ -378,6 +378,32 @@ readability::
 However the name after the `endblock` word must match the block name.
 
 
+Block Nesting and Scope
+~~~~~~~~~~~~~~~~~~~~~~~
+
+Blocks can be nested for more complex layouts.  However per default blocks
+may not access variables from outer scopes::
+
+    {% for item in seq %}
+        <li>{% block loop_item %}{{ item }}{% endblock %}</li>
+    {% endfor %}
+
+This example would output empty ``<li>`` items because `item` is unavailable
+inside the block.  The reason for this is that if the block is replaced by
+a child template a variable would appear that was not defined in the block or
+passed to the context.
+
+Starting with Jinja 2.2 you can explicitly specify that variables are
+available in a block by setting the block to "scoped" by adding the `scoped`
+modifier to a block declaration::
+
+    {% for item in seq %}
+        <li>{% block loop_item scoped %}{{ item }}{% endblock %}</li>
+    {% endfor %}
+
+    When overriding a block the `scoped` modifier does not have to be provided.
+
+
 HTML Escaping
 -------------
 

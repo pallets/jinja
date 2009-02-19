@@ -269,7 +269,7 @@ class FilterBlock(Stmt):
 
 class Block(Stmt):
     """A node that represents a block."""
-    fields = ('name', 'body')
+    fields = ('name', 'body', 'scoped')
 
 
 class Include(Stmt):

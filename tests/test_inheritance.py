@@ -166,3 +166,12 @@ def test_fixed_macro_scoping_bug():
     {% block content %}&nbsp;{% endblock %}
     '''
     })).get_template("test.html").render().split() == [u'outer_box', u'my_macro']
+
+
+def test_scoped_block():
+    env = Environment(loader=DictLoader({
+        'master.html': '{% for item in seq %}[{% block item scoped %}'
+                       '{% endblock %}]{% endfor %}'
+    }))
+    t = env.from_string('{% extends "master.html" %}{% block item %}{{ item }}{% endblock %}')
+    assert t.render(seq=range(5)) == '[0][1][2][3][4]'

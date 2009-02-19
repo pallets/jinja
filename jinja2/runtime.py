@@ -17,7 +17,7 @@ from jinja2.exceptions import UndefinedError, TemplateRuntimeError, \
 
 
 # these variables are exported to the template runtime
-__all__ = ['LoopContext', 'Context', 'TemplateReference', 'Macro', 'Markup',
+__all__ = ['LoopContext', 'TemplateReference', 'Macro', 'Markup',
            'TemplateRuntimeError', 'missing', 'concat', 'escape',
            'markup_join', 'unicode_join', 'TemplateNotFound']
 
@@ -40,6 +40,45 @@ def markup_join(seq):
 def unicode_join(seq):
     """Simple args to unicode conversion and concatenation."""
     return concat(imap(unicode, seq))
+
+
+def new_context(environment, template_name, blocks, vars=None,
+                shared=None, globals=None, locals=None):
+    """Internal helper to for context creation."""
+    if vars is None:
+        vars = {}
+    if shared:
+        parent = vars
+    else:
+        parent = dict(globals or (), **vars)
+    if locals:
+        # if the parent is shared a copy should be created because
+        # we don't want to modify the dict passed
+        if shared:
+            parent = dict(parent)
+        for key, value in locals.iteritems():
+            if key[:2] == 'l_' and value is not missing:
+                parent[key[2:]] = value
+    return Context(environment, parent, template_name, blocks)
+
+
+class TemplateReference(object):
+    """The `self` in templates."""
+
+    def __init__(self, context):
+        self.__context = context
+
+    def __getitem__(self, name):
+        blocks = self.__context.blocks[name]
+        wrap = self.__context.environment.autoescape and \
+               Markup or (lambda x: x)
+        return BlockReference(name, self.__context, blocks, 0)
+
+    def __repr__(self):
+        return '<%s %r>' % (
+            self.__class__.__name__,
+            self.__context.name
+        )
 
 
 class Context(object):
@@ -132,6 +171,11 @@ class Context(object):
                 args = (__self.environment,) + args
         return __obj(*args, **kwargs)
 
+    def derived(self, locals=None):
+        """Internal helper function to create a derived context."""
+        return new_context(self.environment, self.name, self.blocks,
+                           self.parent, True, None, locals)
+
     def _all(meth):
         proxy = lambda self: getattr(self.get_all(), meth)()
         proxy.__doc__ = getattr(dict, meth).__doc__
@@ -172,25 +216,6 @@ try:
     Mapping.register(Context)
 except ImportError:
     pass
-
-
-class TemplateReference(object):
-    """The `self` in templates."""
-
-    def __init__(self, context):
-        self.__context = context
-
-    def __getitem__(self, name):
-        blocks = self.__context.blocks[name]
-        wrap = self.__context.environment.autoescape and \
-               Markup or (lambda x: x)
-        return BlockReference(name, self.__context, blocks, 0)
-
-    def __repr__(self):
-        return '<%s %r>' % (
-            self.__class__.__name__,
-            self.__context.name
-        )
 
 
 class BlockReference(object):

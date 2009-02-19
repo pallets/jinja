@@ -783,8 +783,12 @@ class CodeGenerator(NodeVisitor):
                 self.writeline('if parent_template is None:')
                 self.indent()
                 level += 1
-        self.writeline('for event in context.blocks[%r][0](context):' %
-                       node.name, node)
+        if node.scoped:
+            context = 'context.derived(locals())'
+        else:
+            context = 'context'
+        self.writeline('for event in context.blocks[%r][0](%s):' % (
+                       node.name, context), node)
         self.indent()
         self.simple_write('event', frame)
         self.outdent(level)

@@ -15,7 +15,7 @@ from jinja2.lexer import get_lexer, TokenStream
 from jinja2.parser import Parser
 from jinja2.optimizer import optimize
 from jinja2.compiler import generate
-from jinja2.runtime import Undefined, Context
+from jinja2.runtime import Undefined, new_context
 from jinja2.exceptions import TemplateSyntaxError
 from jinja2.utils import import_string, LRUCache, Markup, missing, \
      concat, consume
@@ -646,21 +646,8 @@ class Template(object):
 
         `locals` can be a dict of local variables for internal usage.
         """
-        if vars is None:
-            vars = {}
-        if shared:
-            parent = vars
-        else:
-            parent = dict(self.globals, **vars)
-        if locals:
-            # if the parent is shared a copy should be created because
-            # we don't want to modify the dict passed
-            if shared:
-                parent = dict(parent)
-            for key, value in locals.iteritems():
-                if key[:2] == 'l_' and value is not missing:
-                    parent[key[2:]] = value
-        return Context(self.environment, parent, self.name, self.blocks)
+        return new_context(self.environment, self.name, self.blocks,
+                           vars, shared, self.globals, locals)
 
     def make_module(self, vars=None, shared=False, locals=None):
         """This method works like the :attr:`module` attribute when called
