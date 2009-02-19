@@ -173,8 +173,10 @@ class Context(object):
 
     def derived(self, locals=None):
         """Internal helper function to create a derived context."""
-        return new_context(self.environment, self.name, self.blocks,
-                           self.parent, True, None, locals)
+        context = new_context(self.environment, self.name, {},
+                              self.parent, True, None, locals)
+        context.blocks.update((k, list(v)) for k, v in self.blocks.iteritems())
+        return context
 
     def _all(meth):
         proxy = lambda self: getattr(self.get_all(), meth)()

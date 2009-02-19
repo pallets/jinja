@@ -175,3 +175,12 @@ def test_scoped_block():
     }))
     t = env.from_string('{% extends "master.html" %}{% block item %}{{ item }}{% endblock %}')
     assert t.render(seq=range(5)) == '[0][1][2][3][4]'
+
+
+def test_super_in_scoped_block():
+    env = Environment(loader=DictLoader({
+        'master.html': '{% for item in seq %}[{% block item scoped %}'
+                       '{{ item }}{% endblock %}]{% endfor %}'
+    }))
+    t = env.from_string('{% extends "master.html" %}{% block item %}{{ super() }}|{{ item * 2 }}{% endblock %}')
+    assert t.render(seq=range(5)) == '[0|0][1|2][2|4][3|6][4|8]'
