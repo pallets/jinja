@@ -13,6 +13,18 @@
 class TemplateError(Exception):
     """Baseclass for all template errors."""
 
+    def __init__(self, message=None):
+        if message is not None:
+            message = unicode(message).encode('utf-8')
+        Exception.__init__(self, message)
+
+    @property
+    def message(self):
+        if self.args:
+            message = self.args[0]
+            if message is not None:
+                return message.decode('utf-8', 'replace')
+
 
 class TemplateNotFound(IOError, LookupError, TemplateError):
     """Raised if a template does not exist."""
@@ -26,14 +38,11 @@ class TemplateSyntaxError(TemplateError):
     """Raised to tell the user that there is a problem with the template."""
 
     def __init__(self, message, lineno, name=None, filename=None):
-        if not isinstance(message, unicode):
-            message = message.decode('utf-8', 'replace')
-        TemplateError.__init__(self, message.encode('utf-8'))
+        TemplateError.__init__(self, message)
         self.lineno = lineno
         self.name = name
         self.filename = filename
         self.source = None
-        self.message = message
 
     def __unicode__(self):
         location = 'line %d' % self.lineno
