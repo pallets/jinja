@@ -44,7 +44,16 @@ class TemplateSyntaxError(TemplateError):
         self.filename = filename
         self.source = None
 
+        # this is set to True if the debug.translate_syntax_error
+        # function translated the syntax error into a new traceback
+        self.translated = False
+
     def __unicode__(self):
+        # for translated errors we only return the message
+        if self.translated:
+            return self.message.encode('utf-8')
+
+        # otherwise attach some stuff
         location = 'line %d' % self.lineno
         name = self.filename or self.name
         if name:

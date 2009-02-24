@@ -11,7 +11,18 @@
     :license: BSD.
 """
 import sys
-from jinja2.utils import CodeType, missing
+from jinja2.utils import CodeType, missing, internal_code
+
+
+def translate_syntax_error(error, source=None):
+    """Rewrites a syntax error to please traceback systems."""
+    error.source = source
+    error.translated = True
+    exc_info = (type(error), error, None)
+    filename = error.filename
+    if filename is None:
+        filename = '<unknown>'
+    return fake_exc_info(exc_info, filename, error.lineno)
 
 
 def translate_exception(exc_info):
@@ -22,6 +33,14 @@ def translate_exception(exc_info):
     initial_tb = tb = exc_info[2].tb_next
 
     while tb is not None:
+        # skip frames decorated with @internalcode.  These are internal
+        # calls we can't avoid and that are useless in template debugging
+        # output.
+        if tb_set_next is not None and tb.tb_frame.f_code in internal_code:
+            tb_set_next(prev_tb, tb.tb_next)
+            tb = tb.tb_next
+            continue
+
         template = tb.tb_frame.f_globals.get('__jinja_template__')
         if template is not None:
             lineno = template.get_corresponding_lineno(tb.tb_lineno)
@@ -40,19 +59,22 @@ def fake_exc_info(exc_info, filename, lineno, tb_back=None):
     exc_type, exc_value, tb = exc_info
 
     # figure the real context out
-    real_locals = tb.tb_frame.f_locals.copy()
-    ctx = real_locals.get('context')
-    if ctx:
-        locals = ctx.get_all()
+    if tb is not None:
+        real_locals = tb.tb_frame.f_locals.copy()
+        ctx = real_locals.get('context')
+        if ctx:
+            locals = ctx.get_all()
+        else:
+            locals = {}
+        for name, value in real_locals.iteritems():
+            if name.startswith('l_') and value is not missing:
+                locals[name[2:]] = value
+
+        # if there is a local called __jinja_exception__, we get
+        # rid of it to not break the debug functionality.
+        locals.pop('__jinja_exception__', None)
     else:
         locals = {}
-    for name, value in real_locals.iteritems():
-        if name.startswith('l_') and value is not missing:
-            locals[name[2:]] = value
-
-    # if there is a local called __jinja_exception__, we get
-    # rid of it to not break the debug functionality.
-    locals.pop('__jinja_exception__', None)
 
     # assamble fake globals we need
     globals = {
@@ -68,13 +90,16 @@ def fake_exc_info(exc_info, filename, lineno, tb_back=None):
     # if it's possible, change the name of the code.  This won't work
     # on some python environments such as google appengine
     try:
-        function = tb.tb_frame.f_code.co_name
-        if function == 'root':
-            location = 'top-level template code'
-        elif function.startswith('block_'):
-            location = 'block "%s"' % function[6:]
-        else:
+        if tb is None:
             location = 'template'
+        else:
+            function = tb.tb_frame.f_code.co_name
+            if function == 'root':
+                location = 'top-level template code'
+            elif function.startswith('block_'):
+                location = 'block "%s"' % function[6:]
+            else:
+                location = 'template'
         code = CodeType(0, code.co_nlocals, code.co_stacksize,
                         code.co_flags, code.co_code, code.co_consts,
                         code.co_names, code.co_varnames, filename,

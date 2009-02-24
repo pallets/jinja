@@ -18,7 +18,7 @@ from jinja2.compiler import generate
 from jinja2.runtime import Undefined, new_context
 from jinja2.exceptions import TemplateSyntaxError
 from jinja2.utils import import_string, LRUCache, Markup, missing, \
-     concat, consume
+     concat, consume, internalcode
 
 
 # for direct template usage we have up to ten living environments
@@ -339,6 +339,7 @@ class Environment(object):
         except (TypeError, LookupError, AttributeError):
             return self.undefined(obj=obj, name=attribute)
 
+    @internalcode
     def parse(self, source, name=None, filename=None):
         """Parse the sourcecode and return the abstract syntax tree.  This
         tree of nodes is used by the compiler to convert the template into
@@ -353,8 +354,9 @@ class Environment(object):
         try:
             return Parser(self, source, name, filename).parse()
         except TemplateSyntaxError, e:
-            e.source = source
-            raise e
+            from jinja2.debug import translate_syntax_error
+            exc_type, exc_value, tb = translate_syntax_error(e, source)
+            raise exc_type, exc_value, tb
 
     def lex(self, source, name=None, filename=None):
         """Lex the given sourcecode and return a generator that yields
@@ -370,8 +372,9 @@ class Environment(object):
         try:
             return self.lexer.tokeniter(source, name, filename)
         except TemplateSyntaxError, e:
-            e.source = source
-            raise e
+            from jinja2.debug import translate_syntax_error
+            exc_type, exc_value, tb = translate_syntax_error(e, source)
+            raise exc_type, exc_value, tb
 
     def preprocess(self, source, name=None, filename=None):
         """Preprocesses the source with all extensions.  This is automatically
@@ -393,6 +396,7 @@ class Environment(object):
                 stream = TokenStream(stream, name, filename)
         return stream
 
+    @internalcode
     def compile(self, source, name=None, filename=None, raw=False):
         """Compile a node or template source code.  The `name` parameter is
         the load name of the template after it was joined using
@@ -473,6 +477,7 @@ class Environment(object):
         """
         return template
 
+    @internalcode
     def get_template(self, name, parent=None, globals=None):
         """Load a template from the loader.  If a loader is configured this
         method ask the loader for the template and returns a :class:`Template`.

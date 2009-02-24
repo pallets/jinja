@@ -11,7 +11,7 @@
 import sys
 from itertools import chain, imap
 from jinja2.utils import Markup, partial, soft_unicode, escape, missing, \
-     concat, MethodType, FunctionType
+     concat, MethodType, FunctionType, internalcode
 from jinja2.exceptions import UndefinedError, TemplateRuntimeError, \
      TemplateNotFound
 
@@ -156,6 +156,7 @@ class Context(object):
         """
         return dict(self.parent, **self.vars)
 
+    @internalcode
     def call(__self, __obj, *args, **kwargs):
         """Call the callable with the arguments and keyword arguments
         provided but inject the active context or environment as first
@@ -239,6 +240,7 @@ class BlockReference(object):
         return BlockReference(self.name, self._context, self._stack,
                               self._depth + 1)
 
+    @internalcode
     def __call__(self):
         rv = concat(self._stack[self._depth](self._context))
         if self._context.environment.autoescape:
@@ -281,6 +283,7 @@ class LoopContext(object):
     def __iter__(self):
         return LoopContextIterator(self)
 
+    @internalcode
     def loop(self, iterable):
         if self._recurse is None:
             raise TypeError('Tried to call non recursive loop.  Maybe you '
@@ -342,6 +345,7 @@ class Macro(object):
         self.catch_varargs = catch_varargs
         self.caller = caller
 
+    @internalcode
     def __call__(self, *args, **kwargs):
         arguments = []
         for idx, name in enumerate(self.arguments):
@@ -409,6 +413,7 @@ class Undefined(object):
         self._undefined_name = name
         self._undefined_exception = exc
 
+    @internalcode
     def _fail_with_undefined_error(self, *args, **kwargs):
         """Regular callback function for undefined objects that raises an
         `UndefinedError` on call.

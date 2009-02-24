@@ -31,7 +31,19 @@ test_syntax_error = '''
 >>> tmpl = MODULE.env.get_template('syntaxerror.html')
 Traceback (most recent call last):
   ...
-TemplateSyntaxError: unknown tag 'endif'
   File "loaderres/templates/syntaxerror.html", line 4
     {% endif %}
+TemplateSyntaxError: unknown tag 'endif'
+'''
+
+
+test_regular_syntax_error = '''
+>>> from jinja2.exceptions import TemplateSyntaxError
+>>> raise TemplateSyntaxError('wtf', 42)
+Traceback (most recent call last):
+  ...
+  File "<doctest test_regular_syntax_error[1]>", line 1, in <module>
+    raise TemplateSyntaxError('wtf', 42)
+TemplateSyntaxError: wtf
+  line 42
 '''

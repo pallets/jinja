@@ -35,6 +35,9 @@ _digits = '0123456789'
 # special singleton representing missing values for the runtime
 missing = type('MissingType', (), {'__repr__': lambda x: 'missing'})()
 
+# internal code
+internal_code = set()
+
 
 # concatenate a list of strings and convert them to unicode.
 # unfortunately there is a bug in python 2.4 and lower that causes
@@ -117,6 +120,12 @@ def environmentfunction(f):
     and not context.
     """
     f.environmentfunction = True
+    return f
+
+
+def internalcode(f):
+    """Marks the function as internally used"""
+    internal_code.add(f.func_code)
     return f
 
 
