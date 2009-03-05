@@ -8,10 +8,85 @@
     with correct line numbers, locals and contents.
 
     :copyright: (c) 2009 by the Jinja Team.
-    :license: BSD.
+    :license: BSD, see LICENSE for more details.
 """
 import sys
+import traceback
 from jinja2.utils import CodeType, missing, internal_code
+from jinja2.exceptions import TemplateSyntaxError
+
+
+class TracebackFrameProxy(object):
+    """Proxies a traceback frame."""
+
+    def __init__(self, tb):
+        self.tb = tb
+
+    def _set_tb_next(self, next):
+        if tb_set_next is not None:
+            tb_set_next(self.tb, next and next.tb or None)
+        self._tb_next = next
+
+    def _get_tb_next(self):
+        return self._tb_next
+
+    tb_next = property(_get_tb_next, _set_tb_next)
+    del _get_tb_next, _set_tb_next
+
+    @property
+    def is_jinja_frame(self):
+        return '__jinja_template__' in self.tb.tb_frame.f_globals
+
+    def __getattr__(self, name):
+        return getattr(self.tb, name)
+
+
+class ProcessedTraceback(object):
+    """Holds a Jinja preprocessed traceback for priting or reraising."""
+
+    def __init__(self, exc_type, exc_value, frames):
+        assert frames, 'no frames for this traceback?'
+        self.exc_type = exc_type
+        self.exc_value = exc_value
+        self.frames = frames
+
+    def chain_frames(self):
+        """Chains the frames.  Requires ctypes or the speedups extension."""
+        prev_tb = None
+        for tb in self.frames:
+            if prev_tb is not None:
+                prev_tb.tb_next = tb
+            prev_tb = tb
+        prev_tb.tb_next = None
+
+    def render_as_text(self, limit=None):
+        """Return a string with the traceback."""
+        lines = traceback.format_exception(self.exc_type, self.exc_value,
+                                           self.frames[0], limit=limit)
+        return ''.join(lines).rstrip()
+
+    @property
+    def is_template_syntax_error(self):
+        """`True` if this is a template syntax error."""
+        return isinstance(self.exc_value, TemplateSyntaxError)
+
+    @property
+    def exc_info(self):
+        """Exception info tuple with a proxy around the frame objects."""
+        return self.exc_type, self.exc_value, self.frames[0]
+
+    @property
+    def standard_exc_info(self):
+        """Standard python exc_info for re-raising"""
+        return self.exc_type, self.exc_value, self.frames[0].tb
+
+
+def make_traceback(exc_info, source_hint=None):
+    """Creates a processed traceback object from the exc_info."""
+    exc_type, exc_value, tb = exc_info
+    if isinstance(exc_value, TemplateSyntaxError):
+        exc_info = translate_syntax_error(exc_value, source_hint)
+    return translate_exception(exc_info)
 
 
 def translate_syntax_error(error, source=None):
@@ -29,32 +104,44 @@ def translate_exception(exc_info):
     """If passed an exc_info it will automatically rewrite the exceptions
     all the way down to the correct line numbers and frames.
     """
-    result_tb = prev_tb = None
     initial_tb = tb = exc_info[2].tb_next
+    frames = []
 
     while tb is not None:
         # skip frames decorated with @internalcode.  These are internal
         # calls we can't avoid and that are useless in template debugging
         # output.
-        if tb_set_next is not None and tb.tb_frame.f_code in internal_code:
-            tb_set_next(prev_tb, tb.tb_next)
+        if tb.tb_frame.f_code in internal_code:
             tb = tb.tb_next
             continue
 
+        # save a reference to the next frame if we override the current
+        # one with a faked one.
+        next = tb.tb_next
+
+        # fake template exceptions
         template = tb.tb_frame.f_globals.get('__jinja_template__')
         if template is not None:
             lineno = template.get_corresponding_lineno(tb.tb_lineno)
             tb = fake_exc_info(exc_info[:2] + (tb,), template.filename,
-                               lineno, prev_tb)[2]
-        if result_tb is None:
-            result_tb = tb
-        prev_tb = tb
-        tb = tb.tb_next
+                               lineno)[2]
 
-    return exc_info[:2] + (result_tb or initial_tb,)
+        frames.append(TracebackFrameProxy(tb))
+        tb = next
+
+    # if we don't have any exceptions in the frames left, we have to
+    # reraise it unchanged.
+    # XXX: can we backup here?  when could this happen?
+    if not frames:
+        raise exc_info[0], exc_info[1], exc_info[2]
+
+    traceback = ProcessedTraceback(exc_info[0], exc_info[1], frames)
+    if tb_set_next is not None:
+        traceback.chain_frames()
+    return traceback
 
 
-def fake_exc_info(exc_info, filename, lineno, tb_back=None):
+def fake_exc_info(exc_info, filename, lineno):
     """Helper for `translate_exception`."""
     exc_type, exc_value, tb = exc_info
 
@@ -114,13 +201,6 @@ def fake_exc_info(exc_info, filename, lineno, tb_back=None):
     except:
         exc_info = sys.exc_info()
         new_tb = exc_info[2].tb_next
-
-    # now we can patch the exc info accordingly
-    if tb_set_next is not None:
-        if tb_back is not None:
-            tb_set_next(tb_back, new_tb)
-        if tb is not None:
-            tb_set_next(new_tb, tb.tb_next)
 
     # return without this frame
     return exc_info[:2] + (new_tb,)

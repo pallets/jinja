@@ -24,6 +24,10 @@ from jinja2.utils import import_string, LRUCache, Markup, missing, \
 # for direct template usage we have up to ten living environments
 _spontaneous_environments = LRUCache(10)
 
+# the function to create jinja traceback objects.  This is dynamically
+# imported on the first exception in the exception handler.
+_make_traceback = None
+
 
 def get_spontaneous_environment(*args):
     """Return a new spontaneous environment.  A spontaneous environment is an
@@ -190,6 +194,9 @@ class Environment(object):
     #: must not be modified
     shared = False
 
+    exception_handler = None
+    exception_formatter = None
+
     def __init__(self,
                  block_start_string=BLOCK_START_STRING,
                  block_end_string=BLOCK_END_STRING,
@@ -354,9 +361,7 @@ class Environment(object):
         try:
             return Parser(self, source, name, filename).parse()
         except TemplateSyntaxError, e:
-            from jinja2.debug import translate_syntax_error
-            exc_type, exc_value, tb = translate_syntax_error(e, source)
-            raise exc_type, exc_value, tb
+            self.handle_exception(sys.exc_info(), source_hint=source)
 
     def lex(self, source, name=None, filename=None):
         """Lex the given sourcecode and return a generator that yields
@@ -372,9 +377,7 @@ class Environment(object):
         try:
             return self.lexer.tokeniter(source, name, filename)
         except TemplateSyntaxError, e:
-            from jinja2.debug import translate_syntax_error
-            exc_type, exc_value, tb = translate_syntax_error(e, source)
-            raise exc_type, exc_value, tb
+            self.handle_exception(sys.exc_info(), source_hint=source)
 
     def preprocess(self, source, name=None, filename=None):
         """Preprocesses the source with all extensions.  This is automatically
@@ -464,6 +467,23 @@ class Environment(object):
         body = [nodes.Assign(nodes.Name('result', 'store'), expr, lineno=1)]
         template = self.from_string(nodes.Template(body, lineno=1))
         return TemplateExpression(template, undefined_to_none)
+
+    def handle_exception(self, exc_info=None, rendered=False, source_hint=None):
+        """Exception handling helper.  This is used internally to either raise
+        rewritten exceptions or return a rendered traceback for the template.
+        """
+        global _make_traceback
+        if exc_info is None:
+            exc_info = sys.exc_info()
+        if _make_traceback is None:
+            from jinja2.debug import make_traceback as _make_traceback
+        traceback = _make_traceback(exc_info, source_hint)
+        if rendered and self.exception_formatter is not None:
+            return self.exception_formatter(traceback)
+        if self.exception_handler is not None:
+            self.exception_handler(traceback)
+        exc_type, exc_value, tb = traceback.standard_exc_info
+        raise exc_type, exc_value, tb
 
     def join_path(self, template, parent):
         """Join a template with the parent.  By default all the lookups are
@@ -616,9 +636,7 @@ class Template(object):
         try:
             return concat(self.root_render_func(self.new_context(vars)))
         except:
-            from jinja2.debug import translate_exception
-            exc_type, exc_value, tb = translate_exception(sys.exc_info())
-            raise exc_type, exc_value, tb
+            return self.environment.handle_exception(sys.exc_info(), True)
 
     def stream(self, *args, **kwargs):
         """Works exactly like :meth:`generate` but returns a
@@ -639,9 +657,7 @@ class Template(object):
             for event in self.root_render_func(self.new_context(vars)):
                 yield event
         except:
-            from jinja2.debug import translate_exception
-            exc_type, exc_value, tb = translate_exception(sys.exc_info())
-            raise exc_type, exc_value, tb
+            yield self.environment.handle_exception(sys.exc_info(), True)
 
     def new_context(self, vars=None, shared=False, locals=None):
         """Create a new :class:`Context` for this template.  The vars
