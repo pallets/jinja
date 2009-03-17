@@ -595,7 +595,9 @@ class CodeGenerator(NodeVisitor):
         # variables that are undeclared (accessed before declaration) and
         # declared locally *and* part of an outside scope raise a template
         # assertion error. Reason: we can't generate reasonable code from
-        # it without aliasing all the variables.  XXX: alias them ^^
+        # it without aliasing all the variables.
+        # this could be fixed in Python 3 where we have the nonlocal
+        # keyword or if we switch to bytecode generation
         overriden_closure_vars = (
             func_frame.identifiers.undeclared &
             func_frame.identifiers.declared &
