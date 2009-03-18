@@ -285,8 +285,8 @@ def do_random(environment, seq):
 def do_filesizeformat(value, binary=False):
     """Format the value like a 'human-readable' file size (i.e. 13 KB,
     4.1 MB, 102 bytes, etc).  Per default decimal prefixes are used (mega,
-    giga etc.), if the second parameter is set to `True` the binary
-    prefixes are (mebi, gibi).
+    giga, etc.), if the second parameter is set to `True` the binary
+    prefixes are used (mebi, gibi).
     """
     bytes = float(value)
     base = binary and 1024 or 1000
@@ -452,7 +452,7 @@ def do_striptags(value):
 def do_slice(value, slices, fill_with=None):
     """Slice an iterator and return a list of lists containing
     those items. Useful if you want to create a div containing
-    three div tags that represent columns:
+    three ul tags that represent columns:
 
     .. sourcecode:: html+jinja
 
@@ -498,7 +498,7 @@ def do_batch(value, linecount, fill_with=None):
         {%- for row in items|batch(3, '&nbsp;') %}
           <tr>
           {%- for column in row %}
-            <tr>{{ column }}</td>
+            <td>{{ column }}</td>
           {%- endfor %}
           </tr>
         {%- endfor %}

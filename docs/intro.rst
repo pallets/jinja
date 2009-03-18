@@ -101,7 +101,7 @@ Or the new `pip`_ command::
 
     sudo pip install Jinja2==dev
 
-.. _download page: http://jinja.pocoo.org/2/download
+.. _download page: http://pypi.python.org/pypi/Jinja2
 .. _setuptools: http://peak.telecommunity.com/DevCenter/setuptools
 .. _easy_install: http://peak.telecommunity.com/DevCenter/EasyInstall
 .. _pip: http://pypi.python.org/pypi/pip

@@ -109,7 +109,7 @@ applied to the next.
 ``{{ name|striptags|title }}`` for example will remove all HTML Tags from the
 `name` and title-cases it.  Filters that accept arguments have parentheses
 around the arguments, like a function call.  This example will join a list
-by spaces:  ``{{ list|join(', ') }}``.
+by commas:  ``{{ list|join(', ') }}``.
 
 The :ref:`builtin-filters` below describes all the builtin filters.
 
@@ -836,7 +836,7 @@ Here two examples::
 .. admonition:: Note
 
     In Jinja 2.0 the context that was passed to the included template
-    did not include variables define in the template.  As a matter of
+    did not include variables defined in the template.  As a matter of
     fact this did not work::
 
         {% for box in boxes %}
@@ -914,16 +914,16 @@ Math
 ~~~~
 
 Jinja allows you to calculate with values.  This is rarely useful in templates
-but exists for completeness sake.  The following operators are supported:
+but exists for completeness' sake.  The following operators are supported:
 
 \+
-    Adds two objects with each other.  Usually numbers but if both objects are
+    Adds two objects together.  Usually the objects are numbers but if both are
     strings or lists you can concatenate them this way.  This however is not
     the preferred way to concatenate strings!  For string concatenation have
     a look at the ``~`` operator.  ``{{ 1 + 1 }}`` is ``2``.
 
 \-
-    Substract two numbers from each other.  ``{{ 3 - 2 }}`` is ``1``.
+    Substract the second number from the first one.  ``{{ 3 - 2 }}`` is ``1``.
 
 /
     Divide two numbers.  The return value will be a floating point number.
@@ -934,12 +934,11 @@ but exists for completeness sake.  The following operators are supported:
     ``{{ 20 / 7 }}`` is ``2``.
 
 %
-    Calculate the remainder of an integer division between the left and right
-    operand.  ``{{ 11 % 7 }}`` is ``4``.
+    Calculate the remainder of an integer division.  ``{{ 11 % 7 }}`` is ``4``.
 
 \*
     Multiply the left operand with the right one.  ``{{ 2 * 2 }}`` would
-    return ``4``.  This can also be used to repeat string multiple times.
+    return ``4``.  This can also be used to repeat a string multiple times.
     ``{{ '=' * 80 }}`` would print a bar of 80 equal signs.
 
 \**
@@ -949,8 +948,8 @@ but exists for completeness sake.  The following operators are supported:
 Logic
 ~~~~~
 
-For `if` statements / `for` filtering or `if` expressions it can be useful to
-combine group multiple expressions:
+For `if` statements, `for` filtering or `if` expressions it can be useful to
+combine multiple expressions:
 
 and
     Return true if the left and the right operand is true.
@@ -996,7 +995,7 @@ is
 
 ()
     Call a callable: ``{{ post.render() }}``.  Inside of the parentheses you
-    can use arguments and keyword arguments like in python:
+    can use positional arguments and keyword arguments like in python:
     ``{{ post.render(user, full=true) }}``.
 
 . / []
@@ -1085,7 +1084,7 @@ The following functions are available in the global scope by default:
     loops or over multiple loops.
 
     This is for example very useful if you want to show a list of folders and
-    files, with the folders on top, but both in the same list with alteranting
+    files, with the folders on top, but both in the same list with alternating
     row colors.
 
     The following example shows how `cycler` can be used::

@@ -656,8 +656,8 @@ class Template(object):
 
     def make_module(self, vars=None, shared=False, locals=None):
         """This method works like the :attr:`module` attribute when called
-        without arguments but it will evaluate the template every call
-        rather then caching the template.  It's also possible to provide
+        without arguments but it will evaluate the template on every call
+        rather than caching it.  It's also possible to provide
         a dict which is then used as context.  The arguments are the same
         as for the :meth:`new_context` method.
         """
