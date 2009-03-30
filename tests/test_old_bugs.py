@@ -8,7 +8,8 @@
     :copyright: (c) 2009 by the Jinja Team.
     :license: BSD.
 """
-from jinja2 import Environment, DictLoader
+from py.test import raises
+from jinja2 import Environment, DictLoader, TemplateSyntaxError
 
 
 def test_keyword_folding():
@@ -53,3 +54,9 @@ def test_loop_call_loop(env):
     ''')
 
     assert tmpl.render() == ''
+
+
+def test_weird_inline_comment():
+    env = Environment(line_statement_prefix='%')
+    raises(TemplateSyntaxError, env.from_string,
+           '% for item in seq {# missing #}\n...% endfor')
