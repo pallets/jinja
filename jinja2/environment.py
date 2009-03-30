@@ -118,6 +118,12 @@ class Environment(object):
             If given and a string, this will be used as prefix for line based
             statements.  See also :ref:`line-statements`.
 
+        `line_comment_prefix`
+            If given and a string, this will be used as prefix for line based
+            based comments.  See also :ref:`line-statements`.
+
+            .. versionadded:: 2.2
+
         `trim_blocks`
             If this is set to ``True`` the first newline after a block is
             removed (block, not variable tag!).  Defaults to `False`.
@@ -198,6 +204,7 @@ class Environment(object):
                  comment_start_string=COMMENT_START_STRING,
                  comment_end_string=COMMENT_END_STRING,
                  line_statement_prefix=LINE_STATEMENT_PREFIX,
+                 line_comment_prefix=LINE_COMMENT_PREFIX,
                  trim_blocks=TRIM_BLOCKS,
                  newline_sequence=NEWLINE_SEQUENCE,
                  extensions=(),
@@ -228,6 +235,7 @@ class Environment(object):
         self.comment_start_string = comment_start_string
         self.comment_end_string = comment_end_string
         self.line_statement_prefix = line_statement_prefix
+        self.line_comment_prefix = line_comment_prefix
         self.trim_blocks = trim_blocks
         self.newline_sequence = newline_sequence
 
@@ -266,10 +274,10 @@ class Environment(object):
     def overlay(self, block_start_string=missing, block_end_string=missing,
                 variable_start_string=missing, variable_end_string=missing,
                 comment_start_string=missing, comment_end_string=missing,
-                line_statement_prefix=missing, trim_blocks=missing,
-                extensions=missing, optimized=missing, undefined=missing,
-                finalize=missing, autoescape=missing, loader=missing,
-                cache_size=missing, auto_reload=missing,
+                line_statement_prefix=missing, line_comment_prefix=missing,
+                trim_blocks=missing, extensions=missing, optimized=missing,
+                undefined=missing, finalize=missing, autoescape=missing,
+                loader=missing, cache_size=missing, auto_reload=missing,
                 bytecode_cache=missing):
         """Create a new overlay environment that shares all the data with the
         current environment except of cache and the overriden attributes.
@@ -560,6 +568,7 @@ class Template(object):
                 comment_start_string=COMMENT_START_STRING,
                 comment_end_string=COMMENT_END_STRING,
                 line_statement_prefix=LINE_STATEMENT_PREFIX,
+                line_comment_prefix=LINE_COMMENT_PREFIX,
                 trim_blocks=TRIM_BLOCKS,
                 newline_sequence=NEWLINE_SEQUENCE,
                 extensions=(),
@@ -570,9 +579,9 @@ class Template(object):
         env = get_spontaneous_environment(
             block_start_string, block_end_string, variable_start_string,
             variable_end_string, comment_start_string, comment_end_string,
-            line_statement_prefix, trim_blocks, newline_sequence,
-            frozenset(extensions), optimized, undefined, finalize,
-            autoescape, None, 0, False, None)
+            line_statement_prefix, line_comment_prefix, trim_blocks,
+            newline_sequence, frozenset(extensions), optimized, undefined,
+            finalize, autoescape, None, 0, False, None)
         return env.from_string(source, template_class=cls)
 
     @classmethod

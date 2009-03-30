@@ -28,8 +28,15 @@ COMMENT_SYNTAX = '''\
 <!--- endfor -->'''
 
 MAKO_SYNTAX = '''\
+<%# regular comment %>
 % for item in seq:
     ${item}
+% endfor'''
+
+MAKO_SYNTAX_LINECOMMENTS = '''\
+<%# regular comment %>
+% for item in seq:
+    ${item} ## the rest of the stuff
 % endfor'''
 
 BALANCING = '''{{{'foo':'bar'}.foo}}'''
@@ -38,6 +45,14 @@ STARTCOMMENT = '''{# foo comment
 and bar comment #}
 {% macro blub() %}foo{% endmacro %}
 {{ blub() }}'''
+
+LINE_SYNTAX_PRIORITY = '''\
+/* ignore me.
+   I'm a multiline comment */
+# for item in seq:
+* ${item}          ## this is just extra stuff
+# endfor
+'''
 
 
 def test_php_syntax():
@@ -72,4 +87,15 @@ def test_line_syntax():
     env = Environment('<%', '%>', '${', '}', '<%#', '%>', '%')
     tmpl = env.from_string(MAKO_SYNTAX)
     assert [int(x.strip()) for x in tmpl.render(seq=range(5)).split()] == \
-           range(5)
+            range(5)
+
+    env = Environment('<%', '%>', '${', '}', '<%#', '%>', '%', '##')
+    tmpl = env.from_string(MAKO_SYNTAX_LINECOMMENTS)
+    assert [int(x.strip()) for x in tmpl.render(seq=range(5)).split()] == \
+            range(5)
+
+
+def test_line_syntax_priority():
+    env = Environment('{%', '%}', '${', '}', '/*', '*/', '#', '##')
+    tmpl = env.from_string(LINE_SYNTAX_PRIORITY)
+    assert tmpl.render(seq=[1, 2]).strip() == '* 1\n* 2'

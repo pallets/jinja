@@ -19,6 +19,7 @@ Version 2.2
   variable and regular variable *after* the loop if that variable was unused
   *before* the loop.  (#331)
 - Added support for optional `scoped` modifier to blocks.
+- Added support for line-comments.
 
 Version 2.1.1
 -------------

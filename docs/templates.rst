@@ -252,6 +252,14 @@ precedes it.  For better readability statements that start a block (such as
         # endfor
         </ul>
 
+Since Jinja 2.2 line-based comments are available as well.  For example if
+the line-comment prefix is configured to be ``##`` everything from ``##`` to
+the end of the line is ignored (excluding the newline sign)::
+
+    # for item in seq:
+        <li>{{ item }}</li>     ## this comment is ignored
+    # endfor
+
 
 .. _template-inheritance:
 

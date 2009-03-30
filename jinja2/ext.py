@@ -429,6 +429,7 @@ def babel_extract(fileobj, keywords, comment_tags, options):
         options.get('comment_start_string', COMMENT_START_STRING),
         options.get('comment_end_string', COMMENT_END_STRING),
         options.get('line_statement_prefix') or LINE_STATEMENT_PREFIX,
+        options.get('line_comment_prefix') or LINE_COMMENT_PREFIX,
         str(options.get('trim_blocks', TRIM_BLOCKS)).lower() in \
             ('1', 'on', 'yes', 'true'),
         NEWLINE_SEQUENCE, frozenset(extensions),

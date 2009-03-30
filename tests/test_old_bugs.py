@@ -60,3 +60,9 @@ def test_weird_inline_comment():
     env = Environment(line_statement_prefix='%')
     raises(TemplateSyntaxError, env.from_string,
            '% for item in seq {# missing #}\n...% endfor')
+
+
+def test_old_macro_loop_scoping_bug(env):
+    tmpl = env.from_string('{% for i in (1, 2) %}{{ i }}{% endfor %}'
+                           '{% macro i() %}3{% endmacro %}{{ i() }}')
+    assert tmpl.render() == '123'

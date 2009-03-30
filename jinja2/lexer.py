@@ -78,6 +78,9 @@ TOKEN_COMMENT_END = intern('comment_end')
 TOKEN_COMMENT = intern('comment')
 TOKEN_LINESTATEMENT_BEGIN = intern('linestatement_begin')
 TOKEN_LINESTATEMENT_END = intern('linestatement_end')
+TOKEN_LINECOMMENT_BEGIN = intern('linecomment_begin')
+TOKEN_LINECOMMENT_END = intern('linecomment_end')
+TOKEN_LINECOMMENT = intern('linecomment')
 TOKEN_DATA = intern('data')
 TOKEN_INITIAL = intern('initial')
 TOKEN_EOF = intern('eof')
@@ -117,12 +120,39 @@ assert len(operators) == len(reverse_operators), 'operators dropped'
 operator_re = re.compile('(%s)' % '|'.join(re.escape(x) for x in
                          sorted(operators, key=lambda x: -len(x))))
 
+ignored_tokens = frozenset([TOKEN_COMMENT_BEGIN, TOKEN_COMMENT,
+                            TOKEN_COMMENT_END, TOKEN_WHITESPACE,
+                            TOKEN_WHITESPACE, TOKEN_LINECOMMENT_BEGIN,
+                            TOKEN_LINECOMMENT_END, TOKEN_LINECOMMENT])
+
 
 def count_newlines(value):
     """Count the number of newline characters in the string.  This is
     useful for extensions that filter a stream.
     """
     return len(newline_re.findall(value))
+
+
+def compile_rules(environment):
+    """Compiles all the rules from the environment into a list of rules."""
+    e = re.escape
+    rules = [
+        (len(environment.comment_start_string), 'comment',
+         e(environment.comment_start_string)),
+        (len(environment.block_start_string), 'block',
+         e(environment.block_start_string)),
+        (len(environment.variable_start_string), 'variable',
+         e(environment.variable_start_string)),
+    ]
+
+    if environment.line_statement_prefix is not None:
+        rules.append((len(environment.line_statement_prefix), 'linestatement',
+                      '^\\s*' + e(environment.line_statement_prefix)))
+    if environment.line_comment_prefix is not None:
+        rules.append((len(environment.line_comment_prefix), 'linecomment',
+                      '\\s*' + e(environment.line_comment_prefix)))
+
+    return [x[1:] for x in sorted(rules, reverse=True)]
 
 
 class Failure(object):
@@ -302,6 +332,7 @@ def get_lexer(environment):
            environment.comment_start_string,
            environment.comment_end_string,
            environment.line_statement_prefix,
+           environment.line_comment_prefix,
            environment.trim_blocks,
            environment.newline_sequence)
     lexer = _lexer_cache.get(key)
@@ -340,22 +371,7 @@ class Lexer(object):
         # <%= for variables. (if someone wants asp like syntax)
         # variables are just part of the rules if variable processing
         # is required.
-        root_tag_rules = [
-            ('comment',     environment.comment_start_string),
-            ('block',       environment.block_start_string),
-            ('variable',    environment.variable_start_string)
-        ]
-        root_tag_rules.sort(key=lambda x: -len(x[1]))
-
-        # now escape the rules.  This is done here so that the escape
-        # signs don't count for the lengths of the tags.
-        root_tag_rules = [(a, e(b)) for a, b in root_tag_rules]
-
-        # if we have a line statement prefix we need an extra rule for
-        # that.  We add this rule *after* all the others.
-        if environment.line_statement_prefix is not None:
-            prefix = e(environment.line_statement_prefix)
-            root_tag_rules.insert(0, ('linestatement', '^\s*' + prefix))
+        root_tag_rules = compile_rules(environment)
 
         # block suffix if trimming is enabled
         block_suffix_re = environment.trim_blocks and '\\n?' or ''
@@ -416,7 +432,11 @@ class Lexer(object):
             # line statements
             TOKEN_LINESTATEMENT_BEGIN: [
                 (c(r'\s*(\n|$)'), TOKEN_LINESTATEMENT_END, '#pop')
-            ] + tag_rules
+            ] + tag_rules,
+            # line comments
+            TOKEN_LINECOMMENT_BEGIN: [
+                (c(r'.*?(?=\n|$)'), TOKEN_LINECOMMENT_END, '#pop')
+            ]
         }
 
     def _normalize_newlines(self, value):
@@ -434,8 +454,7 @@ class Lexer(object):
         every token in a :class:`Token` and converts the value.
         """
         for lineno, token, value in stream:
-            if token in ('comment_begin', 'comment', 'comment_end',
-                         'whitespace'):
+            if token in ignored_tokens:
                 continue
             elif token == 'linestatement_begin':
                 token = 'block_begin'
