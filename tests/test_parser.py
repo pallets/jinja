@@ -46,7 +46,15 @@ and bar comment #}
 {% macro blub() %}foo{% endmacro %}
 {{ blub() }}'''
 
-LINE_SYNTAX_PRIORITY = '''\
+LINE_SYNTAX_PRIORITY1 = '''\
+/* ignore me.
+   I'm a multiline comment */
+## for item in seq:
+* ${item}          # this is just extra stuff
+## endfor
+'''
+
+LINE_SYNTAX_PRIORITY2 = '''\
 /* ignore me.
    I'm a multiline comment */
 # for item in seq:
@@ -96,6 +104,10 @@ def test_line_syntax():
 
 
 def test_line_syntax_priority():
+    # XXX: why is the whitespace there in front of the newline?
+    env = Environment('{%', '%}', '${', '}', '/*', '*/', '##', '#')
+    tmpl = env.from_string(LINE_SYNTAX_PRIORITY1)
+    assert tmpl.render(seq=[1, 2]).strip() == '* 1 \n* 2'
     env = Environment('{%', '%}', '${', '}', '/*', '*/', '#', '##')
-    tmpl = env.from_string(LINE_SYNTAX_PRIORITY)
-    assert tmpl.render(seq=[1, 2]).strip() == '* 1\n* 2'
+    tmpl = env.from_string(LINE_SYNTAX_PRIORITY2)
+    assert tmpl.render(seq=[1, 2]).strip() == '* 1 \n* 2'

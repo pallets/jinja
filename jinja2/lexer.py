@@ -124,6 +124,8 @@ ignored_tokens = frozenset([TOKEN_COMMENT_BEGIN, TOKEN_COMMENT,
                             TOKEN_COMMENT_END, TOKEN_WHITESPACE,
                             TOKEN_WHITESPACE, TOKEN_LINECOMMENT_BEGIN,
                             TOKEN_LINECOMMENT_END, TOKEN_LINECOMMENT])
+ignore_if_empty = frozenset([TOKEN_WHITESPACE, TOKEN_DATA,
+                             TOKEN_COMMENT, TOKEN_LINECOMMENT])
 
 
 def count_newlines(value):
@@ -147,10 +149,10 @@ def compile_rules(environment):
 
     if environment.line_statement_prefix is not None:
         rules.append((len(environment.line_statement_prefix), 'linestatement',
-                      '^\\s*' + e(environment.line_statement_prefix)))
+                      r'^\s*' + e(environment.line_statement_prefix)))
     if environment.line_comment_prefix is not None:
         rules.append((len(environment.line_comment_prefix), 'linecomment',
-                      '\\s*' + e(environment.line_comment_prefix)))
+                      r'(?:^|(?<!\S))\s*' + e(environment.line_comment_prefix)))
 
     return [x[1:] for x in sorted(rules, reverse=True)]
 
@@ -383,16 +385,16 @@ class Lexer(object):
             'root': [
                 # directives
                 (c('(.*?)(?:%s)' % '|'.join(
-                    ['(?P<raw_begin>(?:\s*%s\-|%s)\s*raw\s*%s)' % (
+                    [r'(?P<raw_begin>(?:\s*%s\-|%s)\s*raw\s*%s)' % (
                         e(environment.block_start_string),
                         e(environment.block_start_string),
                         e(environment.block_end_string)
                     )] + [
-                        '(?P<%s_begin>\s*%s\-|%s)' % (n, r, r)
+                        r'(?P<%s_begin>\s*%s\-|%s)' % (n, r, r)
                         for n, r in root_tag_rules
                     ])), (TOKEN_DATA, '#bygroup'), '#bygroup'),
                 # data
-                (c('.+'), 'data', None)
+                (c('.+'), TOKEN_DATA, None)
             ],
             # comments
             TOKEN_COMMENT_BEGIN: [
@@ -435,7 +437,8 @@ class Lexer(object):
             ] + tag_rules,
             # line comments
             TOKEN_LINECOMMENT_BEGIN: [
-                (c(r'.*?(?=\n|$)'), TOKEN_LINECOMMENT_END, '#pop')
+                (c(r'(.*?)()(?=\n|$)'), (TOKEN_LINECOMMENT,
+                 TOKEN_LINECOMMENT_END), '#pop')
             ]
         }
 
@@ -551,7 +554,7 @@ class Lexer(object):
                         # normal group
                         else:
                             data = m.group(idx + 1)
-                            if data:
+                            if data or token not in ignore_if_empty:
                                 yield lineno, token, data
                             lineno += data.count('\n')
 
@@ -579,7 +582,8 @@ class Lexer(object):
                                                           lineno, name,
                                                           filename)
                     # yield items
-                    yield lineno, tokens, data
+                    if data or tokens not in ignore_if_empty:
+                        yield lineno, tokens, data
                     lineno += data.count('\n')
 
                 # fetch new position into new variable so that we can check
