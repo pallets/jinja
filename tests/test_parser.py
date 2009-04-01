@@ -59,6 +59,7 @@ LINE_SYNTAX_PRIORITY2 = '''\
    I'm a multiline comment */
 # for item in seq:
 * ${item}          ## this is just extra stuff
+    ## extra stuff i just want to ignore
 # endfor
 '''
 
@@ -110,4 +111,4 @@ def test_line_syntax_priority():
     assert tmpl.render(seq=[1, 2]).strip() == '* 1\n* 2'
     env = Environment('{%', '%}', '${', '}', '/*', '*/', '#', '##')
     tmpl = env.from_string(LINE_SYNTAX_PRIORITY2)
-    assert tmpl.render(seq=[1, 2]).strip() == '* 1\n* 2'
+    assert tmpl.render(seq=[1, 2]).strip() == '* 1\n\n* 2'
