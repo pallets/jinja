@@ -107,7 +107,7 @@ def test_line_syntax_priority():
     # XXX: why is the whitespace there in front of the newline?
     env = Environment('{%', '%}', '${', '}', '/*', '*/', '##', '#')
     tmpl = env.from_string(LINE_SYNTAX_PRIORITY1)
-    assert tmpl.render(seq=[1, 2]).strip() == '* 1 \n* 2'
+    assert tmpl.render(seq=[1, 2]).strip() == '* 1\n* 2'
     env = Environment('{%', '%}', '${', '}', '/*', '*/', '#', '##')
     tmpl = env.from_string(LINE_SYNTAX_PRIORITY2)
-    assert tmpl.render(seq=[1, 2]).strip() == '* 1 \n* 2'
+    assert tmpl.render(seq=[1, 2]).strip() == '* 1\n* 2'
