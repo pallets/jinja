@@ -65,6 +65,14 @@ class ProcessedTraceback(object):
                                            self.frames[0], limit=limit)
         return ''.join(lines).rstrip()
 
+    def render_as_html(self, full=False):
+        """Return a unicode string with the traceback as rendered HTML."""
+        from jinja2.debugrenderer import render_traceback
+        return u'%s\n\n<!--\n%s\n-->' % (
+            render_traceback(self, full=full),
+            self.render_as_text().decode('utf-8', 'replace')
+        )
+
     @property
     def is_template_syntax_error(self):
         """`True` if this is a template syntax error."""
