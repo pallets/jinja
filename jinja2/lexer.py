@@ -152,7 +152,8 @@ def compile_rules(environment):
                       r'^\s*' + e(environment.line_statement_prefix)))
     if environment.line_comment_prefix is not None:
         rules.append((len(environment.line_comment_prefix), 'linecomment',
-                      r'(?:^|(?<=\S))[^\S\r\n]*' + e(environment.line_comment_prefix)))
+                      r'(?:^|(?<=\S))[^\S\r\n]*' +
+                      e(environment.line_comment_prefix)))
 
     return [x[1:] for x in sorted(rules, reverse=True)]
 
