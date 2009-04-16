@@ -150,7 +150,6 @@ def translate_exception(exc_info, initial_skip=0):
     # reraise it unchanged.
     # XXX: can we backup here?  when could this happen?
     if not frames:
-        print "bummer"
         raise exc_info[0], exc_info[1], exc_info[2]
 
     traceback = ProcessedTraceback(exc_info[0], exc_info[1], frames)
