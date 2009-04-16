@@ -200,6 +200,7 @@ class Environment(object):
     #: must not be modified
     shared = False
 
+    #: these are currently EXPERIMENTAL undocumented features.
     exception_handler = None
     exception_formatter = None
 
@@ -482,6 +483,11 @@ class Environment(object):
         global _make_traceback
         if exc_info is None:
             exc_info = sys.exc_info()
+
+        # the debugging module is imported when it's used for the first time.
+        # we're doing a lot of stuff there and for applications that do not
+        # get any exceptions in template rendering there is no need to load
+        # all of that.
         if _make_traceback is None:
             from jinja2.debug import make_traceback as _make_traceback
         traceback = _make_traceback(exc_info, source_hint)
