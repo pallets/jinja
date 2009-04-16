@@ -86,7 +86,10 @@ def make_traceback(exc_info, source_hint=None):
     exc_type, exc_value, tb = exc_info
     if isinstance(exc_value, TemplateSyntaxError):
         exc_info = translate_syntax_error(exc_value, source_hint)
-    return translate_exception(exc_info)
+        initial_skip = 0
+    else:
+        initial_skip = 1
+    return translate_exception(exc_info, initial_skip)
 
 
 def translate_syntax_error(error, source=None):
@@ -100,12 +103,18 @@ def translate_syntax_error(error, source=None):
     return fake_exc_info(exc_info, filename, error.lineno)
 
 
-def translate_exception(exc_info):
+def translate_exception(exc_info, initial_skip=0):
     """If passed an exc_info it will automatically rewrite the exceptions
     all the way down to the correct line numbers and frames.
     """
-    initial_tb = tb = exc_info[2].tb_next
+    tb = exc_info[2]
     frames = []
+
+    # skip some internal frames if wanted
+    for x in xrange(initial_skip):
+        if tb is not None:
+            tb = tb.tb_next
+    initial_tb = tb
 
     while tb is not None:
         # skip frames decorated with @internalcode.  These are internal
@@ -133,6 +142,7 @@ def translate_exception(exc_info):
     # reraise it unchanged.
     # XXX: can we backup here?  when could this happen?
     if not frames:
+        print "bummer"
         raise exc_info[0], exc_info[1], exc_info[2]
 
     traceback = ProcessedTraceback(exc_info[0], exc_info[1], frames)

@@ -368,7 +368,7 @@ class Environment(object):
             filename = filename.encode('utf-8')
         try:
             return Parser(self, source, name, filename).parse()
-        except TemplateSyntaxError, e:
+        except TemplateSyntaxError:
             self.handle_exception(sys.exc_info(), source_hint=source)
 
     def lex(self, source, name=None, filename=None):
@@ -384,7 +384,7 @@ class Environment(object):
         source = unicode(source)
         try:
             return self.lexer.tokeniter(source, name, filename)
-        except TemplateSyntaxError, e:
+        except TemplateSyntaxError:
             self.handle_exception(sys.exc_info(), source_hint=source)
 
     def preprocess(self, source, name=None, filename=None):
@@ -469,9 +469,8 @@ class Environment(object):
                 raise TemplateSyntaxError('chunk after expression',
                                           parser.stream.current.lineno,
                                           None, None)
-        except TemplateSyntaxError, e:
-            e.source = source
-            raise e
+        except TemplateSyntaxError:
+            self.handle_exception(sys.exc_info(), source_hint=source)
         body = [nodes.Assign(nodes.Name('result', 'store'), expr, lineno=1)]
         template = self.from_string(nodes.Template(body, lineno=1))
         return TemplateExpression(template, undefined_to_none)
