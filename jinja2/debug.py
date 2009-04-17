@@ -184,7 +184,12 @@ def fake_exc_info(exc_info, filename, lineno):
     globals = {
         '__name__':             filename,
         '__file__':             filename,
-        '__jinja_exception__':  exc_info[:2]
+        '__jinja_exception__':  exc_info[:2],
+
+        # we don't want to keep the reference to the template around
+        # to not cause circular dependencies, but we mark it as Jinja
+        # frame for the ProcessedTraceback
+        '__jinja_template__':   None
     }
 
     # and fake the exception
