@@ -19,6 +19,19 @@ from jinja2.loaders import BaseLoader
 from jinja2.exceptions import TemplateNotFound
 
 
+NOSE = 'nose' in sys.modules
+if NOSE:
+    import inspect
+    from nose import case
+
+    def runTest(self):
+        args = list(self.arg)
+        if 'env' in inspect.getargspec(self.test).args:
+            args.insert(0, simple_env)
+        self.test(*args)
+    case.TestBase.runTest = runTest
+
+
 try:
     # This code adds support for coverage.py (see
     # http://nedbatchelder.com/code/modules/coverage.html).
@@ -55,6 +68,7 @@ except ImportError:
 
 
 class GlobalLoader(BaseLoader):
+    # Should be overwritten by importing module (test file) in order to find TEMPLATE vars
     scope = globals()
 
     def get_source(self, environment, name):

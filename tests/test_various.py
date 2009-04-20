@@ -7,10 +7,15 @@
     :license: BSD, see LICENSE for more details.
 """
 import gc
-from py.test import raises
 from jinja2 import escape, is_undefined
 from jinja2.utils import Cycler
 from jinja2.exceptions import TemplateSyntaxError
+
+import conftest
+if conftest.NOSE:
+    from nose.tools import assert_raises as raises
+else:
+    from py.test import raises
 
 
 UNPACKING = '''{% for a, b, c in [[1, 2, 3]] %}{{ a }}|{{ b }}|{{ c }}{% endfor %}'''

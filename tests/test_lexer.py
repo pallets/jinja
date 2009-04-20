@@ -7,6 +7,9 @@
     :license: BSD, see LICENSE for more details.
 """
 
+import conftest
+
+
 RAW = '{% raw %}foo{% endraw %}|{%raw%}{{ bar }}|{% baz %}{%       endraw    %}'
 BALANCING = '''{% for item in seq %}${{'foo': item}|upper}{% endfor %}'''
 COMMENTS = '''\

@@ -6,9 +6,14 @@
     :copyright: (c) 2009 by the Jinja Team.
     :license: BSD, see LICENSE for more details.
 """
-from py.test import raises
 from jinja2 import Environment, DictLoader
 from jinja2.exceptions import TemplateSyntaxError, UndefinedError
+
+import conftest
+if conftest.NOSE:
+    from nose.tools import assert_raises as raises
+else:
+    from py.test import raises
 
 
 CALL = '''{{ foo('a', c='d', e='f', *['b'], **{'g': 'h'}) }}'''

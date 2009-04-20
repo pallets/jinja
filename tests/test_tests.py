@@ -8,6 +8,8 @@
 """
 from jinja2 import Environment, Markup
 
+import conftest
+
 
 DEFINED = '''{{ missing is defined }}|{{ true is defined }}'''
 EVEN = '''{{ 1 is even }}|{{ 2 is even }}'''

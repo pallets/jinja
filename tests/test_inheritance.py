@@ -6,8 +6,13 @@
     :copyright: (c) 2009 by the Jinja Team.
     :license: BSD, see LICENSE for more details.
 """
+
 from jinja2 import Environment, DictLoader
 from jinja2.exceptions import TemplateSyntaxError
+
+import conftest
+conftest.GlobalLoader.scope = globals()
+
 
 LAYOUTTEMPLATE = '''\
 |{% block block1 %}block 1 from layout{% endblock %}

@@ -8,6 +8,8 @@
 """
 from jinja2 import Environment
 
+import conftest
+
 
 PHP_SYNTAX = '''\
 <!-- I'm a comment, I'm not interesting -->\
@@ -96,7 +98,7 @@ def test_line_syntax():
     env = Environment('<%', '%>', '${', '}', '<%#', '%>', '%')
     tmpl = env.from_string(MAKO_SYNTAX)
     assert [int(x.strip()) for x in tmpl.render(seq=range(5)).split()] == \
-            range(5)
+           range(5)
 
     env = Environment('<%', '%>', '${', '}', '<%#', '%>', '%', '##')
     tmpl = env.from_string(MAKO_SYNTAX_LINECOMMENTS)

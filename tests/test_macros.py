@@ -7,6 +7,10 @@
     :license: BSD, see LICENSE for more details.
 """
 
+import conftest
+conftest.GlobalLoader.scope = globals()
+
+
 SIMPLE = '''\
 {% macro say_hello(name) %}Hello {{ name }}!{% endmacro %}
 {{ say_hello('Peter') }}\

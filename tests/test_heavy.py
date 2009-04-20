@@ -11,6 +11,8 @@
     :license: BSD.
 """
 
+import conftest
+
 
 def test_assigned_scoping(env):
     t = env.from_string('''
