@@ -63,7 +63,7 @@ Or directly provide the model for quick testing::
     {% endfor %}
 
 Please keep in mind that even though you may put such things into templates
-it still isn't a good idea.  Queries should go into the view code and now
+it still isn't a good idea.  Queries should go into the view code and not
 the template!
 
 Isn't it a terrible idea to put Logic into Templates?
