@@ -139,19 +139,6 @@ def dump_functions(mapping):
     return directive
 
 
-def jinja_changelog(dirname, arguments, options, content, lineno,
-                    content_offset, block_text, state, state_machine):
-    doc = ViewList()
-    changelog = file(os.path.join(os.path.dirname(jinja2.__file__), '..',
-                                  'CHANGES'))
-    try:
-        for line in islice(changelog, 3, None):
-            doc.append(line.rstrip().decode('utf-8'), '<jinjaext>')
-    finally:
-        changelog.close()
-    return parse_rst(state, content_offset, doc)
-
-
 from jinja2.defaults import DEFAULT_FILTERS, DEFAULT_TESTS
 jinja_filters = dump_functions(DEFAULT_FILTERS)
 jinja_tests = dump_functions(DEFAULT_TESTS)
@@ -210,7 +197,6 @@ def inject_toc(app, doctree, docname):
 def setup(app):
     app.add_directive('jinjafilters', jinja_filters, 0, (0, 0, 0))
     app.add_directive('jinjatests', jinja_tests, 0, (0, 0, 0))
-    app.add_directive('jinjachangelog', jinja_changelog, 0, (0, 0, 0))
     app.add_directive('jinjanodes', jinja_nodes, 0, (0, 0, 0))
     # uncomment for inline toc.  links are broken unfortunately
     ##app.connect('doctree-resolved', inject_toc)

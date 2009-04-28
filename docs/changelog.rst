@@ -1,4 +1,3 @@
-Changelog
-=========
+.. module:: jinja2
 
-.. jinjachangelog::
+.. include:: ../CHANGES
