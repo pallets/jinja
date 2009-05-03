@@ -142,7 +142,7 @@ by default set to ``{# ... #}``.  This is useful to comment out parts of the
 template for debugging or to add information for other template designers or
 yourself::
 
-    {# note: disabled template because we no longer user this
+    {# note: disabled template because we no longer use this
         {% for user in users %}
             ...
         {% endfor %}
