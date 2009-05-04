@@ -142,7 +142,7 @@ by default set to ``{# ... #}``.  This is useful to comment out parts of the
 template for debugging or to add information for other template designers or
 yourself::
 
-    {# note: disabled template because we no longer user this
+    {# note: disabled template because we no longer use this
         {% for user in users %}
             ...
         {% endfor %}
@@ -319,7 +319,7 @@ A child template might look like this::
     {% block content %}
         <h1>Index</h1>
         <p class="important">
-          Welcome on my awsome homepage.
+          Welcome on my awesome homepage.
         </p>
     {% endblock %}
 
