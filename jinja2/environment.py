@@ -191,7 +191,7 @@ class Environment(object):
     sandboxed = False
 
     #: True if the environment is just an overlay
-    overlay = False
+    overlayed = False
 
     #: the environment this environment is linked to if it is an overlay
     linked_to = None
@@ -303,7 +303,7 @@ class Environment(object):
 
         rv = object.__new__(self.__class__)
         rv.__dict__.update(self.__dict__)
-        rv.overlay = True
+        rv.overlayed = True
         rv.linked_to = self
 
         for key, value in args.iteritems():
