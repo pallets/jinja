@@ -9,11 +9,7 @@
 from jinja2 import Environment, DictLoader
 from jinja2.exceptions import TemplateNotFound
 
-import conftest
-if conftest.NOSE:
-    from nose.tools import assert_raises as raises
-else:
-    from py.test import raises
+from nose.tools import assert_raises
 
 
 test_env = Environment(loader=DictLoader(dict(
@@ -50,7 +46,7 @@ def test_context_include():
 
 def test_include_ignoring_missing():
     t = test_env.from_string('{% include "missing" %}')
-    raises(TemplateNotFound, t.render)
+    assert_raises(TemplateNotFound, t.render)
     for extra in '', 'with context', 'without context':
         t = test_env.from_string('{% include "missing" ignore missing ' +
                                  extra + ' %}')

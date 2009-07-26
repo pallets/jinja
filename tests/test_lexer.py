@@ -6,8 +6,9 @@
     :copyright: (c) 2009 by the Jinja Team.
     :license: BSD, see LICENSE for more details.
 """
+from jinja2 import Environment
 
-import conftest
+env = Environment()
 
 
 RAW = '{% raw %}foo{% endraw %}|{%raw%}{{ bar }}|{% baz %}{%       endraw    %}'
@@ -21,7 +22,7 @@ COMMENTS = '''\
 BYTEFALLBACK = u'''{{ 'foo'|pprint }}|{{ 'bär'|pprint }}'''
 
 
-def test_raw(env):
+def test_raw():
     tmpl = env.from_string(RAW)
     assert tmpl.render() == 'foo|{{ bar }}|{% baz %}'
 
@@ -41,19 +42,19 @@ def test_comments():
                                          "<li>1</li>\n  <li>2</li>\n</ul>")
 
 
-def test_string_escapes(env):
+def test_string_escapes():
     for char in u'\0', u'\u2668', u'\xe4', u'\t', u'\r', u'\n':
         tmpl = env.from_string('{{ %s }}' % repr(char)[1:])
         assert tmpl.render() == char
     assert env.from_string('{{ "\N{HOT SPRINGS}" }}').render() == u'\u2668'
 
 
-def test_bytefallback(env):
+def test_bytefallback():
     tmpl = env.from_string(BYTEFALLBACK)
     assert tmpl.render() == u"'foo'|u'b\\xe4r'"
 
 
-def test_operators(env):
+def test_operators():
     from jinja2.lexer import operators
     for test, expect in operators.iteritems():
         if test in '([{}])':

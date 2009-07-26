@@ -10,11 +10,9 @@
 """
 from jinja2 import Environment, DictLoader, TemplateSyntaxError
 
-import conftest
-if conftest.NOSE:
-    from nose.tools import assert_raises as raises
-else:
-    from py.test import raises
+env = Environment()
+
+from nose.tools import assert_raises
 
 
 def test_keyword_folding():
@@ -36,12 +34,12 @@ def test_extends_output_bugs():
     assert t.render(expr=True) == '((title))'
 
 
-def test_urlize_filter_escaping(env):
+def test_urlize_filter_escaping():
     tmpl = env.from_string('{{ "http://www.example.org/<foo"|urlize }}')
     assert tmpl.render() == '<a href="http://www.example.org/&lt;foo">http://www.example.org/&lt;foo</a>'
 
 
-def test_loop_call_loop(env):
+def test_loop_call_loop():
     tmpl = env.from_string('''
 
     {% macro test() %}
@@ -63,11 +61,11 @@ def test_loop_call_loop(env):
 
 def test_weird_inline_comment():
     env = Environment(line_statement_prefix='%')
-    raises(TemplateSyntaxError, env.from_string,
-           '% for item in seq {# missing #}\n...% endfor')
+    assert_raises(TemplateSyntaxError, env.from_string,
+                  '% for item in seq {# missing #}\n...% endfor')
 
 
-def test_old_macro_loop_scoping_bug(env):
+def test_old_macro_loop_scoping_bug():
     tmpl = env.from_string('{% for i in (1, 2) %}{{ i }}{% endfor %}'
                            '{% macro i() %}3{% endmacro %}{{ i() }}')
     assert tmpl.render() == '123'

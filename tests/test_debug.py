@@ -11,18 +11,12 @@
 from jinja2 import Environment
 from test_loaders import filesystem_loader
 
-import conftest
-if conftest.NOSE:
-    import sys
-    MODULE = sys.modules[__name__]
-
-
 env = Environment(loader=filesystem_loader)
 
 
 def test_runtime_error():
     '''
->>> tmpl = MODULE.env.get_template('broken.html')
+>>> tmpl = env.get_template('broken.html')
 >>> tmpl.render(fail=lambda: 1 / 0)
 Traceback (most recent call last):
   File "loaderres/templates/broken.html", line 2, in top-level template code
@@ -35,7 +29,7 @@ ZeroDivisionError: integer division or modulo by zero
 
 def test_syntax_error():
     '''
->>> tmpl = MODULE.env.get_template('syntaxerror.html')
+>>> tmpl = env.get_template('syntaxerror.html')
 Traceback (most recent call last):
   ...
 TemplateSyntaxError: unknown tag 'endif'

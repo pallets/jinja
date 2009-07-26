@@ -13,11 +13,7 @@ from jinja2 import Environment, loaders
 from jinja2.loaders import split_template_path
 from jinja2.exceptions import TemplateNotFound
 
-import conftest
-if conftest.NOSE:
-    from nose.tools import assert_raises as raises
-else:
-    from py.test import raises
+from nose.tools import assert_raises
 
 
 dict_loader = loaders.DictLoader({
@@ -37,14 +33,14 @@ def test_dict_loader():
     env = Environment(loader=dict_loader)
     tmpl = env.get_template('justdict.html')
     assert tmpl.render().strip() == 'FOO'
-    raises(TemplateNotFound, env.get_template, 'missing.html')
+    assert_raises(TemplateNotFound, env.get_template, 'missing.html')
 
 
 def test_package_loader():
     env = Environment(loader=package_loader)
     tmpl = env.get_template('test.html')
     assert tmpl.render().strip() == 'BAR'
-    raises(TemplateNotFound, env.get_template, 'missing.html')
+    assert_raises(TemplateNotFound, env.get_template, 'missing.html')
 
 
 def test_filesystem_loader():
@@ -53,7 +49,7 @@ def test_filesystem_loader():
     assert tmpl.render().strip() == 'BAR'
     tmpl = env.get_template('foo/test.html')
     assert tmpl.render().strip() == 'FOO'
-    raises(TemplateNotFound, env.get_template, 'missing.html')
+    assert_raises(TemplateNotFound, env.get_template, 'missing.html')
 
 
 def test_choice_loader():
@@ -62,14 +58,14 @@ def test_choice_loader():
     assert tmpl.render().strip() == 'FOO'
     tmpl = env.get_template('test.html')
     assert tmpl.render().strip() == 'BAR'
-    raises(TemplateNotFound, env.get_template, 'missing.html')
+    assert_raises(TemplateNotFound, env.get_template, 'missing.html')
 
 
 def test_function_loader():
     env = Environment(loader=function_loader)
     tmpl = env.get_template('justfunction.html')
     assert tmpl.render().strip() == 'FOO'
-    raises(TemplateNotFound, env.get_template, 'missing.html')
+    assert_raises(TemplateNotFound, env.get_template, 'missing.html')
 
 
 def test_prefix_loader():
@@ -78,7 +74,7 @@ def test_prefix_loader():
     assert tmpl.render().strip() == 'BAR'
     tmpl = env.get_template('b/justdict.html')
     assert tmpl.render().strip() == 'FOO'
-    raises(TemplateNotFound, env.get_template, 'missing')
+    assert_raises(TemplateNotFound, env.get_template, 'missing')
 
 
 def test_caching():
@@ -112,4 +108,4 @@ def test_caching():
 def test_split_template_path():
     assert split_template_path('foo/bar') == ['foo', 'bar']
     assert split_template_path('./foo/bar') == ['foo', 'bar']
-    raises(TemplateNotFound, split_template_path, '../foo')
+    assert_raises(TemplateNotFound, split_template_path, '../foo')

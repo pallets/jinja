@@ -7,9 +7,8 @@
     :license: BSD, see LICENSE for more details.
 """
 
-import conftest
-if conftest.NOSE:
-    env = conftest.simple_env
+from jinja2 import Environment
+env = Environment()
 
 
 def test_basic_streaming():

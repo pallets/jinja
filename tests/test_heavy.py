@@ -10,11 +10,11 @@
     :copyright: Copyright 2009 by the Jinja Team.
     :license: BSD.
 """
+from jinja2 import Environment
+env = Environment()
 
-import conftest
 
-
-def test_assigned_scoping(env):
+def test_assigned_scoping():
     t = env.from_string('''
     {%- for item in (1, 2, 3, 4) -%}
         [{{ item }}]
@@ -42,7 +42,7 @@ def test_assigned_scoping(env):
     assert t.render() == '[1][2][3][4]42'
 
 
-def test_closure_scoping(env):
+def test_closure_scoping():
     t = env.from_string('''
     {%- set wrapper = "<FOO>" %}
     {%- for item in (1, 2, 3, 4) %}

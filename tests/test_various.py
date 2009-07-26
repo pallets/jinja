@@ -7,15 +7,13 @@
     :license: BSD, see LICENSE for more details.
 """
 import gc
-from jinja2 import escape, is_undefined
+from jinja2 import escape, is_undefined, Environment
 from jinja2.utils import Cycler
 from jinja2.exceptions import TemplateSyntaxError
 
-import conftest
-if conftest.NOSE:
-    from nose.tools import assert_raises as raises
-else:
-    from py.test import raises
+from nose.tools import assert_raises
+
+env = Environment()
 
 
 UNPACKING = '''{% for a, b, c in [[1, 2, 3]] %}{{ a }}|{{ b }}|{{ c }}{% endfor %}'''
@@ -29,27 +27,27 @@ CONSTASS1 = '''{% set true = 42 %}'''
 CONSTASS2 = '''{% for none in seq %}{% endfor %}'''
 
 
-def test_unpacking(env):
+def test_unpacking():
     tmpl = env.from_string(UNPACKING)
     assert tmpl.render() == '1|2|3'
 
 
-def test_raw(env):
+def test_raw():
     tmpl = env.from_string(RAW)
     assert tmpl.render() == '{{ FOO }} and {% BAR %}'
 
 
-def test_const(env):
+def test_const():
     tmpl = env.from_string(CONST)
     assert tmpl.render() == 'True|False|None|True|False'
 
 
-def test_const_assign(env):
+def test_const_assign():
     for tmpl in CONSTASS1, CONSTASS2:
-        raises(TemplateSyntaxError, env.from_string, tmpl)
+        assert_raises(TemplateSyntaxError, env.from_string, tmpl)
 
 
-def test_localset(env):
+def test_localset():
     tmpl = env.from_string(LOCALSET)
     assert tmpl.render() == '0'
 
@@ -67,7 +65,6 @@ def test_markup_leaks():
 
 
 def test_item_and_attribute():
-    from jinja2 import Environment
     from jinja2.sandbox import SandboxedEnvironment
 
     for env in Environment(), SandboxedEnvironment():
@@ -80,7 +77,6 @@ def test_item_and_attribute():
 
 
 def test_finalizer():
-    from jinja2 import Environment
     def finalize_none_empty(value):
         if value is None:
             value = u''
@@ -104,7 +100,7 @@ def test_cycler():
     assert c.current == 1
 
 
-def test_expressions(env):
+def test_expressions():
     expr = env.compile_expression("foo")
     assert expr() is None
     assert expr(foo=42) == 42

@@ -9,11 +9,7 @@
 from jinja2 import Template
 from jinja2.exceptions import UndefinedError
 
-import conftest
-if conftest.NOSE:
-    from nose.tools import assert_raises as raises
-else:
-    from py.test import raises
+from nose.tools import assert_raises
 
 
 def test_default_undefined():
@@ -87,4 +83,4 @@ UndefinedError: 'missing' is undefined
 
 def test_indexing_gives_undefined():
     t = Template("{{ var[42].foo }}")
-    raises(UndefinedError, t.render, var=0)
+    assert_raises(UndefinedError, t.render, var=0)

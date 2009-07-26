@@ -6,13 +6,12 @@
     :copyright: (c) 2009 by the Jinja Team.
     :license: BSD, see LICENSE for more details.
 """
+from jinja2 import Environment
 from jinja2.exceptions import UndefinedError, TemplateSyntaxError
 
-import conftest
-if conftest.NOSE:
-    from nose.tools import assert_raises as raises
-else:
-    from py.test import raises
+from nose.tools import assert_raises
+
+env = Environment()
 
 
 SIMPLE = '''{% for item in seq %}{{ item }}{% endfor %}'''
@@ -49,22 +48,22 @@ LOOPUNASSIGNABLE = '''\
 {% for loop in seq %}...{% endfor %}'''
 
 
-def test_simple(env):
+def test_simple():
     tmpl = env.from_string(SIMPLE)
     assert tmpl.render(seq=range(10)) == '0123456789'
 
 
-def test_else(env):
+def test_else():
     tmpl = env.from_string(ELSE)
     assert tmpl.render() == '...'
 
 
-def test_empty_blocks(env):
+def test_empty_blocks():
     tmpl = env.from_string(EMPTYBLOCKS)
     assert tmpl.render() == '<>'
 
 
-def test_context_vars(env):
+def test_context_vars():
     tmpl = env.from_string(CONTEXTVARS)
     one, two, _ = tmpl.render(seq=[0, 1]).split('###')
     (one_index, one_index0, one_revindex, one_revindex0, one_first,
@@ -81,19 +80,19 @@ def test_context_vars(env):
     assert one_length == two_length == '2'
 
 
-def test_cycling(env):
+def test_cycling():
     tmpl = env.from_string(CYCLING)
     output = tmpl.render(seq=range(4), through=('<1>', '<2>'))
     assert output == '<1><2>' * 4
 
 
-def test_scope(env):
+def test_scope():
     tmpl = env.from_string(SCOPE)
     output = tmpl.render(seq=range(10))
     assert not output
 
 
-def test_varlen(env):
+def test_varlen():
     def inner():
         for item in range(5):
             yield item
@@ -102,12 +101,12 @@ def test_varlen(env):
     assert output == '01234'
 
 
-def test_noniter(env):
+def test_noniter():
     tmpl = env.from_string(NONITER)
-    raises(TypeError, tmpl.render)
+    assert_raises(TypeError, tmpl.render)
 
 
-def test_recursive(env):
+def test_recursive():
     tmpl = env.from_string(RECURSIVE)
     assert tmpl.render(seq=[
         dict(a=1, b=[dict(a=1), dict(a=2)]),
@@ -116,42 +115,42 @@ def test_recursive(env):
     ]) == '[1<[1][2]>][2<[1][2]>][3<[a]>]'
 
 
-def test_looploop(env):
+def test_looploop():
     tmpl = env.from_string(LOOPLOOP)
     assert tmpl.render(table=['ab', 'cd']) == '[1|1][1|2][2|1][2|2]'
 
 
-def test_reversed_bug(env):
+def test_reversed_bug():
     tmpl = env.from_string('{% for i in items %}{{ i }}{% if not loop.last %}'
                            ',{% endif %}{% endfor %}')
     assert tmpl.render(items=reversed([3, 2, 1])) == '1,2,3'
 
 
-def test_loop_errors(env):
+def test_loop_errors():
     tmpl = env.from_string(LOOPERROR1)
-    raises(UndefinedError, tmpl.render)
+    assert_raises(UndefinedError, tmpl.render)
     tmpl = env.from_string(LOOPERROR2)
     assert tmpl.render() == ''
 
 
-def test_loop_filter(env):
+def test_loop_filter():
     tmpl = env.from_string(LOOPFILTER)
     assert tmpl.render() == '[0][2][4][6][8]'
     tmpl = env.from_string(EXTENDEDLOOPFILTER)
     assert tmpl.render() == '[1:0][2:2][3:4][4:6][5:8]'
 
 
-def test_loop_unassignable(env):
-    raises(TemplateSyntaxError, env.from_string, LOOPUNASSIGNABLE)
+def test_loop_unassignable():
+    assert_raises(TemplateSyntaxError, env.from_string, LOOPUNASSIGNABLE)
 
 
-def test_scoped_special_var(env):
+def test_scoped_special_var():
     t = env.from_string('{% for s in seq %}[{{ loop.first }}{% for c in s %}'
                         '|{{ loop.first }}{% endfor %}]{% endfor %}')
     assert t.render(seq=('ab', 'cd')) == '[True|True|False][False|True|False]'
 
 
-def test_scoped_loop_var(env):
+def test_scoped_loop_var():
     t = env.from_string('{% for x in seq %}{{ loop.first }}'
                         '{% for y in seq %}{% endfor %}{% endfor %}')
     assert t.render(seq='ab') == 'TrueFalse'
@@ -160,14 +159,14 @@ def test_scoped_loop_var(env):
     assert t.render(seq='ab') == 'TrueFalseTrueFalse'
 
 
-def test_recursive_empty_loop_iter(env):
+def test_recursive_empty_loop_iter():
     t = env.from_string('''
     {%- for item in foo recursive -%}{%- endfor -%}
     ''')
     assert t.render(dict(foo=[])) == ''
 
 
-def test_call_in_loop(env):
+def test_call_in_loop():
     t = env.from_string('''
     {%- macro do_something() -%}
         [{{ caller() }}]
@@ -182,7 +181,7 @@ def test_call_in_loop(env):
     assert t.render() == '[1][2][3]'
 
 
-def test_scoping_bug(env):
+def test_scoping_bug():
     t = env.from_string('''
     {%- for item in foo %}...{{ item }}...{% endfor %}
     {%- macro item(a) %}...{{ a }}...{% endmacro %}

@@ -9,11 +9,7 @@
 from jinja2 import Environment, DictLoader, contextfunction
 from jinja2.exceptions import TemplateAssertionError
 
-import conftest
-if conftest.NOSE:
-    from nose.tools import assert_raises as raises
-else:
-    from py.test import raises
+from nose.tools import assert_raises
 
 templates = {
     'master.html': '<title>{{ page_title|default(_("missing")) }}</title>'
@@ -77,8 +73,8 @@ def test_complex_plural():
     tmpl = i18n_env.from_string('{% trans foo=42, count=2 %}{{ count }} item{% '
                                 'pluralize count %}{{ count }} items{% endtrans %}')
     assert tmpl.render() == '2 items'
-    raises(TemplateAssertionError, i18n_env.from_string,
-           '{% trans foo %}...{% pluralize bar %}...{% endtrans %}')
+    assert_raises(TemplateAssertionError, i18n_env.from_string,
+                 '{% trans foo %}...{% pluralize bar %}...{% endtrans %}')
 
 
 def test_trans_stringformatting():

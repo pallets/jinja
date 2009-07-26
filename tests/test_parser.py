@@ -8,7 +8,7 @@
 """
 from jinja2 import Environment
 
-import conftest
+env = Environment()
 
 
 PHP_SYNTAX = '''\
@@ -84,12 +84,12 @@ def test_comment_syntax():
     assert tmpl.render(seq=range(5)) == '01234'
 
 
-def test_balancing(env):
+def test_balancing():
     tmpl = env.from_string(BALANCING)
     assert tmpl.render() == 'bar'
 
 
-def test_start_comment(env):
+def test_start_comment():
     tmpl = env.from_string(STARTCOMMENT)
     assert tmpl.render().strip() == 'foo'
 

@@ -7,8 +7,9 @@
     :license: BSD, see LICENSE for more details.
 """
 
-import conftest
-conftest.GlobalLoader.scope = globals()
+from jinja2 import Environment, DictLoader
+
+env = Environment(trim_blocks=True)
 
 
 SIMPLE = '''\
@@ -52,47 +53,48 @@ CALLERUNDEFINED = '''\
 INCLUDETEMPLATE = '''{% macro test(foo) %}[{{ foo }}]{% endmacro %}'''
 
 
-def test_simple(env):
+def test_simple():
     tmpl = env.from_string(SIMPLE)
     assert tmpl.render() == 'Hello Peter!'
 
 
-def test_scoping(env):
+def test_scoping():
     tmpl = env.from_string(SCOPING)
     assert tmpl.render() == 'foo|bar'
 
 
-def test_arguments(env):
+def test_arguments():
     tmpl = env.from_string(ARGUMENTS)
     assert tmpl.render() == '||c|d|a||c|d|a|b|c|d|1|2|3|d'
 
 
-def test_varargs(env):
+def test_varargs():
     tmpl = env.from_string(VARARGS)
     assert tmpl.render() == '1|2|3'
 
 
-def test_simple_call(env):
+def test_simple_call():
     tmpl = env.from_string(SIMPLECALL)
     assert tmpl.render() == '[[data]]'
 
 
-def test_complex_call(env):
+def test_complex_call():
     tmpl = env.from_string(COMPLEXCALL)
     assert tmpl.render() == '[[data]]'
 
 
-def test_caller_undefined(env):
+def test_caller_undefined():
     tmpl = env.from_string(CALLERUNDEFINED)
     assert tmpl.render() == 'True'
 
 
-def test_include(env):
+def test_include():
+    env = Environment(loader=DictLoader({'include': INCLUDETEMPLATE}))
     tmpl = env.from_string('{% from "include" import test %}{{ test("foo") }}')
     assert tmpl.render() == '[foo]'
 
 
-def test_macro_api(env):
+def test_macro_api():
     tmpl = env.from_string('{% macro foo(a, b) %}{% endmacro %}'
                            '{% macro bar() %}{{ varargs }}{{ kwargs }}{% endmacro %}'
                            '{% macro baz() %}{{ caller() }}{% endmacro %}')
