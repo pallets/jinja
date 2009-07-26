@@ -95,9 +95,6 @@ html_last_updated_fmt = '%b %d, %Y'
 # typographically correct entities.
 #html_use_smartypants = True
 
-# use jinja2 for templates
-template_bridge = 'jinjaext.Jinja2Bridge'
-
 # no modindex
 html_use_modindex = False
 

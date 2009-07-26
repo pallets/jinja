@@ -77,16 +77,6 @@ class JinjaStyle(Style):
     }
 
 
-class Jinja2Bridge(TemplateBridge):
-
-    def init(self, builder):
-        path = builder.config.templates_path
-        self.env = Environment(loader=FileSystemLoader(path))
-
-    def render(self, template, context):
-        return self.env.get_template(template).render(context)
-
-
 _sig_re = re.compile(r'^[a-zA-Z_][a-zA-Z0-9_]*(\(.*?\))')
 
 

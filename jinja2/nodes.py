@@ -146,7 +146,9 @@ class Node(object):
             return result
 
     def find_all(self, node_type):
-        """Find all the nodes of a given type."""
+        """Find all the nodes of a given type.  If the type is a tuple,
+        the check is performed for any of the tuple items.
+        """
         for child in self.iter_child_nodes():
             if isinstance(child, node_type):
                 yield child

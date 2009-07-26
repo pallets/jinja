@@ -20,6 +20,7 @@ Version 2.2
   *before* the loop.  (#331)
 - Added support for optional `scoped` modifier to blocks.
 - Added support for line-comments.
+- Added the `meta` module.
 
 Version 2.1.1
 -------------

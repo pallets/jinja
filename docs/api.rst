@@ -665,3 +665,17 @@ don't recommend using any of those.
     change it in a backwards incompatible way but modifications in the Jinja2
     core may shine through.  For example if Jinja2 introduces a new AST node
     in later versions that may be returned by :meth:`~Environment.parse`.
+
+The Meta API
+------------
+
+.. versionadded:: 2.2
+
+The meta API returns some information about abstract syntax trees that
+could help applications to implement more advanced template concepts.  All
+the functions of the meta API operate on an abstract syntax tree as
+returned by the :meth:`Environment.parse` method.
+
+.. autofunction:: jinja2.meta.find_undeclared_variables
+
+.. autofunction:: jinja2.meta.find_referenced_templates
