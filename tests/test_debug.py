@@ -11,11 +11,17 @@
 from jinja2 import Environment
 from test_loaders import filesystem_loader
 
+import conftest
+if conftest.NOSE:
+    import sys
+    MODULE = sys.modules[__name__]
+
 
 env = Environment(loader=filesystem_loader)
 
 
-test_runtime_error = '''
+def test_runtime_error():
+    '''
 >>> tmpl = MODULE.env.get_template('broken.html')
 >>> tmpl.render(fail=lambda: 1 / 0)
 Traceback (most recent call last):
@@ -27,17 +33,19 @@ ZeroDivisionError: integer division or modulo by zero
 '''
 
 
-test_syntax_error = '''
+def test_syntax_error():
+    '''
 >>> tmpl = MODULE.env.get_template('syntaxerror.html')
 Traceback (most recent call last):
   ...
-  File "loaderres/templates/syntaxerror.html", line 4
-    {% endif %}
 TemplateSyntaxError: unknown tag 'endif'
+  File "loaderres/templates\\syntaxerror.html", line 4
+    {% endif %}
 '''
 
 
-test_regular_syntax_error = '''
+def test_regular_syntax_error():
+    '''
 >>> from jinja2.exceptions import TemplateSyntaxError
 >>> raise TemplateSyntaxError('wtf', 42)
 Traceback (most recent call last):

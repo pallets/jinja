@@ -6,13 +6,20 @@
     :copyright: (c) 2009 by the Jinja Team.
     :license: BSD, see LICENSE for more details.
 """
-from py.test import raises
 from jinja2 import Environment
 from jinja2.sandbox import SandboxedEnvironment, \
      ImmutableSandboxedEnvironment, unsafe
 from jinja2 import Markup, escape
 from jinja2.exceptions import SecurityError, TemplateSyntaxError
 
+
+import conftest
+if conftest.NOSE:
+    from nose.tools import assert_raises as raises
+    import sys
+    MODULE = sys.modules[__name__]
+else:
+    from py.test import raises
 
 class PrivateStuff(object):
 
@@ -35,7 +42,8 @@ class PublicStuff(object):
         return 'PublicStuff'
 
 
-test_unsafe = '''
+def test_unsafe():
+    '''
 >>> env = MODULE.SandboxedEnvironment()
 >>> env.from_string("{{ foo.foo() }}").render(foo=MODULE.PrivateStuff())
 Traceback (most recent call last):
@@ -70,7 +78,8 @@ def test_restricted():
            "{% for foo, bar.baz in seq %}...{% endfor %}")
 
 
-test_immutable_environment = '''
+def test_immutable_environment():
+    '''
 >>> env = MODULE.ImmutableSandboxedEnvironment()
 >>> env.from_string('{{ [].append(23) }}').render()
 Traceback (most recent call last):

@@ -7,12 +7,17 @@
     :license: BSD, see LICENSE for more details.
 """
 
-from py.test import raises
 import time
 import tempfile
 from jinja2 import Environment, loaders
 from jinja2.loaders import split_template_path
 from jinja2.exceptions import TemplateNotFound
+
+import conftest
+if conftest.NOSE:
+    from nose.tools import assert_raises as raises
+else:
+    from py.test import raises
 
 
 dict_loader = loaders.DictLoader({

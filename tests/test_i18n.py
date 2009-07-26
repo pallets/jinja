@@ -6,9 +6,14 @@
     :copyright: (c) 2009 by the Jinja Team.
     :license: BSD, see LICENSE for more details.
 """
-from py.test import raises
 from jinja2 import Environment, DictLoader, contextfunction
 from jinja2.exceptions import TemplateAssertionError
+
+import conftest
+if conftest.NOSE:
+    from nose.tools import assert_raises as raises
+else:
+    from py.test import raises
 
 templates = {
     'master.html': '<title>{{ page_title|default(_("missing")) }}</title>'

@@ -8,8 +8,13 @@
     :copyright: (c) 2009 by the Jinja Team.
     :license: BSD.
 """
-from py.test import raises
 from jinja2 import Environment, DictLoader, TemplateSyntaxError
+
+import conftest
+if conftest.NOSE:
+    from nose.tools import assert_raises as raises
+else:
+    from py.test import raises
 
 
 def test_keyword_folding():

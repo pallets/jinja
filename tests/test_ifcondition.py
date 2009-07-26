@@ -7,6 +7,9 @@
     :license: BSD, see LICENSE for more details.
 """
 
+import conftest
+
+
 SIMPLE = '''{% if true %}...{% endif %}'''
 ELIF = '''{% if false %}XXX{% elif true %}...{% else %}XXX{% endif %}'''
 ELSE = '''{% if false %}XXX{% else %}...{% endif %}'''

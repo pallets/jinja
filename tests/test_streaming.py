@@ -7,8 +7,13 @@
     :license: BSD, see LICENSE for more details.
 """
 
+import conftest
+if conftest.NOSE:
+    env = conftest.simple_env
 
-test_basic_streaming = r"""
+
+def test_basic_streaming():
+    r"""
 >>> tmpl = env.from_string("<ul>{% for item in seq %}<li>{{ loop.index "
 ...                        "}} - {{ item }}</li>{%- endfor %}</ul>")
 >>> stream = tmpl.stream(seq=range(4))
@@ -26,7 +31,8 @@ u'<li>4 - 3</li>'
 u'</ul>'
 """
 
-test_buffered_streaming = r"""
+def test_buffered_streaming():
+    r"""
 >>> tmpl = env.from_string("<ul>{% for item in seq %}<li>{{ loop.index "
 ...                        "}} - {{ item }}</li>{%- endfor %}</ul>")
 >>> stream = tmpl.stream(seq=range(4))
@@ -37,7 +43,8 @@ u'<ul><li>1 - 0</li><li>2 - 1</li>'
 u'<li>3 - 2</li><li>4 - 3</li></ul>'
 """
 
-test_streaming_behavior = r"""
+def test_streaming_behavior():
+    r"""
 >>> tmpl = env.from_string("")
 >>> stream = tmpl.stream()
 >>> stream.buffered

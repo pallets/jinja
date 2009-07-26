@@ -6,12 +6,18 @@
     :copyright: (c) 2009 by the Jinja Team.
     :license: BSD, see LICENSE for more details.
 """
-from py.test import raises
 from jinja2 import Template
 from jinja2.exceptions import UndefinedError
 
+import conftest
+if conftest.NOSE:
+    from nose.tools import assert_raises as raises
+else:
+    from py.test import raises
 
-test_default_undefined = '''
+
+def test_default_undefined():
+    '''
 >>> from jinja2 import Environment, Undefined
 >>> env = Environment(undefined=Undefined)
 >>> env.from_string('{{ missing }}').render()
@@ -30,7 +36,8 @@ u''
 u'True'
 '''
 
-test_debug_undefined = '''
+def test_debug_undefined():
+    '''
 >>> from jinja2 import Environment, DebugUndefined
 >>> env = Environment(undefined=DebugUndefined)
 >>> env.from_string('{{ missing }}').render()
@@ -49,7 +56,8 @@ u"{{ no such element: int['missing'] }}"
 u'True'
 '''
 
-test_strict_undefined = '''
+def test_strict_undefined():
+    '''
 >>> from jinja2 import Environment, StrictUndefined
 >>> env = Environment(undefined=StrictUndefined)
 >>> env.from_string('{{ missing }}').render()
