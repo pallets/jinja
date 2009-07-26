@@ -86,7 +86,10 @@ _resolved_filters = {}
 _newline_re = re.compile(r'(?:\r\n|\r|\n)')
 
 
-# don't ask....
+# Django stores an itertools object on the cycle node.  Not only is this
+# thread unsafe but also a problem for the converter which needs the raw
+# string values passed to the constructor to create a jinja loop.cycle()
+# call from it.
 _old_cycle_init = core_tags.CycleNode.__init__
 def _fixed_cycle_init(self, cyclevars, variable_name=None):
     self.raw_cycle_vars = map(Variable, cyclevars)
