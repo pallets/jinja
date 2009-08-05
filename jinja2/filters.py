@@ -18,7 +18,7 @@ from jinja2.runtime import Undefined
 from jinja2.exceptions import FilterArgumentError, SecurityError
 
 
-_word_re = re.compile(r'\w+')
+_word_re = re.compile(r'\w+(?u)')
 
 
 def contextfilter(f):
