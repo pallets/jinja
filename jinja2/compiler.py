@@ -13,7 +13,7 @@ from itertools import chain
 from jinja2 import nodes
 from jinja2.visitor import NodeVisitor, NodeTransformer
 from jinja2.exceptions import TemplateAssertionError
-from jinja2.utils import Markup, concat, escape, is_python_keyword
+from jinja2.utils import Markup, concat, escape, is_python_keyword, next
 
 
 operators = {
@@ -1191,7 +1191,7 @@ class CodeGenerator(NodeVisitor):
                     if self.environment.autoescape:
                         self.write('escape(')
                     else:
-                        self.write('unicode(')
+                        self.write('to_string(')
                     if self.environment.finalize is not None:
                         self.write('environment.finalize(')
                         close += 1
@@ -1255,7 +1255,7 @@ class CodeGenerator(NodeVisitor):
             public_names = [x for x in assignment_frame.toplevel_assignments
                             if not x.startswith('_')]
             if len(assignment_frame.toplevel_assignments) == 1:
-                name = iter(assignment_frame.toplevel_assignments).next()
+                name = next(iter(assignment_frame.toplevel_assignments))
                 self.writeline('context.vars[%r] = l_%s' % (name, name))
             else:
                 self.writeline('context.vars.update({')

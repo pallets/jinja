@@ -63,6 +63,15 @@ except TypeError, _error:
     del _test_gen_bug, _error
 
 
+# for python 2.x we create outselves a next() function that does the
+# basics without exception catching.
+try:
+    next = next
+except NameError:
+    def next(x):
+        return x.next()
+
+
 # ironpython without stdlib doesn't have keyword
 try:
     from keyword import iskeyword as is_python_keyword

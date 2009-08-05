@@ -11,7 +11,7 @@
 import sys
 from itertools import chain, imap
 from jinja2.utils import Markup, partial, soft_unicode, escape, missing, \
-     concat, MethodType, FunctionType, internalcode
+     concat, MethodType, FunctionType, internalcode, next
 from jinja2.exceptions import UndefinedError, TemplateRuntimeError, \
      TemplateNotFound
 
@@ -19,11 +19,17 @@ from jinja2.exceptions import UndefinedError, TemplateRuntimeError, \
 # these variables are exported to the template runtime
 __all__ = ['LoopContext', 'TemplateReference', 'Macro', 'Markup',
            'TemplateRuntimeError', 'missing', 'concat', 'escape',
-           'markup_join', 'unicode_join', 'TemplateNotFound']
+           'markup_join', 'unicode_join', 'to_string',
+           'TemplateNotFound']
 
 
 #: the types we support for context functions
 _context_function_types = (FunctionType, MethodType)
+
+#: the name of the function that is used to convert something into
+#: a string.  2to3 will adopt that automatically and the generated
+#: code can take advantage of it.
+to_string = unicode
 
 
 def markup_join(seq):
@@ -330,7 +336,7 @@ class LoopContextIterator(object):
     def next(self):
         ctx = self.context
         ctx.index0 += 1
-        return ctx._iterator.next(), ctx
+        return next(ctx._iterator), ctx
 
 
 class Macro(object):
@@ -378,7 +384,7 @@ class Macro(object):
             arguments.append(kwargs)
         elif kwargs:
             raise TypeError('macro %r takes no keyword argument %r' %
-                            (self.name, iter(kwargs).next()))
+                            (self.name, next(iter(kwargs))))
         if self.catch_varargs:
             arguments.append(args[self._argument_count:])
         elif len(args) > self._argument_count:

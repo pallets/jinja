@@ -16,6 +16,15 @@ from jinja2.utils import CodeType, missing, internal_code
 from jinja2.exceptions import TemplateSyntaxError
 
 
+# how does the raise helper look like?
+try:
+    exec "raise TypeError, 'foo'"
+except SyntaxError:
+    raise_helper = 'raise __jinja_exception__[1]'
+except TypeError:
+    raise_helper = 'raise __jinja_exception__[0], __jinja_exception__[1]'
+
+
 class TracebackFrameProxy(object):
     """Proxies a traceback frame."""
 
@@ -193,8 +202,7 @@ def fake_exc_info(exc_info, filename, lineno):
     }
 
     # and fake the exception
-    code = compile('\n' * (lineno - 1) + 'raise __jinja_exception__[0], ' +
-                   '__jinja_exception__[1]', filename, 'exec')
+    code = compile('\n' * (lineno - 1) + raise_helper, filename, 'exec')
 
     # if it's possible, change the name of the code.  This won't work
     # on some python environments such as google appengine

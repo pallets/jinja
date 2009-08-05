@@ -18,7 +18,7 @@ import re
 from operator import itemgetter
 from collections import deque
 from jinja2.exceptions import TemplateSyntaxError
-from jinja2.utils import LRUCache
+from jinja2.utils import LRUCache, next
 
 
 # cache for the lexers. Exists in order to be able to have multiple
@@ -30,7 +30,18 @@ whitespace_re = re.compile(r'\s+', re.U)
 string_re = re.compile(r"('([^'\\]*(?:\\.[^'\\]*)*)'"
                        r'|"([^"\\]*(?:\\.[^"\\]*)*)")', re.S)
 integer_re = re.compile(r'\d+')
-name_re = re.compile(r'\b[a-zA-Z_][a-zA-Z0-9_]*\b')
+
+# we use the unicode identifier rule if this python version is able
+# to handle unicode identifiers, otherwise the standard ASCII one.
+try:
+    compile('föö', '<unknown>', 'eval')
+except SyntaxError:
+    name_re = re.compile(r'\b[a-zA-Z_][a-zA-Z0-9_]*\b')
+else:
+    from jinja2 import _stringdefs
+    name_re = re.compile(r'[%s][%s]*' % (_stringdefs.xid_start,
+                                         _stringdefs.xid_continue))
+
 float_re = re.compile(r'(?<!\.)\d+\.\d+')
 newline_re = re.compile(r'(\r\n|\r|\n)')
 
@@ -230,7 +241,7 @@ class TokenStreamIterator(object):
         if token.type is TOKEN_EOF:
             self.stream.close()
             raise StopIteration()
-        self.stream.next()
+        next(self.stream)
         return token
 
 
@@ -247,7 +258,7 @@ class TokenStream(object):
         self.filename = filename
         self.closed = False
         self.current = Token(1, TOKEN_INITIAL, '')
-        self.next()
+        next(self)
 
     def __iter__(self):
         return TokenStreamIterator(self)
@@ -263,7 +274,7 @@ class TokenStream(object):
 
     def look(self):
         """Look at the next token."""
-        old_token = self.next()
+        old_token = next(self)
         result = self.current
         self.push(result)
         self.current = old_token
@@ -272,14 +283,14 @@ class TokenStream(object):
     def skip(self, n=1):
         """Got n tokens ahead."""
         for x in xrange(n):
-            self.next()
+            next(self)
 
     def next_if(self, expr):
         """Perform the token test and return the token if it matched.
         Otherwise the return value is `None`.
         """
         if self.current.test(expr):
-            return self.next()
+            return next(self)
 
     def skip_if(self, expr):
         """Like :meth:`next_if` but only returns `True` or `False`."""
@@ -322,7 +333,7 @@ class TokenStream(object):
         try:
             return self.current
         finally:
-            self.next()
+            next(self)
 
 
 def get_lexer(environment):

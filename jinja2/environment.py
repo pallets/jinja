@@ -370,7 +370,8 @@ class Environment(object):
         try:
             return Parser(self, source, name, filename).parse()
         except TemplateSyntaxError:
-            self.handle_exception(sys.exc_info(), source_hint=source)
+            exc_info = sys.exc_info()
+        self.handle_exception(exc_info, source_hint=source)
 
     def lex(self, source, name=None, filename=None):
         """Lex the given sourcecode and return a generator that yields
@@ -386,7 +387,8 @@ class Environment(object):
         try:
             return self.lexer.tokeniter(source, name, filename)
         except TemplateSyntaxError:
-            self.handle_exception(sys.exc_info(), source_hint=source)
+            exc_info = sys.exc_info()
+        self.handle_exception(exc_info, source_hint=source)
 
     def preprocess(self, source, name=None, filename=None):
         """Preprocesses the source with all extensions.  This is automatically
@@ -464,6 +466,7 @@ class Environment(object):
         **new in Jinja 2.1**
         """
         parser = Parser(self, source, state='variable')
+        exc_info = None
         try:
             expr = parser.parse_expression()
             if not parser.stream.eos:
@@ -471,7 +474,9 @@ class Environment(object):
                                           parser.stream.current.lineno,
                                           None, None)
         except TemplateSyntaxError:
-            self.handle_exception(sys.exc_info(), source_hint=source)
+            exc_info = sys.exc_info()
+        if exc_info is not None:
+            self.handle_exception(exc_info, source_hint=source)
         body = [nodes.Assign(nodes.Name('result', 'store'), expr, lineno=1)]
         template = self.from_string(nodes.Template(body, lineno=1))
         return TemplateExpression(template, undefined_to_none)
@@ -650,7 +655,8 @@ class Template(object):
         try:
             return concat(self.root_render_func(self.new_context(vars)))
         except:
-            return self.environment.handle_exception(sys.exc_info(), True)
+            exc_info = sys.exc_info()
+        return self.environment.handle_exception(exc_info, True)
 
     def stream(self, *args, **kwargs):
         """Works exactly like :meth:`generate` but returns a
@@ -671,7 +677,10 @@ class Template(object):
             for event in self.root_render_func(self.new_context(vars)):
                 yield event
         except:
-            yield self.environment.handle_exception(sys.exc_info(), True)
+            exc_info = sys.exc_info()
+        else:
+            return
+        yield self.environment.handle_exception(exc_info, True)
 
     def new_context(self, vars=None, shared=False, locals=None):
         """Create a new :class:`Context` for this template.  The vars
