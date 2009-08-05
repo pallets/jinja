@@ -28,7 +28,7 @@ from jinja2.utils import open_if_exists
 
 
 bc_version = 1
-bc_magic = 'j2' + pickle.dumps(bc_version, 2)
+bc_magic = 'j2'.encode('ascii') + pickle.dumps(bc_version, 2)
 
 
 class Bucket(object):

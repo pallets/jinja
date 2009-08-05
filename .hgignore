@@ -6,3 +6,4 @@
 \.py[co]$
 \.DS_Store$
 ^env/
+^py3k/

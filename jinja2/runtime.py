@@ -188,9 +188,12 @@ class Context(object):
     keys = _all('keys')
     values = _all('values')
     items = _all('items')
-    iterkeys = _all('iterkeys')
-    itervalues = _all('itervalues')
-    iteritems = _all('iteritems')
+
+    # not available on python 3
+    if hasattr(dict, 'iterkeys'):
+        iterkeys = _all('iterkeys')
+        itervalues = _all('itervalues')
+        iteritems = _all('iteritems')
     del _all
 
     def __contains__(self, name):

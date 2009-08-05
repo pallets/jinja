@@ -253,10 +253,9 @@ class TokenStream(object):
         return TokenStreamIterator(self)
 
     def __nonzero__(self):
-        """Are we at the end of the stream?"""
         return bool(self._pushed) or self.current.type is not TOKEN_EOF
 
-    eos = property(lambda x: not x.__nonzero__(), doc=__nonzero__.__doc__)
+    eos = property(lambda x: not x, doc="Are we at the end of the stream?")
 
     def push(self, token):
         """Push a token back to the stream."""

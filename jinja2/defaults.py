@@ -24,11 +24,17 @@ TRIM_BLOCKS = False
 NEWLINE_SEQUENCE = '\n'
 
 
+try:
+    range_func = xrange
+except NameError:
+    range_func = range
+
+
 # default filters, tests and namespace
 from jinja2.filters import FILTERS as DEFAULT_FILTERS
 from jinja2.tests import TESTS as DEFAULT_TESTS
 DEFAULT_NAMESPACE = {
-    'range':        xrange,
+    'range':        range_func,
     'dict':         lambda **kw: kw,
     'lipsum':       generate_lorem_ipsum,
     'cycler':       Cycler,
