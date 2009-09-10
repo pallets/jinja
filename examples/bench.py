@@ -55,6 +55,48 @@ def test_jinja():
     jinja_template.render(context)
 
 try:
+    from tornado.template import Template
+except ImportError:
+    test_tornado = None
+else:
+    tornado_template = Template("""\
+<!doctype html>
+<html>
+  <head>
+    <title>{{ page_title }}</title>
+  </head>
+  <body>
+    <div class="header">
+      <h1>{{ page_title }}</h1>
+    </div>
+    <ul class="navigation">
+    {% for href, caption in [ \
+        ('index.html', 'Index'), \
+        ('downloads.html', 'Downloads'), \
+        ('products.html', 'Products') \
+      ] %}
+      <li><a href="{{ href }}">{{ caption }}</a></li>
+    {% end %}
+    </ul>
+    <div class="table">
+      <table>
+      {% for row in table %}
+        <tr>
+        {% for cell in row %}
+          <td>{{ cell }}</td>
+        {% end %}
+        </tr>
+      {% end %}
+      </table>
+    </div>
+  </body>
+</html>\
+""")
+
+    def test_tornado():
+        tornado_template.generate(**context)
+
+try:
     from django.conf import settings
     settings.configure()
     from django.template import Template as DjangoTemplate, Context as DjangoContext
@@ -300,7 +342,7 @@ sys.stdout.write('\r' + '\n'.join((
 )) + '\n')
 
 
-for test in 'jinja', 'mako', 'tenjin', 'spitfire', 'django', 'genshi', 'cheetah':
+for test in 'jinja', 'mako', 'tornado', 'tenjin', 'spitfire', 'django', 'genshi', 'cheetah':
     if locals()['test_' + test] is None:
         sys.stdout.write('    %-20s*not installed*\n' % test)
         continue
