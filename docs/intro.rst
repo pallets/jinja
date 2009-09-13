@@ -39,7 +39,9 @@ should be installed.
 
 If you don't have a working C compiler and you are trying to install the source
 release you will get a compiler error.  This however can be circumvented by
-passing the ``--without-speedups`` command line argument to the setup script.
+passing the ``--without-speedups`` command line argument to the setup script::
+
+    $ python setup.py install --without-speedups
 
 For more details about that have a look at the :ref:`disable-speedups`
 section below.
@@ -58,8 +60,8 @@ As a Python egg (via easy_install)
 
 You can install the most recent Jinja2 version using `easy_install`_ or `pip`_::
 
-    sudo easy_install Jinja2
-    sudo pip install Jinja2
+    easy_install Jinja2
+    pip install Jinja2
 
 This will install a Jinja2 egg in your Python installation's site-packages
 directory.
@@ -121,7 +123,9 @@ You can disable the speedups extension when installing using the
 
     sudo python setup.py install --without-speedups
 
-You can also pass this parameter to `easy_install` or `pip`.
+You can also pass this parameter to `pip`::
+
+    $ pip install --install-option='--without-speedups' Jinja2
 
 
 Basic API Usage

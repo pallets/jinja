@@ -47,38 +47,9 @@ from distutils.command.build_ext import build_ext
 from distutils.errors import CCompilerError, DistutilsPlatformError
 
 
-#: don't change the variable and assignment.  the fabfile parses this
-#: file to get the version for deployment from it.
-VERSION = '2.2'
-
-
-data_files = []
-documentation_path = 'docs/_build/html'
-if os.path.exists(documentation_path):
-    documentation_files = []
-    for fn in os.listdir(documentation_path):
-        if not fn.startswith('.'):
-            fn = os.path.join(documentation_path, fn)
-            if os.path.isfile(fn):
-                documentation_files.append(fn)
-    data_files.append(('docs', documentation_files))
-
-
-def get_terminal_width():
-    """Return the current terminal dimensions."""
-    try:
-        from struct import pack, unpack
-        from fcntl import ioctl
-        from termios import TIOCGWINSZ
-        s = pack('HHHH', 0, 0, 0, 0)
-        return unpack('HHHH', ioctl(sys.stdout.fileno(), TIOCGWINSZ, s))[1]
-    except:
-        return 80
-
-
 setup(
     name='Jinja2',
-    version=VERSION,
+    version='2.2',
     url='http://jinja.pocoo.org/',
     license='BSD',
     author='Armin Ronacher',
@@ -86,8 +57,7 @@ setup(
     description='A small but fast and easy to use stand-alone template '
                 'engine written in pure python.',
     long_description=__doc__,
-    # jinja is egg safe. But because we distribute the documentation
-    # in form of html and txt files it's a better idea to extract the files
+    # jinja is egg safe. But we hate eggs
     zip_safe=False,
     classifiers=[
         'Development Status :: 5 - Production/Stable',
