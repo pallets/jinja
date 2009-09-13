@@ -647,6 +647,15 @@ class CodeGenerator(NodeVisitor):
         # macros are delayed, they never require output checks
         frame.require_output_check = False
         args = frame.arguments
+        # XXX: this is an ugly fix for the loop nesting bug
+        # (tests.test_old_bugs.test_loop_call_bug).  This works around
+        # a identifier nesting problem we have in general.  It's just more
+        # likely to happen in loops which is why we work around it.  The
+        # real solution would be "nonlocal" all the identifiers that are
+        # leaking into a new python frame and might be used both unassigned
+        # and assigned.
+        if 'loop' in frame.identifiers.declared:
+            args.append('l_loop=l_loop')
         self.writeline('def macro(%s):' % ', '.join(args), node)
         self.indent()
         self.buffer(frame)

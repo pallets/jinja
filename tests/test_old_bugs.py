@@ -56,7 +56,7 @@ def test_loop_call_loop():
 
     ''')
 
-    assert tmpl.render() == ''
+    assert tmpl.render().split() == map(unicode, range(1, 11)) * 5
 
 
 def test_weird_inline_comment():
