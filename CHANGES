@@ -21,9 +21,8 @@ Version 2.2
 - Added support for optional `scoped` modifier to blocks.
 - Added support for line-comments.
 - Added the `meta` module.
-- Renamed (undocumented) attribute overlay to overlayed on the environment
-  because it was clashing with a method of the same name.  The new attribute
-  is called "overlayed".
+- Renamed (undocumented) attribute "overlay" to "overlayed" on the
+  environment because it was clashing with a method of the same name.
 
 Version 2.1.1
 -------------
