@@ -3,7 +3,7 @@ Jinja2 Changelog
 
 Version 2.2
 -----------
-(codename Kong, released on September 12th 2009)
+(codename Kong, released on September 13th 2009)
 
 - Include statements can now be marked with ``ignore missing`` to skip
   non existing templates.
