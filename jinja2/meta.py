@@ -6,7 +6,7 @@
     This module implements various functions that exposes information about
     templates that might be interesting for various kinds of applications.
 
-    :copyright: (c) 2009 by the Jinja2 Team, see AUTHORS for more details.
+    :copyright: (c) 2009 by the Jinja Team, see AUTHORS for more details.
     :license: BSD, see LICENSE for more details.
 """
 from jinja2 import nodes

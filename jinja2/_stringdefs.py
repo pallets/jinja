@@ -9,7 +9,7 @@
     Inspired by chartypes_create.py from the MoinMoin project, original
     implementation from Pygments.
 
-    :copyright: Copyright 2006-2009 by the Jinja2 team, see AUTHORS.
+    :copyright: Copyright 2006-2009 by the Jinja team, see AUTHORS.
     :license: BSD, see LICENSE for details.
 """
 
