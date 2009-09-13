@@ -655,7 +655,7 @@ class CodeGenerator(NodeVisitor):
         # leaking into a new python frame and might be used both unassigned
         # and assigned.
         if 'loop' in frame.identifiers.declared:
-            args.append('l_loop=l_loop')
+            args = args + ['l_loop=l_loop']
         self.writeline('def macro(%s):' % ', '.join(args), node)
         self.indent()
         self.buffer(frame)
