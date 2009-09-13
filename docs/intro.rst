@@ -38,13 +38,14 @@ C-compiler is available and you are using Python 2.4 the `ctypes`_ module
 should be installed.
 
 If you don't have a working C compiler and you are trying to install the source
-release you will get a compiler error.  This however can be circumvented by
-passing the ``--without-speedups`` command line argument to the setup script::
+release with the speedups you will get a compiler error.  This however can be
+circumvented by passing the ``--without-speedups`` command line argument to the
+setup script::
 
-    $ python setup.py install --without-speedups
+    $ python setup.py install --with-speedups
 
-For more details about that have a look at the :ref:`disable-speedups`
-section below.
+(As of Jinja 2.2, the speedups are disabled by default and can be enabled
+with ``--with-speedups``.  See :ref:`enable-speedups`)
 
 .. _ctypes: http://python.net/crew/theller/ctypes/
 
@@ -109,23 +110,23 @@ Or the new `pip`_ command::
 .. _pip: http://pypi.python.org/pypi/pip
 .. _mercurial: http://www.selenic.com/mercurial/
 
-.. _disable-speedups:
+.. _enable-speedups:
 
-Disable the speedups Module
+Enaable the speedups Module
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
-By default Jinja2 will try to compile the speedups module.  This of course
+By default Jinja2 will not compile the speedups module.  Enabling this
 will fail if you don't have the Python headers or a working compiler.  This
 is often the case if you are installing Jinja2 from a windows machine.
 
-You can disable the speedups extension when installing using the
-``--without-speedups`` flag::
+You can enable the speedups extension when installing using the
+``--with-speedups`` flag::
 
-    sudo python setup.py install --without-speedups
+    sudo python setup.py install --with-speedups
 
 You can also pass this parameter to `pip`::
 
-    $ pip install --install-option='--without-speedups' Jinja2
+    $ pip install --install-option='--with-speedups' Jinja2
 
 
 Basic API Usage

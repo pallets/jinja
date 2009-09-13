@@ -71,10 +71,9 @@ setup(
         'Topic :: Text Processing :: Markup :: HTML'
     ],
     packages=['jinja2'],
-    data_files=data_files,
     features={
         'speedups': Feature("optional C speed-enhancements",
-            standard=True,
+            standard=False,
             ext_modules=[
                 Extension('jinja2._speedups', ['jinja2/_speedups.c'])
             ]
