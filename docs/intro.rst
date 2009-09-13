@@ -42,7 +42,7 @@ release with the speedups you will get a compiler error.  This however can be
 circumvented by passing the ``--without-speedups`` command line argument to the
 setup script::
 
-    $ python setup.py install --with-speedups
+    $ python setup.py --with-speedups install
 
 (As of Jinja 2.2, the speedups are disabled by default and can be enabled
 with ``--with-speedups``.  See :ref:`enable-speedups`)
@@ -122,11 +122,8 @@ is often the case if you are installing Jinja2 from a windows machine.
 You can enable the speedups extension when installing using the
 ``--with-speedups`` flag::
 
-    sudo python setup.py install --with-speedups
+    sudo python setup.py --with-speedups install
 
-You can also pass this parameter to `pip`::
-
-    $ pip install --install-option='--with-speedups' Jinja2
 
 
 Basic API Usage
