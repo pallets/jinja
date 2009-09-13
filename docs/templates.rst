@@ -409,7 +409,7 @@ modifier to a block declaration::
         <li>{% block loop_item scoped %}{{ item }}{% endblock %}</li>
     {% endfor %}
 
-    When overriding a block the `scoped` modifier does not have to be provided.
+When overriding a block the `scoped` modifier does not have to be provided.
 
 
 HTML Escaping

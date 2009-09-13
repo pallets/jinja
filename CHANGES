@@ -23,6 +23,7 @@ Version 2.2
 - Added the `meta` module.
 - Renamed (undocumented) attribute "overlay" to "overlayed" on the
   environment because it was clashing with a method of the same name.
+- speedup extension is now disabled by default.
 
 Version 2.1.1
 -------------
