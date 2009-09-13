@@ -365,13 +365,17 @@ class Environment(object):
         If you are :ref:`developing Jinja2 extensions <writing-extensions>`
         this gives you a good overview of the node tree generated.
         """
-        if isinstance(filename, unicode):
-            filename = filename.encode('utf-8')
         try:
-            return Parser(self, source, name, filename).parse()
+            return self._parse(source, name, filename)
         except TemplateSyntaxError:
             exc_info = sys.exc_info()
         self.handle_exception(exc_info, source_hint=source)
+
+    def _parse(self, source, name, filename):
+        """Internal parsing function used by `parse` and `compile`."""
+        if isinstance(filename, unicode):
+            filename = filename.encode('utf-8')
+        return Parser(self, source, name, filename).parse()
 
     def lex(self, source, name=None, filename=None):
         """Lex the given sourcecode and return a generator that yields
@@ -424,18 +428,24 @@ class Environment(object):
         code equivalent to the bytecode returned otherwise.  This method is
         mainly used internally.
         """
-        if isinstance(source, basestring):
-            source = self.parse(source, name, filename)
-        if self.optimized:
-            source = optimize(source, self)
-        source = generate(source, self, name, filename)
-        if raw:
-            return source
-        if filename is None:
-            filename = '<template>'
-        elif isinstance(filename, unicode):
-            filename = filename.encode('utf-8')
-        return compile(source, filename, 'exec')
+        source_hint = None
+        try:
+            if isinstance(source, basestring):
+                source_hint = source
+                source = self._parse(source, name, filename)
+            if self.optimized:
+                source = optimize(source, self)
+            source = generate(source, self, name, filename)
+            if raw:
+                return source
+            if filename is None:
+                filename = '<template>'
+            elif isinstance(filename, unicode):
+                filename = filename.encode('utf-8')
+            return compile(source, filename, 'exec')
+        except TemplateSyntaxError:
+            exc_info = sys.exc_info()
+        self.handle_exception(exc_info, source_hint=source)
 
     def compile_expression(self, source, undefined_to_none=True):
         """A handy helper method that returns a callable that accepts keyword

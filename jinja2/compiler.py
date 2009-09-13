@@ -606,7 +606,7 @@ class CodeGenerator(NodeVisitor):
         )
         if overriden_closure_vars:
             self.fail('It\'s not possible to set and access variables '
-                      'derived from an outer scope! (affects: %s' %
+                      'derived from an outer scope! (affects: %s)' %
                       ', '.join(sorted(overriden_closure_vars)), node.lineno)
 
         # remove variables from a closure from the frame's undeclared
