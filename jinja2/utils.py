@@ -613,7 +613,7 @@ class LRUCache(object):
         if self._queue[-1] != key:
             try:
                 self._remove(key)
-            except:
+            except ValueError:
                 # if something removed the key from the container
                 # when we read, ignore the ValueError that we would
                 # get otherwise.
@@ -643,7 +643,11 @@ class LRUCache(object):
         self._wlock.acquire()
         try:
             del self._mapping[key]
-            self._remove(key)
+            try:
+                self._remove(key)
+            except ValueError:
+                # __getitem__ is not locked, it might happen
+                pass
         finally:
             self._wlock.release()
 
