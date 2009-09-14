@@ -4,6 +4,7 @@
 ^docs/_build
 ^(build|dist|Jinja2\.egg-info)/
 \.py[co]$
+\$py\.class$
 \.DS_Store$
-^env/
+^j?env/
 ^py3k/

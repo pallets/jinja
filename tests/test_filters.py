@@ -89,10 +89,10 @@ def test_default():
 
 def test_dictsort():
     tmpl = env.from_string(DICTSORT)
-    out = tmpl.render(foo={"a": 0, "b": 1, "c": 2, "A": 3})
-    assert out == ("[('a', 0), ('A', 3), ('b', 1), ('c', 2)]|"
-                   "[('A', 3), ('a', 0), ('b', 1), ('c', 2)]|"
-                   "[('a', 0), ('b', 1), ('c', 2), ('A', 3)]")
+    out = tmpl.render(foo={"aa": 0, "b": 1, "c": 2, "AB": 3})
+    assert out == ("[('aa', 0), ('AB', 3), ('b', 1), ('c', 2)]|"
+                   "[('AB', 3), ('aa', 0), ('b', 1), ('c', 2)]|"
+                   "[('aa', 0), ('b', 1), ('c', 2), ('AB', 3)]")
 
 
 def test_batch():

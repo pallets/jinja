@@ -11,6 +11,7 @@ from jinja2 import escape, is_undefined, Environment
 from jinja2.utils import Cycler
 from jinja2.exceptions import TemplateSyntaxError
 
+from nose import SkipTest
 from nose.tools import assert_raises
 
 env = Environment()
@@ -53,6 +54,9 @@ def test_localset():
 
 
 def test_markup_leaks():
+    # this test only tests the c extension
+    if hasattr(escape, 'func_code'):
+        raise SkipTest()
     counts = set()
     for count in xrange(20):
         for item in xrange(1000):

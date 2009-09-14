@@ -1,6 +1,12 @@
 Jinja2 Changelog
 ================
 
+Version 2.2.1
+-------------
+(bugfix release, released on September 14th 2009)
+
+- fixes some smaller problems for Jinja2 on Jython.
+
 Version 2.2
 -----------
 (codename Kong, released on September 13th 2009)

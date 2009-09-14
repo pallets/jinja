@@ -15,7 +15,7 @@ from jinja2.lexer import Token, count_newlines
 importable_object = 23
 
 
-_gettext_re = re.compile(r'_\((.*?)\)')
+_gettext_re = re.compile(r'_\((.*?)\)(?s)')
 
 
 class TestExtension(Extension):
@@ -49,7 +49,7 @@ class StreamFilterExtension(Extension):
 
     def filter_stream(self, stream):
         for token in stream:
-            if token.type is 'data':
+            if token.type == 'data':
                 for t in self.interpolate(token):
                     yield t
             else:
@@ -132,9 +132,10 @@ def test_preprocessor_extension():
 
 def test_streamfilter_extension():
     env = Environment(extensions=[StreamFilterExtension])
-    env.globals['gettext'] = lambda x: x.title()
+    env.globals['gettext'] = lambda x: x.upper()
     tmpl = env.from_string('Foo _(bar) Baz')
-    assert tmpl.render() == 'Foo Bar Baz'
+    out = tmpl.render()
+    assert out == 'Foo BAR Baz'
 
 
 class WithExtension(Extension):
