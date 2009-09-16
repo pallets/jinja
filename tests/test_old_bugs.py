@@ -69,3 +69,9 @@ def test_old_macro_loop_scoping_bug():
     tmpl = env.from_string('{% for i in (1, 2) %}{{ i }}{% endfor %}'
                            '{% macro i() %}3{% endmacro %}{{ i() }}')
     assert tmpl.render() == '123'
+
+
+def test_partial_conditional_assignments():
+    tmpl = env.from_string('{% if b %}{% set a = 42 %}{% endif %}{{ a }}')
+    assert tmpl.render(a=23) == '23'
+    assert tmpl.render(b=True) == '42'

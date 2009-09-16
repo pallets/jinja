@@ -1,6 +1,13 @@
 Jinja2 Changelog
 ================
 
+Version 2.2.2
+-------------
+(bugfix release, to be released soon)
+
+- fixes issue with code generator that causes unbound variables
+  to be generated if set was used in if-blocks.
+
 Version 2.2.1
 -------------
 (bugfix release, released on September 14th 2009)

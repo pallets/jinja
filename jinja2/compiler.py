@@ -265,6 +265,30 @@ class FrameIdentifierVisitor(NodeVisitor):
              self.identifiers.is_declared(node.name, self.hard_scope):
             self.identifiers.undeclared.add(node.name)
 
+    def visit_If(self, node):
+        self.visit(node.test)
+
+        # remember all the names that are locally assigned in the body
+        old_locals = self.identifiers.declared_locally.copy()
+        for subnode in node.body:
+            self.visit(subnode)
+        body = self.identifiers.declared_locally - old_locals
+
+        # same for else.
+        self.identifiers.declared_locally = old_locals.copy()
+        for subnode in node.else_ or ():
+            self.visit(subnode)
+        else_ = self.identifiers.declared_locally - old_locals
+
+        # the differences between the two branches are also pulled as
+        # undeclared variables
+        self.identifiers.undeclared.update(body.symmetric_difference(else_))
+
+        # declared_locally is currently the set of all variables assigned
+        # in the else part, add the new vars from body as well.  That means
+        # that undeclared variables if unbalanced are considered local.
+        self.identifiers.declared_locally.update(body)
+
     def visit_Macro(self, node):
         self.identifiers.declared_locally.add(node.name)
 

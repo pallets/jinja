@@ -49,7 +49,7 @@ from distutils.errors import CCompilerError, DistutilsPlatformError
 
 setup(
     name='Jinja2',
-    version='2.3',
+    version='2.2.2',
     url='http://jinja.pocoo.org/',
     license='BSD',
     author='Armin Ronacher',
