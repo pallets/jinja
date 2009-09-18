@@ -725,6 +725,9 @@ class CodeGenerator(NodeVisitor):
         # overhead by just not processing any inheritance code.
         have_extends = node.find(nodes.Extends) is not None
 
+        # are there any block tags?  If yes, we need a copy of the scope.
+        have_blocks = node.find(nodes.Block) is not None
+
         # find all blocks
         for block in node.find_all(nodes.Block):
             if block.name in self.blocks:
@@ -757,6 +760,8 @@ class CodeGenerator(NodeVisitor):
         self.indent()
         if have_extends:
             self.writeline('parent_template = None')
+        if have_blocks:
+            self.writeline('block_context = context._block()')
         if 'self' in find_undeclared(node.body, ('self',)):
             frame.identifiers.add_special('self')
             self.writeline('l_self = TemplateReference(context)')
@@ -789,6 +794,8 @@ class CodeGenerator(NodeVisitor):
             if 'self' in undeclared:
                 block_frame.identifiers.add_special('self')
                 self.writeline('l_self = TemplateReference(context)')
+            if block.find(nodes.Block) is not None:
+                self.writeline('block_context = context._block(%r)' % name)
             if 'super' in undeclared:
                 block_frame.identifiers.add_special('super')
                 self.writeline('l_super = context.super(%r, '
@@ -819,9 +826,9 @@ class CodeGenerator(NodeVisitor):
                 self.indent()
                 level += 1
         if node.scoped:
-            context = 'context.derived(locals())'
+            context = 'block_context.derived(locals())'
         else:
-            context = 'context'
+            context = 'block_context'
         self.writeline('for event in context.blocks[%r][0](%s):' % (
                        node.name, context), node)
         self.indent()

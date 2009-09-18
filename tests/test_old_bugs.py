@@ -12,6 +12,7 @@ from jinja2 import Environment, DictLoader, TemplateSyntaxError
 
 env = Environment()
 
+from nose import SkipTest
 from nose.tools import assert_raises
 
 
@@ -75,3 +76,15 @@ def test_partial_conditional_assignments():
     tmpl = env.from_string('{% if b %}{% set a = 42 %}{% endif %}{{ a }}')
     assert tmpl.render(a=23) == '23'
     assert tmpl.render(b=True) == '42'
+
+
+def test_local_macros_first():
+    raise SkipTest('Behavior will change in 2.3')
+    env = Environment(loader=DictLoader({
+        'layout.html': ('{% macro foo() %}LAYOUT{% endmacro %}'
+                        '{% block body %}{% endblock %}'),
+        'child.html': ('{% extends "layout.html" %}'
+                       '{% macro foo() %}CHILD{% endmacro %}'
+                       '{% block body %}{{ foo() }}{% endblock %}')
+    }))
+    assert env.get_template('child.html').render() == 'CHILD'

@@ -152,4 +152,41 @@ harder to maintain the code for older Python versions.  If you really need
 Python 2.3 support you either have to use `Jinja 1`_ or other templating
 engines that still support 2.3.
 
+.. _jinja-scoping-bug:
+
+Scoping Bug in Jinja2
+---------------------
+
+Jinja2 currently has a scoping bug that causes confusing behavior.  If you
+have a layout template that defines a macro, and a child template that
+does the same thing, it will see the macro from the layout template:
+
+layout.tmpl:
+
+.. sourcecode:: jinja
+
+    {% macro foo() %}LAYOUT{% endmacro %}
+    {% block body %}{% endblock %}
+
+child.tmpl:
+
+.. sourcecode:: jinja
+
+    {% extends 'layout.tmpl' %}
+    {% macro foo() %}CHILD{% endmacro %}
+    {% block body %}{{ foo() }}{% endblock %}
+
+This will print ``LAYOUT`` in Jinja2 versions older than 2.5.  Starting
+with Jinja 2.2.2, there will however be a deprecation warning for this
+behavior.  Starting with Jinja 2.5, this behavior will change so that
+``CHILD`` is printed instead.
+
+The reason why it was not changed right away is that some templates could
+depend on macros or variables defined in the layout template to be
+available in a child template.  This however was undocumented behavior and
+is considered a bug.
+
+If you depend on this behavior, move your macros into a different file and
+import it into the layout and child template.
+
 .. _Jinja 1: http://jinja.pocoo.org/1/

@@ -1,12 +1,15 @@
 Jinja2 Changelog
 ================
 
-Version 2.2.2
--------------
-(bugfix release, to be released soon)
+Version 2.3
+-----------
+(codename Gnok, release date to be selected.)
 
 - fixes issue with code generator that causes unbound variables
   to be generated if set was used in if-blocks.
+- added a deprecation warning for a variable assignment, scope bug
+  that exists since 2.0, code could depend on.  See :ref:`jinja-scoping-bug`
+  for more information on this problem.
 
 Version 2.2.1
 -------------
