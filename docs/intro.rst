@@ -112,8 +112,8 @@ Or the new `pip`_ command::
 
 .. _enable-speedups:
 
-Enaable the speedups Module
-~~~~~~~~~~~~~~~~~~~~~~~~~~~
+Enable the speedups Module
+~~~~~~~~~~~~~~~~~~~~~~~~~~
 
 By default Jinja2 will not compile the speedups module.  Enabling this
 will fail if you don't have the Python headers or a working compiler.  This
