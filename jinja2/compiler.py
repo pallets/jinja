@@ -10,6 +10,7 @@
 """
 from cStringIO import StringIO
 from itertools import chain
+from copy import deepcopy
 from jinja2 import nodes
 from jinja2.visitor import NodeVisitor, NodeTransformer
 from jinja2.exceptions import TemplateAssertionError
@@ -114,6 +115,9 @@ class Identifiers(object):
         if local_only:
             return False
         return name in self.declared
+
+    def copy(self):
+        return deepcopy(self)
 
 
 class Frame(object):
@@ -267,27 +271,32 @@ class FrameIdentifierVisitor(NodeVisitor):
 
     def visit_If(self, node):
         self.visit(node.test)
+        real_identifiers = self.identifiers
 
-        # remember all the names that are locally assigned in the body
-        old_locals = self.identifiers.declared_locally.copy()
-        for subnode in node.body:
-            self.visit(subnode)
-        body = self.identifiers.declared_locally - old_locals
+        old_names = real_identifiers.declared | \
+                    real_identifiers.declared_locally | \
+                    real_identifiers.declared_parameter
 
-        # same for else.
-        self.identifiers.declared_locally = old_locals.copy()
-        for subnode in node.else_ or ():
-            self.visit(subnode)
-        else_ = self.identifiers.declared_locally - old_locals
+        def inner_visit(nodes):
+            self.identifiers = real_identifiers.copy()
+            for subnode in nodes:
+                self.visit(subnode)
+            rv = self.identifiers.declared_locally - old_names
+            # we have to remember the undeclared variables of this branch
+            # because we will have to pull them.
+            real_identifiers.undeclared.update(self.identifiers.undeclared)
+            self.identifiers = real_identifiers
+            return rv
+
+        body = inner_visit(node.body)
+        else_ = inner_visit(node.else_ or ())
 
         # the differences between the two branches are also pulled as
         # undeclared variables
-        self.identifiers.undeclared.update(body.symmetric_difference(else_))
+        real_identifiers.undeclared.update(body.symmetric_difference(else_))
 
-        # declared_locally is currently the set of all variables assigned
-        # in the else part, add the new vars from body as well.  That means
-        # that undeclared variables if unbalanced are considered local.
-        self.identifiers.declared_locally.update(body)
+        # remember those that are declared.
+        real_identifiers.declared_locally.update(body | else_)
 
     def visit_Macro(self, node):
         self.identifiers.declared_locally.add(node.name)
