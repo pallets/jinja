@@ -278,6 +278,8 @@ class FrameIdentifierVisitor(NodeVisitor):
                     real_identifiers.declared_parameter
 
         def inner_visit(nodes):
+            if not nodes:
+                return set()
             self.identifiers = real_identifiers.copy()
             for subnode in nodes:
                 self.visit(subnode)
