@@ -628,7 +628,11 @@ class LRUCache(object):
         self._wlock.acquire()
         try:
             if key in self._mapping:
-                self._remove(key)
+                try:
+                    self._remove(key)
+                except ValueError:
+                    # __getitem__ is not locked, it might happen
+                    pass
             elif len(self._mapping) == self.capacity:
                 del self._mapping[self._popleft()]
             self._append(key)

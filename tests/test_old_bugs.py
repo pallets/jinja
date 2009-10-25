@@ -88,3 +88,28 @@ def test_local_macros_first():
                        '{% block body %}{{ foo() }}{% endblock %}')
     }))
     assert env.get_template('child.html').render() == 'CHILD'
+
+
+def test_stacked_locals_scoping_bug():
+    env = Environment(line_statement_prefix='#')
+    t = env.from_string('''\
+# for j in [1, 2]:
+#   set x = 1
+#   for i in [1, 2]:
+#     print x
+#     if i % 2 == 0:
+#       set x = x + 1
+#     endif
+#   endfor
+# endfor
+# if a
+#   print 'A'
+# elif b
+#   print 'B'
+# elif c == d
+#   print 'C'
+# else
+#   print 'D'
+# endif
+''')
+    assert t.render(a=0, b=False, c=42, d=42.0) == '1111C'
