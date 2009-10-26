@@ -111,7 +111,7 @@ class Context(object):
 
     def __init__(self, environment, parent, name, blocks):
         self.parent = parent
-        self.vars = vars = {}
+        self.vars = {}
         self.environment = environment
         self.exported_vars = set()
         self.name = name
@@ -185,16 +185,6 @@ class Context(object):
         context.blocks.update((k, list(v)) for k, v in self.blocks.iteritems())
         return context
 
-    def _block(self, block=None):
-        """Creates a context that is used for block execution.  Currently this
-        returns a special `_BlockContext` that warns about changed behavior.
-        In Jinja 2.5, this will instead just return a new context with the same
-        resolve behavior.  Do not call from anywhere but the generated code!
-
-        :private:
-        """
-        return _BlockContext(self, block)
-
     def _all(meth):
         proxy = lambda self: getattr(self.get_all(), meth)()
         proxy.__doc__ = getattr(dict, meth).__doc__
@@ -230,39 +220,6 @@ class Context(object):
             repr(self.get_all()),
             self.name
         )
-
-
-class _BlockContext(Context):
-    """Implements a deprecation warning for the changed block assignments."""
-    __slots__ = ('real_context', 'block_name')
-
-    def __init__(self, real_context, block_name):
-        super(_BlockContext, self).__init__(real_context.environment,
-                                            real_context.parent,
-                                            real_context.name, {})
-        self.vars = dict(real_context.vars)
-        self.exported_vars = set(real_context.exported_vars)
-        self.blocks = real_context.blocks
-        self.real_context = real_context
-        self.block_name = block_name
-
-    def resolve(self, key):
-        self_rv = super(_BlockContext, self).resolve(key)
-        base_rv = self.real_context.resolve(key)
-        if self_rv != base_rv and not isinstance(base_rv, Undefined):
-            from warnings import warn
-            if self.block_name is not None:
-                detail = 'accessing %r from inside block %r' \
-                    % (key, self.block_name)
-            else:
-                detail = 'accessing %r toplevel' % key
-            detail += ', in template %s' % self.name
-            warn(DeprecationWarning('variables set in a base template '
-                                    'will no longer leak into the child '
-                                    'context in future versions.  Happened '
-                                    'when ' + detail))
-            return base_rv
-        return self_rv
 
 
 # register the context as mapping if possible

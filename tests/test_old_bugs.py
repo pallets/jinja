@@ -78,18 +78,6 @@ def test_partial_conditional_assignments():
     assert tmpl.render(b=True) == '42'
 
 
-def test_local_macros_first():
-    raise SkipTest('Behavior will change in 2.3')
-    env = Environment(loader=DictLoader({
-        'layout.html': ('{% macro foo() %}LAYOUT{% endmacro %}'
-                        '{% block body %}{% endblock %}'),
-        'child.html': ('{% extends "layout.html" %}'
-                       '{% macro foo() %}CHILD{% endmacro %}'
-                       '{% block body %}{{ foo() }}{% endblock %}')
-    }))
-    assert env.get_template('child.html').render() == 'CHILD'
-
-
 def test_stacked_locals_scoping_bug():
     env = Environment(line_statement_prefix='#')
     t = env.from_string('''\
