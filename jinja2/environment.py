@@ -288,8 +288,8 @@ class Environment(object):
                 loader=missing, cache_size=missing, auto_reload=missing,
                 bytecode_cache=missing):
         """Create a new overlay environment that shares all the data with the
-        current environment except of cache and the overriden attributes.
-        Extensions cannot be removed for a overlayed environment.  A overlayed
+        current environment except of cache and the overridden attributes.
+        Extensions cannot be removed for an overlayed environment.  An overlayed
         environment automatically gets all the extensions of the environment it
         is linked to plus optional extra extensions.
 
