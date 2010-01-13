@@ -61,6 +61,17 @@ def test_choice_includes():
     else:
         assert False, 'thou shalt raise'
 
+    def test_includes(t, **ctx):
+        ctx['foo'] = 42
+        assert t.render(ctx) == '[42|23]'
+
+    t = test_env.from_string('{% include ["missing", "header"] %}')
+    test_includes(t)
+    t = test_env.from_string('{% include x %}')
+    test_includes(t, x=['missing', 'header'])
+    t = test_env.from_string('{% include [x, "header"] %}')
+    test_includes(t, x='missing')
+
 
 def test_include_ignoring_missing():
     t = test_env.from_string('{% include "missing" %}')
