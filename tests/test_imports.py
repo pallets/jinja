@@ -71,6 +71,12 @@ def test_choice_includes():
     test_includes(t, x=['missing', 'header'])
     t = test_env.from_string('{% include [x, "header"] %}')
     test_includes(t, x='missing')
+    t = test_env.from_string('{% include x %}')
+    test_includes(t, x='header')
+    t = test_env.from_string('{% include x %}')
+    test_includes(t, x='header')
+    t = test_env.from_string('{% include [x] %}')
+    test_includes(t, x='header')
 
 
 def test_include_ignoring_missing():
