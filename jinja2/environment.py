@@ -16,7 +16,8 @@ from jinja2.parser import Parser
 from jinja2.optimizer import optimize
 from jinja2.compiler import generate
 from jinja2.runtime import Undefined, new_context
-from jinja2.exceptions import TemplateSyntaxError
+from jinja2.exceptions import TemplateSyntaxError, TemplateNotFound, \
+     TemplatesNotFound
 from jinja2.utils import import_string, LRUCache, Markup, missing, \
      concat, consume, internalcode
 
@@ -526,6 +527,20 @@ class Environment(object):
         return template
 
     @internalcode
+    def _load_template(self, name, globals):
+        if self.loader is None:
+            raise TypeError('no loader for this environment specified')
+        if self.cache is not None:
+            template = self.cache.get(name)
+            if template is not None and (not self.auto_reload or \
+                                         template.is_up_to_date):
+                return template
+        template = self.loader.load(self, name, globals)
+        if self.cache is not None:
+            self.cache[name] = template
+        return template
+
+    @internalcode
     def get_template(self, name, parent=None, globals=None):
         """Load a template from the loader.  If a loader is configured this
         method ask the loader for the template and returns a :class:`Template`.
@@ -538,21 +553,43 @@ class Environment(object):
         If the template does not exist a :exc:`TemplateNotFound` exception is
         raised.
         """
-        if self.loader is None:
-            raise TypeError('no loader for this environment specified')
         if parent is not None:
             name = self.join_path(name, parent)
+        return self._load_template(name, self.make_globals(globals))
 
-        if self.cache is not None:
-            template = self.cache.get(name)
-            if template is not None and (not self.auto_reload or \
-                                         template.is_up_to_date):
-                return template
+    @internalcode
+    def select_template(self, names, parent=None, globals=None):
+        """Works like :meth:`get_template` but tries a number of templates
+        before it fails.  If it cannot find any of the templates, it will
+        raise a :exc:`TemplatesNotFound` exception.
 
-        template = self.loader.load(self, name, self.make_globals(globals))
-        if self.cache is not None:
-            self.cache[name] = template
-        return template
+        .. versionadded:: 2.2
+        """
+        if not names:
+            raise TemplatesNotFound(message=u'Tried to select from an empty list '
+                                            u'of templates.')
+        globals = self.make_globals(globals)
+        for name in names:
+            if parent is not None:
+                name = self.join_path(name, parent)
+            try:
+                return self._load_template(name, globals)
+            except TemplateNotFound:
+                pass
+        raise TemplatesNotFound(names)
+
+    @internalcode
+    def get_or_select_template(self, template_name_or_list,
+                               parent=None, globals=None):
+        """
+        Does a typecheck and dispatches to :meth:`select_template` if an
+        iterable of template names is given, otherwise to :meth:`get_template`.
+
+        .. versionadded:: 2.2
+        """
+        if isinstance(template_name_or_list, basestring):
+            return self.get_template(template_name_or_list, parent, globals)
+        return self.select_template(template_name_or_list, parent, globals)
 
     def from_string(self, source, globals=None, template_class=None):
         """Load a template from a string.  This parses the source given and

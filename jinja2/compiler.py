@@ -890,7 +890,17 @@ class CodeGenerator(NodeVisitor):
         if node.ignore_missing:
             self.writeline('try:')
             self.indent()
-        self.writeline('template = environment.get_template(', node)
+
+        func_name = 'get_or_select_template'
+        if isinstance(node.template, nodes.Const):
+            if isinstance(node.template.value, basestring):
+                func_name = 'get_template'
+            elif isinstance(node.template.value, (tuple, list)):
+                func_name = 'select_template'
+        elif isinstance(node.template, (nodes.Tuple, nodes.List)):
+            func_name = 'select_template'
+
+        self.writeline('template = environment.%s(' % func_name, node)
         self.visit(node.template, frame)
         self.write(', %r)' % self.name)
         if node.ignore_missing:

@@ -70,8 +70,33 @@ def find_referenced_templates(ast):
     """
     for node in ast.find_all((nodes.Extends, nodes.FromImport, nodes.Import,
                               nodes.Include)):
-        if isinstance(node.template, nodes.Const) and \
-           isinstance(node.template.value, basestring):
+        if not isinstance(node.template, nodes.Const):
+            # a tuple with some non consts in there
+            if isinstance(node.template, (nodes.Tuple, nodes.List)):
+                for template_name in node.template.items:
+                    # something const, only yield the strings and ignore
+                    # non-string consts that really just make no sense
+                    if isinstance(template_name, nodes.Const):
+                        if isinstance(template_name.value, basestring):
+                            yield template_name.value
+                    # something dynamic in there
+                    else:
+                        yield None
+            # something dynamic we don't know about here
+            else:
+                yield None
+            continue
+        # constant is a basestring, direct template name
+        if isinstance(node.template.value, basestring):
             yield node.template.value
+        # a tuple or list (latter *should* not happen) made of consts,
+        # yield the consts that are strings.  We could warn here for
+        # non string values
+        elif isinstance(node, nodes.Include) and \
+             isinstance(node.template.value, (tuple, list)):
+            for template_name in node.template.value:
+                if isinstance(template_name, basestring):
+                    yield template_name
+        # something else we don't care about, we could warn here
         else:
             yield None

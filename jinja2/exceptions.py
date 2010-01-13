@@ -29,9 +29,39 @@ class TemplateError(Exception):
 class TemplateNotFound(IOError, LookupError, TemplateError):
     """Raised if a template does not exist."""
 
-    def __init__(self, name):
-        IOError.__init__(self, name)
+    # looks weird, but removes the warning descriptor that just
+    # bogusly warns us about message being deprecated
+    message = None
+
+    def __init__(self, name, message=None):
+        IOError.__init__(self)
+        if message is None:
+            message = name
+        self.message = message
         self.name = name
+        self.templates = [name]
+
+    def __unicode__(self):
+        return self.message
+
+    def __str__(self):
+        return self.message.encode('utf-8')
+
+
+class TemplatesNotFound(TemplateNotFound):
+    """Like :class:`TemplateNotFound` but raised if multiple templates
+    are selected.  This is a subclass of :class:`TemplateNotFound`
+    exception, so just catching the base exception will catch both.
+
+    .. versionadded:: 2.2
+    """
+
+    def __init__(self, names=(), message=None):
+        if message is None:
+            message = u'non of the templates given were found: ' + \
+                      u', '.join(names)
+        TemplateNotFound.__init__(self, names and names[-1] or None, message)
+        self.templates = list(names)
 
 
 class TemplateSyntaxError(TemplateError):

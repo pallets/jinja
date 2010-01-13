@@ -7,7 +7,7 @@
     :license: BSD, see LICENSE for more details.
 """
 from jinja2 import Environment, DictLoader
-from jinja2.exceptions import TemplateNotFound
+from jinja2.exceptions import TemplateNotFound, TemplatesNotFound
 
 from nose.tools import assert_raises
 
@@ -42,6 +42,24 @@ def test_context_include():
     assert t.render(foo=42) == '[42|23]'
     t = test_env.from_string('{% include "header" without context %}')
     assert t.render(foo=42) == '[|23]'
+
+
+def test_choice_includes():
+    t = test_env.from_string('{% include ["missing", "header"] %}')
+    assert t.render(foo=42) == '[42|23]'
+
+    t = test_env.from_string('{% include ["missing", "missing2"] ignore missing %}')
+    assert t.render(foo=42) == ''
+
+    t = test_env.from_string('{% include ["missing", "missing2"] %}')
+    assert_raises(TemplateNotFound, t.render)
+    try:
+        t.render()
+    except TemplatesNotFound, e:
+        assert e.templates == ['missing', 'missing2']
+        assert e.name == 'missing2'
+    else:
+        assert False, 'thou shalt raise'
 
 
 def test_include_ignoring_missing():

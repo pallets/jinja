@@ -1,12 +1,16 @@
 Jinja2 Changelog
 ================
 
-Version 2.2.2
--------------
-(bugfix release, release date to be selected.)
+Version 2.3
+-----------
+(codename to be selected, release date to be selected.)
 
 - fixes issue with code generator that causes unbound variables
-  to be generated if set was used in if-blocks.
+  to be generated if set was used in if-blocks and other small
+  identifier problems.
+- include tags are now able to select between multiple templates
+  and take the first that exists, if a list of templates is
+  given.
 
 Version 2.2.1
 -------------

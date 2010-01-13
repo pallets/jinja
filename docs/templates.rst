@@ -768,6 +768,18 @@ examples::
     {% include "sidebar.html" ignore missing with context %}
     {% include "sidebar.html" ignore missing without context %}
 
+.. versionadded:: 2.2
+
+You can also provide a list of templates that are checked for existence
+before inclusion.  The first template that exists will be included.  If
+`ignore missing` is given, it will fall back to rendering nothing if
+none of the templates exist, otherwise it will raise an exception.
+
+Example::
+
+    {% include ['page_detailed.html', 'page.html'] %}
+    {% include ['special_sidebar.html', 'sidebar.html'] ignore missing %}
+
 .. _import:
 
 Import

@@ -36,3 +36,22 @@ def test_find_refererenced_templates():
                     '{% include "muh.html" %}')
     i = meta.find_referenced_templates(ast)
     assert list(i) == ['layout.html', 'test.html', 'meh.html', 'muh.html']
+
+
+def test_find_included_templates():
+    env = Environment()
+    ast = env.parse('{% include ["foo.html", "bar.html"] %}')
+    i = meta.find_referenced_templates(ast)
+    assert list(i) == ['foo.html', 'bar.html']
+
+    ast = env.parse('{% include ("foo.html", "bar.html") %}')
+    i = meta.find_referenced_templates(ast)
+    assert list(i) == ['foo.html', 'bar.html']
+
+    ast = env.parse('{% include ["foo.html", "bar.html", foo] %}')
+    i = meta.find_referenced_templates(ast)
+    assert list(i) == ['foo.html', 'bar.html', None]
+
+    ast = env.parse('{% include ("foo.html", "bar.html", foo) %}')
+    i = meta.find_referenced_templates(ast)
+    assert list(i) == ['foo.html', 'bar.html', None]
