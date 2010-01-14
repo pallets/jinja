@@ -8,7 +8,7 @@
     :copyright: (c) 2009 by the Jinja Team.
     :license: BSD.
 """
-from jinja2 import Environment, DictLoader, TemplateSyntaxError
+from jinja2 import Template, Environment, DictLoader, TemplateSyntaxError
 
 env = Environment()
 
@@ -101,3 +101,36 @@ def test_stacked_locals_scoping_bug():
 # endif
 ''')
     assert t.render(a=0, b=False, c=42, d=42.0) == '1111C'
+
+
+def test_call_with_args():
+    t = Template("""{% macro dump_users(users) -%}
+    <ul>
+      {%- for user in users -%}
+        <li><p>{{ user.username|e }}</p>{{ caller(user) }}</li>
+      {%- endfor -%}
+      </ul>
+    {%- endmacro -%}
+
+    {% call(user) dump_users(list_of_user) -%}
+      <dl>
+        <dl>Realname</dl>
+        <dd>{{ user.realname|e }}</dd>
+        <dl>Description</dl>
+        <dd>{{ user.description }}</dd>
+      </dl>
+    {% endcall %}""")
+
+    assert [x.strip() for x in t.render(list_of_user=[{
+        'username':'apo',
+        'realname':'something else',
+        'description':'test'
+    }]).splitlines()] == [
+        u'<ul><li><p>apo</p><dl>',
+        u'<dl>Realname</dl>',
+        u'<dd>something else</dd>',
+        u'<dl>Description</dl>',
+        u'<dd>test</dd>',
+        u'</dl>',
+        u'</li></ul>'
+    ]

@@ -11,6 +11,9 @@ Version 2.3
 - include tags are now able to select between multiple templates
   and take the first that exists, if a list of templates is
   given.
+- fixed a problem with having call blocks in outer scopes that
+  have an argument that is also used as local variable in an
+  inner frame [#360].
 
 Version 2.2.1
 -------------

@@ -327,7 +327,7 @@ class FrameIdentifierVisitor(NodeVisitor):
         self.visit(node.iter)
 
     def visit_CallBlock(self, node):
-        for child in node.iter_child_nodes(exclude=('body',)):
+        for child in node.iter_child_nodes(exclude=('body', 'args')):
             self.visit(child)
 
     def visit_FilterBlock(self, node):
