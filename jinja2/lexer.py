@@ -11,7 +11,7 @@
     operators we don't allow in templates. On the other hand it separates
     template code and python code in expressions.
 
-    :copyright: (c) 2009 by the Jinja Team.
+    :copyright: (c) 2010 by the Jinja Team.
     :license: BSD, see LICENSE for more details.
 """
 import re

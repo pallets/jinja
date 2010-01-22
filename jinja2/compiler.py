@@ -5,7 +5,7 @@
 
     Compiles nodes into python code.
 
-    :copyright: (c) 2009 by the Jinja Team.
+    :copyright: (c) 2010 by the Jinja Team.
     :license: BSD.
 """
 from cStringIO import StringIO

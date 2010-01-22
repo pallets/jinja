@@ -5,7 +5,7 @@
 
     Jinja loader classes.
 
-    :copyright: (c) 2009 by the Jinja Team.
+    :copyright: (c) 2010 by the Jinja Team.
     :license: BSD, see LICENSE for more details.
 """
 from os import path
