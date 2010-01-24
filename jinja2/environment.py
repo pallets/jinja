@@ -152,8 +152,9 @@ class Environment(object):
             undefined values in the template.
 
         `finalize`
-            A callable that finalizes the variable.  Per default no finalizing
-            is applied.
+            A callable that can be used to process the result of a variable
+            expression before it is output.  For example one can convert
+            `None` implicitly into an empty string here.
 
         `autoescape`
             If set to true the XML/HTML autoescaping feature is enabled.
