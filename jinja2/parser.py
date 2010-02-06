@@ -11,8 +11,10 @@
 from jinja2 import nodes
 from jinja2.exceptions import TemplateSyntaxError, TemplateAssertionError
 from jinja2.utils import next
+from jinja2.lexer import describe_token, describe_token_expr
 
 
+#: statements that callinto 
 _statement_keywords = frozenset(['for', 'if', 'block', 'extends', 'print',
                                  'macro', 'include', 'from', 'import',
                                  'set'])
@@ -36,6 +38,8 @@ class Parser(object):
             for tag in extension.tags:
                 self.extensions[tag] = extension.parse
         self._last_identifier = 0
+        self._tag_stack = []
+        self._end_token_stack = []
 
     def fail(self, msg, lineno=None, exc=TemplateSyntaxError):
         """Convenience method that raises `exc` with the message, passed
@@ -45,6 +49,46 @@ class Parser(object):
         if lineno is None:
             lineno = self.stream.current.lineno
         raise exc(msg, lineno, self.name, self.filename)
+
+    def _fail_ut_eof(self, name, end_token_stack, lineno):
+        expected = []
+        for exprs in end_token_stack:
+            expected.extend(map(describe_token_expr, exprs))
+        currently_looking = ' or '.join("'%s'" % describe_token_expr(expr)
+                                        for expr in end_token_stack[-1])
+
+        if name is None:
+            message = ['Unexpected end of template.']
+        else:
+            message = ['Encountered unknown tag \'%s\'.' % name]
+
+        if name is not None and name in expected:
+            message.append('You probably made a nesting mistake. Jinja '
+                           'is expecting this tag, but currently looking '
+                           'for %s.' % currently_looking)
+        else:
+            message.append('Jinja was looking for the following tags: '
+                           '%s.' % currently_looking)
+
+        if self._tag_stack:
+            message.append('The innermost block that needs to be '
+                           'closed is \'%s\'.' % self._tag_stack[-1])
+
+        self.fail(' '.join(message), lineno)
+
+    def fail_unknown_tag(self, name, lineno=None):
+        """Called if the parser encounters an unknown tag.  Tries to fail
+        with a human readable error message that could help to identify
+        the problem.
+        """
+        return self._fail_ut_eof(name, self._end_token_stack, lineno)
+
+    def fail_eof(self, end_tokens=None, lineno=None):
+        """Like fail_unknown_tag but for end of template situations."""
+        stack = list(self._end_token_stack)
+        if end_tokens is not None:
+            stack.append(end_tokens)
+        return self._fail_ut_eof(None, stack, lineno)
 
     def is_tuple_end(self, extra_end_rules=None):
         """Are we at the end of a tuple?"""
@@ -66,16 +110,28 @@ class Parser(object):
         token = self.stream.current
         if token.type != 'name':
             self.fail('tag name expected', token.lineno)
-        if token.value in _statement_keywords:
-            return getattr(self, 'parse_' + self.stream.current.value)()
-        if token.value == 'call':
-            return self.parse_call_block()
-        if token.value == 'filter':
-            return self.parse_filter_block()
-        ext = self.extensions.get(token.value)
-        if ext is not None:
-            return ext(self)
-        self.fail('unknown tag %r' % token.value, token.lineno)
+        self._tag_stack.append(token.value)
+        pop_tag = True
+        try:
+            if token.value in _statement_keywords:
+                return getattr(self, 'parse_' + self.stream.current.value)()
+            if token.value == 'call':
+                return self.parse_call_block()
+            if token.value == 'filter':
+                return self.parse_filter_block()
+            ext = self.extensions.get(token.value)
+            if ext is not None:
+                return ext(self)
+
+            # did not work out, remove the token we pushed by accident
+            # from the stack so that the unknown tag fail function can
+            # produce a proper error message.
+            self._tag_stack.pop()
+            pop_tag = False
+            self.fail_unknown_tag(token.value, token.lineno)
+        finally:
+            if pop_tag:
+                self._tag_stack.pop()
 
     def parse_statements(self, end_tokens, drop_needle=False):
         """Parse multiple statements into a list until one of the end tokens
@@ -94,6 +150,11 @@ class Parser(object):
         # by adding some sort of end of statement token and parsing those here.
         self.stream.expect('block_end')
         result = self.subparse(end_tokens)
+
+        # we reached the end of the template too early, the subparser
+        # does not check for this, so we do that now
+        if self.stream.current.type == 'eof':
+            self.fail_eof(end_tokens)
 
         if drop_needle:
             next(self.stream)
@@ -494,7 +555,7 @@ class Parser(object):
         elif token.type == 'lbrace':
             node = self.parse_dict()
         else:
-            self.fail("unexpected token '%s'" % (token,), token.lineno)
+            self.fail("unexpected '%s'" % describe_token(token), token.lineno)
         if with_postfix:
             node = self.parse_postfix(node)
         return node
@@ -742,39 +803,47 @@ class Parser(object):
         data_buffer = []
         add_data = data_buffer.append
 
+        if end_tokens is not None:
+            self._end_token_stack.append(end_tokens)
+
         def flush_data():
             if data_buffer:
                 lineno = data_buffer[0].lineno
                 body.append(nodes.Output(data_buffer[:], lineno=lineno))
                 del data_buffer[:]
 
-        while self.stream:
-            token = self.stream.current
-            if token.type == 'data':
-                if token.value:
-                    add_data(nodes.TemplateData(token.value,
-                                                lineno=token.lineno))
-                next(self.stream)
-            elif token.type == 'variable_begin':
-                next(self.stream)
-                add_data(self.parse_tuple(with_condexpr=True))
-                self.stream.expect('variable_end')
-            elif token.type == 'block_begin':
-                flush_data()
-                next(self.stream)
-                if end_tokens is not None and \
-                   self.stream.current.test_any(*end_tokens):
-                    return body
-                rv = self.parse_statement()
-                if isinstance(rv, list):
-                    body.extend(rv)
+        try:
+            while self.stream:
+                token = self.stream.current
+                if token.type == 'data':
+                    if token.value:
+                        add_data(nodes.TemplateData(token.value,
+                                                    lineno=token.lineno))
+                    next(self.stream)
+                elif token.type == 'variable_begin':
+                    next(self.stream)
+                    add_data(self.parse_tuple(with_condexpr=True))
+                    self.stream.expect('variable_end')
+                elif token.type == 'block_begin':
+                    flush_data()
+                    next(self.stream)
+                    if end_tokens is not None and \
+                       self.stream.current.test_any(*end_tokens):
+                        return body
+                    rv = self.parse_statement()
+                    if isinstance(rv, list):
+                        body.extend(rv)
+                    else:
+                        body.append(rv)
+                    self.stream.expect('block_end')
                 else:
-                    body.append(rv)
-                self.stream.expect('block_end')
-            else:
-                raise AssertionError('internal parsing error')
+                    raise AssertionError('internal parsing error')
 
-        flush_data()
+            flush_data()
+        finally:
+            if end_tokens is not None:
+                self._end_token_stack.pop()
+
         return body
 
     def parse(self):

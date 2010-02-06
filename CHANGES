@@ -3,7 +3,7 @@ Jinja2 Changelog
 
 Version 2.3
 -----------
-(codename to be selected, release date to be selected.)
+(codename to be selected, release date will be February 9th 2010)
 
 - fixes issue with code generator that causes unbound variables
   to be generated if set was used in if-blocks and other small
@@ -14,6 +14,7 @@ Version 2.3
 - fixed a problem with having call blocks in outer scopes that
   have an argument that is also used as local variable in an
   inner frame [#360].
+- greatly improved error message reporting (#339)
 
 Version 2.2.1
 -------------

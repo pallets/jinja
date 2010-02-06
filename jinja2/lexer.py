@@ -139,6 +139,43 @@ ignore_if_empty = frozenset([TOKEN_WHITESPACE, TOKEN_DATA,
                              TOKEN_COMMENT, TOKEN_LINECOMMENT])
 
 
+def _describe_token_type(token_type):
+    if token_type in reverse_operators:
+        return reverse_operators[token_type]
+    return {
+        TOKEN_COMMENT_BEGIN:        'begin of comment',
+        TOKEN_COMMENT_END:          'end of comment',
+        TOKEN_COMMENT:              'comment',
+        TOKEN_LINECOMMENT:          'comment',
+        TOKEN_BLOCK_BEGIN:          'begin of statement block',
+        TOKEN_BLOCK_END:            'end of statement block',
+        TOKEN_VARIABLE_BEGIN:       'begin of print statement',
+        TOKEN_VARIABLE_END:         'end of print statement',
+        TOKEN_LINESTATEMENT_BEGIN:  'begin of line statement',
+        TOKEN_LINESTATEMENT_END:    'end of line statement',
+        TOKEN_DATA:                 'template data / text',
+        TOKEN_EOF:                  'end of template'
+    }.get(token_type, token_type)
+
+
+def describe_token(token):
+    """Returns a description of the token."""
+    if token.type == 'name':
+        return token.value
+    return _describe_token_type(token.type)
+
+
+def describe_token_expr(expr):
+    """Like `describe_token` but for token expressions."""
+    if ':' in expr:
+        type, value = expr.split(':', 1)
+        if type == 'name':
+            return value
+    else:
+        type = expr
+    return _describe_token_type(type)
+
+
 def count_newlines(value):
     """Count the number of newline characters in the string.  This is
     useful for extensions that filter a stream.
@@ -319,15 +356,14 @@ class TokenStream(object):
         argument as :meth:`jinja2.lexer.Token.test`.
         """
         if not self.current.test(expr):
-            if ':' in expr:
-                expr = expr.split(':')[1]
+            expr = describe_token_expr(expr)
             if self.current.type is TOKEN_EOF:
                 raise TemplateSyntaxError('unexpected end of template, '
                                           'expected %r.' % expr,
                                           self.current.lineno,
                                           self.name, self.filename)
             raise TemplateSyntaxError("expected token %r, got %r" %
-                                      (expr, str(self.current)),
+                                      (expr, describe_token(self.current)),
                                       self.current.lineno,
                                       self.name, self.filename)
         try:
@@ -582,13 +618,13 @@ class Lexer(object):
                             balancing_stack.append(']')
                         elif data in ('}', ')', ']'):
                             if not balancing_stack:
-                                raise TemplateSyntaxError('unexpected "%s"' %
+                                raise TemplateSyntaxError('unexpected \'%s\'' %
                                                           data, lineno, name,
                                                           filename)
                             expected_op = balancing_stack.pop()
                             if expected_op != data:
-                                raise TemplateSyntaxError('unexpected "%s", '
-                                                          'expected "%s"' %
+                                raise TemplateSyntaxError('unexpected \'%s\', '
+                                                          'expected \'%s\'' %
                                                           (data, expected_op),
                                                           lineno, name,
                                                           filename)

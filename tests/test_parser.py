@@ -6,7 +6,7 @@
     :copyright: (c) 2009 by the Jinja Team.
     :license: BSD, see LICENSE for more details.
 """
-from jinja2 import Environment
+from jinja2 import Environment, Template, TemplateSyntaxError
 
 env = Environment()
 
@@ -114,3 +114,30 @@ def test_line_syntax_priority():
     env = Environment('{%', '%}', '${', '}', '/*', '*/', '#', '##')
     tmpl = env.from_string(LINE_SYNTAX_PRIORITY2)
     assert tmpl.render(seq=[1, 2]).strip() == '* 1\n\n* 2'
+
+
+def test_error_messages():
+    def assert_error(code, expected):
+        try:
+            Template(code)
+        except TemplateSyntaxError, e:
+            assert str(e) == expected, 'unexpected error message'
+        else:
+            assert False, 'that was suposed to be an error'
+
+    assert_error('{% for item in seq %}...{% endif %}',
+                 "Encountered unknown tag 'endif'. Jinja was looking "
+                 "for the following tags: 'endfor' or 'else'. The "
+                 "innermost block that needs to be closed is 'for'.")
+    assert_error('{% if foo %}{% for item in seq %}...{% endfor %}{% endfor %}',
+                 "Encountered unknown tag 'endfor'. Jinja was looking for "
+                 "the following tags: 'elif' or 'else' or 'endif'. The "
+                 "innermost block that needs to be closed is 'if'.")
+    assert_error('{% if foo %}',
+                 "Unexpected end of template. Jinja was looking for the "
+                 "following tags: 'elif' or 'else' or 'endif'. The "
+                 "innermost block that needs to be closed is 'if'.")
+    assert_error('{% for item in seq %}',
+                 "Unexpected end of template. Jinja was looking for the "
+                 "following tags: 'endfor' or 'else'. The innermost block "
+                 "that needs to be closed is 'for'.")
