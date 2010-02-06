@@ -531,9 +531,17 @@ def do_round(value, precision=0, method='common'):
     .. sourcecode:: jinja
 
         {{ 42.55|round }}
-            -> 43
+            -> 43.0
         {{ 42.55|round(1, 'floor') }}
             -> 42.5
+
+    Note that even if rounded to 0 precision, a float is returned.  If
+    you need a real integer, pipe it through `int`:
+
+    .. sourcecode:: jinja
+
+        {{ 42.55|round|int }}
+            -> 43
     """
     if not method in ('common', 'ceil', 'floor'):
         raise FilterArgumentError('method must be common, ceil or floor')
