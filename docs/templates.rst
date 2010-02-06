@@ -541,7 +541,7 @@ by using `else`::
         <li>{{ user.username|e }}</li>
     {% else %}
         <li><em>no users found</em></li>
-    {% endif %}
+    {% endfor %}
     </ul>
 
 It is also possible to use loops recursively.  This is useful if you are
