@@ -95,3 +95,20 @@ def test_extract():
         (3, 'gettext', u'Hello World', []),
         (4, 'ngettext', (u'%(users)s user', u'%(users)s users', None), [])
     ]
+
+
+def test_comment_extract():
+    from jinja2.ext import babel_extract
+    from StringIO import StringIO
+    source = StringIO('''
+    {# trans first #}
+    {{ gettext('Hello World') }}
+    {% trans %}Hello World{% endtrans %}{# trans second #}
+    {#: third #}
+    {% trans %}{{ users }} user{% pluralize %}{{ users }} users{% endtrans %}
+    ''')
+    assert list(babel_extract(source, ('gettext', 'ngettext', '_'), ['trans', ':'], {})) == [
+        (3, 'gettext', u'Hello World', ['first']),
+        (4, 'gettext', u'Hello World', ['second']),
+        (6, 'ngettext', (u'%(users)s user', u'%(users)s users', None), ['third'])
+    ]

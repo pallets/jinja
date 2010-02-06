@@ -18,6 +18,7 @@ Version 2.3
 - implicit tuple expressions can no longer be totally empty.
   This change makes ``{% if %}...{% endif %}`` a syntax error
   now. (#364)
+- added support for translator comments if extracted via babel.
 
 Version 2.2.1
 -------------

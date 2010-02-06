@@ -367,6 +367,10 @@ def extract_from_ast(node, gettext_functions=GETTEXT_FUNCTIONS,
       string was extracted from embedded Python code), and
     *  ``message`` is the string itself (a ``unicode`` object, or a tuple
        of ``unicode`` objects for functions with multiple string arguments).
+
+    This extraction function operates on the AST and is because of that unable
+    to extract any comments.  For comment support you have to use the babel
+    extraction interface or extract comments yourself.
     """
     for node in node.find_all(nodes.Call):
         if not isinstance(node.node, nodes.Name) or \
@@ -400,14 +404,59 @@ def extract_from_ast(node, gettext_functions=GETTEXT_FUNCTIONS,
         yield node.lineno, node.node.name, strings
 
 
+class _CommentFinder(object):
+    """Helper class to find comments in a token stream.  Can only
+    find comments for gettext calls forwards.  Once the comment
+    from line 4 is found, a comment for line 1 will not return a
+    usable value.
+    """
+
+    def __init__(self, tokens, comment_tags):
+        self.tokens = tokens
+        self.comment_tags = comment_tags
+        self.offset = 0
+        self.last_lineno = 0
+
+    def find_backwards(self, offset):
+        try:
+            for _, token_type, token_value in \
+                    reversed(self.tokens[self.offset:offset]):
+                if token_type in ('comment', 'linecomment'):
+                    try:
+                        prefix, comment = token_value.split(None, 1)
+                    except ValueError:
+                        continue
+                    if prefix in self.comment_tags:
+                        return [comment.rstrip()]
+            return []
+        finally:
+            self.offset = offset
+
+    def find_comments(self, lineno):
+        if not self.comment_tags or self.last_lineno > lineno:
+            return []
+        for idx, (token_lineno, _, _) in enumerate(self.tokens[self.offset:]):
+            if token_lineno > lineno:
+                return self.find_backwards(self.offset + idx)
+        return self.find_backwards(len(self.tokens))
+
+
 def babel_extract(fileobj, keywords, comment_tags, options):
     """Babel extraction method for Jinja templates.
+
+    .. versionchanged:: 2.3
+       Basic support for translation comments was added.  If `comment_tags`
+       is now set to a list of keywords for extraction, the extractor will
+       try to find the best preceeding comment that begins with one of the
+       keywords.  For best results, make sure to not have more than one
+       gettext call in one line of code and the matching comment in the
+       same line or the line before.
 
     :param fileobj: the file-like object the messages should be extracted from
     :param keywords: a list of keywords (i.e. function names) that should be
                      recognized as translation functions
     :param comment_tags: a list of translator tags to search for and include
-                         in the results.  (Unused)
+                         in the results.
     :param options: a dictionary of additional options (optional)
     :return: an iterator over ``(lineno, funcname, message, comments)`` tuples.
              (comments will be empty currently)
@@ -444,11 +493,14 @@ def babel_extract(fileobj, keywords, comment_tags, options):
     source = fileobj.read().decode(options.get('encoding', 'utf-8'))
     try:
         node = environment.parse(source)
+        tokens = list(environment.lex(environment.preprocess(source)))
     except TemplateSyntaxError, e:
         # skip templates with syntax errors
         return
+
+    finder = _CommentFinder(tokens, comment_tags)
     for lineno, func, message in extract_from_ast(node, keywords):
-        yield lineno, func, message, []
+        yield lineno, func, message, finder.find_comments(lineno)
 
 
 #: nicer import names
