@@ -354,9 +354,6 @@ If you want to print a block multiple times you can however use the special
     <h1>{{ self.title() }}</h1>
     {% block body %}{% endblock %}
 
-Unlike Python Jinja does not support multiple inheritance.  So you can only have
-one extends tag called per rendering.
-
 
 Super Blocks
 ~~~~~~~~~~~~
@@ -732,8 +729,7 @@ Extends
 
 The `extends` tag can be used to extend a template from another one.  You
 can have multiple of them in a file but only one of them may be executed
-at the time.  There is no support for multiple inheritance.  See the section
-about :ref:`template-inheritance` above.
+at the time.  See the section about :ref:`template-inheritance` above.
 
 
 Block
