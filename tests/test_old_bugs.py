@@ -140,3 +140,33 @@ def test_empty_if_condition_fails():
     assert_raises(TemplateSyntaxError, Template, '{% if %}....{% endif %}')
     assert_raises(TemplateSyntaxError, Template, '{% if foo %}...{% elif %}...{% endif %}')
     assert_raises(TemplateSyntaxError, Template, '{% for x in %}..{% endfor %}')
+
+
+def test_recursive_loop_bug():
+    tpl1 = Template("""
+    {% for p in foo recursive%}
+        {{p.bar}}
+        {% for f in p.fields recursive%}
+            {{f.baz}}
+            {{p.bar}}
+            {% if f.rec %}
+                {{ loop(f.sub) }}
+            {% endif %}
+        {% endfor %}
+    {% endfor %}
+    """)
+    tpl1.render(ctx)
+
+    tpl2 = Template("""
+    {% for p in foo%}
+        {{p.bar}}
+        {% for f in p.fields recursive%}
+            {{f.baz}}
+            {{p.bar}}
+            {% if f.rec %}
+                {{ loop(f.sub) }}
+            {% endif %}
+        {% endfor %}
+    {% endfor %}
+    """)
+    tpl2.render(ctx)
