@@ -13,8 +13,11 @@ Version 2.3
   given.
 - fixed a problem with having call blocks in outer scopes that
   have an argument that is also used as local variable in an
-  inner frame [#360].
+  inner frame (#360).
 - greatly improved error message reporting (#339)
+- implicit tuple expressions can no longer be totally empty.
+  This change makes ``{% if %}...{% endif %}`` a syntax error
+  now. (#364)
 
 Version 2.2.1
 -------------

@@ -548,7 +548,7 @@ class Parser(object):
             node = nodes.Const(token.value, lineno=token.lineno)
         elif token.type == 'lparen':
             next(self.stream)
-            node = self.parse_tuple()
+            node = self.parse_tuple(explicit_parentheses=True)
             self.stream.expect('rparen')
         elif token.type == 'lbracket':
             node = self.parse_list()
@@ -561,7 +561,7 @@ class Parser(object):
         return node
 
     def parse_tuple(self, simplified=False, with_condexpr=True,
-                    extra_end_rules=None):
+                    extra_end_rules=None, explicit_parentheses=False):
         """Works like `parse_expression` but if multiple expressions are
         delimited by a comma a :class:`~jinja2.nodes.Tuple` node is created.
         This method could also return a regular expression instead of a tuple
@@ -575,6 +575,10 @@ class Parser(object):
         an extra hint is needed that marks the end of a tuple.  For example
         for loops support tuples between `for` and `in`.  In that case the
         `extra_end_rules` is set to ``['name:in']``.
+
+        `explicit_parentheses` is true if the parsing was triggered by an
+        expression in parentheses.  This is used to figure out if an empty
+        tuple is a valid expression or not.
         """
         lineno = self.stream.current.lineno
         if simplified:
@@ -596,8 +600,19 @@ class Parser(object):
             else:
                 break
             lineno = self.stream.current.lineno
-        if not is_tuple and args:
-            return args[0]
+
+        if not is_tuple:
+            if args:
+                return args[0]
+
+            # if we don't have explicit parentheses, an empty tuple is
+            # not a valid expression.  This would mean nothing (literally
+            # nothing) in the spot of an expression would be an empty
+            # tuple.
+            if not explicit_parentheses:
+                self.fail('Expected an expression, got \'%s\'' %
+                          describe_token(self.stream.current))
+
         return nodes.Tuple(args, 'load', lineno=lineno)
 
     def parse_list(self):

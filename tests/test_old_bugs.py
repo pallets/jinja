@@ -134,3 +134,9 @@ def test_call_with_args():
         u'</dl>',
         u'</li></ul>'
     ]
+
+
+def test_empty_if_condition_fails():
+    assert_raises(TemplateSyntaxError, Template, '{% if %}....{% endif %}')
+    assert_raises(TemplateSyntaxError, Template, '{% if foo %}...{% elif %}...{% endif %}')
+    assert_raises(TemplateSyntaxError, Template, '{% for x in %}..{% endfor %}')
