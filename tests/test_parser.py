@@ -141,3 +141,6 @@ def test_error_messages():
                  "Unexpected end of template. Jinja was looking for the "
                  "following tags: 'endfor' or 'else'. The innermost block "
                  "that needs to be closed is 'for'.")
+    assert_error('{% block foo-bar-baz %}',
+                 "Block names in Jinja have to be valid Python identifiers "
+                 "and may not contain hypens, use an underscore instead.")

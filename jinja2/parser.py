@@ -212,6 +212,15 @@ class Parser(object):
         node = nodes.Block(lineno=next(self.stream).lineno)
         node.name = self.stream.expect('name').value
         node.scoped = self.stream.skip_if('name:scoped')
+
+        # common problem people encounter when switching from django
+        # to jinja.  we do not support hyphens in block names, so let's
+        # raise a nicer error message in that case.
+        if self.stream.current.type == 'sub':
+            self.fail('Block names in Jinja have to be valid Python '
+                      'identifiers and may not contain hypens, use an '
+                      'underscore instead.')
+
         node.body = self.parse_statements(('name:endblock',), drop_needle=True)
         self.stream.skip_if('name:' + node.name)
         return node
