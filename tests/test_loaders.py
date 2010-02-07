@@ -7,6 +7,7 @@
     :license: BSD, see LICENSE for more details.
 """
 
+import os
 import time
 import tempfile
 from jinja2 import Environment, loaders
@@ -20,7 +21,7 @@ dict_loader = loaders.DictLoader({
     'justdict.html':        'FOO'
 })
 package_loader = loaders.PackageLoader('loaderres', 'templates')
-filesystem_loader = loaders.FileSystemLoader('loaderres/templates')
+filesystem_loader = loaders.FileSystemLoader('tests/loaderres/templates')
 function_loader = loaders.FunctionLoader({'justfunction.html': 'FOO'}.get)
 choice_loader = loaders.ChoiceLoader([dict_loader, package_loader])
 prefix_loader = loaders.PrefixLoader({

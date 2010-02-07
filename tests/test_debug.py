@@ -32,9 +32,9 @@ def test_syntax_error():
 >>> tmpl = env.get_template('syntaxerror.html')
 Traceback (most recent call last):
   ...
-TemplateSyntaxError: unknown tag 'endif'
-  File "loaderres/templates\\syntaxerror.html", line 4
-    {% endif %}
+  File "tests/loaderres/templates/syntaxerror.html", line 4, in template
+  {% endif %}
+TemplateSyntaxError: Encountered unknown tag 'endif'. Jinja was looking for the following tags: 'endfor' or 'else'. The innermost block that needs to be closed is 'for'.
 '''
 
 

@@ -164,9 +164,9 @@ class FileSystemLoader(BaseLoader):
 class PackageLoader(BaseLoader):
     """Load templates from python eggs or packages.  It is constructed with
     the name of the python package and the path to the templates in that
-    package:
+    package::
 
-    >>> loader = PackageLoader('mypackage', 'views')
+        loader = PackageLoader('mypackage', 'views')
 
     If the package path is not given, ``'templates'`` is assumed.
 
@@ -233,7 +233,7 @@ class FunctionLoader(BaseLoader):
     filename, uptodatefunc)`` or `None` if the template does not exist.
 
     >>> def load_template(name):
-    ...     if name == 'index.html'
+    ...     if name == 'index.html':
     ...         return '...'
     ...
     >>> loader = FunctionLoader(load_template)
@@ -260,12 +260,12 @@ class PrefixLoader(BaseLoader):
     """A loader that is passed a dict of loaders where each loader is bound
     to a prefix.  The prefix is delimited from the template by a slash per
     default, which can be changed by setting the `delimiter` argument to
-    something else.
+    something else::
 
-    >>> loader = PrefixLoader({
-    ...     'app1':     PackageLoader('mypackage.app1'),
-    ...     'app2':     PackageLoader('mypackage.app2')
-    ... })
+        loader = PrefixLoader({
+            'app1':     PackageLoader('mypackage.app1'),
+            'app2':     PackageLoader('mypackage.app2')
+        })
 
     By loading ``'app1/index.html'`` the file from the app1 package is loaded,
     by loading ``'app2/index.html'`` the file from the second.
@@ -291,7 +291,7 @@ class ChoiceLoader(BaseLoader):
 
     >>> loader = ChoiceLoader([
     ...     FileSystemLoader('/path/to/user/templates'),
-    ...     PackageLoader('mypackage')
+    ...     FileSystemLoader('/path/to/system/templates')
     ... ])
 
     This is useful if you want to allow users to override builtin templates

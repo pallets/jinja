@@ -1,5 +1,5 @@
 test:
-	cd tests; nosetests -v
+	nosetests --with-doctest jinja2 tests
 
 2to3:
 	rm -rf py3k

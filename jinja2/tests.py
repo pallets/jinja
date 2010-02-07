@@ -11,6 +11,9 @@
 import re
 from jinja2.runtime import Undefined
 
+# nose, nothing here to test
+__test__ = False
+
 
 number_re = re.compile(r'^-?\d+(\.\d+)?$')
 regex_type = type(number_re)
