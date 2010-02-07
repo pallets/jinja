@@ -155,7 +155,6 @@ def test_recursive_loop_bug():
         {% endfor %}
     {% endfor %}
     """)
-    tpl1.render(ctx)
 
     tpl2 = Template("""
     {% for p in foo%}
@@ -169,4 +168,3 @@ def test_recursive_loop_bug():
         {% endfor %}
     {% endfor %}
     """)
-    tpl2.render(ctx)
