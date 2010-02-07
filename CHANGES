@@ -19,6 +19,7 @@ Version 2.3
   This change makes ``{% if %}...{% endif %}`` a syntax error
   now. (#364)
 - added support for translator comments if extracted via babel.
+- added with-statement extension.
 
 Version 2.2.1
 -------------

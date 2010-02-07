@@ -336,6 +336,27 @@ class LoopControlExtension(Extension):
         return nodes.Continue(lineno=token.lineno)
 
 
+class WithExtension(Extension):
+    """Adds support for a django-like with block."""
+    tags = set(['with'])
+
+    def parse(self, parser):
+        node = nodes.Scope(lineno=next(parser.stream).lineno)
+        assignments = []
+        while parser.stream.current.type != 'block_end':
+            lineno = parser.stream.current.lineno
+            if assignments:
+                parser.stream.expect('comma')
+            target = parser.parse_assign_target()
+            parser.stream.expect('assign')
+            expr = parser.parse_expression()
+            assignments.append(nodes.Assign(target, expr, lineno=lineno))
+        node.body = assignments + \
+            list(parser.parse_statements(('name:endwith',),
+                                         drop_needle=True))
+        return node
+
+
 def extract_from_ast(node, gettext_functions=GETTEXT_FUNCTIONS,
                      babel_style=True):
     """Extract localizable strings from the given template node.  Per
@@ -507,3 +528,4 @@ def babel_extract(fileobj, keywords, comment_tags, options):
 i18n = InternationalizationExtension
 do = ExprStmtExtension
 loopcontrols = LoopControlExtension
+with_ = WithExtension

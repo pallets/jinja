@@ -1252,3 +1252,35 @@ Likewise a look that stops processing after the 10th iteration::
     {% for user in users %}
         {%- if loop.index >= 10 %}{% break %}{% endif %}
     {%- endfor %}
+
+
+With Statement
+~~~~~~~~~~~~~~
+
+.. versionadded:: 2.3
+
+If the application enables the :ref:`with-extension` it is possible to
+use the `with` keyword in templates.  This makes it possible to create
+a new inner scope.  Variables set within this scope are not visible
+outside of the scope.
+
+With in a nutshell::
+
+    {% with %}
+        {% set foo = 42 %}
+        {{ foo }}           foo is 42 here
+    {% endwith %}
+    foo is not visible here any longer
+
+Because it is common to set variables at the beginning of the scope
+you can do that within the with statement.  The following two examples
+are equivalent::
+
+    {% with foo = 42 %}
+        {{ foo }}
+    {% endwith %}
+
+    {% with %}
+        {% set foo = 42 %}
+        {{ foo }}
+    {% endwith %}
