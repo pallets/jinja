@@ -15,7 +15,7 @@ import unittest
 
 from jinja2.testsuite import JinjaTestCase
 
-from jinja2 import Environment, Template, TemplateSyntaxError
+from jinja2 import Environment, Template, TemplateSyntaxError, UndefinedError
 
 env = Environment()
 
@@ -181,7 +181,157 @@ and bar comment #}
 
 
 class SyntaxTestCase(JinjaTestCase):
-    pass
+
+    def test_call(self):
+        env = Environment()
+        env.globals['foo'] = lambda a, b, c, e, g: a + b + c + e + g
+        tmpl = env.from_string("{{ foo('a', c='d', e='f', *['b'], **{'g': 'h'}) }}")
+        assert tmpl.render() == 'abdfh'
+
+    def test_slicing(self):
+        tmpl = env.from_string('{{ [1, 2, 3][:] }}|{{ [1, 2, 3][::-1] }}')
+        assert tmpl.render() == '[1, 2, 3]|[3, 2, 1]'
+
+    def test_attr(self):
+        tmpl = env.from_string("{{ foo.bar }}|{{ foo['bar'] }}")
+        assert tmpl.render(foo={'bar': 42}) == '42|42'
+
+    def test_subscript(self):
+        tmpl = env.from_string("{{ foo[0] }}|{{ foo[-1] }}")
+        assert tmpl.render(foo=[0, 1, 2]) == '0|2'
+
+    def test_tuple(self):
+        tmpl = env.from_string('{{ () }}|{{ (1,) }}|{{ (1, 2) }}')
+        assert tmpl.render() == '()|(1,)|(1, 2)'
+
+    def test_math(self):
+        tmpl = env.from_string('{{ (1 + 1 * 2) - 3 / 2 }}|{{ 2**3 }}')
+        assert tmpl.render() == '1.5|8'
+
+    def test_div(self):
+        tmpl = env.from_string('{{ 3 // 2 }}|{{ 3 / 2 }}|{{ 3 % 2 }}')
+        assert tmpl.render() == '1|1.5|1'
+
+    def test_unary(self):
+        tmpl = env.from_string('{{ +3 }}|{{ -3 }}')
+        assert tmpl.render() == '3|-3'
+
+    def test_concat(self):
+        tmpl = env.from_string("{{ [1, 2] ~ 'foo' }}")
+        assert tmpl.render() == '[1, 2]foo'
+
+    def test_compare(self):
+        tmpl = env.from_string('{{ 1 > 0 }}|{{ 1 >= 1 }}|{{ 2 < 3 }}|'
+                               '{{ 2 == 2 }}|{{ 1 <= 1 }}')
+        assert tmpl.render() == 'True|True|True|True|True'
+
+    def test_inop(self):
+        tmpl = env.from_string('{{ 1 in [1, 2, 3] }}|{{ 1 not in [1, 2, 3] }}')
+        assert tmpl.render() == 'True|False'
+
+    def test_literals(self):
+        tmpl = env.from_string('{{ [] }}|{{ {} }}|{{ () }}')
+        assert tmpl.render().lower() == '[]|{}|()'
+
+    def test_bool(self):
+        tmpl = env.from_string('{{ true and false }}|{{ false '
+                               'or true }}|{{ not false }}')
+        assert tmpl.render() == 'False|True|True'
+
+    def test_grouping(self):
+        tmpl = env.from_string('{{ (true and false) or (false and true) and not false }}')
+        assert tmpl.render() == 'False'
+
+    def test_django_attr(self):
+        tmpl = env.from_string('{{ [1, 2, 3].0 }}|{{ [[1]].0.0 }}')
+        assert tmpl.render() == '1|1'
+
+    def test_conditional_expression(self):
+        tmpl = env.from_string('''{{ 0 if true else 1 }}''')
+        assert tmpl.render() == '0'
+
+    def test_short_conditional_expression(self):
+        tmpl = env.from_string('<{{ 1 if false }}>')
+        assert tmpl.render() == '<>'
+
+        tmpl = env.from_string('<{{ (1 if false).bar }}>')
+        self.assert_raises(UndefinedError, tmpl.render)
+
+    def test_filter_priority(self):
+        tmpl = env.from_string('{{ "foo"|upper + "bar"|upper }}')
+        assert tmpl.render() == 'FOOBAR'
+
+    def test_function_calls(self):
+        tests = [
+            (True, '*foo, bar'),
+            (True, '*foo, *bar'),
+            (True, '*foo, bar=42'),
+            (True, '**foo, *bar'),
+            (True, '**foo, bar'),
+            (False, 'foo, bar'),
+            (False, 'foo, bar=42'),
+            (False, 'foo, bar=23, *args'),
+            (False, 'a, b=c, *d, **e'),
+            (False, '*foo, **bar')
+        ]
+        for should_fail, sig in tests:
+            if should_fail:
+                self.assert_raises(TemplateSyntaxError,
+                    env.from_string, '{{ foo(%s) }}' % sig)
+            else:
+                env.from_string('foo(%s)' % sig)
+
+
+    def test_tuple_expr(self):
+        for tmpl in [
+            '{{ () }}',
+            '{{ (1, 2) }}',
+            '{{ (1, 2,) }}',
+            '{{ 1, }}',
+            '{{ 1, 2 }}',
+            '{% for foo, bar in seq %}...{% endfor %}',
+            '{% for x in foo, bar %}...{% endfor %}',
+            '{% for x in foo, %}...{% endfor %}'
+        ]:
+            assert env.from_string(tmpl)
+
+    def test_trailing_comma(self):
+        tmpl = env.from_string('{{ (1, 2,) }}|{{ [1, 2,] }}|{{ {1: 2,} }}')
+        assert tmpl.render().lower() == '(1, 2)|[1, 2]|{1: 2}'
+
+    def test_block_end_name(self):
+        env.from_string('{% block foo %}...{% endblock foo %}')
+        self.assert_raises(TemplateSyntaxError, env.from_string,
+                           '{% block x %}{% endblock y %}')
+
+    def test_contant_casing(self):
+        for const in True, False, None:
+            tmpl = env.from_string('{{ %s }}|{{ %s }}|{{ %s }}' % (
+                str(const), str(const).lower(), str(const).upper()
+            ))
+            assert tmpl.render() == '%s|%s|' % (const, const)
+
+    def test_test_chaining(self):
+        self.assert_raises(TemplateSyntaxError, env.from_string,
+                           '{{ foo is string is sequence }}')
+        env.from_string('{{ 42 is string or 42 is number }}'
+            ).render() == 'True'
+
+    def test_string_concatenation(self):
+        tmpl = env.from_string('{{ "foo" "bar" "baz" }}')
+        assert tmpl.render() == 'foobarbaz'
+
+    def test_notin(self):
+        bar = xrange(100)
+        tmpl = env.from_string('''{{ not 42 in bar }}''')
+        assert tmpl.render(bar=bar) == unicode(not 42 in bar)
+
+    def test_implicit_subscribed_tuple(self):
+        class Foo(object):
+            def __getitem__(self, x):
+                return x
+        t = env.from_string('{{ foo[1, 2] }}')
+        assert t.render(foo=Foo()) == u'(1, 2)'
 
 
 def suite():
