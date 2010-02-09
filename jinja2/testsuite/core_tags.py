@@ -1,9 +1,9 @@
 # -*- coding: utf-8 -*-
 """
-    jinja2.testsuite.tags
-    ~~~~~~~~~~~~~~~~~~~~~
+    jinja2.testsuite.core_tags
+    ~~~~~~~~~~~~~~~~~~~~~~~~~~
 
-    Test for most of the builtin tags.
+    Test the core tags like for and if.
 
     :copyright: (c) 2010 by the Jinja Team.
     :license: BSD, see LICENSE for more details.
@@ -163,7 +163,39 @@ class ForLoopTestCase(JinjaTestCase):
         assert t.render(foo=(1,)) == '...1......2...'
 
 
+class IfConditionTestCase(JinjaTestCase):
+
+    def test_simple(self):
+        tmpl = env.from_string('''{% if true %}...{% endif %}''')
+        assert tmpl.render() == '...'
+
+    def test_elif(self):
+        tmpl = env.from_string('''{% if false %}XXX{% elif true
+            %}...{% else %}XXX{% endif %}''')
+        assert tmpl.render() == '...'
+
+    def test_else(self):
+        tmpl = env.from_string('{% if false %}XXX{% else %}...{% endif %}')
+        assert tmpl.render() == '...'
+
+    def test_empty(self):
+        tmpl = env.from_string('[{% if true %}{% else %}{% endif %}]')
+        assert tmpl.render() == '[]'
+
+    def test_complete(self):
+        tmpl = env.from_string('{% if a %}A{% elif b %}B{% elif c == d %}'
+                               'C{% else %}D{% endif %}')
+        assert tmpl.render(a=0, b=False, c=42, d=42.0) == 'C'
+
+    def test_no_scope(self):
+        tmpl = env.from_string('{% if a %}{% set foo = 1 %}{% endif %}{{ foo }}')
+        assert tmpl.render(a=True) == '1'
+        tmpl = env.from_string('{% if true %}{% set foo = 1 %}{% endif %}{{ foo }}')
+        assert tmpl.render() == '1'
+
+
 def suite():
     suite = unittest.TestSuite()
     suite.addTest(unittest.makeSuite(ForLoopTestCase))
+    suite.addTest(unittest.makeSuite(IfConditionTestCase))
     return suite

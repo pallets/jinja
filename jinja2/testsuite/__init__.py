@@ -22,7 +22,7 @@ dict_loader = loaders.DictLoader({
     'justdict.html':        'FOO'
 })
 package_loader = loaders.PackageLoader('jinja2.testsuite.res', 'templates')
-filesystem_loader = loaders.FileSystemLoader(here + 'res/templates')
+filesystem_loader = loaders.FileSystemLoader(here + '/res/templates')
 function_loader = loaders.FunctionLoader({'justfunction.html': 'FOO'}.get)
 choice_loader = loaders.ChoiceLoader([dict_loader, package_loader])
 prefix_loader = loaders.PrefixLoader({
@@ -44,9 +44,10 @@ class JinjaTestCase(unittest.TestCase):
 
 
 def suite():
-    from jinja2.testsuite import ext, filters, tags
+    from jinja2.testsuite import ext, filters, core_tags, loader
     suite = unittest.TestSuite()
     suite.addTest(ext.suite())
     suite.addTest(filters.suite())
-    suite.addTest(tags.suite())
+    suite.addTest(core_tags.suite())
+    suite.addTest(loader.suite())
     return suite
