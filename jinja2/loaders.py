@@ -277,11 +277,16 @@ class PrefixLoader(BaseLoader):
 
     def get_source(self, environment, template):
         try:
-            prefix, template = template.split(self.delimiter, 1)
+            prefix, name = template.split(self.delimiter, 1)
             loader = self.mapping[prefix]
         except (ValueError, KeyError):
             raise TemplateNotFound(template)
-        return loader.get_source(environment, template)
+        try:
+            return loader.get_source(environment, name)
+        except TemplateNotFound:
+            # re-raise the exception with the correct fileame here.
+            # (the one that includes the prefix)
+            raise TemplateNotFound(template)
 
 
 class ChoiceLoader(BaseLoader):

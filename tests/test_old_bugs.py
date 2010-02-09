@@ -8,7 +8,8 @@
     :copyright: (c) 2009 by the Jinja Team.
     :license: BSD.
 """
-from jinja2 import Template, Environment, DictLoader, TemplateSyntaxError
+from jinja2 import Template, Environment, DictLoader, TemplateSyntaxError, \
+     TemplateNotFound, PrefixLoader
 
 env = Environment()
 
@@ -168,3 +169,15 @@ def test_recursive_loop_bug():
         {% endfor %}
     {% endfor %}
     """)
+
+
+def test_correct_prefix_loader_name():
+    env = Environment(loader=PrefixLoader({
+        'foo':  DictLoader({})
+    }))
+    try:
+        env.get_template('foo/bar.html')
+    except TemplateNotFound, e:
+        assert e.name == 'foo/bar.html'
+    else:
+        assert False, 'expected error here'
