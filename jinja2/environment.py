@@ -475,7 +475,7 @@ class Environment(object):
         >>> env.compile_expression('var', undefined_to_none=False)()
         Undefined
 
-        **new in Jinja 2.1**
+        .. versionadded:: 2.1
         """
         parser = Parser(self, source, state='variable')
         exc_info = None
@@ -564,7 +564,7 @@ class Environment(object):
         before it fails.  If it cannot find any of the templates, it will
         raise a :exc:`TemplatesNotFound` exception.
 
-        .. versionadded:: 2.2
+        .. versionadded:: 2.3
         """
         if not names:
             raise TemplatesNotFound(message=u'Tried to select from an empty list '
@@ -586,7 +586,7 @@ class Environment(object):
         Does a typecheck and dispatches to :meth:`select_template` if an
         iterable of template names is given, otherwise to :meth:`get_template`.
 
-        .. versionadded:: 2.2
+        .. versionadded:: 2.3
         """
         if isinstance(template_name_or_list, basestring):
             return self.get_template(template_name_or_list, parent, globals)

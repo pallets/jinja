@@ -20,6 +20,7 @@ Version 2.3
   now. (#364)
 - added support for translator comments if extracted via babel.
 - added with-statement extension.
+- experimental Python 3 support.
 
 Version 2.2.1
 -------------
