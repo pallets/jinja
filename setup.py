@@ -76,7 +76,7 @@ setup(
         'Topic :: Software Development :: Libraries :: Python Modules',
         'Topic :: Text Processing :: Markup :: HTML'
     ],
-    packages=['jinja2'],
+    packages=['jinja2', 'jinja2.testsuite'],
     features={
         'speedups': Feature("optional C speed-enhancements",
             standard=False,
@@ -86,6 +86,7 @@ setup(
         )
     },
     extras_require={'i18n': ['Babel>=0.8']},
+    test_suite='jinja2.testsuite.suite',
     entry_points="""
     [babel.extractors]
     jinja2 = jinja2.ext:babel_extract[i18n]
