@@ -76,7 +76,7 @@ setup(
         'Topic :: Software Development :: Libraries :: Python Modules',
         'Topic :: Text Processing :: Markup :: HTML'
     ],
-    packages=['jinja2', 'jinja2.testsuite'],
+    packages=['jinja2', 'jinja2.testsuite', 'jinja2.testsuite.res'],
     features={
         'speedups': Feature("optional C speed-enhancements",
             standard=False,

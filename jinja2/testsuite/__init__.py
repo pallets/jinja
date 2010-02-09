@@ -45,7 +45,7 @@ class JinjaTestCase(unittest.TestCase):
 
 def suite():
     from jinja2.testsuite import ext, filters, tests, core_tags, \
-         loader, inheritance, imports, lexnparse
+         loader, inheritance, imports, lexnparse, security
     suite = unittest.TestSuite()
     suite.addTest(ext.suite())
     suite.addTest(filters.suite())
@@ -55,4 +55,5 @@ def suite():
     suite.addTest(inheritance.suite())
     suite.addTest(imports.suite())
     suite.addTest(lexnparse.suite())
+    suite.addTest(security.suite())
     return suite
