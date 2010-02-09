@@ -44,11 +44,13 @@ class JinjaTestCase(unittest.TestCase):
 
 
 def suite():
-    from jinja2.testsuite import ext, filters, tests, core_tags, loader
+    from jinja2.testsuite import ext, filters, tests, core_tags, \
+         loader, inheritance
     suite = unittest.TestSuite()
     suite.addTest(ext.suite())
     suite.addTest(filters.suite())
     suite.addTest(tests.suite())
     suite.addTest(core_tags.suite())
     suite.addTest(loader.suite())
+    suite.addTest(inheritance.suite())
     return suite
