@@ -808,14 +808,14 @@ class TemplateModule(object):
         self.__dict__.update(context.get_exported())
         self.__name__ = template.name
 
-    def __unicode__(self):
-        return concat(self._body_stream)
-
     def __html__(self):
         return Markup(concat(self._body_stream))
 
     def __str__(self):
         return unicode(self).encode('utf-8')
+
+    def __unicode__(self):
+        return concat(self._body_stream)
 
     def __repr__(self):
         if self.__name__ is None:

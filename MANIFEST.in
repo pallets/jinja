@@ -4,4 +4,5 @@ recursive-include tests *
 recursive-include ext *
 recursive-include artwork *
 recursive-include examples *
+recursive-include jinja2/testsuite/res *
 recursive-exclude docs/_build/doctrees *

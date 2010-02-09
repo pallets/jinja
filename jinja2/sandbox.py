@@ -37,13 +37,21 @@ import warnings
 warnings.filterwarnings('ignore', 'the sets module', DeprecationWarning,
                         module='jinja2.sandbox')
 
-
 from collections import deque
-from UserDict import UserDict, DictMixin
-from UserList import UserList
+
 _mutable_set_types = (set,)
-_mutable_mapping_types = (UserDict, DictMixin, dict)
-_mutable_sequence_types = (UserList, list)
+_mutable_mapping_types = (dict,)
+_mutable_sequence_types = (list,)
+
+
+# on python 2.x we can register the user collection types
+try:
+    from UserDict import UserDict, DictMixin
+    from UserList import UserList
+    _mutable_mapping_types += (UserDict, DictMixin)
+    _mutable_set_types += (UserList,)
+except ImportError:
+    pass
 
 # if sets is still available, register the mutable set from there as well
 try:

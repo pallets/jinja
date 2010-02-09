@@ -203,7 +203,7 @@ def open_if_exists(filename, mode='rb'):
     otherwise `None`.
     """
     try:
-        return file(filename, mode)
+        return open(filename, mode)
     except IOError, e:
         if e.errno not in (errno.ENOENT, errno.EISDIR):
             raise
@@ -506,8 +506,8 @@ class _MarkupEscapeHelper(object):
         self.obj = obj
 
     __getitem__ = lambda s, x: _MarkupEscapeHelper(s.obj[x])
-    __unicode__ = lambda s: unicode(escape(s.obj))
     __str__ = lambda s: str(escape(s.obj))
+    __unicode__ = lambda s: unicode(escape(s.obj))
     __repr__ = lambda s: str(escape(repr(s.obj)))
     __int__ = lambda s: int(s.obj)
     __float__ = lambda s: float(s.obj)

@@ -41,11 +41,11 @@ class TemplateNotFound(IOError, LookupError, TemplateError):
         self.name = name
         self.templates = [name]
 
-    def __unicode__(self):
-        return self.message
-
     def __str__(self):
         return self.message.encode('utf-8')
+
+    def __unicode__(self):
+        return self.message
 
 
 class TemplatesNotFound(TemplateNotFound):
@@ -78,6 +78,9 @@ class TemplateSyntaxError(TemplateError):
         # function translated the syntax error into a new traceback
         self.translated = False
 
+    def __str__(self):
+        return unicode(self).encode('utf-8')
+
     def __unicode__(self):
         # for translated errors we only return the message
         if self.translated:
@@ -100,9 +103,6 @@ class TemplateSyntaxError(TemplateError):
                 lines.append('    ' + line.strip())
 
         return u'\n'.join(lines)
-
-    def __str__(self):
-        return unicode(self).encode('utf-8')
 
 
 class TemplateAssertionError(TemplateSyntaxError):
