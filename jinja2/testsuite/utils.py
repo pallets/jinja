@@ -9,13 +9,16 @@
     :license: BSD, see LICENSE for more details.
 """
 import os
+import gc
 import unittest
 
 import pickle
 
+from jinja2.testsuite import JinjaTestCase
+
 from jinja2 import Environment, Undefined, DebugUndefined, \
      StrictUndefined, UndefinedError, Template, meta
-from jinja2.utils import LRUCache
+from jinja2.utils import LRUCache, escape
 
 
 class LRUCacheTestCase(JinjaTestCase):

@@ -59,7 +59,7 @@ class JinjaTestCase(unittest.TestCase):
 def suite():
     from jinja2.testsuite import ext, filters, tests, core_tags, \
          loader, inheritance, imports, lexnparse, security, api, \
-         regression, debug
+         regression, debug, utils, doctests
     suite = unittest.TestSuite()
     suite.addTest(ext.suite())
     suite.addTest(filters.suite())
@@ -73,4 +73,6 @@ def suite():
     suite.addTest(api.suite())
     suite.addTest(regression.suite())
     suite.addTest(debug.suite())
+    suite.addTest(utils.suite())
+    suite.addTest(doctests.suite())
     return suite
