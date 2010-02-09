@@ -150,7 +150,8 @@ class InheritanceTestCase(JinjaTestCase):
             'master.html': '{% for item in seq %}[{% block item scoped %}'
                            '{% endblock %}]{% endfor %}'
         }))
-        t = env.from_string('{% extends "master.html" %}{% block item %}{{ item }}{% endblock %}')
+        t = env.from_string('{% extends "master.html" %}{% block item %}'
+                            '{{ item }}{% endblock %}')
         assert t.render(seq=range(5)) == '[0][1][2][3][4]'
 
     def test_super_in_scoped_block(self):
