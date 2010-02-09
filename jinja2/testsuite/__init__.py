@@ -44,8 +44,9 @@ class JinjaTestCase(unittest.TestCase):
 
 
 def suite():
-    from jinja2.testsuite import ext, filters
+    from jinja2.testsuite import ext, filters, tags
     suite = unittest.TestSuite()
     suite.addTest(ext.suite())
     suite.addTest(filters.suite())
+    suite.addTest(tags.suite())
     return suite
