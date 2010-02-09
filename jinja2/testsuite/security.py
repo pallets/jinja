@@ -59,6 +59,13 @@ class SandboxTestCase(JinjaTestCase):
         self.assert_raises(SecurityError, env.from_string(
             "{{ foo.__class__.__subclasses__() }}").render, foo=42)
 
+    def test_immutable_environment(self):
+        env = ImmutableSandboxedEnvironment()
+        self.assert_raises(SecurityError, env.from_string(
+            '{{ [].append(23) }}').render)
+        self.assert_raises(SecurityError, env.from_string(
+            '{{ {1:2}.clear() }}').render)
+
     def test_restricted(self):
         env = SandboxedEnvironment()
         self.assert_raises(TemplateSyntaxError, env.from_string,

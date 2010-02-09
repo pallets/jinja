@@ -12,7 +12,9 @@
 """
 import os
 import sys
+import re
 import unittest
+from traceback import format_exception
 from jinja2 import loaders
 
 
@@ -42,10 +44,22 @@ class JinjaTestCase(unittest.TestCase):
     def assert_raises(self, *args, **kwargs):
         return self.assertRaises(*args, **kwargs)
 
+    def assert_traceback_matches(self, callback, expected_tb):
+        try:
+            callback()
+        except Exception, e:
+            tb = format_exception(*sys.exc_info())
+            if re.search(expected_tb.strip(), ''.join(tb)) is None:
+                raise self.fail('Traceback did not match:\n\n%s\nexpected:\n%s'
+                    % (''.join(tb), expected_tb))
+        else:
+            self.fail('Expected exception')
+
 
 def suite():
     from jinja2.testsuite import ext, filters, tests, core_tags, \
-         loader, inheritance, imports, lexnparse, security
+         loader, inheritance, imports, lexnparse, security, api, \
+         regression, debug
     suite = unittest.TestSuite()
     suite.addTest(ext.suite())
     suite.addTest(filters.suite())
@@ -56,4 +70,7 @@ def suite():
     suite.addTest(imports.suite())
     suite.addTest(lexnparse.suite())
     suite.addTest(security.suite())
+    suite.addTest(api.suite())
+    suite.addTest(regression.suite())
+    suite.addTest(debug.suite())
     return suite

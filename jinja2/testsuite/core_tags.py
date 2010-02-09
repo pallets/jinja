@@ -13,7 +13,8 @@ import unittest
 
 from jinja2.testsuite import JinjaTestCase
 
-from jinja2 import Environment, TemplateSyntaxError, UndefinedError
+from jinja2 import Environment, TemplateSyntaxError, UndefinedError, \
+     DictLoader
 
 env = Environment()
 
@@ -162,6 +163,11 @@ class ForLoopTestCase(JinjaTestCase):
         ''')
         assert t.render(foo=(1,)) == '...1......2...'
 
+    def test_unpacking(self):
+        tmpl = env.from_string('{% for a, b, c in [[1, 2, 3]] %}'
+            '{{ a }}|{{ b }}|{{ c }}{% endfor %}')
+        assert tmpl.render() == '1|2|3'
+
 
 class IfConditionTestCase(JinjaTestCase):
 
@@ -194,8 +200,83 @@ class IfConditionTestCase(JinjaTestCase):
         assert tmpl.render() == '1'
 
 
+class MacrosTestCase(JinjaTestCase):
+    env = Environment(trim_blocks=True)
+
+    def test_simple(self):
+        tmpl = self.env.from_string('''\
+{% macro say_hello(name) %}Hello {{ name }}!{% endmacro %}
+{{ say_hello('Peter') }}''')
+        assert tmpl.render() == 'Hello Peter!'
+
+    def test_scoping(self):
+        tmpl = self.env.from_string('''\
+{% macro level1(data1) %}
+{% macro level2(data2) %}{{ data1 }}|{{ data2 }}{% endmacro %}
+{{ level2('bar') }}{% endmacro %}
+{{ level1('foo') }}''')
+        print repr(tmpl.render())
+        assert tmpl.render() == 'foo|bar'
+
+    def test_arguments(self):
+        tmpl = self.env.from_string('''\
+{% macro m(a, b, c='c', d='d') %}{{ a }}|{{ b }}|{{ c }}|{{ d }}{% endmacro %}
+{{ m() }}|{{ m('a') }}|{{ m('a', 'b') }}|{{ m(1, 2, 3) }}''')
+        print tmpl.render()
+        assert tmpl.render() == '||c|d|a||c|d|a|b|c|d|1|2|3|d'
+
+    def test_varargs(self):
+        tmpl = self.env.from_string('''\
+{% macro test() %}{{ varargs|join('|') }}{% endmacro %}\
+{{ test(1, 2, 3) }}''')
+        assert tmpl.render() == '1|2|3'
+
+    def test_simple_call(self):
+        tmpl = self.env.from_string('''\
+{% macro test() %}[[{{ caller() }}]]{% endmacro %}\
+{% call test() %}data{% endcall %}''')
+        assert tmpl.render() == '[[data]]'
+
+    def test_complex_call(self):
+        tmpl = self.env.from_string('''\
+{% macro test() %}[[{{ caller('data') }}]]{% endmacro %}\
+{% call(data) test() %}{{ data }}{% endcall %}''')
+        assert tmpl.render() == '[[data]]'
+
+    def test_caller_undefined(self):
+        tmpl = self.env.from_string('''\
+{% set caller = 42 %}\
+{% macro test() %}{{ caller is not defined }}{% endmacro %}\
+{{ test() }}''')
+        assert tmpl.render() == 'True'
+
+    def test_include(self):
+        self.env = Environment(loader=DictLoader({'include':
+            '{% macro test(foo) %}[{{ foo }}]{% endmacro %}'}))
+        tmpl = self.env.from_string('{% from "include" import test %}{{ test("foo") }}')
+        assert tmpl.render() == '[foo]'
+
+    def test_macro_api(self):
+        tmpl = self.env.from_string('{% macro foo(a, b) %}{% endmacro %}'
+                               '{% macro bar() %}{{ varargs }}{{ kwargs }}{% endmacro %}'
+                               '{% macro baz() %}{{ caller() }}{% endmacro %}')
+        assert tmpl.module.foo.arguments == ('a', 'b')
+        assert tmpl.module.foo.defaults == ()
+        assert tmpl.module.foo.name == 'foo'
+        assert not tmpl.module.foo.caller
+        assert not tmpl.module.foo.catch_kwargs
+        assert not tmpl.module.foo.catch_varargs
+        assert tmpl.module.bar.arguments == ()
+        assert tmpl.module.bar.defaults == ()
+        assert not tmpl.module.bar.caller
+        assert tmpl.module.bar.catch_kwargs
+        assert tmpl.module.bar.catch_varargs
+        assert tmpl.module.baz.caller
+
+
 def suite():
     suite = unittest.TestSuite()
     suite.addTest(unittest.makeSuite(ForLoopTestCase))
     suite.addTest(unittest.makeSuite(IfConditionTestCase))
+    suite.addTest(unittest.makeSuite(MacrosTestCase))
     return suite

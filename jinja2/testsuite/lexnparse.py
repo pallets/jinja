@@ -22,7 +22,7 @@ env = Environment()
 
 class LexerTestCase(JinjaTestCase):
 
-    def test_raw(self):
+    def test_raw1(self):
         tmpl = env.from_string('{% raw %}foo{% endraw %}|'
                                '{%raw%}{{ bar }}|{% baz %}{%       endraw    %}')
         assert tmpl.render() == 'foo|{{ bar }}|{% baz %}'
@@ -281,7 +281,6 @@ class SyntaxTestCase(JinjaTestCase):
             else:
                 env.from_string('foo(%s)' % sig)
 
-
     def test_tuple_expr(self):
         for tmpl in [
             '{{ () }}',
@@ -332,6 +331,27 @@ class SyntaxTestCase(JinjaTestCase):
                 return x
         t = env.from_string('{{ foo[1, 2] }}')
         assert t.render(foo=Foo()) == u'(1, 2)'
+
+    def test_raw2(self):
+        tmpl = env.from_string('{% raw %}{{ FOO }} and {% BAR %}{% endraw %}')
+        assert tmpl.render() == '{{ FOO }} and {% BAR %}'
+
+    def test_const(self):
+        tmpl = env.from_string('{{ true }}|{{ false }}|{{ none }}|'
+                               '{{ none is defined }}|{{ missing is defined }}')
+        assert tmpl.render() == 'True|False|None|True|False'
+
+    def test_const_assign(self):
+        constass1 = '''{% set true = 42 %}'''
+        constass2 = '''{% for none in seq %}{% endfor %}'''
+        for tmpl in constass1, constass2:
+            self.assert_raises(TemplateSyntaxError, env.from_string, tmpl)
+
+    def test_localset(self):
+        tmpl = env.from_string('''{% set foo = 0 %}\
+{% for item in [1, 2] %}{% set foo = 1 %}{% endfor %}\
+{{ foo }}''')
+        assert tmpl.render() == '0'
 
 
 def suite():
