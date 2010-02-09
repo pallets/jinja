@@ -808,8 +808,11 @@ class TemplateModule(object):
         self.__dict__.update(context.get_exported())
         self.__name__ = template.name
 
-    __unicode__ = lambda x: concat(x._body_stream)
-    __html__ = lambda x: Markup(concat(x._body_stream))
+    def __unicode__(self):
+        return concat(self._body_stream)
+
+    def __html__(self):
+        return Markup(concat(self._body_stream))
 
     def __str__(self):
         return unicode(self).encode('utf-8')

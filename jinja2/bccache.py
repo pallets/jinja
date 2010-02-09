@@ -108,12 +108,12 @@ class BytecodeCache(object):
             def load_bytecode(self, bucket):
                 filename = path.join(self.directory, bucket.key)
                 if path.exists(filename):
-                    with file(filename, 'rb') as f:
+                    with open(filename, 'rb') as f:
                         bucket.load_bytecode(f)
 
             def dump_bytecode(self, bucket):
                 filename = path.join(self.directory, bucket.key)
-                with file(filename, 'wb') as f:
+                with open(filename, 'wb') as f:
                     bucket.write_bytecode(f)
 
     A more advanced version of a filesystem based bytecode cache is part of
@@ -202,7 +202,7 @@ class FileSystemBytecodeCache(BytecodeCache):
                 f.close()
 
     def dump_bytecode(self, bucket):
-        f = file(self._get_cache_filename(bucket), 'wb')
+        f = open(self._get_cache_filename(bucket), 'wb')
         try:
             bucket.write_bytecode(f)
         finally:

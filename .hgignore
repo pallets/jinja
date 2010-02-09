@@ -7,4 +7,3 @@
 \$py\.class$
 \.DS_Store$
 ^j?env/
-^py3k/

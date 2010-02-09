@@ -43,13 +43,14 @@ import os
 import sys
 
 from setuptools import setup, Extension, Feature
-from distutils.command.build_ext import build_ext
-from distutils.errors import CCompilerError, DistutilsPlatformError
 
-try:
-    from distutils.command.build_py import build_py_2to3 as build_py
-except ImportError:
-    from distutils.command.build_py import build_py
+# tell distribute to use 2to3 with our own fixers.
+extra = {}
+if sys.version_info >= (3, 0):
+    extra.update(
+        use_2to3=True,
+        use_2to3_fixers=['custom_fixers']
+    )
 
 
 setup(
@@ -89,5 +90,5 @@ setup(
     [babel.extractors]
     jinja2 = jinja2.ext:babel_extract[i18n]
     """,
-    cmdclass=dict(build_py=build_py)
+    **extra
 )
