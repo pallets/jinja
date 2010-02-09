@@ -52,7 +52,7 @@ a lot easier to use it also enables template inheritance.
 Unicode
 -------
 
-Jinja2 is using unicode internally which means that you have to pass unicode
+Jinja2 is using Unicode internally which means that you have to pass Unicode
 objects to the render function or bytestrings that only consist of ASCII
 characters.  Additionally newlines are normalized to one end of line
 sequence which is per default UNIX style (``\n``).
@@ -64,14 +64,14 @@ be used to store text based information unless only ASCII characters are
 used.  With Python 2.6 it is possible to make `unicode` the default on a per
 module level and with Python 3 it will be the default.
 
-To explicitly use a unicode string you have to prefix the string literal
+To explicitly use a Unicode string you have to prefix the string literal
 with a `u`: ``u'Hänsel und Gretel sagen Hallo'``.  That way Python will
-store the string as unicode by decoding the string with the character
+store the string as Unicode by decoding the string with the character
 encoding from the current Python module.  If no encoding is specified this
 defaults to 'ASCII' which means that you can't use any non ASCII identifier.
 
 To set a better module encoding add the following comment to the first or
-second line of the Python module using the unicode literal::
+second line of the Python module using the Unicode literal::
 
     # -*- coding: utf-8 -*-
 
@@ -80,20 +80,20 @@ possible to represent every Unicode character in utf-8 and because it's
 backwards compatible to ASCII.  For Jinja2 the default encoding of templates
 is assumed to be utf-8.
 
-It is not possible to use Jinja2 to process non unicode data.  The reason
+It is not possible to use Jinja2 to process non-Unicode data.  The reason
 for this is that Jinja2 uses Unicode already on the language level.  For
 example Jinja2 treats the non-breaking space as valid whitespace inside
 expressions which requires knowledge of the encoding or operating on an
-unicode string.
+Unicode string.
 
-For more details about unicode in Python have a look at the excellent
+For more details about Unicode in Python have a look at the excellent
 `Unicode documentation`_.
 
 Another important thing is how Jinja2 is handling string literals in
-templates.  A naive implementation would be using unicode strings for
+templates.  A naive implementation would be using Unicode strings for
 all string literals but it turned out in the past that this is problematic
 as some libraries are typechecking against `str` explicitly.  For example
-`datetime.strftime` does not accept unicode arguments.  To not break it
+`datetime.strftime` does not accept Unicode arguments.  To not break it
 completely Jinja2 is returning `str` for strings that fit into ASCII and
 for everything else `unicode`:
 

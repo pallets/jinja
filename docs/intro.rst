@@ -37,7 +37,7 @@ that can create python extensions should be installed for the debugger.  If no
 C-compiler is available and you are using Python 2.4 the `ctypes`_ module
 should be installed.
 
-If you don't have a working C compiler and you are trying to install the source
+If you don't have a working C-compiler and you are trying to install the source
 release with the speedups you will get a compiler error.  This however can be
 circumvented by passing the ``--without-speedups`` command line argument to the
 setup script::
