@@ -215,14 +215,12 @@ class MacrosTestCase(JinjaTestCase):
 {% macro level2(data2) %}{{ data1 }}|{{ data2 }}{% endmacro %}
 {{ level2('bar') }}{% endmacro %}
 {{ level1('foo') }}''')
-        print repr(tmpl.render())
         assert tmpl.render() == 'foo|bar'
 
     def test_arguments(self):
         tmpl = self.env.from_string('''\
 {% macro m(a, b, c='c', d='d') %}{{ a }}|{{ b }}|{{ c }}|{{ d }}{% endmacro %}
 {{ m() }}|{{ m('a') }}|{{ m('a', 'b') }}|{{ m(1, 2, 3) }}''')
-        print tmpl.render()
         assert tmpl.render() == '||c|d|a||c|d|a|b|c|d|1|2|3|d'
 
     def test_varargs(self):
