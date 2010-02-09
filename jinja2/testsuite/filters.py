@@ -16,67 +16,6 @@ from jinja2 import Markup, Environment
 env = Environment()
 
 
-CAPITALIZE = '''{{ "foo bar"|capitalize }}'''
-CENTER = '''{{ "foo"|center(9) }}'''
-DEFAULT = '''{{ missing|default("no") }}|{{ false|default('no') }}|\
-{{ false|default('no', true) }}|{{ given|default("no") }}'''
-DICTSORT = '''{{ foo|dictsort }}|\
-{{ foo|dictsort(true) }}|\
-{{ foo|dictsort(false, 'value') }}'''
-BATCH = '''{{ foo|batch(3)|list }}|{{ foo|batch(3, 'X')|list }}'''
-SLICE = '''{{ foo|slice(3)|list }}|{{ foo|slice(3, 'X')|list }}'''
-ESCAPE = '''{{ '<">&'|escape }}'''
-STRIPTAGS = '''{{ foo|striptags }}'''
-FILESIZEFORMAT = '{{ 100|filesizeformat }}|\
-{{ 1000|filesizeformat }}|\
-{{ 1000000|filesizeformat }}|\
-{{ 1000000000|filesizeformat }}|\
-{{ 1000000000000|filesizeformat }}|\
-{{ 100|filesizeformat(true) }}|\
-{{ 1000|filesizeformat(true) }}|\
-{{ 1000000|filesizeformat(true) }}|\
-{{ 1000000000|filesizeformat(true) }}|\
-{{ 1000000000000|filesizeformat(true) }}'
-FIRST = '''{{ foo|first }}'''
-FLOAT = '''{{ "42"|float }}|{{ "ajsghasjgd"|float }}|{{ "32.32"|float }}'''
-FORMAT = '''{{ "%s|%s"|format("a", "b") }}'''
-INDENT = '''{{ foo|indent(2) }}|{{ foo|indent(2, true) }}'''
-INT = '''{{ "42"|int }}|{{ "ajsghasjgd"|int }}|{{ "32.32"|int }}'''
-JOIN = '''{{ [1, 2, 3]|join("|") }}'''
-LAST = '''{{ foo|last }}'''
-LENGTH = '''{{ "hello world"|length }}'''
-LOWER = '''{{ "FOO"|lower }}'''
-PPRINT = '''{{ data|pprint }}'''
-RANDOM = '''{{ seq|random }}'''
-REVERSE = '''{{ "foobar"|reverse|join }}|{{ [1, 2, 3]|reverse|list }}'''
-STRING = '''{{ range(10)|string }}'''
-TITLE = '''{{ "foo bar"|title }}'''
-TRIM = '''{{ "      foo       "|trim }}'''
-TRUNCATE = '''{{ data|truncate(15, true, ">>>") }}|\
-{{ data|truncate(15, false, ">>>") }}|\
-{{ smalldata|truncate(15) }}'''
-UPPER = '''{{ "foo"|upper }}'''
-URLIZE = '''{{ "foo http://www.example.com/ bar"|urlize }}'''
-WORDCOUNT = '''{{ "foo bar baz"|wordcount }}'''
-BLOCK = '''{% filter lower|escape %}<HEHE>{% endfilter %}'''
-CHAINING = '''{{ ['<foo>', '<bar>']|first|upper|escape }}'''
-SUM = '''{{ [1, 2, 3, 4, 5, 6]|sum }}'''
-ABS = '''{{ -1|abs }}|{{ 1|abs }}'''
-ROUND = '''{{ 2.7|round }}|{{ 2.1|round }}|\
-{{ 2.1234|round(2, 'floor') }}|{{ 2.1|round(0, 'ceil') }}'''
-XMLATTR = '''{{ {'foo': 42, 'bar': 23, 'fish': none,
-'spam': missing, 'blub:blub': '<?>'}|xmlattr }}'''
-SORT1 = '''{{ [2, 3, 1]|sort }}|{{ [2, 3, 1]|sort(true) }}'''
-GROUPBY = '''{% for grouper, list in [{'foo': 1, 'bar': 2},
-                 {'foo': 2, 'bar': 3},
-                 {'foo': 1, 'bar': 1},
-                 {'foo': 3, 'bar': 4}]|groupby('foo') -%}
-{{ grouper }}: {{ list|join(', ') }}
-{% endfor %}'''
-FILTERTAG = '''{% filter upper|replace('FOO', 'foo') %}foobar{% endfilter %}'''
-SORT2 = '''{{ ['foo', 'Bar', 'blah']|sort }}'''
-
-
 class FilterTestCase(JinjaTestCase):
 
     def test_capitalize(self):
