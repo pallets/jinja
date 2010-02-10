@@ -494,13 +494,18 @@ class Filter(Expr):
     def as_const(self, obj=None):
         if self.node is obj is None:
             raise Impossible()
-        filter = self.environment.filters.get(self.name)
-        if filter is None or getattr(filter, 'contextfilter', False):
+        # we have to be careful here because we call filter_ below.
+        # if this variable would be called filter, 2to3 would wrap the
+        # call in a list beause it is assuming we are talking about the
+        # builtin filter function here which no longer returns a list in
+        # python 3.  because of that, do not rename filter_ to filter!
+        filter_ = self.environment.filters.get(self.name)
+        if filter_ is None or getattr(filter_, 'contextfilter', False):
             raise Impossible()
         if obj is None:
             obj = self.node.as_const()
         args = [x.as_const() for x in self.args]
-        if getattr(filter, 'environmentfilter', False):
+        if getattr(filter_, 'environmentfilter', False):
             args.insert(0, self.environment)
         kwargs = dict(x.as_const() for x in self.kwargs)
         if self.dyn_args is not None:
@@ -514,7 +519,7 @@ class Filter(Expr):
             except:
                 raise Impossible()
         try:
-            return filter(obj, *args, **kwargs)
+            return filter_(obj, *args, **kwargs)
         except:
             raise Impossible()
 

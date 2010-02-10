@@ -17,6 +17,13 @@ from jinja2 import Environment, DictLoader, contextfunction, nodes
 from jinja2.exceptions import TemplateAssertionError
 from jinja2.ext import Extension
 from jinja2.lexer import Token, count_newlines
+from jinja2.utils import next
+
+# 2.x / 3.x
+try:
+    from io import BytesIO
+except ImportError:
+    from StringIO import StringIO as BytesIO
 
 
 importable_object = 23
@@ -81,7 +88,7 @@ class TestExtension(Extension):
             self.attr('ext_attr'),
             nodes.ImportedName(__name__ + '.importable_object'),
             nodes.ContextReference()
-        ])]).set_lineno(parser.stream.next().lineno)
+        ])]).set_lineno(next(parser.stream).lineno)
 
     def _dump(self, sandboxed, ext_attr, imported_object, context):
         return '%s|%s|%s|%s' % (
@@ -222,12 +229,11 @@ class InternationalizationTestCase(JinjaTestCase):
 
     def test_extract(self):
         from jinja2.ext import babel_extract
-        from StringIO import StringIO
-        source = StringIO('''
+        source = BytesIO('''
         {{ gettext('Hello World') }}
         {% trans %}Hello World{% endtrans %}
         {% trans %}{{ users }} user{% pluralize %}{{ users }} users{% endtrans %}
-        ''')
+        '''.encode('ascii')) # make python 3 happy
         assert list(babel_extract(source, ('gettext', 'ngettext', '_'), [], {})) == [
             (2, 'gettext', u'Hello World', []),
             (3, 'gettext', u'Hello World', []),
@@ -236,14 +242,13 @@ class InternationalizationTestCase(JinjaTestCase):
 
     def test_comment_extract(self):
         from jinja2.ext import babel_extract
-        from StringIO import StringIO
-        source = StringIO('''
+        source = BytesIO('''
         {# trans first #}
         {{ gettext('Hello World') }}
         {% trans %}Hello World{% endtrans %}{# trans second #}
         {#: third #}
         {% trans %}{{ users }} user{% pluralize %}{{ users }} users{% endtrans %}
-        ''')
+        '''.encode('utf-8')) # make python 3 happy
         assert list(babel_extract(source, ('gettext', 'ngettext', '_'), ['trans', ':'], {})) == [
             (3, 'gettext', u'Hello World', ['first']),
             (4, 'gettext', u'Hello World', ['second']),

@@ -530,7 +530,8 @@ class Lexer(object):
                     raise TemplateSyntaxError(msg, lineno, name, filename)
                 # if we can express it as bytestring (ascii only)
                 # we do that for support of semi broken APIs
-                # as datetime.datetime.strftime
+                # as datetime.datetime.strftime.  On python 3 this
+                # call becomes a noop thanks to 2to3
                 try:
                     value = str(value)
                 except UnicodeError:

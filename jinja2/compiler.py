@@ -36,6 +36,14 @@ else:
     have_condexpr = True
 
 
+# what method to iterate over items do we want to use for dict iteration
+# in generated code?  on 2.x let's go with iteritems, on 3.x with items
+if hasattr(dict, 'iteritems'):
+    dict_item_iter = 'iteritems'
+else:
+    dict_item_iter = 'items'
+
+
 def generate(node, environment, name, filename, stream=None):
     """Generate the python source for a node tree."""
     if not isinstance(node, nodes.Template):
@@ -867,7 +875,7 @@ class CodeGenerator(NodeVisitor):
         self.visit(node.template, frame)
         self.write(', %r)' % self.name)
         self.writeline('for name, parent_block in parent_template.'
-                       'blocks.iteritems():')
+                       'blocks.%s():' % dict_item_iter)
         self.indent()
         self.writeline('context.blocks.setdefault(name, []).'
                        'append(parent_block)')

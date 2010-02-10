@@ -19,7 +19,7 @@ from jinja2.runtime import Undefined, new_context
 from jinja2.exceptions import TemplateSyntaxError, TemplateNotFound, \
      TemplatesNotFound
 from jinja2.utils import import_string, LRUCache, Markup, missing, \
-     concat, consume, internalcode
+     concat, consume, internalcode, _encode_filename
 
 
 # for direct template usage we have up to ten living environments
@@ -375,9 +375,7 @@ class Environment(object):
 
     def _parse(self, source, name, filename):
         """Internal parsing function used by `parse` and `compile`."""
-        if isinstance(filename, unicode):
-            filename = filename.encode('utf-8')
-        return Parser(self, source, name, filename).parse()
+        return Parser(self, source, name, _encode_filename(filename)).parse()
 
     def lex(self, source, name=None, filename=None):
         """Lex the given sourcecode and return a generator that yields
@@ -442,8 +440,8 @@ class Environment(object):
                 return source
             if filename is None:
                 filename = '<template>'
-            elif isinstance(filename, unicode):
-                filename = filename.encode('utf-8')
+            else:
+                filename = _encode_filename(filename)
             return compile(source, filename, 'exec')
         except TemplateSyntaxError:
             exc_info = sys.exc_info()

@@ -72,23 +72,28 @@ except NameError:
         return x.next()
 
 
-# ironpython without stdlib doesn't have keyword
-try:
-    from keyword import iskeyword as is_python_keyword
-except ImportError:
-    _py_identifier_re = re.compile(r'^[a-zA-Z_][a-zA-Z0-9]*$')
-    def is_python_keyword(name):
-        if _py_identifier_re.search(name) is None:
-            return False
-        try:
-            exec name + " = 42"
-        except SyntaxError:
-            return False
-        return True
+# if this python version is unable to deal with unicode filenames
+# when passed to encode we let this function encode it properly.
+# This is used in a couple of places.  As far as Jinja is concerned
+# filenames are unicode *or* bytestrings in 2.x and unicode only in
+# 3.x because compile cannot handle bytes
+if sys.version_info < (3, 0):
+    def _encode_filename(filename):
+        if isinstance(filename, unicode):
+            return filename.encode('utf-8')
+        return filename
+else:
+    def _encode_filename(filename):
+        assert filename is None or isinstance(filename, str), \
+            'filenames must be strings'
+        return filename
+
+from keyword import iskeyword as is_python_keyword
 
 
 # common types.  These do exist in the special types module too which however
-# does not exist in IronPython out of the box.
+# does not exist in IronPython out of the box.  Also that way we don't have
+# to deal with implementation specific stuff here
 class _C(object):
     def method(self): pass
 def _func():

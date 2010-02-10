@@ -92,7 +92,7 @@ class TemplateSyntaxError(TemplateError):
     def __unicode__(self):
         # for translated errors we only return the message
         if self.translated:
-            return self.message.encode('utf-8')
+            return self.message
 
         # otherwise attach some stuff
         location = 'line %d' % self.lineno
