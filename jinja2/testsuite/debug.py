@@ -38,8 +38,7 @@ ZeroDivisionError: int(eger)? division or modulo by zero
         # be fixed though.
         self.assert_traceback_matches(lambda: env.get_template('syntaxerror.html'), r'''(?sm)
   File ".*?syntaxerror.html", line 4, in (template|<module>)
-    \{% endif %\}
-  .*?
+    \{% endif %\}.*?
 (jinja2\.exceptions\.)?TemplateSyntaxError: Encountered unknown tag 'endif'. Jinja was looking for the following tags: 'endfor' or 'else'. The innermost block that needs to be closed is 'for'.
     ''')
 
