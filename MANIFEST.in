@@ -1,7 +1,6 @@
 include MANIFEST.in Makefile CHANGES LICENSE AUTHORS
 recursive-include docs *
 recursive-include custom_fixers *
-recursive-include tests *
 recursive-include ext *
 recursive-include artwork *
 recursive-include examples *
