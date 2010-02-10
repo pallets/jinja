@@ -161,8 +161,9 @@ class FilterTestCase(JinjaTestCase):
         assert tmpl.render() == 'raboof|[3, 2, 1]'
 
     def test_string(self):
-        tmpl = env.from_string('''{{ range(10)|string }}''')
-        assert tmpl.render(foo=range(10)) == unicode(xrange(10))
+        x = [1, 2, 3, 4, 5]
+        tmpl = env.from_string('''{{ obj|string }}''')
+        assert tmpl.render(obj=x) == unicode(x)
 
     def test_title(self):
         tmpl = env.from_string('''{{ "foo bar"|title }}''')

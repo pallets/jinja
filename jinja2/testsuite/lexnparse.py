@@ -9,6 +9,7 @@
     :license: BSD, see LICENSE for more details.
 """
 import os
+import sys
 import time
 import tempfile
 import unittest
@@ -18,6 +19,14 @@ from jinja2.testsuite import JinjaTestCase
 from jinja2 import Environment, Template, TemplateSyntaxError, UndefinedError
 
 env = Environment()
+
+
+# how does a string look like in jinja syntax?
+if sys.version_info < (3, 0):
+    def jinja_string_repr(string):
+        return repr(string)[1:]
+else:
+    jinja_string_repr = repr
 
 
 class LexerTestCase(JinjaTestCase):
@@ -46,13 +55,14 @@ class LexerTestCase(JinjaTestCase):
 
     def test_string_escapes(self):
         for char in u'\0', u'\u2668', u'\xe4', u'\t', u'\r', u'\n':
-            tmpl = env.from_string('{{ %s }}' % repr(char)[1:])
+            tmpl = env.from_string('{{ %s }}' % jinja_string_repr(char))
             assert tmpl.render() == char
         assert env.from_string('{{ "\N{HOT SPRINGS}" }}').render() == u'\u2668'
 
     def test_bytefallback(self):
+        from pprint import pformat
         tmpl = env.from_string(u'''{{ 'foo'|pprint }}|{{ 'bär'|pprint }}''')
-        assert tmpl.render() == u"'foo'|u'b\\xe4r'"
+        assert tmpl.render() == pformat('foo') + '|' + pformat(u'bär')
 
     def test_operators(self):
         from jinja2.lexer import operators
