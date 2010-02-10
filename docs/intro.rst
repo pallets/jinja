@@ -77,11 +77,12 @@ From the tarball release
 2.  Unpack the tarball
 3.  ``sudo python setup.py install``
 
-Note that the last command will automatically download and install
-`setuptools`_ if you don't already have it installed. This requires a working
-internet connection.
+Note that you either have to have setuptools or `distribute`_ installed,
+the latter is preferred.
 
 This will install Jinja2 into your Python installation's site-packages directory.
+
+.. _distribute: http://pypi.python.org/pypi/distribute
 
 Installing the development version
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
@@ -92,17 +93,17 @@ Installing the development version
 4.  ``ln -s jinja2 /usr/lib/python2.X/site-packages``
 
 As an alternative to steps 4 you can also do ``python setup.py develop``
-which will install the package via setuptools in development mode.  This also
+which will install the package via distribute in development mode.  This also
 has the advantage that the C extensions are compiled.
 
-Alternative you can use `easy_install`_ to install the current development
+Alternative you can use `pip`_ to install the current development
 snapshot::
 
-    sudo easy_install Jinja2==dev
-
-Or the new `pip`_ command::
-
     sudo pip install Jinja2==dev
+
+Or the `easy_install`_ command::
+
+    sudo easy_install Jinja2==dev
 
 .. _download page: http://pypi.python.org/pypi/Jinja2
 .. _setuptools: http://peak.telecommunity.com/DevCenter/setuptools
