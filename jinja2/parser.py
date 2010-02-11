@@ -54,21 +54,26 @@ class Parser(object):
         expected = []
         for exprs in end_token_stack:
             expected.extend(map(describe_token_expr, exprs))
-        currently_looking = ' or '.join("'%s'" % describe_token_expr(expr)
-                                        for expr in end_token_stack[-1])
+        if end_token_stack:
+            currently_looking = ' or '.join(
+                "'%s'" % describe_token_expr(expr)
+                for expr in end_token_stack[-1])
+        else:
+            currently_looking = None
 
         if name is None:
             message = ['Unexpected end of template.']
         else:
             message = ['Encountered unknown tag \'%s\'.' % name]
 
-        if name is not None and name in expected:
-            message.append('You probably made a nesting mistake. Jinja '
-                           'is expecting this tag, but currently looking '
-                           'for %s.' % currently_looking)
-        else:
-            message.append('Jinja was looking for the following tags: '
-                           '%s.' % currently_looking)
+        if currently_looking:
+            if name is not None and name in expected:
+                message.append('You probably made a nesting mistake. Jinja '
+                               'is expecting this tag, but currently looking '
+                               'for %s.' % currently_looking)
+            else:
+                message.append('Jinja was looking for the following tags: '
+                               '%s.' % currently_looking)
 
         if self._tag_stack:
             message.append('The innermost block that needs to be '
