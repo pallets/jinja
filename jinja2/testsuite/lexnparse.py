@@ -188,6 +188,8 @@ and bar comment #}
         assert_error('{% block foo-bar-baz %}',
                      "Block names in Jinja have to be valid Python identifiers "
                      "and may not contain hypens, use an underscore instead.")
+        assert_error('{% unknown_tag %}',
+                     "Encountered unknown tag 'unknown_tag'.")
 
 
 class SyntaxTestCase(JinjaTestCase):
