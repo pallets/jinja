@@ -5,6 +5,11 @@ Version 2.4
 -----------
 (codename to be selected, release date to be decided)
 
+- the environment template loading functions now transparently
+  pass through a template object if it was passed to it.  This
+  makes it possible to import or extend from a template object
+  that was passed to the template.
+
 Version 2.3
 -----------
 (3000 Pythons, released on February 10th 2010)

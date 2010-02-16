@@ -552,6 +552,8 @@ class Environment(object):
         If the template does not exist a :exc:`TemplateNotFound` exception is
         raised.
         """
+        if isinstance(name, Template):
+            return name
         if parent is not None:
             name = self.join_path(name, parent)
         return self._load_template(name, self.make_globals(globals))
@@ -569,6 +571,8 @@ class Environment(object):
                                             u'of templates.')
         globals = self.make_globals(globals)
         for name in names:
+            if isinstance(name, Template):
+                return name
             if parent is not None:
                 name = self.join_path(name, parent)
             try:
@@ -588,6 +592,8 @@ class Environment(object):
         """
         if isinstance(template_name_or_list, basestring):
             return self.get_template(template_name_or_list, parent, globals)
+        elif isinstance(template_name_or_list, Template):
+            return template_name_or_list
         return self.select_template(template_name_or_list, parent, globals)
 
     def from_string(self, source, globals=None, template_class=None):

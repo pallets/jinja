@@ -17,7 +17,7 @@ from jinja2.testsuite import JinjaTestCase
 
 from jinja2 import Environment, Undefined, DebugUndefined, \
      StrictUndefined, UndefinedError, Template, meta, \
-     is_undefined
+     is_undefined, Template
 from jinja2.utils import Cycler
 
 env = Environment()
@@ -68,6 +68,13 @@ class ExtendedAPITestCase(JinjaTestCase):
 
         expr = env.compile_expression("42 + foo")
         assert expr(foo=42) == 84
+
+    def test_template_passthrough(self):
+        t = Template('Content')
+        assert env.get_template(t) is t
+        assert env.select_template([t]) is t
+        assert env.get_or_select_template([t]) is t
+        assert env.get_or_select_template(t) is t
 
 
 class MetaTestCase(JinjaTestCase):

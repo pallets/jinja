@@ -409,6 +409,22 @@ modifier to a block declaration::
 When overriding a block the `scoped` modifier does not have to be provided.
 
 
+Template Objects
+~~~~~~~~~~~~~~~~
+
+.. versionchanged:: 2.4
+
+If a template object was passed to the template context you can
+extend from that object as well.  Assuming the calling code passes
+a layout template as `layout_template` to the environment, this
+code works::
+
+    {% extends layout_template %}
+
+Previously the `layout_template` variable had to be a string with
+the layout template's filename for this to work.
+
+
 HTML Escaping
 -------------
 
@@ -776,6 +792,10 @@ Example::
     {% include ['page_detailed.html', 'page.html'] %}
     {% include ['special_sidebar.html', 'sidebar.html'] ignore missing %}
 
+.. versionchanged:: 2.4
+   If a template object was passed to the template context you can
+   include that object using `include`.
+
 .. _import:
 
 Import
@@ -829,6 +849,10 @@ namespace::
 
 Macros and variables starting with one ore more underscores are private and
 cannot be imported.
+
+.. versionchanged:: 2.4
+   If a template object was passed to the template context you can
+   import from that object.
 
 
 .. _import-visibility:
