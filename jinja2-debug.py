@@ -6,7 +6,7 @@
 
     Helper script for internal Jinja2 debugging.  Requires Werkzeug.
 
-    :copyright: Copyright 2008 by Armin Ronacher.
+    :copyright: Copyright 2010 by Armin Ronacher.
     :license: BSD.
 """
 import sys
