@@ -551,6 +551,10 @@ class Environment(object):
 
         If the template does not exist a :exc:`TemplateNotFound` exception is
         raised.
+
+        .. versionchanged:: 2.4
+           If `name` is a :class:`Template` object it is returned from the
+           function unchanged.
         """
         if isinstance(name, Template):
             return name
@@ -565,6 +569,10 @@ class Environment(object):
         raise a :exc:`TemplatesNotFound` exception.
 
         .. versionadded:: 2.3
+
+        .. versionchanged:: 2.4
+           If `names` contains a :class:`Template` object it is returned
+           from the function unchanged.
         """
         if not names:
             raise TemplatesNotFound(message=u'Tried to select from an empty list '
