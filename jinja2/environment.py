@@ -592,9 +592,9 @@ class Environment(object):
     @internalcode
     def get_or_select_template(self, template_name_or_list,
                                parent=None, globals=None):
-        """
-        Does a typecheck and dispatches to :meth:`select_template` if an
-        iterable of template names is given, otherwise to :meth:`get_template`.
+        """Does a typecheck and dispatches to :meth:`select_template`
+        if an iterable of template names is given, otherwise to
+        :meth:`get_template`.
 
         .. versionadded:: 2.3
         """
