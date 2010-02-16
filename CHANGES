@@ -3,7 +3,7 @@ Jinja2 Changelog
 
 Version 2.4
 -----------
-(codename to be selected, release date to be decided)
+(codename to be selected, release date unknown)
 
 - the environment template loading functions now transparently
   pass through a template object if it was passed to it.  This
