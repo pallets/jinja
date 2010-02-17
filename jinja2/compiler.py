@@ -44,6 +44,15 @@ else:
     dict_item_iter = 'items'
 
 
+# does if 0: dummy(x) get us x into the scope?
+def unoptimize_before_dead_code():
+    x = 42
+    def f():
+        if 0: dummy(x)
+    return f
+unoptimize_before_dead_code = bool(unoptimize_before_dead_code().func_closure)
+
+
 def generate(node, environment, name, filename, stream=None):
     """Generate the python source for a node tree."""
     if not isinstance(node, nodes.Template):
@@ -576,8 +585,10 @@ class CodeGenerator(NodeVisitor):
         # is removed.  If that breaks we have to add a dummy function
         # that just accepts the arguments and does nothing.
         if frame.identifiers.declared:
-            self.writeline('if 0: dummy(%s)' % ', '.join(
-                'l_' + name for name in frame.identifiers.declared))
+            self.writeline('%sdummy(%s)' % (
+                unoptimize_before_dead_code and 'if 0: ' or '',
+                ', '.join('l_' + name for name in frame.identifiers.declared)
+            ))
 
     def push_scope(self, frame, extra_vars=()):
         """This function returns all the shadowed variables in a dict
@@ -739,6 +750,8 @@ class CodeGenerator(NodeVisitor):
         from jinja2.runtime import __all__ as exported
         self.writeline('from __future__ import division')
         self.writeline('from jinja2.runtime import ' + ', '.join(exported))
+        if not unoptimize_before_dead_code:
+            self.writeline('dummy = lambda *x: None')
 
         # do we have an extends tag at all?  If not, we can save some
         # overhead by just not processing any inheritance code.
