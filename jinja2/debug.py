@@ -113,7 +113,7 @@ def translate_syntax_error(error, source=None):
     """Rewrites a syntax error to please traceback systems."""
     error.source = source
     error.translated = True
-    exc_info = (type(error), error, None)
+    exc_info = (error.__class__, error, None)
     filename = error.filename
     if filename is None:
         filename = '<unknown>'

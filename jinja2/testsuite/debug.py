@@ -8,6 +8,7 @@
     :copyright: (c) 2010 by the Jinja Team.
     :license: BSD, see LICENSE for more details.
 """
+import sys
 import unittest
 
 from jinja2.testsuite import JinjaTestCase, filesystem_loader
@@ -19,11 +20,12 @@ env = Environment(loader=filesystem_loader)
 
 class DebugTestCase(JinjaTestCase):
 
-    def test_runtime_error(self):
-        def test():
-            tmpl.render(fail=lambda: 1 / 0)
-        tmpl = env.get_template('broken.html')
-        self.assert_traceback_matches(test, r'''
+    if sys.version_info[:2] != (2, 4):
+        def test_runtime_error(self):
+            def test():
+                tmpl.render(fail=lambda: 1 / 0)
+            tmpl = env.get_template('broken.html')
+            self.assert_traceback_matches(test, r'''
   File ".*?broken.html", line 2, in (top-level template code|<module>)
     \{\{ fail\(\) \}\}
   File ".*?debug.pyc?", line \d+, in <lambda>
