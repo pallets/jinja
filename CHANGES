@@ -10,6 +10,13 @@ Version 2.4
   makes it possible to import or extend from a template object
   that was passed to the template.
 
+Version 2.3.1
+-------------
+(bugfix release, released on February 19th 2010)
+
+- fixed an error reporting bug on all python versions
+- fixed an error reporting bug on Python 2.4
+
 Version 2.3
 -----------
 (3000 Pythons, released on February 10th 2010)
