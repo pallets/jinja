@@ -1,9 +1,16 @@
 Jinja2 Changelog
 ================
 
+Version 2.3.1
+-------------
+(bugfix release, released on February 19th 2010)
+
+- fixed an error reporting bug on all python versions
+- fixed an error reporting bug on Python 2.4
+
 Version 2.3
 -----------
-(codename to be selected, release date will be February 9th 2010)
+(3000 Pythons, released on February 10th 2010)
 
 - fixes issue with code generator that causes unbound variables
   to be generated if set was used in if-blocks and other small
