@@ -30,7 +30,7 @@ class DebugTestCase(JinjaTestCase):
     \{\{ fail\(\) \}\}
   File ".*?debug.pyc?", line \d+, in <lambda>
     tmpl\.render\(fail=lambda: 1 / 0\)
-ZeroDivisionError: int(eger)? division or modulo by zero
+ZeroDivisionError: (int(eger)? )?division (or modulo )?by zero
 ''')
 
     def test_syntax_error(self):
