@@ -10,6 +10,8 @@ Version 2.4
   makes it possible to import or extend from a template object
   that was passed to the template.
 
+- the _speedups C extension now supports Python 3.
+
 Version 2.3.1
 -------------
 (bugfix release, released on February 19th 2010)

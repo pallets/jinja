@@ -123,7 +123,10 @@ escape(PyObject *self, PyObject *text)
 	PyObject *s = NULL, *rv = NULL, *html;
 
 	/* we don't have to escape integers, bools or floats */
-	if (PyInt_CheckExact(text) || PyLong_CheckExact(text) ||
+	if (PyLong_CheckExact(text) ||
+#if PY_MAJOR_VERSION < 3
+	    PyInt_CheckExact(text) ||
+#endif
 	    PyFloat_CheckExact(text) || PyBool_Check(text) ||
 	    text == Py_None)
 		return PyObject_CallFunctionObjArgs(markup, text, NULL);
@@ -139,7 +142,11 @@ escape(PyObject *self, PyObject *text)
 	/* otherwise make the object unicode if it isn't, then escape */
 	PyErr_Clear();
 	if (!PyUnicode_Check(text)) {
+#if PY_MAJOR_VERSION < 3
 		PyObject *unicode = PyObject_Unicode(text);
+#else
+		PyObject *unicode = PyObject_Str(text);
+#endif
 		if (!unicode)
 			return NULL;
 		s = escape_unicode((PyUnicodeObject*)unicode);
@@ -159,7 +166,11 @@ static PyObject*
 soft_unicode(PyObject *self, PyObject *s)
 {
 	if (!PyUnicode_Check(s))
+#if PY_MAJOR_VERSION < 3
 		return PyObject_Unicode(s);
+#else
+		return PyObject_Str(s);
+#endif
 	Py_INCREF(s);
 	return s;
 }
@@ -208,6 +219,8 @@ static PyMethodDef module_methods[] = {
 };
 
 
+#if PY_MAJOR_VERSION < 3
+
 #ifndef PyMODINIT_FUNC	/* declarations for DLL import/export */
 #define PyMODINIT_FUNC void
 #endif
@@ -219,3 +232,28 @@ init_speedups(void)
 
 	Py_InitModule3("jinja2._speedups", module_methods, "");
 }
+
+#else /* Python 3.x module initialization */
+
+static struct PyModuleDef module_definition = {
+        PyModuleDef_HEAD_INIT,
+	"jinja2._speedups",
+	NULL,
+	-1,
+	module_methods,
+	NULL,
+	NULL,
+	NULL,
+	NULL
+};
+
+PyMODINIT_FUNC
+PyInit__speedups(void)
+{
+	if (!init_constants())
+		return NULL;
+
+	return PyModule_Create(&module_definition);
+}
+
+#endif
