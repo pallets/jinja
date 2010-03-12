@@ -385,13 +385,7 @@ class ChoiceLoader(BaseLoader):
 
 
 class _TemplateModule(ModuleType):
-
-    def __init__(self, module):
-        if isinstance(module, basestring):
-            super(_TemplateModule, self).__init__(module)
-        else:
-            super(_TemplateModule, self).__init__(module.__name__)
-            self.__dict__.update(module.__dict__)
+    """Like a normal module but with support for weak references"""
 
 
 class ModuleLoader(BaseLoader):
@@ -443,8 +437,7 @@ class ModuleLoader(BaseLoader):
         mod = getattr(self.module, module, None)
         if mod is None:
             try:
-                mod = _TemplateModule(__import__(module, None,
-                                                 None, ['root']))
+                mod = __import__(module, None, None, ['root'])
             except ImportError:
                 raise TemplateNotFound(name)
 
