@@ -8,6 +8,7 @@
     :copyright: (c) 2010 by the Jinja Team.
     :license: BSD, see LICENSE for more details.
 """
+import os
 import sys
 from jinja2 import nodes
 from jinja2.defaults import *
@@ -501,24 +502,53 @@ class Environment(object):
         return TemplateExpression(template, undefined_to_none)
 
     def compile_templates(self, target, extensions=None, filter_func=None,
-                          zip=True, log_function=None):
+                          zip='deflated', log_function=None,
+                          ignore_errors=True, py_compile=False):
         """Compiles all the templates the loader can find, compiles them
-        and stores them in `target`.  If `zip` is true, a zipfile will be
-        written, otherwise the templates are stored in a directory.
+        and stores them in `target`.  If `zip` is `None`, instead of in a
+        zipfile, the templates will be will be stored in a directory.
+        By default a deflate zip algorithm is used, to switch to
+        the stored algorithm, `zip` can be set to ``'stored'``.
 
         `extensions` and `filter_func` are passed to :meth:`list_templates`.
         Each template returned will be compiled to the target folder or
         zipfile.
 
+        By default template compilation errors are ignored.  In case a
+        log function is provided, errors are logged.  If you want template
+        syntax errors to abort the compilation you can set `ignore_errors`
+        to `False` and you will get an exception on syntax errors.
+
+        If `py_compile` is set to `True` .pyc files will be written to the
+        target instead of standard .py files.
+
         .. versionadded:: 2.4
         """
         from jinja2.loaders import ModuleLoader
+
         if log_function is None:
             log_function = lambda x: None
 
-        if zip:
-            from zipfile import ZipFile, ZipInfo, ZIP_DEFLATED
-            f = ZipFile(target, 'w', ZIP_DEFLATED)
+        if py_compile:
+            import imp, struct, marshal
+            py_header = imp.get_magic() + '\xff\xff\xff\xff'
+
+        def write_file(filename, data):
+            if zip:
+                info = ZipInfo(filename)
+                info.external_attr = 0755 << 16L
+                zip_file.writestr(info, data)
+            else:
+                f = open(os.path.join(target, filename), 'wb')
+                try:
+                    f.write(data)
+                finally:
+                    f.close()
+
+        if zip is not None:
+            from zipfile import ZipFile, ZipInfo, ZIP_DEFLATED, ZIP_STORED
+            zip_file = ZipFile(target, 'w', dict(deflated=ZIP_DEFLATED,
+                                                 stored=ZIP_STORED)[zip])
             log_function('Compiling into Zip archive "%s"' % target)
         else:
             if not os.path.isdir(target):
@@ -531,23 +561,24 @@ class Environment(object):
                 try:
                     code = self.compile(source, name, filename, True, True)
                 except TemplateSyntaxError, e:
+                    if not ignore_errors:
+                        raise
                     log_function('Could not compile "%s": %s' % (name, e))
                     continue
-                module = ModuleLoader.get_module_filename(name)
-                if zip:
-                    info = ZipInfo(module)
-                    info.external_attr = 0755 << 16L
-                    f.writestr(info, code)
+
+                filename = ModuleLoader.get_module_filename(name)
+
+                if py_compile:
+                    c = compile(code, _encode_filename(filename), 'exec')
+                    write_file(filename + 'c', py_header + marshal.dumps(c))
+                    log_function('Byte-compiled "%s" as %s' %
+                                 (name, filename + 'c'))
                 else:
-                    f = open(filename, 'w')
-                    try:
-                        f.write(code)
-                    finally:
-                        f.close()
-                log_function('Compiled "%s" as %s' % (name, module))
+                    write_file(filename, code)
+                    log_function('Compiled "%s" as %s' % (name, filename))
         finally:
             if zip:
-                f.close()
+                zip_file.close()
 
         log_function('Finished compiling templates')
 
