@@ -415,7 +415,8 @@ class Environment(object):
         return stream
 
     @internalcode
-    def compile(self, source, name=None, filename=None, raw=False):
+    def compile(self, source, name=None, filename=None, raw=False,
+                defer_init=False):
         """Compile a node or template source code.  The `name` parameter is
         the load name of the template after it was joined using
         :meth:`join_path` if necessary, not the filename on the file system.
@@ -427,6 +428,13 @@ class Environment(object):
         parameter is `True` the return value will be a string with python
         code equivalent to the bytecode returned otherwise.  This method is
         mainly used internally.
+
+        `defer_init` is use internally to aid the module code generator.  This
+        causes the generated code to be able to import without the global
+        environment variable to be set.
+
+        .. versionadded:: 2.4
+           `defer_init` parameter added.
         """
         source_hint = None
         try:
@@ -435,7 +443,8 @@ class Environment(object):
                 source = self._parse(source, name, filename)
             if self.optimized:
                 source = optimize(source, self)
-            source = generate(source, self, name, filename)
+            source = generate(source, self, name, filename,
+                              defer_init=defer_init)
             if raw:
                 return source
             if filename is None:
@@ -490,6 +499,82 @@ class Environment(object):
         body = [nodes.Assign(nodes.Name('result', 'store'), expr, lineno=1)]
         template = self.from_string(nodes.Template(body, lineno=1))
         return TemplateExpression(template, undefined_to_none)
+
+    def compile_templates(self, target, extensions=None, filter_func=None,
+                          zip=True, log_function=None):
+        """Compiles all the templates the loader can find, compiles them
+        and stores them in `target`.  If `zip` is true, a zipfile will be
+        written, otherwise the templates are stored in a directory.
+
+        `extensions` and `filter_func` are passed to :meth:`list_templates`.
+        Each template returned will be compiled to the target folder or
+        zipfile.
+
+        .. versionadded:: 2.4
+        """
+        from jinja2.loaders import ModuleLoader
+        if log_function is None:
+            log_function = lambda x: None
+
+        if zip:
+            from zipfile import ZipFile, ZipInfo, ZIP_DEFLATED
+            f = ZipFile(target, 'w', ZIP_DEFLATED)
+            log_function('Compiling into Zip archive "%s"' % target)
+        else:
+            if not os.path.isdir(target):
+                os.makedirs(target)
+            log_function('Compiling into folder "%s"' % target)
+
+        try:
+            for name in self.list_templates(extensions, filter_func):
+                source, filename, _ = self.loader.get_source(self, name)
+                try:
+                    code = self.compile(source, name, filename, True, True)
+                except TemplateSyntaxError, e:
+                    log_function('Could not compile "%s": %s' % (name, e))
+                    continue
+                module = ModuleLoader.get_module_filename(name)
+                if zip:
+                    info = ZipInfo(module)
+                    info.external_attr = 0755 << 16L
+                    f.writestr(info, code)
+                else:
+                    f = open(filename, 'w')
+                    try:
+                        f.write(code)
+                    finally:
+                        f.close()
+                log_function('Compiled "%s" as %s' % (name, module))
+        finally:
+            if zip:
+                f.close()
+
+        log_function('Finished compiling templates')
+
+    def list_templates(self, extensions=None, filter_func=None):
+        """Returns a list of templates for this environment.  This requires
+        that the loader supports the loader's
+        :meth:`~BaseLoader.list_templates` method.
+
+        If there are other files in the template folder besides the
+        actual templates, the returned list can be filtered.  There are two
+        ways: either `extensions` is set to a list of file extensions for
+        templates, or a `filter_func` can be provided which is a callable that
+        is passed a template name and should return `True` if it should end up
+        in the result list.
+
+        If the loader does not support that, a :exc:`TypeError` is raised.
+        """
+        x = self.loader.list_templates()
+        if extensions is not None:
+            if filter_func is not None:
+                raise TypeError('either extensions or filter_func '
+                                'can be passed, but not both')
+            filter_func = lambda x: '.' in x and \
+                                    x.rsplit('.', 1)[1] in extensions
+        if filter_func is not None:
+            x = filter(filter_func, x)
+        return x
 
     def handle_exception(self, exc_info=None, rendered=False, source_hint=None):
         """Exception handling helper.  This is used internally to either raise
@@ -679,16 +764,31 @@ class Template(object):
         """Creates a template object from compiled code and the globals.  This
         is used by the loaders and environment to create a template object.
         """
-        t = object.__new__(cls)
         namespace = {
-            'environment':          environment,
-            '__jinja_template__':   t
+            'environment':  environment,
+            '__file__':     code.co_filename
         }
         exec code in namespace
+        rv = cls._from_namespace(environment, namespace, globals)
+        rv._uptodate = uptodate
+        return rv
+
+    @classmethod
+    def from_module_dict(cls, environment, module_dict, globals):
+        """Creates a template object from a module.  This is used by the
+        module loader to create a template object.
+
+        .. versionadded:: 2.4
+        """
+        return cls._from_namespace(environment, module_dict, globals)
+
+    @classmethod
+    def _from_namespace(cls, environment, namespace, globals):
+        t = object.__new__(cls)
         t.environment = environment
         t.globals = globals
         t.name = namespace['name']
-        t.filename = code.co_filename
+        t.filename = namespace['__file__']
         t.blocks = namespace['blocks']
 
         # render function and module
@@ -697,7 +797,11 @@ class Template(object):
 
         # debug and loader helpers
         t._debug_info = namespace['debug_info']
-        t._uptodate = uptodate
+        t._uptodate = None
+
+        # store the reference
+        namespace['environment'] = environment
+        namespace['__jinja_template__'] = t
 
         return t
 

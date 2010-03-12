@@ -9,6 +9,10 @@ Version 2.4
   pass through a template object if it was passed to it.  This
   makes it possible to import or extend from a template object
   that was passed to the template.
+- added a :class:`ModuleLoader` that can load templates from
+  precompiled sources.  The environment now features a method
+  to compile the templates from a configured loader into a zip
+  file or folder.
 
 - the _speedups C extension now supports Python 3.
 

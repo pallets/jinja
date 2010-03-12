@@ -38,7 +38,8 @@ from jinja2.environment import Environment, Template
 
 # loaders
 from jinja2.loaders import BaseLoader, FileSystemLoader, PackageLoader, \
-     DictLoader, FunctionLoader, PrefixLoader, ChoiceLoader
+     DictLoader, FunctionLoader, PrefixLoader, ChoiceLoader, \
+     ModuleLoader
 
 # bytecode caches
 from jinja2.bccache import BytecodeCache, FileSystemBytecodeCache, \
@@ -64,6 +65,6 @@ __all__ = [
     'MemcachedBytecodeCache', 'Undefined', 'DebugUndefined',
     'StrictUndefined', 'TemplateError', 'UndefinedError', 'TemplateNotFound',
     'TemplatesNotFound', 'TemplateSyntaxError', 'TemplateAssertionError',
-    'environmentfilter', 'contextfilter', 'Markup', 'escape',
+    'ModuleLoader', 'environmentfilter', 'contextfilter', 'Markup', 'escape',
     'environmentfunction', 'contextfunction', 'clear_caches', 'is_undefined'
 ]

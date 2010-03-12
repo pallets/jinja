@@ -8,6 +8,10 @@
     :copyright: (c) 2010 by the Jinja Team.
     :license: BSD, see LICENSE for more details.
 """
+import os
+import sys
+import weakref
+from types import ModuleType
 from os import path
 try:
     from hashlib import sha1
@@ -59,6 +63,12 @@ class BaseLoader(object):
                 return source, path, lambda: mtime == getmtime(path)
     """
 
+    #: if set to `False` it indicates that the loader cannot provide access
+    #: to the source of templates.
+    #:
+    #: .. versionadded:: 2.4
+    has_source_access = True
+
     def get_source(self, environment, template):
         """Get the template source, filename and reload helper for a template.
         It's passed the environment and template name and has to return a
@@ -77,7 +87,16 @@ class BaseLoader(object):
         old state somewhere (for example in a closure).  If it returns `False`
         the template will be reloaded.
         """
+        if not self.has_source_access:
+            raise RuntimeError('%s cannot provide access to the source' %
+                               self.__class__.__name__)
         raise TemplateNotFound(template)
+
+    def list_templates(self):
+        """Iterates over all templates.  If the loader does not support that
+        it should raise a :exc:`TypeError` which is the default behavior.
+        """
+        raise TypeError('this loader cannot iterate over all templates')
 
     @internalcode
     def load(self, environment, name, globals=None):
@@ -160,6 +179,20 @@ class FileSystemLoader(BaseLoader):
             return contents, filename, uptodate
         raise TemplateNotFound(template)
 
+    def list_templates(self):
+        found = set()
+        for searchpath in self.searchpath:
+            for dirpath, dirnames, filenames in os.walk(searchpath):
+                for filename in filenames:
+                    template = os.path.join(dirpath, filename) \
+                        [len(searchpath):].strip(os.path.sep) \
+                                          .replace(os.path.sep, '/')
+                    if template[:2] == './':
+                        template = template[2:]
+                    if template not in found:
+                        found.add(template)
+        return sorted(found)
+
 
 class PackageLoader(BaseLoader):
     """Load templates from python eggs or packages.  It is constructed with
@@ -206,6 +239,26 @@ class PackageLoader(BaseLoader):
         source = self.provider.get_resource_string(self.manager, p)
         return source.decode(self.encoding), filename, uptodate
 
+    def list_templates(self):
+        path = self.package_path
+        if path[:2] == './':
+            path = path[2:]
+        elif path == '.':
+            path = ''
+        offset = len(path)
+        results = []
+        def _walk(path):
+            for filename in self.provider.resource_listdir(path):
+                fullname = path + '/' + filename
+                if self.provider.resource_isdir(fullname):
+                    for item in _walk(fullname):
+                        results.append(item)
+                else:
+                    results.append(fullname[offset:].lstrip('/'))
+        _walk(path)
+        results.sort()
+        return results
+
 
 class DictLoader(BaseLoader):
     """Loads a template from a python dict.  It's passed a dict of unicode
@@ -224,6 +277,9 @@ class DictLoader(BaseLoader):
             source = self.mapping[template]
             return source, None, lambda: source != self.mapping.get(template)
         raise TemplateNotFound(template)
+
+    def list_templates(self):
+        return sorted(self.mapping)
 
 
 class FunctionLoader(BaseLoader):
@@ -288,6 +344,13 @@ class PrefixLoader(BaseLoader):
             # (the one that includes the prefix)
             raise TemplateNotFound(template)
 
+    def list_templates(self):
+        result = []
+        for prefix, loader in self.mapping.iteritems():
+            for template in loader.list_templates():
+                result.append(prefix + self.delimiter + template)
+        return result
+
 
 class ChoiceLoader(BaseLoader):
     """This loader works like the `PrefixLoader` just that no prefix is
@@ -313,3 +376,81 @@ class ChoiceLoader(BaseLoader):
             except TemplateNotFound:
                 pass
         raise TemplateNotFound(template)
+
+    def list_templates(self):
+        found = set()
+        for loader in self.loaders:
+            found.update(loader.list_templates())
+        return sorted(found)
+
+
+class _TemplateModule(ModuleType):
+
+    def __init__(self, module):
+        if isinstance(module, basestring):
+            super(_TemplateModule, self).__init__(module)
+        else:
+            super(_TemplateModule, self).__init__(module.__name__)
+            self.__dict__.update(module.__dict__)
+
+
+class ModuleLoader(BaseLoader):
+    """This loader loads templates from precompiled templates.
+
+    Example usage:
+
+    >>> loader = ChoiceLoader([
+    ...     ModuleLoader('/path/to/compiled/templates'),
+    ...     FileSystemLoader('/path/to/templates')
+    ... ])
+    """
+
+    has_source_access = False
+
+    def __init__(self, path):
+        package_name = '_jinja2_module_templates_%x' % id(self)
+
+        # create a fake module that looks for the templates in the
+        # path given.
+        mod = _TemplateModule(package_name)
+        if isinstance(path, basestring):
+            path = [path]
+        else:
+            path = list(path)
+        mod.__path__ = path
+
+        sys.modules[package_name] = weakref.proxy(mod,
+            lambda x: sys.modules.pop(package_name, None))
+
+        # the only strong reference, the sys.modules entry is weak
+        # so that the garbage collector can remove it once the
+        # loader that created it goes out of business.
+        self.module = mod
+        self.package_name = package_name
+
+    @staticmethod
+    def get_template_key(name):
+        return 'tmpl_' + sha1(name.encode('utf-8')).hexdigest()
+
+    @staticmethod
+    def get_module_filename(name):
+        return ModuleLoader.get_template_key(name) + '.py'
+
+    @internalcode
+    def load(self, environment, name, globals=None):
+        key = self.get_template_key(name)
+        module = '%s.%s' % (self.package_name, key)
+        mod = getattr(self.module, module, None)
+        if mod is None:
+            try:
+                mod = _TemplateModule(__import__(module, None,
+                                                 None, ['root']))
+            except ImportError:
+                raise TemplateNotFound(name)
+
+            # remove the entry from sys.modules, we only want the attribute
+            # on the module object we have stored on the loader.
+            sys.modules.pop(module, None)
+
+        return environment.template_class.from_module_dict(
+            environment, mod.__dict__, globals)

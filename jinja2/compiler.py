@@ -53,11 +53,12 @@ def unoptimize_before_dead_code():
 unoptimize_before_dead_code = bool(unoptimize_before_dead_code().func_closure)
 
 
-def generate(node, environment, name, filename, stream=None):
+def generate(node, environment, name, filename, stream=None,
+             defer_init=False):
     """Generate the python source for a node tree."""
     if not isinstance(node, nodes.Template):
         raise TypeError('Can\'t compile non template nodes')
-    generator = CodeGenerator(environment, name, filename, stream)
+    generator = CodeGenerator(environment, name, filename, stream, defer_init)
     generator.visit(node)
     if stream is None:
         return generator.stream.getvalue()
@@ -365,7 +366,8 @@ class CompilerExit(Exception):
 
 class CodeGenerator(NodeVisitor):
 
-    def __init__(self, environment, name, filename, stream=None):
+    def __init__(self, environment, name, filename, stream=None,
+                 defer_init=False):
         if stream is None:
             stream = StringIO()
         self.environment = environment
@@ -373,6 +375,7 @@ class CodeGenerator(NodeVisitor):
         self.filename = filename
         self.stream = stream
         self.created_block_context = False
+        self.defer_init = defer_init
 
         # aliases for imports
         self.import_aliases = {}
@@ -753,6 +756,10 @@ class CodeGenerator(NodeVisitor):
         if not unoptimize_before_dead_code:
             self.writeline('dummy = lambda *x: None')
 
+        # if we want a deferred initialization we cannot move the
+        # environment into a local name
+        envenv = not self.defer_init and ', environment=environment' or ''
+
         # do we have an extends tag at all?  If not, we can save some
         # overhead by just not processing any inheritance code.
         have_extends = node.find(nodes.Extends) is not None
@@ -779,7 +786,7 @@ class CodeGenerator(NodeVisitor):
         self.writeline('name = %r' % self.name)
 
         # generate the root render function.
-        self.writeline('def root(context, environment=environment):', extra=1)
+        self.writeline('def root(context%s):' % envenv, extra=1)
 
         # process the root
         frame = Frame()
@@ -814,8 +821,8 @@ class CodeGenerator(NodeVisitor):
             block_frame = Frame()
             block_frame.inspect(block.body)
             block_frame.block = name
-            self.writeline('def block_%s(context, environment=environment):'
-                           % name, block, 1)
+            self.writeline('def block_%s(context%s):' % (name, envenv),
+                           block, 1)
             self.indent()
             undeclared = find_undeclared(block.body, ('self', 'super'))
             if 'self' in undeclared:

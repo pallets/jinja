@@ -38,6 +38,18 @@ class JinjaTestCase(unittest.TestCase):
     ### use only these methods for testing.  If you need standard
     ### unittest method, wrap them!
 
+    def setup(self):
+        pass
+
+    def teardown(self):
+        pass
+
+    def setUp(self):
+        self.setup()
+
+    def tearDown(self):
+        self.teardown()
+
     def assert_equal(self, a, b):
         return self.assertEqual(a, b)
 

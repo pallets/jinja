@@ -9,6 +9,8 @@
     :license: BSD, see LICENSE for more details.
 """
 import os
+import gc
+import sys
 import time
 import tempfile
 import unittest
@@ -98,7 +100,46 @@ class LoaderTestCase(JinjaTestCase):
         self.assert_raises(TemplateNotFound, split_template_path, '../foo')
 
 
+class ModuleLoaderTestCase(JinjaTestCase):
+    archive = None
+
+    def setup(self):
+        super(ModuleLoaderTestCase, self).setup()
+        self.reg_env = Environment(loader=prefix_loader)
+        self.archive = tempfile.mkstemp(suffix='.zip')[1]
+        self.reg_env.compile_templates(self.archive)
+        self.mod_env = Environment(loader=loaders.ModuleLoader(self.archive))
+
+    def teardown(self):
+        super(ModuleLoaderTestCase, self).teardown()
+        os.remove(self.archive)
+        self.archive = None
+
+    def test_module_loader(self):
+        tmpl1 = self.reg_env.get_template('a/test.html')
+        tmpl2 = self.mod_env.get_template('a/test.html')
+        assert tmpl1.render() == tmpl2.render()
+
+        tmpl1 = self.reg_env.get_template('b/justdict.html')
+        tmpl2 = self.mod_env.get_template('b/justdict.html')
+        assert tmpl1.render() == tmpl2.render()
+
+    def test_weak_references(self):
+        tmpl = self.mod_env.get_template('a/test.html')
+        key = loaders.ModuleLoader.get_template_key('a/test.html')
+        name = self.mod_env.loader.module.__name__
+
+        assert hasattr(self.mod_env.loader.module, key)
+        assert name in sys.modules
+
+        # unset all, ensure the module is gone from sys.modules
+        self.mod_env = tmpl = None
+        gc.collect()
+        assert name not in sys.modules
+
+
 def suite():
     suite = unittest.TestSuite()
     suite.addTest(unittest.makeSuite(LoaderTestCase))
+    suite.addTest(unittest.makeSuite(ModuleLoaderTestCase))
     return suite
