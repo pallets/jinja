@@ -9,7 +9,6 @@
     :license: BSD, see LICENSE for more details.
 """
 import os
-import gc
 import sys
 import time
 import tempfile
@@ -134,7 +133,13 @@ class ModuleLoaderTestCase(JinjaTestCase):
 
         # unset all, ensure the module is gone from sys.modules
         self.mod_env = tmpl = None
-        gc.collect()
+
+        try:
+            import gc
+            gc.collect()
+        except:
+            pass
+
         assert name not in sys.modules
 
 
