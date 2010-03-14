@@ -532,15 +532,16 @@ class Environment(object):
 
         if py_compile:
             import imp, struct, marshal
-            py_header = imp.get_magic() + '\xff\xff\xff\xff'
+            py_header = imp.get_magic() + \
+                u'\xff\xff\xff\xff'.encode('iso-8859-15')
 
-        def write_file(filename, data):
+        def write_file(filename, data, mode):
             if zip:
                 info = ZipInfo(filename)
                 info.external_attr = 0755 << 16L
                 zip_file.writestr(info, data)
             else:
-                f = open(os.path.join(target, filename), 'wb')
+                f = open(os.path.join(target, filename), mode)
                 try:
                     f.write(data)
                 finally:
@@ -571,11 +572,12 @@ class Environment(object):
 
                 if py_compile:
                     c = compile(code, _encode_filename(filename), 'exec')
-                    write_file(filename + 'c', py_header + marshal.dumps(c))
+                    write_file(filename + 'c', py_header +
+                               marshal.dumps(c), 'wb')
                     log_function('Byte-compiled "%s" as %s' %
                                  (name, filename + 'c'))
                 else:
-                    write_file(filename, code)
+                    write_file(filename, code, 'w')
                     log_function('Compiled "%s" as %s' % (name, filename))
         finally:
             if zip:
