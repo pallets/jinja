@@ -1318,6 +1318,7 @@ class CodeGenerator(NodeVisitor):
                 if frame.eval_ctx.volatile:
                     self.write('(context.eval_ctx.autoescape and'
                                ' escape or to_string)(')
+                    close += 1
                 elif frame.eval_ctx.autoescape:
                     self.write('escape(')
                     close += 1
@@ -1613,7 +1614,7 @@ class CodeGenerator(NodeVisitor):
             try:
                 val = keyword.value.as_const(frame.eval_ctx)
             except nodes.Impossible:
-                frame.volatile = True
+                frame.eval_ctx.volatile = True
             else:
                 setattr(frame.eval_ctx, keyword.key, val)
 

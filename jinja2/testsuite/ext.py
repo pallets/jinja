@@ -306,6 +306,19 @@ class AutoEscapeTestCase(JinjaTestCase):
                                '{% endautoescape %}{{ x }}{{ "<y>" }}')
         assert tmpl.render(x=1) == '&lt;x&gt;1<y>'
 
+    def test_volatile_scoping(self):
+        env = Environment(extensions=['jinja2.ext.autoescape'])
+        tmpl = env.from_string('''
+        {% autoescape val %}
+            {% macro foo(x) %}
+                [{{ x }}]
+            {% endmacro %}
+            {{ foo().__class__.__name__ }}
+        {% endautoescape %}
+        ''')
+        assert tmpl.render(val=True).strip() == 'Markup'
+        assert tmpl.render(val=False).strip() == unicode.__name__
+
 
 def suite():
     suite = unittest.TestSuite()
