@@ -308,16 +308,29 @@ class AutoEscapeTestCase(JinjaTestCase):
 
     def test_volatile_scoping(self):
         env = Environment(extensions=['jinja2.ext.autoescape'])
-        tmpl = env.from_string('''
+        tmplsource = '''
         {% autoescape val %}
             {% macro foo(x) %}
                 [{{ x }}]
             {% endmacro %}
             {{ foo().__class__.__name__ }}
         {% endautoescape %}
-        ''')
-        assert tmpl.render(val=True).strip() == 'Markup'
-        assert tmpl.render(val=False).strip() == unicode.__name__
+        {{ '<testing>' }}
+        '''
+        tmpl = env.from_string(tmplsource)
+        assert tmpl.render(val=True).split()[0] == 'Markup'
+        assert tmpl.render(val=False).split()[0] == unicode.__name__
+
+        # looking at the source we should see <testing> there in raw
+        # (and then escaped as well)
+        env = Environment(extensions=['jinja2.ext.autoescape'])
+        pysource = env.compile(tmplsource, raw=True)
+        assert '<testing>\\n' in pysource
+
+        env = Environment(extensions=['jinja2.ext.autoescape'],
+                          autoescape=True)
+        pysource = env.compile(tmplsource, raw=True)
+        assert '&lt;testing&gt;\\n' in pysource
 
 
 def suite():
