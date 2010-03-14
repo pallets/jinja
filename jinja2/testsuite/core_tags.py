@@ -271,6 +271,12 @@ class MacrosTestCase(JinjaTestCase):
         assert tmpl.module.bar.catch_varargs
         assert tmpl.module.baz.caller
 
+    def test_callself(self):
+        tmpl = self.env.from_string('{% macro foo(x) %}{{ x }}{% if x > 1 %}|'
+                                    '{{ foo(x - 1) }}{% endif %}{% endmacro %}'
+                                    '{{ foo(5) }}')
+        assert tmpl.render() == '5|4|3|2|1'
+
 
 def suite():
     suite = unittest.TestSuite()
