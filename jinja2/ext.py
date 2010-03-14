@@ -357,6 +357,20 @@ class WithExtension(Extension):
         return node
 
 
+class AutoEscapeExtension(Extension):
+    """Changes auto escape rules for a scope."""
+    tags = set(['autoescape'])
+
+    def parse(self, parser):
+        node = nodes.ScopedEvalContextModifier(lineno=next(parser.stream).lineno)
+        node.options = [
+            nodes.Keyword('autoescape', parser.parse_expression())
+        ]
+        node.body = parser.parse_statements(('name:endautoescape',),
+                                            drop_needle=True)
+        return nodes.Scope([node])
+
+
 def extract_from_ast(node, gettext_functions=GETTEXT_FUNCTIONS,
                      babel_style=True):
     """Extract localizable strings from the given template node.  Per
@@ -529,3 +543,4 @@ i18n = InternationalizationExtension
 do = ExprStmtExtension
 loopcontrols = LoopControlExtension
 with_ = WithExtension
+autoescape = AutoEscapeExtension

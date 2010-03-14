@@ -158,8 +158,8 @@ class Environment(object):
             `None` implicitly into an empty string here.
 
         `autoescape`
-            If set to true the XML/HTML autoescaping feature is enabled.
-            For more details about auto escaping see
+            If set to true the XML/HTML autoescaping feature is enabled by
+            default.  For more details about auto escaping see
             :class:`~jinja2.utils.Markup`.
 
         `loader`
@@ -493,6 +493,7 @@ class Environment(object):
                 raise TemplateSyntaxError('chunk after expression',
                                           parser.stream.current.lineno,
                                           None, None)
+            expr.set_environment(self)
         except TemplateSyntaxError:
             exc_info = sys.exc_info()
         if exc_info is not None:

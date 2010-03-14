@@ -10,6 +10,7 @@
 """
 import sys
 from itertools import chain, imap
+from jinja2.nodes import EvalContext
 from jinja2.utils import Markup, partial, soft_unicode, escape, missing, \
      concat, MethodType, FunctionType, internalcode, next
 from jinja2.exceptions import UndefinedError, TemplateRuntimeError, \
@@ -106,13 +107,14 @@ class Context(object):
     method that doesn't fail with a `KeyError` but returns an
     :class:`Undefined` object for missing variables.
     """
-    __slots__ = ('parent', 'vars', 'environment', 'exported_vars', 'name',
-                 'blocks', '__weakref__')
+    __slots__ = ('parent', 'vars', 'environment', 'eval_ctx', 'exported_vars',
+                 'name', 'blocks', '__weakref__')
 
     def __init__(self, environment, parent, name, blocks):
         self.parent = parent
         self.vars = {}
         self.environment = environment
+        self.eval_ctx = EvalContext(self.environment)
         self.exported_vars = set()
         self.name = name
 
@@ -174,6 +176,8 @@ class Context(object):
         if isinstance(__obj, _context_function_types):
             if getattr(__obj, 'contextfunction', 0):
                 args = (__self,) + args
+            elif getattr(__obj, 'evalcontextfunction', 0):
+                args = (__self.eval_ctx,) + args
             elif getattr(__obj, 'environmentfunction', 0):
                 args = (__self.environment,) + args
         return __obj(*args, **kwargs)
@@ -182,6 +186,7 @@ class Context(object):
         """Internal helper function to create a derived context."""
         context = new_context(self.environment, self.name, {},
                               self.parent, True, None, locals)
+        context.eval_ctx = self.eval_ctx
         context.blocks.update((k, list(v)) for k, v in self.blocks.iteritems())
         return context
 

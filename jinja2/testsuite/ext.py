@@ -256,8 +256,60 @@ class InternationalizationTestCase(JinjaTestCase):
         ]
 
 
+class AutoEscapeTestCase(JinjaTestCase):
+
+    def test_scoped_setting(self):
+        env = Environment(extensions=['jinja2.ext.autoescape'],
+                          autoescape=True)
+        tmpl = env.from_string('''
+            {{ "<HelloWorld>" }}
+            {% autoescape false %}
+                {{ "<HelloWorld>" }}
+            {% endautoescape %}
+            {{ "<HelloWorld>" }}
+        ''')
+        assert tmpl.render().split() == \
+            [u'&lt;HelloWorld&gt;', u'<HelloWorld>', u'&lt;HelloWorld&gt;']
+
+        env = Environment(extensions=['jinja2.ext.autoescape'],
+                          autoescape=False)
+        tmpl = env.from_string('''
+            {{ "<HelloWorld>" }}
+            {% autoescape true %}
+                {{ "<HelloWorld>" }}
+            {% endautoescape %}
+            {{ "<HelloWorld>" }}
+        ''')
+        assert tmpl.render().split() == \
+            [u'<HelloWorld>', u'&lt;HelloWorld&gt;', u'<HelloWorld>']
+
+    def test_nonvolatile(self):
+        env = Environment(extensions=['jinja2.ext.autoescape'],
+                          autoescape=True)
+        tmpl = env.from_string('{{ {"foo": "<test>"}|xmlattr|escape }}')
+        assert tmpl.render() == ' foo="&lt;test&gt;"'
+        tmpl = env.from_string('{% autoescape false %}{{ {"foo": "<test>"}'
+                               '|xmlattr|escape }}{% endautoescape %}')
+        assert tmpl.render() == ' foo=&#34;&amp;lt;test&amp;gt;&#34;'
+
+    def test_volatile(self):
+        env = Environment(extensions=['jinja2.ext.autoescape'],
+                          autoescape=True)
+        tmpl = env.from_string('{% autoescape foo %}{{ {"foo": "<test>"}'
+                               '|xmlattr|escape }}{% endautoescape %}')
+        assert tmpl.render(foo=False) == ' foo=&#34;&amp;lt;test&amp;gt;&#34;'
+        assert tmpl.render(foo=True) == ' foo="&lt;test&gt;"'
+
+    def test_scoping(self):
+        env = Environment(extensions=['jinja2.ext.autoescape'])
+        tmpl = env.from_string('{% autoescape true %}{% set x = "<x>" %}{{ x }}'
+                               '{% endautoescape %}{{ x }}{{ "<y>" }}')
+        assert tmpl.render(x=1) == '&lt;x&gt;1<y>'
+
+
 def suite():
     suite = unittest.TestSuite()
     suite.addTest(unittest.makeSuite(ExtensionsTestCase))
     suite.addTest(unittest.makeSuite(InternationalizationTestCase))
+    suite.addTest(unittest.makeSuite(AutoEscapeTestCase))
     return suite

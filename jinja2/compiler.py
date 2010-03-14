@@ -12,6 +12,7 @@ from cStringIO import StringIO
 from itertools import chain
 from copy import deepcopy
 from jinja2 import nodes
+from jinja2.nodes import EvalContext
 from jinja2.visitor import NodeVisitor, NodeTransformer
 from jinja2.exceptions import TemplateAssertionError
 from jinja2.utils import Markup, concat, escape, is_python_keyword, next
@@ -141,7 +142,8 @@ class Identifiers(object):
 class Frame(object):
     """Holds compile time information for us."""
 
-    def __init__(self, parent=None):
+    def __init__(self, eval_ctx, parent=None):
+        self.eval_ctx = eval_ctx
         self.identifiers = Identifiers()
 
         # a toplevel frame is the root + soft frames such as if conditions.
@@ -211,7 +213,7 @@ class Frame(object):
 
     def inner(self):
         """Return an inner frame."""
-        return Frame(self)
+        return Frame(self.eval_ctx, self)
 
     def soft(self):
         """Return a soft frame.  A soft frame may not be modified as
@@ -422,7 +424,7 @@ class CodeGenerator(NodeVisitor):
     # -- Various compilation helpers
 
     def fail(self, msg, lineno):
-        """Fail with a `TemplateAssertionError`."""
+        """Fail with a :exc:`TemplateAssertionError`."""
         raise TemplateAssertionError(msg, lineno, self.name, self.filename)
 
     def temporary_identifier(self):
@@ -437,10 +439,15 @@ class CodeGenerator(NodeVisitor):
 
     def return_buffer_contents(self, frame):
         """Return the buffer contents of the frame."""
-        if self.environment.autoescape:
-            self.writeline('return Markup(concat(%s))' % frame.buffer)
+        self.writeline('return ')
+        if frame.eval_ctx.volatile:
+            self.write('(Markup(concat(%s)) if context.eval_ctx'
+                       '.autoescape else concat(%s))' %
+                       (frame.buffer, frame.buffer))
+        elif frame.eval_ctx.autoescape:
+            self.write('Markup(concat(%s))' % frame.buffer)
         else:
-            self.writeline('return concat(%s)' % frame.buffer)
+            self.write('concat(%s)' % frame.buffer)
 
     def indent(self):
         """Indent by one."""
@@ -750,6 +757,8 @@ class CodeGenerator(NodeVisitor):
 
     def visit_Template(self, node, frame=None):
         assert frame is None, 'no root frame allowed'
+        eval_ctx = EvalContext(self.environment)
+
         from jinja2.runtime import __all__ as exported
         self.writeline('from __future__ import division')
         self.writeline('from jinja2.runtime import ' + ', '.join(exported))
@@ -789,7 +798,7 @@ class CodeGenerator(NodeVisitor):
         self.writeline('def root(context%s):' % envenv, extra=1)
 
         # process the root
-        frame = Frame()
+        frame = Frame(eval_ctx)
         frame.inspect(node.body)
         frame.toplevel = frame.rootlevel = True
         frame.require_output_check = have_extends and not self.has_known_extends
@@ -818,7 +827,7 @@ class CodeGenerator(NodeVisitor):
 
         # at this point we now have the blocks collected and can visit them too.
         for name, block in self.blocks.iteritems():
-            block_frame = Frame()
+            block_frame = Frame(eval_ctx)
             block_frame.inspect(block.body)
             block_frame.block = name
             self.writeline('def block_%s(context%s):' % (name, envenv),
@@ -1224,12 +1233,15 @@ class CodeGenerator(NodeVisitor):
         body = []
         for child in node.nodes:
             try:
-                const = child.as_const()
+                const = child.as_const(frame.eval_ctx)
             except nodes.Impossible:
                 body.append(child)
                 continue
+            # the frame can't be volatile here, becaus otherwise the
+            # as_const() function would raise an Impossible exception
+            # at that point.
             try:
-                if self.environment.autoescape:
+                if frame.eval_ctx.autoescape:
                     if hasattr(const, '__html__'):
                         const = const.__html__()
                     else:
@@ -1267,7 +1279,10 @@ class CodeGenerator(NodeVisitor):
                     else:
                         self.newline(item)
                     close = 1
-                    if self.environment.autoescape:
+                    if frame.eval_ctx.volatile:
+                        self.write('(context.eval_ctx.autoescape and'
+                                   ' escape or to_string)(')
+                    elif frame.eval_ctx.autoescape:
                         self.write('escape(')
                     else:
                         self.write('to_string(')
@@ -1300,7 +1315,10 @@ class CodeGenerator(NodeVisitor):
             for argument in arguments:
                 self.newline(argument)
                 close = 0
-                if self.environment.autoescape:
+                if frame.eval_ctx.volatile:
+                    self.write('(context.eval_ctx.autoescape and'
+                               ' escape or to_string)(')
+                elif frame.eval_ctx.autoescape:
                     self.write('escape(')
                     close += 1
                 if self.environment.finalize is not None:
@@ -1367,7 +1385,7 @@ class CodeGenerator(NodeVisitor):
             self.write(repr(val))
 
     def visit_TemplateData(self, node, frame):
-        self.write(repr(node.as_const()))
+        self.write(repr(node.as_const(frame.eval_ctx)))
 
     def visit_Tuple(self, node, frame):
         self.write('(')
@@ -1427,8 +1445,14 @@ class CodeGenerator(NodeVisitor):
     del binop, uaop
 
     def visit_Concat(self, node, frame):
-        self.write('%s((' % (self.environment.autoescape and
-                             'markup_join' or 'unicode_join'))
+        if frame.eval_ctx.volatile:
+            func_name = '(context.eval_ctx.volatile and' \
+                        ' markup_join or unicode_join)'
+        elif frame.eval_ctx.autoescape:
+            func_name = 'markup_join'
+        else:
+            func_name = 'unicode_join'
+        self.write('%s((' % func_name)
         for arg in node.nodes:
             self.visit(arg, frame)
             self.write(', ')
@@ -1479,6 +1503,8 @@ class CodeGenerator(NodeVisitor):
             self.fail('no filter named %r' % node.name, node.lineno)
         if getattr(func, 'contextfilter', False):
             self.write('context, ')
+        elif getattr(func, 'evalcontextfilter', False):
+            self.write('context.eval_ctx, ')
         elif getattr(func, 'environmentfilter', False):
             self.write('environment, ')
 
@@ -1486,7 +1512,11 @@ class CodeGenerator(NodeVisitor):
         # and want to write to the current buffer
         if node.node is not None:
             self.visit(node.node, frame)
-        elif self.environment.autoescape:
+        elif frame.eval_ctx.volatile:
+            self.write('(context.eval_ctx.autoescape and'
+                       ' Markup(concat(%s)) or concat(%s))' %
+                       (frame.buffer, frame.buffer))
+        elif frame.eval_ctx.autoescape:
             self.write('Markup(concat(%s))' % frame.buffer)
         else:
             self.write('concat(%s)' % frame.buffer)
@@ -1575,3 +1605,24 @@ class CodeGenerator(NodeVisitor):
         self.pull_locals(scope_frame)
         self.blockvisit(node.body, scope_frame)
         self.pop_scope(aliases, scope_frame)
+
+    def visit_EvalContextModifier(self, node, frame):
+        for keyword in node.options:
+            self.writeline('context.eval_ctx.%s = ' % keyword.key)
+            self.visit(keyword.value, frame)
+            try:
+                val = keyword.value.as_const(frame.eval_ctx)
+            except nodes.Impossible:
+                frame.volatile = True
+            else:
+                setattr(frame.eval_ctx, keyword.key, val)
+
+    def visit_ScopedEvalContextModifier(self, node, frame):
+        old_ctx_name = self.temporary_identifier()
+        safed_ctx = frame.eval_ctx.save()
+        self.writeline('%s = context.eval_ctx.save()' % old_ctx_name)
+        self.visit_EvalContextModifier(node, frame)
+        for child in node.body:
+            self.visit(child, frame)
+        frame.eval_ctx.revert(safed_ctx)
+        self.writeline('context.eval_ctx.revert(%s)' % old_ctx_name)
