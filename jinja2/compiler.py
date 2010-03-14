@@ -439,15 +439,19 @@ class CodeGenerator(NodeVisitor):
 
     def return_buffer_contents(self, frame):
         """Return the buffer contents of the frame."""
-        self.writeline('return ')
         if frame.eval_ctx.volatile:
-            self.write('(Markup(concat(%s)) if context.eval_ctx'
-                       '.autoescape else concat(%s))' %
-                       (frame.buffer, frame.buffer))
+            self.writeline('if context.eval_ctx.autoescape:')
+            self.indent()
+            self.writeline('return Markup(concat(%s))' % frame.buffer)
+            self.outdent()
+            self.writeline('else:')
+            self.indent()
+            self.writeline('return concat(%s)' % frame.buffer)
+            self.outdent()
         elif frame.eval_ctx.autoescape:
-            self.write('Markup(concat(%s))' % frame.buffer)
+            self.writeline('return Markup(concat(%s))' % frame.buffer)
         else:
-            self.write('concat(%s)' % frame.buffer)
+            self.writeline('return concat(%s)' % frame.buffer)
 
     def indent(self):
         """Indent by one."""
