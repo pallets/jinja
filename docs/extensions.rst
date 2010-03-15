@@ -126,6 +126,20 @@ is possible to enforce a nested scope in a template.  Variables can be
 declared directly in the opening block of the with statement or using a
 standard `set` statement directly within.
 
+.. _autoescape-extension:
+
+Autoescape Extension
+--------------------
+
+**Import name:** `jinja2.ext.autoescape`
+
+.. versionadded:: 2.4
+
+The autoescape extension allows you to toggle the autoescape feature from
+within the template.  If the environment's :attr:`~Environment.autoescape`
+setting is set to `False` it can be activated, if it's `True` it can be
+activated.  The setting overriding is scoped.
+
 
 .. _writing-extensions:
 

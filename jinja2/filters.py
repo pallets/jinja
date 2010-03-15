@@ -31,7 +31,8 @@ def contextfilter(f):
 
 def evalcontextfilter(f):
     """Decorator for marking eval-context dependent filters.  An eval
-    context object is passed as first argument.
+    context object is passed as first argument.  For more information
+    about the eval context, see :ref:`eval-context`.
 
     .. versionadded:: 2.4
     """

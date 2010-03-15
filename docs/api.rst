@@ -353,6 +353,10 @@ The Context
         blocks registered.  The last item in each list is the current active
         block (latest in the inheritance chain).
 
+    .. attribute:: eval_ctx
+
+        The current :ref:`eval-context`.
+
     .. automethod:: jinja2.runtime.Context.call(callable, \*args, \**kwargs)
 
 
@@ -450,9 +454,13 @@ functions to a Jinja2 environment.
 
 .. autofunction:: jinja2.contextfilter
 
+.. autofunction:: jinja2.evalcontextfilter
+
 .. autofunction:: jinja2.environmentfunction
 
 .. autofunction:: jinja2.contextfunction
+
+.. autofunction:: jinja2.evalcontextfunction
 
 .. function:: escape(s)
 
@@ -545,7 +553,8 @@ Inside the template it can then be used as follows:
 Filters can also be passed the current template context or environment.  This
 is useful if a filter wants to return an undefined value or check the current
 :attr:`~Environment.autoescape` setting.  For this purpose two decorators
-exist: :func:`environmentfilter` and :func:`contextfilter`.
+exist: :func:`environmentfilter`, :func:`contextfilter` and
+:func:`evalcontextfilter`.
 
 Here a small example filter that breaks a text into HTML line breaks and
 paragraphs and marks the return value as safe HTML string if autoescaping is
@@ -556,17 +565,67 @@ enabled::
 
     _paragraph_re = re.compile(r'(?:\r\n|\r|\n){2,}')
 
-    @environmentfilter
-    def nl2br(environment, value):
+    @evalcontextfilter
+    def nl2br(eval_ctx, value):
         result = u'\n\n'.join(u'<p>%s</p>' % p.replace('\n', '<br>\n')
                               for p in _paragraph_re.split(escape(value)))
-        if environment.autoescape:
+        if eval_ctx.autoescape:
             result = Markup(result)
         return result
 
 Context filters work the same just that the first argument is the current
 active :class:`Context` rather then the environment.
 
+
+.. _eval-context:
+
+Evaluation Context
+------------------
+
+The evaluation context (short eval context or eval ctx) is a new object
+introducted in Jinja 2.4 that makes it possible to activate and deactivate
+compiled features at runtime.
+
+Currently it is only used to enable and disable the automatic escaping but
+can be used for extensions as well.
+
+In previous Jinja versions filters and functions were marked as
+environment callables in order to check for the autoescape status from the
+environment.  In new versions it's encouraged to check the setting from the
+evaluation context instead.
+
+Previous versions::
+
+    @environmentfilter
+    def filter(env, value):
+        result = do_something(value)
+        if env.autoescape:
+            result = Markup(result)
+        return result
+
+In new versions you can either use a :func:`contextfilter` and access the
+evaluation context from the actual context, or use a
+:func:`evalcontextfilter` which directly passes the evaluation context to
+the function::
+
+    @contextfilter
+    def filter(context, value):
+        result = do_something(value)
+        if context.eval_ctx.autoescape:
+            result = Markup(result)
+        return result
+
+    @evalcontextfilter
+    def filter(eval_ctx, value):
+        result = do_something(value)
+        if eval_ctx.autoescape:
+            result = Markup(result)
+        return result
+
+The evaluation context must not be modified at runtime.  Modifications
+must only happen with a :class:`nodes.EvalContextModifier` and
+:class:`nodes.ScopedEvalContextModifier` from an extension, not on the
+eval context object itself.
 
 .. _writing-tests:
 

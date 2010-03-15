@@ -13,8 +13,9 @@ Version 2.4
   precompiled sources.  The environment now features a method
   to compile the templates from a configured loader into a zip
   file or folder.
-
 - the _speedups C extension now supports Python 3.
+- added support for autoescaping toggling sections and support
+  for evaluation contexts (:ref:`eval-context`).
 
 Version 2.3.1
 -------------
