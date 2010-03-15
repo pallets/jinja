@@ -627,6 +627,18 @@ must only happen with a :class:`nodes.EvalContextModifier` and
 :class:`nodes.ScopedEvalContextModifier` from an extension, not on the
 eval context object itself.
 
+.. autoclass:: nodes.EvalContext
+
+   .. attribute:: autoescape
+
+      `True` or `False` depending on if autoescaping is active or not.
+
+   .. attribute:: volatile
+
+      `True` if the compiler cannot evaluate some expressions at compile
+      time.  At runtime this should always be `False`.
+
+
 .. _writing-tests:
 
 Custom Tests

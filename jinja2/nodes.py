@@ -68,7 +68,9 @@ class NodeType(type):
 
 
 class EvalContext(object):
-    """Holds evaluation time information"""
+    """Holds evaluation time information.  Custom attributes can be attached
+    to it in extensions.
+    """
 
     def __init__(self, environment):
         self.autoescape = environment.autoescape
@@ -836,12 +838,21 @@ class Scope(Stmt):
 
 
 class EvalContextModifier(Stmt):
-    """Modifies the eval context"""
+    """Modifies the eval context.  For each option that should be modified,
+    a :class:`Keyword` has to be added to the :attr:`options` list.
+
+    Example to change the `autoescape` setting::
+
+        EvalContextModifier(options=[Keyword('autoescape', Const(True))])
+    """
     fields = ('options',)
 
 
 class ScopedEvalContextModifier(EvalContextModifier):
-    """Modifies the eval context and reverts it later."""
+    """Modifies the eval context and reverts it later.  Works exactly like
+    :class:`EvalContextModifier` but will only modify the
+    :class:`EvalContext` for nodes in the :attr:`body`.
+    """
     fields = ('body',)
 
 
