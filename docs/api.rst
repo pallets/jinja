@@ -627,7 +627,7 @@ must only happen with a :class:`nodes.EvalContextModifier` and
 :class:`nodes.ScopedEvalContextModifier` from an extension, not on the
 eval context object itself.
 
-.. autoclass:: nodes.EvalContext
+.. autoclass:: jinja2.nodes.EvalContext
 
    .. attribute:: autoescape
 
