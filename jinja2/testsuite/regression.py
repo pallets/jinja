@@ -162,6 +162,19 @@ class BugTestCase(JinjaTestCase):
     ''')
         assert t.render(a=0, b=False, c=42, d=42.0) == '1111C'
 
+    def test_stacked_locals_scoping_bug_twoframe(self):
+        t = Template('''
+            {% set x = 1 %}
+            {% for item in foo %}
+                {% if item == 1 %}
+                    {% set x = 2 %}
+                {% endif %}
+            {% endfor %}
+            {{ x }}
+        ''')
+        rv = t.render(foo=[1]).strip()
+        assert rv == u'1'
+
     def test_call_with_args(self):
         t = Template("""{% macro dump_users(users) -%}
         <ul>
