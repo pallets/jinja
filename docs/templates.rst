@@ -1309,6 +1309,7 @@ are equivalent::
         {{ foo }}
     {% endwith %}
 
+.. _autoescape-overrides:
 
 Autoescape Extension
 --------------------
