@@ -761,7 +761,7 @@ class CodeGenerator(NodeVisitor):
 
     def visit_Template(self, node, frame=None):
         assert frame is None, 'no root frame allowed'
-        eval_ctx = EvalContext(self.environment)
+        eval_ctx = EvalContext(self.environment, self.name)
 
         from jinja2.runtime import __all__ as exported
         self.writeline('from __future__ import division')

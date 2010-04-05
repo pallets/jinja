@@ -160,7 +160,13 @@ class Environment(object):
         `autoescape`
             If set to true the XML/HTML autoescaping feature is enabled by
             default.  For more details about auto escaping see
-            :class:`~jinja2.utils.Markup`.
+            :class:`~jinja2.utils.Markup`.  As of Jinja 2.4 this can also
+            be a callable that is passed the template name and has to
+            return `True` or `False` depending on autoescape should be
+            enabled by default.
+
+            .. versionchanged:: 2.4
+               `autoescape` can now be a function
 
         `loader`
             The template loader for this environment.

@@ -17,7 +17,7 @@ from jinja2.testsuite import JinjaTestCase
 
 from jinja2 import Environment, Undefined, DebugUndefined, \
      StrictUndefined, UndefinedError, Template, meta, \
-     is_undefined, Template
+     is_undefined, Template, DictLoader
 from jinja2.utils import Cycler
 
 env = Environment()
@@ -75,6 +75,23 @@ class ExtendedAPITestCase(JinjaTestCase):
         assert env.select_template([t]) is t
         assert env.get_or_select_template([t]) is t
         assert env.get_or_select_template(t) is t
+
+    def test_autoescape_autoselect(self):
+        def select_autoescape(name):
+            if name is None or '.' not in name:
+                return False
+            return name.endswith('.html')
+        env = Environment(autoescape=select_autoescape,
+                          loader=DictLoader({
+            'test.txt':     '{{ foo }}',
+            'test.html':    '{{ foo }}'
+        }))
+        t = env.get_template('test.txt')
+        assert t.render(foo='<foo>') == '<foo>'
+        t = env.get_template('test.html')
+        assert t.render(foo='<foo>') == '&lt;foo&gt;'
+        t = env.from_string('{{ foo }}')
+        assert t.render(foo='<foo>') == '<foo>'
 
 
 class MetaTestCase(JinjaTestCase):

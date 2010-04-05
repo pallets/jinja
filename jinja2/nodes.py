@@ -72,8 +72,11 @@ class EvalContext(object):
     to it in extensions.
     """
 
-    def __init__(self, environment):
-        self.autoescape = environment.autoescape
+    def __init__(self, environment, template_name=None):
+        if callable(environment.autoescape):
+            self.autoescape = environment.autoescape(template_name)
+        else:
+            self.autoescape = environment.autoescape
         self.volatile = False
 
     def save(self):

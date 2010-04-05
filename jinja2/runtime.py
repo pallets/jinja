@@ -77,7 +77,7 @@ class TemplateReference(object):
 
     def __getitem__(self, name):
         blocks = self.__context.blocks[name]
-        wrap = self.__context.environment.autoescape and \
+        wrap = self.__context.eval_ctx.autoescape and \
                Markup or (lambda x: x)
         return BlockReference(name, self.__context, blocks, 0)
 
@@ -114,7 +114,7 @@ class Context(object):
         self.parent = parent
         self.vars = {}
         self.environment = environment
-        self.eval_ctx = EvalContext(self.environment)
+        self.eval_ctx = EvalContext(self.environment, name)
         self.exported_vars = set()
         self.name = name
 
@@ -257,7 +257,7 @@ class BlockReference(object):
     @internalcode
     def __call__(self):
         rv = concat(self._stack[self._depth](self._context))
-        if self._context.environment.autoescape:
+        if self._context.eval_ctx.autoescape:
             rv = Markup(rv)
         return rv
 
