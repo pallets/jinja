@@ -584,7 +584,7 @@ Inside the template it can then be used as follows:
 
 Filters can also be passed the current template context or environment.  This
 is useful if a filter wants to return an undefined value or check the current
-:attr:`~Environment.autoescape` setting.  For this purpose two decorators
+:attr:`~Environment.autoescape` setting.  For this purpose three decorators
 exist: :func:`environmentfilter`, :func:`contextfilter` and
 :func:`evalcontextfilter`.
 
