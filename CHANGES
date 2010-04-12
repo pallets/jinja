@@ -16,6 +16,7 @@ Version 2.4
 - the _speedups C extension now supports Python 3.
 - added support for autoescaping toggling sections and support
   for evaluation contexts (:ref:`eval-context`).
+- extensions have a priority now.
 
 Version 2.3.1
 -------------
