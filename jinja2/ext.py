@@ -57,6 +57,13 @@ class Extension(object):
     #: if this extension parses this is the list of tags it's listening to.
     tags = set()
 
+    #: the priority of that extension.  This is especially useful for
+    #: extensions that preprocess values.  A lower value means higher
+    #: priority.
+    #:
+    #: .. versionadded:: 2.4
+    priority = 100
+
     def __init__(self, environment):
         self.environment = environment
 

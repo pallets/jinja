@@ -204,6 +204,16 @@ class ExtensionsTestCase(JinjaTestCase):
         out = tmpl.render()
         assert out == 'Foo BAR Baz'
 
+    def test_extension_ordering(self):
+        class T1(Extension):
+            priority = 1
+        class T2(Extension):
+            priority = 2
+        env = Environment(extensions=[T1, T2])
+        ext = list(env.iter_extensions())
+        assert ext[0].__class__ is T1
+        assert ext[1].__class__ is T2
+
 
 class InternationalizationTestCase(JinjaTestCase):
 

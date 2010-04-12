@@ -34,7 +34,7 @@ class Parser(object):
         self.filename = filename
         self.closed = False
         self.extensions = {}
-        for extension in environment.extensions.itervalues():
+        for extension in environment.iter_extensions():
             for tag in extension.tags:
                 self.extensions[tag] = extension.parse
         self._last_identifier = 0
