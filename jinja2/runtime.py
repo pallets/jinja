@@ -422,7 +422,7 @@ class Undefined(object):
     __slots__ = ('_undefined_hint', '_undefined_obj', '_undefined_name',
                  '_undefined_exception')
 
-    def __init__(self, hint=None, obj=None, name=None, exc=UndefinedError):
+    def __init__(self, hint=None, obj=missing, name=None, exc=UndefinedError):
         self._undefined_hint = hint
         self._undefined_obj = obj
         self._undefined_name = name
@@ -434,7 +434,7 @@ class Undefined(object):
         `UndefinedError` on call.
         """
         if self._undefined_hint is None:
-            if self._undefined_obj is None:
+            if self._undefined_obj is missing:
                 hint = '%r is undefined' % self._undefined_name
             elif not isinstance(self._undefined_name, basestring):
                 hint = '%r object has no element %r' % (
@@ -498,7 +498,7 @@ class DebugUndefined(Undefined):
 
     def __unicode__(self):
         if self._undefined_hint is None:
-            if self._undefined_obj is None:
+            if self._undefined_obj is missing:
                 return u'{{ %s }}' % self._undefined_name
             return '{{ no such element: %s[%r] }}' % (
                 self._undefined_obj.__class__.__name__,

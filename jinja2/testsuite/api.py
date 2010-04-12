@@ -207,6 +207,13 @@ class UndefinedTestCase(JinjaTestCase):
         t = Template("{{ var[42].foo }}")
         assert_raises(UndefinedError, t.render, var=0)
 
+    def test_none_gives_propert_error(self):
+        try:
+            Undefined(None).split()
+        except UndefinedError, e:
+            assert e.message == 'None is not defined'
+        else:
+            assert False, 'expected exception'
 
 
 def suite():
