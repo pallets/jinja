@@ -227,6 +227,22 @@ def open_if_exists(filename, mode='rb'):
             raise
 
 
+def object_type_repr(obj):
+    """Returns the name of the object's type.  For some recognized
+    singletons the name of the object is returned instead. (For
+    example for `None` and `Ellipsis`).
+    """
+    if obj is None:
+        return 'None'
+    elif obj is Ellipsis:
+        return 'Ellipsis'
+    if obj.__class__.__module__ == '__builtin__':
+        name = obj.__name__
+    else:
+        name = obj.__class__.module__ + '.' + obj.__name__
+    return '%s object' % name
+
+
 def pformat(obj, verbose=False):
     """Prettyprint an object.  Either use the `pretty` library or the
     builtin `pprint`.

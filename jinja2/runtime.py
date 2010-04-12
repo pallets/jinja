@@ -12,7 +12,8 @@ import sys
 from itertools import chain, imap
 from jinja2.nodes import EvalContext
 from jinja2.utils import Markup, partial, soft_unicode, escape, missing, \
-     concat, MethodType, FunctionType, internalcode, next
+     concat, MethodType, FunctionType, internalcode, next, \
+     object_type_repr
 from jinja2.exceptions import UndefinedError, TemplateRuntimeError, \
      TemplateNotFound
 
@@ -437,13 +438,13 @@ class Undefined(object):
             if self._undefined_obj is missing:
                 hint = '%r is undefined' % self._undefined_name
             elif not isinstance(self._undefined_name, basestring):
-                hint = '%r object has no element %r' % (
-                    self._undefined_obj.__class__.__name__,
+                hint = '%s has no element %r' % (
+                    object_type_repr(self._undefined_obj),
                     self._undefined_name
                 )
             else:
-                hint = '%r object has no attribute %r' % (
-                    self._undefined_obj.__class__.__name__,
+                hint = '%r has no attribute %r' % (
+                    object_type_repr(self._undefined_obj),
                     self._undefined_name
                 )
         else:
@@ -501,7 +502,7 @@ class DebugUndefined(Undefined):
             if self._undefined_obj is missing:
                 return u'{{ %s }}' % self._undefined_name
             return '{{ no such element: %s[%r] }}' % (
-                self._undefined_obj.__class__.__name__,
+                object_type_repr(self._undefined_obj),
                 self._undefined_name
             )
         return u'{{ undefined value printed: %s }}' % self._undefined_hint
