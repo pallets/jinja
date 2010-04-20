@@ -1,9 +1,11 @@
 Jinja2 Changelog
 ================
 
-Version 2.5
------------
-(codename to be selected, release date to be announced)
+Version 2.4.1
+-------------
+(bugfix release, released on April 20th 2010)
+
+- fixed an error reporting bug for undefineds.
 
 Version 2.4
 -----------

@@ -18,7 +18,7 @@ from jinja2.testsuite import JinjaTestCase
 
 from jinja2 import Environment, Undefined, DebugUndefined, \
      StrictUndefined, UndefinedError, Template, meta
-from jinja2.utils import LRUCache, escape
+from jinja2.utils import LRUCache, escape, object_type_repr
 
 
 class LRUCacheTestCase(JinjaTestCase):
@@ -46,6 +46,19 @@ class LRUCacheTestCase(JinjaTestCase):
             assert copy._queue == cache._queue
 
 
+class HelpersTestCase(JinjaTestCase):
+
+    def test_object_type_repr(self):
+        class X(object):
+            pass
+        self.assert_equal(object_type_repr(42), 'int object')
+        self.assert_equal(object_type_repr([]), 'list object')
+        self.assert_equal(object_type_repr(X()),
+                         'jinja2.testsuite.utils.X object')
+        self.assert_equal(object_type_repr(None), 'None')
+        self.assert_equal(object_type_repr(Ellipsis), 'Ellipsis')
+
+
 class MarkupLeakTestCase(JinjaTestCase):
 
     def test_markup_leaks(self):
@@ -63,6 +76,7 @@ class MarkupLeakTestCase(JinjaTestCase):
 def suite():
     suite = unittest.TestSuite()
     suite.addTest(unittest.makeSuite(LRUCacheTestCase))
+    suite.addTest(unittest.makeSuite(HelpersTestCase))
 
     # this test only tests the c extension
     if not hasattr(escape, 'func_code'):
