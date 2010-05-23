@@ -638,7 +638,8 @@ class Getattr(Expr):
             raise Impossible()
         try:
             eval_ctx = get_eval_context(self, eval_ctx)
-            return self.environment.getattr(self.node.as_const(eval_ctx), arg)
+            return self.environment.getattr(self.node.as_const(eval_ctx),
+                                            self.attr)
         except:
             raise Impossible()
 
