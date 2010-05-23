@@ -177,24 +177,23 @@ class UndefinedTestCase(JinjaTestCase):
         self.assert_equal(env.from_string('{{ missing }}').render(), u'')
         self.assert_raises(UndefinedError,
                            env.from_string('{{ missing.attribute }}').render)
-        self.assert_equal(env.from_string('{{ missing|list }}').render, '[]')
-        self.assert_equal(env.from_string('{{ missing is not defined }}').render, 'True')
+        self.assert_equal(env.from_string('{{ missing|list }}').render(), '[]')
+        self.assert_equal(env.from_string('{{ missing is not defined }}').render(), 'True')
         self.assert_equal(env.from_string('{{ foo.missing }}').render(foo=42), '')
         self.assert_equal(env.from_string('{{ not missing }}').render(), 'True')
 
-    def test_debug_undefined():
+    def test_debug_undefined(self):
         env = Environment(undefined=DebugUndefined)
         self.assert_equal(env.from_string('{{ missing }}').render(), '{{ missing }}')
         self.assert_raises(UndefinedError,
-                           env.from_string('{{ missing.attribute }}').render())
+                           env.from_string('{{ missing.attribute }}').render)
         self.assert_equal(env.from_string('{{ missing|list }}').render(), '[]')
-        u'[]'
-        self.assert_equal(env.from_string('{{ missing is not defined }}').render, 'True')
+        self.assert_equal(env.from_string('{{ missing is not defined }}').render(), 'True')
         self.assert_equal(env.from_string('{{ foo.missing }}').render(foo=42),
-                          u"{{ no such element: int['missing'] }}")
+                          u"{{ no such element: int object['missing'] }}")
         self.assert_equal(env.from_string('{{ not missing }}').render(), 'True')
 
-    def test_strict_undefined():
+    def test_strict_undefined(self):
         env = Environment(undefined=StrictUndefined)
         self.assert_raises(UndefinedError, env.from_string('{{ missing }}').render)
         self.assert_raises(UndefinedError, env.from_string('{{ missing.attribute }}').render)
@@ -205,21 +204,21 @@ class UndefinedTestCase(JinjaTestCase):
 
     def test_indexing_gives_undefined(self):
         t = Template("{{ var[42].foo }}")
-        assert_raises(UndefinedError, t.render, var=0)
+        self.assert_raises(UndefinedError, t.render, var=0)
 
     def test_none_gives_proper_error(self):
         try:
-            Environment().getattr(None, 'split')
+            Environment().getattr(None, 'split')()
         except UndefinedError, e:
-            assert e.message == "None has no attribute 'split'"
+            assert e.message == "'None' has no attribute 'split'"
         else:
             assert False, 'expected exception'
 
     def test_object_repr(self):
         try:
-            Undefined(obj=42, name='upper')
+            Undefined(obj=42, name='upper')()
         except UndefinedError, e:
-            assert e.message == "'int' object has no attribute 'upper'"
+            assert e.message == "'int object' has no attribute 'upper'"
         else:
             assert False, 'expected exception'
 
@@ -229,4 +228,5 @@ def suite():
     suite.addTest(unittest.makeSuite(ExtendedAPITestCase))
     suite.addTest(unittest.makeSuite(MetaTestCase))
     suite.addTest(unittest.makeSuite(StreamingTestCase))
+    suite.addTest(unittest.makeSuite(UndefinedTestCase))
     return suite
