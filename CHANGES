@@ -1,9 +1,13 @@
 Jinja2 Changelog
 ================
 
-Version 2.5
------------
-(codename not be selected, release date to be announced)
+Version 2.4.2
+-------------
+(bugfix release, release date to be announced)
+
+- improved the sort filter (should have worked like this for a
+  long time) by adding support for case insensitive searches.
+- fixed a bug for getattribute constant folding.
 
 Version 2.4.1
 -------------

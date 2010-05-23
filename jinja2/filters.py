@@ -176,10 +176,13 @@ def do_dictsort(value, case_sensitive=False, by='key'):
     return sorted(value.items(), key=sort_func)
 
 
-def do_sort(value, case_sensitive=False):
-    """Sort an iterable.  If the iterable is made of strings the second
-    parameter can be used to control the case sensitiveness of the
-    comparison which is disabled by default.
+def do_sort(value, reverse=False, case_sensitive=False):
+    """Sort an iterable.  Per default it sorts ascending, if you pass it
+    true as first argument it will reverse the sorting.
+
+    If the iterable is made of strings the third parameter can be used to
+    control the case sensitiveness of the comparison which is disabled by
+    default.
 
     .. sourcecode:: jinja
 
@@ -194,7 +197,7 @@ def do_sort(value, case_sensitive=False):
             return item
     else:
         sort_func = None
-    return sorted(seq, key=sort_func)
+    return sorted(value, key=sort_func, reverse=reverse)
 
 
 def do_default(value, default_value=u'', boolean=False):
@@ -564,13 +567,6 @@ def do_round(value, precision=0, method='common'):
         return func(value)
 
 
-def do_sort(value, reverse=False):
-    """Sort a sequence. Per default it sorts ascending, if you pass it
-    true as first argument it will reverse the sorting.
-    """
-    return sorted(value, reverse=reverse)
-
-
 @environmentfilter
 def do_groupby(environment, value, attribute):
     """Group a sequence of objects by a common attribute.
@@ -723,7 +719,6 @@ FILTERS = {
     'sum':                  sum,
     'abs':                  abs,
     'round':                do_round,
-    'sort':                 do_sort,
     'groupby':              do_groupby,
     'safe':                 do_mark_safe,
     'xmlattr':              do_xmlattr

@@ -227,6 +227,10 @@ class FilterTestCase(JinjaTestCase):
         tmpl = env.from_string('{{ [2, 3, 1]|sort }}|{{ [2, 3, 1]|sort(true) }}')
         assert tmpl.render() == '[1, 2, 3]|[3, 2, 1]'
 
+    def test_sort2(self):
+        tmpl = env.from_string('{{ "".join(["c", "A", "b", "D"]|sort(false, true)) }}')
+        assert tmpl.render() == 'AbcD'
+
     def test_groupby(self):
         tmpl = env.from_string('''
         {%- for grouper, list in [{'foo': 1, 'bar': 2},
