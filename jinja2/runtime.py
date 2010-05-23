@@ -10,10 +10,9 @@
 """
 import sys
 from itertools import chain, imap
-from jinja2.nodes import EvalContext
+from jinja2.nodes import EvalContext, _context_function_types
 from jinja2.utils import Markup, partial, soft_unicode, escape, missing, \
-     concat, MethodType, FunctionType, internalcode, next, \
-     object_type_repr
+     concat, internalcode, next, object_type_repr
 from jinja2.exceptions import UndefinedError, TemplateRuntimeError, \
      TemplateNotFound
 
@@ -23,10 +22,6 @@ __all__ = ['LoopContext', 'TemplateReference', 'Macro', 'Markup',
            'TemplateRuntimeError', 'missing', 'concat', 'escape',
            'markup_join', 'unicode_join', 'to_string',
            'TemplateNotFound']
-
-
-#: the types we support for context functions
-_context_function_types = (FunctionType, MethodType)
 
 #: the name of the function that is used to convert something into
 #: a string.  2to3 will adopt that automatically and the generated

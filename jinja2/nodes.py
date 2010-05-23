@@ -15,7 +15,11 @@
 import operator
 from itertools import chain, izip
 from collections import deque
-from jinja2.utils import Markup
+from jinja2.utils import Markup, MethodType, FunctionType
+
+
+#: the types we support for context functions
+_context_function_types = (FunctionType, MethodType)
 
 
 _binop_to_func = {
@@ -585,12 +589,13 @@ class Call(Expr):
 
         # don't evaluate context functions
         args = [x.as_const(eval_ctx) for x in self.args]
-        if getattr(obj, 'contextfunction', False):
-            raise Impossible()
-        elif getattr(obj, 'evalcontextfunction', False):
-            args.insert(0, eval_ctx)
-        elif getattr(obj, 'environmentfunction', False):
-            args.insert(0, self.environment)
+        if isinstance(obj, _context_function_types):
+            if getattr(obj, 'contextfunction', False):
+                raise Impossible()
+            elif getattr(obj, 'evalcontextfunction', False):
+                args.insert(0, eval_ctx)
+            elif getattr(obj, 'environmentfunction', False):
+                args.insert(0, self.environment)
 
         kwargs = dict(x.as_const(eval_ctx) for x in self.kwargs)
         if self.dyn_args is not None:
