@@ -433,6 +433,22 @@ class Environment(object):
                 stream = TokenStream(stream, name, filename)
         return stream
 
+    def _generate(self, source, name, filename, defer_init=False):
+        """Internal hook that can be overriden to hook a different generate
+        method in.
+
+        .. versionadded:: 2.5
+        """
+        return generate(source, self, name, filename, defer_init=defer_init)
+
+    def _compile(self, source, filename):
+        """Internal hook that can be overriden to hook a different compile
+        method in.
+
+        .. versionadded:: 2.5
+        """
+        return compile(source, filename, 'exec')
+
     @internalcode
     def compile(self, source, name=None, filename=None, raw=False,
                 defer_init=False):
@@ -462,15 +478,15 @@ class Environment(object):
                 source = self._parse(source, name, filename)
             if self.optimized:
                 source = optimize(source, self)
-            source = generate(source, self, name, filename,
-                              defer_init=defer_init)
+            source = self._generate(source, name, filename,
+                                    defer_init=defer_init)
             if raw:
                 return source
             if filename is None:
                 filename = '<template>'
             else:
                 filename = _encode_filename(filename)
-            return compile(source, filename, 'exec')
+            return self._compile(source, filename)
         except TemplateSyntaxError:
             exc_info = sys.exc_info()
         self.handle_exception(exc_info, source_hint=source)
@@ -589,7 +605,7 @@ class Environment(object):
                 filename = ModuleLoader.get_module_filename(name)
 
                 if py_compile:
-                    c = compile(code, _encode_filename(filename), 'exec')
+                    c = self._compile(code, _encode_filename(filename))
                     write_file(filename + 'c', py_header +
                                marshal.dumps(c), 'wb')
                     log_function('Byte-compiled "%s" as %s' %
