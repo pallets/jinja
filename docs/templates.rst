@@ -1245,7 +1245,7 @@ languages may not use the words in the same order.
 
 .. versionchanged:: 2.5
 
-If newstyle gettext call are activated (:ref:`newstyle-gettext`), using
+If newstyle gettext calls are activated (:ref:`newstyle-gettext`), using
 placeholders is a lot easier:
 
 .. sourcecode:: html+jinja
