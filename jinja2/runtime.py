@@ -528,6 +528,9 @@ class StrictUndefined(Undefined):
     __slots__ = ()
     __iter__ = __unicode__ = __str__ = __len__ = __nonzero__ = __eq__ = \
         __ne__ = Undefined._fail_with_undefined_error
+    if sys.version_info >= (3, 0):
+        __bool__ = __nonzero__
+        del __nonzero__
 
 
 # remove remaining slots attributes, after the metaclass did the magic they
