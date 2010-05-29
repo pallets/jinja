@@ -346,7 +346,6 @@ class InternationalizationExtension(Extension):
         # enough to handle the variable expansion and autoescape
         # handling itself
         if self.environment.newstyle_gettext:
-            print 'HERE'
             for key, value in variables.iteritems():
                 node.kwargs.append(nodes.Keyword(key, value))
 
