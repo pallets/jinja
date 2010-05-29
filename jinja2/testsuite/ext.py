@@ -38,7 +38,7 @@ i18n_templates = {
                   '{% trans %}watch out{% endtrans %}{% endblock %}',
     'plural.html': '{% trans user_count %}One user online{% pluralize %}'
                    '{{ user_count }} users online{% endtrans %}',
-    'stringformat.html': '{{ _("User: %(num)d")|format(num=user_count) }}'
+    'stringformat.html': '{{ _("User: %(num)s")|format(num=user_count) }}'
 }
 
 newstyle_i18n_templates = {
@@ -48,8 +48,10 @@ newstyle_i18n_templates = {
                   '{% trans %}watch out{% endtrans %}{% endblock %}',
     'plural.html': '{% trans user_count %}One user online{% pluralize %}'
                    '{{ user_count }} users online{% endtrans %}',
-    'stringformat.html': '{{ _("User: %(num)d", num=user_count) }}',
-    'ngettext.html': '{{ ngettext("%(num)d apple", "%(num)d apples", apples) }}'
+    'stringformat.html': '{{ _("User: %(num)s", num=user_count) }}',
+    'ngettext.html': '{{ ngettext("%(num)s apple", "%(num)s apples", apples) }}',
+    'ngettext_long.html': '{% trans num=apples %}{{ num }} apple{% pluralize %}'
+                          '{{ num }} apples{% endtrans %}'
 }
 
 
@@ -59,9 +61,9 @@ languages = {
         'watch out':                    u'pass auf',
         'One user online':              u'Ein Benutzer online',
         '%(user_count)s users online':  u'%(user_count)s Benutzer online',
-        'User: %(num)d':                u'Benutzer: %(num)d',
-        '%(num)d apple':                u'%(num)d Apfel',
-        '%(num)d apples':               u'%(num)d Äpfel'
+        'User: %(num)s':                u'Benutzer: %(num)s',
+        '%(num)s apple':                u'%(num)s Apfel',
+        '%(num)s apples':               u'%(num)s Äpfel'
     }
 }
 
@@ -326,6 +328,22 @@ class NewstyleInternationalizationTestCase(JinjaTestCase):
                             '"<test>") }}{% endautoescape %}')
         assert t.render(ae=True) == '<strong>Wert: &lt;test&gt;</strong>'
         assert t.render(ae=False) == '<strong>Wert: <test></strong>'
+
+    def test_num_used_twice(self):
+        tmpl = newstyle_i18n_env.get_template('ngettext_long.html')
+        assert tmpl.render(apples=5, LANGUAGE='de') == u'5 Äpfel'
+
+    def test_num_called_num(self):
+        source = newstyle_i18n_env.compile('''
+            {% trans num=3 %}{{ num }} apple{% pluralize
+            %}{{ num }} apples{% endtrans %}
+        ''', raw=True)
+        # quite hacky, but the only way to properly test that.  The idea is
+        # that the generated code does not pass num twice (although that
+        # would work) for better performance.  This only works on the
+        # newstyle gettext of course
+        assert re.search(r"l_ngettext, u?'\%\(num\)s apple', u?'\%\(num\)s "
+                         r"apples', 3", source) is not None
 
 
 class AutoEscapeTestCase(JinjaTestCase):

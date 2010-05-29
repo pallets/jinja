@@ -139,9 +139,9 @@ def _make_new_gettext(func):
 
 def _make_new_ngettext(func):
     @contextfunction
-    def ngettext(__context, __singular, __plural, num, **variables):
-        variables.setdefault('num', num)
-        rv = __context.call(func, __singular, __plural, num)
+    def ngettext(__context, __singular, __plural, __num, **variables):
+        variables.setdefault('num', __num)
+        rv = __context.call(func, __singular, __plural, __num)
         if __context.eval_ctx.autoescape:
             rv = Markup(rv)
         return rv % variables
@@ -210,6 +210,7 @@ class InternationalizationExtension(Extension):
     def parse(self, parser):
         """Parse a translatable tag."""
         lineno = next(parser.stream).lineno
+        num_called_num = False
 
         # find all the variables referenced.  Additionally a variable can be
         # defined in the body of the trans block too, but this is checked at
@@ -236,8 +237,10 @@ class InternationalizationExtension(Extension):
                 variables[name.value] = var = parser.parse_expression()
             else:
                 variables[name.value] = var = nodes.Name(name.value, 'load')
+
             if plural_expr is None:
                 plural_expr = var
+                num_called_num = name.value == 'num'
 
         parser.stream.expect('block_end')
 
@@ -251,6 +254,7 @@ class InternationalizationExtension(Extension):
             referenced.update(singular_names)
             if plural_expr is None:
                 plural_expr = nodes.Name(singular_names[0], 'load')
+                num_called_num = singular_names[0] == 'num'
 
         # if we have a pluralize block, we parse that too
         if parser.stream.current.test('name:pluralize'):
@@ -263,6 +267,7 @@ class InternationalizationExtension(Extension):
                                 name.value, name.lineno,
                                 exc=TemplateAssertionError)
                 plural_expr = variables[name.value]
+                num_called_num = name.value == 'num'
             parser.stream.expect('block_end')
             plural_names, plural = self._parse_block(parser, False)
             next(parser.stream)
@@ -281,7 +286,7 @@ class InternationalizationExtension(Extension):
             parser.fail('pluralize without variables', lineno)
 
         node = self._make_node(singular, plural, variables, plural_expr,
-                               bool(referenced))
+                               bool(referenced), num_called_num)
         node.set_lineno(lineno)
         return node
 
@@ -318,7 +323,7 @@ class InternationalizationExtension(Extension):
         return referenced, concat(buf)
 
     def _make_node(self, singular, plural, variables, plural_expr,
-                   vars_referenced):
+                   vars_referenced, num_called_num):
         """Generates a useful node from the data provided."""
         # no variables referenced?  no need to escape for old style
         # gettext invocations
@@ -347,6 +352,10 @@ class InternationalizationExtension(Extension):
         # handling itself
         if self.environment.newstyle_gettext:
             for key, value in variables.iteritems():
+                # the function adds that later anyways in case num was
+                # called num, so just skip it.
+                if num_called_num and key == 'num':
+                    continue
                 node.kwargs.append(nodes.Keyword(key, value))
 
         # otherwise do that here
