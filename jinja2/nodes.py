@@ -829,6 +829,22 @@ class MarkSafe(Expr):
         return Markup(self.expr.as_const(eval_ctx))
 
 
+class MarkSafeIfAutoescape(Expr):
+    """Mark the wrapped expression as safe (wrap it as `Markup`) but
+    only if autoescaping is active.
+
+    .. versionadded:: 2.5
+    """
+    fields = ('expr',)
+
+    def as_const(self, eval_ctx=None):
+        eval_ctx = get_eval_context(self, eval_ctx)
+        expr = self.expr.as_const(eval_ctx)
+        if eval_ctx.autoescape:
+            return Markup(expr)
+        return expr
+
+
 class ContextReference(Expr):
     """Returns the current template context.  It can be used like a
     :class:`Name` node, with a ``'load'`` ctx and will return the

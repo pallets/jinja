@@ -123,8 +123,29 @@ class Extension(object):
 
 
 @contextfunction
-def _gettext_alias(context, string):
-    return context.resolve('gettext')(string)
+def _gettext_alias(__context, *args, **kwargs):
+    return __context.resolve('gettext')(*args, **kwargs)
+
+
+def _make_new_gettext(func):
+    @contextfunction
+    def gettext(__context, __string, **variables):
+        rv  = func(__string)
+        if __context.eval_ctx.autoescape:
+            rv = Markup(rv)
+        return rv % variables
+    return gettext
+
+
+def _make_new_ngettext(func):
+    @contextfunction
+    def ngettext(__context, __singular, __plural, num, **variables):
+        variables.setdefault('num', num)
+        rv = func(__singular, __plural, num)
+        if __context.eval_ctx.autoescape:
+            rv = Markup(rv)
+        return rv % variables
+    return ngettext
 
 
 class InternationalizationExtension(Extension):
@@ -144,23 +165,37 @@ class InternationalizationExtension(Extension):
         environment.extend(
             install_gettext_translations=self._install,
             install_null_translations=self._install_null,
+            install_gettext_callables=self._install_callables,
             uninstall_gettext_translations=self._uninstall,
-            extract_translations=self._extract
+            extract_translations=self._extract,
+            newstyle_gettext=False
         )
 
-    def _install(self, translations):
+    def _install(self, translations, newstyle=None):
         gettext = getattr(translations, 'ugettext', None)
         if gettext is None:
             gettext = translations.gettext
         ngettext = getattr(translations, 'ungettext', None)
         if ngettext is None:
             ngettext = translations.ngettext
-        self.environment.globals.update(gettext=gettext, ngettext=ngettext)
+        self._install_callables(gettext, ngettext, newstyle)
 
-    def _install_null(self):
+    def _install_null(self, newstyle=None):
+        self._install_callables(
+            lambda x: x,
+            lambda s, p, n: (n != 1 and (p,) or (s,))[0],
+            newstyle
+        )
+
+    def _install_callables(self, gettext, ngettext, newstyle=None):
+        if newstyle is not None:
+            self.environment.newstyle_gettext = newstyle
+        if self.environment.newstyle_gettext:
+            gettext = _make_new_gettext(gettext)
+            ngettext = _make_new_ngettext(ngettext)
         self.environment.globals.update(
-            gettext=lambda x: x,
-            ngettext=lambda s, p, n: (n != 1 and (p,) or (s,))[0]
+            gettext=gettext,
+            ngettext=ngettext
         )
 
     def _uninstall(self, translations):
@@ -310,13 +345,21 @@ class InternationalizationExtension(Extension):
                 plural_expr
             ], [], None, None)
 
-        # mark the return value as safe if we are in an
-        # environment with autoescaping turned on
-        if self.environment.autoescape:
-            node = nodes.MarkSafe(node)
+        # in case newstyle gettext is used, the method is powerful
+        # enough to handle the variable expansion and autoescape
+        # handling itself
+        if self.environment.newstyle_gettext:
+            if variables is None:
+                variables = nodes.Dict([])
+            node.kwargs = variables
 
-        if variables:
-            node = nodes.Mod(node, variables)
+        # otherwise do that here
+        else:
+            # mark the return value as safe if we are in an
+            # environment with autoescaping turned on
+            node = nodes.MarkSafeIfAutoescape(node)
+            if variables:
+                node = nodes.Mod(node, variables)
         return nodes.Output([node])
 
 

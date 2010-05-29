@@ -1582,6 +1582,11 @@ class CodeGenerator(NodeVisitor):
         self.visit(node.expr, frame)
         self.write(')')
 
+    def visit_MarkSafeIfAutoescape(self, node, frame):
+        self.write('(context.eval_ctx.autoescape and Markup or identity)(')
+        self.visit(node.expr, frame)
+        self.write(')')
+
     def visit_EnvironmentAttribute(self, node, frame):
         self.write('environment.' + node.name)
 
