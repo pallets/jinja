@@ -10,7 +10,9 @@ Version 2.5
 - fixed a bug for getattribute constant folding.
 - support for newstyle gettext translations which result in a
   nicer in-template user interface and more consistent
-  catalogs.
+  catalogs. (:ref:`newstyle-gettext`)
+- it's now possible to register extensions after an environment
+  was created.
 
 Version 2.4.1
 -------------

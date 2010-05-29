@@ -130,7 +130,7 @@ def _gettext_alias(__context, *args, **kwargs):
 def _make_new_gettext(func):
     @contextfunction
     def gettext(__context, __string, **variables):
-        rv  = __context.call(func, __string)
+        rv = __context.call(func, __string)
         if __context.eval_ctx.autoescape:
             rv = Markup(rv)
         return rv % variables
@@ -275,18 +275,13 @@ class InternationalizationExtension(Extension):
             if var not in variables:
                 variables[var] = nodes.Name(var, 'load')
 
-        # no variables referenced?  no need to escape
-        if not referenced:
-            singular = singular.replace('%%', '%')
-            if plural:
-                plural = plural.replace('%%', '%')
-
         if not have_plural:
             plural_expr = None
         elif plural_expr is None:
             parser.fail('pluralize without variables', lineno)
 
-        node = self._make_node(singular, plural, variables, plural_expr)
+        node = self._make_node(singular, plural, variables, plural_expr,
+                               bool(referenced))
         node.set_lineno(lineno)
         return node
 
@@ -322,8 +317,16 @@ class InternationalizationExtension(Extension):
 
         return referenced, concat(buf)
 
-    def _make_node(self, singular, plural, variables, plural_expr):
+    def _make_node(self, singular, plural, variables, plural_expr,
+                   vars_referenced):
         """Generates a useful node from the data provided."""
+        # no variables referenced?  no need to escape for old style
+        # gettext invocations
+        if not vars_referenced and not self.environment.newstyle_gettext:
+            singular = singular.replace('%%', '%')
+            if plural:
+                plural = plural.replace('%%', '%')
+
         # singular only:
         if plural_expr is None:
             gettext = nodes.Name('gettext', 'load')
@@ -343,6 +346,7 @@ class InternationalizationExtension(Extension):
         # enough to handle the variable expansion and autoescape
         # handling itself
         if self.environment.newstyle_gettext:
+            print 'HERE'
             for key, value in variables.iteritems():
                 node.kwargs.append(nodes.Keyword(key, value))
 

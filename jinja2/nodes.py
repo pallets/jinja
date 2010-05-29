@@ -442,7 +442,10 @@ class TemplateData(Literal):
     fields = ('data',)
 
     def as_const(self, eval_ctx=None):
-        if get_eval_context(self, eval_ctx).autoescape:
+        eval_ctx = get_eval_context(self, eval_ctx)
+        if eval_ctx.volatile:
+            raise Impossible()
+        if eval_ctx.autoescape:
             return Markup(self.data)
         return self.data
 
@@ -839,6 +842,8 @@ class MarkSafeIfAutoescape(Expr):
 
     def as_const(self, eval_ctx=None):
         eval_ctx = get_eval_context(self, eval_ctx)
+        if eval_ctx.volatile:
+            raise Impossible()
         expr = self.expr.as_const(eval_ctx)
         if eval_ctx.autoescape:
             return Markup(expr)

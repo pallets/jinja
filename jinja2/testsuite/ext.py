@@ -311,6 +311,16 @@ class NewstyleInternationalizationTestCase(JinjaTestCase):
         assert tmpl.render(LANGUAGE='de', apples=1) == '1 Apfel'
         assert tmpl.render(LANGUAGE='de', apples=5) == u'5 Äpfel'
 
+    def test_autoescape_support(self):
+        env = Environment(extensions=['jinja2.ext.autoescape',
+                                      'jinja2.ext.i18n'])
+        env.install_gettext_callables(lambda x: u'<strong>Wert: %(name)s</strong>',
+                                      lambda s, p, n: s, newstyle=True)
+        t = env.from_string('{% autoescape ae %}{{ gettext("foo", name='
+                            '"<test>") }}{% endautoescape %}')
+        assert t.render(ae=True) == '<strong>Wert: &lt;test&gt;</strong>'
+        assert t.render(ae=False) == '<strong>Wert: <test></strong>'
+
 
 class AutoEscapeTestCase(JinjaTestCase):
 

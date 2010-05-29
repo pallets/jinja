@@ -1239,11 +1239,23 @@ For example you can print a translated string easily this way::
 To use placeholders you can use the `format` filter::
 
     {{ _('Hello %(user)s!')|format(user=user.username) }}
-        or
-    {{ _('Hello %s')|format(user.username) }}
 
 For multiple placeholders always use keyword arguments to `format` as other
 languages may not use the words in the same order.
+
+.. versionchanged:: 2.5
+
+If newstyle gettext call are activated (:ref:`newstyle-gettext`), using
+placeholders is a lot easier:
+
+.. sourcecode:: html+jinja
+
+    {{ gettext('Hello World!') }}
+    {{ gettext('Hello %(name)s!', name='World') }}
+    {{ ngettext('%(num)d apple', '%(num)d apples', apples|count) }}
+
+Note that the `ngettext` function's format string automatically recieves
+the count as `num` parameter additionally to the regular parameters.
 
 
 Expression Statement
