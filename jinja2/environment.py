@@ -284,7 +284,7 @@ class Environment(object):
 
         .. versionadded:: 2.5
         """
-        load_extensions(self, [extension])
+        self.extensions.update(load_extensions(self, [extension]))
 
     def extend(self, **attributes):
         """Add the items to the instance of the environment if they do not exist
