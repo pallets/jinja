@@ -124,13 +124,13 @@ class Extension(object):
 
 @contextfunction
 def _gettext_alias(__context, *args, **kwargs):
-    return __context.resolve('gettext')(*args, **kwargs)
+    return __context.call(__context.resolve('gettext'), *args, **kwargs)
 
 
 def _make_new_gettext(func):
     @contextfunction
     def gettext(__context, __string, **variables):
-        rv  = func(__string)
+        rv  = __context.call(func, __string)
         if __context.eval_ctx.autoescape:
             rv = Markup(rv)
         return rv % variables
@@ -141,7 +141,7 @@ def _make_new_ngettext(func):
     @contextfunction
     def ngettext(__context, __singular, __plural, num, **variables):
         variables.setdefault('num', num)
-        rv = func(__singular, __plural, num)
+        rv = __context.call(func, __singular, __plural, num)
         if __context.eval_ctx.autoescape:
             rv = Markup(rv)
         return rv % variables
@@ -286,12 +286,6 @@ class InternationalizationExtension(Extension):
         elif plural_expr is None:
             parser.fail('pluralize without variables', lineno)
 
-        if variables:
-            variables = nodes.Dict([nodes.Pair(nodes.Const(x, lineno=lineno), y)
-                                    for x, y in variables.items()])
-        else:
-            variables = None
-
         node = self._make_node(singular, plural, variables, plural_expr)
         node.set_lineno(lineno)
         return node
@@ -349,9 +343,8 @@ class InternationalizationExtension(Extension):
         # enough to handle the variable expansion and autoescape
         # handling itself
         if self.environment.newstyle_gettext:
-            if variables is None:
-                variables = nodes.Dict([])
-            node.kwargs = variables
+            for key, value in variables.iteritems():
+                node.kwargs.append(nodes.Keyword(key, value))
 
         # otherwise do that here
         else:
@@ -359,7 +352,10 @@ class InternationalizationExtension(Extension):
             # environment with autoescaping turned on
             node = nodes.MarkSafeIfAutoescape(node)
             if variables:
-                node = nodes.Mod(node, variables)
+                node = nodes.Mod(node, nodes.Dict([
+                    nodes.Pair(nodes.Const(key), value)
+                    for key, value in variables.items()
+                ]))
         return nodes.Output([node])
 
 

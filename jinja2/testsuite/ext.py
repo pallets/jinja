@@ -31,24 +31,37 @@ importable_object = 23
 _gettext_re = re.compile(r'_\((.*?)\)(?s)')
 
 
-templates = {
+i18n_templates = {
     'master.html': '<title>{{ page_title|default(_("missing")) }}</title>'
                    '{% block body %}{% endblock %}',
     'child.html': '{% extends "master.html" %}{% block body %}'
                   '{% trans %}watch out{% endtrans %}{% endblock %}',
     'plural.html': '{% trans user_count %}One user online{% pluralize %}'
                    '{{ user_count }} users online{% endtrans %}',
-    'stringformat.html': '{{ _("User: %d")|format(user_count) }}'
+    'stringformat.html': '{{ _("User: %(num)d")|format(num=user_count) }}'
+}
+
+newstyle_i18n_templates = {
+    'master.html': '<title>{{ page_title|default(_("missing")) }}</title>'
+                   '{% block body %}{% endblock %}',
+    'child.html': '{% extends "master.html" %}{% block body %}'
+                  '{% trans %}watch out{% endtrans %}{% endblock %}',
+    'plural.html': '{% trans user_count %}One user online{% pluralize %}'
+                   '{{ user_count }} users online{% endtrans %}',
+    'stringformat.html': '{{ _("User: %(num)d", num=user_count) }}',
+    'ngettext.html': '{{ ngettext("%(num)d apple", "%(num)d apples", apples) }}'
 }
 
 
 languages = {
     'de': {
-        'missing':                      'fehlend',
-        'watch out':                    'pass auf',
-        'One user online':              'Ein Benutzer online',
-        '%(user_count)s users online':  '%(user_count)s Benutzer online',
-        'User: %d':                     'Benutzer: %d'
+        'missing':                      u'fehlend',
+        'watch out':                    u'pass auf',
+        'One user online':              u'Ein Benutzer online',
+        '%(user_count)s users online':  u'%(user_count)s Benutzer online',
+        'User: %(num)d':                u'Benutzer: %(num)d',
+        '%(num)d apple':                u'%(num)d Apfel',
+        '%(num)d apples':               u'%(num)d Äpfel'
     }
 }
 
@@ -68,7 +81,7 @@ def ngettext(context, s, p, n):
 
 
 i18n_env = Environment(
-    loader=DictLoader(templates),
+    loader=DictLoader(i18n_templates),
     extensions=['jinja2.ext.i18n']
 )
 i18n_env.globals.update({
@@ -77,6 +90,11 @@ i18n_env.globals.update({
     'ngettext':     ngettext
 })
 
+newstyle_i18n_env = Environment(
+    loader=DictLoader(newstyle_i18n_templates),
+    extensions=['jinja2.ext.i18n']
+)
+newstyle_i18n_env.install_gettext_callables(gettext, ngettext, newstyle=True)
 
 class TestExtension(Extension):
     tags = set(['test'])
@@ -266,6 +284,34 @@ class InternationalizationTestCase(JinjaTestCase):
         ]
 
 
+class NewstyleInternationalizationTestCase(JinjaTestCase):
+
+    def test_trans(self):
+        tmpl = newstyle_i18n_env.get_template('child.html')
+        assert tmpl.render(LANGUAGE='de') == '<title>fehlend</title>pass auf'
+
+    def test_trans_plural(self):
+        tmpl = newstyle_i18n_env.get_template('plural.html')
+        assert tmpl.render(LANGUAGE='de', user_count=1) == 'Ein Benutzer online'
+        assert tmpl.render(LANGUAGE='de', user_count=2) == '2 Benutzer online'
+
+    def test_complex_plural(self):
+        tmpl = newstyle_i18n_env.from_string('{% trans foo=42, count=2 %}{{ count }} item{% '
+                                    'pluralize count %}{{ count }} items{% endtrans %}')
+        assert tmpl.render() == '2 items'
+        self.assert_raises(TemplateAssertionError, i18n_env.from_string,
+                           '{% trans foo %}...{% pluralize bar %}...{% endtrans %}')
+
+    def test_trans_stringformatting(self):
+        tmpl = newstyle_i18n_env.get_template('stringformat.html')
+        assert tmpl.render(LANGUAGE='de', user_count=5) == 'Benutzer: 5'
+
+    def test_newstyle_plural(self):
+        tmpl = newstyle_i18n_env.get_template('ngettext.html')
+        assert tmpl.render(LANGUAGE='de', apples=1) == '1 Apfel'
+        assert tmpl.render(LANGUAGE='de', apples=5) == u'5 Äpfel'
+
+
 class AutoEscapeTestCase(JinjaTestCase):
 
     def test_scoped_setting(self):
@@ -347,5 +393,6 @@ def suite():
     suite = unittest.TestSuite()
     suite.addTest(unittest.makeSuite(ExtensionsTestCase))
     suite.addTest(unittest.makeSuite(InternationalizationTestCase))
+    suite.addTest(unittest.makeSuite(NewstyleInternationalizationTestCase))
     suite.addTest(unittest.makeSuite(AutoEscapeTestCase))
     return suite

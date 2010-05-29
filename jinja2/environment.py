@@ -279,6 +279,13 @@ class Environment(object):
 
         _environment_sanity_check(self)
 
+    def add_extension(self, extension):
+        """Adds an extension after the environment was created.
+
+        .. versionadded:: 2.5
+        """
+        load_extensions(self, [extension])
+
     def extend(self, **attributes):
         """Add the items to the instance of the environment if they do not exist
         yet.  This is used by :ref:`extensions <writing-extensions>` to register
