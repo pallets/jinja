@@ -1,6 +1,16 @@
 Jinja2 Changelog
 ================
 
+Version 2.6
+-----------
+(codename to be selected, release date to be announced)
+
+- StopIteration exceptions raised by functions called from templates
+  are now intercepted and converted to undefineds.  This solves a
+  lot of debugging grief.  (StopIteration is used internally to
+  abort template execution)
+- improved performance of macro calls slightly.
+
 Version 2.5
 -----------
 (codename Incoherence, relased on May 29th 2010)
