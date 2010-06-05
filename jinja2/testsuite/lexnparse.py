@@ -36,6 +36,10 @@ class LexerTestCase(JinjaTestCase):
                                '{%raw%}{{ bar }}|{% baz %}{%       endraw    %}')
         assert tmpl.render() == 'foo|{{ bar }}|{% baz %}'
 
+    def test_raw2(self):
+        tmpl = env.from_string('1  {%- raw -%}   2   {%- endraw -%}   3')
+        assert tmpl.render() == '123'
+
     def test_balancing(self):
         env = Environment('{%', '%}', '${', '}')
         tmpl = env.from_string('''{% for item in seq
