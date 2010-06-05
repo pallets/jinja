@@ -432,9 +432,10 @@ class Lexer(object):
             'root': [
                 # directives
                 (c('(.*?)(?:%s)' % '|'.join(
-                    [r'(?P<raw_begin>(?:\s*%s\-|%s)\s*raw\s*%s)' % (
+                    [r'(?P<raw_begin>(?:\s*%s\-|%s)\s*raw\s*(?:\-%s\s*|%s))' % (
                         e(environment.block_start_string),
                         e(environment.block_start_string),
+                        e(environment.block_end_string),
                         e(environment.block_end_string)
                     )] + [
                         r'(?P<%s_begin>\s*%s\-|%s)' % (n, r, r)
