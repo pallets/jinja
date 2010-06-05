@@ -172,6 +172,14 @@ class StreamingTestCase(JinjaTestCase):
 
 class UndefinedTestCase(JinjaTestCase):
 
+    def test_stopiteration_is_undefined(self):
+        def test():
+            raise StopIteration()
+        t = Template('A{{ test() }}B')
+        assert t.render(test=test) == 'AB'
+        t = Template('A{{ test().missingattribute }}B')
+        self.assert_raises(UndefinedError, t.render, test=test)
+
     def test_default_undefined(self):
         env = Environment(undefined=Undefined)
         self.assert_equal(env.from_string('{{ missing }}').render(), u'')

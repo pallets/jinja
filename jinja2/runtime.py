@@ -179,7 +179,12 @@ class Context(object):
                 args = (__self.eval_ctx,) + args
             elif getattr(__obj, 'environmentfunction', 0):
                 args = (__self.environment,) + args
-        return __obj(*args, **kwargs)
+        try:
+            return __obj(*args, **kwargs)
+        except StopIteration:
+            return __self.environment.undefined('value was undefined because '
+                                                'a callable raised a '
+                                                'StopIteration exception')
 
     def derived(self, locals=None):
         """Internal helper function to create a derived context."""
@@ -345,7 +350,7 @@ class LoopContextIterator(object):
 
 
 class Macro(object):
-    """Wraps a macro."""
+    """Wraps a macro function."""
 
     def __init__(self, environment, func, name, arguments, defaults,
                  catch_kwargs, catch_varargs, caller):
@@ -361,20 +366,24 @@ class Macro(object):
 
     @internalcode
     def __call__(self, *args, **kwargs):
-        arguments = []
-        for idx, name in enumerate(self.arguments):
-            try:
-                value = args[idx]
-            except:
+        # try to consume the positional arguments
+        arguments = list(args[:self._argument_count])
+        off = len(arguments)
+
+        # if the number of arguments consumed is not the number of
+        # arguments expected we start filling in keyword arguments
+        # and defaults.
+        if off != self._argument_count:
+            for idx, name in enumerate(self.arguments[len(arguments):]):
                 try:
                     value = kwargs.pop(name)
-                except:
+                except KeyError:
                     try:
-                        value = self.defaults[idx - self._argument_count]
-                    except:
+                        value = self.defaults[idx - self._argument_count + off]
+                    except IndexError:
                         value = self._environment.undefined(
                             'parameter %r was not provided' % name, name=name)
-            arguments.append(value)
+                arguments.append(value)
 
         # it's important that the order of these arguments does not change
         # if not also changed in the compiler's `function_scoping` method.
