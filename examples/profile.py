@@ -11,6 +11,9 @@ context = {
 }
 
 source = """\
+% macro testmacro(x)
+  <span>{{ x }}</span>
+% endmacro
 <!doctype html>
 <html>
   <head>
@@ -25,7 +28,7 @@ source = """\
       % for row in table
         <tr>
         % for cell in row
-          <td>${cell}</td>
+          <td>${testmacro(cell)}</td>
         % endfor
         </tr>
       % endfor

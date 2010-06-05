@@ -2,7 +2,14 @@
 from rwbench import ROOT
 from os.path import join
 from django.conf import settings
-settings.configure(TEMPLATE_DIRS=(join(ROOT, 'django'),))
+settings.configure(
+    TEMPLATE_DIRS=(join(ROOT, 'django'),),
+    TEMPLATE_LOADERS=(
+        ('django.template.loaders.cached.Loader', (
+            'django.template.loaders.filesystem.Loader',
+        )),
+    )
+)
 from django.template import loader as django_loader, Context as DjangoContext, \
      Node, NodeList, Variable, TokenParser
 from django import template as django_template_module
