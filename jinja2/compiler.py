@@ -1223,8 +1223,6 @@ class CodeGenerator(NodeVisitor):
         else:
             finalize = unicode
 
-        self.newline(node)
-
         # if we are inside a frame that requires output checking, we do so
         outdent_later = False
         if frame.require_output_check:

@@ -12,7 +12,7 @@ context = {
 
 source = """\
 % macro testmacro(x)
-  <span>{{ x }}</span>
+  <span>${x}</span>
 % endmacro
 <!doctype html>
 <html>
