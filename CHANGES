@@ -1,9 +1,9 @@
 Jinja2 Changelog
 ================
 
-Version 2.6
------------
-(codename to be selected, release date to be announced)
+Version 2.5.1
+-------------
+(bugfix release, release date to be announced)
 
 - StopIteration exceptions raised by functions called from templates
   are now intercepted and converted to undefineds.  This solves a

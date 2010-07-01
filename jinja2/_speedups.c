@@ -202,7 +202,6 @@ tb_set_next(PyObject *self, PyObject *args)
 	return Py_None;
 }
 
-
 static PyMethodDef module_methods[] = {
 	{"escape", (PyCFunction)escape, METH_O,
 	 "escape(s) -> markup\n\n"

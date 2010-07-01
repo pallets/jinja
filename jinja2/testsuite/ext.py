@@ -51,7 +51,9 @@ newstyle_i18n_templates = {
     'stringformat.html': '{{ _("User: %(num)s", num=user_count) }}',
     'ngettext.html': '{{ ngettext("%(num)s apple", "%(num)s apples", apples) }}',
     'ngettext_long.html': '{% trans num=apples %}{{ num }} apple{% pluralize %}'
-                          '{{ num }} apples{% endtrans %}'
+                          '{{ num }} apples{% endtrans %}',
+    'transvars1.html': '{% trans %}User: {{ num }}{% endtrans %}',
+    'transvars2.html': '{% trans num=count %}User: {{ num }}{% endtrans %}'
 }
 
 
@@ -344,6 +346,12 @@ class NewstyleInternationalizationTestCase(JinjaTestCase):
         # newstyle gettext of course
         assert re.search(r"l_ngettext, u?'\%\(num\)s apple', u?'\%\(num\)s "
                          r"apples', 3", source) is not None
+
+    def test_trans_vars(self):
+        t1 = newstyle_i18n_env.get_template('transvars1.html')
+        t2 = newstyle_i18n_env.get_template('transvars2.html')
+        assert t1.render(num=1, LANGUAGE='de') == 'Benutzer: 1'
+        assert t2.render(count=23, LANGUAGE='de') == 'Benutzer: 23'
 
 
 class AutoEscapeTestCase(JinjaTestCase):
