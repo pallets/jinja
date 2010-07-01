@@ -12,6 +12,11 @@
 """
 import sys
 from os.path import join, dirname, abspath
+try:
+    from cProfile import Profile
+except ImportError:
+    from profile import Profile
+from pstats import Stats
 ROOT = abspath(dirname(__file__))
 
 from random import choice, randrange
@@ -97,3 +102,11 @@ if __name__ == '__main__':
         sys.stdout.write(' >> %-20s<running>' % test)
         sys.stdout.flush()
         sys.stdout.write('\r    %-20s%.4f seconds\n' % (test, t.timeit(number=200) / 200))
+
+    if '-p' in sys.argv:
+        print 'Jinja profile'
+        p = Profile()
+        p.runcall(test_jinja)
+        stats = Stats(p)
+        stats.sort_stats('time', 'calls')
+        stats.print_stats()
