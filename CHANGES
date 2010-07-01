@@ -10,6 +10,9 @@ Version 2.5.1
   lot of debugging grief.  (StopIteration is used internally to
   abort template execution)
 - improved performance of macro calls slightly.
+- babel extraction can now properly extract newstyle gettext calls.
+- using the variable `num` in newstyle gettext for something else
+  than the pluralize count will no longer raise a :exc:`KeyError`.
 
 Version 2.5
 -----------

@@ -13,7 +13,7 @@
 from collections import deque
 from jinja2 import nodes
 from jinja2.defaults import *
-from jinja2.environment import get_spontaneous_environment
+from jinja2.environment import Environment
 from jinja2.runtime import Undefined, concat
 from jinja2.exceptions import TemplateAssertionError, TemplateSyntaxError
 from jinja2.utils import contextfunction, import_string, Markup, next
@@ -286,7 +286,8 @@ class InternationalizationExtension(Extension):
             parser.fail('pluralize without variables', lineno)
 
         node = self._make_node(singular, plural, variables, plural_expr,
-                               bool(referenced), num_called_num)
+                               bool(referenced),
+                               num_called_num and have_plural)
         node.set_lineno(lineno)
         return node
 
@@ -545,6 +546,10 @@ def babel_extract(fileobj, keywords, comment_tags, options):
        gettext call in one line of code and the matching comment in the
        same line or the line before.
 
+    .. versionchanged:: 2.5.1
+       The `newstyle_gettext` flag can be set to `True` to enable newstyle
+       gettext calls.
+
     :param fileobj: the file-like object the messages should be extracted from
     :param keywords: a list of keywords (i.e. function names) that should be
                      recognized as translation functions
@@ -563,7 +568,10 @@ def babel_extract(fileobj, keywords, comment_tags, options):
     if InternationalizationExtension not in extensions:
         extensions.add(InternationalizationExtension)
 
-    environment = get_spontaneous_environment(
+    def getbool(options, key, default=False):
+        options.get(key, str(default)).lower() in ('1', 'on', 'yes', 'true')
+
+    environment = Environment(
         options.get('block_start_string', BLOCK_START_STRING),
         options.get('block_end_string', BLOCK_END_STRING),
         options.get('variable_start_string', VARIABLE_START_STRING),
@@ -572,16 +580,14 @@ def babel_extract(fileobj, keywords, comment_tags, options):
         options.get('comment_end_string', COMMENT_END_STRING),
         options.get('line_statement_prefix') or LINE_STATEMENT_PREFIX,
         options.get('line_comment_prefix') or LINE_COMMENT_PREFIX,
-        str(options.get('trim_blocks', TRIM_BLOCKS)).lower() in \
-            ('1', 'on', 'yes', 'true'),
+        getbool(options, 'trim_blocks', TRIM_BLOCKS),
         NEWLINE_SEQUENCE, frozenset(extensions),
-        # fill with defaults so that environments are shared
-        # with other spontaneus environments.  The rest of the
-        # arguments are optimizer, undefined, finalize, autoescape,
-        # loader, cache size, auto reloading setting and the
-        # bytecode cache
-        True, Undefined, None, False, None, 0, False, None
+        cache_size=0,
+        auto_reload=False
     )
+
+    if getbool(options, 'newstyle_gettext'):
+        environment.newstyle_gettext = True
 
     source = fileobj.read().decode(options.get('encoding', 'utf-8'))
     try:

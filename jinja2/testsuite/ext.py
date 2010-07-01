@@ -53,7 +53,8 @@ newstyle_i18n_templates = {
     'ngettext_long.html': '{% trans num=apples %}{{ num }} apple{% pluralize %}'
                           '{{ num }} apples{% endtrans %}',
     'transvars1.html': '{% trans %}User: {{ num }}{% endtrans %}',
-    'transvars2.html': '{% trans num=count %}User: {{ num }}{% endtrans %}'
+    'transvars2.html': '{% trans num=count %}User: {{ num }}{% endtrans %}',
+    'transvars3.html': '{% trans count=num %}User: {{ count }}{% endtrans %}'
 }
 
 
@@ -64,6 +65,7 @@ languages = {
         'One user online':              u'Ein Benutzer online',
         '%(user_count)s users online':  u'%(user_count)s Benutzer online',
         'User: %(num)s':                u'Benutzer: %(num)s',
+        'User: %(count)s':              u'Benutzer: %(count)s',
         '%(num)s apple':                u'%(num)s Apfel',
         '%(num)s apples':               u'%(num)s Äpfel'
     }
@@ -350,8 +352,10 @@ class NewstyleInternationalizationTestCase(JinjaTestCase):
     def test_trans_vars(self):
         t1 = newstyle_i18n_env.get_template('transvars1.html')
         t2 = newstyle_i18n_env.get_template('transvars2.html')
+        t3 = newstyle_i18n_env.get_template('transvars3.html')
         assert t1.render(num=1, LANGUAGE='de') == 'Benutzer: 1'
         assert t2.render(count=23, LANGUAGE='de') == 'Benutzer: 23'
+        assert t3.render(num=42, LANGUAGE='de') == 'Benutzer: 42'
 
 
 class AutoEscapeTestCase(JinjaTestCase):
