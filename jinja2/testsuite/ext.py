@@ -54,7 +54,9 @@ newstyle_i18n_templates = {
                           '{{ num }} apples{% endtrans %}',
     'transvars1.html': '{% trans %}User: {{ num }}{% endtrans %}',
     'transvars2.html': '{% trans num=count %}User: {{ num }}{% endtrans %}',
-    'transvars3.html': '{% trans count=num %}User: {{ count }}{% endtrans %}'
+    'transvars3.html': '{% trans count=num %}User: {{ count }}{% endtrans %}',
+    'novars.html': '{% trans %}%(hello)s{% endtrans %}',
+    'vars.html': '{% trans %}{{ foo }}%(foo)s{% endtrans %}'
 }
 
 
@@ -356,6 +358,12 @@ class NewstyleInternationalizationTestCase(JinjaTestCase):
         assert t1.render(num=1, LANGUAGE='de') == 'Benutzer: 1'
         assert t2.render(count=23, LANGUAGE='de') == 'Benutzer: 23'
         assert t3.render(num=42, LANGUAGE='de') == 'Benutzer: 42'
+
+    def test_novars_vars_escaping(self):
+        t = newstyle_i18n_env.get_template('novars.html')
+        assert t.render() == '%(hello)s'
+        t = newstyle_i18n_env.get_template('vars.html')
+        assert t.render(foo='42') == '42%(foo)s'
 
 
 class AutoEscapeTestCase(JinjaTestCase):

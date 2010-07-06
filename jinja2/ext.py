@@ -327,7 +327,7 @@ class InternationalizationExtension(Extension):
                    vars_referenced, num_called_num):
         """Generates a useful node from the data provided."""
         # no variables referenced?  no need to escape for old style
-        # gettext invocations
+        # gettext invocations only if there are vars.
         if not vars_referenced and not self.environment.newstyle_gettext:
             singular = singular.replace('%%', '%')
             if plural:
