@@ -985,6 +985,27 @@ but exists for completeness' sake.  The following operators are supported:
     Raise the left operand to the power of the right operand.  ``{{ 2**3 }}``
     would return ``8``.
 
+Comparisions
+~~~~~~~~~~~~
+
+==
+    Compares two objects for equality.
+
+!=
+    Compares two objects for inequality.
+
+>
+    `true` if the left hand side is greater than the right hand side.
+
+>=
+    `true` if the left hand side is greater or equal to the right hand side.
+
+<
+    `true` if the left hand side is lower than the right hand side.
+
+<=
+    `true` if the left hand side is lower or equal to the right hand side.
+
 Logic
 ~~~~~
 
