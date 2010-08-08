@@ -985,8 +985,8 @@ but exists for completeness' sake.  The following operators are supported:
     Raise the left operand to the power of the right operand.  ``{{ 2**3 }}``
     would return ``8``.
 
-Comparisions
-~~~~~~~~~~~~
+Comparisons
+~~~~~~~~~~~
 
 ==
     Compares two objects for equality.
