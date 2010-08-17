@@ -206,7 +206,7 @@ class FilterTestCase(JinjaTestCase):
 
     def test_abs(self):
         tmpl = env.from_string('''{{ -1|abs }}|{{ 1|abs }}''')
-        return tmpl.render() == '1|1'
+        assert tmpl.render() == '1|1', tmpl.render()
 
     def test_round_positive(self):
         tmpl = env.from_string('{{ 2.7|round }}|{{ 2.1|round }}|'
