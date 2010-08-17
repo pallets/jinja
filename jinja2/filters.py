@@ -558,10 +558,7 @@ def do_round(value, precision=0, method='common'):
     if method == 'common':
         return round(value, precision)
     func = getattr(math, method)
-    if precision:
-        return func(value * (10 ** precision)) / (10 ** precision)
-    else:
-        return func(value)
+    return func(value * (10 ** precision)) / (10 ** precision)
 
 
 @environmentfilter
