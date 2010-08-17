@@ -65,7 +65,7 @@ if sys.version_info >= (3, 0):
 
 setup(
     name='Jinja2',
-    version='2.5.1',
+    version='2.6',
     url='http://jinja.pocoo.org/',
     license='BSD',
     author='Armin Ronacher',
