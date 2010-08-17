@@ -18,6 +18,7 @@ Version 2.5.1
   pulled from markupsafe by the Jinja2 developers.  The debug support
   went into a separate feature called "debugsupport" and is disabled
   by default because it is only relevant for Python 2.4
+- fixed an issue with unary operators having the wrong precendence.
 
 Version 2.5
 -----------

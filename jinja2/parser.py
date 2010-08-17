@@ -370,7 +370,7 @@ class Parser(object):
                 target = self.parse_tuple(simplified=True,
                                           extra_end_rules=extra_end_rules)
             else:
-                target = self.parse_primary(with_postfix=False)
+                target = self.parse_primary()
             target.set_ctx('store')
         if not target.can_assign():
             self.fail('can\'t assign to %r' % target.__class__.
@@ -525,20 +525,22 @@ class Parser(object):
             lineno = self.stream.current.lineno
         return left
 
-    def parse_unary(self):
+    def parse_unary(self, with_postfix=True):
         token_type = self.stream.current.type
         lineno = self.stream.current.lineno
         if token_type == 'sub':
             next(self.stream)
-            node = self.parse_unary()
-            return nodes.Neg(node, lineno=lineno)
-        if token_type == 'add':
+            node = nodes.Neg(self.parse_unary(False), lineno=lineno)
+        elif token_type == 'add':
             next(self.stream)
-            node = self.parse_unary()
-            return nodes.Pos(node, lineno=lineno)
-        return self.parse_primary()
+            node = nodes.Pos(self.parse_unary(False), lineno=lineno)
+        else:
+            node = self.parse_primary()
+        if with_postfix:
+            node = self.parse_postfix(node)
+        return node
 
-    def parse_primary(self, with_postfix=True):
+    def parse_primary(self):
         token = self.stream.current
         if token.type == 'name':
             if token.value in ('true', 'false', 'True', 'False'):
@@ -570,8 +572,6 @@ class Parser(object):
             node = self.parse_dict()
         else:
             self.fail("unexpected '%s'" % describe_token(token), token.lineno)
-        if with_postfix:
-            node = self.parse_postfix(node)
         return node
 
     def parse_tuple(self, simplified=False, with_condexpr=True,
@@ -596,7 +596,7 @@ class Parser(object):
         """
         lineno = self.stream.current.lineno
         if simplified:
-            parse = lambda: self.parse_primary(with_postfix=False)
+            parse = self.parse_primary
         elif with_condexpr:
             parse = self.parse_expression
         else:
