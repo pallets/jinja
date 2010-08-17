@@ -330,6 +330,81 @@ else:
     def test_spitfire():
         spitfire_template(search_list=[spitfire_context]).main()
 
+
+try:
+    from chameleon.zpt.template import PageTemplate
+except ImportError:
+    test_chameleon = None
+else:
+    chameleon_template = PageTemplate("""\
+<html xmlns:tal="http://xml.zope.org/namespaces/tal">
+  <head>
+    <title tal:content="page_title">Page Title</title>
+  </head>
+  <body>
+    <div class="header">
+      <h1 tal:content="page_title">Page Title</h1>
+    </div>
+    <ul class="navigation">
+    <li tal:repeat="item sections"><a tal:attributes="href item[0]" tal:content="item[1]">caption</a></li>
+    </ul>
+    <div class="table">
+      <table>
+        <tr tal:repeat="row table">
+        <td tal:repeat="cell row" tal:content="row[cell]">cell</td>
+        </tr>
+      </table>
+    </div>
+  </body>
+</html>\
+""")
+    chameleon_context = dict(context)
+    chameleon_context['sections'] = [
+        ('index.html', 'Index'),
+        ('downloads.html', 'Downloads'),
+        ('products.html', 'Products')
+    ]
+    def test_chameleon():
+        chameleon_template.render(**chameleon_context)
+
+try:
+    from chameleon.zpt.template import PageTemplate
+    from chameleon.genshi import language
+except ImportError:
+    test_chameleon_genshi = None
+else:
+    chameleon_genshi_template = PageTemplate("""\
+<html xmlns="http://www.w3.org/1999/xhtml" xmlns:py="http://genshi.edgewall.org/">
+  <head>
+    <title>${page_title}</title>
+  </head>
+  <body>
+    <div class="header">
+      <h1>${page_title}</h1>
+    </div>
+    <ul class="navigation">
+    <li py:for="info in sections"><a href="${info[0]}">${info[1]}</a></li>
+    </ul>
+    <div class="table">
+      <table>
+        <tr py:for="row in table">
+          <td py:for="cell in row">${row[cell]}</td>
+        </tr>
+      </table>
+    </div>
+  </body>
+</html>\
+""", parser=language.Parser())
+    chameleon_genshi_context = dict(context)
+    chameleon_genshi_context['sections'] = [
+        ('index.html', 'Index'),
+        ('downloads.html', 'Downloads'),
+        ('products.html', 'Products')
+    ]
+    def test_chameleon_genshi():
+        chameleon_genshi_template.render(**chameleon_genshi_context)
+
+
 sys.stdout.write('\r' + '\n'.join((
     '=' * 80,
     'Template Engine BigTable Benchmark'.center(80),
@@ -339,7 +414,7 @@ sys.stdout.write('\r' + '\n'.join((
 )) + '\n')
 
 
-for test in 'jinja', 'mako', 'tornado', 'tenjin', 'spitfire', 'django', 'genshi', 'cheetah':
+for test in 'jinja', 'mako', 'tornado', 'tenjin', 'spitfire', 'django', 'genshi', 'cheetah', 'chameleon', 'chameleon_genshi':
     if locals()['test_' + test] is None:
         sys.stdout.write('    %-20s*not installed*\n' % test)
         continue
