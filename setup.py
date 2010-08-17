@@ -42,7 +42,17 @@ Jinja2==dev``.
 import os
 import sys
 
-from setuptools import setup
+from setuptools import setup, Extension, Feature
+from distutils.command.build_ext import build_ext
+
+debugsupport = Feature(
+    'optional C debug support',
+    standard=False,
+    ext_modules = [
+        Extension('jinja2._debugsupport', ['jinja2/_debugsupport.c']),
+    ],
+)
+
 
 # tell distribute to use 2to3 with our own fixers.
 extra = {}
@@ -86,5 +96,6 @@ setup(
     [babel.extractors]
     jinja2 = jinja2.ext:babel_extract[i18n]
     """,
+    features={'debugsupport': debugsupport},
     **extra
 )

@@ -13,6 +13,11 @@ Version 2.5.1
 - babel extraction can now properly extract newstyle gettext calls.
 - using the variable `num` in newstyle gettext for something else
   than the pluralize count will no longer raise a :exc:`KeyError`.
+- removed builtin markup class and switched to markupsafe.  For backwards
+  compatibility the pure Python implementation still exists but is
+  pulled from markupsafe by the Jinja2 developers.  The debug support
+  went into a separate feature called "debugsupport" and is disabled
+  by default because it is only relevant for Python 2.4
 
 Version 2.5
 -----------

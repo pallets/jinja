@@ -125,23 +125,33 @@ instead that one can assign to a variable by using set::
 
     {% set comments = get_latest_comments() %}
 
-I don't have the _speedups Module.  Is Jinja slower now?
---------------------------------------------------------
+What is the speedups module and why is it missing?
+--------------------------------------------------
 
 To achieve a good performance with automatic escaping enabled, the escaping
-function is also implemented in pure C and used if Jinja2 was installed with
-the speedups module.  This happens automatically if a C compiler is available
-on the system during installation.
+function was also implemented in pure C in older Jinja2 releases and used if
+Jinja2 was installed with the speedups module.
+
+Because this feature itself is very useful for non-template engines as
+well it was moved into a separate project on PyPI called `MarkupSafe`_.
+
+Jinja2 no longer ships with a C implementation of it but only the pure
+Python implementation.  It will however check if MarkupSafe is available
+and installed, and if it is, use the Markup class from MarkupSafe.
+
+So if you want the speedups, just import MarkupSafe.
+
+.. _MarkupSafe: http://pypi.python.org/pypi/MarkupSafe
 
 My tracebacks look weird.  What's happening?
 --------------------------------------------
 
-If the speedups module is not compiled and you are using a Python installation
-without ctypes (Python 2.4 without ctypes, Jython or Google's AppEngine)
-Jinja2 is unable to provide correct debugging information and the traceback
-may be incomplete.  There is currently no good workaround for Jython or
-the AppEngine as ctypes is unavailable there and it's not possible to use
-the speedups extension.
+If the debugsupport module is not compiled and you are using a Python
+installation without ctypes (Python 2.4 without ctypes, Jython or Google's
+AppEngine) Jinja2 is unable to provide correct debugging information and
+the traceback may be incomplete.  There is currently no good workaround
+for Jython or the AppEngine as ctypes is unavailable there and it's not
+possible to use the debugsupport extension.
 
 Why is there no Python 2.3 support?
 -----------------------------------
