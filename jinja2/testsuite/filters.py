@@ -208,11 +208,17 @@ class FilterTestCase(JinjaTestCase):
         tmpl = env.from_string('''{{ -1|abs }}|{{ 1|abs }}''')
         return tmpl.render() == '1|1'
 
-    def test_round(self):
+    def test_round_positive(self):
         tmpl = env.from_string('{{ 2.7|round }}|{{ 2.1|round }}|'
-                               "{{ 2.1234|round(2, 'floor') }}|"
+                               "{{ 2.1234|round(3, 'floor') }}|"
                                "{{ 2.1|round(0, 'ceil') }}")
-        return tmpl.render() == '3.0|2.0|2.1|3.0'
+        assert tmpl.render() == '3.0|2.0|2.123|3.0', tmpl.render()
+
+    def test_round_negative(self):
+        tmpl = env.from_string('{{ 21.3|round(-1)}}|'
+                               "{{ 21.3|round(-1, 'ceil')}}|"
+                               "{{ 21.3|round(-1, 'floor')}}")
+        assert tmpl.render() == '20.0|30.0|20.0',tmpl.render()
 
     def test_xmlattr(self):
         tmpl = env.from_string("{{ {'foo': 42, 'bar': 23, 'fish': none, "

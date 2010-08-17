@@ -555,14 +555,11 @@ def do_round(value, precision=0, method='common'):
     """
     if not method in ('common', 'ceil', 'floor'):
         raise FilterArgumentError('method must be common, ceil or floor')
-    if precision < 0:
-        raise FilterArgumentError('precision must be a postive integer '
-                                  'or zero.')
     if method == 'common':
         return round(value, precision)
     func = getattr(math, method)
     if precision:
-        return func(value * 10 * precision) / (10 * precision)
+        return func(value * (10 ** precision)) / (10 ** precision)
     else:
         return func(value)
 
