@@ -42,7 +42,7 @@ Jinja2==dev``.
 import os
 import sys
 
-from setuptools import setup, Extension, Feature
+from setuptools import setup
 
 # tell distribute to use 2to3 with our own fixers.
 extra = {}
@@ -77,15 +77,8 @@ setup(
         'Topic :: Software Development :: Libraries :: Python Modules',
         'Topic :: Text Processing :: Markup :: HTML'
     ],
-    packages=['jinja2', 'jinja2.testsuite', 'jinja2.testsuite.res'],
-    features={
-        'speedups': Feature("optional C speed-enhancements",
-            standard=False,
-            ext_modules=[
-                Extension('jinja2._speedups', ['jinja2/_speedups.c'])
-            ]
-        )
-    },
+    packages=['jinja2', 'jinja2.testsuite', 'jinja2.testsuite.res',
+              'jinja2._markupsafe'],
     extras_require={'i18n': ['Babel>=0.8']},
     test_suite='jinja2.testsuite.suite',
     include_package_data=True,
