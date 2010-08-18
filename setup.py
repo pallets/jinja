@@ -62,10 +62,21 @@ if sys.version_info >= (3, 0):
         use_2to3_fixers=['custom_fixers']
     )
 
+# ignore the old '--with-speedups' flag
+try:
+    speedups_pos = sys.argv.index('--with-speedups')
+except IndexError:
+    pass
+else:
+    sys.argv[speedups_pos] = '--with-debugsupport'
+    print >> sys.stderr, 'the --with-speedups flag is deprecated'
+    print >> sys.stderr, 'assuming --with-debugsupport'
+    print >> sys.stderr, 'for speedups install MarkupSafe'
+
 
 setup(
     name='Jinja2',
-    version='2.6',
+    version='2.5.2',
     url='http://jinja.pocoo.org/',
     license='BSD',
     author='Armin Ronacher',

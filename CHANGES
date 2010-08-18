@@ -1,6 +1,14 @@
 Jinja2 Changelog
 ================
 
+Version 2.5.2
+-------------
+(bugfix release, released on August 18th 2010)
+
+- improved setup.py script to better work with assumptions people
+  might still have from it (``--with-speedups``).
+- fixed a packaging error that excluded the new debug support.
+
 Version 2.5.1
 -------------
 (bugfix release, released on August 17th 2010)
