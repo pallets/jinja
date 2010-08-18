@@ -65,7 +65,7 @@ if sys.version_info >= (3, 0):
 # ignore the old '--with-speedups' flag
 try:
     speedups_pos = sys.argv.index('--with-speedups')
-except IndexError:
+except ValueError:
     pass
 else:
     sys.argv[speedups_pos] = '--with-debugsupport'
