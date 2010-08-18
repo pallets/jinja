@@ -69,9 +69,13 @@ except IndexError:
     pass
 else:
     sys.argv[speedups_pos] = '--with-debugsupport'
-    print >> sys.stderr, 'the --with-speedups flag is deprecated'
-    print >> sys.stderr, 'assuming --with-debugsupport'
-    print >> sys.stderr, 'for speedups install MarkupSafe'
+    sys.stderr.write('*' * 74 + '\n')
+    sys.stderr.write('WARNING:\n')
+    sys.stderr.write('  the --with-speedups flag is deprecated, assuming '
+                     '--with-debugsupport\n')
+    sys.stderr.write('  For the actual speedups install the MarkupSafe '
+                     'package.\n')
+    sys.stderr.write('*' * 74 + '\n')
 
 
 setup(
