@@ -525,7 +525,7 @@ class Parser(object):
             lineno = self.stream.current.lineno
         return left
 
-    def parse_unary(self, with_postfix=True):
+    def parse_unary(self, with_filter=True):
         token_type = self.stream.current.type
         lineno = self.stream.current.lineno
         if token_type == 'sub':
@@ -536,8 +536,9 @@ class Parser(object):
             node = nodes.Pos(self.parse_unary(False), lineno=lineno)
         else:
             node = self.parse_primary()
-        if with_postfix:
-            node = self.parse_postfix(node)
+        node = self.parse_postfix(node)
+        if with_filter:
+            node = self.parse_filter_expr(node)
         return node
 
     def parse_primary(self):
@@ -661,12 +662,25 @@ class Parser(object):
             token_type = self.stream.current.type
             if token_type == 'dot' or token_type == 'lbracket':
                 node = self.parse_subscript(node)
+            # calls are valid both after postfix expressions (getattr
+            # and getitem) as well as filters and tests
             elif token_type == 'lparen':
                 node = self.parse_call(node)
-            elif token_type == 'pipe':
+            else:
+                break
+        return node
+
+    def parse_filter_expr(self, node):
+        while 1:
+            token_type = self.stream.current.type
+            if token_type == 'pipe':
                 node = self.parse_filter(node)
             elif token_type == 'name' and self.stream.current.value == 'is':
                 node = self.parse_test(node)
+            # calls are valid both after postfix expressions (getattr
+            # and getitem) as well as filters and tests
+            elif token_type == 'lparen':
+                node = self.parse_call(node)
             else:
                 break
         return node

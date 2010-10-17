@@ -375,6 +375,12 @@ class SyntaxTestCase(JinjaTestCase):
 {{ foo }}''')
         assert tmpl.render() == '0'
 
+    def test_parse_unary(self):
+        tmpl = env.from_string('{{ -foo["bar"] }}')
+        assert tmpl.render(foo={'bar': 42}) == '-42'
+        tmpl = env.from_string('{{ -foo["bar"]|abs }}')
+        assert tmpl.render(foo={'bar': 42}) == '42'
+
 
 def suite():
     suite = unittest.TestSuite()

@@ -1,6 +1,15 @@
 Jinja2 Changelog
 ================
 
+Version 2.5.3
+-------------
+(bugfix release, release date to be announced)
+
+- fixed an operator precedence error introduced in 2.5.2.  Statements
+  like "-foo.bar" had their implicit parentheses applied around the
+  first part of the expression ("(-foo).bar") instead of the more
+  correct "-(foo.bar)".
+
 Version 2.5.2
 -------------
 (bugfix release, released on August 18th 2010)
