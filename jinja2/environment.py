@@ -335,7 +335,7 @@ class Environment(object):
         for key, value in self.extensions.iteritems():
             rv.extensions[key] = value.bind(rv)
         if extensions is not missing:
-            rv.extensions.update(load_extensions(extensions))
+            rv.extensions.update(load_extensions(rv, extensions))
 
         return _environment_sanity_check(rv)
 
