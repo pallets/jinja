@@ -1,9 +1,0 @@
-^instance$
-^instance/
-^jinja2/.*\.so$
-^docs/_build
-^(build|dist|Jinja2\.egg-info)/
-\.py[cod]$
-\$py\.class$
-\.DS_Store$
-^j?env/
