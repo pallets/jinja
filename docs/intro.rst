@@ -79,23 +79,14 @@ This will install Jinja2 into your Python installation's site-packages directory
 Installing the development version
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
-1.  Install `mercurial`_
-2.  ``hg clone http://dev.pocoo.org/hg/jinja2-main jinja2``
+1.  Install `git`_
+2.  ``git clone git://github.com/mitsuhiko/jinja2.git``
 3.  ``cd jinja2``
 4.  ``ln -s jinja2 /usr/lib/python2.X/site-packages``
 
 As an alternative to steps 4 you can also do ``python setup.py develop``
 which will install the package via distribute in development mode.  This also
 has the advantage that the C extensions are compiled.
-
-Alternative you can use `pip`_ to install the current development
-snapshot::
-
-    sudo pip install Jinja2==dev
-
-Or the `easy_install`_ command::
-
-    sudo easy_install Jinja2==dev
 
 .. _download page: http://pypi.python.org/pypi/Jinja2
 .. _setuptools: http://peak.telecommunity.com/DevCenter/setuptools
@@ -174,4 +165,4 @@ in mind, you will have to adapt the shown code examples to Python 3 syntax
 for yourself.
 
 
-.. _Jinja bug tracker: http://dev.pocoo.org/projects/jinja/
+.. _Jinja bug tracker: http://github.com/mitsuhiko/jinja2/issues
