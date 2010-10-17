@@ -92,7 +92,7 @@ has the advantage that the C extensions are compiled.
 .. _setuptools: http://peak.telecommunity.com/DevCenter/setuptools
 .. _easy_install: http://peak.telecommunity.com/DevCenter/EasyInstall
 .. _pip: http://pypi.python.org/pypi/pip
-.. _mercurial: http://www.selenic.com/mercurial/
+.. _git: http://git-scm.org/
 
 
 More Speed with MarkupSafe
