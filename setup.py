@@ -80,7 +80,7 @@ else:
 
 setup(
     name='Jinja2',
-    version='2.5.2',
+    version='2.5.3',
     url='http://jinja.pocoo.org/',
     license='BSD',
     author='Armin Ronacher',
