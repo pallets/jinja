@@ -259,7 +259,7 @@ def _init_ugly_crap():
     ]
 
     # python with trace
-    if object.__basicsize__ != ctypes.sizeof(_PyObject):
+    if hasattr(sys, 'getobjects'):
         class _PyObject(ctypes.Structure):
             pass
         _PyObject._fields_ = [

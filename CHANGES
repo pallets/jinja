@@ -6,6 +6,8 @@ Version 2.5.4
 (bugfix release, release date to be announced)
 
 - Fixed extensions not loading properly with overlays.
+- Work around a bug in cpython for the debugger that causes segfaults
+  on 64bit big-endian architectures.
 
 Version 2.5.3
 -------------
