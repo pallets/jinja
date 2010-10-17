@@ -10,25 +10,6 @@ Django, you should feel right at home with Jinja2.  It's both designer and
 developer friendly by sticking to Python's principles and adding functionality
 useful for templating environments.
 
-The key-features are...
-
--   ... **configurable syntax**.  If you are generating LaTeX or other formats
-    with Jinja2 you can change the delimiters to something that integrates better
-    into the LaTeX markup.
-
--   ... **fast**.  While performance is not the primarily target of Jinja2 it's
-    surprisingly fast.  The overhead compared to regular Python code was reduced
-    to the very minimum.
-
--   ... **easy to debug**.  Jinja2 integrates directly into the python traceback
-    system which allows you to debug Jinja2 templates with regular python
-    debugging helpers.
-
--   ... **secure**.  It's possible to evaluate untrusted template code if the
-    optional sandbox is enabled.  This allows Jinja2 to be used as templating
-    language for applications where users may modify the template design.
-
-
 Prerequisites
 -------------
 
