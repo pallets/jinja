@@ -5,7 +5,7 @@ recursive-include ext *
 recursive-include artwork *
 recursive-include examples *
 recursive-include jinja2/testsuite/res *
-recursive-exclude docs/_build/doctrees *
+recursive-exclude docs/_build *
 recursive-exclude jinja2 *.pyc
 recursive-exclude docs *.pyc
 recursive-exclude jinja2 *.pyo
