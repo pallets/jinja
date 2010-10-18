@@ -5,6 +5,13 @@ Version 2.6
 -----------
 (codename to be selected, release date to be announced)
 
+Version 2.5.5
+-------------
+(re-release of 2.5.4 with built documentation removed for filesize.
+ Released on October 18th 2010)
+
+- built documentation is no longer part of release.
+
 Version 2.5.4
 -------------
 (bugfix release, released on October 17th 2010)
