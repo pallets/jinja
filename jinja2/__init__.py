@@ -30,7 +30,7 @@ __docformat__ = 'restructuredtext en'
 try:
     __version__ = __import__('pkg_resources') \
         .get_distribution('Jinja2').version
-except:
+except Exception:
     __version__ = 'unknown'
 
 # high level interface
