@@ -1249,7 +1249,7 @@ class CodeGenerator(NodeVisitor):
                     else:
                         const = escape(const)
                 const = finalize(const)
-            except:
+            except Exception:
                 # if something goes wrong here we evaluate the node
                 # at runtime for easier debugging
                 body.append(child)

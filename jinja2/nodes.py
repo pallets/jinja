@@ -375,7 +375,7 @@ class BinExpr(Expr):
         f = _binop_to_func[self.operator]
         try:
             return f(self.left.as_const(eval_ctx), self.right.as_const(eval_ctx))
-        except:
+        except Exception:
             raise Impossible()
 
 
@@ -390,7 +390,7 @@ class UnaryExpr(Expr):
         f = _uaop_to_func[self.operator]
         try:
             return f(self.node.as_const(eval_ctx))
-        except:
+        except Exception:
             raise Impossible()
 
 
@@ -555,16 +555,16 @@ class Filter(Expr):
         if self.dyn_args is not None:
             try:
                 args.extend(self.dyn_args.as_const(eval_ctx))
-            except:
+            except Exception:
                 raise Impossible()
         if self.dyn_kwargs is not None:
             try:
                 kwargs.update(self.dyn_kwargs.as_const(eval_ctx))
-            except:
+            except Exception:
                 raise Impossible()
         try:
             return filter_(obj, *args, **kwargs)
-        except:
+        except Exception:
             raise Impossible()
 
 
@@ -604,16 +604,16 @@ class Call(Expr):
         if self.dyn_args is not None:
             try:
                 args.extend(self.dyn_args.as_const(eval_ctx))
-            except:
+            except Exception:
                 raise Impossible()
         if self.dyn_kwargs is not None:
             try:
                 kwargs.update(self.dyn_kwargs.as_const(eval_ctx))
-            except:
+            except Exception:
                 raise Impossible()
         try:
             return obj(*args, **kwargs)
-        except:
+        except Exception:
             raise Impossible()
 
 
@@ -628,7 +628,7 @@ class Getitem(Expr):
         try:
             return self.environment.getitem(self.node.as_const(eval_ctx),
                                             self.arg.as_const(eval_ctx))
-        except:
+        except Exception:
             raise Impossible()
 
     def can_assign(self):
@@ -648,7 +648,7 @@ class Getattr(Expr):
             eval_ctx = get_eval_context(self, eval_ctx)
             return self.environment.getattr(self.node.as_const(eval_ctx),
                                             self.attr)
-        except:
+        except Exception:
             raise Impossible()
 
     def can_assign(self):
@@ -695,7 +695,7 @@ class Compare(Expr):
                 new_value = op.expr.as_const(eval_ctx)
                 result = _cmpop_to_func[op.op](value, new_value)
                 value = new_value
-        except:
+        except Exception:
             raise Impossible()
         return result
 

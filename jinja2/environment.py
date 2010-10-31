@@ -354,7 +354,7 @@ class Environment(object):
             if isinstance(argument, basestring):
                 try:
                     attr = str(argument)
-                except:
+                except Exception:
                     pass
                 else:
                     try:
@@ -886,7 +886,7 @@ class Template(object):
         vars = dict(*args, **kwargs)
         try:
             return concat(self.root_render_func(self.new_context(vars)))
-        except:
+        except Exception:
             exc_info = sys.exc_info()
         return self.environment.handle_exception(exc_info, True)
 
@@ -908,7 +908,7 @@ class Template(object):
         try:
             for event in self.root_render_func(self.new_context(vars)):
                 yield event
-        except:
+        except Exception:
             exc_info = sys.exc_info()
         else:
             return

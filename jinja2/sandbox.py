@@ -212,7 +212,7 @@ class SandboxedEnvironment(Environment):
             if isinstance(argument, basestring):
                 try:
                     attr = str(argument)
-                except:
+                except Exception:
                     pass
                 else:
                     try:

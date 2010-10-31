@@ -53,7 +53,7 @@ except TypeError, _error:
         def concat(gen):
             try:
                 return _concat(list(gen))
-            except:
+            except Exception:
                 # this hack is needed so that the current frame
                 # does not show up in the traceback.
                 exc_type, exc_value, tb = sys.exc_info()
