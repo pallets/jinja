@@ -458,11 +458,17 @@ class Undefined(object):
             hint = self._undefined_hint
         raise self._undefined_exception(hint)
 
+    @internalcode
+    def __getattr__(self, name):
+        if name[:2] == '__':
+            raise AttributeError(name)
+        return self._fail_with_undefined_error()
+
     __add__ = __radd__ = __mul__ = __rmul__ = __div__ = __rdiv__ = \
     __truediv__ = __rtruediv__ = __floordiv__ = __rfloordiv__ = \
     __mod__ = __rmod__ = __pos__ = __neg__ = __call__ = \
-    __getattr__ = __getitem__ = __lt__ = __le__ = __gt__ = __ge__ = \
-    __int__ = __float__ = __complex__ = __pow__ = __rpow__ = \
+    __getitem__ = __lt__ = __le__ = __gt__ = __ge__ = __int__ = \
+    __float__ = __complex__ = __pow__ = __rpow__ = \
         _fail_with_undefined_error
 
     def __str__(self):

@@ -180,6 +180,14 @@ class UndefinedTestCase(JinjaTestCase):
         t = Template('A{{ test().missingattribute }}B')
         self.assert_raises(UndefinedError, t.render, test=test)
 
+    def test_undefined_and_special_attributes(self):
+        try:
+            Undefined('Foo').__dict__
+        except AttributeError:
+            pass
+        else:
+            assert False, "Expected actual attribute error"
+
     def test_default_undefined(self):
         env = Environment(undefined=Undefined)
         self.assert_equal(env.from_string('{{ missing }}').render(), u'')

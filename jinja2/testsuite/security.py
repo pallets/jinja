@@ -56,6 +56,7 @@ class SandboxTestCase(JinjaTestCase):
         self.assert_equal(env.from_string("{{ foo.bar() }}").render(foo=PublicStuff()), '23')
         self.assert_equal(env.from_string("{{ foo.__class__ }}").render(foo=42), '')
         self.assert_equal(env.from_string("{{ foo.func_code }}").render(foo=lambda:None), '')
+        # security error comes from __class__ already.
         self.assert_raises(SecurityError, env.from_string(
             "{{ foo.__class__.__subclasses__() }}").render, foo=42)
 
@@ -108,7 +109,6 @@ class SandboxTestCase(JinjaTestCase):
         assert Markup("<em>Foo &amp; Bar</em>").striptags() == "Foo & Bar"
         assert Markup("&lt;test&gt;").unescape() == "<test>"
 
-
     def test_template_data(self):
         env = Environment(autoescape=True)
         t = env.from_string('{% macro say_hello(name) %}'
@@ -121,11 +121,10 @@ class SandboxTestCase(JinjaTestCase):
         assert t.module.say_hello('<blink>foo</blink>') == escaped_out
         assert escape(t.module.say_hello('<blink>foo</blink>')) == escaped_out
 
-
     def test_attr_filter(self):
         env = SandboxedEnvironment()
-        tmpl = env.from_string('{{ 42|attr("__class__")|attr("__subclasses__")() }}')
-        self.assert_raises(SecurityError, tmpl.render)
+        tmpl = env.from_string('{{ cls|attr("__subclasses__")() }}')
+        self.assert_raises(SecurityError, tmpl.render, cls=int)
 
 
 def suite():

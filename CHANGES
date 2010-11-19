@@ -5,6 +5,10 @@ Version 2.6
 -----------
 (codename to be selected, release date to be announced)
 
+- internal attributes now raise an internal attribute error now instead
+  of returning an undefined.  This fixes problems when passing undefined
+  objects to Python semantics expecting APIs.
+
 Version 2.5.5
 -------------
 (re-release of 2.5.4 with built documentation removed for filesize.
