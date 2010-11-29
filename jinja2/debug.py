@@ -80,9 +80,9 @@ class ProcessedTraceback(object):
         prev_tb = None
         for tb in self.frames:
             if prev_tb is not None:
-                prev_tb.tb_next = tb
+                prev_tb._tb_next = tb
             prev_tb = tb
-        prev_tb.tb_next = None
+        prev_tb._tb_next = None
 
     def render_as_text(self, limit=None):
         """Return a string with the traceback."""
