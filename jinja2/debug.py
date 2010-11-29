@@ -39,16 +39,14 @@ class TracebackFrameProxy(object):
         self.tb = tb
         self._tb_next = None
 
-    def _set_tb_next(self, next):
+    @property
+    def tb_next(self):
+        return self._tb_next
+
+    def set_next(self, next):
         if tb_set_next is not None:
             tb_set_next(self.tb, next and next.tb or None)
         self._tb_next = next
-
-    def _get_tb_next(self):
-        return self._tb_next
-
-    tb_next = property(_get_tb_next, _set_tb_next)
-    del _get_tb_next, _set_tb_next
 
     @property
     def is_jinja_frame(self):
@@ -80,9 +78,9 @@ class ProcessedTraceback(object):
         prev_tb = None
         for tb in self.frames:
             if prev_tb is not None:
-                prev_tb._tb_next = tb
+                prev_tb.set_next(tb)
             prev_tb = tb
-        prev_tb._tb_next = None
+        prev_tb.set_next(None)
 
     def render_as_text(self, limit=None):
         """Return a string with the traceback."""
