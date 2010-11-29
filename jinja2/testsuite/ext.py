@@ -11,7 +11,7 @@
 import re
 import unittest
 
-from jinja2.testsuite import JinjaTestCase, filesystem_loader
+from jinja2.testsuite import JinjaTestCase
 
 from jinja2 import Environment, DictLoader, contextfunction, nodes
 from jinja2.exceptions import TemplateAssertionError

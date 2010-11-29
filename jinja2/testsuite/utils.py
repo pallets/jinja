@@ -8,7 +8,6 @@
     :copyright: (c) 2010 by the Jinja Team.
     :license: BSD, see LICENSE for more details.
 """
-import os
 import gc
 import unittest
 
@@ -17,7 +16,7 @@ import pickle
 from jinja2.testsuite import JinjaTestCase
 
 from jinja2 import Environment, Undefined, DebugUndefined, \
-     StrictUndefined, UndefinedError, Template, meta
+     StrictUndefined
 from jinja2.utils import LRUCache, escape, object_type_repr
 
 

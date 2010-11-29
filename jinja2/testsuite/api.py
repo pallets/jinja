@@ -8,15 +8,12 @@
     :copyright: (c) 2010 by the Jinja Team.
     :license: BSD, see LICENSE for more details.
 """
-import os
-import time
-import tempfile
 import unittest
 
 from jinja2.testsuite import JinjaTestCase
 
 from jinja2 import Environment, Undefined, DebugUndefined, \
-     StrictUndefined, UndefinedError, Template, meta, \
+     StrictUndefined, UndefinedError, meta, \
      is_undefined, Template, DictLoader
 from jinja2.utils import Cycler
 
