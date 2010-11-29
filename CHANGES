@@ -8,6 +8,7 @@ Version 2.6
 - internal attributes now raise an internal attribute error now instead
   of returning an undefined.  This fixes problems when passing undefined
   objects to Python semantics expecting APIs.
+- traceback support now works properly for PyPy.  (Tested with 1.4)
 
 Version 2.5.5
 -------------
