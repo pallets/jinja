@@ -565,7 +565,7 @@ class Environment(object):
             log_function = lambda x: None
 
         if py_compile:
-            import imp, struct, marshal
+            import imp, marshal
             py_header = imp.get_magic() + \
                 u'\xff\xff\xff\xff'.encode('iso-8859-15')
 
