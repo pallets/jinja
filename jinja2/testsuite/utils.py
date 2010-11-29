@@ -15,8 +15,6 @@ import pickle
 
 from jinja2.testsuite import JinjaTestCase
 
-from jinja2 import Environment, Undefined, DebugUndefined, \
-     StrictUndefined
 from jinja2.utils import LRUCache, escape, object_type_repr
 
 
