@@ -196,7 +196,8 @@ class Environment(object):
 
     #: if this environment is sandboxed.  Modifying this variable won't make
     #: the environment sandboxed though.  For a real sandboxed environment
-    #: have a look at jinja2.sandbox
+    #: have a look at jinja2.sandbox.  This flag alone controls the code
+    #: generation by the compiler.
     sandboxed = False
 
     #: True if the environment is just an overlay
