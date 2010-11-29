@@ -13,7 +13,6 @@
     :license: BSD.
 """
 import operator
-from jinja2.runtime import Undefined
 from jinja2.environment import Environment
 from jinja2.exceptions import SecurityError
 from jinja2.utils import FunctionType, MethodType, TracebackType, CodeType, \
@@ -182,9 +181,81 @@ class SandboxedEnvironment(Environment):
     """
     sandboxed = True
 
+    #: default callback table for the binary operators.  A copy of this is
+    #: available on each instance of a sandboxed environment as
+    #: :attr:`binop_table`
+    default_binop_table = {
+        '+':        operator.add,
+        '-':        operator.sub,
+        '*':        operator.mul,
+        '/':        operator.truediv,
+        '//':       operator.floordiv,
+        '**':       operator.pow,
+        '%':        operator.mod
+    }
+
+    #: default callback table for the unary operators.  A copy of this is
+    #: available on each instance of a sandboxed environment as
+    #: :attr:`unop_table`
+    default_unop_table = {
+        '+':        operator.pos,
+        '-':        operator.neg
+    }
+
+    #: a set of binary operators that should be intercepted.  Each operator
+    #: that is added to this set (empty by default) is delegated to the
+    #: :meth:`call_binop` method that will perform the operator.  The default
+    #: operator callback is specified by :attr:`binop_table`.
+    #:
+    #: The following binary operators are interceptable:
+    #: ``//``, ``%``, ``+``, ``*``, ``-``, ``/``, and ``**``
+    #:
+    #: The default operation form the operator table corresponds to the
+    #: builtin function.  Intercepted calls are always slower than the native
+    #: operator call, so make sure only to intercept the ones you are
+    #: interested in.
+    #:
+    #: .. versionadded:: 2.6
+    intercepted_binops = frozenset()
+
+    #: a set of unary operators that should be intercepted.  Each operator
+    #: that is added to this set (empty by default) is delegated to the
+    #: :meth:`call_unop` method that will perform the operator.  The default
+    #: operator callback is specified by :attr:`unop_table`.
+    #:
+    #: The following unary operators are interceptable: ``+``, ``-``
+    #:
+    #: The default operation form the operator table corresponds to the
+    #: builtin function.  Intercepted calls are always slower than the native
+    #: operator call, so make sure only to intercept the ones you are
+    #: interested in.
+    #:
+    #: .. versionadded:: 2.6
+    intercepted_unops = frozenset()
+
+    def intercept_unop(self, operator):
+        """Called during template compilation with the name of a unary
+        operator to check if it should be intercepted at runtime.  If this
+        method returns `True`, :meth:`call_unop` is excuted for this unary
+        operator.  The default implementation of :meth:`call_unop` will use
+        the :attr:`unop_table` dictionary to perform the operator with the
+        same logic as the builtin one.
+
+        The following unary operators are interceptable: ``+`` and ``-``
+
+        Intercepted calls are always slower than the native operator call,
+        so make sure only to intercept the ones you are interested in.
+
+        .. versionadded:: 2.6
+        """
+        return False
+
+
     def __init__(self, *args, **kwargs):
         Environment.__init__(self, *args, **kwargs)
         self.globals['range'] = safe_range
+        self.binop_table = self.default_binop_table.copy()
+        self.unop_table = self.default_unop_table.copy()
 
     def is_safe_attribute(self, obj, attr, value):
         """The sandboxed environment will call this method to check if the
@@ -203,6 +274,24 @@ class SandboxedEnvironment(Environment):
         """
         return not (getattr(obj, 'unsafe_callable', False) or
                     getattr(obj, 'alters_data', False))
+
+    def call_binop(self, context, operator, left, right):
+        """For intercepted binary operator calls (:meth:`intercepted_binops`)
+        this function is executed instead of the builtin operator.  This can
+        be used to fine tune the behavior of certain operators.
+
+        .. versionadded:: 2.6
+        """
+        return self.binop_table[operator](left, right)
+
+    def call_unop(self, context, operator, arg):
+        """For intercepted unary operator calls (:meth:`intercepted_unops`)
+        this function is executed instead of the builtin operator.  This can
+        be used to fine tune the behavior of certain operators.
+
+        .. versionadded:: 2.6
+        """
+        return self.unop_table[operator](arg)
 
     def getitem(self, obj, argument):
         """Subscribe an object from sandboxed code."""

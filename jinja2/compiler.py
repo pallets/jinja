@@ -1421,19 +1421,31 @@ class CodeGenerator(NodeVisitor):
             self.visit(item.value, frame)
         self.write('}')
 
-    def binop(operator):
+    def binop(operator, interceptable=True):
         def visitor(self, node, frame):
-            self.write('(')
-            self.visit(node.left, frame)
-            self.write(' %s ' % operator)
-            self.visit(node.right, frame)
+            if self.environment.sandboxed and \
+               operator in self.environment.intercepted_binops:
+                self.write('environment.call_binop(context, %r, ' % operator)
+                self.visit(node.left, frame)
+                self.write(', ')
+                self.visit(node.right, frame)
+            else:
+                self.write('(')
+                self.visit(node.left, frame)
+                self.write(' %s ' % operator)
+                self.visit(node.right, frame)
             self.write(')')
         return visitor
 
-    def uaop(operator):
+    def uaop(operator, interceptable=True):
         def visitor(self, node, frame):
-            self.write('(' + operator)
-            self.visit(node.node, frame)
+            if self.environment.sandboxed and \
+               operator in self.environment.intercepted_unops:
+                self.write('environment.call_unop(context, %r, ' % operator)
+                self.visit(node.node, frame)
+            else:
+                self.write('(' + operator)
+                self.visit(node.node, frame)
             self.write(')')
         return visitor
 
@@ -1444,11 +1456,11 @@ class CodeGenerator(NodeVisitor):
     visit_FloorDiv = binop('//')
     visit_Pow = binop('**')
     visit_Mod = binop('%')
-    visit_And = binop('and')
-    visit_Or = binop('or')
+    visit_And = binop('and', interceptable=False)
+    visit_Or = binop('or', interceptable=False)
     visit_Pos = uaop('+')
     visit_Neg = uaop('-')
-    visit_Not = uaop('not ')
+    visit_Not = uaop('not ', interceptable=False)
     del binop, uaop
 
     def visit_Concat(self, node, frame):

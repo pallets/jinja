@@ -372,6 +372,10 @@ class BinExpr(Expr):
 
     def as_const(self, eval_ctx=None):
         eval_ctx = get_eval_context(self, eval_ctx)
+        # intercepted operators cannot be folded at compile time
+        if self.environment.sandboxed and \
+           self.operator in self.environment.intercepted_binops:
+            raise Impossible()
         f = _binop_to_func[self.operator]
         try:
             return f(self.left.as_const(eval_ctx), self.right.as_const(eval_ctx))
@@ -387,6 +391,10 @@ class UnaryExpr(Expr):
 
     def as_const(self, eval_ctx=None):
         eval_ctx = get_eval_context(self, eval_ctx)
+        # intercepted operators cannot be folded at compile time
+        if self.environment.sandboxed and \
+           self.operator in self.environment.intercepted_unops:
+            raise Impossible()
         f = _uaop_to_func[self.operator]
         try:
             return f(self.node.as_const(eval_ctx))

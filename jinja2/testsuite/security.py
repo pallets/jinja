@@ -16,7 +16,8 @@ from jinja2 import Environment
 from jinja2.sandbox import SandboxedEnvironment, \
      ImmutableSandboxedEnvironment, unsafe
 from jinja2 import Markup, escape
-from jinja2.exceptions import SecurityError, TemplateSyntaxError
+from jinja2.exceptions import SecurityError, TemplateSyntaxError, \
+     TemplateRuntimeError
 
 
 class PrivateStuff(object):
@@ -122,6 +123,40 @@ class SandboxTestCase(JinjaTestCase):
         env = SandboxedEnvironment()
         tmpl = env.from_string('{{ cls|attr("__subclasses__")() }}')
         self.assert_raises(SecurityError, tmpl.render, cls=int)
+
+    def test_binary_operator_intercepting(self):
+        def disable_op(left, right):
+            raise TemplateRuntimeError('that operator so does not work')
+        for expr, ctx, rv in ('1 + 2', {}, '3'), ('a + 2', {'a': 2}, '4'):
+            env = SandboxedEnvironment()
+            env.binop_table['+'] = disable_op
+            t = env.from_string('{{ %s }}' % expr)
+            assert t.render(ctx) == rv
+            env.intercepted_binops = frozenset(['+'])
+            t = env.from_string('{{ %s }}' % expr)
+            try:
+                t.render(ctx)
+            except TemplateRuntimeError, e:
+                pass
+            else:
+                self.fail('expected runtime error')
+
+    def test_unary_operator_intercepting(self):
+        def disable_op(arg):
+            raise TemplateRuntimeError('that operator so does not work')
+        for expr, ctx, rv in ('-1', {}, '-1'), ('-a', {'a': 2}, '-2'):
+            env = SandboxedEnvironment()
+            env.unop_table['-'] = disable_op
+            t = env.from_string('{{ %s }}' % expr)
+            assert t.render(ctx) == rv
+            env.intercepted_unops = frozenset(['-'])
+            t = env.from_string('{{ %s }}' % expr)
+            try:
+                t.render(ctx)
+            except TemplateRuntimeError, e:
+                pass
+            else:
+                self.fail('expected runtime error')
 
 
 def suite():

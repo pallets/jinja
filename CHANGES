@@ -9,6 +9,10 @@ Version 2.6
   of returning an undefined.  This fixes problems when passing undefined
   objects to Python semantics expecting APIs.
 - traceback support now works properly for PyPy.  (Tested with 1.4)
+- implemented operator intercepting for sandboxed environments.  This
+  allows application developers to disable builtin operators for better
+  security.  (For instance limit the mathematical operators to actual
+  integers instead of longs)
 
 Version 2.5.5
 -------------
