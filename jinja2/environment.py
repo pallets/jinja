@@ -539,7 +539,7 @@ class Environment(object):
     def compile_templates(self, target, extensions=None, filter_func=None,
                           zip='deflated', log_function=None,
                           ignore_errors=True, py_compile=False):
-        """Compiles all the templates the loader can find, compiles them
+        """Finds all the templates the loader can find, compiles them
         and stores them in `target`.  If `zip` is `None`, instead of in a
         zipfile, the templates will be will be stored in a directory.
         By default a deflate zip algorithm is used, to switch to

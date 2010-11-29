@@ -201,7 +201,7 @@ class SandboxedEnvironment(Environment):
         True.  Override this method to alter the behavior, but this won't
         affect the `unsafe` decorator from this module.
         """
-        return not (getattr(obj, 'unsafe_callable', False) or \
+        return not (getattr(obj, 'unsafe_callable', False) or
                     getattr(obj, 'alters_data', False))
 
     def getitem(self, obj, argument):
