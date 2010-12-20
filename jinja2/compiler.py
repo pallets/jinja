@@ -13,7 +13,7 @@ from itertools import chain
 from copy import deepcopy
 from jinja2 import nodes
 from jinja2.nodes import EvalContext
-from jinja2.visitor import NodeVisitor, NodeTransformer
+from jinja2.visitor import NodeVisitor
 from jinja2.exceptions import TemplateAssertionError
 from jinja2.utils import Markup, concat, escape, is_python_keyword, next
 

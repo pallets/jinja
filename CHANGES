@@ -13,6 +13,8 @@ Version 2.6
   allows application developers to disable builtin operators for better
   security.  (For instance limit the mathematical operators to actual
   integers instead of longs)
+- groupby filter now supports dotted notation for grouping by attributes
+  of attributes.
 
 Version 2.5.5
 -------------

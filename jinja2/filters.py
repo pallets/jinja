@@ -595,8 +595,18 @@ def do_groupby(environment, value, attribute):
     As you can see the item we're grouping by is stored in the `grouper`
     attribute and the `list` contains all the objects that have this grouper
     in common.
+
+    .. versionchanged:: 2.6
+       It's now possible to use dotted notation to group by the child
+       attribute of another attribute.
     """
-    expr = lambda x: environment.getitem(x, attribute)
+    if '.' in attribute:
+        def expr(item):
+            for part in attribute.split('.'):
+                item = environment.getitem(item, part)
+            return item
+    else:
+        expr = lambda x: environment.getitem(x, attribute)
     return sorted(map(_GroupTuple, groupby(sorted(value, key=expr), expr)))
 
 
