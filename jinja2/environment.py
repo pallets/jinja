@@ -10,6 +10,7 @@
 """
 import os
 import sys
+from operator import attrgetter
 from jinja2 import nodes
 from jinja2.defaults import *
 from jinja2.lexer import get_lexer, TokenStream
@@ -361,7 +362,10 @@ class Environment(object):
                     try:
                         return getattr(obj, attr)
                     except AttributeError:
-                        pass
+                        try:
+                            return attrgetter(attr)(obj)
+                        except AttributeError:
+                            pass
             return self.undefined(obj=obj, name=argument)
 
     def getattr(self, obj, attribute):
