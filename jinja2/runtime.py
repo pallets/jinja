@@ -190,6 +190,7 @@ class Context(object):
         """Internal helper function to create a derived context."""
         context = new_context(self.environment, self.name, {},
                               self.parent, True, None, locals)
+        context.vars.update(self.vars)
         context.eval_ctx = self.eval_ctx
         context.blocks.update((k, list(v)) for k, v in self.blocks.iteritems())
         return context
