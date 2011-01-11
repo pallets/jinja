@@ -17,6 +17,13 @@ Version 2.6
   of attributes.
 - scoped blocks not properly treat toplevel assignments and imports.
   Previously an import suddenly "disappeared" in a scoped block.
+- automatically detect newer Python interpreter versions before loading code
+  from bytecode caches to prevent segfaults on invalid opcodes.  The segfault
+  in earlier Jinja2 versions here was not a Jinja2 bug but a limitation in
+  the underlying Python interpreter.  If you notice Jinja2 segfaulting in
+  earlier versions after an upgrade of the Python interpreter you don't have
+  to upgrade, it's enough to flush the bytecode cache.  This just no longer
+  makes this necessary, Jinja2 will automatically detect these cases now.
 
 Version 2.5.5
 -------------

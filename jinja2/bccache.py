@@ -15,6 +15,7 @@
     :license: BSD.
 """
 from os import path, listdir
+import sys
 import marshal
 import tempfile
 import cPickle as pickle
@@ -27,8 +28,16 @@ except ImportError:
 from jinja2.utils import open_if_exists
 
 
-bc_version = 1
-bc_magic = 'j2'.encode('ascii') + pickle.dumps(bc_version, 2)
+bc_version = 2
+
+# magic version used to only change with new jinja versions.  With 2.6
+# we change this to also take Python version changes into account.  The
+# reason for this is that Python tends to segfault if fed earlier bytecode
+# versions because someone thought it would be a good idea to reuse opcodes
+# or make Python incompatible with earlier versions.
+bc_magic = 'j2'.encode('ascii') + \
+    pickle.dumps(bc_version, 2) + \
+    pickle.dumps((sys.version_info[0] << 24) | sys.version_info[1])
 
 
 class Bucket(object):
