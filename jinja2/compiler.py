@@ -1089,7 +1089,7 @@ class CodeGenerator(NodeVisitor):
            node.iter_child_nodes(only=('else_', 'test')), ('loop',)):
             self.writeline("l_loop = environment.undefined(%r, name='loop')" %
                 ("'loop' is undefined. the filter section of a loop as well "
-                 "as the else block doesn't have access to the special 'loop'"
+                 "as the else block don't have access to the special 'loop'"
                  " variable of the current loop.  Because there is no parent "
                  "loop it's undefined.  Happened in loop on %s" %
                  self.position(node)))
