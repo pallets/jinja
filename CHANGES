@@ -24,6 +24,10 @@ Version 2.6
   earlier versions after an upgrade of the Python interpreter you don't have
   to upgrade, it's enough to flush the bytecode cache.  This just no longer
   makes this necessary, Jinja2 will automatically detect these cases now.
+- the sum filter can now sum up values by attribute.  This is a backwards
+  incompatible change.  The argument to the filter previously was the
+  optional starting index which defaultes to zero.  This now became the
+  second argument to the function because it's rarely used.
 
 Version 2.5.5
 -------------

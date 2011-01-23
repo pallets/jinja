@@ -204,6 +204,22 @@ class FilterTestCase(JinjaTestCase):
         tmpl = env.from_string('''{{ [1, 2, 3, 4, 5, 6]|sum }}''')
         assert tmpl.render() == '21'
 
+    def test_sum_attributes(self):
+        tmpl = env.from_string('''{{ values|sum('value') }}''')
+        assert tmpl.render(values=[
+            {'value': 23},
+            {'value': 1},
+            {'value': 18},
+        ]) == '42'
+
+    def test_sum_attributes_nested(self):
+        tmpl = env.from_string('''{{ values|sum('real.value') }}''')
+        assert tmpl.render(values=[
+            {'real': {'value': 23}},
+            {'real': {'value': 1}},
+            {'real': {'value': 18}},
+        ]) == '42'
+
     def test_abs(self):
         tmpl = env.from_string('''{{ -1|abs }}|{{ 1|abs }}''')
         assert tmpl.render() == '1|1', tmpl.render()
@@ -234,8 +250,12 @@ class FilterTestCase(JinjaTestCase):
         assert tmpl.render() == '[1, 2, 3]|[3, 2, 1]'
 
     def test_sort2(self):
-        tmpl = env.from_string('{{ "".join(["c", "A", "b", "D"]|sort(false, true)) }}')
+        tmpl = env.from_string('{{ "".join(["c", "A", "b", "D"]|sort) }}')
         assert tmpl.render() == 'AbcD'
+
+    def test_sort3(self):
+        tmpl = env.from_string('''{{ ['foo', 'Bar', 'blah']|sort }}''')
+        assert tmpl.render() == "['Bar', 'blah', 'foo']"
 
     def test_groupby(self):
         tmpl = env.from_string('''
@@ -305,10 +325,6 @@ class FilterTestCase(JinjaTestCase):
         assert tmpl.render() == '<div>foo</div>'
         tmpl = env.from_string('{{ "<div>foo</div>" }}')
         assert tmpl.render() == '&lt;div&gt;foo&lt;/div&gt;'
-
-    def test_sort2(self):
-        tmpl = env.from_string('''{{ ['foo', 'Bar', 'blah']|sort }}''')
-        assert tmpl.render() == "['Bar', 'blah', 'foo']"
 
 
 def suite():

@@ -48,6 +48,21 @@ def environmentfilter(f):
     return f
 
 
+def make_attrgetter(environment, attribute):
+    """Returns a callable that looks up the given attribute from a
+    passed object with the rules of the environment.  Dots are allowed
+    to access attributes of attributes.
+    """
+    if '.' not in attribute:
+        return lambda x: environment.getitem(x, attribute)
+    attribute = attribute.split('.')
+    def attrgetter(item):
+        for part in attribute:
+            item = environment.getitem(item, part)
+        return item
+    return attrgetter
+
+
 def do_forceescape(value):
     """Enforce HTML escaping.  This will probably double escape variables."""
     if hasattr(value, '__html__'):
@@ -600,13 +615,7 @@ def do_groupby(environment, value, attribute):
        It's now possible to use dotted notation to group by the child
        attribute of another attribute.
     """
-    if '.' in attribute:
-        def expr(item):
-            for part in attribute.split('.'):
-                item = environment.getitem(item, part)
-            return item
-    else:
-        expr = lambda x: environment.getitem(x, attribute)
+    expr = make_attrgetter(environment, attribute)
     return sorted(map(_GroupTuple, groupby(sorted(value, key=expr), expr)))
 
 
@@ -617,6 +626,19 @@ class _GroupTuple(tuple):
 
     def __new__(cls, (key, value)):
         return tuple.__new__(cls, (key, list(value)))
+
+
+@environmentfilter
+def do_sum(environment, iterable, attribute=None, start=0):
+    """Sums up an iterable.
+
+    .. versionchanged:: 2.6
+       The `attribute` parameter was added to allow suming up over
+       attributes.
+    """
+    if attribute is not None:
+        iterable = imap(make_attrgetter(environment, attribute), iterable)
+    return sum(iterable, start)
 
 
 def do_list(value):
@@ -720,7 +742,7 @@ FILTERS = {
     'striptags':            do_striptags,
     'slice':                do_slice,
     'batch':                do_batch,
-    'sum':                  sum,
+    'sum':                  do_sum,
     'abs':                  abs,
     'round':                do_round,
     'groupby':              do_groupby,
