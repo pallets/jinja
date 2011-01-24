@@ -648,11 +648,19 @@ class _GroupTuple(tuple):
 
 @environmentfilter
 def do_sum(environment, iterable, attribute=None, start=0):
-    """Sums up an iterable.
+    """Returns the sum of a sequence of numbers plus the value of parameter
+    'start' (which defaults to 0).  When the sequence is empty it returns
+    start.
+
+    It is also possible to sum up only certain attributes:
+
+    .. sourcecode:: jinja
+
+        Total: {{ items|sum(attribute='price') }}
 
     .. versionchanged:: 2.6
        The `attribute` parameter was added to allow suming up over
-       attributes.
+       attributes.  Also the `start` parameter was moved on to the right.
     """
     if attribute is not None:
         iterable = imap(make_attrgetter(environment, attribute), iterable)
