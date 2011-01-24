@@ -103,7 +103,9 @@ class Extension(object):
 
     def attr(self, name, lineno=None):
         """Return an attribute node for the current extension.  This is useful
-        to pass constants on extensions to generated template code::
+        to pass constants on extensions to generated template code.
+
+        ::
 
             self.attr('_my_attribute', lineno=lineno)
         """

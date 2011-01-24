@@ -98,8 +98,9 @@ def safe_range(*args):
 
 
 def unsafe(f):
-    """
-    Mark a function or method as unsafe::
+    """Marks a function or method as unsafe.
+
+    ::
 
         @unsafe
         def delete(self):
