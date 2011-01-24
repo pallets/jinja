@@ -191,7 +191,9 @@ def do_dictsort(value, case_sensitive=False, by='key'):
     return sorted(value.items(), key=sort_func)
 
 
-def do_sort(value, reverse=False, case_sensitive=False):
+@environmentfilter
+def do_sort(environment, value, reverse=False, case_sensitive=False,
+            attribute=None):
     """Sort an iterable.  Per default it sorts ascending, if you pass it
     true as first argument it will reverse the sorting.
 
@@ -204,6 +206,18 @@ def do_sort(value, reverse=False, case_sensitive=False):
         {% for item in iterable|sort %}
             ...
         {% endfor %}
+
+    It is also possible to sort by an attribute (for example to sort
+    by the date of an object) by specifying the `attribute` parameter:
+
+    .. sourcecode:: jinja
+
+        {% for item in iterable|sort(attribute='date') %}
+            ...
+        {% endfor %}
+
+    .. versionchanged:: 2.6
+       The `attribute` parameter was added.
     """
     if not case_sensitive:
         def sort_func(item):
@@ -212,6 +226,10 @@ def do_sort(value, reverse=False, case_sensitive=False):
             return item
     else:
         sort_func = None
+    if attribute is not None:
+        getter = make_attrgetter(environment, attribute)
+        def sort_func(item, processor=sort_func or (lambda x: x)):
+            return processor(getter(item))
     return sorted(value, key=sort_func, reverse=reverse)
 
 

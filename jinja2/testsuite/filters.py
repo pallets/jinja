@@ -257,6 +257,15 @@ class FilterTestCase(JinjaTestCase):
         tmpl = env.from_string('''{{ ['foo', 'Bar', 'blah']|sort }}''')
         assert tmpl.render() == "['Bar', 'blah', 'foo']"
 
+    def test_sort4(self):
+        class Magic(object):
+            def __init__(self, value):
+                self.value = value
+            def __unicode__(self):
+                return unicode(self.value)
+        tmpl = env.from_string('''{{ items|sort(attribute='value')|join }}''')
+        assert tmpl.render(items=map(Magic, [3, 2, 4, 1])) == '1234'
+
     def test_groupby(self):
         tmpl = env.from_string('''
         {%- for grouper, list in [{'foo': 1, 'bar': 2},

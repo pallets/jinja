@@ -28,6 +28,7 @@ Version 2.6
   incompatible change.  The argument to the filter previously was the
   optional starting index which defaultes to zero.  This now became the
   second argument to the function because it's rarely used.
+- like sum, sort now also makes it possible to order items by attribute.
 
 Version 2.5.5
 -------------
