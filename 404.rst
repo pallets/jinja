@@ -1,0 +1,14 @@
+public: yes
+
+404, Page Not Found
+===================
+
+    | The requested page,
+    | cannot be found —
+    | We're sorry.
+
+Maybe we can help you out though:
+
+-   `overview </>`_ — for a quick introduction into Jinja2
+-   the `documentation </docs/>`_, in case you need help
+-   our helpful `community </community/>`_
