@@ -4,7 +4,7 @@ Community
 =========
 
 The most important thing for a successful Open Source project is a vibrant
-community.  This part of the webpage tries to connect Werkzeug users all
+community.  This part of the webpage tries to connect Jinja users all
 over the world, to exchange their experiences and to help each other.
 
 IRC Channel
