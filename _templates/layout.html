@@ -1,0 +1,19 @@
+<!doctype html>
+{% block htmlhead %}
+<title>{% block title %}Welcome{% endblock %} | Jinja2 (The Python Template Engine)</title>
+<meta charset=utf-8>
+<link rel=stylesheet type=text/css href="/static/style.css">
+{% endblock %}
+<div class=box>
+  <div class=header>
+    <h1><span>Jinja2</span></h1>
+    <p>The Python Template Engine
+  </div>
+  <p class=nav>
+    <a href="/">overview</a> |
+    <a href="/docs/">documentation</a> |
+    <a href="/community/">community</a>
+  {% block body %}{% endblock %}
+  <p class=footer>
+    &copy; Copyright 2011 by <a href=http://lucumr.pocoo.org/>Armin Ronacher</a>
+</div>

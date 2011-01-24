@@ -1,0 +1,36 @@
+body         { font-family: 'Georgia', serif; font-size: 17px; color: #000; }
+a            { color: #aa0000; }
+a:hover      { color: #dd0000; }
+.box         { width: 540px; margin: 40px auto; }
+h1, h2, h3   { font-family: 'Georgia', serif; font-weight: normal; }
+.header      { height: 165px; }
+.header h1   { margin: 0 0 30px 0; background: url(/static/jinja.png) no-repeat center;
+               font-size: 50px; padding-top: 50px; height: 120px; }
+.header h1 span, .header p { display: none; }
+h1           { font-size: 34px; margin: 25px 0 5px 0; }
+h2           { font-size: 24px; margin: 25px 0 5px 0; }
+h3           { font-size: 19px; margin: 25px 0 5px 0; }
+textarea, code,
+pre          { font-family: 'Consolas', 'Menlo', 'Deja Vu Sans Mono', 'Bitstream Vera Sans Mono',
+               monospace!important; font-size: 15px; background: #eee; }
+pre          { padding: 7px 30px; margin: 15px -30px; line-height: 1.3; }
+.ig          { color: #888; }
+p            { line-height: 1.4; }
+ul           { margin: 15px 0 15px 0; padding: 0; list-style: none; line-height: 1.4; }
+ul li:before { content: "\00BB \0020"; color: #888; position: absolute; margin-left: -19px; }
+ol           { line-height: 1.4; margin: 15px 0 15px 30px; padding: 0; }
+blockquote   { margin: 15px 0; font-style: italic; color: #444; }
+.footer      { font-size: 13px; color: #888; text-align: right; margin-top: 25px; }
+.more        { text-align: right; margin-top: 0; font-size: 0.9em; font-style: italic; }
+.nav         { text-align: center; margin: 0; }
+table        { border: 1px solid black; border-collapse: collapse;
+               margin: 15px 0; }
+td, th       { border: 1px solid black; padding: 4px 10px;
+               text-align: left; }
+th           { background: #eee; font-weight: normal; }
+
+td input     { border: none; padding: 0; }
+
+/* latest version button */
+.latestver          { margin: 20px 0 0 0; float: right; font-style: italic; }
+.latestver strong   { font-weight: normal; }
