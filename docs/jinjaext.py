@@ -92,7 +92,8 @@ def format_function(name, aliases, func):
         try:
             argspec = inspect.getargspec(func)
             if getattr(func, 'environmentfilter', False) or \
-               getattr(func, 'contextfilter', False):
+               getattr(func, 'contextfilter', False) or \
+               getattr(func, 'evalcontextfilter', False):
                 del argspec[0][0]
             signature = inspect.formatargspec(*argspec)
         except:
