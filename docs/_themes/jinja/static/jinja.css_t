@@ -1,15 +1,17 @@
 /*
- * flasky.css_t
- * ~~~~~~~~~~~~
+ * jinja.css_t
+ * ~~~~~~~~~~~
  *
- * :copyright: Copyright 2010 by Armin Ronacher.
+ * :copyright: Copyright 2011 by Armin Ronacher.
  * :license: Flask Design License, see LICENSE for details.
  */
+
+@import url(http://fonts.googleapis.com/css?family=Crimson+Text);
 
 {% set page_width = '940px' %}
 {% set sidebar_width = '220px' %}
 {% set font_family = 'Georgia, serif' %}
-{% set header_font_family = font_family %}
+{% set header_font_family = 'Crimson Text, ' ~ font_family %}
  
 @import url("basic.css");
  
@@ -253,7 +255,7 @@ p.admonition-title:after {
 
 pre, tt {
     font-family: 'Consolas', 'Menlo', 'Deja Vu Sans Mono', 'Bitstream Vera Sans Mono', monospace;
-    font-size: 0.9em;
+    font-size: 0.85em;
 }
 
 img.screenshot {
