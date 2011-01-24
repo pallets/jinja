@@ -29,6 +29,9 @@ Version 2.6
   optional starting index which defaultes to zero.  This now became the
   second argument to the function because it's rarely used.
 - like sum, sort now also makes it possible to order items by attribute.
+- like sum and sort, join now also is able to join attributes of objects
+  as string.
+- the internal eval context now has a reference to the environment.
 
 Version 2.5.5
 -------------

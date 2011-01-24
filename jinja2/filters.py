@@ -256,7 +256,7 @@ def do_default(value, default_value=u'', boolean=False):
 
 
 @evalcontextfilter
-def do_join(eval_ctx, value, d=u''):
+def do_join(eval_ctx, value, d=u'', attribute=None):
     """Return a string which is the concatenation of the strings in the
     sequence. The separator between elements is an empty string per
     default, you can define it with the optional parameter:
@@ -268,7 +268,19 @@ def do_join(eval_ctx, value, d=u''):
 
         {{ [1, 2, 3]|join }}
             -> 123
+
+    It is also possible to join certain attributes of an object:
+
+    .. sourcecode:: jinja
+
+        {{ users|join(', ', attribute='username') }}
+
+    .. versionadded:: 2.6
+       The `attribute` parameter was added.
     """
+    if attribute is not None:
+        value = imap(make_attrgetter(eval_ctx.environment, attribute), value)
+
     # no automatic escaping?  joining is a lot eaiser then
     if not eval_ctx.autoescape:
         return unicode(d).join(imap(unicode, value))

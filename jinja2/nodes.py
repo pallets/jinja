@@ -77,6 +77,7 @@ class EvalContext(object):
     """
 
     def __init__(self, environment, template_name=None):
+        self.environment = environment
         if callable(environment.autoescape):
             self.autoescape = environment.autoescape(template_name)
         else:

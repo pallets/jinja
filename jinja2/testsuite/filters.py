@@ -128,6 +128,13 @@ class FilterTestCase(JinjaTestCase):
         tmpl = env2.from_string('{{ ["<foo>", "<span>foo</span>"|safe]|join }}')
         assert tmpl.render() == '&lt;foo&gt;<span>foo</span>'
 
+    def test_join_attribute(self):
+        class User(object):
+            def __init__(self, username):
+                self.username = username
+        tmpl = env.from_string('''{{ users|join(', ', 'username') }}''')
+        assert tmpl.render(users=map(User, ['foo', 'bar'])) == 'foo, bar'
+
     def test_last(self):
         tmpl = env.from_string('''{{ foo|last }}''')
         out = tmpl.render(foo=range(10))

@@ -8,7 +8,6 @@
     :copyright: (c) 2010 by the Jinja Team.
     :license: BSD.
 """
-import sys
 from itertools import chain, imap
 from jinja2.nodes import EvalContext, _context_function_types
 from jinja2.utils import Markup, partial, soft_unicode, escape, missing, \
