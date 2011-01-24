@@ -73,10 +73,8 @@ pygments_style = 'jinjaext.JinjaStyle'
 # Options for HTML output
 # -----------------------
 
-# The style sheet to use for HTML and HTML Help pages. A file of that name
-# must exist either in Sphinx' static/ path, or in one of the custom paths
-# given in html_static_path.
-html_style = 'style.css'
+html_theme = 'jinja'
+html_theme_path = ['_themes']
 
 # The name for this set of Sphinx documents.  If None, it defaults to
 # "<project> v<release> documentation".
@@ -139,3 +137,10 @@ latex_preamble = '''
 
 # If false, no module index is generated.
 latex_use_modindex = False
+
+html_sidebars = {
+    'index':    ['sidebarlogo.html', 'sidebarintro.html', 'sourcelink.html',
+                 'searchbox.html'],
+    '**':       ['sidebarlogo.html', 'localtoc.html', 'relations.html',
+                 'sourcelink.html', 'searchbox.html']
+}
