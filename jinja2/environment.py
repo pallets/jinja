@@ -633,6 +633,8 @@ class Environment(object):
         in the result list.
 
         If the loader does not support that, a :exc:`TypeError` is raised.
+
+        .. versionadded:: 2.4
         """
         x = self.loader.list_templates()
         if extensions is not None:
