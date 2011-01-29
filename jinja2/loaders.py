@@ -397,6 +397,8 @@ class ModuleLoader(BaseLoader):
     ...     ModuleLoader('/path/to/compiled/templates'),
     ...     FileSystemLoader('/path/to/templates')
     ... ])
+
+    Templates can be precompiled with :meth:`Environment.compile_templates`.
     """
 
     has_source_access = False
