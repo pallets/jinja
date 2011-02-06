@@ -25,29 +25,7 @@ with the optional sandboxed template execution environment:
     the correct line in the template.
 -   configurable syntax
 
-Jinja2 Documentation
---------------------
-
-.. toctree::
-   :maxdepth: 2
-
-   intro
-   api
-   sandbox
-   templates
-   extensions
-   integration
-   switching
-   tricks
-
-Additional Information
-----------------------
-
-.. toctree::
-   :maxdepth: 2
-
-   faq
-   changelog
+.. include:: contents.rst.inc
 
 If you can't find the information you're looking for, have a look at the
 index of try to find it using the search function:

@@ -119,21 +119,26 @@ latex_paper_size = 'a4'
 # Grouping the document tree into LaTeX files. List of tuples
 # (source start file, target name, title, author, document class [howto/manual]).
 latex_documents = [
-  ('index', 'Jinja2.tex', 'Jinja2 Documentation', 'Armin Ronacher', 'manual', 'toctree_only'),
+  ('latexindex', 'Jinja2.tex', 'Jinja2 Documentation', 'Armin Ronacher',
+   'manual'),
 ]
 
-# Additional stuff for the LaTeX preamble.
-latex_preamble = '''
-\usepackage{palatino}
-\definecolor{TitleColor}{rgb}{0.7,0,0}
-\definecolor{InnerLinkColor}{rgb}{0.7,0,0}
-\definecolor{OuterLinkColor}{rgb}{0.8,0,0}
-\definecolor{VerbatimColor}{rgb}{0.985,0.985,0.985}
-\definecolor{VerbatimBorderColor}{rgb}{0.8,0.8,0.8}
-'''
+# Additional stuff for LaTeX
+latex_elements = {
+    'fontpkg':      r'\usepackage{mathpazo}',
+    'papersize':    'a4paper',
+    'pointsize':    '12pt',
+    'preamble':     r'''
+\usepackage{jinjastyle}
 
-# Documents to append as an appendix to all manuals.
-#latex_appendices = []
+% i hate you latex
+\DeclareUnicodeCharacter{14D}{o}
+'''
+}
+
+latex_use_parts = True
+
+latex_additional_files = ['jinjastyle.sty', 'logo.pdf']
 
 # If false, no module index is generated.
 latex_use_modindex = False
