@@ -42,9 +42,18 @@ copyright = '2008, Armin Ronacher'
 # other places throughout the built documents.
 #
 # The short X.Y version.
-version = '2.0'
-# The full version, including alpha/beta/rc tags.
-release = '2.0'
+import pkg_resources
+try:
+    release = pkg_resources.get_distribution('Jinja2').version
+except ImportError:
+    print 'To build the documentation, The distribution information of Jinja2'
+    print 'Has to be available.  Either install the package into your'
+    print 'development environment or run "setup.py develop" to setup the'
+    print 'metadata.  A virtualenv is recommended!'
+    sys.exit(1)
+if 'dev' in release:
+    release = release.split('dev')[0] + 'dev'
+version = '.'.join(release.split('.')[:2])
 
 # There are two options for replacing |today|: either, you set today to some
 # non-false value, then it is used:
