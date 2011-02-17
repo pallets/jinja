@@ -338,21 +338,33 @@ def do_random(environment, seq):
 
 
 def do_filesizeformat(value, binary=False):
-    """Format the value like a 'human-readable' file size (i.e. 13 KB,
-    4.1 MB, 102 bytes, etc).  Per default decimal prefixes are used (mega,
-    giga, etc.), if the second parameter is set to `True` the binary
-    prefixes are used (mebi, gibi).
+    """Format the value like a 'human-readable' file size (i.e. 13 kB,
+    4.1 MB, 102 Bytes, etc).  Per default decimal prefixes are used (Mega,
+    Giga, etc.), if the second parameter is set to `True` the binary
+    prefixes are used (Mebi, Gibi).
     """
     bytes = float(value)
     base = binary and 1024 or 1000
-    middle = binary and 'i' or ''
-    if bytes < base:
-        return "%d Byte%s" % (bytes, bytes != 1 and 's' or '')
-    elif bytes < base * base:
-        return "%.1f K%sB" % (bytes / base, middle)
-    elif bytes < base * base * base:
-        return "%.1f M%sB" % (bytes / (base * base), middle)
-    return "%.1f G%sB" % (bytes / (base * base * base), middle)
+    prefixes = [
+        (binary and "KiB" or "kB"),
+        (binary and "MiB" or "MB"),
+        (binary and "GiB" or "GB"),
+        (binary and "TiB" or "TB"),
+        (binary and "PiB" or "PB"),
+        (binary and "EiB" or "EB"),
+        (binary and "ZiB" or "ZB"),
+        (binary and "YiB" or "YB")
+    ]
+    if bytes == 1:
+        return "1 Byte"
+    elif bytes < base:
+        return "%d Bytes" % bytes
+    else:
+        for i, prefix in enumerate(prefixes):
+            unit = base * base ** (i + 1)
+            if bytes < unit:
+                return "%.1f %s" % ((bytes / unit), prefix)
+        return "%.1f %s" % ((bytes / unit), prefix)
 
 
 def do_pprint(value, verbose=False):
