@@ -127,12 +127,10 @@ class Identifiers(object):
         self.undeclared.discard(name)
         self.declared.add(name)
 
-    def is_declared(self, name, local_only=False):
+    def is_declared(self, name):
         """Check if a name is declared in this or an outer scope."""
         if name in self.declared_locally or name in self.declared_parameter:
             return True
-        if local_only:
-            return False
         return name in self.declared
 
     def copy(self):
@@ -193,12 +191,12 @@ class Frame(object):
         rv.identifiers.__dict__.update(self.identifiers.__dict__)
         return rv
 
-    def inspect(self, nodes, hard_scope=False):
+    def inspect(self, nodes):
         """Walk the node and check for identifiers.  If the scope is hard (eg:
         enforce on a python level) overrides from outer scopes are tracked
         differently.
         """
-        visitor = FrameIdentifierVisitor(self.identifiers, hard_scope)
+        visitor = FrameIdentifierVisitor(self.identifiers)
         for node in nodes:
             visitor.visit(node)
 
@@ -275,9 +273,8 @@ class UndeclaredNameVisitor(NodeVisitor):
 class FrameIdentifierVisitor(NodeVisitor):
     """A visitor for `Frame.inspect`."""
 
-    def __init__(self, identifiers, hard_scope):
+    def __init__(self, identifiers):
         self.identifiers = identifiers
-        self.hard_scope = hard_scope
 
     def visit_Name(self, node):
         """All assignments to names go through this function."""
@@ -286,7 +283,7 @@ class FrameIdentifierVisitor(NodeVisitor):
         elif node.ctx == 'param':
             self.identifiers.declared_parameter.add(node.name)
         elif node.ctx == 'load' and not \
-             self.identifiers.is_declared(node.name, self.hard_scope):
+             self.identifiers.is_declared(node.name):
             self.identifiers.undeclared.add(node.name)
 
     def visit_If(self, node):
@@ -658,7 +655,7 @@ class CodeGenerator(NodeVisitor):
             children = node.iter_child_nodes()
         children = list(children)
         func_frame = frame.inner()
-        func_frame.inspect(children, hard_scope=True)
+        func_frame.inspect(children)
 
         # variables that are undeclared (accessed before declaration) and
         # declared locally *and* part of an outside scope raise a template

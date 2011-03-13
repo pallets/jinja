@@ -85,8 +85,8 @@ class FilterTestCase(JinjaTestCase):
         )
         out = tmpl.render()
         assert out == (
-            '100 Bytes|1.0 KB|1.0 MB|1.0 GB|1000.0 GB|'
-            '100 Bytes|1000 Bytes|976.6 KiB|953.7 MiB|931.3 GiB'
+            '100 Bytes|0.0 kB|0.0 MB|0.0 GB|0.0 TB|100 Bytes|'
+            '1000 Bytes|1.0 KiB|0.9 MiB|0.9 GiB'
         )
 
     def test_first(self):
