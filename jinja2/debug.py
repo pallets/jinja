@@ -45,7 +45,13 @@ class TracebackFrameProxy(object):
 
     def set_next(self, next):
         if tb_set_next is not None:
-            tb_set_next(self.tb, next and next.tb or None)
+            try:
+                tb_set_next(self.tb, next and next.tb or None)
+            except Exception:
+                # this function can fail due to all the hackery it does
+                # on various python implementations.  We just catch errors
+                # down and ignore them if necessary.
+                pass
         self._tb_next = next
 
     @property
