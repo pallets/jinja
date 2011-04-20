@@ -80,104 +80,19 @@ This mode only provides syntax highlighting."
   (setq font-lock-defaults '(jinja-font-lock-keywords)))
 
 ;; mumamo stuff
-
 (when (require 'mumamo nil t)
 
-  (defun mumamo-chunk-jinja3(pos min max)
-    "Find {# ... #}.  Return range and `jinja-mode'.
-See `mumamo-find-possible-chunk' for POS, MIN and MAX."
-    (mumamo-find-possible-chunk pos min max
-                                'mumamo-search-bw-exc-start-jinja3
-                                'mumamo-search-bw-exc-end-jinja3
-                                'mumamo-search-fw-exc-start-jinja3
-                                'mumamo-search-fw-exc-end-jinja3))
+  (defun mumamo-chunk-jinja3 (pos max)
+    "Find {# ... #}"
+    (mumamo-quick-chunk-forward pos max "{#" "#}" 'borders 'jinja-mode))
 
-  (defun mumamo-chunk-jinja2(pos min max)
-    "Find {{ ... }}.  Return range and `jinja-mode'.
-See `mumamo-find-possible-chunk' for POS, MIN and MAX."
-    (mumamo-find-possible-chunk pos min max
-                                'mumamo-search-bw-exc-start-jinja2
-                                'mumamo-search-bw-exc-end-jinja2
-                                'mumamo-search-fw-exc-start-jinja2
-                                'mumamo-search-fw-exc-end-jinja2))
+  (defun mumamo-chunk-jinja2 (pos max)
+    "Find {{ ... }}"
+    (mumamo-quick-chunk-forward pos max "{{" "}}" 'borders 'jinja-mode))
 
-  (defun mumamo-chunk-jinja (pos min max)
-    "Find {% ... %}.  Return range and `jinja-mode'.
-See `mumamo-find-possible-chunk' for POS, MIN and MAX."
-    (mumamo-find-possible-chunk pos min max
-                                'mumamo-search-bw-exc-start-jinja
-                                'mumamo-search-bw-exc-end-jinja
-                                'mumamo-search-fw-exc-start-jinja
-                                'mumamo-search-fw-exc-end-jinja))
-
-  (defun mumamo-search-bw-exc-start-jinja (pos min)
-    "Helper for `mumamo-chunk-jinja'.
-POS is where to start search and MIN is where to stop."
-    (let ((exc-start (mumamo-chunk-start-bw-str-inc pos min "{%")))
-      (and exc-start
-           (<= exc-start pos)
-           (cons exc-start 'jinja-mode))))
-
-  (defun mumamo-search-bw-exc-start-jinja2(pos min)
-    "Helper for `mumamo-chunk-jinja2'.
-POS is where to start search and MIN is where to stop."
-    (let ((exc-start (mumamo-chunk-start-bw-str-inc pos min "{{")))
-      (and exc-start
-           (<= exc-start pos)
-           (cons exc-start 'jinja-mode))))
-
-  (defun mumamo-search-bw-exc-start-jinja3(pos min)
-    "Helper for `mumamo-chunk-jinja3'.
-POS is where to start search and MIN is where to stop."
-    (let ((exc-start (mumamo-chunk-start-bw-str-inc pos min "{#")))
-      (and exc-start
-           (<= exc-start pos)
-           (cons exc-start 'jinja-mode))))
-
-  (defun mumamo-search-bw-exc-end-jinja (pos min)
-    "Helper for `mumamo-chunk-jinja'.
-POS is where to start search and MIN is where to stop."
-    (mumamo-chunk-end-bw-str-inc pos min "%}"))
-
-  (defun mumamo-search-bw-exc-end-jinja2(pos min)
-    "Helper for `mumamo-chunk-jinja2'.
-POS is where to start search and MIN is where to stop."
-    (mumamo-chunk-end-bw-str-inc pos min "}}"))
-
-  (defun mumamo-search-bw-exc-end-jinja3(pos min)
-    "Helper for `mumamo-chunk-jinja3'.
-POS is where to start search and MIN is where to stop."
-    (mumamo-chunk-end-bw-str-inc pos min "#}"))
-
-  (defun mumamo-search-fw-exc-start-jinja (pos max)
-    "Helper for `mumamo-chunk-jinja'.
-POS is where to start search and MAX is where to stop."
-    (mumamo-chunk-start-fw-str-inc pos max "{%"))
-
-  (defun mumamo-search-fw-exc-start-jinja2(pos max)
-    "Helper for `mumamo-chunk-jinja2'.
-POS is where to start search and MAX is where to stop."
-    (mumamo-chunk-start-fw-str-inc pos max "{{"))
-
-  (defun mumamo-search-fw-exc-start-jinja3(pos max)
-    "Helper for `mumamo-chunk-jinja3'.
-POS is where to start search and MAX is where to stop."
-    (mumamo-chunk-start-fw-str-inc pos max "{#"))
-
-  (defun mumamo-search-fw-exc-end-jinja (pos max)
-    "Helper for `mumamo-chunk-jinja'.
-POS is where to start search and MAX is where to stop."
-    (mumamo-chunk-end-fw-str-inc pos max "%}"))
-
-  (defun mumamo-search-fw-exc-end-jinja2(pos max)
-    "Helper for `mumamo-chunk-jinja2'.
-POS is where to start search and MAX is where to stop."
-    (mumamo-chunk-end-fw-str-inc pos max "}}"))
-
-  (defun mumamo-search-fw-exc-end-jinja3(pos max)
-    "Helper for `mumamo-chunk-jinja3'.
-POS is where to start search and MAX is where to stop."
-    (mumamo-chunk-end-fw-str-inc pos max "#}"))
+  (defun mumamo-chunk-jinja (pos max)
+    "Find {% ... %}"
+    (mumamo-quick-chunk-forward pos max "{%" "%}" 'borders 'jinja-mode))
 
 ;;;###autoload
   (define-mumamo-multi-major-mode jinja-html-mumamo
