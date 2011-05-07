@@ -883,8 +883,9 @@ Here two examples::
             {% include "render_box.html" %}
         {% endfor %}
 
-    The included template ``render_box.html`` is not able to access
-    `box` in Jinja 2.0, but in Jinja 2.1.
+    The included template ``render_box.html`` is *not* able to access
+    `box` in Jinja 2.0. As of Jinja 2.1 ``render_box.html`` *is* able
+    to do so.
 
 
 .. _expressions:
