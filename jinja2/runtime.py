@@ -75,8 +75,6 @@ class TemplateReference(object):
 
     def __getitem__(self, name):
         blocks = self.__context.blocks[name]
-        wrap = self.__context.eval_ctx.autoescape and \
-               Markup or (lambda x: x)
         return BlockReference(name, self.__context, blocks, 0)
 
     def __repr__(self):
