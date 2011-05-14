@@ -158,7 +158,7 @@ class BytecodeCache(object):
         if filename is not None:
             filename = '|' + filename
             if isinstance(filename, unicode):
-                key = filename.encode('utf-8')
+                filename = filename.encode('utf-8')
             hash.update(filename)
         return hash.hexdigest()
 
