@@ -972,7 +972,7 @@ but exists for completeness' sake.  The following operators are supported:
 
 //
     Divide two numbers and return the truncated integer result.
-    ``{{ 20 / 7 }}`` is ``2``.
+    ``{{ 20 // 7 }}`` is ``2``.
 
 %
     Calculate the remainder of an integer division.  ``{{ 11 % 7 }}`` is ``4``.
