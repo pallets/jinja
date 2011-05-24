@@ -32,6 +32,8 @@ Version 2.6
 - like sum and sort, join now also is able to join attributes of objects
   as string.
 - the internal eval context now has a reference to the environment.
+- added a mapping test to see if an object is a dict or an object with
+  a similar interface.
 
 Version 2.5.5
 -------------

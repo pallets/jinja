@@ -48,10 +48,16 @@ class TestsTestCase(JinjaTestCase):
             {{ range is callable }}
             {{ 42 is callable }}
             {{ range(5) is iterable }}
+            {{ {} is mapping }}
+            {{ mydict is mapping }}
+            {{ [] is mapping }}
         ''')
-        assert tmpl.render().split() == [
+        class MyDict(dict):
+            pass
+        assert tmpl.render(mydict=MyDict()).split() == [
             'False', 'True', 'False', 'True', 'True', 'False',
-            'True', 'True', 'True', 'True', 'False', 'True'
+            'True', 'True', 'True', 'True', 'False', 'True',
+            'True', 'True', 'False'
         ]
 
     def test_sequence(self):
