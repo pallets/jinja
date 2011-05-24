@@ -20,7 +20,10 @@ import marshal
 import tempfile
 import cPickle as pickle
 import fnmatch
-from cStringIO import StringIO
+try:
+    from io import BytesIO
+except ImportError:
+    from cStringIO import StringIO as BytesIO
 try:
     from hashlib import sha1
 except ImportError:
@@ -73,7 +76,7 @@ class Bucket(object):
             return
         # now load the code.  Because marshal is not able to load
         # from arbitrary streams we have to work around that
-        if isinstance(f, file):
+        if sys.version_info >= (3, 0) or isinstance(f, file):
             self.code = marshal.load(f)
         else:
             self.code = marshal.loads(f.read())
@@ -84,18 +87,18 @@ class Bucket(object):
             raise TypeError('can\'t write empty bucket')
         f.write(bc_magic)
         pickle.dump(self.checksum, f, 2)
-        if isinstance(f, file):
+        if sys.version_info >= (3, 0) or isinstance(f, file):
             marshal.dump(self.code, f)
         else:
             f.write(marshal.dumps(self.code))
 
     def bytecode_from_string(self, string):
         """Load bytecode from a string."""
-        self.load_bytecode(StringIO(string))
+        self.load_bytecode(BytesIO(string))
 
     def bytecode_to_string(self):
         """Return the bytecode as string."""
-        out = StringIO()
+        out = BytesIO()
         self.write_bytecode(out)
         return out.getvalue()
 
@@ -153,9 +156,10 @@ class BytecodeCache(object):
         """Returns the unique hash key for this template name."""
         hash = sha1(name.encode('utf-8'))
         if filename is not None:
+            filename = '|' + filename
             if isinstance(filename, unicode):
                 filename = filename.encode('utf-8')
-            hash.update('|' + filename)
+            hash.update(filename)
         return hash.hexdigest()
 
     def get_source_checksum(self, source):
