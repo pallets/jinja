@@ -883,8 +883,9 @@ Here two examples::
             {% include "render_box.html" %}
         {% endfor %}
 
-    The included template ``render_box.html`` is not able to access
-    `box` in Jinja 2.0, but in Jinja 2.1.
+    The included template ``render_box.html`` is *not* able to access
+    `box` in Jinja 2.0. As of Jinja 2.1 ``render_box.html`` *is* able
+    to do so.
 
 
 .. _expressions:
@@ -971,7 +972,7 @@ but exists for completeness' sake.  The following operators are supported:
 
 //
     Divide two numbers and return the truncated integer result.
-    ``{{ 20 / 7 }}`` is ``2``.
+    ``{{ 20 // 7 }}`` is ``2``.
 
 %
     Calculate the remainder of an integer division.  ``{{ 11 % 7 }}`` is ``4``.
