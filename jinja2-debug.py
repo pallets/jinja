@@ -14,7 +14,10 @@ import jinja2
 from werkzeug import script
 
 env = jinja2.Environment(extensions=['jinja2.ext.i18n', 'jinja2.ext.do',
-                                     'jinja2.ext.loopcontrols'])
+                                     'jinja2.ext.loopcontrols',
+                                     'jinja2.ext.with_',
+                                     'jinja2.ext.autoescape'],
+                         autoescape=True)
 
 def shell_init_func():
     def _compile(x):
