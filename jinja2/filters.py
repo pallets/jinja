@@ -10,6 +10,7 @@
 """
 import re
 import math
+import collections
 from random import choice
 from operator import itemgetter
 from itertools import imap, groupby
@@ -53,7 +54,7 @@ def make_attrgetter(environment, attribute):
     passed object with the rules of the environment.  Dots are allowed
     to access attributes of attributes.
     """
-    if '.' not in attribute:
+    if not (isinstance(attribute, collections.Iterable) and '.'  in attribute):
         return lambda x: environment.getitem(x, attribute)
     attribute = attribute.split('.')
     def attrgetter(item):
