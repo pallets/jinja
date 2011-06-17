@@ -288,6 +288,13 @@ class FilterTestCase(JinjaTestCase):
             ""
         ]
 
+    def test_groupby_tuple_index(self):
+        tmpl = env.from_string('''
+        {%- for grouper, list in [('a', 1), ('a', 2), ('b', 1)]|groupby(0) -%}
+            {{ grouper }}{% for x in list %}:{{ x.1 }}{% endfor %}|
+        {%- endfor %}''')
+        assert tmpl.render() == 'a:1:2|b:1|'
+
     def test_groupby_multidot(self):
         class Date(object):
             def __init__(self, day, month, year):
