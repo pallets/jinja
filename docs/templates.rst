@@ -44,7 +44,7 @@ the details later in that document::
 This covers the default settings.  The application developer might have
 changed the syntax from ``{% foo %}`` to ``<% foo %>`` or something similar.
 
-There are two kinds of delimiers. ``{% ... %}`` and ``{{ ... }}``.  The first
+There are two kinds of delimiters. ``{% ... %}`` and ``{{ ... }}``.  The first
 one is used to execute statements such as for-loops or assign values, the
 latter prints the result of the expression to the template.
 
@@ -165,7 +165,7 @@ that block::
     {% for item in seq -%}
         {{ item }}
     {%- endfor %}
-    
+
 This will yield all elements without whitespace between them.  If `seq` was
 a list of numbers from ``1`` to ``9`` the output would be ``123456789``.
 
@@ -1174,7 +1174,7 @@ The following functions are available in the global scope by default:
     .. attribute:: current
 
         Returns the current item.
-    
+
     **new in Jinja 2.1**
 
 .. class:: joiner(sep=', ')
