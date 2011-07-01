@@ -318,6 +318,7 @@ def do_first(environment, seq):
     except StopIteration:
         return environment.undefined('No first item, sequence was empty.')
 
+
 @environmentfilter
 def do_firstof(environment, seq):
     """Return the first "True" item of a sequence.
@@ -325,12 +326,11 @@ def do_firstof(environment, seq):
     if not len(seq):
         return environment.undefined('No first "True" item, '
                                      'sequence was empty')
-
     for item in iter(seq):
         if item:
             return item
-
     return ''
+
 
 @environmentfilter
 def do_last(environment, seq):
