@@ -318,6 +318,19 @@ def do_first(environment, seq):
     except StopIteration:
         return environment.undefined('No first item, sequence was empty.')
 
+@environmentfilter
+def do_firstof(environment, seq):
+    """Return the first "True" item of a sequence.
+    Return '' if all values are evaluated to False."""
+    if not len(seq):
+        return environment.undefined('No first "True" item, '
+                                     'sequence was empty')
+
+    for item in iter(seq):
+        if item:
+            return item
+
+    return ''
 
 @environmentfilter
 def do_last(environment, seq):
@@ -775,6 +788,7 @@ FILTERS = {
     'title':                do_title,
     'capitalize':           do_capitalize,
     'first':                do_first,
+    'firstof':              do_firstof,
     'last':                 do_last,
     'random':               do_random,
     'filesizeformat':       do_filesizeformat,
