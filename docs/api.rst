@@ -596,7 +596,7 @@ paragraphs and marks the return value as safe HTML string if autoescaping is
 enabled::
 
     import re
-    from jinja2 import environmentfilter, Markup, escape
+    from jinja2 import evalcontextfilter, Markup, escape
 
     _paragraph_re = re.compile(r'(?:\r\n|\r|\n){2,}')
 
