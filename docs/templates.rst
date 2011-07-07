@@ -101,7 +101,7 @@ if printed and that you can iterate over it, but every other operation fails.
 Filters
 -------
 
-Variables can by modified by **filters**.  Filters are separated from the
+Variables can be modified by **filters**.  Filters are separated from the
 variable by a pipe symbol (``|``) and may have optional arguments in
 parentheses.  Multiple filters can be chained.  The output of one filter is
 applied to the next.
