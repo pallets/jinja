@@ -1,6 +1,9 @@
 from jinja2 import Environment
+import gettext
 
-print Environment(extensions=['jinja2.i18n.TransExtension']).from_string("""\
+e = Environment(extensions=['jinja2.ext.i18n'])
+e.install_gettext_translations(gettext.NullTranslations())
+print e.from_string("""\
 {% trans %}Hello {{ user }}!{% endtrans %}
 {% trans count=users|count %}{{ count }} user{% pluralize %}{{ count }} users{% endtrans %}
 """).render(user="someone")
