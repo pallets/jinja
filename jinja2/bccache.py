@@ -98,7 +98,7 @@ class Bucket(object):
             raise TypeError('can\'t write empty bucket')
         f.write(bc_magic)
         pickle.dump(self.checksum, f, 2)
-        marshal_dump(code, f)
+        marshal_dump(self.code, f)
 
     def bytecode_from_string(self, string):
         """Load bytecode from a string."""
