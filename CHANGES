@@ -3,7 +3,7 @@ Jinja2 Changelog
 
 Version 2.6
 -----------
-(codename to be selected, release date to be announced)
+(codename Convolution, released on July 24th 2011)
 
 - internal attributes now raise an internal attribute error now instead
   of returning an undefined.  This fixes problems when passing undefined
