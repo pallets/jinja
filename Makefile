@@ -1,6 +1,9 @@
 test:
 	python setup.py test
 
+release:
+	python scripts/make-release.py
+
 upload-docs:
 	$(MAKE) -C docs html dirhtml latex
 	$(MAKE) -C docs/_build/latex all-pdf
