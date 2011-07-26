@@ -1276,7 +1276,7 @@ placeholders is a lot easier:
     {{ gettext('Hello %(name)s!', name='World') }}
     {{ ngettext('%(num)d apple', '%(num)d apples', apples|count) }}
 
-Note that the `ngettext` function's format string automatically recieves
+Note that the `ngettext` function's format string automatically receives
 the count as `num` parameter additionally to the regular parameters.
 
 
