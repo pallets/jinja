@@ -1180,7 +1180,7 @@ The following functions are available in the global scope by default:
 .. class:: joiner(sep=', ')
 
     A tiny helper that can be use to "join" multiple sections.  A joiner is
-    passed a string and will return that string every time it's calld, except
+    passed a string and will return that string every time it's called, except
     the first time in which situation it returns an empty string.  You can
     use this to join things::
 
@@ -1276,7 +1276,7 @@ placeholders is a lot easier:
     {{ gettext('Hello %(name)s!', name='World') }}
     {{ ngettext('%(num)d apple', '%(num)d apples', apples|count) }}
 
-Note that the `ngettext` function's format string automatically recieves
+Note that the `ngettext` function's format string automatically receives
 the count as `num` parameter additionally to the regular parameters.
 
 
@@ -1295,7 +1295,7 @@ Loop Controls
 
 If the application enables the :ref:`loopcontrols-extension` it's possible to
 use `break` and `continue` in loops.  When `break` is reached, the loop is
-terminated, if `continue` is eached the processing is stopped and continues
+terminated;  if `continue` is reached, the processing is stopped and continues
 with the next iteration.
 
 Here a loop that skips every second item::
