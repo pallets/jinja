@@ -1295,7 +1295,7 @@ Loop Controls
 
 If the application enables the :ref:`loopcontrols-extension` it's possible to
 use `break` and `continue` in loops.  When `break` is reached, the loop is
-terminated;  if `continue` is reached the processing is stopped and continues
+terminated;  if `continue` is reached, the processing is stopped and continues
 with the next iteration.
 
 Here a loop that skips every second item::
