@@ -77,16 +77,20 @@ class FilterTestCase(JinjaTestCase):
             '{{ 1000000|filesizeformat }}|'
             '{{ 1000000000|filesizeformat }}|'
             '{{ 1000000000000|filesizeformat }}|'
-            '{{ 100|filesizeformat(true) }}|'
             '{{ 1000|filesizeformat(true) }}|'
-            '{{ 1000000|filesizeformat(true) }}|'
-            '{{ 1000000000|filesizeformat(true) }}|'
-            '{{ 1000000000000|filesizeformat(true) }}'
+            '{{ 1024|filesizeformat(true) }}|'
+            '{{ 1048576|filesizeformat(true) }}|'
+            '{{ 1073741824|filesizeformat(true) }}|'
+            '{{ 1099511627776|filesizeformat(true) }}|'
+            '{{ 1984|filesizeformat(binary=true, precision=1) }}|'
+            '{{ 1984|filesizeformat(binary=true, precision=2) }}'
         )
         out = tmpl.render()
+        print out
         assert out == (
-            '100 Bytes|0.0 kB|0.0 MB|0.0 GB|0.0 TB|100 Bytes|'
-            '1000 Bytes|1.0 KiB|0.9 MiB|0.9 GiB'
+            '100 Bytes|1.0 kB|1.0 MB|1.0 GB|1.0 TB|'
+            '1000 Bytes|1.0 KiB|1.0 MiB|1.0 GiB|1.0 TiB|'
+            '1.9 KiB|1.94 KiB'
         )
 
     def test_first(self):
