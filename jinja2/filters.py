@@ -54,11 +54,11 @@ def make_attrgetter(environment, attribute):
     to access attributes of attributes.
     """
     if not isinstance(attribute, basestring) or '.' not in attribute:
-        return lambda x: environment.getitem(x, attribute)
+        return lambda x: environment.getattr(x, attribute)
     attribute = attribute.split('.')
     def attrgetter(item):
         for part in attribute:
-            item = environment.getitem(item, part)
+            item = environment.getattr(item, part)
         return item
     return attrgetter
 
