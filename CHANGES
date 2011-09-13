@@ -23,7 +23,7 @@ Version 2.6
   integers instead of longs)
 - groupby filter now supports dotted notation for grouping by attributes
   of attributes.
-- scoped blocks not properly treat toplevel assignments and imports.
+- scoped blocks now properly treat toplevel assignments and imports.
   Previously an import suddenly "disappeared" in a scoped block.
 - automatically detect newer Python interpreter versions before loading code
   from bytecode caches to prevent segfaults on invalid opcodes.  The segfault
