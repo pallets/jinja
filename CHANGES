@@ -1,6 +1,14 @@
 Jinja2 Changelog
 ================
 
+Version 2.7
+-----------
+(codename to be selected, release date to be announced)
+
+- Choice and prefix loaders now dispatch source and template lookup
+  separately in order to work in combination with module loaders as
+  advertised.
+
 Version 2.6
 -----------
 (codename Convolution, released on July 24th 2011)
