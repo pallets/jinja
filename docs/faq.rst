@@ -153,6 +153,18 @@ the traceback may be incomplete.  There is currently no good workaround
 for Jython or the AppEngine as ctypes is unavailable there and it's not
 possible to use the debugsupport extension.
 
+If you are working in the Google Appengine development server you can
+whitelist the ctypes module to restore the tracebacks.  This however won't
+work in production environments::
+
+    import os
+    if os.environ.get('SERVER_SOFTWARE', '').startswith('Dev'):
+        from google.appengine.tools.dev_appserver import HardenedModulesHook
+        HardenedModulesHook._WHITE_LIST_C_MODULES += ['_ctypes', 'gestalt']
+
+Credit for this snippet goes to `Thomas Johansson
+<http://stackoverflow.com/questions/3086091/debug-jinja2-in-google-app-engine/3694434#3694434>`_
+
 Why is there no Python 2.3 support?
 -----------------------------------
 
