@@ -223,7 +223,7 @@ class Parser(object):
         # raise a nicer error message in that case.
         if self.stream.current.type == 'sub':
             self.fail('Block names in Jinja have to be valid Python '
-                      'identifiers and may not contain hypens, use an '
+                      'identifiers and may not contain hyphens, use an '
                       'underscore instead.')
 
         node.body = self.parse_statements(('name:endblock',), drop_needle=True)

@@ -67,7 +67,7 @@ def copy_cache(cache):
 
 def load_extensions(environment, extensions):
     """Load the extensions from the list and bind it to the environment.
-    Returns a dict of instanciated environments.
+    Returns a dict of instantiated environments.
     """
     result = {}
     for extension in extensions:
@@ -239,7 +239,7 @@ class Environment(object):
         #   passed by keyword rather than position.  However it's important to
         #   not change the order of arguments because it's used at least
         #   internally in those cases:
-        #       -   spontaneus environments (i18n extension and Template)
+        #       -   spontaneous environments (i18n extension and Template)
         #       -   unittests
         #   If parameter changes are required only add parameters at the end
         #   and don't change the arguments (or the defaults!) of the arguments
@@ -435,7 +435,7 @@ class Environment(object):
         return stream
 
     def _generate(self, source, name, filename, defer_init=False):
-        """Internal hook that can be overriden to hook a different generate
+        """Internal hook that can be overridden to hook a different generate
         method in.
 
         .. versionadded:: 2.5
@@ -443,7 +443,7 @@ class Environment(object):
         return generate(source, self, name, filename, defer_init=defer_init)
 
     def _compile(self, source, filename):
-        """Internal hook that can be overriden to hook a different compile
+        """Internal hook that can be overridden to hook a different compile
         method in.
 
         .. versionadded:: 2.5
@@ -1053,7 +1053,7 @@ class TemplateStream(object):
     def dump(self, fp, encoding=None, errors='strict'):
         """Dump the complete stream into a file or file-like object.
         Per default unicode strings are written, if you want to encode
-        before writing specifiy an `encoding`.
+        before writing specify an `encoding`.
 
         Example usage::
 
