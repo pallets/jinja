@@ -317,7 +317,7 @@ class SyntaxTestCase(JinjaTestCase):
         self.assert_raises(TemplateSyntaxError, env.from_string,
                            '{% block x %}{% endblock y %}')
 
-    def test_contant_casing(self):
+    def test_constant_casing(self):
         for const in True, False, None:
             tmpl = env.from_string('{{ %s }}|{{ %s }}|{{ %s }}' % (
                 str(const), str(const).lower(), str(const).upper()
