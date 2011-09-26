@@ -169,7 +169,7 @@ and bar comment #}
             except TemplateSyntaxError, e:
                 assert str(e) == expected, 'unexpected error message'
             else:
-                assert False, 'that was suposed to be an error'
+                assert False, 'that was supposed to be an error'
 
         assert_error('{% for item in seq %}...{% endif %}',
                      "Encountered unknown tag 'endif'. Jinja was looking "
@@ -189,7 +189,7 @@ and bar comment #}
                      "that needs to be closed is 'for'.")
         assert_error('{% block foo-bar-baz %}',
                      "Block names in Jinja have to be valid Python identifiers "
-                     "and may not contain hypens, use an underscore instead.")
+                     "and may not contain hyphens, use an underscore instead.")
         assert_error('{% unknown_tag %}',
                      "Encountered unknown tag 'unknown_tag'.")
 
@@ -317,7 +317,7 @@ class SyntaxTestCase(JinjaTestCase):
         self.assert_raises(TemplateSyntaxError, env.from_string,
                            '{% block x %}{% endblock y %}')
 
-    def test_contant_casing(self):
+    def test_constant_casing(self):
         for const in True, False, None:
             tmpl = env.from_string('{{ %s }}|{{ %s }}|{{ %s }}' % (
                 str(const), str(const).lower(), str(const).upper()
@@ -327,7 +327,7 @@ class SyntaxTestCase(JinjaTestCase):
     def test_test_chaining(self):
         self.assert_raises(TemplateSyntaxError, env.from_string,
                            '{{ foo is string is sequence }}')
-        env.from_string('{{ 42 is string or 42 is number }}'
+        assert env.from_string('{{ 42 is string or 42 is number }}'
             ).render() == 'True'
 
     def test_string_concatenation(self):

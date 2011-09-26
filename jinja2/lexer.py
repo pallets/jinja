@@ -414,7 +414,7 @@ class Lexer(object):
             (operator_re, TOKEN_OPERATOR, None)
         ]
 
-        # assamble the root lexing rule. because "|" is ungreedy
+        # assemble the root lexing rule. because "|" is ungreedy
         # we have to sort by length so that the lexer continues working
         # as expected when we have parsing rules like <% for block and
         # <%= for variables. (if someone wants asp like syntax)
@@ -491,7 +491,7 @@ class Lexer(object):
         }
 
     def _normalize_newlines(self, value):
-        """Called for strings and template data to normlize it to unicode."""
+        """Called for strings and template data to normalize it to unicode."""
         return newline_re.sub(self.newline_sequence, value)
 
     def tokenize(self, source, name=None, filename=None, state=None):
@@ -571,7 +571,7 @@ class Lexer(object):
                 if m is None:
                     continue
 
-                # we only match blocks and variables if brances / parentheses
+                # we only match blocks and variables if braces / parentheses
                 # are balanced. continue parsing with the lower rule which
                 # is the operator rule. do this only if the end tags look
                 # like operators
@@ -669,7 +669,7 @@ class Lexer(object):
                 # publish new function and start again
                 pos = pos2
                 break
-            # if loop terminated without break we havn't found a single match
+            # if loop terminated without break we haven't found a single match
             # either we are at the end of the file or we have a problem
             else:
                 # end of text

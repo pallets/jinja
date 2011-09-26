@@ -223,7 +223,7 @@ class Parser(object):
         # raise a nicer error message in that case.
         if self.stream.current.type == 'sub':
             self.fail('Block names in Jinja have to be valid Python '
-                      'identifiers and may not contain hypens, use an '
+                      'identifiers and may not contain hyphens, use an '
                       'underscore instead.')
 
         node.body = self.parse_statements(('name:endblock',), drop_needle=True)
@@ -698,7 +698,6 @@ class Parser(object):
             arg = nodes.Const(attr_token.value, lineno=attr_token.lineno)
             return nodes.Getitem(node, arg, 'load', lineno=token.lineno)
         if token.type == 'lbracket':
-            priority_on_attribute = False
             args = []
             while self.stream.current.type != 'rbracket':
                 if args:
