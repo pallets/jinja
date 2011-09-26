@@ -77,7 +77,7 @@ def make_frame_proxy(frame):
 
 
 class ProcessedTraceback(object):
-    """Holds a Jinja preprocessed traceback for priting or reraising."""
+    """Holds a Jinja preprocessed traceback for printing or reraising."""
 
     def __init__(self, exc_type, exc_value, frames):
         assert frames, 'no frames for this traceback?'
