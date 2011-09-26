@@ -698,7 +698,6 @@ class Parser(object):
             arg = nodes.Const(attr_token.value, lineno=attr_token.lineno)
             return nodes.Getitem(node, arg, 'load', lineno=token.lineno)
         if token.type == 'lbracket':
-            priority_on_attribute = False
             args = []
             while self.stream.current.type != 'rbracket':
                 if args:
