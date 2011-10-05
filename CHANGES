@@ -8,6 +8,7 @@ Version 2.7
 - Choice and prefix loaders now dispatch source and template lookup
   separately in order to work in combination with module loaders as
   advertised.
+- Fixed filesizeformat.
 
 Version 2.6
 -----------

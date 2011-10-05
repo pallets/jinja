@@ -84,10 +84,10 @@ class FilterTestCase(JinjaTestCase):
             '{{ 1000000000000|filesizeformat(true) }}'
         )
         out = tmpl.render()
-        assert out == (
-            '100 Bytes|0.0 kB|0.0 MB|0.0 GB|0.0 TB|100 Bytes|'
-            '1000 Bytes|1.0 KiB|0.9 MiB|0.9 GiB'
-        )
+        self.assert_equal(out, (
+            '100 Bytes|1.0 kB|1.0 MB|1.0 GB|1.0 TB|100 Bytes|'
+            '1000 Bytes|1.0 MiB|0.9 GiB|0.9 TiB'
+        ))
 
     def test_first(self):
         tmpl = env.from_string('{{ foo|first }}')
