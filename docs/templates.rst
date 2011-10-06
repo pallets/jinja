@@ -497,7 +497,17 @@ provided in a variable called `users`::
     {% endfor %}
     </ul>
 
-Inside of a for loop block you can access some special variables:
+As variables in templates retain their object properties, it is possible to
+iterate over containers like `dict`::
+
+    <dl>
+    {% for key, value in _dict.iteritems() %}
+        <dt>{{ key }}</dt>
+        <dd>{{ value }}</dd>
+    {% endfor %}
+    </dl>
+
+Inside of a for-loop block you can access some special variables:
 
 +-----------------------+---------------------------------------------------+
 | Variable              | Description                                       |
@@ -529,7 +539,7 @@ each time through the loop by using the special `loop.cycle` helper::
         <li class="{{ loop.cycle('odd', 'even') }}">{{ row }}</li>
     {% endfor %}
 
-With Jinja 2.1 an extra `cycle` helper exists that allows loop-unbound
+Since Jinja 2.1 an extra `cycle` helper exists that allows loop-unbound
 cycling.  For more information have a look at the :ref:`builtin-globals`.
 
 .. _loop-filtering:
