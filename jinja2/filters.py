@@ -62,6 +62,22 @@ def make_attrgetter(environment, attribute):
         return item
     return attrgetter
 
+def make_sort_func(func, case_sensitive):
+    """Returns a callable that is usable as key function for the sorted(),
+    built-in function, respecting the case sensitivity.
+    """
+    if case_sensitive:
+        return func
+
+    def sort_func(item):
+        if func is not None:
+            item = func(item)
+
+        if isinstance(item, basestring):
+            return item.lower()
+        return item
+
+    return sort_func
 
 def do_forceescape(value):
     """Enforce HTML escaping.  This will probably double escape variables."""
@@ -182,13 +198,8 @@ def do_dictsort(value, case_sensitive=False, by='key'):
     else:
         raise FilterArgumentError('You can only sort by either '
                                   '"key" or "value"')
-    def sort_func(item):
-        value = item[pos]
-        if isinstance(value, basestring) and not case_sensitive:
-            value = value.lower()
-        return value
 
-    return sorted(value.items(), key=sort_func)
+    return sorted(value.items(), key=make_sort_func(itemgetter(pos), case_sensitive))
 
 
 @environmentfilter
@@ -219,18 +230,11 @@ def do_sort(environment, value, reverse=False, case_sensitive=False,
     .. versionchanged:: 2.6
        The `attribute` parameter was added.
     """
-    if not case_sensitive:
-        def sort_func(item):
-            if isinstance(item, basestring):
-                item = item.lower()
-            return item
-    else:
-        sort_func = None
     if attribute is not None:
         getter = make_attrgetter(environment, attribute)
-        def sort_func(item, processor=sort_func or (lambda x: x)):
-            return processor(getter(item))
-    return sorted(value, key=sort_func, reverse=reverse)
+    else:
+        getter = None
+    return sorted(value, key=make_sort_func(getter, case_sensitive), reverse=reverse)
 
 
 def do_default(value, default_value=u'', boolean=False):
