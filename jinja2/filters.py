@@ -646,6 +646,54 @@ def do_batch(value, linecount, fill_with=None):
         yield tmp
 
 
+@environmentfilter
+def do_filter(environment, iterable, test=None, *args, **kwargs):
+
+    """Filter an iterable using tests and attribute lookups.
+
+    .. sourcecode:: jinja
+
+        {{ range(10)|filter('even') }}
+            -> [0,2,4,6,8]
+
+    If you don't specify a ``'test'``, all values that evaluate to False (e.g.
+    none, false, '', 0) are excluded:
+
+    .. sourcecode:: jinja
+
+        {{ [none,true,false,'foo','',42,0]|filter }}
+            -> [true,'foo',42]
+
+    It is also possible to filter by a certain attribute:
+
+    .. sourcecode:: jinja
+
+        {{ users|filter(attribute='is_staff') }}
+
+    And you can also invert the the filter condition:
+
+    .. sourcecode:: jinja
+
+        {{ [none,true,false,'foo','',42,0]|filter(invert=false) }}
+            -> [none, false, '', 0]
+    """
+    if test is not None:
+        try:
+            test = environment.tests[test]
+        except KeyError:
+            raise FilterArgumentError("there is no test '%s'" % test)
+    else:
+        test = bool
+
+    attribute = kwargs.pop('attribute', None)
+    invert = kwargs.pop('invert', False)
+
+    if attribute is not None:
+        iterable = imap(make_attrgetter(environment, attribute), iterable)
+
+    return [x for x in iterable if test(x, *args) != invert]
+
+
 def do_round(value, precision=0, method='common'):
     """Round the number to a given precision. The first
     parameter specifies the precision (default is ``0``), the
@@ -856,6 +904,7 @@ FILTERS = {
     'striptags':            do_striptags,
     'slice':                do_slice,
     'batch':                do_batch,
+    'filter':               do_filter,
     'sum':                  do_sum,
     'abs':                  abs,
     'round':                do_round,
