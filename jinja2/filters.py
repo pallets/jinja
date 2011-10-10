@@ -13,7 +13,7 @@ import math
 from random import choice
 from operator import itemgetter
 from itertools import imap, groupby
-from jinja2.utils import Markup, escape, pformat, urlize, soft_unicode
+from jinja2.utils import Markup, escape, pformat, urlize, soft_unicode, min, max
 from jinja2.runtime import Undefined
 from jinja2.exceptions import FilterArgumentError
 
@@ -339,6 +339,64 @@ def do_random(environment, seq):
         return choice(seq)
     except IndexError:
         return environment.undefined('No random item, sequence was empty.')
+
+
+@environmentfilter
+def do_min(environment, seq, attribute=None, case_sensitive=False):
+    """Return the smallest item from the sequence.
+
+    .. sourcecode:: jinja
+
+        {{ [1, 2, 3]|min }}
+            -> 1
+
+    It is also possible to get the item providing the smallest value for a
+    certain attribute:
+
+    .. sourcecode:: jinja
+
+        {{ users|min('last_login') }}
+    """
+    if attribute is not None:
+        getter = make_attrgetter(environment, attribute)
+    else:
+        getter = None
+    key = make_sort_func(getter, case_sensitive)
+    try:
+        if key is None:
+            return min(seq)
+        return min(seq, key=key)
+    except ValueError:
+        return environment.undefined('No smallest item, sequence was empty.')
+
+
+@environmentfilter
+def do_max(environment, seq, attribute=None, case_sensitive=False):
+    """Return the largest item from the sequence.
+
+    .. sourcecode:: jinja
+
+        {{ [1, 2, 3]|max }}
+            -> 3
+
+    It is also possible to get the item providing the largest value for a
+    certain attribute:
+
+    .. sourcecode:: jinja
+
+        {{ users|max('last_login') }}
+    """
+    if attribute is not None:
+        getter = make_attrgetter(environment, attribute)
+    else:
+        getter = None
+    key = make_sort_func(getter, case_sensitive)
+    try:
+        if key is None:
+            return max(seq)
+        return max(seq, key=key)
+    except ValueError:
+        return environment.undefined('No largest item, sequence was empty.')
 
 
 def do_filesizeformat(value, binary=False):
@@ -781,6 +839,8 @@ FILTERS = {
     'first':                do_first,
     'last':                 do_last,
     'random':               do_random,
+    'min':                  do_min,
+    'max':                  do_max,
     'filesizeformat':       do_filesizeformat,
     'pprint':               do_pprint,
     'truncate':             do_truncate,
