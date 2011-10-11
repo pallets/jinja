@@ -822,7 +822,7 @@ def do_groupby(environment, value, attribute):
        attribute of another attribute.
     """
     expr = make_attrgetter(environment, attribute)
-    return sorted(map(_GroupTuple, groupby(sorted(value, key=expr), expr)))
+    return map(_GroupTuple, groupby(sorted(value, key=expr), expr))
 
 
 class _GroupTuple(tuple):
