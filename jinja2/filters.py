@@ -327,7 +327,17 @@ def do_first(environment, seq):
 def do_last(environment, seq):
     """Return the last item of a sequence."""
     try:
-        return iter(reversed(seq)).next()
+        try:
+            rv = reversed(seq).next()
+        except TypeError:
+            it = iter(seq)
+            rv = it.next()
+            while True:
+                try:
+                    rv = it.next()
+                except StopIteration:
+                    break
+        return rv
     except StopIteration:
         return environment.undefined('No last item, sequence was empty.')
 
