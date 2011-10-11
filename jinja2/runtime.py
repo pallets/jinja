@@ -9,6 +9,7 @@
     :license: BSD.
 """
 from itertools import chain, imap
+from abc import ABCMeta
 from jinja2.nodes import EvalContext, _context_function_types
 from jinja2.utils import Markup, partial, soft_unicode, escape, missing, \
      concat, internalcode, next, object_type_repr
@@ -412,6 +413,7 @@ class Macro(object):
 
 
 class Undefined(object):
+    __metaclass__ = ABCMeta
     """The default undefined type.  This undefined type can be printed and
     iterated over, but every other access will raise an :exc:`UndefinedError`:
 
