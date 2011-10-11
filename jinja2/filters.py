@@ -783,7 +783,7 @@ def do_round(value, precision=0, method='common'):
 
 
 @environmentfilter
-def do_groupby(environment, value, attribute):
+def do_groupby(environment, value, attribute, case_sensitive=False):
     """Group a sequence of objects by a common attribute.
 
     If you for example have a list of dicts or objects that represent persons
@@ -821,8 +821,14 @@ def do_groupby(environment, value, attribute):
        It's now possible to use dotted notation to group by the child
        attribute of another attribute.
     """
-    expr = make_attrgetter(environment, attribute)
-    return map(_GroupTuple, groupby(sorted(value, key=expr), expr))
+    getter = make_attrgetter(environment, attribute)
+    expr = make_sort_func(getter, case_sensitive)
+
+    rv = []
+    for _, list_ in groupby(sorted(value, key=expr), expr):
+        list_ = list(list_)
+        rv.append(_GroupTuple(getter(list_[0]), list_))
+    return rv
 
 
 class _GroupTuple(tuple):
@@ -830,8 +836,8 @@ class _GroupTuple(tuple):
     grouper = property(itemgetter(0))
     list = property(itemgetter(1))
 
-    def __new__(cls, (key, value)):
-        return tuple.__new__(cls, (key, list(value)))
+    def __new__(cls, key, list_):
+        return tuple.__new__(cls, (key, list_))
 
 
 @environmentfilter
