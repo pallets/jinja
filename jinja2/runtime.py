@@ -544,7 +544,44 @@ class StrictUndefined(Undefined):
     __iter__ = __unicode__ = __str__ = __len__ = __nonzero__ = __eq__ = \
         __ne__ = __bool__ = Undefined._fail_with_undefined_error
 
+class LaxUndefined(Undefined):
+    __slots__ = ()
+
+    @internalcode
+    def _do_nothing(self, *args, **kwargs):
+        """Regular callback function for undefined objects that returns self on call
+        """
+        try:
+            self._fail_with_undefined_error(self, *args, **kwargs)
+        except self._undefined_exception:
+            pass
+            
+        return self
+
+    __add__ = __radd__ = __mul__ = __rmul__ = __div__ = __rdiv__ = \
+    __truediv__ = __rtruediv__ = __floordiv__ = __rfloordiv__ = \
+    __mod__ = __rmod__ = __pos__ = __neg__ = __call__ = \
+    __getattr__ = __getitem__ = __lt__ = __le__ = __gt__ = __ge__ = \
+    __int__ = __float__ = __complex__ = __pow__ = __rpow__ = \
+    _do_nothing
+
+    def __repr__(self):
+        return '<Undefined: %s>' % self._undefined_hint
+
+class DebugLaxUndefined(LaxUndefined, DebugUndefined):
+    """An undefined that returns the debug info when printed.
+
+    >>> foo = DebugUndefined(name='foo')
+    >>> str(foo)
+    '{{ foo }}'
+    >>> not foo
+    True
+    >>> foo + 42
+    '<Undefined: 'foo' is undefined>'
+    """
+    __slots__ = ()
 
 # remove remaining slots attributes, after the metaclass did the magic they
 # are unneeded and irritating as they contain wrong data for the subclasses.
-del Undefined.__slots__, DebugUndefined.__slots__, StrictUndefined.__slots__
+del Undefined.__slots__, DebugUndefined.__slots__, StrictUndefined.__slots__, \
+     LaxUndefined.__slots__, DebugLaxUndefined.__slots__
