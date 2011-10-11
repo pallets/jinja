@@ -237,6 +237,50 @@ def do_sort(environment, value, reverse=False, case_sensitive=False,
     return sorted(value, key=make_sort_func(getter, case_sensitive), reverse=reverse)
 
 
+@environmentfilter
+def do_unique(environment, iterable, case_sensitive=False):
+    """Return a list of unique items from the the given iterable.
+
+    .. sourcecode:: jinja
+
+        {{ ['foo', 'bar', 'foobar', 'FooBar']|unique }}
+            -> ['foo', 'bar', 'foobar']
+
+    This filter complements the `groupby` filter, which sorts and groups an
+    iterable by a certain attribute. The `unique` filter groups the items
+    from the iterable by themself instead and always returns a flat list of
+    unique items. That can be useuful for example when you need to concatenate
+    that items:
+
+    .. sourcecode:: jinja
+
+        {{ ['foo', 'bar', 'foobar', 'FooBar']|unique|join(',') }}
+            -> foo,bar,foobar
+
+    Also note that the resulting list contains the items in the same order
+    as their first occurence in the iterable passed to the filter. If sorting
+    is needed you can still chain the `unique` and `sort` filter:
+
+    .. sourcecode:: jinja
+
+        {{ ['foo', 'bar', 'foobar', 'FooBar']|unique|sort }}
+            -> ['bar', 'foo', 'foobar']
+    """
+    sort_func = make_sort_func(lambda x: x, case_sensitive)
+
+    uniq_items = []
+    norm_items = []
+
+    for item in iterable:
+        norm_item = sort_func(item)
+
+        if norm_item not in norm_items:
+            norm_items.append(norm_item)
+            uniq_items.append(item)
+
+    return uniq_items
+
+
 def do_default(value, default_value=u'', boolean=False):
     """If the value is undefined it will return the passed default value,
     otherwise the value of the variable:
@@ -888,6 +932,7 @@ FILTERS = {
     'count':                len,
     'dictsort':             do_dictsort,
     'sort':                 do_sort,
+    'unique':               do_unique,
     'length':               len,
     'reverse':              do_reverse,
     'center':               do_center,
