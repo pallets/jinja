@@ -557,7 +557,7 @@ def do_batch(value, linecount, fill_with=None):
     A filter that batches items. It works pretty much like `slice`
     just the other way round. It returns a list of lists with the
     given number of items. If you provide a second parameter this
-    is used to fill missing items. See this example:
+    is used to fill up missing items. See this example:
 
     .. sourcecode:: html+jinja
 
