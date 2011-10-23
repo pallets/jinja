@@ -332,7 +332,7 @@ advantage of it, see :ref:`null-master-fallback`.
 
 The filename of the template depends on the template loader.  For example the
 :class:`FileSystemLoader` allows you to access other templates by giving the
-filename.  You can access templates in subdirectories with an slash::
+filename.  You can access templates in subdirectories with a slash::
 
     {% extends "layout/default.html" %}
 
@@ -819,7 +819,7 @@ Jinja2 supports putting often used code into macros.  These macros can go into
 different templates and get imported from there.  This works similar to the
 import statements in Python.  It's important to know that imports are cached
 and imported templates don't have access to the current template variables,
-just the globals by defualt.  For more details about context behavior of
+just the globals by default.  For more details about context behavior of
 imports and includes see :ref:`import-visibility`.
 
 There are two ways to import templates.  You can import the complete template
