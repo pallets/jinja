@@ -347,34 +347,29 @@ class Environment(object):
         return iter(sorted(self.extensions.values(),
                            key=lambda x: x.priority))
 
-    def getitem(self, obj, argument):
+    def getitem(self, obj, argument, strict=False):
         """Get an item or attribute of an object but prefer the item."""
         try:
             return obj[argument]
         except (TypeError, LookupError):
-            if isinstance(argument, basestring):
+            if not strict and isinstance(argument, basestring):
                 try:
                     attr = str(argument)
                 except Exception:
                     pass
                 else:
-                    try:
-                        return getattr(obj, attr)
-                    except AttributeError:
-                        pass
+                    return self.getattr(obj, attr, strict=True)
             return self.undefined(obj=obj, name=argument)
 
-    def getattr(self, obj, attribute):
+    def getattr(self, obj, attribute, strict=False):
         """Get an item or attribute of an object but prefer the attribute.
         Unlike :meth:`getitem` the attribute *must* be a bytestring.
         """
         try:
             return getattr(obj, attribute)
         except AttributeError:
-            pass
-        try:
-            return obj[attribute]
-        except (TypeError, LookupError, AttributeError):
+            if not strict:
+                return self.getitem(obj, attribute, strict=True)
             return self.undefined(obj=obj, name=attribute)
 
     @internalcode

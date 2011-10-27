@@ -967,21 +967,7 @@ def do_attr(environment, obj, name):
 
     See :ref:`Notes on subscriptions <notes-on-subscriptions>` for more details.
     """
-    try:
-        name = str(name)
-    except UnicodeError:
-        pass
-    else:
-        try:
-            value = getattr(obj, name)
-        except AttributeError:
-            pass
-        else:
-            if environment.sandboxed and not \
-               environment.is_safe_attribute(obj, name, value):
-                return environment.unsafe_undefined(obj, name)
-            return value
-    return environment.undefined(obj=obj, name=name)
+    return environment.getattr(obj, name, strict=True)
 
 
 FILTERS = {
