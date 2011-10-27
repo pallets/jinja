@@ -11,7 +11,7 @@
 import re
 import math
 from random import choice
-from operator import itemgetter
+from operator import itemgetter, not_
 from itertools import imap, groupby
 from jinja2.utils import Markup, escape, pformat, urlize, soft_unicode, min, max
 from jinja2.runtime import Undefined
@@ -78,6 +78,39 @@ def make_sort_func(func, case_sensitive):
         return item
 
     return sort_func
+
+def make_map_and_filter_func(environment, filters_or_tests, *args, **kwargs):
+    """Parses arguments of filters like `map` and `filter` and returns a
+    callable usable for Python's map() and filter() built-in. Those filters
+    can be called in following ways:
+
+    * With the name of a filter (in the case of `map`) or a test (in the case
+      of `filter` and `filterfalse`) as first positional argument.
+      All additional arguments are passed to the filter/test.
+    * With the keyword argument `attribute`. So an attribute lookup is performed
+      on the items in the sequence, instead of a filter or test.
+    * With no arguments at all. In that case this function returns None, so when
+      passed to the filter() built-in for exmpale, only items that evaluate to
+      True are returned.
+    """
+    if args:
+        name, args = args[0], args[1:]
+
+        try:
+            func = filters_or_tests[name]
+        except KeyError:
+            raise FilterArgumentError("there is no filter/test '%s'" % name)
+
+        return lambda x: func(x, *args, **kwargs)
+
+    attribute = kwargs.pop('attribute', None)
+
+    if kwargs:
+        raise FilterArgumentError('got an unexpected keyword argument')
+
+    if attribute is not None:
+        return make_attrgetter(environment, attribute)
+
 
 def do_forceescape(value):
     """Enforce HTML escaping.  This will probably double escape variables."""
@@ -701,51 +734,80 @@ def do_batch(value, linecount, fill_with=None):
 
 
 @environmentfilter
-def do_filter(environment, iterable, test=None, *args, **kwargs):
+def do_map(environment, iterable, *args, **kwargs):
+    """Map an iterable using filters or attribute lookups, returning a list
+    that holds the values processed by the given filter or provided by the
+    given attribute.
 
-    """Filter an iterable using tests and attribute lookups.
+    .. sourcecode:: jinja
+
+        {{ ['foo', 'bar']|map('upper') }}
+            -> ['FOO','BAR']
+
+    It is also possible to map the items to a certain attribute:
+
+    .. sourcecode:: jinja
+
+        {{ users|map(attribute='full_name') }}
+    """
+    func = make_map_and_filter_func(environment, environment.filters, *args, **kwargs)
+    return map(func, iterable)
+
+
+@environmentfilter
+def do_filter(environment, iterable, *args, **kwargs):
+    """Filter an iterable using tests or attribute lookups, returning only
+    items where the tests passes or the given attribute evaluates to True.
 
     .. sourcecode:: jinja
 
         {{ range(10)|filter('even') }}
             -> [0,2,4,6,8]
 
-    If you don't specify a ``'test'``, all values that evaluate to False (e.g.
-    none, false, '', 0) are excluded:
+    If you don't specify a ``'test'``, all items that evaluate to False
+    (e.g. none, false, '', 0) are excluded:
 
     .. sourcecode:: jinja
 
         {{ [none,true,false,'foo','',42,0]|filter }}
             -> [true,'foo',42]
 
-    It is also possible to filter by a certain attribute:
+    It is also possible to filter the items by a certain attribute:
 
     .. sourcecode:: jinja
 
         {{ users|filter(attribute='is_staff') }}
+    """
+    func = make_map_and_filter_func(environment, environment.tests, *args, **kwargs)
+    return filter(func, iterable)
 
-    And you can also invert the the filter condition:
+
+@environmentfilter
+def do_filterfalse(environment, iterable, *args, **kwargs):
+    """Filter an iterable using tests or attribute lookups, returning only
+    items where the tests fails or the given attribute evalutes to False.
 
     .. sourcecode:: jinja
 
-        {{ [none,true,false,'foo','',42,0]|filter(invert=false) }}
-            -> [none, false, '', 0]
+        {{ range(10)|filterfalse('even') }}
+            -> [1,3,5,7,9]
+
+    If you don't specify a ``'test'``, only items that evaluate to False
+    (e.g. none, false, '', 0) are included:
+
+    .. sourcecode:: jinja
+
+        {{ [none,true,false,'foo','',42,0]|filterfalse }}
+            -> [none,false,'',0]
+
+    It is also possible to filter the items by a certain attribute:
+
+    .. sourcecode:: jinja
+
+        {{ users|filterfalse(attribute='is_staff') }}
     """
-    if test is not None:
-        try:
-            test = environment.tests[test]
-        except KeyError:
-            raise FilterArgumentError("there is no test '%s'" % test)
-    else:
-        test = bool
-
-    attribute = kwargs.pop('attribute', None)
-    invert = kwargs.pop('invert', False)
-
-    if attribute is not None:
-        iterable = imap(make_attrgetter(environment, attribute), iterable)
-
-    return [x for x in iterable if test(x, *args) != invert]
+    func = make_map_and_filter_func(environment, environment.tests, *args, **kwargs)
+    return filter(func and (lambda x: not func(x)) or not_, iterable)
 
 
 def do_round(value, precision=0, method='common'):
@@ -965,7 +1027,9 @@ FILTERS = {
     'striptags':            do_striptags,
     'slice':                do_slice,
     'batch':                do_batch,
+    'map':                  do_map,
     'filter':               do_filter,
+    'filterfalse':          do_filterfalse,
     'sum':                  do_sum,
     'abs':                  abs,
     'round':                do_round,
