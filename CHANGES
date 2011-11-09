@@ -9,6 +9,9 @@ Version 2.7
   separately in order to work in combination with module loaders as
   advertised.
 - Fixed filesizeformat.
+- Implemented `fail_silently` flag to extract_babel method
+  to properly handle the behavior if errors occur during extracting
+  translations.
 
 Version 2.6
 -----------

@@ -552,6 +552,10 @@ def babel_extract(fileobj, keywords, comment_tags, options):
        The `newstyle_gettext` flag can be set to `True` to enable newstyle
        gettext calls.
 
+    .. versionchanged:: 2.7
+       You can provide a `fail_silently` flag to define the behavior if
+       errors occur during the parsing process.  Defaults to `True`
+
     :param fileobj: the file-like object the messages should be extracted from
     :param keywords: a list of keywords (i.e. function names) that should be
                      recognized as translation functions
@@ -595,9 +599,12 @@ def babel_extract(fileobj, keywords, comment_tags, options):
     try:
         node = environment.parse(source)
         tokens = list(environment.lex(environment.preprocess(source)))
-    except TemplateSyntaxError, e:
+    except TemplateSyntaxError, exc:
         # skip templates with syntax errors
-        return
+        if options.get('fail_silently', True):
+            return
+        else:
+            raise exc
 
     finder = _CommentFinder(tokens, comment_tags)
     for lineno, func, message in extract_from_ast(node, keywords):
