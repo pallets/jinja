@@ -574,16 +574,16 @@ def babel_extract(fileobj, keywords, comment_tags, options):
         options.get(key, str(default)).lower() in ('1', 'on', 'yes', 'true')
 
     environment = Environment(
-        options.get('block_start_string', BLOCK_START_STRING),
-        options.get('block_end_string', BLOCK_END_STRING),
-        options.get('variable_start_string', VARIABLE_START_STRING),
-        options.get('variable_end_string', VARIABLE_END_STRING),
-        options.get('comment_start_string', COMMENT_START_STRING),
-        options.get('comment_end_string', COMMENT_END_STRING),
-        options.get('line_statement_prefix') or LINE_STATEMENT_PREFIX,
-        options.get('line_comment_prefix') or LINE_COMMENT_PREFIX,
-        getbool(options, 'trim_blocks', TRIM_BLOCKS),
-        NEWLINE_SEQUENCE, frozenset(extensions),
+        block_start_string=options.get('block_start_string', BLOCK_START_STRING),
+        block_end_string=options.get('block_end_string', BLOCK_END_STRING),
+        variable_start_string=options.get('variable_start_string', VARIABLE_START_STRING),
+        variable_end_string=options.get('variable_end_string', VARIABLE_END_STRING),
+        comment_start_string=options.get('comment_start_string', COMMENT_START_STRING),
+        comment_end_string=options.get('comment_end_string', COMMENT_END_STRING),
+        line_statement_prefix=options.get('line_statement_prefix') or LINE_STATEMENT_PREFIX,
+        line_comment_prefix=options.get('line_comment_prefix') or LINE_COMMENT_PREFIX,
+        trim_blocks=getbool(options, 'trim_blocks', TRIM_BLOCKS),
+        newline_sequence=NEWLINE_SEQUENCE, extensions=frozenset(extensions),
         cache_size=0,
         auto_reload=False
     )
