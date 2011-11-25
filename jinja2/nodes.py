@@ -104,7 +104,7 @@ def get_eval_context(node, ctx):
 
 class Node(object):
     """Baseclass for all Jinja2 nodes.  There are a number of nodes available
-    of different types.  There are three major types:
+    of different types.  There are four major types:
 
     -   :class:`Stmt`: statements
     -   :class:`Expr`: expressions
