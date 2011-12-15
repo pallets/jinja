@@ -294,43 +294,19 @@ class SandboxedEnvironment(Environment):
         """
         return self.unop_table[operator](arg)
 
-    def getitem(self, obj, argument):
-        """Subscribe an object from sandboxed code."""
-        try:
-            return obj[argument]
-        except (TypeError, LookupError):
-            if isinstance(argument, basestring):
-                try:
-                    attr = str(argument)
-                except Exception:
-                    pass
-                else:
-                    try:
-                        value = getattr(obj, attr)
-                    except AttributeError:
-                        pass
-                    else:
-                        if self.is_safe_attribute(obj, argument, value):
-                            return value
-                        return self.unsafe_undefined(obj, argument)
-        return self.undefined(obj=obj, name=argument)
-
-    def getattr(self, obj, attribute):
+    def getattr(self, obj, attribute, strict=False):
         """Subscribe an object from sandboxed code and prefer the
         attribute.  The attribute passed *must* be a bytestring.
         """
         try:
             value = getattr(obj, attribute)
         except AttributeError:
-            try:
-                return obj[attribute]
-            except (TypeError, LookupError):
-                pass
-        else:
-            if self.is_safe_attribute(obj, attribute, value):
-                return value
-            return self.unsafe_undefined(obj, attribute)
-        return self.undefined(obj=obj, name=attribute)
+            if not strict:
+                return self.getitem(obj, attribute, strict=True)
+            return self.undefined(obj=obj, name=attribute)
+        if self.is_safe_attribute(obj, attribute, value):
+            return value
+        return self.unsafe_undefined(obj, attribute)
 
     def unsafe_undefined(self, obj, attribute):
         """Return an undefined object for unsafe attributes."""

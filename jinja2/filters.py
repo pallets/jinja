@@ -11,9 +11,9 @@
 import re
 import math
 from random import choice
-from operator import itemgetter
+from operator import itemgetter, not_
 from itertools import imap, groupby
-from jinja2.utils import Markup, escape, pformat, urlize, soft_unicode
+from jinja2.utils import Markup, escape, pformat, urlize, soft_unicode, min, max
 from jinja2.runtime import Undefined
 from jinja2.exceptions import FilterArgumentError
 
@@ -61,6 +61,55 @@ def make_attrgetter(environment, attribute):
             item = environment.getitem(item, part)
         return item
     return attrgetter
+
+def make_sort_func(func, case_sensitive):
+    """Returns a callable that is usable as key function for the sorted(),
+    built-in function, respecting the case sensitivity.
+    """
+    if case_sensitive:
+        return func
+
+    def sort_func(item):
+        if func is not None:
+            item = func(item)
+
+        if isinstance(item, basestring):
+            return item.lower()
+        return item
+
+    return sort_func
+
+def make_map_and_filter_func(environment, filters_or_tests, *args, **kwargs):
+    """Parses arguments of filters like `map` and `filter` and returns a
+    callable usable for Python's map() and filter() built-in. Those filters
+    can be called in following ways:
+
+    * With the name of a filter (in the case of `map`) or a test (in the case
+      of `filter` and `filterfalse`) as first positional argument.
+      All additional arguments are passed to the filter/test.
+    * With the keyword argument `attribute`. So an attribute lookup is performed
+      on the items in the sequence, instead of a filter or test.
+    * With no arguments at all. In that case this function returns None, so when
+      passed to the filter() built-in for exmpale, only items that evaluate to
+      True are returned.
+    """
+    if args:
+        name, args = args[0], args[1:]
+
+        try:
+            func = filters_or_tests[name]
+        except KeyError:
+            raise FilterArgumentError("there is no filter/test '%s'" % name)
+
+        return lambda x: func(x, *args, **kwargs)
+
+    attribute = kwargs.pop('attribute', None)
+
+    if kwargs:
+        raise FilterArgumentError('got an unexpected keyword argument')
+
+    if attribute is not None:
+        return make_attrgetter(environment, attribute)
 
 
 def do_forceescape(value):
@@ -182,13 +231,8 @@ def do_dictsort(value, case_sensitive=False, by='key'):
     else:
         raise FilterArgumentError('You can only sort by either '
                                   '"key" or "value"')
-    def sort_func(item):
-        value = item[pos]
-        if isinstance(value, basestring) and not case_sensitive:
-            value = value.lower()
-        return value
 
-    return sorted(value.items(), key=sort_func)
+    return sorted(value.items(), key=make_sort_func(itemgetter(pos), case_sensitive))
 
 
 @environmentfilter
@@ -219,18 +263,55 @@ def do_sort(environment, value, reverse=False, case_sensitive=False,
     .. versionchanged:: 2.6
        The `attribute` parameter was added.
     """
-    if not case_sensitive:
-        def sort_func(item):
-            if isinstance(item, basestring):
-                item = item.lower()
-            return item
-    else:
-        sort_func = None
     if attribute is not None:
         getter = make_attrgetter(environment, attribute)
-        def sort_func(item, processor=sort_func or (lambda x: x)):
-            return processor(getter(item))
-    return sorted(value, key=sort_func, reverse=reverse)
+    else:
+        getter = None
+    return sorted(value, key=make_sort_func(getter, case_sensitive), reverse=reverse)
+
+
+@environmentfilter
+def do_unique(environment, iterable, case_sensitive=False):
+    """Return a list of unique items from the the given iterable.
+
+    .. sourcecode:: jinja
+
+        {{ ['foo', 'bar', 'foobar', 'FooBar']|unique }}
+            -> ['foo', 'bar', 'foobar']
+
+    This filter complements the `groupby` filter, which sorts and groups an
+    iterable by a certain attribute. The `unique` filter groups the items
+    from the iterable by themself instead and always returns a flat list of
+    unique items. That can be useuful for example when you need to concatenate
+    that items:
+
+    .. sourcecode:: jinja
+
+        {{ ['foo', 'bar', 'foobar', 'FooBar']|unique|join(',') }}
+            -> foo,bar,foobar
+
+    Also note that the resulting list contains the items in the same order
+    as their first occurence in the iterable passed to the filter. If sorting
+    is needed you can still chain the `unique` and `sort` filter:
+
+    .. sourcecode:: jinja
+
+        {{ ['foo', 'bar', 'foobar', 'FooBar']|unique|sort }}
+            -> ['bar', 'foo', 'foobar']
+    """
+    sort_func = make_sort_func(lambda x: x, case_sensitive)
+
+    uniq_items = []
+    norm_items = []
+
+    for item in iterable:
+        norm_item = sort_func(item)
+
+        if norm_item not in norm_items:
+            norm_items.append(norm_item)
+            uniq_items.append(item)
+
+    return uniq_items
 
 
 def do_default(value, default_value=u'', boolean=False):
@@ -323,7 +404,17 @@ def do_first(environment, seq):
 def do_last(environment, seq):
     """Return the last item of a sequence."""
     try:
-        return iter(reversed(seq)).next()
+        try:
+            rv = reversed(seq).next()
+        except TypeError:
+            it = iter(seq)
+            rv = it.next()
+            while True:
+                try:
+                    rv = it.next()
+                except StopIteration:
+                    break
+        return rv
     except StopIteration:
         return environment.undefined('No last item, sequence was empty.')
 
@@ -335,6 +426,64 @@ def do_random(environment, seq):
         return choice(seq)
     except IndexError:
         return environment.undefined('No random item, sequence was empty.')
+
+
+@environmentfilter
+def do_min(environment, seq, attribute=None, case_sensitive=False):
+    """Return the smallest item from the sequence.
+
+    .. sourcecode:: jinja
+
+        {{ [1, 2, 3]|min }}
+            -> 1
+
+    It is also possible to get the item providing the smallest value for a
+    certain attribute:
+
+    .. sourcecode:: jinja
+
+        {{ users|min('last_login') }}
+    """
+    if attribute is not None:
+        getter = make_attrgetter(environment, attribute)
+    else:
+        getter = None
+    key = make_sort_func(getter, case_sensitive)
+    try:
+        if key is None:
+            return min(seq)
+        return min(seq, key=key)
+    except ValueError:
+        return environment.undefined('No smallest item, sequence was empty.')
+
+
+@environmentfilter
+def do_max(environment, seq, attribute=None, case_sensitive=False):
+    """Return the largest item from the sequence.
+
+    .. sourcecode:: jinja
+
+        {{ [1, 2, 3]|max }}
+            -> 3
+
+    It is also possible to get the item providing the largest value for a
+    certain attribute:
+
+    .. sourcecode:: jinja
+
+        {{ users|max('last_login') }}
+    """
+    if attribute is not None:
+        getter = make_attrgetter(environment, attribute)
+    else:
+        getter = None
+    key = make_sort_func(getter, case_sensitive)
+    try:
+        if key is None:
+            return max(seq)
+        return max(seq, key=key)
+    except ValueError:
+        return environment.undefined('No largest item, sequence was empty.')
 
 
 def do_filesizeformat(value, binary=False):
@@ -584,6 +733,83 @@ def do_batch(value, linecount, fill_with=None):
         yield tmp
 
 
+@environmentfilter
+def do_map(environment, iterable, *args, **kwargs):
+    """Map an iterable using filters or attribute lookups, returning a list
+    that holds the values processed by the given filter or provided by the
+    given attribute.
+
+    .. sourcecode:: jinja
+
+        {{ ['foo', 'bar']|map('upper') }}
+            -> ['FOO','BAR']
+
+    It is also possible to map the items to a certain attribute:
+
+    .. sourcecode:: jinja
+
+        {{ users|map(attribute='full_name') }}
+    """
+    func = make_map_and_filter_func(environment, environment.filters, *args, **kwargs)
+    return map(func, iterable)
+
+
+@environmentfilter
+def do_filter(environment, iterable, *args, **kwargs):
+    """Filter an iterable using tests or attribute lookups, returning only
+    items where the tests passes or the given attribute evaluates to True.
+
+    .. sourcecode:: jinja
+
+        {{ range(10)|filter('even') }}
+            -> [0,2,4,6,8]
+
+    If you don't specify a ``'test'``, all items that evaluate to False
+    (e.g. none, false, '', 0) are excluded:
+
+    .. sourcecode:: jinja
+
+        {{ [none,true,false,'foo','',42,0]|filter }}
+            -> [true,'foo',42]
+
+    It is also possible to filter the items by a certain attribute:
+
+    .. sourcecode:: jinja
+
+        {{ users|filter(attribute='is_staff') }}
+    """
+    func = make_map_and_filter_func(environment, environment.tests, *args, **kwargs)
+    return filter(func, iterable)
+
+
+@environmentfilter
+def do_filterfalse(environment, iterable, *args, **kwargs):
+    """Filter an iterable using tests or attribute lookups, returning only
+    items where the tests fails or the given attribute evalutes to False.
+
+    .. sourcecode:: jinja
+
+        {{ range(10)|filterfalse('even') }}
+            -> [1,3,5,7,9]
+
+    If you don't specify a ``'test'``, only items that evaluate to False
+    (e.g. none, false, '', 0) are included:
+
+    .. sourcecode:: jinja
+
+        {{ [none,true,false,'foo','',42,0]|filterfalse }}
+            -> [none,false,'',0]
+
+    It is also possible to filter the items by a certain attribute:
+
+    .. sourcecode:: jinja
+
+        {{ users|filterfalse(attribute='is_staff') }}
+    """
+    func = make_map_and_filter_func(environment, environment.tests, *args, **kwargs)
+    return filter(func and (lambda x: not func(x)) or not_, iterable)
+
+
 def do_round(value, precision=0, method='common'):
     """Round the number to a given precision. The first
     parameter specifies the precision (default is ``0``), the
@@ -619,7 +845,7 @@ def do_round(value, precision=0, method='common'):
 
 
 @environmentfilter
-def do_groupby(environment, value, attribute):
+def do_groupby(environment, value, attribute, case_sensitive=False):
     """Group a sequence of objects by a common attribute.
 
     If you for example have a list of dicts or objects that represent persons
@@ -657,8 +883,14 @@ def do_groupby(environment, value, attribute):
        It's now possible to use dotted notation to group by the child
        attribute of another attribute.
     """
-    expr = make_attrgetter(environment, attribute)
-    return sorted(map(_GroupTuple, groupby(sorted(value, key=expr), expr)))
+    getter = make_attrgetter(environment, attribute)
+    expr = make_sort_func(getter, case_sensitive)
+
+    rv = []
+    for _, list_ in groupby(sorted(value, key=expr), expr):
+        list_ = list(list_)
+        rv.append(_GroupTuple(getter(list_[0]), list_))
+    return rv
 
 
 class _GroupTuple(tuple):
@@ -666,8 +898,8 @@ class _GroupTuple(tuple):
     grouper = property(itemgetter(0))
     list = property(itemgetter(1))
 
-    def __new__(cls, (key, value)):
-        return tuple.__new__(cls, (key, list(value)))
+    def __new__(cls, key, list_):
+        return tuple.__new__(cls, (key, list_))
 
 
 @environmentfilter
@@ -735,21 +967,7 @@ def do_attr(environment, obj, name):
 
     See :ref:`Notes on subscriptions <notes-on-subscriptions>` for more details.
     """
-    try:
-        name = str(name)
-    except UnicodeError:
-        pass
-    else:
-        try:
-            value = getattr(obj, name)
-        except AttributeError:
-            pass
-        else:
-            if environment.sandboxed and not \
-               environment.is_safe_attribute(obj, name, value):
-                return environment.unsafe_undefined(obj, name)
-            return value
-    return environment.undefined(obj=obj, name=name)
+    return environment.getattr(obj, name, strict=True)
 
 
 FILTERS = {
@@ -768,6 +986,7 @@ FILTERS = {
     'count':                len,
     'dictsort':             do_dictsort,
     'sort':                 do_sort,
+    'unique':               do_unique,
     'length':               len,
     'reverse':              do_reverse,
     'center':               do_center,
@@ -777,6 +996,8 @@ FILTERS = {
     'first':                do_first,
     'last':                 do_last,
     'random':               do_random,
+    'min':                  do_min,
+    'max':                  do_max,
     'filesizeformat':       do_filesizeformat,
     'pprint':               do_pprint,
     'truncate':             do_truncate,
@@ -792,6 +1013,9 @@ FILTERS = {
     'striptags':            do_striptags,
     'slice':                do_slice,
     'batch':                do_batch,
+    'map':                  do_map,
+    'filter':               do_filter,
+    'filterfalse':          do_filterfalse,
     'sum':                  do_sum,
     'abs':                  abs,
     'round':                do_round,

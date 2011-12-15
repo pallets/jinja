@@ -11,6 +11,7 @@
 import re
 import sys
 import errno
+import operator
 try:
     from thread import allocate_lock
 except ImportError:
@@ -70,6 +71,38 @@ try:
 except NameError:
     def next(x):
         return x.next()
+
+
+# for python 2.4 we wrap the min and max builtins in order to support
+# the 'key' argument.
+def _make_min_or_max(builtin, op):
+    try:
+        builtin([1], key=lambda x: x)
+    except TypeError:
+        def min_or_max(*seq, **kwargs):
+            if 'key' not in kwargs:
+                return builtin(*seq, **kwargs)
+
+            if len(seq) == 1:
+                seq = seq[0]
+            key = kwargs['key']
+
+            def func(x, y):
+                k = key(y)
+                if x is None or op(k, x[1]):
+                    return (y, k)
+                return x
+
+            result = reduce(func, seq, None)
+            if result is None:
+                raise ValueError(builtin.__name__ + '() arg is an empty sequence')
+            return result[0]
+    else:
+        min_or_max = builtin
+    return min_or_max
+min = _make_min_or_max(min, operator.lt)
+max = _make_min_or_max(max, operator.gt)
+del _make_min_or_max
 
 
 # if this python version is unable to deal with unicode filenames
