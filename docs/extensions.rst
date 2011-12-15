@@ -34,7 +34,7 @@ translatable and calls `gettext`.
 
 After enabling dummy `_` function that forwards calls to `gettext` is added
 to the environment globals.  An internationalized application then has to
-provide at least an `gettext` and optoinally a `ngettext` function into the
+provide at least an `gettext` and optionally a `ngettext` function into the
 namespace.  Either globally or for each rendering.
 
 Environment Methods

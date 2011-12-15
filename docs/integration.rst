@@ -38,6 +38,15 @@ that templates use ``%`` as `line_statement_prefix` you can use this code:
 of import paths as `extensions` value.  The i18n extension is added
 automatically.
 
+.. versionchanged:: 2.7
+
+   Until 2.7 template syntax errors were always ignored.  This was done
+   since many people are dropping non template html files into the
+   templates folder and it would randomly fail.  The assumption was that
+   testsuites will catch syntax errors in templates anyways.  If you don't
+   want that behavior you can add ``silent=false`` to the settings and
+   exceptions are propagated.
+
 .. _mapping file: http://babel.edgewall.org/wiki/Documentation/messages.html#extraction-method-mapping-and-configuration
 
 Pylons

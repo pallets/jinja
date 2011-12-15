@@ -9,6 +9,7 @@ Version 2.7
   separately in order to work in combination with module loaders as
   advertised.
 - Fixed filesizeformat.
+- Added a non-silent option for babel extraction.
 
 Version 2.6
 -----------

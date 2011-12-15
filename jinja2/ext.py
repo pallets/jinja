@@ -552,6 +552,10 @@ def babel_extract(fileobj, keywords, comment_tags, options):
        The `newstyle_gettext` flag can be set to `True` to enable newstyle
        gettext calls.
 
+    .. versionchanged:: 2.7
+       A `silent` option can now be provided.  If set to `False` template
+       syntax errors are propagated instead of being ignored.
+
     :param fileobj: the file-like object the messages should be extracted from
     :param keywords: a list of keywords (i.e. function names) that should be
                      recognized as translation functions
@@ -571,8 +575,10 @@ def babel_extract(fileobj, keywords, comment_tags, options):
         extensions.add(InternationalizationExtension)
 
     def getbool(options, key, default=False):
-        options.get(key, str(default)).lower() in ('1', 'on', 'yes', 'true')
+        return options.get(key, str(default)).lower() in \
+            ('1', 'on', 'yes', 'true')
 
+    silent = getbool(options, 'silent', True)
     environment = Environment(
         options.get('block_start_string', BLOCK_START_STRING),
         options.get('block_end_string', BLOCK_END_STRING),
@@ -596,6 +602,8 @@ def babel_extract(fileobj, keywords, comment_tags, options):
         node = environment.parse(source)
         tokens = list(environment.lex(environment.preprocess(source)))
     except TemplateSyntaxError, e:
+        if not silent:
+            raise
         # skip templates with syntax errors
         return
 
