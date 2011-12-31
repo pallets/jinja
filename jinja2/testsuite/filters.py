@@ -215,12 +215,15 @@ class FilterTestCase(JinjaTestCase):
 
     def test_wordwrap(self):
         s = ' '.join('lots of words' for i in range(40))
-        tmpl = env.from_string('{{ s|wordwrap(80) }})')
+        tmpl = env.from_string('{{ s|wordwrap(80) }}')
         wraped = tmpl.render(s=s)
         for l in wraped.splitlines():
             assert len(l.rstrip()) <= 80
-        tmpl = env.from_string('{{ s|wordwrap(80, False) }}')
+        tmpl = env.from_string('{{ s|wordwrap(80, false) }}')
         assert tmpl.render(s="hugeword"*40).count("\n") == 0
+        tmpl = env.from_string('{{ s|wordwrap(80, replace_whitespace=true) }}')
+        s = '\n'.join('lots of words' for i in range(40))
+        assert tmpl.render(s=s) == wraped
 
     def test_wordcount(self):
         tmpl = env.from_string('{{ "foo bar baz"|wordcount }}')

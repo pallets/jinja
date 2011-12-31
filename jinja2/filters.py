@@ -444,7 +444,8 @@ def do_truncate(s, length=255, killwords=False, end='...'):
     return u' '.join(result)
 
 @environmentfilter
-def do_wordwrap(environment, s, width=79, break_long_words=True):
+def do_wordwrap(environment, s, width=79, break_long_words=True,
+                replace_whitespace=False):
     """
     Return a copy of the string passed to the filter wrapped after
     ``79`` characters.  You can override this default using the first
@@ -452,9 +453,10 @@ def do_wordwrap(environment, s, width=79, break_long_words=True):
     split words apart if they are longer than `width`.
     """
     import textwrap
-    return environment.newline_sequence.join(textwrap.wrap(s, width=width, expand_tabs=False,
-                                   replace_whitespace=False,
-                                   break_long_words=break_long_words))
+    res = textwrap.wrap(s, width=width, expand_tabs=False,
+                        replace_whitespace=replace_whitespace,
+                        break_long_words=break_long_words)
+    return environment.newline_sequence.join(res)
 
 
 def do_wordcount(s):
