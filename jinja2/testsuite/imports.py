@@ -121,6 +121,22 @@ class IncludesTestCase(JinjaTestCase):
         )))
         assert env.get_template("main").render() == "123"
 
+    def test_included_block_override(self):
+        env = Environment(loader=DictLoader(dict(
+            main="{% extends 'base' %}{% block b %}1337{% endblock %}",
+            base="{% include 'inc' %}",
+            inc="{% block b %}42{% endblock %}"
+        )))
+        assert env.get_template("main").render() == "1337"
+
+    def test_included_block_override_with_super(self):
+        env = Environment(loader=DictLoader(dict(
+            main="{% extends 'base' %}{% block b %}1337|{{ super() }}{% endblock %}",
+            base="{% include 'inc' %}",
+            inc="{% block b %}42{% endblock %}"
+        )))
+        assert env.get_template("main").render() == "1337|42"
+
     def test_unoptimized_scopes(self):
         t = test_env.from_string("""
             {% macro outer(o) %}
