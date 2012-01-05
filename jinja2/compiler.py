@@ -895,7 +895,7 @@ class CodeGenerator(NodeVisitor):
             self.writeline('raise TemplateRuntimeError(%r)' %
                            'extended multiple times')
 
-            # if we have a known extends already we don't need that code here 
+            # if we have a known extends already we don't need that code here
             # as we know that the template execution will end here.
             if self.has_known_extends:
                 raise CompilerExit()

@@ -13,7 +13,7 @@ import unittest
 from jinja2.testsuite import JinjaTestCase
 
 from jinja2 import Environment, DictLoader
-
+from jinja2.exceptions import TemplateRuntimeError
 
 LAYOUTTEMPLATE = '''\
 |{% block block1 %}block 1 from layout{% endblock %}
@@ -140,6 +140,21 @@ class InheritanceTestCase(JinjaTestCase):
         assert tmpl.render(master='master2') == 'MASTER2CHILD'
         assert tmpl.render(master='master1') == 'MASTER1CHILD'
         assert tmpl.render() == 'MASTER1CHILD'
+
+    def test_forbidden_multi_inheritance(self):
+        env = Environment(loader=DictLoader({
+            'master1': '1',
+            'master2': '2',
+            'child': "{% extends 'master1' %}{% extends 'master2' %}"
+        }))
+
+        tmpl = env.get_template('child')
+        try:
+            tmpl.render()
+        except TemplateRuntimeError, e:
+            assert e.message == 'extended multiple times'
+        else:
+            assert False, 'Must raise on multiple inheritance'
 
     def test_scoped_block(self):
         env = Environment(loader=DictLoader({
