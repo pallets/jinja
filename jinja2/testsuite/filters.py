@@ -366,7 +366,11 @@ class FilterTestCase(JinjaTestCase):
         assert tmpl.render() == '<div>foo</div>'
         tmpl = env.from_string('{{ "<div>foo</div>" }}')
         assert tmpl.render() == '&lt;div&gt;foo&lt;/div&gt;'
-
+    
+    def test_urlescape(self):
+        env = Environment(autoescape=True)
+        tmpl = env.from_string('{{ "Hello, world!"|urle }}')
+        assert tmpl.render() == 'Hello%2C%20world%21'
 
 def suite():
     suite = unittest.TestSuite()

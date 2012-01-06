@@ -10,6 +10,7 @@
 """
 import re
 import math
+import urllib
 from random import choice
 from operator import itemgetter
 from itertools import imap, groupby
@@ -69,6 +70,9 @@ def do_forceescape(value):
         value = value.__html__()
     return escape(unicode(value))
 
+def do_urlescape(value):
+    """Escape for use in URLs."""
+    return urllib.quote(value.encode('utf8'))
 
 @evalcontextfilter
 def do_replace(eval_ctx, s, old, new, count=None):
@@ -797,5 +801,9 @@ FILTERS = {
     'round':                do_round,
     'groupby':              do_groupby,
     'safe':                 do_mark_safe,
-    'xmlattr':              do_xmlattr
+    'xmlattr':              do_xmlattr,
+    'urlescape':            do_urlescape,
+    'urle':                 do_urlescape,
+    'urlencode':            do_urlescape,
+    'urlquote':             do_urlescape
 }
