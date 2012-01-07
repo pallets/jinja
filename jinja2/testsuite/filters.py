@@ -366,7 +366,7 @@ class FilterTestCase(JinjaTestCase):
         assert tmpl.render() == '<div>foo</div>'
         tmpl = env.from_string('{{ "<div>foo</div>" }}')
         assert tmpl.render() == '&lt;div&gt;foo&lt;/div&gt;'
-    
+
     def test_urlescape(self):
         env = Environment(autoescape=True)
         tmpl = env.from_string('{{ "Hello, world!"|urlescape }}')
@@ -377,6 +377,8 @@ class FilterTestCase(JinjaTestCase):
         assert tmpl.render(o=(('f', 1), ("z", 2))) == "f=1&amp;z=2"
         assert tmpl.render(o=((u"\u203d", 1),)) == "%E2%80%BD=1"
         assert tmpl.render(o={u"\u203d": 1}) == "%E2%80%BD=1"
+        assert tmpl.render(o={0: 1}) == "0=1"
+
 
 def suite():
     suite = unittest.TestSuite()

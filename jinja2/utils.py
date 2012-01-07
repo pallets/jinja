@@ -12,6 +12,10 @@ import re
 import sys
 import errno
 try:
+    from urllib.parse import quote_from_bytes as url_quote
+except ImportError:
+    from urllib import quote as url_quote
+try:
     from thread import allocate_lock
 except ImportError:
     from dummy_thread import allocate_lock
@@ -347,6 +351,21 @@ def generate_lorem_ipsum(n=5, html=True, min=20, max=100):
     if not html:
         return u'\n\n'.join(result)
     return Markup(u'\n'.join(u'<p>%s</p>' % escape(x) for x in result))
+
+
+def unicode_urlescape(obj, charset='utf-8'):
+    """URL escapes a single bytestring or unicode string with the
+    given charset if applicable to URL safe quoting under all rules
+    that need to be considered under all supported Python versions.
+
+    If non strings are provided they are converted to their unicode
+    representation first.
+    """
+    if not isinstance(obj, basestring):
+        obj = unicode(obj)
+    if isinstance(obj, unicode):
+        obj = obj.encode(charset)
+    return unicode(url_quote(obj))
 
 
 class LRUCache(object):

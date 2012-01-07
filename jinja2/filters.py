@@ -10,11 +10,11 @@
 """
 import re
 import math
-import urllib
 from random import choice
 from operator import itemgetter
 from itertools import imap, groupby
-from jinja2.utils import Markup, escape, pformat, urlize, soft_unicode
+from jinja2.utils import Markup, escape, pformat, urlize, soft_unicode, \
+     unicode_urlescape
 from jinja2.runtime import Undefined
 from jinja2.exceptions import FilterArgumentError
 
@@ -72,22 +72,23 @@ def do_forceescape(value):
 
 
 def do_urlescape(value):
-    """Escape strings for use in URLs (uses UTF-8 encoding)."""
-    def utf8(o):
-        return unicode(o).encode('utf8')
+    """Escape strings for use in URLs (uses UTF-8 encoding).  It accepts both
+    dictionaries and regular strings as well as pairwise iterables.
 
-    if isinstance(value, basestring):
-        return urllib.quote(utf8(value))
-
-    if hasattr(value, 'items'):
-        # convert dictionaries to list of 2-tuples
-        value = value.items()
-
-    if hasattr(value, 'next'):
-        # convert generators to list
-        value = list(value)
-
-    return urllib.urlencode((utf8(k), utf8(v)) for (k, v) in value)
+    .. versionadded:: 2.7
+    """
+    itemiter = None
+    if isinstance(value, dict):
+        itemiter = value.iteritems()
+    elif not isinstance(value, basestring):
+        try:
+            itemiter = iter(value)
+        except TypeError:
+            pass
+    if itemiter is None:
+        return unicode_urlescape(value)
+    return u'&'.join(unicode_urlescape(k) + '=' +
+                     unicode_urlescape(v) for k, v in itemiter)
 
 
 @evalcontextfilter
