@@ -353,7 +353,7 @@ def generate_lorem_ipsum(n=5, html=True, min=20, max=100):
     return Markup(u'\n'.join(u'<p>%s</p>' % escape(x) for x in result))
 
 
-def unicode_urlescape(obj, charset='utf-8'):
+def unicode_urlencode(obj, charset='utf-8'):
     """URL escapes a single bytestring or unicode string with the
     given charset if applicable to URL safe quoting under all rules
     that need to be considered under all supported Python versions.

@@ -367,11 +367,11 @@ class FilterTestCase(JinjaTestCase):
         tmpl = env.from_string('{{ "<div>foo</div>" }}')
         assert tmpl.render() == '&lt;div&gt;foo&lt;/div&gt;'
 
-    def test_urlescape(self):
+    def test_urlencode(self):
         env = Environment(autoescape=True)
-        tmpl = env.from_string('{{ "Hello, world!"|urlescape }}')
+        tmpl = env.from_string('{{ "Hello, world!"|urlencode }}')
         assert tmpl.render() == 'Hello%2C%20world%21'
-        tmpl = env.from_string('{{ o|urlescape }}')
+        tmpl = env.from_string('{{ o|urlencode }}')
         assert tmpl.render(o=u"Hello, world\u203d") == "Hello%2C%20world%E2%80%BD"
         assert tmpl.render(o=(("f", 1),)) == "f=1"
         assert tmpl.render(o=(('f', 1), ("z", 2))) == "f=1&amp;z=2"
