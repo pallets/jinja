@@ -70,23 +70,25 @@ def do_forceescape(value):
         value = value.__html__()
     return escape(unicode(value))
 
+
 def do_urlescape(value):
     """Escape strings for use in URLs (uses UTF-8 encoding)."""
     def utf8(o):
         return unicode(o).encode('utf8')
-    
+
     if isinstance(value, basestring):
         return urllib.quote(utf8(value))
-    
+
     if hasattr(value, 'items'):
         # convert dictionaries to list of 2-tuples
         value = value.items()
-    
+
     if hasattr(value, 'next'):
         # convert generators to list
         value = list(value)
-    
-    return urllib.urlencode([(utf8(k), utf8(v)) for (k, v) in value])
+
+    return urllib.urlencode((utf8(k), utf8(v)) for (k, v) in value)
+
 
 @evalcontextfilter
 def do_replace(eval_ctx, s, old, new, count=None):
