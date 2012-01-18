@@ -218,6 +218,7 @@ class InternationalizationExtension(Extension):
         # defined in the body of the trans block too, but this is checked at
         # a later state.
         plural_expr = None
+        plural_expr_assignment = None
         variables = {}
         while parser.stream.current.type != 'block_end':
             if variables:
@@ -242,7 +243,10 @@ class InternationalizationExtension(Extension):
 
             if plural_expr is None:
                 if isinstance(var, nodes.Call):
-                    plural_expr = nodes.Name(name.value, 'load')
+                    plural_expr = nodes.Name('_trans', 'load')
+                    variables[name.value] = plural_expr
+                    plural_expr_assignment = nodes.Assign(
+                        nodes.Name('_trans', 'store'), var)
                 else:
                     plural_expr = var
                 num_called_num = name.value == 'num'
@@ -294,7 +298,10 @@ class InternationalizationExtension(Extension):
                                bool(referenced),
                                num_called_num and have_plural)
         node.set_lineno(lineno)
-        return node
+        if plural_expr_assignment is not None:
+            return [plural_expr_assignment, node]
+        else:
+            return node
 
     def _parse_block(self, parser, allow_pluralize):
         """Parse until the next block tag with a given name."""

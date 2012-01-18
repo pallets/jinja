@@ -38,8 +38,8 @@ i18n_templates = {
                   '{% trans %}watch out{% endtrans %}{% endblock %}',
     'plural.html': '{% trans user_count %}One user online{% pluralize %}'
                    '{{ user_count }} users online{% endtrans %}',
-    'plural2.html': '{% trans user_count=get_user_count() %}{{ user_count }}'
-                    '{% pluralize %}{{ user_count }}{% endtrans %}',
+    'plural2.html': '{% trans user_count=get_user_count() %}{{ user_count }}s'
+                    '{% pluralize %}{{ user_count }}p{% endtrans %}',
     'stringformat.html': '{{ _("User: %(num)s")|format(num=user_count) }}'
 }
 
@@ -267,7 +267,7 @@ class InternationalizationTestCase(JinjaTestCase):
             get_user_count.called += 1
             return 1
         get_user_count.called = 0
-        assert tmpl.render(LANGUAGE='de', get_user_count=get_user_count) == '1'
+        assert tmpl.render(LANGUAGE='de', get_user_count=get_user_count) == '1s'
         assert get_user_count.called == 1
 
     def test_complex_plural(self):
