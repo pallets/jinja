@@ -241,7 +241,10 @@ class InternationalizationExtension(Extension):
                 variables[name.value] = var = nodes.Name(name.value, 'load')
 
             if plural_expr is None:
-                plural_expr = var
+                if isinstance(var, nodes.Call):
+                    plural_expr = nodes.Name(name.value, 'load')
+                else:
+                    plural_expr = var
                 num_called_num = name.value == 'num'
 
         parser.stream.expect('block_end')
