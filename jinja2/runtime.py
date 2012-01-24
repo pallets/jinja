@@ -266,10 +266,12 @@ class BlockReference(object):
 
 class LoopContext(object):
     """A loop context for dynamic iteration."""
+    End = object()
 
     def __init__(self, iterable, recurse=None):
         self._iterator = iter(iterable)
         self._recurse = recurse
+        self._after = self._safe_next()
         self.index0 = -1
 
         # try to get the length of the iterable early.  This must be done
@@ -288,7 +290,7 @@ class LoopContext(object):
         return args[self.index0 % len(args)]
 
     first = property(lambda x: x.index0 == 0)
-    last = property(lambda x: x.index0 + 1 == x.length)
+    last = property(lambda x: x._after is LoopContext.End)
     index = property(lambda x: x.index0 + 1)
     revindex = property(lambda x: x.length - x.index0)
     revindex0 = property(lambda x: x.length - x.index)
@@ -298,6 +300,12 @@ class LoopContext(object):
 
     def __iter__(self):
         return LoopContextIterator(self)
+
+    def _safe_next(self):
+        try:
+            return next(self._iterator)
+        except StopIteration:
+            return self.End
 
     @internalcode
     def loop(self, iterable):
@@ -344,7 +352,11 @@ class LoopContextIterator(object):
     def next(self):
         ctx = self.context
         ctx.index0 += 1
-        return next(ctx._iterator), ctx
+        if ctx._after is LoopContext.End:
+            raise StopIteration
+        next_elem = ctx._after
+        ctx._after = ctx._safe_next()
+        return next_elem, ctx
 
 
 class Macro(object):
