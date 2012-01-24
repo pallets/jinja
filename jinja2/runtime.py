@@ -30,6 +30,8 @@ to_string = unicode
 #: the identity function.  Useful for certain things in the environment
 identity = lambda x: x
 
+_last_iteration = object()
+
 
 def markup_join(seq):
     """Concatenation that escapes if necessary and converts to unicode."""
@@ -266,7 +268,6 @@ class BlockReference(object):
 
 class LoopContext(object):
     """A loop context for dynamic iteration."""
-    End = object()
 
     def __init__(self, iterable, recurse=None):
         self._iterator = iter(iterable)
@@ -290,7 +291,7 @@ class LoopContext(object):
         return args[self.index0 % len(args)]
 
     first = property(lambda x: x.index0 == 0)
-    last = property(lambda x: x._after is LoopContext.End)
+    last = property(lambda x: x._after is _last_iteration)
     index = property(lambda x: x.index0 + 1)
     revindex = property(lambda x: x.length - x.index0)
     revindex0 = property(lambda x: x.length - x.index)
@@ -305,7 +306,7 @@ class LoopContext(object):
         try:
             return next(self._iterator)
         except StopIteration:
-            return self.End
+            return _last_iteration
 
     @internalcode
     def loop(self, iterable):
@@ -352,8 +353,8 @@ class LoopContextIterator(object):
     def next(self):
         ctx = self.context
         ctx.index0 += 1
-        if ctx._after is LoopContext.End:
-            raise StopIteration
+        if ctx._after is _last_iteration:
+            raise StopIteration()
         next_elem = ctx._after
         ctx._after = ctx._safe_next()
         return next_elem, ctx
