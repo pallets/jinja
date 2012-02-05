@@ -67,7 +67,7 @@ except TypeError, _error:
     del _test_gen_bug, _error
 
 
-# for python 2.x we create outselves a next() function that does the
+# for python 2.x we create ourselves a next() function that does the
 # basics without exception catching.
 try:
     next = next
@@ -132,7 +132,7 @@ def contextfunction(f):
 
 
 def evalcontextfunction(f):
-    """This decoraotr can be used to mark a function or method as an eval
+    """This decorator can be used to mark a function or method as an eval
     context callable.  This is similar to the :func:`contextfunction`
     but instead of passing the context, an evaluation context object is
     passed.  For more information about the eval context, see
@@ -195,7 +195,7 @@ def clear_caches():
 
 
 def import_string(import_name, silent=False):
-    """Imports an object based on a string.  This use useful if you want to
+    """Imports an object based on a string.  This is useful if you want to
     use import paths as endpoints or something similar.  An import path can
     be specified either in dotted notation (``xml.sax.saxutils.escape``)
     or with a colon as object delimiter (``xml.sax.saxutils:escape``).
@@ -412,7 +412,7 @@ class LRUCache(object):
         return (self.capacity,)
 
     def copy(self):
-        """Return an shallow copy of the instance."""
+        """Return a shallow copy of the instance."""
         rv = self.__class__(self.capacity)
         rv._mapping.update(self._mapping)
         rv._queue = deque(self._queue)
@@ -462,7 +462,7 @@ class LRUCache(object):
         """Get an item from the cache. Moves the item up so that it has the
         highest priority then.
 
-        Raise an `KeyError` if it does not exist.
+        Raise a `KeyError` if it does not exist.
         """
         rv = self._mapping[key]
         if self._queue[-1] != key:
@@ -497,7 +497,7 @@ class LRUCache(object):
 
     def __delitem__(self, key):
         """Remove an item from the cache dict.
-        Raise an `KeyError` if it does not exist.
+        Raise a `KeyError` if it does not exist.
         """
         self._wlock.acquire()
         try:
@@ -598,7 +598,7 @@ class Joiner(object):
 
 # try markupsafe first, if that fails go with Jinja2's bundled version
 # of markupsafe.  Markupsafe was previously Jinja2's implementation of
-# the Markup object but was moved into a separate package in a patchleve
+# the Markup object but was moved into a separate package in a patchlevel
 # release
 try:
     from markupsafe import Markup, escape, soft_unicode
