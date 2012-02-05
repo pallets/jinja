@@ -215,7 +215,7 @@ Jinja2 to look more like Mako:
 
     env = Environment('<%', '%>', '${', '}', '<%doc>', '</%doc>', '%', '##')
 
-Once the environment is configure like that Jinja2 should be able to interpret
+Once the environment is configured like that Jinja2 should be able to interpret
 a small subset of Mako templates.  Jinja2 does not support embedded Python code
 so you would have to move that out of the template.  The syntax for defs (in
 Jinja2 defs are called macros) and template inheritance is different too.  The
