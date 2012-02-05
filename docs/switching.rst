@@ -213,7 +213,7 @@ Jinja2 to look more like Mako:
 
 .. sourcecode:: python
 
-    env = Environment('<%', '%>', '${', '}', '%')
+    env = Environment('<%', '%>', '${', '}', '<%doc>', '</%doc>', '%', '##')
 
 Once the environment is configure like that Jinja2 should be able to interpret
 a small subset of Mako templates.  Jinja2 does not support embedded Python code
