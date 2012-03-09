@@ -62,7 +62,7 @@ class TemplatesNotFound(TemplateNotFound):
 
     def __init__(self, names=(), message=None):
         if message is None:
-            message = u'non of the templates given were found: ' + \
+            message = u'none of the templates given were found: ' + \
                       u', '.join(map(unicode, names))
         TemplateNotFound.__init__(self, names and names[-1] or None, message)
         self.templates = list(names)
