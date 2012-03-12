@@ -177,12 +177,12 @@ def do_title(s):
     uppercase letters, all remaining characters are lowercase.
     """
     rv = []
-    for word in soft_unicode(s).split(' '):
-        if not word:
-            rv.append(word)
+    for item in re.compile(r'([-\s]+)(?u)').split(s):
+        if not item:
+            rv.append(item)
             continue
-        rv.append(word[0].upper() + word[1:])
-    return ' '.join(rv)
+        rv.append(item[0].upper() + item[1:])
+    return ''.join(rv)
 
 
 def do_dictsort(value, case_sensitive=False, by='key'):
