@@ -193,6 +193,16 @@ class FilterTestCase(JinjaTestCase):
     def test_title(self):
         tmpl = env.from_string('''{{ "foo bar"|title }}''')
         assert tmpl.render() == "Foo Bar"
+        tmpl = env.from_string('''{{ "foo's bar"|title }}''')
+        assert tmpl.render() == "Foo's Bar"
+        tmpl = env.from_string('''{{ "foo   bar"|title }}''')
+        assert tmpl.render() == "Foo   Bar"
+        tmpl = env.from_string('''{{ "f bar f"|title }}''')
+        assert tmpl.render() == "F Bar F"
+        tmpl = env.from_string('''{{ "foo-bar"|title }}''')
+        assert tmpl.render() == "Foo-Bar"
+        tmpl = env.from_string('''{{ "foo\tbar"|title }}''')
+        assert tmpl.render() == "Foo\tBar"
 
     def test_truncate(self):
         tmpl = env.from_string(

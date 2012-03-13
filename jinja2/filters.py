@@ -176,7 +176,12 @@ def do_title(s):
     """Return a titlecased version of the value. I.e. words will start with
     uppercase letters, all remaining characters are lowercase.
     """
-    return soft_unicode(s).title()
+    rv = []
+    for item in re.compile(r'([-\s]+)(?u)').split(s):
+        if not item:
+            continue
+        rv.append(item[0].upper() + item[1:])
+    return ''.join(rv)
 
 
 def do_dictsort(value, case_sensitive=False, by='key'):
