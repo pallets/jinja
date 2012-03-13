@@ -226,6 +226,12 @@ class MacrosTestCase(JinjaTestCase):
 {{ m() }}|{{ m('a') }}|{{ m('a', 'b') }}|{{ m(1, 2, 3) }}''')
         assert tmpl.render() == '||c|d|a||c|d|a|b|c|d|1|2|3|d'
 
+    def test_trailing_comma(self):
+        tmpl = self.env.from_string('''\
+{% macro m(a, b,) %}{{ a }}|{{ b }}{% endmacro %}
+{{ m(1,2,) }}''')
+        assert tmpl.render() == '1|2'
+
     def test_varargs(self):
         tmpl = self.env.from_string('''\
 {% macro test() %}{{ varargs|join('|') }}{% endmacro %}\
