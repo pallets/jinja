@@ -177,9 +177,25 @@ operator.  Here are some examples::
 Loops
 ~~~~~
 
-For loops work very similar to Django, the only incompatibility is that in
-Jinja2 the special variable for the loop context is called `loop` and not
-`forloop` like in Django.
+For loops work very similar to Django. Notably, in Jinja2 the special variable for 
+the loop context is called `loop` and not `forloop` like in Django.
+
+In addition, the Django `empty` argument is called `else` in Jinja2. For example, the
+Django template::
+
+    {% for item in items %}
+        {{item}}
+    {% empty %}
+        No items!
+    {% endfor %}
+
+would be handled in Flask as::
+
+    {% for item in items %}
+        {{item}}
+    {% else %}
+        No items!
+    {% endfor %}
 
 Cycle
 ~~~~~
