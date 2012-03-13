@@ -24,6 +24,10 @@ class ForLoopTestCase(JinjaTestCase):
         tmpl = env.from_string('{% for item in seq %}{{ item }}{% endfor %}')
         assert tmpl.render(seq=range(10)) == '0123456789'
 
+    def test_embedded_for_in_else(self):
+        tmpl = env.from_string('{% for item in seq %}{{ loop.index0 }}{% else %}{% for i in range(3) %}{{ i }}{% endfor %}{% endfor %}')
+        assert tmpl.render(seq=[]) == '012'
+
     def test_else(self):
         tmpl = env.from_string('{% for item in seq %}XXX{% else %}...{% endfor %}')
         assert tmpl.render() == '...'
