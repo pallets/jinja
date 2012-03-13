@@ -16,6 +16,7 @@ from jinja2.testsuite import JinjaTestCase
 from jinja2 import Environment, DictLoader, contextfunction, nodes
 from jinja2.exceptions import TemplateAssertionError
 from jinja2.ext import Extension
+from jinja2.ext.entrypoints import EPPlugin
 from jinja2.lexer import Token, count_newlines
 from jinja2.utils import next
 
@@ -446,10 +447,30 @@ class AutoEscapeTestCase(JinjaTestCase):
         assert '&lt;testing&gt;\\n' in pysource
 
 
+class EPPluginTestCase(JinjaTestCase):
+
+    def setup(self):
+        self.tl = EPPlugin()
+
+    def test_basic(self):
+        t = self.tl.load_template('jinja2.testsuite.res.templates.test')
+        assert t.render() == "BAR"
+
+    def test_subdir(self):
+        try:
+            t = self.tl.load_template('jinja2.testsuite.res.templates.foo.test')
+        except ImportError as e:
+            assert str(e) == "No module named templates"
+
+    def test_string(self):
+        t = self.tl.load_template('foo', "hello world")
+        assert t.render() == "hello world"
+
 def suite():
     suite = unittest.TestSuite()
     suite.addTest(unittest.makeSuite(ExtensionsTestCase))
     suite.addTest(unittest.makeSuite(InternationalizationTestCase))
     suite.addTest(unittest.makeSuite(NewstyleInternationalizationTestCase))
     suite.addTest(unittest.makeSuite(AutoEscapeTestCase))
+    suite.addTest(unittest.makeSuite(EPPluginTestCase))
     return suite
