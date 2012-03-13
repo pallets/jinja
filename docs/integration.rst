@@ -5,6 +5,9 @@ Jinja2 provides some code for integration into other tools such as frameworks,
 the `Babel`_ library or your favourite editor for fancy code highlighting.
 This is a brief description of whats included.
 
+Files to help integration are available
+`here. <https://github.com/mitsuhiko/jinja2/tree/master/ext>`_
+
 .. _babel-integration:
 
 Babel Integration
@@ -78,18 +81,18 @@ snippet and add it into your `config/environment.py`::
 TextMate
 --------
 
-Inside the `ext` folder of Jinja2 there is a bundle for TextMate that supports
-syntax highlighting for Jinja1 and Jinja2 for text based templates as well as
-HTML.  It also contains a few often used snippets.
+Inside the `ext` folder at the root of the Jinja2 project there is a bundle for
+TextMate that supports syntax highlighting for Jinja1 and Jinja2 for text based
+templates as well as HTML.  It also contains a few often used snippets.
 
 Vim
 ---
 
 A syntax plugin for `Vim`_ exists in the Vim-scripts directory as well as the
-ext folder of Jinja2.  `The script <http://www.vim.org/scripts/script.php?script_id=1856>`_
-supports Jinja1 and Jinja2.  Once installed two file types are available `jinja`
-and `htmljinja`.  The first one for text based templates, the latter for HTML
-templates.
+`ext` folder at the root of the Jinja2 project.  `The script
+<http://www.vim.org/scripts/script.php?script_id=1856>`_ supports Jinja1 and
+Jinja2.  Once installed two file types are available `jinja` and `htmljinja`.
+The first one for text based templates, the latter for HTML templates.
 
 Copy the files into your `syntax` folder.
 
