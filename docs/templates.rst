@@ -571,6 +571,10 @@ by using `else`::
     {% endfor %}
     </ul>
 
+Note that in Python `else` blocks are executed whenever the corresponding
+loop did not `break`.  Since in Jinja loops cannot `break` anyway,
+a slightly different behavior of the `else` keyword was chosen.
+
 It is also possible to use loops recursively.  This is useful if you are
 dealing with recursive data such as sitemaps.  To use loops recursively you
 basically have to add the `recursive` modifier to the loop definition and
