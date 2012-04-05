@@ -270,7 +270,6 @@ class Environment(object):
 
         # set the loader provided
         self.loader = loader
-        self.bytecode_cache = None
         self.cache = create_cache(cache_size)
         self.bytecode_cache = bytecode_cache
         self.auto_reload = auto_reload
