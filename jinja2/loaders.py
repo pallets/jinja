@@ -177,7 +177,8 @@ class FileSystemLoader(BaseLoader):
                 except OSError:
                     return False
             return contents, filename, uptodate
-        raise TemplateNotFound(template)
+        message = "%s - search path:(%s)"
+        raise TemplateNotFound(message % (template, ", ".join(self.searchpath)))
 
     def list_templates(self):
         found = set()
