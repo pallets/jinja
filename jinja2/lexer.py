@@ -197,7 +197,8 @@ def compile_rules(environment):
 
     if environment.line_statement_prefix is not None:
         rules.append((len(environment.line_statement_prefix), 'linestatement',
-                      r'^\s*' + e(environment.line_statement_prefix)))
+                      (r'^%s*' % (environment.whitespace_re,)) +
+                      e(environment.line_statement_prefix)))
     if environment.line_comment_prefix is not None:
         rules.append((len(environment.line_comment_prefix), 'linecomment',
                       r'(?:^|(?<=\S))[^\S\r\n]*' +
@@ -383,7 +384,8 @@ def get_lexer(environment):
            environment.line_statement_prefix,
            environment.line_comment_prefix,
            environment.trim_blocks,
-           environment.newline_sequence)
+           environment.newline_sequence,
+           environment.whitespace_re)
     lexer = _lexer_cache.get(key)
     if lexer is None:
         lexer = Lexer(environment)
@@ -432,13 +434,17 @@ class Lexer(object):
             'root': [
                 # directives
                 (c('(.*?)(?:%s)' % '|'.join(
-                    [r'(?P<raw_begin>(?:\s*%s\-|%s)\s*raw\s*(?:\-%s\s*|%s))' % (
+                    [r'(?P<raw_begin>(?:%s*%s\-|%s)%s*raw%s*(?:\-%s%s*|%s))' % (
+                        environment.whitespace_re,
                         e(environment.block_start_string),
                         e(environment.block_start_string),
+                        environment.whitespace_re, environment.whitespace_re,
                         e(environment.block_end_string),
+                        environment.whitespace_re,
                         e(environment.block_end_string)
                     )] + [
-                        r'(?P<%s_begin>\s*%s\-|%s)' % (n, r, r)
+                        r'(?P<%s_begin>%s*%s\-|%s)' %
+                        (n, environment.whitespace_re, r, r)
                         for n, r in root_tag_rules
                     ])), (TOKEN_DATA, '#bygroup'), '#bygroup'),
                 # data
@@ -446,8 +452,9 @@ class Lexer(object):
             ],
             # comments
             TOKEN_COMMENT_BEGIN: [
-                (c(r'(.*?)((?:\-%s\s*|%s)%s)' % (
+                (c(r'(.*?)((?:\-%s%s*|%s)%s)' % (
                     e(environment.comment_end_string),
+                    environment.whitespace_re,
                     e(environment.comment_end_string),
                     block_suffix_re
                 )), (TOKEN_COMMENT, TOKEN_COMMENT_END), '#pop'),
@@ -455,25 +462,30 @@ class Lexer(object):
             ],
             # blocks
             TOKEN_BLOCK_BEGIN: [
-                (c('(?:\-%s\s*|%s)%s' % (
+                (c('(?:\-%s%s*|%s)%s' % (
                     e(environment.block_end_string),
+                    environment.whitespace_re,
                     e(environment.block_end_string),
                     block_suffix_re
                 )), TOKEN_BLOCK_END, '#pop'),
             ] + tag_rules,
             # variables
             TOKEN_VARIABLE_BEGIN: [
-                (c('\-%s\s*|%s' % (
+                (c('\-%s%s*|%s' % (
                     e(environment.variable_end_string),
+                    environment.whitespace_re,
                     e(environment.variable_end_string)
                 )), TOKEN_VARIABLE_END, '#pop')
             ] + tag_rules,
             # raw block
             TOKEN_RAW_BEGIN: [
-                (c('(.*?)((?:\s*%s\-|%s)\s*endraw\s*(?:\-%s\s*|%s%s))' % (
+                (c('(.*?)((?:%s*%s\-|%s)%s*endraw%s*(?:\-%s%s*|%s%s))' % (
+                    environment.whitespace_re,
                     e(environment.block_start_string),
                     e(environment.block_start_string),
+                    environment.whitespace_re, environment.whitespace_re,
                     e(environment.block_end_string),
+                    environment.whitespace_re,
                     e(environment.block_end_string),
                     block_suffix_re
                 )), (TOKEN_DATA, TOKEN_RAW_END), '#pop'),
@@ -481,7 +493,8 @@ class Lexer(object):
             ],
             # line statements
             TOKEN_LINESTATEMENT_BEGIN: [
-                (c(r'\s*(\n|$)'), TOKEN_LINESTATEMENT_END, '#pop')
+                (c(r'%s*(\n|$)' % (environment.whitespace_re,)),
+                TOKEN_LINESTATEMENT_END, '#pop')
             ] + tag_rules,
             # line comments
             TOKEN_LINECOMMENT_BEGIN: [
