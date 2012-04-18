@@ -42,7 +42,8 @@ from jinja2.bccache import BytecodeCache, FileSystemBytecodeCache, \
      MemcachedBytecodeCache
 
 # undefined types
-from jinja2.runtime import Undefined, DebugUndefined, StrictUndefined
+from jinja2.runtime import Undefined, DebugUndefined, StrictUndefined, \
+     LaxUndefined, LaxDebugUndefined
 
 # exceptions
 from jinja2.exceptions import TemplateError, UndefinedError, \
