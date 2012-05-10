@@ -12,7 +12,7 @@ import unittest
 
 from jinja2.testsuite import JinjaTestCase
 
-from jinja2 import Environment, DictLoader
+from jinja2 import Environment, DictLoader, TemplateError
 
 
 LAYOUTTEMPLATE = '''\
@@ -53,13 +53,26 @@ WORKINGTEMPLATE = '''\
 {% endblock %}
 '''
 
+DOUBLEEXTENDS = '''\
+{% extends "layout" %}
+{% extends "layout" %}
+{% block block1 %}
+  {% if false %}
+    {% block block2 %}
+      this should workd
+    {% endblock %}
+  {% endif %}
+{% endblock %}
+'''
+
 env = Environment(loader=DictLoader({
     'layout':       LAYOUTTEMPLATE,
     'level1':       LEVEL1TEMPLATE,
     'level2':       LEVEL2TEMPLATE,
     'level3':       LEVEL3TEMPLATE,
     'level4':       LEVEL4TEMPLATE,
-    'working':      WORKINGTEMPLATE
+    'working':      WORKINGTEMPLATE,
+    'doublee':      DOUBLEEXTENDS
 }), trim_blocks=True)
 
 
@@ -105,6 +118,15 @@ class InheritanceTestCase(JinjaTestCase):
 
     def test_working(self):
         tmpl = env.get_template('working')
+    
+    def test_double_extends(self):
+        """
+        Ensures that a template with more than 1 {% extends ... %} usage raises a ``TemplateError``.
+        """
+        try:
+            tmpl = env.get_template('doublee')
+        except Exception, e:
+            assert isinstance(e, TemplateError)
 
     def test_reuse_blocks(self):
         tmpl = env.from_string('{{ self.foo() }}|{% block foo %}42'
