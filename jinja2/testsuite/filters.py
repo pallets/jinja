@@ -106,6 +106,18 @@ class FilterTestCase(JinjaTestCase):
             '2.9 KiB|2.9 MiB'
         ))
 
+    def test_timeformat(self):
+        tmpl = env.from_string(
+            '{{ 1|timeformat }}|'
+            '{{ 10|timeformat }}|'
+            '{{ 60|timeformat }}|'
+            '{{ 200|timeformat }}|'
+            '{{ 3661|timeformat }}|'
+        )
+        out = tmpl.render()
+        self.assert_equal(out, (
+            '0:01|0:10|1:00|3:20|1:01:01|'
+        ))
 
     def test_first(self):
         tmpl = env.from_string('{{ foo|first }}')
