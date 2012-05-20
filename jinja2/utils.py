@@ -2,9 +2,9 @@
 """
     jinja2.utils
     ~~~~~~~~~~~~
-
+    
     Utility functions.
-
+    
     :copyright: (c) 2010 by the Jinja Team.
     :license: BSD, see LICENSE for more details.
 """
@@ -122,7 +122,7 @@ def contextfunction(f):
     to the context or functions provided on the context object.  For example
     a function that returns a sorted list of template variables the current
     template exports could look like this::
-
+        
         @contextfunction
         def get_exported_names(context):
             return sorted(context.exported_vars)
@@ -137,7 +137,7 @@ def evalcontextfunction(f):
     but instead of passing the context, an evaluation context object is
     passed.  For more information about the eval context, see
     :ref:`eval-context`.
-
+    
     .. versionadded:: 2.4
     """
     f.evalcontextfunction = True
@@ -166,7 +166,7 @@ def is_undefined(obj):
     This can be used for custom filters or tests that want to react to
     undefined variables.  For example a custom default filter can look like
     this::
-
+        
         def default(var, default=''):
             if is_undefined(var):
                 return default
@@ -199,10 +199,10 @@ def import_string(import_name, silent=False):
     use import paths as endpoints or something similar.  An import path can
     be specified either in dotted notation (``xml.sax.saxutils.escape``)
     or with a colon as object delimiter (``xml.sax.saxutils:escape``).
-
+    
     If the `silent` is True the return value will be `None` if the import
     fails.
-
+    
     :return: imported object
     """
     try:
@@ -260,23 +260,27 @@ def pformat(obj, verbose=False):
         return pformat(obj)
 
 
-def urlize(text, trim_url_limit=None, nofollow=False):
+def urlize(text, trim_url_limit=None, nofollow=False, external=False):
     """Converts any URLs in text into clickable links. Works on http://,
     https:// and www. links. Links can have trailing punctuation (periods,
     commas, close-parens) and leading punctuation (opening parens) and
     it'll still do the right thing.
-
+    
     If trim_url_limit is not None, the URLs in link text will be limited
     to trim_url_limit characters.
-
+    
     If nofollow is True, the URLs in link text will get a rel="nofollow"
     attribute.
+    
+    If external is True, the link will get a target="_blank" which opens
+    the link in a new tab/window.
     """
     trim_url = lambda x, limit=trim_url_limit: limit is not None \
                          and (x[:limit] + (len(x) >=limit and '...'
                          or '')) or x
     words = _word_split_re.split(unicode(escape(text)))
     nofollow_attr = nofollow and ' rel="nofollow"' or ''
+    external_attr = external and ' target="_blank"' or ''
     for i, word in enumerate(words):
         match = _punctuation_re.match(word)
         if match:
@@ -290,12 +294,12 @@ def urlize(text, trim_url_limit=None, nofollow=False):
                     middle.endswith('.net') or
                     middle.endswith('.com')
                 )):
-                middle = '<a href="http://%s"%s>%s</a>' % (middle,
-                    nofollow_attr, trim_url(middle))
+                middle = '<a href="http://%s"%s%s>%s</a>' % (middle,
+                    external_attr, nofollow_attr, trim_url(middle))
             if middle.startswith('http://') or \
                middle.startswith('https://'):
-                middle = '<a href="%s"%s>%s</a>' % (middle,
-                    nofollow_attr, trim_url(middle))
+                middle = '<a href="%s"%s%s>%s</a>' % (middle,
+                    external_attr, nofollow_attr, trim_url(middle))
             if '@' in middle and not middle.startswith('www.') and \
                not ':' in middle and _simple_email_re.match(middle):
                 middle = '<a href="mailto:%s">%s</a>' % (middle, middle)
@@ -310,14 +314,14 @@ def generate_lorem_ipsum(n=5, html=True, min=20, max=100):
     from random import choice, randrange
     words = LOREM_IPSUM_WORDS.split()
     result = []
-
+    
     for _ in xrange(n):
         next_capitalized = True
         last_comma = last_fullstop = 0
         word = None
         last = None
         p = []
-
+        
         # each paragraph contains out of 20 to 100 words.
         for idx, _ in enumerate(xrange(randrange(min, max))):
             while True:
@@ -339,7 +343,7 @@ def generate_lorem_ipsum(n=5, html=True, min=20, max=100):
                 word += '.'
                 next_capitalized = True
             p.append(word)
-
+        
         # ensure that the paragraph ends with a dot.
         p = u' '.join(p)
         if p.endswith(','):
@@ -347,7 +351,7 @@ def generate_lorem_ipsum(n=5, html=True, min=20, max=100):
         elif not p.endswith('.'):
             p += '.'
         result.append(p)
-
+    
     if not html:
         return u'\n\n'.join(result)
     return Markup(u'\n'.join(u'<p>%s</p>' % escape(x) for x in result))
@@ -357,7 +361,7 @@ def unicode_urlencode(obj, charset='utf-8'):
     """URL escapes a single bytestring or unicode string with the
     given charset if applicable to URL safe quoting under all rules
     that need to be considered under all supported Python versions.
-
+    
     If non strings are provided they are converted to their unicode
     representation first.
     """
@@ -370,17 +374,17 @@ def unicode_urlencode(obj, charset='utf-8'):
 
 class LRUCache(object):
     """A simple LRU Cache implementation."""
-
+    
     # this is fast for small capacities (something below 1000) but doesn't
     # scale.  But as long as it's only used as storage for templates this
     # won't do any harm.
-
+    
     def __init__(self, capacity):
         self.capacity = capacity
         self._mapping = {}
         self._queue = deque()
         self._postinit()
-
+    
     def _postinit(self):
         # alias all queue methods for faster lookup
         self._popleft = self._queue.popleft
@@ -389,42 +393,42 @@ class LRUCache(object):
             self._remove = self._queue.remove
         self._wlock = allocate_lock()
         self._append = self._queue.append
-
+    
     def _remove(self, obj):
         """Python 2.4 compatibility."""
         for idx, item in enumerate(self._queue):
             if item == obj:
                 del self._queue[idx]
                 break
-
+    
     def __getstate__(self):
         return {
             'capacity':     self.capacity,
             '_mapping':     self._mapping,
             '_queue':       self._queue
         }
-
+    
     def __setstate__(self, d):
         self.__dict__.update(d)
         self._postinit()
-
+    
     def __getnewargs__(self):
         return (self.capacity,)
-
+    
     def copy(self):
         """Return a shallow copy of the instance."""
         rv = self.__class__(self.capacity)
         rv._mapping.update(self._mapping)
         rv._queue = deque(self._queue)
         return rv
-
+    
     def get(self, key, default=None):
         """Return an item from the cache dict or `default`"""
         try:
             return self[key]
         except KeyError:
             return default
-
+    
     def setdefault(self, key, default=None):
         """Set `default` if the key is not in the cache otherwise
         leave unchanged. Return the value of this key.
@@ -434,7 +438,7 @@ class LRUCache(object):
         except KeyError:
             self[key] = default
             return default
-
+    
     def clear(self):
         """Clear the cache."""
         self._wlock.acquire()
@@ -443,25 +447,25 @@ class LRUCache(object):
             self._queue.clear()
         finally:
             self._wlock.release()
-
+    
     def __contains__(self, key):
         """Check if a key exists in this cache."""
         return key in self._mapping
-
+    
     def __len__(self):
         """Return the current size of the cache."""
         return len(self._mapping)
-
+    
     def __repr__(self):
         return '<%s %r>' % (
             self.__class__.__name__,
             self._mapping
         )
-
+    
     def __getitem__(self, key):
         """Get an item from the cache. Moves the item up so that it has the
         highest priority then.
-
+        
         Raise a `KeyError` if it does not exist.
         """
         rv = self._mapping[key]
@@ -475,7 +479,7 @@ class LRUCache(object):
                 pass
             self._append(key)
         return rv
-
+    
     def __setitem__(self, key, value):
         """Sets the value for an item. Moves the item up so that it
         has the highest priority then.
@@ -494,7 +498,7 @@ class LRUCache(object):
             self._mapping[key] = value
         finally:
             self._wlock.release()
-
+    
     def __delitem__(self, key):
         """Remove an item from the cache dict.
         Raise a `KeyError` if it does not exist.
@@ -509,43 +513,43 @@ class LRUCache(object):
                 pass
         finally:
             self._wlock.release()
-
+    
     def items(self):
         """Return a list of items."""
         result = [(key, self._mapping[key]) for key in list(self._queue)]
         result.reverse()
         return result
-
+    
     def iteritems(self):
         """Iterate over all items."""
         return iter(self.items())
-
+    
     def values(self):
         """Return a list of all values."""
         return [x[1] for x in self.items()]
-
+    
     def itervalue(self):
         """Iterate over all values."""
         return iter(self.values())
-
+    
     def keys(self):
         """Return a list of all keys ordered by most recent usage."""
         return list(self)
-
+    
     def iterkeys(self):
         """Iterate over all keys in the cache dict, ordered by
         the most recent usage.
         """
         return reversed(tuple(self._queue))
-
+    
     __iter__ = iterkeys
-
+    
     def __reversed__(self):
         """Iterate over the values in the cache dict, oldest items
         coming first.
         """
         return iter(tuple(self._queue))
-
+    
     __copy__ = copy
 
 
@@ -559,22 +563,22 @@ except ImportError:
 
 class Cycler(object):
     """A cycle helper for templates."""
-
+    
     def __init__(self, *items):
         if not items:
             raise RuntimeError('at least one item has to be provided')
         self.items = items
         self.reset()
-
+    
     def reset(self):
         """Resets the cycle."""
         self.pos = 0
-
+    
     @property
     def current(self):
         """Returns the current item."""
         return self.items[self.pos]
-
+    
     def next(self):
         """Goes one item ahead and returns it."""
         rv = self.current
@@ -584,11 +588,11 @@ class Cycler(object):
 
 class Joiner(object):
     """A joining helper for templates."""
-
+    
     def __init__(self, sep=u', '):
         self.sep = sep
         self.used = False
-
+    
     def __call__(self):
         if not self.used:
             self.used = True
