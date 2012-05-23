@@ -101,10 +101,14 @@ setup(
     extras_require={'i18n': ['Babel>=0.8']},
     test_suite='jinja2.testsuite.suite',
     include_package_data=True,
-    entry_points="""
-    [babel.extractors]
-    jinja2 = jinja2.ext:babel_extract[i18n]
-    """,
+    entry_points={
+        'babel.extractors': [
+            'jinja2 = jinja2.ext:babel_extract[i18n]',
+        ],
+        'console_scripts': [
+            'jinja2 = jinja2.cli:main'
+        ],
+    },
     features={'debugsupport': debugsupport},
     **extra
 )
