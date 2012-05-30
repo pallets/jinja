@@ -6,3 +6,4 @@ docs/_build
 build
 dist
 .DS_Store
+.tox
