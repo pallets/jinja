@@ -1,0 +1,10 @@
+language: python
+
+python:
+  - 2.5
+  - 2.6
+  - 2.7
+  - 3.2
+  - pypy
+
+script: python setup.py test
