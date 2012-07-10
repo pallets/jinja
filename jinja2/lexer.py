@@ -424,6 +424,8 @@ class Lexer(object):
 
         # block suffix if trimming is enabled
         block_suffix_re = environment.trim_blocks and '\\n?' or ''
+        # TODO hook environment setting
+        block_prefix_re = True and '[ \\t]*' or ''
 
         self.newline_sequence = environment.newline_sequence
 
@@ -432,8 +434,9 @@ class Lexer(object):
             'root': [
                 # directives
                 (c('(.*?)(?:%s)' % '|'.join(
-                    [r'(?P<raw_begin>(?:\s*%s\-|%s)\s*raw\s*(?:\-%s\s*|%s))' % (
+                    [r'(?P<raw_begin>(?:\s*%s\-|%s%s)\s*raw\s*(?:\-%s\s*|%s))' % (
                         e(environment.block_start_string),
+                        block_prefix_re,
                         e(environment.block_start_string),
                         e(environment.block_end_string),
                         e(environment.block_end_string)
@@ -470,8 +473,9 @@ class Lexer(object):
             ] + tag_rules,
             # raw block
             TOKEN_RAW_BEGIN: [
-                (c('(.*?)((?:\s*%s\-|%s)\s*endraw\s*(?:\-%s\s*|%s%s))' % (
+                (c('(.*?)((?:\s*%s\-|%s%s)\s*endraw\s*(?:\-%s\s*|%s%s))' % (
                     e(environment.block_start_string),
+                    block_prefix_re,
                     e(environment.block_start_string),
                     e(environment.block_end_string),
                     e(environment.block_end_string),
