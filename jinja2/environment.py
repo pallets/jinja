@@ -136,7 +136,7 @@ class Environment(object):
 
         `lstrip_blocks`
             If this is set to ``True`` leading spaces and tabs are stripped
-            from a block if the block starts the line.  Defaults to `False`.
+            from the start of a line to a block.  Defaults to `False`.
 
         `newline_sequence`
             The sequence that starts a newline.  Must be one of ``'\r'``,
