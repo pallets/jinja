@@ -427,8 +427,6 @@ class Lexer(object):
         # strip leading spaces if lstrip_blocks is enabled
         block_prefix_re = environment.lstrip_blocks and r'^[ \t]*' or ''
 
-        print 'block_prefix_re = %s' % block_prefix_re
-
         self.newline_sequence = environment.newline_sequence
 
         # global lexing rules
