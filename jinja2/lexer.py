@@ -383,6 +383,7 @@ def get_lexer(environment):
            environment.line_statement_prefix,
            environment.line_comment_prefix,
            environment.trim_blocks,
+           environment.lstrip_blocks,
            environment.newline_sequence)
     lexer = _lexer_cache.get(key)
     if lexer is None:
