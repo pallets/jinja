@@ -134,6 +134,10 @@ class Environment(object):
             If this is set to ``True`` the first newline after a block is
             removed (block, not variable tag!).  Defaults to `False`.
 
+        `lstrip_blocks`
+            If this is set to ``True`` leading spaces and tabs are stripped
+            from a block if the block starts the line.  Defaults to `False`.
+
         `newline_sequence`
             The sequence that starts a newline.  Must be one of ``'\r'``,
             ``'\n'`` or ``'\r\n'``.  The default is ``'\n'`` which is a
@@ -224,6 +228,7 @@ class Environment(object):
                  line_statement_prefix=LINE_STATEMENT_PREFIX,
                  line_comment_prefix=LINE_COMMENT_PREFIX,
                  trim_blocks=TRIM_BLOCKS,
+                 lstrip_blocks=LSTRIP_BLOCKS,
                  newline_sequence=NEWLINE_SEQUENCE,
                  extensions=(),
                  optimized=True,
@@ -255,6 +260,7 @@ class Environment(object):
         self.line_statement_prefix = line_statement_prefix
         self.line_comment_prefix = line_comment_prefix
         self.trim_blocks = trim_blocks
+        self.lstrip_blocks = lstrip_blocks
         self.newline_sequence = newline_sequence
 
         # runtime information
@@ -300,7 +306,8 @@ class Environment(object):
                 variable_start_string=missing, variable_end_string=missing,
                 comment_start_string=missing, comment_end_string=missing,
                 line_statement_prefix=missing, line_comment_prefix=missing,
-                trim_blocks=missing, extensions=missing, optimized=missing,
+                trim_blocks=missing, lstrip_blocks=missing,
+                extensions=missing, optimized=missing,
                 undefined=missing, finalize=missing, autoescape=missing,
                 loader=missing, cache_size=missing, auto_reload=missing,
                 bytecode_cache=missing):
@@ -816,6 +823,7 @@ class Template(object):
                 line_statement_prefix=LINE_STATEMENT_PREFIX,
                 line_comment_prefix=LINE_COMMENT_PREFIX,
                 trim_blocks=TRIM_BLOCKS,
+                lstrip_blocks=LSTRIP_BLOCKS,
                 newline_sequence=NEWLINE_SEQUENCE,
                 extensions=(),
                 optimized=True,
@@ -826,6 +834,7 @@ class Template(object):
             block_start_string, block_end_string, variable_start_string,
             variable_end_string, comment_start_string, comment_end_string,
             line_statement_prefix, line_comment_prefix, trim_blocks,
+            lstrip_blocks,
             newline_sequence, frozenset(extensions), optimized, undefined,
             finalize, autoescape, None, 0, False, None)
         return env.from_string(source, template_class=cls)
