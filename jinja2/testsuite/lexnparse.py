@@ -383,30 +383,33 @@ class LstripBlocksTestCase(JinjaTestCase):
 
     def test_lstrip(self):
         env = Environment(lstrip_blocks=True, trim_blocks=False)
-        tmpl = env.from_string('''    {% if True %}
-                {% endif %}''')
+        tmpl = env.from_string('''    {% if True %}\n    {% endif %}''')
         assert tmpl.render() == "\n"
 
     def test_lstrip_trim(self):
         env = Environment(lstrip_blocks=True, trim_blocks=True)
-        tmpl = env.from_string('''    {% if True %}
-                {% endif %}''')
+        tmpl = env.from_string('''    {% if True %}\n    {% endif %}''')
         assert tmpl.render() == ""
 
+    def test_no_lstrip(self):
+        env = Environment(lstrip_blocks=True, trim_blocks=False)
+        tmpl = env.from_string('''    {%+ if True %}\n    {%+ endif %}''')
+        assert tmpl.render() == "    \n    "
+
     def test_lstrip_endline(self):
-        env = Environment(lstrip_blocks=True, trim_blocks=True)
-        tmpl = env.from_string('''    {% if True %} \n    {% endif %} ''')
-        assert tmpl.render() == "     \n     "
+        env = Environment(lstrip_blocks=True, trim_blocks=False)
+        tmpl = env.from_string('''    hello{% if True %}\n    goodbye{% endif %}''')
+        assert tmpl.render() == "    hello\n    goodbye"
 
     def test_lstrip_inline(self):
         env = Environment(lstrip_blocks=True, trim_blocks=False)
-        tmpl = env.from_string('''    {% if True %}hello{% endif %}''')
-        assert tmpl.render() == '    hello'
+        tmpl = env.from_string('''    {% if True %}hello    {% endif %}''')
+        assert tmpl.render() == 'hello    '
 
     def test_lstrip_nested(self):
         env = Environment(lstrip_blocks=True, trim_blocks=False)
-        tmpl = env.from_string('''    {% if True %}{% if True %}hello{% endif %}{% endif %}''')
-        assert tmpl.render() == '    hello'
+        tmpl = env.from_string('''    {% if True %}a {% if True %}b {% endif %}c {% endif %}''')
+        assert tmpl.render() == 'a b c '
 
     def test_lstrip_left_chars(self):
         env = Environment(lstrip_blocks=True, trim_blocks=False)
@@ -423,13 +426,8 @@ hello
 
     def test_lstrip_preserve_leading_newlines(self):
         env = Environment(lstrip_blocks=True, trim_blocks=False)
-        tmpl = env.from_string('''\
-        
-        {% if True %}
-        hello
-
-        {% endif %}''')
-        assert tmpl.render() == '        \n\n        hello\n\n'
+        tmpl = env.from_string('''\n\n\n{% set hello = 1 %}''')
+        assert tmpl.render() == '\n\n\n'
         
     def test_lstrip_comment(self):
         env = Environment(lstrip_blocks=True, trim_blocks=False)
@@ -441,9 +439,8 @@ hello
     def test_lstrip_angle_bracket_simple(self):
         env = Environment('<%', '%>', '${', '}', '<%#', '%>', '%', '##',
             lstrip_blocks=True, trim_blocks=True)
-        tmpl = env.from_string('''\
-    <% if True %>hello<% endif %>''')
-        assert tmpl.render() == '    hello'
+        tmpl = env.from_string('''    <% if True %>hello    <% endif %>''')
+        assert tmpl.render() == 'hello    '
 
     def test_lstrip_angle_bracket_comment(self):
         env = Environment('<%', '%>', '${', '}', '<%#', '%>', '%', '##',
@@ -461,7 +458,7 @@ hello
 ${item} ## the rest of the stuff
    <% endfor %>''')
         assert tmpl.render(seq=range(5)) == \
-                '    ' + ''.join(str(x) + '\n' for x in range(5))
+                '    ' + ''.join('%s\n' % x for x in range(5))
         
     def test_lstrip_angle_bracket_compact(self):
         env = Environment('<%', '%>', '${', '}', '<%#', '%>', '%', '##',
@@ -504,16 +501,6 @@ ${item} ## the rest of the stuff
     <?endfor?>''')
         assert tmpl.render(seq=range(5)) == '    ' + ''.join('        %s\n' % x for x in range(5))
 
-    def test_erb_syntax_with_manual(self):
-        env = Environment('<%', '%>', '<%=', '%>', '<%#', '%>',
-            lstrip_blocks=True, trim_blocks=True)
-        tmpl = env.from_string('''\
-<%# I'm a comment, I'm not interesting %>
-    <% for item in seq -%>
-        <%= item %>
-    <%- endfor %>''')
-        assert tmpl.render(seq=range(5)) == '01234'
-
     def test_erb_syntax(self):
         env = Environment('<%', '%>', '<%=', '%>', '<%#', '%>',
             lstrip_blocks=True, trim_blocks=True)
@@ -529,6 +516,26 @@ ${item} ## the rest of the stuff
     <% endfor %>
 ''')
         assert tmpl.render(seq=range(5)) == ''.join('    %s\n' % x for x in range(5))
+
+    def test_erb_syntax_with_manual(self):
+        env = Environment('<%', '%>', '<%=', '%>', '<%#', '%>',
+            lstrip_blocks=True, trim_blocks=True)
+        tmpl = env.from_string('''\
+<%# I'm a comment, I'm not interesting %>
+    <% for item in seq -%>
+        <%= item %>
+    <%- endfor %>''')
+        assert tmpl.render(seq=range(5)) == '01234'
+
+    def test_erb_syntax_no_lstrip(self):
+        env = Environment('<%', '%>', '<%=', '%>', '<%#', '%>',
+            lstrip_blocks=True, trim_blocks=True)
+        tmpl = env.from_string('''\
+<%# I'm a comment, I'm not interesting %>
+    <%+ for item in seq -%>
+        <%= item %>
+    <%- endfor %>''')
+        assert tmpl.render(seq=range(5)) == '    01234'
 
     def test_comment_syntax(self):
         env = Environment('<!--', '-->', '${', '}', '<!--#', '-->',
