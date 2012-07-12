@@ -419,10 +419,8 @@ class LstripBlocksTestCase(JinjaTestCase):
 
     def test_lstrip_embeded_strings(self):
         env = Environment(lstrip_blocks=True, trim_blocks=False)
-        tmpl = env.from_string('''    {% if "{% str %}" %}
-hello
-{% endif %}''')
-        assert tmpl.render() == '\nhello\n'
+        tmpl = env.from_string('''    {% set x = " {% str %} " %}{{ x }}''')
+        assert tmpl.render() == ' {% str %} '
 
     def test_lstrip_preserve_leading_newlines(self):
         env = Environment(lstrip_blocks=True, trim_blocks=False)
@@ -434,7 +432,7 @@ hello
         tmpl = env.from_string('''    {# if True #}
 hello
     {#endif#}''')
-        assert tmpl.render() == '    \nhello\n    '
+        assert tmpl.render() == '\nhello\n'
 
     def test_lstrip_angle_bracket_simple(self):
         env = Environment('<%', '%>', '${', '}', '<%#', '%>', '%', '##',
@@ -445,9 +443,8 @@ hello
     def test_lstrip_angle_bracket_comment(self):
         env = Environment('<%', '%>', '${', '}', '<%#', '%>', '%', '##',
             lstrip_blocks=True, trim_blocks=True)
-        tmpl = env.from_string('''\
-    <%# if True %>hello<%# endif %>''')
-        assert tmpl.render() == '    hello'
+        tmpl = env.from_string('''    <%# if True %>hello    <%# endif %>''')
+        assert tmpl.render() == 'hello    '
 
     def test_lstrip_angle_bracket(self):
         env = Environment('<%', '%>', '${', '}', '<%#', '%>', '%', '##',
@@ -458,7 +455,7 @@ hello
 ${item} ## the rest of the stuff
    <% endfor %>''')
         assert tmpl.render(seq=range(5)) == \
-                '    ' + ''.join('%s\n' % x for x in range(5))
+                ''.join('%s\n' % x for x in range(5))
         
     def test_lstrip_angle_bracket_compact(self):
         env = Environment('<%', '%>', '${', '}', '<%#', '%>', '%', '##',
@@ -469,13 +466,13 @@ ${item} ## the rest of the stuff
 ${item} ## the rest of the stuff
    <%endfor%>''')
         assert tmpl.render(seq=range(5)) == \
-                '    ' + ''.join('%s\n' % x for x in range(5))
+                ''.join('%s\n' % x for x in range(5))
         
     def test_php_syntax_with_manual(self):
         env = Environment('<?', '?>', '<?=', '?>', '<!--', '-->',
             lstrip_blocks=True, trim_blocks=True)
         tmpl = env.from_string('''\
-<!-- I'm a comment, I'm not interesting -->
+    <!-- I'm a comment, I'm not interesting -->
     <? for item in seq -?>
         <?= item ?>
     <?- endfor ?>''')
@@ -489,7 +486,7 @@ ${item} ## the rest of the stuff
     <? for item in seq ?>
         <?= item ?>
     <? endfor ?>''')
-        assert tmpl.render(seq=range(5)) == '    ' + ''.join('        %s\n' % x for x in range(5))
+        assert tmpl.render(seq=range(5)) == ''.join('        %s\n' % x for x in range(5))
 
     def test_php_syntax_compact(self):
         env = Environment('<?', '?>', '<?=', '?>', '<!--', '-->',
@@ -499,7 +496,7 @@ ${item} ## the rest of the stuff
     <?for item in seq?>
         <?=item?>
     <?endfor?>''')
-        assert tmpl.render(seq=range(5)) == '    ' + ''.join('        %s\n' % x for x in range(5))
+        assert tmpl.render(seq=range(5)) == ''.join('        %s\n' % x for x in range(5))
 
     def test_erb_syntax(self):
         env = Environment('<%', '%>', '<%=', '%>', '<%#', '%>',
