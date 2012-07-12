@@ -425,8 +425,31 @@ class Lexer(object):
 
         # block suffix if trimming is enabled
         block_suffix_re = environment.trim_blocks and '\\n?' or ''
+
+        # use '{%+' to manually disable lstrip_blocks behavior
+        no_lstrip_re = e('+')
+        # detect overlap between block and variable or comment strings
+        block_diff_re = c(r'^%s(.*)' % e(environment.block_start_string))
+        # make sure we don't mistake a block for a variable or a comment
+        m = block_diff_re.match(environment.comment_start_string)
+        no_lstrip_re += m and r'|%s' % e(m.group(1)) or ''
+        m = block_diff_re.match(environment.variable_start_string)
+        no_lstrip_re += m and r'|%s' % e(m.group(1)) or ''
+        no_variable_re = m and r'(?!%s)' % e(m.group(1)) or ''
+
         # strip leading spaces if lstrip_blocks is enabled
-        block_prefix_re = environment.lstrip_blocks and r'^[ \t]*' or ''
+        prefix_re = {}
+        if environment.lstrip_blocks:
+            lstrip_re = r'^[ \t]*'
+            block_prefix_re = r'%s%s(?!%s)|%s\+?' % (
+                    lstrip_re,
+                    e(environment.block_start_string),
+                    no_lstrip_re,
+                    e(environment.block_start_string),
+                    )
+            prefix_re['block'] = block_prefix_re
+        else:
+            block_prefix_re = '%s' % e(environment.block_start_string)
 
         self.newline_sequence = environment.newline_sequence
 
@@ -435,15 +458,13 @@ class Lexer(object):
             'root': [
                 # directives
                 (c('(.*?)(?:%s)' % '|'.join(
-                    [r'(?P<raw_begin>(?:\s*%s\-|%s%s|%s)\s*raw\s*(?:\-%s\s*|%s))' % (
+                    [r'(?P<raw_begin>(?:\s*%s\-|%s)\s*raw\s*(?:\-%s\s*|%s))' % (
                         e(environment.block_start_string),
                         block_prefix_re,
-                        e(environment.block_start_string),
-                        e(environment.block_start_string),
                         e(environment.block_end_string),
                         e(environment.block_end_string)
                     )] + [
-                        r'(?P<%s_begin>\s*%s\-|%s)' % (n, r, r if n != "block" else '%s%s|%s' % (block_prefix_re, r, r) )
+                        r'(?P<%s_begin>\s*%s\-|%s)' % (n, r, prefix_re.get(n,r))
                         for n, r in root_tag_rules
                     ])), (TOKEN_DATA, '#bygroup'), '#bygroup'),
                 # data
@@ -475,11 +496,9 @@ class Lexer(object):
             ] + tag_rules,
             # raw block
             TOKEN_RAW_BEGIN: [
-                (c('(.*?)((?:\s*%s\-|%s%s|%s)\s*endraw\s*(?:\-%s\s*|%s%s))' % (
+                (c('(.*?)((?:\s*%s\-|%s)\s*endraw\s*(?:\-%s\s*|%s%s))' % (
                     e(environment.block_start_string),
                     block_prefix_re,
-                    e(environment.block_start_string),
-                    e(environment.block_start_string),
                     e(environment.block_end_string),
                     e(environment.block_end_string),
                     block_suffix_re
