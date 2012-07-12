@@ -426,20 +426,24 @@ class Lexer(object):
         # block suffix if trimming is enabled
         block_suffix_re = environment.trim_blocks and '\\n?' or ''
 
-        # use '{%+' to manually disable lstrip_blocks behavior
-        no_lstrip_re = e('+')
-        # detect overlap between block and variable or comment strings
-        block_diff_re = c(r'^%s(.*)' % e(environment.block_start_string))
-        # make sure we don't mistake a block for a variable or a comment
-        m = block_diff_re.match(environment.comment_start_string)
-        no_lstrip_re += m and r'|%s' % e(m.group(1)) or ''
-        m = block_diff_re.match(environment.variable_start_string)
-        no_lstrip_re += m and r'|%s' % e(m.group(1)) or ''
-        no_variable_re = m and r'(?!%s)' % e(m.group(1)) or ''
-
         # strip leading spaces if lstrip_blocks is enabled
         prefix_re = {}
         if environment.lstrip_blocks:
+            # use '{%+' to manually disable lstrip_blocks behavior
+            no_lstrip_re = e('+')
+            # detect overlap between block and variable or comment strings
+            block_diff = c(r'^%s(.*)' % e(environment.block_start_string))
+            # make sure we don't mistake a block for a variable or a comment
+            m = block_diff.match(environment.comment_start_string)
+            no_lstrip_re += m and r'|%s' % e(m.group(1)) or ''
+            m = block_diff.match(environment.variable_start_string)
+            no_lstrip_re += m and r'|%s' % e(m.group(1)) or ''
+
+            # detect overlap between comment and variable strings
+            comment_diff = c(r'^%s(.*)' % e(environment.comment_start_string))
+            m = comment_diff.match(environment.variable_start_string)
+            no_variable_re = m and r'(?!%s)' % e(m.group(1)) or ''
+
             lstrip_re = r'^[ \t]*'
             block_prefix_re = r'%s%s(?!%s)|%s\+?' % (
                     lstrip_re,
@@ -447,7 +451,14 @@ class Lexer(object):
                     no_lstrip_re,
                     e(environment.block_start_string),
                     )
+            comment_prefix_re = r'%s%s%s|%s\+?' % (
+                    lstrip_re,
+                    e(environment.comment_start_string),
+                    no_variable_re,
+                    e(environment.comment_start_string),
+                    )
             prefix_re['block'] = block_prefix_re
+            prefix_re['comment'] = comment_prefix_re
         else:
             block_prefix_re = '%s' % e(environment.block_start_string)
 
