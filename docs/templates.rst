@@ -180,10 +180,18 @@ gets rendered with blank lines inside the div::
     
     </div>
 
-But with both `trim_blocks` and `lstrip_blocks` enabled, the lines with the template blocks are removed while preserving the whitespace of the contents::
+But with both `trim_blocks` and `lstrip_blocks` enabled, the lines with the 
+template blocks are removed while preserving the whitespace of the contents::
     
     <div>
             yay
+    </div>
+
+You can manually disable the `lstrip_blocks` behavior by putting a
+plus sign (``+``) at the start of a block::
+
+    <div>
+            {%+ if something %}yay{% endif %}
     </div>
 
 You can also strip whitespace in templates by hand.  If you put an minus
