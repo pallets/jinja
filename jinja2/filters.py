@@ -403,19 +403,24 @@ def do_pprint(value, verbose=False):
 
 
 @evalcontextfilter
-def do_urlize(eval_ctx, value, trim_url_limit=None, nofollow=False):
+def do_urlize(eval_ctx, value, trim_url_limit=None, nofollow=False, target=None):
     """Converts URLs in plain text into clickable links.
 
     If you pass the filter an additional integer it will shorten the urls
     to that number. Also a third argument exists that makes the urls
-    "nofollow":
+    "nofollow".  The 4th argument, target, may be used to specify the target for
+    the clickable links:
 
     .. sourcecode:: jinja
 
         {{ mytext|urlize(40, true) }}
             links are shortened to 40 chars and defined with rel="nofollow"
+
+        {{ mytext|urlize(40, true, '_blank') }}
+            links are shortened to 40 chars and defined with rel="nofollow" and target="_blank"
+
     """
-    rv = urlize(value, trim_url_limit, nofollow)
+    rv = urlize(value, trim_url_limit, nofollow, target)
     if eval_ctx.autoescape:
         rv = Markup(rv)
     return rv

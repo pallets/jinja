@@ -223,6 +223,16 @@ class FilterTestCase(JinjaTestCase):
         assert tmpl.render() == 'foo <a href="http://www.example.com/">'\
                                 'http://www.example.com/</a> bar'
 
+    def test_urlize_with_target(self):
+        tmpl = env.from_string('{{ "foo http://www.example.com/ bar"|urlize(target="_blank") }}')
+        assert tmpl.render() == 'foo <a href="http://www.example.com/" target="_blank">'\
+                                'http://www.example.com/</a> bar'
+
+    def test_urlize_with_nofollow_and_target(self):
+        tmpl = env.from_string('{{ "foo http://www.example.com/ bar"|urlize(nofollow=True, target="_blank") }}')
+        assert tmpl.render() == 'foo <a href="http://www.example.com/" rel="nofollow" target="_blank">'\
+                                'http://www.example.com/</a> bar'
+
     def test_wordcount(self):
         tmpl = env.from_string('{{ "foo bar baz"|wordcount }}')
         assert tmpl.render() == '3'
