@@ -139,7 +139,7 @@ Jinja2 no longer ships with a C implementation of it but only the pure
 Python implementation.  It will however check if MarkupSafe is available
 and installed, and if it is, use the Markup class from MarkupSafe.
 
-So if you want the speedups, just import MarkupSafe.
+So if you want the speedups, just install MarkupSafe.
 
 .. _MarkupSafe: http://pypi.python.org/pypi/MarkupSafe
 
