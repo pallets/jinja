@@ -572,7 +572,7 @@ class Environment(object):
 
             # Python 3.3 added a source filesize to the header
             if sys.version_info >= (3, 3):
-                py_header += '\x00\x00\x00\x00'
+                py_header += u'\x00\x00\x00\x00'.encode('iso-8859-15')
 
         def write_file(filename, data, mode):
             if zip:
