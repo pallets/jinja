@@ -570,6 +570,10 @@ class Environment(object):
             py_header = imp.get_magic() + \
                 u'\xff\xff\xff\xff'.encode('iso-8859-15')
 
+            # Python 3.3 added a source filesize to the header
+            if sys.version_info >= (3, 3):
+                py_header += '\x00\x00\x00\x00'
+
         def write_file(filename, data, mode):
             if zip:
                 info = ZipInfo(filename)
