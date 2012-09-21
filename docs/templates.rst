@@ -786,7 +786,7 @@ default.  For more details about context behavior of imports and includes
 see :ref:`import-visibility`.
 
 From Jinja 2.2 onwards you can mark an include with ``ignore missing`` in
-which case Jinja will ignore the statement if the template to be ignored
+which case Jinja will ignore the statement if the template to be included
 does not exist.  When combined with ``with`` or ``without context`` it has
 to be placed *before* the context visibility statement.  Here some valid
 examples::
