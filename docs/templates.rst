@@ -1267,18 +1267,18 @@ The following functions are available in the global scope by default:
     **new in Jinja 2.1**
 
 
-Extensions
-----------
+Jinja2 Extensions
+-----------------
 
-The following sections cover the built-in Jinja2 extensions that may be
-enabled by the application.  The application could also provide further
-extensions not covered by this documentation.  In that case there should
-be a separate document explaining the extensions.
+The following section covers the built-in Jinja2 extensions that can be
+enabled by the application. The application itself could also provide
+additional extensions that are not covered by this documentation. In that
+case consult the application-specific documentation.
 
 .. _i18n-in-templates:
 
-i18n
-~~~~
+i18n *(extension)*
+~~~~~~~~~~~~~~~~~~
 
 If the i18n extension is enabled it's possible to mark parts in the template
 as translatable.  To mark a section as translatable you can use `trans`::
@@ -1349,8 +1349,8 @@ Note that the `ngettext` function's format string automatically receives
 the count as `num` parameter additionally to the regular parameters.
 
 
-Expression Statement
-~~~~~~~~~~~~~~~~~~~~
+Expression Statement *(extension)*
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
 If the expression-statement extension is loaded a tag called `do` is available
 that works exactly like the regular variable expression (``{{ ... }}``) just
@@ -1359,8 +1359,8 @@ that it doesn't print anything.  This can be used to modify lists::
     {% do navigation.append('a string') %}
 
 
-Loop Controls
-~~~~~~~~~~~~~
+Loop Controls *(extension)*
+~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
 If the application enables the :ref:`loopcontrols-extension` it's possible to
 use `break` and `continue` in loops.  When `break` is reached, the loop is
@@ -1381,8 +1381,8 @@ Likewise a look that stops processing after the 10th iteration::
     {%- endfor %}
 
 
-With Statement
-~~~~~~~~~~~~~~
+With Statement *(extension)*
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
 .. versionadded:: 2.3
 
@@ -1414,8 +1414,8 @@ are equivalent::
 
 .. _autoescape-overrides:
 
-Autoescape Extension
---------------------
+Autoescape *(extension)*
+~~~~~~~~~~~~~~~~~~~~~~~~
 
 .. versionadded:: 2.4
 
