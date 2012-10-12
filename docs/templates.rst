@@ -1349,7 +1349,7 @@ which should be used for pluralizing by adding it as parameter to `pluralize`::
 It's also possible to translate strings in expressions.  For that purpose
 three functions exist:
 
-_   `gettext`: translate a single string
+-   `gettext`: translate a single string
 -   `ngettext`: translate a pluralizable string
 -   `_`: alias for `gettext`
 
