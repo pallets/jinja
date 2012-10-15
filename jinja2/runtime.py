@@ -15,7 +15,6 @@ from jinja2.utils import Markup, partial, soft_unicode, escape, missing, \
 from jinja2.exceptions import UndefinedError, TemplateRuntimeError, \
      TemplateNotFound
 
-
 # these variables are exported to the template runtime
 __all__ = ['LoopContext', 'TemplateReference', 'Macro', 'Markup',
            'TemplateRuntimeError', 'missing', 'concat', 'escape',
@@ -25,7 +24,7 @@ __all__ = ['LoopContext', 'TemplateReference', 'Macro', 'Markup',
 #: the name of the function that is used to convert something into
 #: a string.  2to3 will adopt that automatically and the generated
 #: code can take advantage of it.
-to_string = unicode
+to_string = unicode if sys.platform != 'cli' else lambda x: unicode(x)
 
 #: the identity function.  Useful for certain things in the environment
 identity = lambda x: x
