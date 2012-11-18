@@ -93,6 +93,13 @@ class LoaderTestCase(JinjaTestCase):
         assert 'two' not in env.cache
         assert 'three' in env.cache
 
+    def test_dict_loader_cache_invalidates(self):
+        mapping = {'foo': "one"}
+        env = Environment(loader=loaders.DictLoader(mapping))
+        assert env.get_template('foo').render() == "one"
+        mapping['foo'] = "two"
+        assert env.get_template('foo').render() == "two"
+
     def test_split_template_path(self):
         assert split_template_path('foo/bar') == ['foo', 'bar']
         assert split_template_path('./foo/bar') == ['foo', 'bar']
