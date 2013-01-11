@@ -156,7 +156,9 @@ In the default configuration, a single trailing newline is stripped if
 present, and whitespace is not further modified by the template engine. Each
 whitespace (spaces, tabs, newlines etc.) is returned unchanged.  If the
 application configures Jinja to `trim_blocks` the first newline after a a
-template tag is removed automatically (like in PHP).
+template tag is removed automatically (like in PHP).  To keep the
+single trailing newline when it is present, configure Jinja to
+`keep_trailing_newline`.
 
 But you can also strip whitespace in templates by hand.  If you put an minus
 sign (``-``) to the start or end of an block (for example a for tag), a

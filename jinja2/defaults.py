@@ -22,6 +22,7 @@ LINE_STATEMENT_PREFIX = None
 LINE_COMMENT_PREFIX = None
 TRIM_BLOCKS = False
 NEWLINE_SEQUENCE = '\n'
+KEEP_TRAILING_NEWLINE = False
 
 
 # default filters, tests and namespace
