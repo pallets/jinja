@@ -290,7 +290,10 @@ class MemcachedBytecodeCache(BytecodeCache):
         self.timeout = timeout
 
     def load_bytecode(self, bucket):
-        code = self.client.get(self.prefix + bucket.key)
+        try:
+            code = self.client.get(self.prefix + bucket.key)
+        except:
+            code = None
         if code is not None:
             bucket.bytecode_from_string(code)
 
@@ -298,4 +301,7 @@ class MemcachedBytecodeCache(BytecodeCache):
         args = (self.prefix + bucket.key, bucket.bytecode_to_string())
         if self.timeout is not None:
             args += (self.timeout,)
-        self.client.set(*args)
+        try:
+            self.client.set(*args)
+        except:
+            pass
