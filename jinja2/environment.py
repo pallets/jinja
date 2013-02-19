@@ -1065,7 +1065,7 @@ class TemplateStream(object):
         """
         close = False
         if isinstance(fp, basestring):
-            fp = file(fp, 'w')
+            fp = open(fp, 'w')
             close = True
         try:
             if encoding is not None:
