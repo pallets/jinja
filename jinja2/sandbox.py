@@ -114,7 +114,7 @@ def is_internal_attribute(obj, attr):
     """Test if the attribute given is an internal python attribute.  For
     example this function returns `True` for the `func_code` attribute of
     python objects.  This is useful if the environment method
-    :meth:`~SandboxedEnvironment.is_safe_attribute` is overriden.
+    :meth:`~SandboxedEnvironment.is_safe_attribute` is overridden.
 
     >>> from jinja2.sandbox import is_internal_attribute
     >>> is_internal_attribute(lambda: None, "func_code")
