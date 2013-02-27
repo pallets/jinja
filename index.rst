@@ -61,6 +61,7 @@ Who uses it?
 -   `Mozilla <http://www.mozilla.org/>`_
 -   `SourceForge <http://www.sourceforge.net/>`_
 -   `Instagram <http://instagr.am/>`_
+-   `NPR <http://www.npr.org/>`_
 -   … and many more
 
 
