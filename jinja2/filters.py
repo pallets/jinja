@@ -194,7 +194,7 @@ def do_dictsort(value, case_sensitive=False, by='key'):
         {% for item in mydict|dictsort %}
             sort the dict by key, case insensitive
 
-        {% for item in mydict|dicsort(true) %}
+        {% for item in mydict|dictsort(true) %}
             sort the dict by key, case sensitive
 
         {% for item in mydict|dictsort(false, 'value') %}
