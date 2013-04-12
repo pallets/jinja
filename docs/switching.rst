@@ -3,7 +3,7 @@ Switching from other Template Engines
 
 .. highlight:: html+jinja
 
-If you have used a different template engine in the past and want to swtich
+If you have used a different template engine in the past and want to switch
 to Jinja2 here is a small guide that shows the basic syntatic and semantic
 changes between some common, similar text template engines for Python.
 
