@@ -284,6 +284,7 @@ def urlize(text, trim_url_limit=None, nofollow=False):
             if middle.startswith('www.') or (
                 '@' not in middle and
                 not middle.startswith('http://') and
+                not middle.startswith('https://') and
                 len(middle) > 0 and
                 middle[0] in _letters + _digits and (
                     middle.endswith('.org') or
