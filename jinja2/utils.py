@@ -430,11 +430,15 @@ class LRUCache(object):
         """Set `default` if the key is not in the cache otherwise
         leave unchanged. Return the value of this key.
         """
+        self._wlock.acquire()
         try:
-            return self[key]
-        except KeyError:
-            self[key] = default
-            return default
+            try:
+                return self[key]
+            except KeyError:
+                self[key] = default
+                return default
+        finally:
+            self._wlock.release()
 
     def clear(self):
         """Clear the cache."""
@@ -465,17 +469,21 @@ class LRUCache(object):
 
         Raise a `KeyError` if it does not exist.
         """
-        rv = self._mapping[key]
-        if self._queue[-1] != key:
-            try:
-                self._remove(key)
-            except ValueError:
-                # if something removed the key from the container
-                # when we read, ignore the ValueError that we would
-                # get otherwise.
-                pass
-            self._append(key)
-        return rv
+        self._wlock.acquire()
+        try:
+            rv = self._mapping[key]
+            if self._queue[-1] != key:
+                try:
+                    self._remove(key)
+                except ValueError:
+                    # if something removed the key from the container
+                    # when we read, ignore the ValueError that we would
+                    # get otherwise.
+                    pass
+                self._append(key)
+            return rv
+        finally:
+            self._wlock.release()
 
     def __setitem__(self, key, value):
         """Sets the value for an item. Moves the item up so that it
@@ -484,11 +492,7 @@ class LRUCache(object):
         self._wlock.acquire()
         try:
             if key in self._mapping:
-                try:
-                    self._remove(key)
-                except ValueError:
-                    # __getitem__ is not locked, it might happen
-                    pass
+                self._remove(key)
             elif len(self._mapping) == self.capacity:
                 del self._mapping[self._popleft()]
             self._append(key)
