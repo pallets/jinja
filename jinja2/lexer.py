@@ -291,10 +291,12 @@ class TokenStream(object):
     def __init__(self, generator, name, filename):
         self._next = iter(generator).next
         self._pushed = deque()
+        self._history = deque(maxlen=100)
         self.name = name
         self.filename = filename
         self.closed = False
         self.current = Token(1, TOKEN_INITIAL, '')
+        self.pos = 0
         next(self)
 
     def __iter__(self):
@@ -308,14 +310,33 @@ class TokenStream(object):
     def push(self, token):
         """Push a token back to the stream."""
         self._pushed.append(token)
+        self._history.pop()
+        self.pos -= 1
 
     def look(self):
         """Look at the next token."""
-        old_token = next(self)
+        next(self)
         result = self.current
-        self.push(result)
-        self.current = old_token
+        self.rewind()
         return result
+
+    def rewind(self, n=1):
+        if n > self.pos:
+            n = self.pos
+        if n <= 0:
+            return
+        try:
+            self._pushed.appendleft(self.current)
+            for x in xrange(n - 1):
+                token = self._history.pop()
+                self._pushed.appendleft(token)
+            self.current = self._history.pop()
+            self.pos -= n
+        except IndexError:
+            raise TemplateSyntaxError('cannot rewind that far, '
+                                      'rewind buffer overflow.',
+                                      self.current.lineno,
+                                      self.name, self.filename)
 
     def skip(self, n=1):
         """Got n tokens ahead."""
@@ -343,6 +364,8 @@ class TokenStream(object):
                 self.current = self._next()
             except StopIteration:
                 self.close()
+        self._history.append(rv)
+        self.pos += 1
         return rv
 
     def close(self):
