@@ -255,6 +255,13 @@ class BugTestCase(JinjaTestCase):
         output = tpl1.render(g = dict(a = 'TEST'))
         
         self.assert_equal(expected, output)
+        
+        tpl2 = Template("""
+        {{g.a}}
+        """)
+        expected = '\n        TEST\n        '
+        output = tpl2.render(g = dict(a = 'TEST'))
+        self.assert_equal(expected, output)
 
 def suite():
     suite = unittest.TestSuite()
