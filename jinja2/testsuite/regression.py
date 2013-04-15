@@ -27,7 +27,7 @@ class CornerTestCase(JinjaTestCase):
         {%- endfor %}
         {{- item -}}
         ''')
-        assert t.render(item=42) == '[1][2][3][4]42'
+        assert t.render(item = 42) == '[1][2][3][4]42'
 
         t = env.from_string('''
         {%- for item in (1, 2, 3, 4) -%}
@@ -75,7 +75,7 @@ class CornerTestCase(JinjaTestCase):
         {%- endfor %}
         {{- wrapper -}}
         ''')
-        assert t.render(wrapper=23) == '[1][2][3][4]23'
+        assert t.render(wrapper = 23) == '[1][2][3][4]23'
 
 
 class BugTestCase(JinjaTestCase):
@@ -87,15 +87,15 @@ class BugTestCase(JinjaTestCase):
                .render() == 'teststuff'
 
     def test_extends_output_bugs(self):
-        env = Environment(loader=DictLoader({
+        env = Environment(loader = DictLoader({
             'parent.html': '(({% block title %}{% endblock %}))'
         }))
 
         t = env.from_string('{% if expr %}{% extends "parent.html" %}{% endif %}'
                             '[[{% block title %}title{% endblock %}]]'
                             '{% for item in [1, 2, 3] %}({{ item }}){% endfor %}')
-        assert t.render(expr=False) == '[[title]](1)(2)(3)'
-        assert t.render(expr=True) == '((title))'
+        assert t.render(expr = False) == '[[title]](1)(2)(3)'
+        assert t.render(expr = True) == '((title))'
 
     def test_urlize_filter_escaping(self):
         tmpl = env.from_string('{{ "http://www.example.org/<foo"|urlize }}')
@@ -121,7 +121,7 @@ class BugTestCase(JinjaTestCase):
         assert tmpl.render().split() == map(unicode, range(1, 11)) * 5
 
     def test_weird_inline_comment(self):
-        env = Environment(line_statement_prefix='%')
+        env = Environment(line_statement_prefix = '%')
         self.assert_raises(TemplateSyntaxError, env.from_string,
                            '% for item in seq {# missing #}\n...% endfor')
 
@@ -132,11 +132,11 @@ class BugTestCase(JinjaTestCase):
 
     def test_partial_conditional_assignments(self):
         tmpl = env.from_string('{% if b %}{% set a = 42 %}{% endif %}{{ a }}')
-        assert tmpl.render(a=23) == '23'
-        assert tmpl.render(b=True) == '42'
+        assert tmpl.render(a = 23) == '23'
+        assert tmpl.render(b = True) == '42'
 
     def test_stacked_locals_scoping_bug(self):
-        env = Environment(line_statement_prefix='#')
+        env = Environment(line_statement_prefix = '#')
         t = env.from_string('''\
 # for j in [1, 2]:
 #   set x = 1
@@ -157,7 +157,7 @@ class BugTestCase(JinjaTestCase):
 #   print 'D'
 # endif
     ''')
-        assert t.render(a=0, b=False, c=42, d=42.0) == '1111C'
+        assert t.render(a = 0, b = False, c = 42, d = 42.0) == '1111C'
 
     def test_stacked_locals_scoping_bug_twoframe(self):
         t = Template('''
@@ -169,7 +169,7 @@ class BugTestCase(JinjaTestCase):
             {% endfor %}
             {{ x }}
         ''')
-        rv = t.render(foo=[1]).strip()
+        rv = t.render(foo = [1]).strip()
         assert rv == u'1'
 
     def test_call_with_args(self):
@@ -190,7 +190,7 @@ class BugTestCase(JinjaTestCase):
           </dl>
         {% endcall %}""")
 
-        assert [x.strip() for x in t.render(list_of_user=[{
+        assert [x.strip() for x in t.render(list_of_user = [{
             'username':'apo',
             'realname':'something else',
             'description':'test'
@@ -237,7 +237,7 @@ class BugTestCase(JinjaTestCase):
         """)
 
     def test_correct_prefix_loader_name(self):
-        env = Environment(loader=PrefixLoader({
+        env = Environment(loader = PrefixLoader({
             'foo':  DictLoader({})
         }))
         try:
@@ -246,7 +246,15 @@ class BugTestCase(JinjaTestCase):
             assert e.name == 'foo/bar.html'
         else:
             assert False, 'expected error here'
-
+    
+    def test_strip_white_by_dict(self):
+        tpl1 = Template("""
+        {{-g.a}}
+        """)
+        expected = 'TEST\n        '
+        output = tpl1.render(g = dict(a = 'TEST'))
+        
+        self.assert_equal(expected, output)
 
 def suite():
     suite = unittest.TestSuite()
