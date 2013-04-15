@@ -723,6 +723,9 @@ class CodeGenerator(NodeVisitor):
             args = args + ['l_loop=l_loop']
         self.writeline('def macro(%s):' % ', '.join(args), node)
         self.indent()
+        for arg in node.args:
+            if arg.ctx == 'param':
+                self.writeline('context.vars[\'%s\'] = l_%s' % (arg.name, arg.name))
         self.buffer(frame)
         self.pull_locals(frame)
         self.blockvisit(node.body, frame)
