@@ -171,6 +171,17 @@ class Context(object):
         """
         if __debug__:
             __traceback_hide__ = True
+        
+        # Allow callable classes to take a context
+        if hasattr(__obj, '__call__'):
+            fn = __obj.__call__
+            for fn_type in ('contextfunction', 
+                            'evalcontextfunction', 
+                            'environmentfunction'):
+                if hasattr(fn, fn_type):
+                    __obj = fn
+                    break;
+        
         if isinstance(__obj, _context_function_types):
             if getattr(__obj, 'contextfunction', 0):
                 args = (__self,) + args
