@@ -17,6 +17,7 @@ from jinja2.environment import Environment
 from jinja2.runtime import Undefined, concat
 from jinja2.exceptions import TemplateAssertionError, TemplateSyntaxError
 from jinja2.utils import contextfunction, import_string, Markup, next
+import six
 
 
 # the only real useful gettext functions for a Jinja template.  Note
@@ -354,7 +355,7 @@ class InternationalizationExtension(Extension):
         # enough to handle the variable expansion and autoescape
         # handling itself
         if self.environment.newstyle_gettext:
-            for key, value in variables.iteritems():
+            for key, value in six.iteritems(variables):
                 # the function adds that later anyways in case num was
                 # called num, so just skip it.
                 if num_called_num and key == 'num':
@@ -601,7 +602,7 @@ def babel_extract(fileobj, keywords, comment_tags, options):
     try:
         node = environment.parse(source)
         tokens = list(environment.lex(environment.preprocess(source)))
-    except TemplateSyntaxError, e:
+    except TemplateSyntaxError as e:
         if not silent:
             raise
         # skip templates with syntax errors

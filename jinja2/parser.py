@@ -12,6 +12,8 @@ from jinja2 import nodes
 from jinja2.exceptions import TemplateSyntaxError, TemplateAssertionError
 from jinja2.utils import next
 from jinja2.lexer import describe_token, describe_token_expr
+from six.moves import map
+from six.moves import zip
 
 
 #: statements that callinto 

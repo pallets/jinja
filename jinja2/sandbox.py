@@ -90,7 +90,7 @@ def safe_range(*args):
     """A range that can't generate ranges with a length of more than
     MAX_RANGE items.
     """
-    rng = xrange(*args)
+    rng = range(*args)
     if len(rng) > MAX_RANGE:
         raise OverflowError('range too big, maximum size for range is %d' %
                             MAX_RANGE)

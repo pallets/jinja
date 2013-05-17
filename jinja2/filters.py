@@ -17,6 +17,9 @@ from jinja2.utils import Markup, escape, pformat, urlize, soft_unicode, \
      unicode_urlencode
 from jinja2.runtime import Undefined
 from jinja2.exceptions import FilterArgumentError
+import six
+from six.moves import map
+from six.moves import zip
 
 
 _word_re = re.compile(r'\w+(?u)')
@@ -68,7 +71,7 @@ def do_forceescape(value):
     """Enforce HTML escaping.  This will probably double escape variables."""
     if hasattr(value, '__html__'):
         value = value.__html__()
-    return escape(unicode(value))
+    return escape(six.text_type(value))
 
 
 def do_urlencode(value):
@@ -79,7 +82,7 @@ def do_urlencode(value):
     """
     itemiter = None
     if isinstance(value, dict):
-        itemiter = value.iteritems()
+        itemiter = six.iteritems(value)
     elif not isinstance(value, basestring):
         try:
             itemiter = iter(value)
@@ -110,7 +113,7 @@ def do_replace(eval_ctx, s, old, new, count=None):
     if count is None:
         count = -1
     if not eval_ctx.autoescape:
-        return unicode(s).replace(unicode(old), unicode(new), count)
+        return six.text_type(s).replace(six.text_type(old), six.text_type(new), count)
     if hasattr(old, '__html__') or hasattr(new, '__html__') and \
        not hasattr(s, '__html__'):
         s = escape(s)
@@ -155,7 +158,7 @@ def do_xmlattr(_eval_ctx, d, autospace=True):
     """
     rv = u' '.join(
         u'%s="%s"' % (escape(key), escape(value))
-        for key, value in d.iteritems()
+        for key, value in six.iteritems(d)
         if value is not None and not isinstance(value, Undefined)
     )
     if autospace and rv:
@@ -309,7 +312,7 @@ def do_join(eval_ctx, value, d=u'', attribute=None):
 
     # no automatic escaping?  joining is a lot eaiser then
     if not eval_ctx.autoescape:
-        return unicode(d).join(imap(unicode, value))
+        return six.text_type(d).join(imap(unicode, value))
 
     # if the delimiter doesn't have an html representation we check
     # if any of the items has.  If yes we do a coercion to Markup
@@ -320,11 +323,11 @@ def do_join(eval_ctx, value, d=u'', attribute=None):
             if hasattr(item, '__html__'):
                 do_escape = True
             else:
-                value[idx] = unicode(item)
+                value[idx] = six.text_type(item)
         if do_escape:
             d = escape(d)
         else:
-            d = unicode(d)
+            d = six.text_type(d)
         return d.join(value)
 
     # no html involved, to normal joining
@@ -333,14 +336,14 @@ def do_join(eval_ctx, value, d=u'', attribute=None):
 
 def do_center(value, width=80):
     """Centers the value in a field of a given width."""
-    return unicode(value).center(width)
+    return six.text_type(value).center(width)
 
 
 @environmentfilter
 def do_first(environment, seq):
     """Return the first item of a sequence."""
     try:
-        return iter(seq).next()
+        return six.advance_iterator(iter(seq))
     except StopIteration:
         return environment.undefined('No first item, sequence was empty.')
 
@@ -349,7 +352,7 @@ def do_first(environment, seq):
 def do_last(environment, seq):
     """Return the last item of a sequence."""
     try:
-        return iter(reversed(seq)).next()
+        return six.advance_iterator(iter(reversed(seq)))
     except StopIteration:
         return environment.undefined('No last item, sequence was empty.')
 
@@ -539,7 +542,7 @@ def do_striptags(value):
     """
     if hasattr(value, '__html__'):
         value = value.__html__()
-    return Markup(unicode(value)).striptags()
+    return Markup(six.text_type(value)).striptags()
 
 
 def do_slice(value, slices, fill_with=None):
@@ -567,7 +570,7 @@ def do_slice(value, slices, fill_with=None):
     items_per_slice = length // slices
     slices_with_extra = length % slices
     offset = 0
-    for slice_number in xrange(slices):
+    for slice_number in range(slices):
         start = offset + slice_number * items_per_slice
         if slice_number < slices_with_extra:
             offset += 1
@@ -692,7 +695,8 @@ class _GroupTuple(tuple):
     grouper = property(itemgetter(0))
     list = property(itemgetter(1))
 
-    def __new__(cls, (key, value)):
+    def __new__(cls, xxx_todo_changeme):
+        (key, value) = xxx_todo_changeme
         return tuple.__new__(cls, (key, list(value)))
 
 
@@ -733,7 +737,7 @@ def do_mark_safe(value):
 
 def do_mark_unsafe(value):
     """Mark a value as unsafe.  This is the reverse operation for :func:`safe`."""
-    return unicode(value)
+    return six.text_type(value)
 
 
 def do_reverse(value):

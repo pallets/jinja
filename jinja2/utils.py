@@ -11,6 +11,7 @@
 import re
 import sys
 import errno
+import six
 try:
     from urllib.parse import quote_from_bytes as url_quote
 except ImportError:
@@ -52,7 +53,7 @@ try:
         raise TypeError(_test_gen_bug)
         yield None
     _concat(_test_gen_bug())
-except TypeError, _error:
+except TypeError as _error:
     if not _error.args or _error.args[0] is not _test_gen_bug:
         def concat(gen):
             try:
@@ -73,7 +74,7 @@ try:
     next = next
 except NameError:
     def next(x):
-        return x.next()
+        return six.advance_iterator(x)
 
 
 # if this python version is unable to deal with unicode filenames
@@ -105,7 +106,7 @@ def _func():
 FunctionType = type(_func)
 GeneratorType = type(_func())
 MethodType = type(_C.method)
-CodeType = type(_C.method.func_code)
+CodeType = type(_C.method.__code__)
 try:
     raise TypeError()
 except TypeError:
@@ -156,7 +157,7 @@ def environmentfunction(f):
 
 def internalcode(f):
     """Marks the function as internally used"""
-    internal_code.add(f.func_code)
+    internal_code.add(f.__code__)
     return f
 
 
@@ -226,7 +227,7 @@ def open_if_exists(filename, mode='rb'):
     """
     try:
         return open(filename, mode)
-    except IOError, e:
+    except IOError as e:
         if e.errno not in (errno.ENOENT, errno.EISDIR):
             raise
 
@@ -275,7 +276,7 @@ def urlize(text, trim_url_limit=None, nofollow=False):
     trim_url = lambda x, limit=trim_url_limit: limit is not None \
                          and (x[:limit] + (len(x) >=limit and '...'
                          or '')) or x
-    words = _word_split_re.split(unicode(escape(text)))
+    words = _word_split_re.split(six.text_type(escape(text)))
     nofollow_attr = nofollow and ' rel="nofollow"' or ''
     for i, word in enumerate(words):
         match = _punctuation_re.match(word)
@@ -312,7 +313,7 @@ def generate_lorem_ipsum(n=5, html=True, min=20, max=100):
     words = LOREM_IPSUM_WORDS.split()
     result = []
 
-    for _ in xrange(n):
+    for _ in range(n):
         next_capitalized = True
         last_comma = last_fullstop = 0
         word = None
@@ -320,7 +321,7 @@ def generate_lorem_ipsum(n=5, html=True, min=20, max=100):
         p = []
 
         # each paragraph contains out of 20 to 100 words.
-        for idx, _ in enumerate(xrange(randrange(min, max))):
+        for idx, _ in enumerate(range(randrange(min, max))):
             while True:
                 word = choice(words)
                 if word != last:
@@ -363,10 +364,10 @@ def unicode_urlencode(obj, charset='utf-8'):
     representation first.
     """
     if not isinstance(obj, basestring):
-        obj = unicode(obj)
+        obj = six.text_type(obj)
     if isinstance(obj, unicode):
         obj = obj.encode(charset)
-    return unicode(url_quote(obj))
+    return six.text_type(url_quote(obj))
 
 
 class LRUCache(object):

@@ -10,6 +10,9 @@
 """
 import re
 from itertools import imap
+import six
+from six.moves import map
+from six.moves import zip
 
 
 __all__ = ['Markup', 'soft_unicode', 'escape', 'escape_silent']
@@ -76,12 +79,12 @@ class Markup(unicode):
 
     def __add__(self, other):
         if hasattr(other, '__html__') or isinstance(other, basestring):
-            return self.__class__(unicode(self) + unicode(escape(other)))
+            return self.__class__(six.text_type(self) + six.text_type(escape(other)))
         return NotImplemented
 
     def __radd__(self, other):
         if hasattr(other, '__html__') or isinstance(other, basestring):
-            return self.__class__(unicode(escape(other)) + unicode(self))
+            return self.__class__(six.text_type(escape(other)) + six.text_type(self))
         return NotImplemented
 
     def __mul__(self, num):
@@ -139,7 +142,7 @@ class Markup(unicode):
             except ValueError:
                 pass
             return u''
-        return _entity_re.sub(handle_match, unicode(self))
+        return _entity_re.sub(handle_match, six.text_type(self))
 
     def striptags(self):
         r"""Unescape markup into an unicode string and strip all tags.  This
@@ -167,7 +170,7 @@ class Markup(unicode):
         orig = getattr(unicode, name)
         def func(self, *args, **kwargs):
             args = _escape_argspec(list(args), enumerate(args))
-            _escape_argspec(kwargs, kwargs.iteritems())
+            _escape_argspec(kwargs, six.iteritems(kwargs))
             return self.__class__(orig(self, *args, **kwargs))
         func.__name__ = orig.__name__
         func.__doc__ = orig.__doc__
@@ -211,7 +214,7 @@ class _MarkupEscapeHelper(object):
 
     __getitem__ = lambda s, x: _MarkupEscapeHelper(s.obj[x])
     __str__ = lambda s: str(escape(s.obj))
-    __unicode__ = lambda s: unicode(escape(s.obj))
+    __unicode__ = lambda s: six.text_type(escape(s.obj))
     __repr__ = lambda s: str(escape(repr(s.obj)))
     __int__ = lambda s: int(s.obj)
     __float__ = lambda s: float(s.obj)

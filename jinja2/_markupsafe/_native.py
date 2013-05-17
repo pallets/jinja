@@ -9,6 +9,7 @@
     :license: BSD, see LICENSE for more details.
 """
 from jinja2._markupsafe import Markup
+import six
 
 
 def escape(s):
@@ -18,7 +19,7 @@ def escape(s):
     """
     if hasattr(s, '__html__'):
         return s.__html__()
-    return Markup(unicode(s)
+    return Markup(six.text_type(s)
         .replace('&', '&amp;')
         .replace('>', '&gt;')
         .replace('<', '&lt;')
@@ -41,5 +42,5 @@ def soft_unicode(s):
     string is not converted back to unicode.
     """
     if not isinstance(s, unicode):
-        s = unicode(s)
+        s = six.text_type(s)
     return s

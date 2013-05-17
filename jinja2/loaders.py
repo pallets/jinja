@@ -13,6 +13,7 @@ import sys
 import weakref
 from types import ModuleType
 from os import path
+import six
 try:
     from hashlib import sha1
 except ImportError:
@@ -359,7 +360,7 @@ class PrefixLoader(BaseLoader):
 
     def list_templates(self):
         result = []
-        for prefix, loader in self.mapping.iteritems():
+        for prefix, loader in six.iteritems(self.mapping):
             for template in loader.list_templates():
                 result.append(prefix + self.delimiter + template)
         return result

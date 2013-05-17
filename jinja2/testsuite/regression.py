@@ -14,6 +14,8 @@ from jinja2.testsuite import JinjaTestCase
 
 from jinja2 import Template, Environment, DictLoader, TemplateSyntaxError, \
      TemplateNotFound, PrefixLoader
+from six.moves import map
+from six.moves import zip
 
 env = Environment()
 
@@ -118,7 +120,7 @@ class BugTestCase(JinjaTestCase):
 
         ''')
 
-        assert tmpl.render().split() == map(unicode, range(1, 11)) * 5
+        assert tmpl.render().split() == map(unicode, list(range(1, 11))) * 5
 
     def test_weird_inline_comment(self):
         env = Environment(line_statement_prefix='%')
@@ -242,7 +244,7 @@ class BugTestCase(JinjaTestCase):
         }))
         try:
             env.get_template('foo/bar.html')
-        except TemplateNotFound, e:
+        except TemplateNotFound as e:
             assert e.name == 'foo/bar.html'
         else:
             assert False, 'expected error here'

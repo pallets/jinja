@@ -8,6 +8,9 @@
     :copyright: (c) 2010 by the Jinja Team.
     :license: BSD, see LICENSE for more details.
 """
+import six
+from six.moves import map
+from six.moves import zip
 
 
 class TemplateError(Exception):
@@ -15,7 +18,7 @@ class TemplateError(Exception):
 
     def __init__(self, message=None):
         if message is not None:
-            message = unicode(message).encode('utf-8')
+            message = six.text_type(message).encode('utf-8')
         Exception.__init__(self, message)
 
     @property
@@ -83,7 +86,7 @@ class TemplateSyntaxError(TemplateError):
         self.translated = False
 
     def __str__(self):
-        return unicode(self).encode('utf-8')
+        return six.text_type(self).encode('utf-8')
 
     # unicode goes after __str__ because we configured 2to3 to rename
     # __unicode__ to __str__.  because the 2to3 tree is not designed to

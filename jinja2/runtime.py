@@ -14,6 +14,7 @@ from jinja2.utils import Markup, partial, soft_unicode, escape, missing, \
      concat, internalcode, next, object_type_repr
 from jinja2.exceptions import UndefinedError, TemplateRuntimeError, \
      TemplateNotFound
+import six
 
 
 # these variables are exported to the template runtime
@@ -63,7 +64,7 @@ def new_context(environment, template_name, blocks, vars=None,
         # we don't want to modify the dict passed
         if shared:
             parent = dict(parent)
-        for key, value in locals.iteritems():
+        for key, value in six.iteritems(locals):
             if key[:2] == 'l_' and value is not missing:
                 parent[key[2:]] = value
     return Context(environment, parent, template_name, blocks)
@@ -119,7 +120,7 @@ class Context(object):
         # create the initial mapping of blocks.  Whenever template inheritance
         # takes place the runtime will update this mapping with the new blocks
         # from the template.
-        self.blocks = dict((k, [v]) for k, v in blocks.iteritems())
+        self.blocks = dict((k, [v]) for k, v in six.iteritems(blocks))
 
     def super(self, name, current):
         """Render a parent block."""
@@ -191,7 +192,7 @@ class Context(object):
                               self.parent, True, None, locals)
         context.vars.update(self.vars)
         context.eval_ctx = self.eval_ctx
-        context.blocks.update((k, list(v)) for k, v in self.blocks.iteritems())
+        context.blocks.update((k, list(v)) for k, v in six.iteritems(self.blocks))
         return context
 
     def _all(meth):
@@ -483,7 +484,7 @@ class Undefined(object):
         _fail_with_undefined_error
 
     def __str__(self):
-        return unicode(self).encode('utf-8')
+        return six.text_type(self).encode('utf-8')
 
     # unicode goes after __str__ because we configured 2to3 to rename
     # __unicode__ to __str__.  because the 2to3 tree is not designed to

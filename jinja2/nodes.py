@@ -16,6 +16,7 @@ import operator
 from itertools import chain, izip
 from collections import deque
 from jinja2.utils import Markup, MethodType, FunctionType
+import six
 
 
 #: the types we support for context functions
@@ -142,7 +143,7 @@ class Node(object):
             setattr(self, attr, attributes.pop(attr, None))
         if attributes:
             raise TypeError('unknown attribute %r' %
-                            iter(attributes).next())
+                            six.advance_iterator(iter(attributes)))
 
     def iter_fields(self, exclude=None, only=None):
         """This method iterates over all fields that are defined and yields
@@ -440,7 +441,7 @@ class Const(Literal):
         constant value in the generated code, otherwise it will raise
         an `Impossible` exception.
         """
-        from compiler import has_safe_repr
+        from .compiler import has_safe_repr
         if not has_safe_repr(value):
             raise Impossible()
         return cls(value, lineno=lineno, environment=environment)
@@ -687,7 +688,7 @@ class Concat(Expr):
 
     def as_const(self, eval_ctx=None):
         eval_ctx = get_eval_context(self, eval_ctx)
-        return ''.join(unicode(x.as_const(eval_ctx)) for x in self.nodes)
+        return ''.join(six.text_type(x.as_const(eval_ctx)) for x in self.nodes)
 
 
 class Compare(Expr):

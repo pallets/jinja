@@ -21,6 +21,11 @@ from jinja2.exceptions import TemplateSyntaxError, TemplateNotFound, \
      TemplatesNotFound
 from jinja2.utils import import_string, LRUCache, Markup, missing, \
      concat, consume, internalcode, _encode_filename
+import six
+from functools import reduce
+from six.moves import filter
+from six.moves import map
+from six.moves import zip
 
 
 # for direct template usage we have up to ten living environments
@@ -292,7 +297,7 @@ class Environment(object):
         yet.  This is used by :ref:`extensions <writing-extensions>` to register
         callbacks and configuration values without breaking inheritance.
         """
-        for key, value in attributes.iteritems():
+        for key, value in six.iteritems(attributes):
             if not hasattr(self, key):
                 setattr(self, key, value)
 
@@ -323,7 +328,7 @@ class Environment(object):
         rv.overlayed = True
         rv.linked_to = self
 
-        for key, value in args.iteritems():
+        for key, value in six.iteritems(args):
             if value is not missing:
                 setattr(rv, key, value)
 
@@ -333,7 +338,7 @@ class Environment(object):
             rv.cache = copy_cache(self.cache)
 
         rv.extensions = {}
-        for key, value in self.extensions.iteritems():
+        for key, value in six.iteritems(self.extensions):
             rv.extensions[key] = value.bind(rv)
         if extensions is not missing:
             rv.extensions.update(load_extensions(rv, extensions))
@@ -407,7 +412,7 @@ class Environment(object):
         of the extensions to be applied you have to filter source through
         the :meth:`preprocess` method.
         """
-        source = unicode(source)
+        source = six.text_type(source)
         try:
             return self.lexer.tokeniter(source, name, filename)
         except TemplateSyntaxError:
@@ -420,7 +425,7 @@ class Environment(object):
         because there you usually only want the actual source tokenized.
         """
         return reduce(lambda s, e: e.preprocess(s, name, filename),
-                      self.iter_extensions(), unicode(source))
+                      self.iter_extensions(), six.text_type(source))
 
     def _tokenize(self, source, name, filename=None, state=None):
         """Called by the parser to do the preprocessing and filtering
@@ -577,7 +582,7 @@ class Environment(object):
         def write_file(filename, data, mode):
             if zip:
                 info = ZipInfo(filename)
-                info.external_attr = 0755 << 16L
+                info.external_attr = 0o755 << 16
                 zip_file.writestr(info, data)
             else:
                 f = open(os.path.join(target, filename), mode)
@@ -601,7 +606,7 @@ class Environment(object):
                 source, filename, _ = self.loader.get_source(self, name)
                 try:
                     code = self.compile(source, name, filename, True, True)
-                except TemplateSyntaxError, e:
+                except TemplateSyntaxError as e:
                     if not ignore_errors:
                         raise
                     log_function('Could not compile "%s": %s' % (name, e))
@@ -843,7 +848,7 @@ class Template(object):
             'environment':  environment,
             '__file__':     code.co_filename
         }
-        exec code in namespace
+        exec(code, namespace)
         rv = cls._from_namespace(environment, namespace, globals)
         rv._uptodate = uptodate
         return rv
@@ -1003,7 +1008,7 @@ class TemplateModule(object):
         return Markup(concat(self._body_stream))
 
     def __str__(self):
-        return unicode(self).encode('utf-8')
+        return six.text_type(self).encode('utf-8')
 
     # unicode goes after __str__ because we configured 2to3 to rename
     # __unicode__ to __str__.  because the 2to3 tree is not designed to

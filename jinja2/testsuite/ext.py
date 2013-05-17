@@ -18,6 +18,7 @@ from jinja2.exceptions import TemplateAssertionError
 from jinja2.ext import Extension
 from jinja2.lexer import Token, count_newlines
 from jinja2.utils import next
+import six
 
 # 2.x / 3.x
 try:
@@ -222,7 +223,7 @@ class ExtensionsTestCase(JinjaTestCase):
         original = Environment(extensions=[TestExtension])
         overlay = original.overlay()
         for env in original, overlay:
-            for ext in env.extensions.itervalues():
+            for ext in six.itervalues(env.extensions):
                 assert ext.environment is env
 
     def test_preprocessor_extension(self):

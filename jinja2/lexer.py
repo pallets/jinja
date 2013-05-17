@@ -19,6 +19,7 @@ from operator import itemgetter
 from collections import deque
 from jinja2.exceptions import TemplateSyntaxError
 from jinja2.utils import LRUCache, next
+import six
 
 
 # cache for the lexers. Exists in order to be able to have multiple
@@ -126,7 +127,7 @@ operators = {
     ';':            TOKEN_SEMICOLON
 }
 
-reverse_operators = dict([(v, k) for k, v in operators.iteritems()])
+reverse_operators = dict([(v, k) for k, v in six.iteritems(operators)])
 assert len(operators) == len(reverse_operators), 'operators dropped'
 operator_re = re.compile('(%s)' % '|'.join(re.escape(x) for x in
                          sorted(operators, key=lambda x: -len(x))))
@@ -319,7 +320,7 @@ class TokenStream(object):
 
     def skip(self, n=1):
         """Got n tokens ahead."""
-        for x in xrange(n):
+        for x in range(n):
             next(self)
 
     def next_if(self, expr):
@@ -526,7 +527,7 @@ class Lexer(object):
                     value = self._normalize_newlines(value[1:-1]) \
                         .encode('ascii', 'backslashreplace') \
                         .decode('unicode-escape')
-                except Exception, e:
+                except Exception as e:
                     msg = str(e).split(':')[-1].strip()
                     raise TemplateSyntaxError(msg, lineno, name, filename)
                 # if we can express it as bytestring (ascii only)
@@ -549,7 +550,7 @@ class Lexer(object):
         """This method tokenizes the text and returns the tokens in a
         generator.  Use this method if you just want to tokenize a template.
         """
-        source = '\n'.join(unicode(source).splitlines())
+        source = '\n'.join(six.text_type(source).splitlines())
         pos = 0
         lineno = 1
         stack = ['root']
@@ -590,7 +591,7 @@ class Lexer(object):
                         # yield for the current token the first named
                         # group that matched
                         elif token == '#bygroup':
-                            for key, value in m.groupdict().iteritems():
+                            for key, value in six.iteritems(m.groupdict()):
                                 if value is not None:
                                     yield lineno, key, value
                                     lineno += value.count('\n')
@@ -647,7 +648,7 @@ class Lexer(object):
                         stack.pop()
                     # resolve the new state by group checking
                     elif new_state == '#bygroup':
-                        for key, value in m.groupdict().iteritems():
+                        for key, value in six.iteritems(m.groupdict()):
                             if value is not None:
                                 stack.append(key)
                                 break

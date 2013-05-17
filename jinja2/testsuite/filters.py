@@ -12,6 +12,9 @@ import unittest
 from jinja2.testsuite import JinjaTestCase
 
 from jinja2 import Markup, Environment
+import six
+from six.moves import map
+from six.moves import zip
 
 env = Environment()
 
@@ -47,14 +50,14 @@ class FilterTestCase(JinjaTestCase):
     def test_batch(self):
         tmpl = env.from_string("{{ foo|batch(3)|list }}|"
                                "{{ foo|batch(3, 'X')|list }}")
-        out = tmpl.render(foo=range(10))
+        out = tmpl.render(foo=list(range(10)))
         assert out == ("[[0, 1, 2], [3, 4, 5], [6, 7, 8], [9]]|"
                        "[[0, 1, 2], [3, 4, 5], [6, 7, 8], [9, 'X', 'X']]")
 
     def test_slice(self):
         tmpl = env.from_string('{{ foo|slice(3)|list }}|'
                                '{{ foo|slice(3, "X")|list }}')
-        out = tmpl.render(foo=range(10))
+        out = tmpl.render(foo=list(range(10)))
         assert out == ("[[0, 1, 2, 3], [4, 5, 6], [7, 8, 9]]|"
                        "[[0, 1, 2, 3], [4, 5, 6, 'X'], [7, 8, 9, 'X']]")
 
@@ -109,7 +112,7 @@ class FilterTestCase(JinjaTestCase):
 
     def test_first(self):
         tmpl = env.from_string('{{ foo|first }}')
-        out = tmpl.render(foo=range(10))
+        out = tmpl.render(foo=list(range(10)))
         assert out == '0'
 
     def test_float(self):
@@ -155,7 +158,7 @@ class FilterTestCase(JinjaTestCase):
 
     def test_last(self):
         tmpl = env.from_string('''{{ foo|last }}''')
-        out = tmpl.render(foo=range(10))
+        out = tmpl.render(foo=list(range(10)))
         assert out == '9'
 
     def test_length(self):
@@ -171,12 +174,12 @@ class FilterTestCase(JinjaTestCase):
     def test_pprint(self):
         from pprint import pformat
         tmpl = env.from_string('''{{ data|pprint }}''')
-        data = range(1000)
+        data = list(range(1000))
         assert tmpl.render(data=data) == pformat(data)
 
     def test_random(self):
         tmpl = env.from_string('''{{ seq|random }}''')
-        seq = range(100)
+        seq = list(range(100))
         for _ in range(10):
             assert int(tmpl.render(seq=seq)) in seq
 
@@ -188,7 +191,7 @@ class FilterTestCase(JinjaTestCase):
     def test_string(self):
         x = [1, 2, 3, 4, 5]
         tmpl = env.from_string('''{{ obj|string }}''')
-        assert tmpl.render(obj=x) == unicode(x)
+        assert tmpl.render(obj=x) == six.text_type(x)
 
     def test_title(self):
         tmpl = env.from_string('''{{ "foo bar"|title }}''')
@@ -297,7 +300,7 @@ class FilterTestCase(JinjaTestCase):
             def __init__(self, value):
                 self.value = value
             def __unicode__(self):
-                return unicode(self.value)
+                return six.text_type(self.value)
         tmpl = env.from_string('''{{ items|sort(attribute='value')|join }}''')
         assert tmpl.render(items=map(Magic, [3, 2, 4, 1])) == '1234'
 
