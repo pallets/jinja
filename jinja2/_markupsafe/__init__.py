@@ -180,18 +180,10 @@ class Markup(six.text_type):
 
     for method in '__getitem__', 'capitalize', \
                   'title', 'lower', 'upper', 'replace', 'ljust', \
+                  'format', 'partition', 'rpartition', \
                   'rjust', 'lstrip', 'rstrip', 'center', 'strip', \
                   'translate', 'expandtabs', 'swapcase', 'zfill':
         locals()[method] = make_wrapper(method)
-
-    # new in python 2.5
-    if hasattr(six.text_type, 'partition'):
-        partition = make_wrapper('partition'),
-        rpartition = make_wrapper('rpartition')
-
-    # new in python 2.6
-    if hasattr(six.text_type, 'format'):
-        format = make_wrapper('format')
 
     # not in python 3
     if hasattr(six.text_type, '__getslice__'):
