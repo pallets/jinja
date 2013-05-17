@@ -18,6 +18,7 @@ from jinja2.sandbox import SandboxedEnvironment, \
 from jinja2 import Markup, escape
 from jinja2.exceptions import SecurityError, TemplateSyntaxError, \
      TemplateRuntimeError
+import six
 
 
 class PrivateStuff(object):
@@ -76,7 +77,7 @@ class SandboxTestCase(JinjaTestCase):
         # adding two strings should escape the unsafe one
         unsafe = '<script type="application/x-some-script">alert("foo");</script>'
         safe = Markup('<em>username</em>')
-        assert unsafe + safe == unicode(escape(unsafe)) + unicode(safe)
+        assert unsafe + safe == six.text_type(escape(unsafe)) + six.text_type(safe)
 
         # string interpolations are safe to use too
         assert Markup('<em>%s</em>') % '<bad user>' == \
@@ -114,7 +115,7 @@ class SandboxTestCase(JinjaTestCase):
                             '{{ say_hello("<blink>foo</blink>") }}')
         escaped_out = '<p>Hello &lt;blink&gt;foo&lt;/blink&gt;!</p>'
         assert t.render() == escaped_out
-        assert unicode(t.module) == escaped_out
+        assert six.text_type(t.module) == escaped_out
         assert escape(t.module) == escaped_out
         assert t.module.say_hello('<blink>foo</blink>') == escaped_out
         assert escape(t.module.say_hello('<blink>foo</blink>')) == escaped_out
@@ -136,7 +137,7 @@ class SandboxTestCase(JinjaTestCase):
             t = env.from_string('{{ %s }}' % expr)
             try:
                 t.render(ctx)
-            except TemplateRuntimeError, e:
+            except TemplateRuntimeError as e:
                 pass
             else:
                 self.fail('expected runtime error')
@@ -153,7 +154,7 @@ class SandboxTestCase(JinjaTestCase):
             t = env.from_string('{{ %s }}' % expr)
             try:
                 t.render(ctx)
-            except TemplateRuntimeError, e:
+            except TemplateRuntimeError as e:
                 pass
             else:
                 self.fail('expected runtime error')

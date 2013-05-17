@@ -1,6 +1,7 @@
 import gc
 import unittest
 from jinja2._markupsafe import Markup, escape, escape_silent
+import six
 
 
 class MarkupTestCase(unittest.TestCase):
@@ -9,7 +10,7 @@ class MarkupTestCase(unittest.TestCase):
         # adding two strings should escape the unsafe one
         unsafe = '<script type="application/x-some-script">alert("foo");</script>'
         safe = Markup('<em>username</em>')
-        assert unsafe + safe == unicode(escape(unsafe)) + unicode(safe)
+        assert unsafe + safe == six.text_type(escape(unsafe)) + six.text_type(safe)
 
         # string interpolations are safe to use too
         assert Markup('<em>%s</em>') % '<bad user>' == \
@@ -55,8 +56,8 @@ class MarkupLeakTestCase(unittest.TestCase):
 
     def test_markup_leaks(self):
         counts = set()
-        for count in xrange(20):
-            for item in xrange(1000):
+        for count in range(20):
+            for item in range(1000):
                 escape("foo")
                 escape("<foo>")
                 escape(u"foo")

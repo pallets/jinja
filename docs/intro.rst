@@ -2,8 +2,7 @@ Introduction
 ============
 
 This is the documentation for the Jinja2 general purpose templating language.
-Jinja2 is a library for Python 2.4 and onwards that is designed to be flexible,
-fast and secure.
+Jinja2 is a library for Python that is designed to be flexible, fast and secure.
 
 If you have any exposure to other text-based template languages, such as Smarty or
 Django, you should feel right at home with Jinja2.  It's both designer and
@@ -13,9 +12,11 @@ useful for templating environments.
 Prerequisites
 -------------
 
-Jinja2 needs at least **Python 2.4** to run.  Additionally a working C-compiler
-that can create python extensions should be installed for the debugger if you
-are using Python 2.4.
+Jinja2 works with Python 2.6.x, 2.7.x and >= 3.3.
+
+FIXME - this is outdated, code should get removed, docs fixed:
+Additionally a working C-compiler that can create python extensions should be
+installed for the debugger if you are using Python 2.4.
 
 If you don't have a working C-compiler and you are trying to install the source
 release with the debugsupport you will get a compiler error.
@@ -100,6 +101,7 @@ By default Jinja2 will not compile the debug support module.  Enabling this
 will fail if you don't have the Python headers or a working compiler.  This
 is often the case if you are installing Jinja2 from a windows machine.
 
+FIXME - outdated:
 Because the debug support is only necessary for Python 2.4 you will not
 have to do this unless you run 2.4::
 
@@ -136,7 +138,7 @@ indeed using unicode internally.
 Experimental Python 3 Support
 -----------------------------
 
-Jinja 2.3 brings experimental support for Python 3.  It means that all
+Jinja 2.7 brings experimental support for Python >=3.3.  It means that all
 unittests pass on the new version, but there might still be small bugs in
 there and behavior might be inconsistent.  If you notice any bugs, please
 provide feedback in the `Jinja bug tracker`_.

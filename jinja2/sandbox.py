@@ -13,6 +13,7 @@
     :license: BSD.
 """
 import operator
+import six
 from jinja2.environment import Environment
 from jinja2.exceptions import SecurityError
 from jinja2.utils import FunctionType, MethodType, TracebackType, CodeType, \
@@ -90,7 +91,7 @@ def safe_range(*args):
     """A range that can't generate ranges with a length of more than
     MAX_RANGE items.
     """
-    rng = xrange(*args)
+    rng = range(*args)
     if len(rng) > MAX_RANGE:
         raise OverflowError('range too big, maximum size for range is %d' %
                             MAX_RANGE)
@@ -299,7 +300,7 @@ class SandboxedEnvironment(Environment):
         try:
             return obj[argument]
         except (TypeError, LookupError):
-            if isinstance(argument, basestring):
+            if isinstance(argument, six.string_types):
                 try:
                     attr = str(argument)
                 except Exception:

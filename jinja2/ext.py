@@ -16,7 +16,8 @@ from jinja2.defaults import *
 from jinja2.environment import Environment
 from jinja2.runtime import Undefined, concat
 from jinja2.exceptions import TemplateAssertionError, TemplateSyntaxError
-from jinja2.utils import contextfunction, import_string, Markup, next
+from jinja2.utils import contextfunction, import_string, Markup
+import six
 
 
 # the only real useful gettext functions for a Jinja template.  Note
@@ -34,7 +35,7 @@ class ExtensionRegistry(type):
         return rv
 
 
-class Extension(object):
+class Extension(six.with_metaclass(ExtensionRegistry, object)):
     """Extensions can be used to add extra functionality to the Jinja template
     system at the parser level.  Custom extensions are bound to an environment
     but may not store environment specific data on `self`.  The reason for
@@ -205,13 +206,13 @@ class InternationalizationExtension(Extension):
             self.environment.globals.pop(key, None)
 
     def _extract(self, source, gettext_functions=GETTEXT_FUNCTIONS):
-        if isinstance(source, basestring):
+        if isinstance(source, six.string_types):
             source = self.environment.parse(source)
         return extract_from_ast(source, gettext_functions)
 
     def parse(self, parser):
         """Parse a translatable tag."""
-        lineno = next(parser.stream).lineno
+        lineno = six.advance_iterator(parser.stream).lineno
         num_called_num = False
 
         # find all the variables referenced.  Additionally a variable can be
@@ -235,7 +236,7 @@ class InternationalizationExtension(Extension):
 
             # expressions
             if parser.stream.current.type == 'assign':
-                next(parser.stream)
+                six.advance_iterator(parser.stream)
                 variables[name.value] = var = parser.parse_expression()
             else:
                 variables[name.value] = var = nodes.Name(name.value, 'load')
@@ -261,7 +262,7 @@ class InternationalizationExtension(Extension):
         # if we have a pluralize block, we parse that too
         if parser.stream.current.test('name:pluralize'):
             have_plural = True
-            next(parser.stream)
+            six.advance_iterator(parser.stream)
             if parser.stream.current.type != 'block_end':
                 name = parser.stream.expect('name')
                 if name.value not in variables:
@@ -272,10 +273,10 @@ class InternationalizationExtension(Extension):
                 num_called_num = name.value == 'num'
             parser.stream.expect('block_end')
             plural_names, plural = self._parse_block(parser, False)
-            next(parser.stream)
+            six.advance_iterator(parser.stream)
             referenced.update(plural_names)
         else:
-            next(parser.stream)
+            six.advance_iterator(parser.stream)
 
         # register free names as simple name expressions
         for var in referenced:
@@ -300,15 +301,15 @@ class InternationalizationExtension(Extension):
         while 1:
             if parser.stream.current.type == 'data':
                 buf.append(parser.stream.current.value.replace('%', '%%'))
-                next(parser.stream)
+                six.advance_iterator(parser.stream)
             elif parser.stream.current.type == 'variable_begin':
-                next(parser.stream)
+                six.advance_iterator(parser.stream)
                 name = parser.stream.expect('name').value
                 referenced.append(name)
                 buf.append('%%(%s)s' % name)
                 parser.stream.expect('variable_end')
             elif parser.stream.current.type == 'block_begin':
-                next(parser.stream)
+                six.advance_iterator(parser.stream)
                 if parser.stream.current.test('name:endtrans'):
                     break
                 elif parser.stream.current.test('name:pluralize'):
@@ -354,7 +355,7 @@ class InternationalizationExtension(Extension):
         # enough to handle the variable expansion and autoescape
         # handling itself
         if self.environment.newstyle_gettext:
-            for key, value in variables.iteritems():
+            for key, value in six.iteritems(variables):
                 # the function adds that later anyways in case num was
                 # called num, so just skip it.
                 if num_called_num and key == 'num':
@@ -381,7 +382,7 @@ class ExprStmtExtension(Extension):
     tags = set(['do'])
 
     def parse(self, parser):
-        node = nodes.ExprStmt(lineno=next(parser.stream).lineno)
+        node = nodes.ExprStmt(lineno=six.advance_iterator(parser.stream).lineno)
         node.node = parser.parse_tuple()
         return node
 
@@ -391,7 +392,7 @@ class LoopControlExtension(Extension):
     tags = set(['break', 'continue'])
 
     def parse(self, parser):
-        token = next(parser.stream)
+        token = six.advance_iterator(parser.stream)
         if token.value == 'break':
             return nodes.Break(lineno=token.lineno)
         return nodes.Continue(lineno=token.lineno)
@@ -402,7 +403,7 @@ class WithExtension(Extension):
     tags = set(['with'])
 
     def parse(self, parser):
-        node = nodes.Scope(lineno=next(parser.stream).lineno)
+        node = nodes.Scope(lineno=six.advance_iterator(parser.stream).lineno)
         assignments = []
         while parser.stream.current.type != 'block_end':
             lineno = parser.stream.current.lineno
@@ -423,7 +424,7 @@ class AutoEscapeExtension(Extension):
     tags = set(['autoescape'])
 
     def parse(self, parser):
-        node = nodes.ScopedEvalContextModifier(lineno=next(parser.stream).lineno)
+        node = nodes.ScopedEvalContextModifier(lineno=six.advance_iterator(parser.stream).lineno)
         node.options = [
             nodes.Keyword('autoescape', parser.parse_expression())
         ]
@@ -476,7 +477,7 @@ def extract_from_ast(node, gettext_functions=GETTEXT_FUNCTIONS,
         strings = []
         for arg in node.args:
             if isinstance(arg, nodes.Const) and \
-               isinstance(arg.value, basestring):
+               isinstance(arg.value, six.string_types):
                 strings.append(arg.value)
             else:
                 strings.append(None)
@@ -601,7 +602,7 @@ def babel_extract(fileobj, keywords, comment_tags, options):
     try:
         node = environment.parse(source)
         tokens = list(environment.lex(environment.preprocess(source)))
-    except TemplateSyntaxError, e:
+    except TemplateSyntaxError as e:
         if not silent:
             raise
         # skip templates with syntax errors

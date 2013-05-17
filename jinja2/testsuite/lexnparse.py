@@ -15,6 +15,8 @@ from jinja2.testsuite import JinjaTestCase
 
 from jinja2 import Environment, Template, TemplateSyntaxError, \
      UndefinedError, nodes
+from jinja2.lexer import Token, TokenStream, TOKEN_EOF, TOKEN_BLOCK_BEGIN, TOKEN_BLOCK_END
+import six
 
 env = Environment()
 
@@ -25,6 +27,30 @@ if sys.version_info < (3, 0):
         return repr(string)[1:]
 else:
     jinja_string_repr = repr
+
+
+class TokenStreamTestCase(JinjaTestCase):
+    test_tokens = [Token(1, TOKEN_BLOCK_BEGIN, ''),
+                   Token(2, TOKEN_BLOCK_END, ''),
+                  ]
+
+    def test_simple(self):
+        ts = TokenStream(self.test_tokens, "foo", "bar")
+        assert ts.current.type is TOKEN_BLOCK_BEGIN
+        assert bool(ts)
+        assert not bool(ts.eos)
+        six.advance_iterator(ts)
+        assert ts.current.type is TOKEN_BLOCK_END
+        assert bool(ts)
+        assert not bool(ts.eos)
+        six.advance_iterator(ts)
+        assert ts.current.type is TOKEN_EOF
+        assert not bool(ts)
+        assert bool(ts.eos)
+
+    def test_iter(self):
+        token_types = [t.type for t in TokenStream(self.test_tokens, "foo", "bar")]
+        assert token_types == ['block_begin', 'block_end', ]
 
 
 class LexerTestCase(JinjaTestCase):
@@ -42,7 +68,7 @@ class LexerTestCase(JinjaTestCase):
         env = Environment('{%', '%}', '${', '}')
         tmpl = env.from_string('''{% for item in seq
             %}${{'foo': item}|upper}{% endfor %}''')
-        assert tmpl.render(seq=range(3)) == "{'FOO': 0}{'FOO': 1}{'FOO': 2}"
+        assert tmpl.render(seq=list(range(3))) == "{'FOO': 0}{'FOO': 1}{'FOO': 2}"
 
     def test_comments(self):
         env = Environment('<!--', '-->', '{', '}')
@@ -52,7 +78,7 @@ class LexerTestCase(JinjaTestCase):
   <li>{item}</li>
 <!--- endfor -->
 </ul>''')
-        assert tmpl.render(seq=range(3)) == ("<ul>\n  <li>0</li>\n  "
+        assert tmpl.render(seq=list(range(3))) == ("<ul>\n  <li>0</li>\n  "
                                              "<li>1</li>\n  <li>2</li>\n</ul>")
 
     def test_string_escapes(self):
@@ -68,11 +94,11 @@ class LexerTestCase(JinjaTestCase):
 
     def test_operators(self):
         from jinja2.lexer import operators
-        for test, expect in operators.iteritems():
+        for test, expect in six.iteritems(operators):
             if test in '([{}])':
                 continue
             stream = env.lexer.tokenize('{{ %s }}' % test)
-            stream.next()
+            six.advance_iterator(stream)
             assert stream.current.type == expect
 
     def test_normalizing(self):
@@ -92,7 +118,7 @@ class ParserTestCase(JinjaTestCase):
 <? for item in seq -?>
     <?= item ?>
 <?- endfor ?>''')
-        assert tmpl.render(seq=range(5)) == '01234'
+        assert tmpl.render(seq=list(range(5))) == '01234'
 
     def test_erb_syntax(self):
         env = Environment('<%', '%>', '<%=', '%>', '<%#', '%>')
@@ -101,7 +127,7 @@ class ParserTestCase(JinjaTestCase):
 <% for item in seq -%>
     <%= item %>
 <%- endfor %>''')
-        assert tmpl.render(seq=range(5)) == '01234'
+        assert tmpl.render(seq=list(range(5))) == '01234'
 
     def test_comment_syntax(self):
         env = Environment('<!--', '-->', '${', '}', '<!--#', '-->')
@@ -110,7 +136,7 @@ class ParserTestCase(JinjaTestCase):
 <!-- for item in seq --->
     ${item}
 <!--- endfor -->''')
-        assert tmpl.render(seq=range(5)) == '01234'
+        assert tmpl.render(seq=list(range(5))) == '01234'
 
     def test_balancing(self):
         tmpl = env.from_string('''{{{'foo':'bar'}.foo}}''')
@@ -130,8 +156,8 @@ and bar comment #}
 % for item in seq:
     ${item}
 % endfor''')
-        assert [int(x.strip()) for x in tmpl.render(seq=range(5)).split()] == \
-               range(5)
+        assert [int(x.strip()) for x in tmpl.render(seq=list(range(5))).split()] == \
+               list(range(5))
 
         env = Environment('<%', '%>', '${', '}', '<%#', '%>', '%', '##')
         tmpl = env.from_string('''\
@@ -139,8 +165,8 @@ and bar comment #}
 % for item in seq:
     ${item} ## the rest of the stuff
 % endfor''')
-        assert [int(x.strip()) for x in tmpl.render(seq=range(5)).split()] == \
-                range(5)
+        assert [int(x.strip()) for x in tmpl.render(seq=list(range(5))).split()] == \
+                list(range(5))
 
     def test_line_syntax_priority(self):
         # XXX: why is the whitespace there in front of the newline?
@@ -166,7 +192,7 @@ and bar comment #}
         def assert_error(code, expected):
             try:
                 Template(code)
-            except TemplateSyntaxError, e:
+            except TemplateSyntaxError as e:
                 assert str(e) == expected, 'unexpected error message'
             else:
                 assert False, 'that was supposed to be an error'
@@ -335,9 +361,9 @@ class SyntaxTestCase(JinjaTestCase):
         assert tmpl.render() == 'foobarbaz'
 
     def test_notin(self):
-        bar = xrange(100)
+        bar = range(100)
         tmpl = env.from_string('''{{ not 42 in bar }}''')
-        assert tmpl.render(bar=bar) == unicode(not 42 in bar)
+        assert tmpl.render(bar=bar) == six.text_type(not 42 in bar)
 
     def test_implicit_subscribed_tuple(self):
         class Foo(object):
@@ -381,6 +407,7 @@ class SyntaxTestCase(JinjaTestCase):
 
 def suite():
     suite = unittest.TestSuite()
+    suite.addTest(unittest.makeSuite(TokenStreamTestCase))
     suite.addTest(unittest.makeSuite(LexerTestCase))
     suite.addTest(unittest.makeSuite(ParserTestCase))
     suite.addTest(unittest.makeSuite(SyntaxTestCase))
