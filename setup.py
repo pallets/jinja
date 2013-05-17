@@ -90,6 +90,7 @@ setup(
     ],
     packages=['jinja2', 'jinja2.testsuite', 'jinja2.testsuite.res',
               'jinja2._markupsafe'],
+    install_requires=['six>=1.3.0'],
     extras_require={'i18n': ['Babel>=0.8']},
     test_suite='jinja2.testsuite.suite',
     include_package_data=True,
