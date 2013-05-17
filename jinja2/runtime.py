@@ -8,13 +8,14 @@
     :copyright: (c) 2010 by the Jinja Team.
     :license: BSD.
 """
-from itertools import chain, imap
+from itertools import chain
 from jinja2.nodes import EvalContext, _context_function_types
 from jinja2.utils import Markup, partial, soft_unicode, escape, missing, \
-     concat, internalcode, next, object_type_repr
+     concat, internalcode, object_type_repr
 from jinja2.exceptions import UndefinedError, TemplateRuntimeError, \
      TemplateNotFound
 import six
+from six.moves import map
 
 
 # these variables are exported to the template runtime
@@ -26,7 +27,10 @@ __all__ = ['LoopContext', 'TemplateReference', 'Macro', 'Markup',
 #: the name of the function that is used to convert something into
 #: a string.  2to3 will adopt that automatically and the generated
 #: code can take advantage of it.
-to_string = unicode
+try:
+    to_string = unicode
+except NameError:
+    to_string = str
 
 #: the identity function.  Useful for certain things in the environment
 identity = lambda x: x
@@ -37,7 +41,7 @@ _last_iteration = object()
 def markup_join(seq):
     """Concatenation that escapes if necessary and converts to unicode."""
     buf = []
-    iterator = imap(soft_unicode, seq)
+    iterator = map(soft_unicode, seq)
     for arg in iterator:
         buf.append(arg)
         if hasattr(arg, '__html__'):
@@ -47,7 +51,7 @@ def markup_join(seq):
 
 def unicode_join(seq):
     """Simple args to unicode conversion and concatenation."""
-    return concat(imap(unicode, seq))
+    return concat(map(six.text_type, seq))
 
 
 def new_context(environment, template_name, blocks, vars=None,
@@ -305,7 +309,7 @@ class LoopContext(object):
 
     def _safe_next(self):
         try:
-            return next(self._iterator)
+            return six.advance_iterator(self._iterator)
         except StopIteration:
             return _last_iteration
 
@@ -341,7 +345,7 @@ class LoopContext(object):
         )
 
 
-class LoopContextIterator(object):
+class LoopContextIterator(six.Iterator):
     """The iterator for a loop context."""
     __slots__ = ('context',)
 
@@ -351,7 +355,7 @@ class LoopContextIterator(object):
     def __iter__(self):
         return self
 
-    def next(self):
+    def __next__(self):
         ctx = self.context
         ctx.index0 += 1
         if ctx._after is _last_iteration:
@@ -456,7 +460,7 @@ class Undefined(object):
         if self._undefined_hint is None:
             if self._undefined_obj is missing:
                 hint = '%r is undefined' % self._undefined_name
-            elif not isinstance(self._undefined_name, basestring):
+            elif not isinstance(self._undefined_name, six.string_types):
                 hint = '%s has no element %r' % (
                     object_type_repr(self._undefined_obj),
                     self._undefined_name
@@ -484,12 +488,9 @@ class Undefined(object):
         _fail_with_undefined_error
 
     def __str__(self):
-        return six.text_type(self).encode('utf-8')
+        s = self.__unicode__()
+        return s if six.PY3 else s.encode('utf-8')
 
-    # unicode goes after __str__ because we configured 2to3 to rename
-    # __unicode__ to __str__.  because the 2to3 tree is not designed to
-    # remove nodes from it, we leave the above __str__ around and let
-    # it override at runtime.
     def __unicode__(self):
         return u''
 
@@ -521,6 +522,10 @@ class DebugUndefined(Undefined):
     UndefinedError: 'foo' is undefined
     """
     __slots__ = ()
+
+    def __str__(self):
+        s = self.__unicode__()
+        return s if six.PY3 else s.encode('utf-8')
 
     def __unicode__(self):
         if self._undefined_hint is None:

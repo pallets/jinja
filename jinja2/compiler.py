@@ -8,17 +8,16 @@
     :copyright: (c) 2010 by the Jinja Team.
     :license: BSD, see LICENSE for more details.
 """
-from cStringIO import StringIO
 from itertools import chain
 from copy import deepcopy
 from jinja2 import nodes
 from jinja2.nodes import EvalContext
 from jinja2.visitor import NodeVisitor
 from jinja2.exceptions import TemplateAssertionError
-from jinja2.utils import Markup, concat, escape, is_python_keyword, next
+from jinja2.utils import Markup, concat, escape, is_python_keyword
 import six
-from six.moves import map
-from six.moves import zip
+from six.moves import cStringIO as StringIO
+from six.moves import map, zip
 
 
 operators = {
@@ -72,8 +71,11 @@ def has_safe_repr(value):
     """Does the node have a safe representation?"""
     if value is None or value is NotImplemented or value is Ellipsis:
         return True
-    if isinstance(value, (bool, int, long, float, complex, basestring,
-                          xrange, Markup)):
+    try:
+        range_type = xrange
+    except NameError:
+        range_type = range
+    if isinstance(value, (bool, int, float, complex, range_type, Markup) + six.string_types):
         return True
     if isinstance(value, (tuple, list, set, frozenset)):
         for item in value:
@@ -933,7 +935,7 @@ class CodeGenerator(NodeVisitor):
 
         func_name = 'get_or_select_template'
         if isinstance(node.template, nodes.Const):
-            if isinstance(node.template.value, basestring):
+            if isinstance(node.template.value, six.string_types):
                 func_name = 'get_template'
             elif isinstance(node.template.value, (tuple, list)):
                 func_name = 'select_template'
@@ -1221,7 +1223,7 @@ class CodeGenerator(NodeVisitor):
         if self.environment.finalize:
             finalize = lambda x: six.text_type(self.environment.finalize(x))
         else:
-            finalize = unicode
+            finalize = six.text_type
 
         # if we are inside a frame that requires output checking, we do so
         outdent_later = False
@@ -1355,7 +1357,7 @@ class CodeGenerator(NodeVisitor):
             public_names = [x for x in assignment_frame.toplevel_assignments
                             if not x.startswith('_')]
             if len(assignment_frame.toplevel_assignments) == 1:
-                name = next(iter(assignment_frame.toplevel_assignments))
+                name = six.advance_iterator(iter(assignment_frame.toplevel_assignments))
                 self.writeline('context.vars[%r] = l_%s' % (name, name))
             else:
                 self.writeline('context.vars.update({')

@@ -18,7 +18,7 @@ import re
 from operator import itemgetter
 from collections import deque
 from jinja2.exceptions import TemplateSyntaxError
-from jinja2.utils import LRUCache, next
+from jinja2.utils import LRUCache
 import six
 
 
@@ -45,6 +45,12 @@ else:
 
 float_re = re.compile(r'(?<!\.)\d+\.\d+')
 newline_re = re.compile(r'(\r\n|\r|\n)')
+
+try:
+    intern = intern  # py2
+except NameError:
+    import sys
+    intern = sys.intern  # py3
 
 # internal the tokens and keep references to them
 TOKEN_ADD = intern('add')
@@ -263,7 +269,7 @@ class Token(tuple):
         )
 
 
-class TokenStreamIterator(object):
+class TokenStreamIterator(six.Iterator):
     """The iterator for tokenstreams.  Iterate over the stream
     until the eof token is reached.
     """
@@ -274,35 +280,36 @@ class TokenStreamIterator(object):
     def __iter__(self):
         return self
 
-    def next(self):
+    def __next__(self):
         token = self.stream.current
         if token.type is TOKEN_EOF:
             self.stream.close()
             raise StopIteration()
-        next(self.stream)
+        six.advance_iterator(self.stream)
         return token
 
 
-class TokenStream(object):
+class TokenStream(six.Iterator):
     """A token stream is an iterable that yields :class:`Token`\s.  The
     parser however does not iterate over it but calls :meth:`next` to go
     one token ahead.  The current active token is stored as :attr:`current`.
     """
 
     def __init__(self, generator, name, filename):
-        self._next = iter(generator).next
+        self._iter = iter(generator)
         self._pushed = deque()
         self.name = name
         self.filename = filename
         self.closed = False
         self.current = Token(1, TOKEN_INITIAL, '')
-        next(self)
+        six.advance_iterator(self)
 
     def __iter__(self):
         return TokenStreamIterator(self)
 
-    def __nonzero__(self):
+    def __bool__(self):
         return bool(self._pushed) or self.current.type is not TOKEN_EOF
+    __nonzero__ = __bool__  # py2
 
     eos = property(lambda x: not x, doc="Are we at the end of the stream?")
 
@@ -312,7 +319,7 @@ class TokenStream(object):
 
     def look(self):
         """Look at the next token."""
-        old_token = next(self)
+        old_token = six.advance_iterator(self)
         result = self.current
         self.push(result)
         self.current = old_token
@@ -321,27 +328,27 @@ class TokenStream(object):
     def skip(self, n=1):
         """Got n tokens ahead."""
         for x in range(n):
-            next(self)
+            six.advance_iterator(self)
 
     def next_if(self, expr):
         """Perform the token test and return the token if it matched.
         Otherwise the return value is `None`.
         """
         if self.current.test(expr):
-            return next(self)
+            return six.advance_iterator(self)
 
     def skip_if(self, expr):
         """Like :meth:`next_if` but only returns `True` or `False`."""
         return self.next_if(expr) is not None
 
-    def next(self):
+    def __next__(self):
         """Go one token ahead and return the old one"""
         rv = self.current
         if self._pushed:
             self.current = self._pushed.popleft()
         elif self.current.type is not TOKEN_EOF:
             try:
-                self.current = self._next()
+                self.current = six.advance_iterator(self._iter)
             except StopIteration:
                 self.close()
         return rv
@@ -349,7 +356,7 @@ class TokenStream(object):
     def close(self):
         """Close the stream."""
         self.current = Token(self.current.lineno, TOKEN_EOF, '')
-        self._next = None
+        self._iter = None
         self.closed = True
 
     def expect(self, expr):
@@ -370,7 +377,7 @@ class TokenStream(object):
         try:
             return self.current
         finally:
-            next(self)
+            six.advance_iterator(self)
 
 
 def get_lexer(environment):

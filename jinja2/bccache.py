@@ -18,7 +18,7 @@ from os import path, listdir
 import sys
 import marshal
 import tempfile
-import cPickle as pickle
+from six.moves import cPickle as pickle
 import fnmatch
 try:
     from hashlib import sha1

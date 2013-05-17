@@ -87,7 +87,7 @@ def test_upper(value):
 
 def test_string(value):
     """Return true if the object is a string."""
-    return isinstance(value, basestring)
+    return isinstance(value, six.string_types)
 
 
 def test_mapping(value):
@@ -100,7 +100,7 @@ def test_mapping(value):
 
 def test_number(value):
     """Return true if the variable is a number."""
-    return isinstance(value, (int, long, float, complex))
+    return isinstance(value, (int, float, complex))
 
 
 def test_sequence(value):

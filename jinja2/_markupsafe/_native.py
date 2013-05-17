@@ -41,6 +41,6 @@ def soft_unicode(s):
     """Make a string unicode if it isn't already.  That way a markup
     string is not converted back to unicode.
     """
-    if not isinstance(s, unicode):
+    if not isinstance(s, six.text_type):
         s = six.text_type(s)
     return s

@@ -10,10 +10,9 @@
 """
 from jinja2 import nodes
 from jinja2.exceptions import TemplateSyntaxError, TemplateAssertionError
-from jinja2.utils import next
 from jinja2.lexer import describe_token, describe_token_expr
-from six.moves import map
-from six.moves import zip
+import six
+from six.moves import map, zip
 
 
 #: statements that callinto 
@@ -164,12 +163,12 @@ class Parser(object):
             self.fail_eof(end_tokens)
 
         if drop_needle:
-            next(self.stream)
+            six.advance_iterator(self.stream)
         return result
 
     def parse_set(self):
         """Parse an assign statement."""
-        lineno = next(self.stream).lineno
+        lineno = six.advance_iterator(self.stream).lineno
         target = self.parse_assign_target()
         self.stream.expect('assign')
         expr = self.parse_tuple()
@@ -187,7 +186,7 @@ class Parser(object):
             test = self.parse_expression()
         recursive = self.stream.skip_if('name:recursive')
         body = self.parse_statements(('name:endfor', 'name:else'))
-        if next(self.stream).value == 'endfor':
+        if six.advance_iterator(self.stream).value == 'endfor':
             else_ = []
         else:
             else_ = self.parse_statements(('name:endfor',), drop_needle=True)
@@ -201,7 +200,7 @@ class Parser(object):
             node.test = self.parse_tuple(with_condexpr=False)
             node.body = self.parse_statements(('name:elif', 'name:else',
                                                'name:endif'))
-            token = next(self.stream)
+            token = six.advance_iterator(self.stream)
             if token.test('name:elif'):
                 new_node = nodes.If(lineno=self.stream.current.lineno)
                 node.else_ = [new_node]
@@ -216,7 +215,7 @@ class Parser(object):
         return result
 
     def parse_block(self):
-        node = nodes.Block(lineno=next(self.stream).lineno)
+        node = nodes.Block(lineno=six.advance_iterator(self.stream).lineno)
         node.name = self.stream.expect('name').value
         node.scoped = self.stream.skip_if('name:scoped')
 
@@ -233,21 +232,21 @@ class Parser(object):
         return node
 
     def parse_extends(self):
-        node = nodes.Extends(lineno=next(self.stream).lineno)
+        node = nodes.Extends(lineno=six.advance_iterator(self.stream).lineno)
         node.template = self.parse_expression()
         return node
 
     def parse_import_context(self, node, default):
         if self.stream.current.test_any('name:with', 'name:without') and \
            self.stream.look().test('name:context'):
-            node.with_context = next(self.stream).value == 'with'
+            node.with_context = six.advance_iterator(self.stream).value == 'with'
             self.stream.skip()
         else:
             node.with_context = default
         return node
 
     def parse_include(self):
-        node = nodes.Include(lineno=next(self.stream).lineno)
+        node = nodes.Include(lineno=six.advance_iterator(self.stream).lineno)
         node.template = self.parse_expression()
         if self.stream.current.test('name:ignore') and \
            self.stream.look().test('name:missing'):
@@ -258,14 +257,14 @@ class Parser(object):
         return self.parse_import_context(node, True)
 
     def parse_import(self):
-        node = nodes.Import(lineno=next(self.stream).lineno)
+        node = nodes.Import(lineno=six.advance_iterator(self.stream).lineno)
         node.template = self.parse_expression()
         self.stream.expect('name:as')
         node.target = self.parse_assign_target(name_only=True).name
         return self.parse_import_context(node, False)
 
     def parse_from(self):
-        node = nodes.FromImport(lineno=next(self.stream).lineno)
+        node = nodes.FromImport(lineno=six.advance_iterator(self.stream).lineno)
         node.template = self.parse_expression()
         self.stream.expect('name:import')
         node.names = []
@@ -273,7 +272,7 @@ class Parser(object):
         def parse_context():
             if self.stream.current.value in ('with', 'without') and \
                self.stream.look().test('name:context'):
-                node.with_context = next(self.stream).value == 'with'
+                node.with_context = six.advance_iterator(self.stream).value == 'with'
                 self.stream.skip()
                 return True
             return False
@@ -318,7 +317,7 @@ class Parser(object):
         self.stream.expect('rparen')
 
     def parse_call_block(self):
-        node = nodes.CallBlock(lineno=next(self.stream).lineno)
+        node = nodes.CallBlock(lineno=six.advance_iterator(self.stream).lineno)
         if self.stream.current.type == 'lparen':
             self.parse_signature(node)
         else:
@@ -332,14 +331,14 @@ class Parser(object):
         return node
 
     def parse_filter_block(self):
-        node = nodes.FilterBlock(lineno=next(self.stream).lineno)
+        node = nodes.FilterBlock(lineno=six.advance_iterator(self.stream).lineno)
         node.filter = self.parse_filter(None, start_inline=True)
         node.body = self.parse_statements(('name:endfilter',),
                                           drop_needle=True)
         return node
 
     def parse_macro(self):
-        node = nodes.Macro(lineno=next(self.stream).lineno)
+        node = nodes.Macro(lineno=six.advance_iterator(self.stream).lineno)
         node.name = self.parse_assign_target(name_only=True).name
         self.parse_signature(node)
         node.body = self.parse_statements(('name:endmacro',),
@@ -347,7 +346,7 @@ class Parser(object):
         return node
 
     def parse_print(self):
-        node = nodes.Output(lineno=next(self.stream).lineno)
+        node = nodes.Output(lineno=six.advance_iterator(self.stream).lineno)
         node.nodes = []
         while self.stream.current.type != 'block_end':
             if node.nodes:
@@ -421,7 +420,7 @@ class Parser(object):
 
     def parse_not(self):
         if self.stream.current.test('name:not'):
-            lineno = next(self.stream).lineno
+            lineno = six.advance_iterator(self.stream).lineno
             return nodes.Not(self.parse_not(), lineno=lineno)
         return self.parse_compare()
 
@@ -432,7 +431,7 @@ class Parser(object):
         while 1:
             token_type = self.stream.current.type
             if token_type in _compare_operators:
-                next(self.stream)
+                six.advance_iterator(self.stream)
                 ops.append(nodes.Operand(token_type, self.parse_add()))
             elif self.stream.skip_if('name:in'):
                 ops.append(nodes.Operand('in', self.parse_add()))
@@ -451,7 +450,7 @@ class Parser(object):
         lineno = self.stream.current.lineno
         left = self.parse_sub()
         while self.stream.current.type == 'add':
-            next(self.stream)
+            six.advance_iterator(self.stream)
             right = self.parse_sub()
             left = nodes.Add(left, right, lineno=lineno)
             lineno = self.stream.current.lineno
@@ -461,7 +460,7 @@ class Parser(object):
         lineno = self.stream.current.lineno
         left = self.parse_concat()
         while self.stream.current.type == 'sub':
-            next(self.stream)
+            six.advance_iterator(self.stream)
             right = self.parse_concat()
             left = nodes.Sub(left, right, lineno=lineno)
             lineno = self.stream.current.lineno
@@ -471,7 +470,7 @@ class Parser(object):
         lineno = self.stream.current.lineno
         args = [self.parse_mul()]
         while self.stream.current.type == 'tilde':
-            next(self.stream)
+            six.advance_iterator(self.stream)
             args.append(self.parse_mul())
         if len(args) == 1:
             return args[0]
@@ -481,7 +480,7 @@ class Parser(object):
         lineno = self.stream.current.lineno
         left = self.parse_div()
         while self.stream.current.type == 'mul':
-            next(self.stream)
+            six.advance_iterator(self.stream)
             right = self.parse_div()
             left = nodes.Mul(left, right, lineno=lineno)
             lineno = self.stream.current.lineno
@@ -491,7 +490,7 @@ class Parser(object):
         lineno = self.stream.current.lineno
         left = self.parse_floordiv()
         while self.stream.current.type == 'div':
-            next(self.stream)
+            six.advance_iterator(self.stream)
             right = self.parse_floordiv()
             left = nodes.Div(left, right, lineno=lineno)
             lineno = self.stream.current.lineno
@@ -501,7 +500,7 @@ class Parser(object):
         lineno = self.stream.current.lineno
         left = self.parse_mod()
         while self.stream.current.type == 'floordiv':
-            next(self.stream)
+            six.advance_iterator(self.stream)
             right = self.parse_mod()
             left = nodes.FloorDiv(left, right, lineno=lineno)
             lineno = self.stream.current.lineno
@@ -511,7 +510,7 @@ class Parser(object):
         lineno = self.stream.current.lineno
         left = self.parse_pow()
         while self.stream.current.type == 'mod':
-            next(self.stream)
+            six.advance_iterator(self.stream)
             right = self.parse_pow()
             left = nodes.Mod(left, right, lineno=lineno)
             lineno = self.stream.current.lineno
@@ -521,7 +520,7 @@ class Parser(object):
         lineno = self.stream.current.lineno
         left = self.parse_unary()
         while self.stream.current.type == 'pow':
-            next(self.stream)
+            six.advance_iterator(self.stream)
             right = self.parse_unary()
             left = nodes.Pow(left, right, lineno=lineno)
             lineno = self.stream.current.lineno
@@ -531,10 +530,10 @@ class Parser(object):
         token_type = self.stream.current.type
         lineno = self.stream.current.lineno
         if token_type == 'sub':
-            next(self.stream)
+            six.advance_iterator(self.stream)
             node = nodes.Neg(self.parse_unary(False), lineno=lineno)
         elif token_type == 'add':
-            next(self.stream)
+            six.advance_iterator(self.stream)
             node = nodes.Pos(self.parse_unary(False), lineno=lineno)
         else:
             node = self.parse_primary()
@@ -553,20 +552,20 @@ class Parser(object):
                 node = nodes.Const(None, lineno=token.lineno)
             else:
                 node = nodes.Name(token.value, 'load', lineno=token.lineno)
-            next(self.stream)
+            six.advance_iterator(self.stream)
         elif token.type == 'string':
-            next(self.stream)
+            six.advance_iterator(self.stream)
             buf = [token.value]
             lineno = token.lineno
             while self.stream.current.type == 'string':
                 buf.append(self.stream.current.value)
-                next(self.stream)
+                six.advance_iterator(self.stream)
             node = nodes.Const(''.join(buf), lineno=lineno)
         elif token.type in ('integer', 'float'):
-            next(self.stream)
+            six.advance_iterator(self.stream)
             node = nodes.Const(token.value, lineno=token.lineno)
         elif token.type == 'lparen':
-            next(self.stream)
+            six.advance_iterator(self.stream)
             node = self.parse_tuple(explicit_parentheses=True)
             self.stream.expect('rparen')
         elif token.type == 'lbracket':
@@ -688,10 +687,10 @@ class Parser(object):
         return node
 
     def parse_subscript(self, node):
-        token = next(self.stream)
+        token = six.advance_iterator(self.stream)
         if token.type == 'dot':
             attr_token = self.stream.current
-            next(self.stream)
+            six.advance_iterator(self.stream)
             if attr_token.type == 'name':
                 return nodes.Getattr(node, attr_token.value, 'load',
                                      lineno=token.lineno)
@@ -717,13 +716,13 @@ class Parser(object):
         lineno = self.stream.current.lineno
 
         if self.stream.current.type == 'colon':
-            next(self.stream)
+            six.advance_iterator(self.stream)
             args = [None]
         else:
             node = self.parse_expression()
             if self.stream.current.type != 'colon':
                 return node
-            next(self.stream)
+            six.advance_iterator(self.stream)
             args = [node]
 
         if self.stream.current.type == 'colon':
@@ -734,7 +733,7 @@ class Parser(object):
             args.append(None)
 
         if self.stream.current.type == 'colon':
-            next(self.stream)
+            six.advance_iterator(self.stream)
             if self.stream.current.type not in ('rbracket', 'comma'):
                 args.append(self.parse_expression())
             else:
@@ -764,11 +763,11 @@ class Parser(object):
                     break
             if self.stream.current.type == 'mul':
                 ensure(dyn_args is None and dyn_kwargs is None)
-                next(self.stream)
+                six.advance_iterator(self.stream)
                 dyn_args = self.parse_expression()
             elif self.stream.current.type == 'pow':
                 ensure(dyn_kwargs is None)
-                next(self.stream)
+                six.advance_iterator(self.stream)
                 dyn_kwargs = self.parse_expression()
             else:
                 ensure(dyn_args is None and dyn_kwargs is None)
@@ -794,11 +793,11 @@ class Parser(object):
     def parse_filter(self, node, start_inline=False):
         while self.stream.current.type == 'pipe' or start_inline:
             if not start_inline:
-                next(self.stream)
+                six.advance_iterator(self.stream)
             token = self.stream.expect('name')
             name = token.value
             while self.stream.current.type == 'dot':
-                next(self.stream)
+                six.advance_iterator(self.stream)
                 name += '.' + self.stream.expect('name').value
             if self.stream.current.type == 'lparen':
                 args, kwargs, dyn_args, dyn_kwargs = self.parse_call(None)
@@ -812,15 +811,15 @@ class Parser(object):
         return node
 
     def parse_test(self, node):
-        token = next(self.stream)
+        token = six.advance_iterator(self.stream)
         if self.stream.current.test('name:not'):
-            next(self.stream)
+            six.advance_iterator(self.stream)
             negated = True
         else:
             negated = False
         name = self.stream.expect('name').value
         while self.stream.current.type == 'dot':
-            next(self.stream)
+            six.advance_iterator(self.stream)
             name += '.' + self.stream.expect('name').value
         dyn_args = dyn_kwargs = None
         kwargs = []
@@ -863,14 +862,14 @@ class Parser(object):
                     if token.value:
                         add_data(nodes.TemplateData(token.value,
                                                     lineno=token.lineno))
-                    next(self.stream)
+                    six.advance_iterator(self.stream)
                 elif token.type == 'variable_begin':
-                    next(self.stream)
+                    six.advance_iterator(self.stream)
                     add_data(self.parse_tuple(with_condexpr=True))
                     self.stream.expect('variable_end')
                 elif token.type == 'block_begin':
                     flush_data()
-                    next(self.stream)
+                    six.advance_iterator(self.stream)
                     if end_tokens is not None and \
                        self.stream.current.test_any(*end_tokens):
                         return body

@@ -8,6 +8,7 @@
     :copyright: (c) 2010 by the Jinja Team.
     :license: BSD, see LICENSE for more details.
 """
+from six.moves import xrange
 from jinja2.utils import generate_lorem_ipsum, Cycler, Joiner
 
 

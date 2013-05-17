@@ -11,7 +11,7 @@
 """
 from jinja2 import nodes
 from jinja2.compiler import CodeGenerator
-
+import six
 
 class TrackingCodeGenerator(CodeGenerator):
     """We abuse the code generator for introspection."""
@@ -77,7 +77,7 @@ def find_referenced_templates(ast):
                     # something const, only yield the strings and ignore
                     # non-string consts that really just make no sense
                     if isinstance(template_name, nodes.Const):
-                        if isinstance(template_name.value, basestring):
+                        if isinstance(template_name.value, six.string_types):
                             yield template_name.value
                     # something dynamic in there
                     else:
@@ -87,7 +87,7 @@ def find_referenced_templates(ast):
                 yield None
             continue
         # constant is a basestring, direct template name
-        if isinstance(node.template.value, basestring):
+        if isinstance(node.template.value, six.string_types):
             yield node.template.value
         # a tuple or list (latter *should* not happen) made of consts,
         # yield the consts that are strings.  We could warn here for
@@ -95,7 +95,7 @@ def find_referenced_templates(ast):
         elif isinstance(node, nodes.Include) and \
              isinstance(node.template.value, (tuple, list)):
             for template_name in node.template.value:
-                if isinstance(template_name, basestring):
+                if isinstance(template_name, six.string_types):
                     yield template_name
         # something else we don't care about, we could warn here
         else:

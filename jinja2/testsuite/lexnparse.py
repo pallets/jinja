@@ -15,6 +15,7 @@ from jinja2.testsuite import JinjaTestCase
 
 from jinja2 import Environment, Template, TemplateSyntaxError, \
      UndefinedError, nodes
+from jinja2.lexer import Token, TokenStream, TOKEN_EOF, TOKEN_BLOCK_BEGIN, TOKEN_BLOCK_END
 import six
 
 env = Environment()
@@ -26,6 +27,30 @@ if sys.version_info < (3, 0):
         return repr(string)[1:]
 else:
     jinja_string_repr = repr
+
+
+class TokenStreamTestCase(JinjaTestCase):
+    test_tokens = [Token(1, TOKEN_BLOCK_BEGIN, ''),
+                   Token(2, TOKEN_BLOCK_END, ''),
+                  ]
+
+    def test_simple(self):
+        ts = TokenStream(self.test_tokens, "foo", "bar")
+        assert ts.current.type is TOKEN_BLOCK_BEGIN
+        assert bool(ts)
+        assert not bool(ts.eos)
+        six.advance_iterator(ts)
+        assert ts.current.type is TOKEN_BLOCK_END
+        assert bool(ts)
+        assert not bool(ts.eos)
+        six.advance_iterator(ts)
+        assert ts.current.type is TOKEN_EOF
+        assert not bool(ts)
+        assert bool(ts.eos)
+
+    def test_iter(self):
+        token_types = [t.type for t in TokenStream(self.test_tokens, "foo", "bar")]
+        assert token_types == ['block_begin', 'block_end', ]
 
 
 class LexerTestCase(JinjaTestCase):
@@ -382,6 +407,7 @@ class SyntaxTestCase(JinjaTestCase):
 
 def suite():
     suite = unittest.TestSuite()
+    suite.addTest(unittest.makeSuite(TokenStreamTestCase))
     suite.addTest(unittest.makeSuite(LexerTestCase))
     suite.addTest(unittest.makeSuite(ParserTestCase))
     suite.addTest(unittest.makeSuite(SyntaxTestCase))

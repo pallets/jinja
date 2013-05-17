@@ -13,10 +13,10 @@
     :license: BSD, see LICENSE for more details.
 """
 import operator
-from itertools import chain, izip
 from collections import deque
 from jinja2.utils import Markup, MethodType, FunctionType
 import six
+from six.moves import zip
 
 
 #: the types we support for context functions
@@ -103,7 +103,7 @@ def get_eval_context(node, ctx):
     return ctx
 
 
-class Node(object):
+class Node(six.with_metaclass(NodeType, object)):
     """Baseclass for all Jinja2 nodes.  There are a number of nodes available
     of different types.  There are three major types:
 
@@ -137,7 +137,7 @@ class Node(object):
                     len(self.fields),
                     len(self.fields) != 1 and 's' or ''
                 ))
-            for name, arg in izip(self.fields, fields):
+            for name, arg in zip(self.fields, fields):
                 setattr(self, name, arg)
         for attr in self.attributes:
             setattr(self, attr, attributes.pop(attr, None))

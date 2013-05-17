@@ -12,6 +12,7 @@ import re
 import sys
 import errno
 import six
+from six.moves import map
 try:
     from urllib.parse import quote_from_bytes as url_quote
 except ImportError:
@@ -19,16 +20,17 @@ except ImportError:
 try:
     from thread import allocate_lock
 except ImportError:
-    from dummy_thread import allocate_lock
+    try:
+        from _thread import allocate_lock  # py 3
+    except ImportError:
+        from dummy_thread import allocate_lock
 from collections import deque
-from itertools import imap
-
 
 _word_split_re = re.compile(r'(\s+)')
 _punctuation_re = re.compile(
     '^(?P<lead>(?:%s)*)(?P<middle>.*?)(?P<trail>(?:%s)*)$' % (
-        '|'.join(imap(re.escape, ('(', '<', '&lt;'))),
-        '|'.join(imap(re.escape, ('.', ',', ')', '>', '\n', '&gt;')))
+        '|'.join(map(re.escape, ('(', '<', '&lt;'))),
+        '|'.join(map(re.escape, ('.', ',', ')', '>', '\n', '&gt;')))
     )
 )
 _simple_email_re = re.compile(r'^\S+@[a-zA-Z0-9._-]+\.[a-zA-Z0-9._-]+$')
@@ -62,19 +64,10 @@ except TypeError as _error:
                 # this hack is needed so that the current frame
                 # does not show up in the traceback.
                 exc_type, exc_value, tb = sys.exc_info()
-                raise exc_type, exc_value, tb.tb_next
+                six.reraise(exc_type, exc_value, tb.tb_next)
     else:
         concat = _concat
     del _test_gen_bug, _error
-
-
-# for python 2.x we create ourselves a next() function that does the
-# basics without exception catching.
-try:
-    next = next
-except NameError:
-    def next(x):
-        return six.advance_iterator(x)
 
 
 # if this python version is unable to deal with unicode filenames
@@ -363,9 +356,9 @@ def unicode_urlencode(obj, charset='utf-8'):
     If non strings are provided they are converted to their unicode
     representation first.
     """
-    if not isinstance(obj, basestring):
+    if not isinstance(obj, six.string_types):
         obj = six.text_type(obj)
-    if isinstance(obj, unicode):
+    if isinstance(obj, six.text_type):
         obj = obj.encode(charset)
     return six.text_type(url_quote(obj))
 
@@ -563,7 +556,7 @@ except ImportError:
     pass
 
 
-class Cycler(object):
+class Cycler(six.Iterator):
     """A cycle helper for templates."""
 
     def __init__(self, *items):
@@ -581,7 +574,7 @@ class Cycler(object):
         """Returns the current item."""
         return self.items[self.pos]
 
-    def next(self):
+    def __next__(self):
         """Goes one item ahead and returns it."""
         rv = self.current
         self.pos = (self.pos + 1) % len(self.items)

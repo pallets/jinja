@@ -9,11 +9,13 @@
     :license: BSD, see LICENSE for more details.
 """
 import re
-from itertools import imap
 import six
 from six.moves import map
 from six.moves import zip
-
+try:
+    unichr = unichr  # py2
+except NameError:
+    unichr = chr  # py3
 
 __all__ = ['Markup', 'soft_unicode', 'escape', 'escape_silent']
 
@@ -22,7 +24,7 @@ _striptags_re = re.compile(r'(<!--.*?-->|<[^>]*>)')
 _entity_re = re.compile(r'&([^;]+);')
 
 
-class Markup(unicode):
+class Markup(six.text_type):
     r"""Marks a string as being safe for inclusion in HTML/XML output without
     needing to be escaped.  This implements the `__html__` interface a couple
     of frameworks and web applications use.  :class:`Markup` is a direct
@@ -71,56 +73,56 @@ class Markup(unicode):
         if hasattr(base, '__html__'):
             base = base.__html__()
         if encoding is None:
-            return unicode.__new__(cls, base)
-        return unicode.__new__(cls, base, encoding, errors)
+            return six.text_type.__new__(cls, base)
+        return six.text_type.__new__(cls, base, encoding, errors)
 
     def __html__(self):
         return self
 
     def __add__(self, other):
-        if hasattr(other, '__html__') or isinstance(other, basestring):
+        if hasattr(other, '__html__') or isinstance(other, six.string_types):
             return self.__class__(six.text_type(self) + six.text_type(escape(other)))
         return NotImplemented
 
     def __radd__(self, other):
-        if hasattr(other, '__html__') or isinstance(other, basestring):
+        if hasattr(other, '__html__') or isinstance(other, six.string_types):
             return self.__class__(six.text_type(escape(other)) + six.text_type(self))
         return NotImplemented
 
     def __mul__(self, num):
         if isinstance(num, (int, long)):
-            return self.__class__(unicode.__mul__(self, num))
+            return self.__class__(six.text_type.__mul__(self, num))
         return NotImplemented
     __rmul__ = __mul__
 
     def __mod__(self, arg):
         if isinstance(arg, tuple):
-            arg = tuple(imap(_MarkupEscapeHelper, arg))
+            arg = tuple(map(_MarkupEscapeHelper, arg))
         else:
             arg = _MarkupEscapeHelper(arg)
-        return self.__class__(unicode.__mod__(self, arg))
+        return self.__class__(six.text_type.__mod__(self, arg))
 
     def __repr__(self):
         return '%s(%s)' % (
             self.__class__.__name__,
-            unicode.__repr__(self)
+            six.text_type.__repr__(self)
         )
 
     def join(self, seq):
-        return self.__class__(unicode.join(self, imap(escape, seq)))
-    join.__doc__ = unicode.join.__doc__
+        return self.__class__(six.text_type.join(self, map(escape, seq)))
+    join.__doc__ = six.text_type.join.__doc__
 
     def split(self, *args, **kwargs):
-        return map(self.__class__, unicode.split(self, *args, **kwargs))
-    split.__doc__ = unicode.split.__doc__
+        return map(self.__class__, six.text_type.split(self, *args, **kwargs))
+    split.__doc__ = six.text_type.split.__doc__
 
     def rsplit(self, *args, **kwargs):
-        return map(self.__class__, unicode.rsplit(self, *args, **kwargs))
-    rsplit.__doc__ = unicode.rsplit.__doc__
+        return map(self.__class__, six.text_type.rsplit(self, *args, **kwargs))
+    rsplit.__doc__ = six.text_type.rsplit.__doc__
 
     def splitlines(self, *args, **kwargs):
-        return map(self.__class__, unicode.splitlines(self, *args, **kwargs))
-    splitlines.__doc__ = unicode.splitlines.__doc__
+        return map(self.__class__, six.text_type.splitlines(self, *args, **kwargs))
+    splitlines.__doc__ = six.text_type.splitlines.__doc__
 
     def unescape(self):
         r"""Unescape markup again into an unicode string.  This also resolves
@@ -167,7 +169,7 @@ class Markup(unicode):
         return rv
 
     def make_wrapper(name):
-        orig = getattr(unicode, name)
+        orig = getattr(six.text_type, name)
         def func(self, *args, **kwargs):
             args = _escape_argspec(list(args), enumerate(args))
             _escape_argspec(kwargs, six.iteritems(kwargs))
@@ -183,16 +185,16 @@ class Markup(unicode):
         locals()[method] = make_wrapper(method)
 
     # new in python 2.5
-    if hasattr(unicode, 'partition'):
+    if hasattr(six.text_type, 'partition'):
         partition = make_wrapper('partition'),
         rpartition = make_wrapper('rpartition')
 
     # new in python 2.6
-    if hasattr(unicode, 'format'):
+    if hasattr(six.text_type, 'format'):
         format = make_wrapper('format')
 
     # not in python 3
-    if hasattr(unicode, '__getslice__'):
+    if hasattr(six.text_type, '__getslice__'):
         __getslice__ = make_wrapper('__getslice__')
 
     del method, make_wrapper
@@ -201,7 +203,7 @@ class Markup(unicode):
 def _escape_argspec(obj, iterable):
     """Helper for various string-wrapped functions."""
     for key, value in iterable:
-        if hasattr(value, '__html__') or isinstance(value, basestring):
+        if hasattr(value, '__html__') or isinstance(value, six.string_types):
             obj[key] = escape(value)
     return obj
 

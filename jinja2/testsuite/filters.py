@@ -13,8 +13,7 @@ from jinja2.testsuite import JinjaTestCase
 
 from jinja2 import Markup, Environment
 import six
-from six.moves import map
-from six.moves import zip
+from six.moves import map, zip
 
 env = Environment()
 
@@ -301,6 +300,7 @@ class FilterTestCase(JinjaTestCase):
                 self.value = value
             def __unicode__(self):
                 return six.text_type(self.value)
+            __str__ = __unicode__
         tmpl = env.from_string('''{{ items|sort(attribute='value')|join }}''')
         assert tmpl.render(items=map(Magic, [3, 2, 4, 1])) == '1234'
 

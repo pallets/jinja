@@ -23,9 +23,7 @@ from jinja2.utils import import_string, LRUCache, Markup, missing, \
      concat, consume, internalcode, _encode_filename
 import six
 from functools import reduce
-from six.moves import filter
-from six.moves import map
-from six.moves import zip
+from six.moves import filter, map, zip
 
 
 # for direct template usage we have up to ten living environments
@@ -76,7 +74,7 @@ def load_extensions(environment, extensions):
     """
     result = {}
     for extension in extensions:
-        if isinstance(extension, basestring):
+        if isinstance(extension, six.string_types):
             extension = import_string(extension)
         result[extension.identifier] = extension(environment)
     return result
@@ -357,7 +355,7 @@ class Environment(object):
         try:
             return obj[argument]
         except (TypeError, LookupError):
-            if isinstance(argument, basestring):
+            if isinstance(argument, six.string_types):
                 try:
                     attr = str(argument)
                 except Exception:
@@ -479,7 +477,7 @@ class Environment(object):
         """
         source_hint = None
         try:
-            if isinstance(source, basestring):
+            if isinstance(source, six.string_types):
                 source_hint = source
                 source = self._parse(source, name, filename)
             if self.optimized:
@@ -676,7 +674,7 @@ class Environment(object):
         if self.exception_handler is not None:
             self.exception_handler(traceback)
         exc_type, exc_value, tb = traceback.standard_exc_info
-        raise exc_type, exc_value, tb
+        six.reraise(exc_type, exc_value, tb)
 
     def join_path(self, template, parent):
         """Join a template with the parent.  By default all the lookups are
@@ -763,7 +761,7 @@ class Environment(object):
 
         .. versionadded:: 2.3
         """
-        if isinstance(template_name_or_list, basestring):
+        if isinstance(template_name_or_list, six.string_types):
             return self.get_template(template_name_or_list, parent, globals)
         elif isinstance(template_name_or_list, Template):
             return template_name_or_list
@@ -1008,12 +1006,9 @@ class TemplateModule(object):
         return Markup(concat(self._body_stream))
 
     def __str__(self):
-        return six.text_type(self).encode('utf-8')
+        s = self.__unicode__()
+        return s if six.PY3 else s.encode('utf-8')
 
-    # unicode goes after __str__ because we configured 2to3 to rename
-    # __unicode__ to __str__.  because the 2to3 tree is not designed to
-    # remove nodes from it, we leave the above __str__ around and let
-    # it override at runtime.
     def __unicode__(self):
         return concat(self._body_stream)
 
@@ -1044,7 +1039,7 @@ class TemplateExpression(object):
         return rv
 
 
-class TemplateStream(object):
+class TemplateStream(six.Iterator):
     """A template stream works pretty much like an ordinary python generator
     but it can buffer multiple items to reduce the number of total iterations.
     Per default the output is unbuffered which means that for every unbuffered
@@ -1069,7 +1064,7 @@ class TemplateStream(object):
             Template('Hello {{ name }}!').stream(name='foo').dump('hello.html')
         """
         close = False
-        if isinstance(fp, basestring):
+        if isinstance(fp, six.string_types):
             fp = file(fp, 'w')
             close = True
         try:
@@ -1088,7 +1083,7 @@ class TemplateStream(object):
 
     def disable_buffering(self):
         """Disable the output buffering."""
-        self._next = self._gen.next
+        self._next = lambda: six.next(self._gen)
         self.buffered = False
 
     def enable_buffering(self, size=5):
@@ -1116,12 +1111,12 @@ class TemplateStream(object):
                 c_size = 0
 
         self.buffered = True
-        self._next = generator(self._gen.next).next
+        self._next = lambda: six.next(generator(lambda: six.next(self._gen)))
 
     def __iter__(self):
         return self
 
-    def next(self):
+    def __next__(self):
         return self._next()
 
 

@@ -17,15 +17,8 @@ from jinja2 import Environment, DictLoader, contextfunction, nodes
 from jinja2.exceptions import TemplateAssertionError
 from jinja2.ext import Extension
 from jinja2.lexer import Token, count_newlines
-from jinja2.utils import next
 import six
-
-# 2.x / 3.x
-try:
-    from io import BytesIO
-except ImportError:
-    from StringIO import StringIO as BytesIO
-
+from six import BytesIO
 
 importable_object = 23
 
@@ -116,7 +109,7 @@ class TestExtension(Extension):
             self.attr('ext_attr'),
             nodes.ImportedName(__name__ + '.importable_object'),
             nodes.ContextReference()
-        ])]).set_lineno(next(parser.stream).lineno)
+        ])]).set_lineno(six.advance_iterator(parser.stream).lineno)
 
     def _dump(self, sandboxed, ext_attr, imported_object, context):
         return '%s|%s|%s|%s' % (
@@ -433,7 +426,7 @@ class AutoEscapeTestCase(JinjaTestCase):
         '''
         tmpl = env.from_string(tmplsource)
         assert tmpl.render(val=True).split()[0] == 'Markup'
-        assert tmpl.render(val=False).split()[0] == unicode.__name__
+        assert tmpl.render(val=False).split()[0] == six.text_type.__name__
 
         # looking at the source we should see <testing> there in raw
         # (and then escaped as well)

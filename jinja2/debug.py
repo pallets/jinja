@@ -190,7 +190,7 @@ def translate_exception(exc_info, initial_skip=0):
     # reraise it unchanged.
     # XXX: can we backup here?  when could this happen?
     if not frames:
-        raise exc_info[0], exc_info[1], exc_info[2]
+        six.reraise(exc_info[0], exc_info[1], exc_info[2])
 
     return ProcessedTraceback(exc_info[0], exc_info[1], frames)
 
