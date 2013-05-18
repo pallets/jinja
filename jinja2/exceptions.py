@@ -8,6 +8,7 @@
     :copyright: (c) 2010 by the Jinja Team.
     :license: BSD, see LICENSE for more details.
 """
+import sys
 import six
 from six.moves import map
 
@@ -15,17 +16,26 @@ from six.moves import map
 class TemplateError(Exception):
     """Baseclass for all template errors."""
 
-    def __init__(self, message=None):
-        if message is not None:
-            message = six.text_type(message).encode('utf-8')
-        Exception.__init__(self, message)
-
-    @property
-    def message(self):
-        if self.args:
-            message = self.args[0]
+    if sys.version_info[0] < 3:
+        def __init__(self, message=None):
             if message is not None:
-                return message.decode('utf-8', 'replace')
+                message = six.text_type(message).encode('utf-8')
+            Exception.__init__(self, message)
+
+        @property
+        def message(self):
+            if self.args:
+                message = self.args[0]
+                if message is not None:
+                    return message.decode('utf-8', 'replace')
+
+    else:
+        @property
+        def message(self):
+            if self.args:
+                message = self.args[0]
+                if message is not None:
+                    return message
 
 
 class TemplateNotFound(IOError, LookupError, TemplateError):
