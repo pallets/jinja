@@ -9,6 +9,9 @@
     :license: BSD, see LICENSE for more details.
 """
 import unittest
+import os
+import tempfile
+import shutil
 
 from jinja2.testsuite import JinjaTestCase
 
@@ -166,6 +169,17 @@ class StreamingTestCase(JinjaTestCase):
         assert stream.buffered
         stream.disable_buffering()
         assert not stream.buffered
+
+    def test_dump_stream(self):
+        tmp = tempfile.mkdtemp()
+        try:
+            tmpl = env.from_string(u"\u2713")
+            stream = tmpl.stream()
+            stream.dump(os.path.join(tmp, 'dump.txt'), 'utf-8')
+            with open(os.path.join(tmp, 'dump.txt'), 'rb') as f:
+                self.assertEqual(f.read(), b'\xe2\x9c\x93')
+        finally:
+            shutil.rmtree(tmp)
 
 
 class UndefinedTestCase(JinjaTestCase):
