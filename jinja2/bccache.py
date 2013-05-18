@@ -19,6 +19,7 @@ import sys
 import marshal
 import tempfile
 from six.moves import cPickle as pickle
+from six import BytesIO
 import fnmatch
 try:
     from hashlib import sha1
@@ -29,11 +30,9 @@ from jinja2.utils import open_if_exists
 
 # marshal works better on 3.x, one hack less required
 if sys.version_info[0] >= 3:
-    from io import BytesIO
     marshal_dump = marshal.dump
     marshal_load = marshal.load
 else:
-    from cStringIO import StringIO as BytesIO
 
     def marshal_dump(code, f):
         if isinstance(f, file):
