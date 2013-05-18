@@ -15,7 +15,7 @@ from jinja2.nodes import EvalContext
 from jinja2.visitor import NodeVisitor
 from jinja2.exceptions import TemplateAssertionError
 from jinja2.utils import Markup, concat, escape, is_python_keyword
-from jinaj2._compat import range_type
+from jinja2._compat import range_type
 import six
 from six.moves import cStringIO as StringIO, map
 
