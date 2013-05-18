@@ -22,7 +22,7 @@ env = Environment()
 
 
 # how does a string look like in jinja syntax?
-if sys.version_info < (3, 0):
+if sys.version_info[0] < 3:
     def jinja_string_repr(string):
         return repr(string)[1:]
 else:
