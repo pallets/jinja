@@ -470,15 +470,20 @@ def do_truncate(s, length=255, killwords=False, end='...'):
     return u' '.join(result)
 
 @environmentfilter
-def do_wordwrap(environment, s, width=79, break_long_words=True):
+def do_wordwrap(environment, s, width=79, break_long_words=True,
+                wrapstring=None):
     """
     Return a copy of the string passed to the filter wrapped after
     ``79`` characters.  You can override this default using the first
     parameter.  If you set the second parameter to `false` Jinja will not
-    split words apart if they are longer than `width`.
+    split words apart if they are longer than `width`. By default, the newlines
+    will be the default newlines for the environment, but this can be changed
+    using the wrapstring keyword argument.
     """
+    if not wrapstring:
+        wrapstring = environment.newline_sequence
     import textwrap
-    return environment.newline_sequence.join(textwrap.wrap(s, width=width, expand_tabs=False,
+    return wrapstring.join(textwrap.wrap(s, width=width, expand_tabs=False,
                                    replace_whitespace=False,
                                    break_long_words=break_long_words))
 
