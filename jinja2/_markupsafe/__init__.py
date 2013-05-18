@@ -11,7 +11,6 @@
 import re
 import six
 from six.moves import map
-from six.moves import zip
 from jinja2._compat import unichr
 
 __all__ = ['Markup', 'soft_unicode', 'escape', 'escape_silent']

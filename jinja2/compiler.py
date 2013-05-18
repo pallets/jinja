@@ -16,9 +16,7 @@ from jinja2.visitor import NodeVisitor
 from jinja2.exceptions import TemplateAssertionError
 from jinja2.utils import Markup, concat, escape, is_python_keyword
 import six
-from six.moves import cStringIO as StringIO
-from six.moves import map, zip
-from six.moves import xrange
+from six.moves import cStringIO as StringIO, map, xrange
 
 
 operators = {
@@ -31,14 +29,6 @@ operators = {
     'in':       'in',
     'notin':    'not in'
 }
-
-try:
-    exec('(0 if 0 else 0)')
-except SyntaxError:
-    have_condexpr = False
-else:
-    have_condexpr = True
-
 
 # what method to iterate over items do we want to use for dict iteration
 # in generated code?  on 2.x let's go with iteritems, on 3.x with items
@@ -669,16 +659,16 @@ class CodeGenerator(NodeVisitor):
         # it without aliasing all the variables.
         # this could be fixed in Python 3 where we have the nonlocal
         # keyword or if we switch to bytecode generation
-        overriden_closure_vars = (
+        overridden_closure_vars = (
             func_frame.identifiers.undeclared &
             func_frame.identifiers.declared &
             (func_frame.identifiers.declared_locally |
              func_frame.identifiers.declared_parameter)
         )
-        if overriden_closure_vars:
+        if overridden_closure_vars:
             self.fail('It\'s not possible to set and access variables '
                       'derived from an outer scope! (affects: %s)' %
-                      ', '.join(sorted(overriden_closure_vars)), node.lineno)
+                      ', '.join(sorted(overridden_closure_vars)), node.lineno)
 
         # remove variables from a closure from the frame's undeclared
         # identifiers.
@@ -1561,22 +1551,13 @@ class CodeGenerator(NodeVisitor):
                        'expression on %s evaluated to false and '
                        'no else section was defined.' % self.position(node)))
 
-        if not have_condexpr:
-            self.write('((')
-            self.visit(node.test, frame)
-            self.write(') and (')
-            self.visit(node.expr1, frame)
-            self.write(',) or (')
-            write_expr2()
-            self.write(',))[0]')
-        else:
-            self.write('(')
-            self.visit(node.expr1, frame)
-            self.write(' if ')
-            self.visit(node.test, frame)
-            self.write(' else ')
-            write_expr2()
-            self.write(')')
+        self.write('(')
+        self.visit(node.expr1, frame)
+        self.write(' if ')
+        self.visit(node.test, frame)
+        self.write(' else ')
+        write_expr2()
+        self.write(')')
 
     def visit_Call(self, node, frame, forward_caller=False):
         if self.environment.sandboxed:

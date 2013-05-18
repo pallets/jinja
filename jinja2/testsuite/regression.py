@@ -15,8 +15,6 @@ from jinja2.testsuite import JinjaTestCase
 from jinja2 import Template, Environment, DictLoader, TemplateSyntaxError, \
      TemplateNotFound, PrefixLoader
 import six
-from six.moves import map
-from six.moves import zip
 
 env = Environment()
 
@@ -249,6 +247,19 @@ class BugTestCase(JinjaTestCase):
             assert e.name == 'foo/bar.html'
         else:
             assert False, 'expected error here'
+
+    def test_contextfunction_callable_classes(self):
+        from jinja2.utils import contextfunction
+        class CallableClass(object):
+            @contextfunction
+            def __call__(self, ctx):
+                return ctx.resolve('hello')
+
+        tpl = Template("""{{ callableclass() }}""")
+        output = tpl.render(callableclass = CallableClass(), hello = 'TEST')
+        expected = 'TEST'
+
+        self.assert_equal(output, expected)
 
 
 def suite():
