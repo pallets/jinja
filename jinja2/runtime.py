@@ -10,8 +10,8 @@
 """
 from itertools import chain
 from jinja2.nodes import EvalContext, _context_function_types
-from jinja2.utils import Markup, partial, soft_unicode, escape, missing, \
-     concat, internalcode, object_type_repr
+from jinja2.utils import Markup, soft_unicode, escape, missing, concat, \
+     internalcode, object_type_repr
 from jinja2.exceptions import UndefinedError, TemplateRuntimeError, \
      TemplateNotFound
 import six

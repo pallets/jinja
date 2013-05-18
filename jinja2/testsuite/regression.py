@@ -15,8 +15,6 @@ from jinja2.testsuite import JinjaTestCase
 from jinja2 import Template, Environment, DictLoader, TemplateSyntaxError, \
      TemplateNotFound, PrefixLoader
 import six
-from six.moves import map
-from six.moves import zip
 
 env = Environment()
 
