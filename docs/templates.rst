@@ -862,7 +862,7 @@ namespace::
     </dl>
     <p>{{ textarea('comment') }}</p>
 
-Macros and variables starting with one ore more underscores are private and
+Macros and variables starting with one or more underscores are private and
 cannot be imported.
 
 .. versionchanged:: 2.4

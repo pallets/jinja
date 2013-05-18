@@ -665,16 +665,16 @@ class CodeGenerator(NodeVisitor):
         # it without aliasing all the variables.
         # this could be fixed in Python 3 where we have the nonlocal
         # keyword or if we switch to bytecode generation
-        overriden_closure_vars = (
+        overridden_closure_vars = (
             func_frame.identifiers.undeclared &
             func_frame.identifiers.declared &
             (func_frame.identifiers.declared_locally |
              func_frame.identifiers.declared_parameter)
         )
-        if overriden_closure_vars:
+        if overridden_closure_vars:
             self.fail('It\'s not possible to set and access variables '
                       'derived from an outer scope! (affects: %s)' %
-                      ', '.join(sorted(overriden_closure_vars)), node.lineno)
+                      ', '.join(sorted(overridden_closure_vars)), node.lineno)
 
         # remove variables from a closure from the frame's undeclared
         # identifiers.
