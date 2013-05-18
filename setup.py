@@ -37,15 +37,7 @@ For more informations visit the new `Jinja2 webpage`_ and `documentation`_.
 """
 import sys
 
-from setuptools import setup, Extension, Feature
-
-debugsupport = Feature(
-    'optional C debug support',
-    standard=False,
-    ext_modules = [
-        Extension('jinja2._debugsupport', ['jinja2/_debugsupport.c']),
-    ],
-)
+from setuptools import setup
 
 
 # ignore the old '--with-speedups' flag
@@ -54,11 +46,10 @@ try:
 except ValueError:
     pass
 else:
-    sys.argv[speedups_pos] = '--with-debugsupport'
+    sys.argv[speedups_pos] = ''
     sys.stderr.write('*' * 74 + '\n')
     sys.stderr.write('WARNING:\n')
-    sys.stderr.write('  the --with-speedups flag is deprecated, assuming '
-                     '--with-debugsupport\n')
+    sys.stderr.write('  the --with-speedups flag is deprecated\n')
     sys.stderr.write('  For the actual speedups install the MarkupSafe '
                      'package.\n')
     sys.stderr.write('*' * 74 + '\n')
@@ -97,6 +88,5 @@ setup(
     entry_points="""
     [babel.extractors]
     jinja2 = jinja2.ext:babel_extract[i18n]
-    """,
-    features={'debugsupport': debugsupport}
+    """
 )
