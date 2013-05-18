@@ -53,7 +53,11 @@ def unoptimize_before_dead_code():
     def f():
         if 0: dummy(x)
     return f
-unoptimize_before_dead_code = bool(unoptimize_before_dead_code().__closure__)
+
+# The getattr is necessary for pypy which does not set this attribute if
+# no closure is on the function
+unoptimize_before_dead_code = bool(
+    getattr(unoptimize_before_dead_code(), '__closure__', None))
 
 
 def generate(node, environment, name, filename, stream=None,
