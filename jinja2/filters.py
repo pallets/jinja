@@ -479,6 +479,9 @@ def do_wordwrap(environment, s, width=79, break_long_words=True,
     split words apart if they are longer than `width`. By default, the newlines
     will be the default newlines for the environment, but this can be changed
     using the wrapstring keyword argument.
+
+    .. versionadded:: 2.7
+       Added support for the `wrapstring` parameter.
     """
     if not wrapstring:
         wrapstring = environment.newline_sequence

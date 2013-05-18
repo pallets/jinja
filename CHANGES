@@ -16,6 +16,8 @@ Version 2.7
 - Accessing `last` on the loop context no longer causes the iterator
   to be consumed into a list.
 - Allow `contextfunction` and other decorators to be applied to `__call__`.
+- Added support for changing from newline to different signs in the `wordwrap`
+  filter.
 
 Version 2.6
 -----------
