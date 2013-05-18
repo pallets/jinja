@@ -37,24 +37,8 @@ For more informations visit the new `Jinja2 webpage`_ and `documentation`_.
 """
 import sys
 
-from setuptools import setup, Extension, Feature
+from setuptools import setup
 
-debugsupport = Feature(
-    'optional C debug support',
-    standard=False,
-    ext_modules = [
-        Extension('jinja2._debugsupport', ['jinja2/_debugsupport.c']),
-    ],
-)
-
-
-# tell distribute to use 2to3 with our own fixers.
-extra = {}
-if sys.version_info >= (3, 0):
-    extra.update(
-        use_2to3=True,
-        use_2to3_fixers=['custom_fixers']
-    )
 
 # ignore the old '--with-speedups' flag
 try:
@@ -62,11 +46,10 @@ try:
 except ValueError:
     pass
 else:
-    sys.argv[speedups_pos] = '--with-debugsupport'
+    sys.argv[speedups_pos] = ''
     sys.stderr.write('*' * 74 + '\n')
     sys.stderr.write('WARNING:\n')
-    sys.stderr.write('  the --with-speedups flag is deprecated, assuming '
-                     '--with-debugsupport\n')
+    sys.stderr.write('  the --with-speedups flag is deprecated\n')
     sys.stderr.write('  For the actual speedups install the MarkupSafe '
                      'package.\n')
     sys.stderr.write('*' * 74 + '\n')
@@ -98,13 +81,12 @@ setup(
     ],
     packages=['jinja2', 'jinja2.testsuite', 'jinja2.testsuite.res',
               'jinja2._markupsafe'],
+    install_requires=['six>=1.3.0'],
     extras_require={'i18n': ['Babel>=0.8']},
     test_suite='jinja2.testsuite.suite',
     include_package_data=True,
     entry_points="""
     [babel.extractors]
     jinja2 = jinja2.ext:babel_extract[i18n]
-    """,
-    features={'debugsupport': debugsupport},
-    **extra
+    """
 )

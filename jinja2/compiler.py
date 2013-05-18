@@ -8,14 +8,21 @@
     :copyright: (c) 2010 by the Jinja Team.
     :license: BSD, see LICENSE for more details.
 """
-from cStringIO import StringIO
 from itertools import chain
 from copy import deepcopy
 from jinja2 import nodes
 from jinja2.nodes import EvalContext
 from jinja2.visitor import NodeVisitor
 from jinja2.exceptions import TemplateAssertionError
-from jinja2.utils import Markup, concat, escape, is_python_keyword, next
+from jinja2.utils import Markup, concat, escape, is_python_keyword
+import six
+from six.moves import cStringIO as StringIO, map
+
+# TODO: Move this to the compat module.
+try:
+    range_type = xrange
+except NameError:
+    range_type = range
 
 
 operators = {
@@ -28,14 +35,6 @@ operators = {
     'in':       'in',
     'notin':    'not in'
 }
-
-try:
-    exec '(0 if 0 else 0)'
-except SyntaxError:
-    have_condexpr = False
-else:
-    have_condexpr = True
-
 
 # what method to iterate over items do we want to use for dict iteration
 # in generated code?  on 2.x let's go with iteritems, on 3.x with items
@@ -51,7 +50,11 @@ def unoptimize_before_dead_code():
     def f():
         if 0: dummy(x)
     return f
-unoptimize_before_dead_code = bool(unoptimize_before_dead_code().func_closure)
+
+# The getattr is necessary for pypy which does not set this attribute if
+# no closure is on the function
+unoptimize_before_dead_code = bool(
+    getattr(unoptimize_before_dead_code(), '__closure__', None))
 
 
 def generate(node, environment, name, filename, stream=None,
@@ -69,8 +72,7 @@ def has_safe_repr(value):
     """Does the node have a safe representation?"""
     if value is None or value is NotImplemented or value is Ellipsis:
         return True
-    if isinstance(value, (bool, int, long, float, complex, basestring,
-                          xrange, Markup)):
+    if isinstance(value, (bool, int, float, complex, range_type, Markup) + six.string_types):
         return True
     if isinstance(value, (tuple, list, set, frozenset)):
         for item in value:
@@ -78,7 +80,7 @@ def has_safe_repr(value):
                 return False
         return True
     elif isinstance(value, dict):
-        for key, value in value.iteritems():
+        for key, value in six.iteritems(value):
             if not has_safe_repr(key):
                 return False
             if not has_safe_repr(value):
@@ -542,7 +544,7 @@ class CodeGenerator(NodeVisitor):
                 self.write(', ')
                 self.visit(kwarg, frame)
             if extra_kwargs is not None:
-                for key, value in extra_kwargs.iteritems():
+                for key, value in six.iteritems(extra_kwargs):
                     self.write(', %s=%s' % (key, value))
         if node.dyn_args:
             self.write(', *')
@@ -558,7 +560,7 @@ class CodeGenerator(NodeVisitor):
                 self.visit(kwarg.value, frame)
                 self.write(', ')
             if extra_kwargs is not None:
-                for key, value in extra_kwargs.iteritems():
+                for key, value in six.iteritems(extra_kwargs):
                     self.write('%r: %s, ' % (key, value))
             if node.dyn_kwargs is not None:
                 self.write('}, **')
@@ -625,7 +627,7 @@ class CodeGenerator(NodeVisitor):
 
     def pop_scope(self, aliases, frame):
         """Restore all aliases and delete unused variables."""
-        for name, alias in aliases.iteritems():
+        for name, alias in six.iteritems(aliases):
             self.writeline('l_%s = %s' % (name, alias))
         to_delete = set()
         for name in frame.identifiers.declared_locally:
@@ -827,7 +829,7 @@ class CodeGenerator(NodeVisitor):
             self.outdent(2 + (not self.has_known_extends))
 
         # at this point we now have the blocks collected and can visit them too.
-        for name, block in self.blocks.iteritems():
+        for name, block in six.iteritems(self.blocks):
             block_frame = Frame(eval_ctx)
             block_frame.inspect(block.body)
             block_frame.block = name
@@ -930,7 +932,7 @@ class CodeGenerator(NodeVisitor):
 
         func_name = 'get_or_select_template'
         if isinstance(node.template, nodes.Const):
-            if isinstance(node.template.value, basestring):
+            if isinstance(node.template.value, six.string_types):
                 func_name = 'get_template'
             elif isinstance(node.template.value, (tuple, list)):
                 func_name = 'select_template'
@@ -1216,9 +1218,9 @@ class CodeGenerator(NodeVisitor):
             return
 
         if self.environment.finalize:
-            finalize = lambda x: unicode(self.environment.finalize(x))
+            finalize = lambda x: six.text_type(self.environment.finalize(x))
         else:
-            finalize = unicode
+            finalize = six.text_type
 
         # if we are inside a frame that requires output checking, we do so
         outdent_later = False
@@ -1352,7 +1354,7 @@ class CodeGenerator(NodeVisitor):
             public_names = [x for x in assignment_frame.toplevel_assignments
                             if not x.startswith('_')]
             if len(assignment_frame.toplevel_assignments) == 1:
-                name = next(iter(assignment_frame.toplevel_assignments))
+                name = six.advance_iterator(iter(assignment_frame.toplevel_assignments))
                 self.writeline('context.vars[%r] = l_%s' % (name, name))
             else:
                 self.writeline('context.vars.update({')
@@ -1555,22 +1557,13 @@ class CodeGenerator(NodeVisitor):
                        'expression on %s evaluated to false and '
                        'no else section was defined.' % self.position(node)))
 
-        if not have_condexpr:
-            self.write('((')
-            self.visit(node.test, frame)
-            self.write(') and (')
-            self.visit(node.expr1, frame)
-            self.write(',) or (')
-            write_expr2()
-            self.write(',))[0]')
-        else:
-            self.write('(')
-            self.visit(node.expr1, frame)
-            self.write(' if ')
-            self.visit(node.test, frame)
-            self.write(' else ')
-            write_expr2()
-            self.write(')')
+        self.write('(')
+        self.visit(node.expr1, frame)
+        self.write(' if ')
+        self.visit(node.test, frame)
+        self.write(' else ')
+        write_expr2()
+        self.write(')')
 
     def visit_Call(self, node, frame, forward_caller=False):
         if self.environment.sandboxed:

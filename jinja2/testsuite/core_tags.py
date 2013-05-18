@@ -22,7 +22,7 @@ class ForLoopTestCase(JinjaTestCase):
 
     def test_simple(self):
         tmpl = env.from_string('{% for item in seq %}{{ item }}{% endfor %}')
-        assert tmpl.render(seq=range(10)) == '0123456789'
+        assert tmpl.render(seq=list(range(10))) == '0123456789'
 
     def test_else(self):
         tmpl = env.from_string('{% for item in seq %}XXX{% else %}...{% endfor %}')
@@ -55,12 +55,12 @@ class ForLoopTestCase(JinjaTestCase):
         tmpl = env.from_string('''{% for item in seq %}{{
             loop.cycle('<1>', '<2>') }}{% endfor %}{%
             for item in seq %}{{ loop.cycle(*through) }}{% endfor %}''')
-        output = tmpl.render(seq=range(4), through=('<1>', '<2>'))
+        output = tmpl.render(seq=list(range(4)), through=('<1>', '<2>'))
         assert output == '<1><2>' * 4
 
     def test_scope(self):
         tmpl = env.from_string('{% for item in seq %}{% endfor %}{{ item }}')
-        output = tmpl.render(seq=range(10))
+        output = tmpl.render(seq=list(range(10)))
         assert not output
 
     def test_varlen(self):

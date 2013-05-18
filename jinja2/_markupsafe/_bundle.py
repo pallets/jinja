@@ -10,6 +10,7 @@
     :copyright: Copyright 2010 by the Jinja team, see AUTHORS.
     :license: BSD, see LICENSE for details.
 """
+from __future__ import print_function
 import sys
 import os
 import re
@@ -25,7 +26,7 @@ def rewrite_imports(lines):
 
 def main():
     if len(sys.argv) != 2:
-        print 'error: only argument is path to markupsafe'
+        print('error: only argument is path to markupsafe')
         sys.exit(1)
     basedir = os.path.dirname(__file__)
     markupdir = sys.argv[1]

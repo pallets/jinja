@@ -13,12 +13,13 @@ import sys
 import weakref
 from types import ModuleType
 from os import path
+import six
 try:
     from hashlib import sha1
 except ImportError:
     from sha import new as sha1
 from jinja2.exceptions import TemplateNotFound
-from jinja2.utils import LRUCache, open_if_exists, internalcode
+from jinja2.utils import open_if_exists, internalcode
 
 
 def split_template_path(template):
@@ -153,7 +154,7 @@ class FileSystemLoader(BaseLoader):
     """
 
     def __init__(self, searchpath, encoding='utf-8'):
-        if isinstance(searchpath, basestring):
+        if isinstance(searchpath, six.string_types):
             searchpath = [searchpath]
         self.searchpath = list(searchpath)
         self.encoding = encoding
@@ -306,7 +307,7 @@ class FunctionLoader(BaseLoader):
         rv = self.load_func(template)
         if rv is None:
             raise TemplateNotFound(template)
-        elif isinstance(rv, basestring):
+        elif isinstance(rv, six.string_types):
             return rv, None, None
         return rv
 
@@ -359,7 +360,7 @@ class PrefixLoader(BaseLoader):
 
     def list_templates(self):
         result = []
-        for prefix, loader in self.mapping.iteritems():
+        for prefix, loader in six.iteritems(self.mapping):
             for template in loader.list_templates():
                 result.append(prefix + self.delimiter + template)
         return result
@@ -431,7 +432,7 @@ class ModuleLoader(BaseLoader):
         # create a fake module that looks for the templates in the
         # path given.
         mod = _TemplateModule(package_name)
-        if isinstance(path, basestring):
+        if isinstance(path, six.string_types):
             path = [path]
         else:
             path = list(path)
