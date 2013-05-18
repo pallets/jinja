@@ -9,7 +9,7 @@
     :license: BSD, see LICENSE for more details.
 """
 import six
-from six.moves import map, zip
+from six.moves import map
 
 
 class TemplateError(Exception):

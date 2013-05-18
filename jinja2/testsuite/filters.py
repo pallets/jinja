@@ -13,7 +13,7 @@ from jinja2.testsuite import JinjaTestCase
 
 from jinja2 import Markup, Environment
 import six
-from six.moves import map, zip
+from six.moves import map
 
 env = Environment()
 

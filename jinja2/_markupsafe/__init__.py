@@ -11,7 +11,6 @@
 import re
 import six
 from six.moves import map
-from six.moves import zip
 try:
     unichr = unichr  # py2
 except NameError:
