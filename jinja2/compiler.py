@@ -16,8 +16,7 @@ from jinja2.visitor import NodeVisitor
 from jinja2.exceptions import TemplateAssertionError
 from jinja2.utils import Markup, concat, escape, is_python_keyword
 import six
-from six.moves import cStringIO as StringIO
-from six.moves import map, zip
+from six.moves import cStringIO as StringIO, map
 
 
 operators = {
