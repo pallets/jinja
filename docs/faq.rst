@@ -174,7 +174,7 @@ harder to maintain the code for older Python versions.  If you really need
 Python 2.3 support you either have to use `Jinja 1`_ or other templating
 engines that still support 2.3.
 
-My Macros are overriden by something
+My Macros are overridden by something
 ------------------------------------
 
 In some situations the Jinja scoping appears arbitrary:

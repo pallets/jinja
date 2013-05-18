@@ -609,7 +609,7 @@ def width_ratio(writer, node):
 @node(core_tags.WithNode)
 def with_block(writer, node):
     writer.warn('with block expanded into set statement.  This could cause '
-                'variables following that block to be overriden.', node)
+                'variables following that block to be overridden.', node)
     writer.start_block()
     writer.write('set %s = ' % node.name)
     writer.node(node.var)
