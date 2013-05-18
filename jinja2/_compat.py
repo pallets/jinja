@@ -17,3 +17,8 @@ try:
     unichr = unichr  # py2
 except NameError:
     unichr = chr  # py3
+
+try:
+    range_type = xrange
+except NameError:
+    range_type = range
