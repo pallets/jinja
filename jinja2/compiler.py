@@ -36,14 +36,6 @@ operators = {
     'notin':    'not in'
 }
 
-try:
-    exec('(0 if 0 else 0)')
-except SyntaxError:
-    have_condexpr = False
-else:
-    have_condexpr = True
-
-
 # what method to iterate over items do we want to use for dict iteration
 # in generated code?  on 2.x let's go with iteritems, on 3.x with items
 if hasattr(dict, 'iteritems'):
@@ -1565,22 +1557,13 @@ class CodeGenerator(NodeVisitor):
                        'expression on %s evaluated to false and '
                        'no else section was defined.' % self.position(node)))
 
-        if not have_condexpr:
-            self.write('((')
-            self.visit(node.test, frame)
-            self.write(') and (')
-            self.visit(node.expr1, frame)
-            self.write(',) or (')
-            write_expr2()
-            self.write(',))[0]')
-        else:
-            self.write('(')
-            self.visit(node.expr1, frame)
-            self.write(' if ')
-            self.visit(node.test, frame)
-            self.write(' else ')
-            write_expr2()
-            self.write(')')
+        self.write('(')
+        self.visit(node.expr1, frame)
+        self.write(' if ')
+        self.visit(node.test, frame)
+        self.write(' else ')
+        write_expr2()
+        self.write(')')
 
     def visit_Call(self, node, frame, forward_caller=False):
         if self.environment.sandboxed:
