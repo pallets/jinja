@@ -18,7 +18,7 @@ from jinja2.utils import Markup, escape, pformat, urlize, soft_unicode, \
 from jinja2.runtime import Undefined
 from jinja2.exceptions import FilterArgumentError
 import six
-from six.moves import map, zip
+from six.moves import map
 
 
 _word_re = re.compile(r'\w+(?u)')

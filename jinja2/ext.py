@@ -10,11 +10,10 @@
     :copyright: (c) 2010 by the Jinja Team.
     :license: BSD.
 """
-from collections import deque
 from jinja2 import nodes
 from jinja2.defaults import *
 from jinja2.environment import Environment
-from jinja2.runtime import Undefined, concat
+from jinja2.runtime import concat
 from jinja2.exceptions import TemplateAssertionError, TemplateSyntaxError
 from jinja2.utils import contextfunction, import_string, Markup
 import six

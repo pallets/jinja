@@ -8,7 +8,6 @@
     :copyright: (c) 2010 by the Jinja Team.
     :license: BSD, see LICENSE for more details.
 """
-import sys
 import unittest
 
 from jinja2.testsuite import JinjaTestCase, filesystem_loader
