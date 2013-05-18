@@ -76,7 +76,7 @@ def _func():
     yield None
 FunctionType = type(_func)
 GeneratorType = type(_func())
-MethodType = type(_C.method)
+MethodType = type(_C().method)
 CodeType = type(_C.method.__code__)
 try:
     raise TypeError()
