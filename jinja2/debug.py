@@ -331,10 +331,7 @@ def _init_ugly_crap():
 tb_set_next = None
 if tproxy is None:
     try:
-        from jinja2._debugsupport import tb_set_next
-    except ImportError:
-        try:
-            tb_set_next = _init_ugly_crap()
-        except:
-            pass
+        tb_set_next = _init_ugly_crap()
+    except:
+        pass
     del _init_ugly_crap
