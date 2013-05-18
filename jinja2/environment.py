@@ -11,7 +11,11 @@
 import os
 import sys
 from jinja2 import nodes
-from jinja2.defaults import *
+from jinja2.defaults import BLOCK_START_STRING, \
+     BLOCK_END_STRING, VARIABLE_START_STRING, VARIABLE_END_STRING, \
+     COMMENT_START_STRING, COMMENT_END_STRING, LINE_STATEMENT_PREFIX, \
+     LINE_COMMENT_PREFIX, TRIM_BLOCKS, NEWLINE_SEQUENCE, \
+     DEFAULT_FILTERS, DEFAULT_TESTS, DEFAULT_NAMESPACE
 from jinja2.lexer import get_lexer, TokenStream
 from jinja2.parser import Parser
 from jinja2.optimizer import optimize
@@ -23,7 +27,7 @@ from jinja2.utils import import_string, LRUCache, Markup, missing, \
      concat, consume, internalcode, _encode_filename
 import six
 from functools import reduce
-from six.moves import filter, map, zip
+from six.moves import filter, map
 
 
 # for direct template usage we have up to ten living environments
