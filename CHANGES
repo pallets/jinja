@@ -15,6 +15,7 @@ Version 2.7
   want to change this encoding they can override the filter.
 - Accessing `last` on the loop context no longer causes the iterator
   to be consumed into a list.
+- Allow `contextfunction` and other decorators to be applied to `__call__`.
 
 Version 2.6
 -----------
