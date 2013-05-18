@@ -15,14 +15,9 @@ from jinja2.nodes import EvalContext
 from jinja2.visitor import NodeVisitor
 from jinja2.exceptions import TemplateAssertionError
 from jinja2.utils import Markup, concat, escape, is_python_keyword
+from jinaj2._compat import range_type
 import six
 from six.moves import cStringIO as StringIO, map
-
-# TODO: Move this to the compat module.
-try:
-    range_type = xrange
-except NameError:
-    range_type = range
 
 
 operators = {
@@ -72,7 +67,8 @@ def has_safe_repr(value):
     """Does the node have a safe representation?"""
     if value is None or value is NotImplemented or value is Ellipsis:
         return True
-    if isinstance(value, (bool, int, float, complex, range_type, Markup) + six.string_types):
+    if isinstance(value, (bool, int, float, complex, range_type,
+            Markup) + six.string_types):
         return True
     if isinstance(value, (tuple, list, set, frozenset)):
         for item in value:

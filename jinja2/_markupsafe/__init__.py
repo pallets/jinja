@@ -11,10 +11,7 @@
 import re
 import six
 from six.moves import map
-try:
-    unichr = unichr  # py2
-except NameError:
-    unichr = chr  # py3
+from jinja2._compat import unichr
 
 __all__ = ['Markup', 'soft_unicode', 'escape', 'escape_silent']
 
