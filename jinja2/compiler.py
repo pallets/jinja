@@ -19,6 +19,12 @@ import six
 from six.moves import cStringIO as StringIO
 from six.moves import map, zip
 
+# TODO: Move this to the compat module.
+try:
+    range_type = xrange
+except NameError:
+    range_type = range
+
 
 operators = {
     'eq':       '==',
@@ -71,10 +77,6 @@ def has_safe_repr(value):
     """Does the node have a safe representation?"""
     if value is None or value is NotImplemented or value is Ellipsis:
         return True
-    try:
-        range_type = xrange
-    except NameError:
-        range_type = range
     if isinstance(value, (bool, int, float, complex, range_type, Markup) + six.string_types):
         return True
     if isinstance(value, (tuple, list, set, frozenset)):
