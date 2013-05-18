@@ -1069,7 +1069,7 @@ class TemplateStream(six.Iterator):
         """
         close = False
         if isinstance(fp, six.string_types):
-            fp = file(fp, 'w')
+            fp = open(fp, 'w')
             close = True
         try:
             if encoding is not None:
