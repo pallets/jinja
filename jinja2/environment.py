@@ -1069,7 +1069,7 @@ class TemplateStream(six.Iterator):
         """
         close = False
         if isinstance(fp, six.string_types):
-            fp = open(fp, 'w')
+            fp = open(fp, encoding is None and 'w' or 'wb')
             close = True
         try:
             if encoding is not None:
