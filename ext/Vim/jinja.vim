@@ -49,14 +49,14 @@ syn keyword jinjaStatement containedin=jinjaTagBlock contained macro skipwhite n
 syn keyword jinjaStatement containedin=jinjaTagBlock contained block skipwhite nextgroup=jinjaBlockName
 
 " Variable Names
-syn match jinjaVariable containedin=jinjaVarBlock,jinjaTagBlock,jinjaNested contained skipwhite /[a-zA-Z_][a-zA-Z0-9_]*/
+syn match jinjaVariable containedin=jinjaVarBlock,jinjaTagBlock,jinjaNested contained /[a-zA-Z_][a-zA-Z0-9_]*/
 syn keyword jinjaSpecial containedin=jinjaVarBlock,jinjaTagBlock,jinjaNested contained false true none False True None loop super caller varargs kwargs
 
 " Filters
-syn match jinjaOperator "|" containedin=jinjaVarBlock,jinjaTagBlock,jinjaNested contained nextgroup=jinjaFilter
-syn match jinjaFilter contained skipwhite /[a-zA-Z_][a-zA-Z0-9_]*/
-syn match jinjaFunction contained skipwhite /[a-zA-Z_][a-zA-Z0-9_]*/
-syn match jinjaBlockName contained skipwhite /[a-zA-Z_][a-zA-Z0-9_]*/
+syn match jinjaOperator "|" containedin=jinjaVarBlock,jinjaTagBlock,jinjaNested contained skipwhite nextgroup=jinjaFilter
+syn match jinjaFilter contained /[a-zA-Z_][a-zA-Z0-9_]*/
+syn match jinjaFunction contained /[a-zA-Z_][a-zA-Z0-9_]*/
+syn match jinjaBlockName contained /[a-zA-Z_][a-zA-Z0-9_]*/
 
 " Jinja template constants
 syn region jinjaString containedin=jinjaVarBlock,jinjaTagBlock,jinjaNested contained start=/"/ skip=/\\"/ end=/"/
@@ -73,7 +73,7 @@ syn match jinjaAttribute contained /[a-zA-Z_][a-zA-Z0-9_]*/
 syn region jinjaNested matchgroup=jinjaOperator start="(" end=")" transparent display containedin=jinjaVarBlock,jinjaTagBlock,jinjaNested contained
 syn region jinjaNested matchgroup=jinjaOperator start="\[" end="\]" transparent display containedin=jinjaVarBlock,jinjaTagBlock,jinjaNested contained
 syn region jinjaNested matchgroup=jinjaOperator start="{" end="}" transparent display containedin=jinjaVarBlock,jinjaTagBlock,jinjaNested contained
-syn region jinjaTagBlock matchgroup=jinjaTagDelim start=/{%-\?/ end=/-\?%}/ skipwhite containedin=ALLBUT,jinjaTagBlock,jinjaVarBlock,jinjaRaw,jinjaString,jinjaNested,jinjaComment
+syn region jinjaTagBlock matchgroup=jinjaTagDelim start=/{%-\?/ end=/-\?%}/ containedin=ALLBUT,jinjaTagBlock,jinjaVarBlock,jinjaRaw,jinjaString,jinjaNested,jinjaComment
 
 syn region jinjaVarBlock matchgroup=jinjaVarDelim start=/{{-\?/ end=/-\?}}/ containedin=ALLBUT,jinjaTagBlock,jinjaVarBlock,jinjaRaw,jinjaString,jinjaNested,jinjaComment
 
@@ -86,10 +86,10 @@ syn region jinjaComment matchgroup=jinjaCommentDelim start="{#" end="#}" contain
 " Block start keywords.  A bit tricker.  We only highlight at the start of a
 " tag block and only if the name is not followed by a comma or equals sign
 " which usually means that we have to deal with an assignment.
-syn match jinjaStatement containedin=jinjaTagBlock contained skipwhite /\({%-\?\s*\)\@<=\<[a-zA-Z_][a-zA-Z0-9_]*\>\(\s*[,=]\)\@!/
+syn match jinjaStatement containedin=jinjaTagBlock contained /\({%-\?\s*\)\@<=\<[a-zA-Z_][a-zA-Z0-9_]*\>\(\s*[,=]\)\@!/
 
 " and context modifiers
-syn match jinjaStatement containedin=jinjaTagBlock contained /\<with\(out\)\?\s\+context\>/ skipwhite
+syn match jinjaStatement containedin=jinjaTagBlock contained /\<with\(out\)\?\s\+context\>/
 
 
 " Define the default highlighting.
