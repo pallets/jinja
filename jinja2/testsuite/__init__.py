@@ -89,7 +89,7 @@ def suite():
 
     # doctests will not run on python 3 currently.  Too many issues
     # with that, do not test that on that platform.
-    if sys.version_info < (3, 0):
+    if sys.version_info[0] < 3:
         suite.addTest(doctests.suite())
 
     return suite

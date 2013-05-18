@@ -28,7 +28,7 @@ from jinja2.utils import open_if_exists
 
 
 # marshal works better on 3.x, one hack less required
-if sys.version_info > (3, 0):
+if sys.version_info[0] > 3:
     from io import BytesIO
     marshal_dump = marshal.dump
     marshal_load = marshal.load

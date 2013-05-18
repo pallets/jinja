@@ -20,12 +20,11 @@ env = Environment(loader=filesystem_loader)
 
 class DebugTestCase(JinjaTestCase):
 
-    if sys.version_info[:2] != (2, 4):
-        def test_runtime_error(self):
-            def test():
-                tmpl.render(fail=lambda: 1 / 0)
-            tmpl = env.get_template('broken.html')
-            self.assert_traceback_matches(test, r'''
+    def test_runtime_error(self):
+        def test():
+            tmpl.render(fail=lambda: 1 / 0)
+        tmpl = env.get_template('broken.html')
+        self.assert_traceback_matches(test, r'''
   File ".*?broken.html", line 2, in (top-level template code|<module>)
     \{\{ fail\(\) \}\}
   File ".*?debug.pyc?", line \d+, in <lambda>
