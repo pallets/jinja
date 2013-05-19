@@ -10,6 +10,7 @@
 """
 import re
 import math
+from urllib import quote, quote_plus
 from random import choice
 from operator import itemgetter
 from itertools import groupby
@@ -422,6 +423,12 @@ def do_urlize(eval_ctx, value, trim_url_limit=None, nofollow=False):
         rv = Markup(rv)
     return rv
 
+def do_urlencode(value, plus=False):
+    """Return the urlencoded value. For detailed informations have a look at the
+    help page of "urllib.quote". If plus is set to True it will use the
+    "urllib.quote_plus" method.
+    """
+    return quote_plus(value) if plus else quote(value)
 
 def do_indent(s, width=4, indentfirst=False):
     """Return a copy of the passed string, each line indented by
@@ -825,6 +832,7 @@ FILTERS = {
     'string':               soft_unicode,
     'list':                 do_list,
     'urlize':               do_urlize,
+    'urlencode':            do_urlencode,
     'format':               do_format,
     'trim':                 do_trim,
     'striptags':            do_striptags,
