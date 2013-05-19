@@ -395,6 +395,21 @@ def do_filesizeformat(value, binary=False):
         return '%.1f %s' % ((base * bytes / unit), prefix)
 
 
+def do_timeformat(value):
+    """Convert seconds to 'human-readable' time (i.e. 9:05).
+    """
+    minutes, seconds = divmod(value, 60)
+    if minutes >= 60:
+        hours, minutes = divmod(minutes, 60)
+    else:
+        hours = 0
+
+    if hours:
+        return '%d:%.2d:%.2d' % (hours, minutes, seconds)
+    else:
+        return '%d:%.2d' % (minutes, seconds)
+
+
 def do_pprint(value, verbose=False):
     """Pretty print a variable. Useful for debugging.
 
@@ -957,6 +972,7 @@ FILTERS = {
     'reject':               do_reject,
     'rejectattr':           do_rejectattr,
     'filesizeformat':       do_filesizeformat,
+    'timeformat':           do_timeformat,
     'pprint':               do_pprint,
     'truncate':             do_truncate,
     'wordwrap':             do_wordwrap,
