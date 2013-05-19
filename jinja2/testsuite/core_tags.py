@@ -24,6 +24,10 @@ class ForLoopTestCase(JinjaTestCase):
         tmpl = env.from_string('{% for item in seq %}{{ item }}{% endfor %}')
         assert tmpl.render(seq=list(range(10))) == '0123456789'
 
+    def test_embedded_for_in_else(self):
+        tmpl = env.from_string('{% for item in seq %}{{ loop.index0 }}{% else %}{% for i in range(3) %}{{ i }}{% endfor %}{% endfor %}')
+        assert tmpl.render(seq=[]) == '012'
+
     def test_else(self):
         tmpl = env.from_string('{% for item in seq %}XXX{% else %}...{% endfor %}')
         assert tmpl.render() == '...'
@@ -221,6 +225,12 @@ class MacrosTestCase(JinjaTestCase):
 {% macro m(a, b, c='c', d='d') %}{{ a }}|{{ b }}|{{ c }}|{{ d }}{% endmacro %}
 {{ m() }}|{{ m('a') }}|{{ m('a', 'b') }}|{{ m(1, 2, 3) }}''')
         assert tmpl.render() == '||c|d|a||c|d|a|b|c|d|1|2|3|d'
+
+    def test_trailing_comma(self):
+        tmpl = self.env.from_string('''\
+{% macro m(a, b,) %}{{ a }}|{{ b }}{% endmacro %}
+{{ m(1,2,) }}''')
+        assert tmpl.render() == '1|2'
 
     def test_varargs(self):
         tmpl = self.env.from_string('''\
