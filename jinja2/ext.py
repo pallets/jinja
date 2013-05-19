@@ -20,6 +20,7 @@ from jinja2.environment import Environment
 from jinja2.runtime import concat
 from jinja2.exceptions import TemplateAssertionError, TemplateSyntaxError
 from jinja2.utils import contextfunction, import_string, Markup
+from jinja2._compat import next
 import six
 
 
@@ -215,7 +216,7 @@ class InternationalizationExtension(Extension):
 
     def parse(self, parser):
         """Parse a translatable tag."""
-        lineno = six.advance_iterator(parser.stream).lineno
+        lineno = next(parser.stream).lineno
         num_called_num = False
 
         # find all the variables referenced.  Additionally a variable can be
@@ -240,7 +241,7 @@ class InternationalizationExtension(Extension):
 
             # expressions
             if parser.stream.current.type == 'assign':
-                six.advance_iterator(parser.stream)
+                next(parser.stream)
                 variables[name.value] = var = parser.parse_expression()
             else:
                 variables[name.value] = var = nodes.Name(name.value, 'load')
@@ -272,7 +273,7 @@ class InternationalizationExtension(Extension):
         # if we have a pluralize block, we parse that too
         if parser.stream.current.test('name:pluralize'):
             have_plural = True
-            six.advance_iterator(parser.stream)
+            next(parser.stream)
             if parser.stream.current.type != 'block_end':
                 name = parser.stream.expect('name')
                 if name.value not in variables:
@@ -283,10 +284,10 @@ class InternationalizationExtension(Extension):
                 num_called_num = name.value == 'num'
             parser.stream.expect('block_end')
             plural_names, plural = self._parse_block(parser, False)
-            six.advance_iterator(parser.stream)
+            next(parser.stream)
             referenced.update(plural_names)
         else:
-            six.advance_iterator(parser.stream)
+            next(parser.stream)
 
         # register free names as simple name expressions
         for var in referenced:
@@ -314,15 +315,15 @@ class InternationalizationExtension(Extension):
         while 1:
             if parser.stream.current.type == 'data':
                 buf.append(parser.stream.current.value.replace('%', '%%'))
-                six.advance_iterator(parser.stream)
+                next(parser.stream)
             elif parser.stream.current.type == 'variable_begin':
-                six.advance_iterator(parser.stream)
+                next(parser.stream)
                 name = parser.stream.expect('name').value
                 referenced.append(name)
                 buf.append('%%(%s)s' % name)
                 parser.stream.expect('variable_end')
             elif parser.stream.current.type == 'block_begin':
-                six.advance_iterator(parser.stream)
+                next(parser.stream)
                 if parser.stream.current.test('name:endtrans'):
                     break
                 elif parser.stream.current.test('name:pluralize'):
@@ -395,7 +396,7 @@ class ExprStmtExtension(Extension):
     tags = set(['do'])
 
     def parse(self, parser):
-        node = nodes.ExprStmt(lineno=six.advance_iterator(parser.stream).lineno)
+        node = nodes.ExprStmt(lineno=next(parser.stream).lineno)
         node.node = parser.parse_tuple()
         return node
 
@@ -405,7 +406,7 @@ class LoopControlExtension(Extension):
     tags = set(['break', 'continue'])
 
     def parse(self, parser):
-        token = six.advance_iterator(parser.stream)
+        token = next(parser.stream)
         if token.value == 'break':
             return nodes.Break(lineno=token.lineno)
         return nodes.Continue(lineno=token.lineno)
@@ -416,7 +417,7 @@ class WithExtension(Extension):
     tags = set(['with'])
 
     def parse(self, parser):
-        node = nodes.Scope(lineno=six.advance_iterator(parser.stream).lineno)
+        node = nodes.Scope(lineno=next(parser.stream).lineno)
         assignments = []
         while parser.stream.current.type != 'block_end':
             lineno = parser.stream.current.lineno
@@ -437,7 +438,7 @@ class AutoEscapeExtension(Extension):
     tags = set(['autoescape'])
 
     def parse(self, parser):
-        node = nodes.ScopedEvalContextModifier(lineno=six.advance_iterator(parser.stream).lineno)
+        node = nodes.ScopedEvalContextModifier(lineno=next(parser.stream).lineno)
         node.options = [
             nodes.Keyword('autoescape', parser.parse_expression())
         ]

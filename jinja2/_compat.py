@@ -11,6 +11,7 @@
     :copyright: Copyright 2013 by the Jinja team, see AUTHORS.
     :license: BSD, see LICENSE for details.
 """
+import six
 
 # https://bitbucket.org/gutworth/six/issue/25/add-unichr
 try:
@@ -18,7 +19,6 @@ try:
 except NameError:
     unichr = chr  # py3
 
-try:
-    range_type = xrange
-except NameError:
-    range_type = range
+range_type = six.moves.xrange
+next = six.advance_iterator
+imap = six.moves.map

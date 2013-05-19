@@ -12,10 +12,12 @@
     :copyright: (c) 2010 by the Jinja Team.
     :license: BSD, see LICENSE for more details.
 """
+import six
 import operator
+
 from collections import deque
 from jinja2.utils import Markup, MethodType, FunctionType
-import six
+from jinja2._compat import next
 from six.moves import zip
 
 
@@ -143,7 +145,7 @@ class Node(six.with_metaclass(NodeType, object)):
             setattr(self, attr, attributes.pop(attr, None))
         if attributes:
             raise TypeError('unknown attribute %r' %
-                            six.advance_iterator(iter(attributes)))
+                            next(iter(attributes)))
 
     def iter_fields(self, exclude=None, only=None):
         """This method iterates over all fields that are defined and yields

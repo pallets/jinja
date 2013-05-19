@@ -14,12 +14,12 @@ import tempfile
 import shutil
 
 from jinja2.testsuite import JinjaTestCase
+from jinja2._compat import next
 
 from jinja2 import Environment, Undefined, DebugUndefined, \
      StrictUndefined, UndefinedError, meta, \
      is_undefined, Template, DictLoader
 from jinja2.utils import Cycler
-import six
 
 env = Environment()
 
@@ -54,8 +54,8 @@ class ExtendedAPITestCase(JinjaTestCase):
         c = Cycler(*items)
         for item in items + items:
             assert c.current == item
-            assert six.advance_iterator(c) == item
-        six.advance_iterator(c)
+            assert next(c) == item
+        next(c)
         assert c.current == 2
         c.reset()
         assert c.current == 1
@@ -111,8 +111,8 @@ class MetaTestCase(JinjaTestCase):
     def test_find_refererenced_templates(self):
         ast = env.parse('{% extends "layout.html" %}{% include helper %}')
         i = meta.find_referenced_templates(ast)
-        assert six.advance_iterator(i) == 'layout.html'
-        assert six.advance_iterator(i) is None
+        assert next(i) == 'layout.html'
+        assert next(i) is None
         assert list(i) == []
 
         ast = env.parse('{% extends "layout.html" %}'
@@ -146,20 +146,20 @@ class StreamingTestCase(JinjaTestCase):
         tmpl = env.from_string("<ul>{% for item in seq %}<li>{{ loop.index "
                                "}} - {{ item }}</li>{%- endfor %}</ul>")
         stream = tmpl.stream(seq=list(range(4)))
-        self.assert_equal(six.advance_iterator(stream), '<ul>')
-        self.assert_equal(six.advance_iterator(stream), '<li>1 - 0</li>')
-        self.assert_equal(six.advance_iterator(stream), '<li>2 - 1</li>')
-        self.assert_equal(six.advance_iterator(stream), '<li>3 - 2</li>')
-        self.assert_equal(six.advance_iterator(stream), '<li>4 - 3</li>')
-        self.assert_equal(six.advance_iterator(stream), '</ul>')
+        self.assert_equal(next(stream), '<ul>')
+        self.assert_equal(next(stream), '<li>1 - 0</li>')
+        self.assert_equal(next(stream), '<li>2 - 1</li>')
+        self.assert_equal(next(stream), '<li>3 - 2</li>')
+        self.assert_equal(next(stream), '<li>4 - 3</li>')
+        self.assert_equal(next(stream), '</ul>')
 
     def test_buffered_streaming(self):
         tmpl = env.from_string("<ul>{% for item in seq %}<li>{{ loop.index "
                                "}} - {{ item }}</li>{%- endfor %}</ul>")
         stream = tmpl.stream(seq=list(range(4)))
         stream.enable_buffering(size=3)
-        self.assert_equal(six.advance_iterator(stream), u'<ul><li>1 - 0</li><li>2 - 1</li>')
-        self.assert_equal(six.advance_iterator(stream), u'<li>3 - 2</li><li>4 - 3</li></ul>')
+        self.assert_equal(next(stream), u'<ul><li>1 - 0</li><li>2 - 1</li>')
+        self.assert_equal(next(stream), u'<li>3 - 2</li><li>4 - 3</li></ul>')
 
     def test_streaming_behavior(self):
         tmpl = env.from_string("")

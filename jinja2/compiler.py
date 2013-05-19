@@ -8,6 +8,8 @@
     :copyright: (c) 2010 by the Jinja Team.
     :license: BSD, see LICENSE for more details.
 """
+import six
+
 from itertools import chain
 from copy import deepcopy
 from jinja2 import nodes
@@ -15,8 +17,7 @@ from jinja2.nodes import EvalContext
 from jinja2.visitor import NodeVisitor
 from jinja2.exceptions import TemplateAssertionError
 from jinja2.utils import Markup, concat, escape, is_python_keyword
-from jinja2._compat import range_type
-import six
+from jinja2._compat import range_type, next
 from six.moves import cStringIO as StringIO, map
 
 
@@ -1359,7 +1360,7 @@ class CodeGenerator(NodeVisitor):
             public_names = [x for x in assignment_frame.toplevel_assignments
                             if not x.startswith('_')]
             if len(assignment_frame.toplevel_assignments) == 1:
-                name = six.advance_iterator(iter(assignment_frame.toplevel_assignments))
+                name = next(iter(assignment_frame.toplevel_assignments))
                 self.writeline('context.vars[%r] = l_%s' % (name, name))
             else:
                 self.writeline('context.vars.update({')

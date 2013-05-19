@@ -15,11 +15,13 @@
     :license: BSD, see LICENSE for more details.
 """
 import re
+import six
+
 from operator import itemgetter
 from collections import deque
 from jinja2.exceptions import TemplateSyntaxError
 from jinja2.utils import LRUCache
-import six
+from jinja2._compat import next
 
 
 # cache for the lexers. Exists in order to be able to have multiple
@@ -285,7 +287,7 @@ class TokenStreamIterator(six.Iterator):
         if token.type is TOKEN_EOF:
             self.stream.close()
             raise StopIteration()
-        six.advance_iterator(self.stream)
+        next(self.stream)
         return token
 
 
@@ -302,7 +304,7 @@ class TokenStream(six.Iterator):
         self.filename = filename
         self.closed = False
         self.current = Token(1, TOKEN_INITIAL, '')
-        six.advance_iterator(self)
+        next(self)
 
     def __iter__(self):
         return TokenStreamIterator(self)
@@ -319,7 +321,7 @@ class TokenStream(six.Iterator):
 
     def look(self):
         """Look at the next token."""
-        old_token = six.advance_iterator(self)
+        old_token = next(self)
         result = self.current
         self.push(result)
         self.current = old_token
@@ -328,14 +330,14 @@ class TokenStream(six.Iterator):
     def skip(self, n=1):
         """Got n tokens ahead."""
         for x in range(n):
-            six.advance_iterator(self)
+            next(self)
 
     def next_if(self, expr):
         """Perform the token test and return the token if it matched.
         Otherwise the return value is `None`.
         """
         if self.current.test(expr):
-            return six.advance_iterator(self)
+            return next(self)
 
     def skip_if(self, expr):
         """Like :meth:`next_if` but only returns `True` or `False`."""
@@ -348,7 +350,7 @@ class TokenStream(six.Iterator):
             self.current = self._pushed.popleft()
         elif self.current.type is not TOKEN_EOF:
             try:
-                self.current = six.advance_iterator(self._iter)
+                self.current = next(self._iter)
             except StopIteration:
                 self.close()
         return rv
@@ -377,7 +379,7 @@ class TokenStream(six.Iterator):
         try:
             return self.current
         finally:
-            six.advance_iterator(self)
+            next(self)
 
 
 def get_lexer(environment):

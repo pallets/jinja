@@ -9,6 +9,7 @@
     :license: BSD, see LICENSE for more details.
 """
 import re
+import six
 import unittest
 
 from jinja2.testsuite import JinjaTestCase
@@ -17,7 +18,7 @@ from jinja2 import Environment, DictLoader, contextfunction, nodes
 from jinja2.exceptions import TemplateAssertionError
 from jinja2.ext import Extension
 from jinja2.lexer import Token, count_newlines
-import six
+from jinja2._compat import next
 from six import BytesIO
 
 importable_object = 23
@@ -111,7 +112,7 @@ class TestExtension(Extension):
             self.attr('ext_attr'),
             nodes.ImportedName(__name__ + '.importable_object'),
             nodes.ContextReference()
-        ])]).set_lineno(six.advance_iterator(parser.stream).lineno)
+        ])]).set_lineno(next(parser.stream).lineno)
 
     def _dump(self, sandboxed, ext_attr, imported_object, context):
         return '%s|%s|%s|%s' % (

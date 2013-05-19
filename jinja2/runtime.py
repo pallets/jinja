@@ -14,6 +14,7 @@ from jinja2.utils import Markup, soft_unicode, escape, missing, concat, \
      internalcode, object_type_repr
 from jinja2.exceptions import UndefinedError, TemplateRuntimeError, \
      TemplateNotFound
+from jinja2._compat import next
 import six
 from six.moves import map
 
@@ -320,7 +321,7 @@ class LoopContext(object):
 
     def _safe_next(self):
         try:
-            return six.advance_iterator(self._iterator)
+            return next(self._iterator)
         except StopIteration:
             return _last_iteration
 

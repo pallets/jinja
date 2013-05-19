@@ -10,6 +10,8 @@
 """
 import re
 import math
+import six
+
 from random import choice
 from operator import itemgetter
 from itertools import groupby
@@ -17,7 +19,7 @@ from jinja2.utils import Markup, escape, pformat, urlize, soft_unicode, \
      unicode_urlencode
 from jinja2.runtime import Undefined
 from jinja2.exceptions import FilterArgumentError
-import six
+from jinja2._compat import next
 from six.moves import map
 
 
@@ -342,7 +344,7 @@ def do_center(value, width=80):
 def do_first(environment, seq):
     """Return the first item of a sequence."""
     try:
-        return six.advance_iterator(iter(seq))
+        return next(iter(seq))
     except StopIteration:
         return environment.undefined('No first item, sequence was empty.')
 
@@ -351,7 +353,7 @@ def do_first(environment, seq):
 def do_last(environment, seq):
     """Return the last item of a sequence."""
     try:
-        return six.advance_iterator(iter(reversed(seq)))
+        return next(iter(reversed(seq)))
     except StopIteration:
         return environment.undefined('No last item, sequence was empty.')
 
@@ -820,7 +822,7 @@ def do_map(*args, **kwargs):
         attribute = kwargs.pop('attribute')
         if kwargs:
             raise FilterArgumentError('Unexpected keyword argument %r' %
-                six.advance_iterator(iter(kwargs)))
+                next(iter(kwargs)))
         func = make_attrgetter(context.environment, attribute)
     else:
         try:

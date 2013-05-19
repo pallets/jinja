@@ -9,14 +9,15 @@
     :license: BSD, see LICENSE for more details.
 """
 import sys
+import six
 import unittest
 
 from jinja2.testsuite import JinjaTestCase
 
 from jinja2 import Environment, Template, TemplateSyntaxError, \
      UndefinedError, nodes
+from jinja2._compat import next
 from jinja2.lexer import Token, TokenStream, TOKEN_EOF, TOKEN_BLOCK_BEGIN, TOKEN_BLOCK_END
-import six
 
 env = Environment()
 
@@ -39,11 +40,11 @@ class TokenStreamTestCase(JinjaTestCase):
         assert ts.current.type is TOKEN_BLOCK_BEGIN
         assert bool(ts)
         assert not bool(ts.eos)
-        six.advance_iterator(ts)
+        next(ts)
         assert ts.current.type is TOKEN_BLOCK_END
         assert bool(ts)
         assert not bool(ts.eos)
-        six.advance_iterator(ts)
+        next(ts)
         assert ts.current.type is TOKEN_EOF
         assert not bool(ts)
         assert bool(ts.eos)
@@ -98,7 +99,7 @@ class LexerTestCase(JinjaTestCase):
             if test in '([{}])':
                 continue
             stream = env.lexer.tokenize('{{ %s }}' % test)
-            six.advance_iterator(stream)
+            next(stream)
             assert stream.current.type == expect
 
     def test_normalizing(self):
