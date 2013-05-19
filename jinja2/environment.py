@@ -19,11 +19,12 @@ from jinja2.defaults import BLOCK_START_STRING, \
      KEEP_TRAILING_NEWLINE, LSTRIP_BLOCKS
 from jinja2.lexer import get_lexer, TokenStream
 from jinja2.parser import Parser
+from jinja2.nodes import EvalContext
 from jinja2.optimizer import optimize
 from jinja2.compiler import generate
 from jinja2.runtime import Undefined, new_context
 from jinja2.exceptions import TemplateSyntaxError, TemplateNotFound, \
-     TemplatesNotFound
+     TemplatesNotFound, TemplateRuntimeError
 from jinja2.utils import import_string, LRUCache, Markup, missing, \
      concat, consume, internalcode, _encode_filename
 import six
@@ -399,6 +400,42 @@ class Environment(object):
             return obj[attribute]
         except (TypeError, LookupError, AttributeError):
             return self.undefined(obj=obj, name=attribute)
+
+    def call_filter(self, name, value, args=None, kwargs=None,
+                    context=None, eval_ctx=None):
+        """Invokes a filter on a value the same way the compiler does it.
+
+        .. versionadded:: 2.7
+        """
+        func = self.filters.get(name)
+        if func is None:
+            raise TemplateRuntimeError('no filter named %r' % name)
+        args = list(args or ())
+        if getattr(func, 'contextfilter', False):
+            if context is None:
+                raise TemplateRuntimeError('Attempted to invoke context '
+                                           'filter without context')
+            args.insert(0, context)
+        elif getattr(func, 'evalcontextfilter', False):
+            if eval_ctx is None:
+                if context is not None:
+                    eval_ctx = context.eval_ctx
+                else:
+                    eval_ctx = EvalContext(self)
+            args.insert(0, eval_ctx)
+        elif getattr(func, 'environmentfilter', False):
+            args.insert(0, self)
+        return func(value, *args, **(kwargs or {}))
+
+    def call_test(self, name, value, args=None, kwargs=None):
+        """Invokes a test on a value the same way the compiler does it.
+
+        .. versionadded:: 2.7
+        """
+        func = self.tests.get(name)
+        if func is None:
+            raise TemplateRuntimeError('no test named %r' % name)
+        return func(value, *(args or ()), **(kwargs or {}))
 
     @internalcode
     def parse(self, source, name=None, filename=None):

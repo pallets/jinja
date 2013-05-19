@@ -26,6 +26,8 @@ Version 2.7
 - Added support for keeping the trailing newline in templates.
 - Added finer grained support for stripping whitespace on the left side
   of blocks.
+- Added `map`, `select`, `reject`, `selectattr` and `rejectattr`
+  filters.
 
 Version 2.6
 -----------

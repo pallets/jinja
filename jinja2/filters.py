@@ -790,6 +790,144 @@ def do_attr(environment, obj, name):
     return environment.undefined(obj=obj, name=name)
 
 
+@contextfilter
+def do_map(*args, **kwargs):
+    """Applies a filter on a sequence of objects or looks up an attribute.
+    This is useful when dealing with lists of objects but you are really
+    only interested in a certain value of it.
+
+    The basic usage is mapping on an attribute.  Imagine you have a list
+    of users but you are only interested in a list of usernames:
+
+    .. sourcecode:: jinja
+
+        Users on this page: {{ users|map(attribute='username')|join(', ') }}
+
+    Alternatively you can let it invoke a filter by passing the name of the
+    filter and the arguments afterwards.  A good example would be applying a
+    text conversion filter on a sequence:
+
+    .. sourcecode:: jinja
+
+        Users on this page: {{ titles|map('lower')|join(', ') }}
+
+    .. versionadded:: 2.7
+    """
+    context = args[0]
+    seq = args[1]
+
+    if len(args) == 2 and 'attribute' in kwargs:
+        attribute = kwargs.pop('attribute')
+        if kwargs:
+            raise FilterArgumentError('Unexpected keyword argument %r' %
+                six.advance_iterator(iter(kwargs)))
+        func = make_attrgetter(context.environment, attribute)
+    else:
+        try:
+            name = args[2]
+            args = args[3:]
+        except LookupError:
+            raise FilterArgumentError('map requires a filter argument')
+        func = lambda item: context.environment.call_filter(
+            name, item, args, kwargs, context=context)
+
+    if seq:
+        for item in seq:
+            yield func(item)
+
+
+@contextfilter
+def do_select(*args, **kwargs):
+    """Filters a sequence of objects by appying a test to either the object
+    or the attribute and only selecting the ones with the test succeeding.
+
+    Example usage:
+
+    .. sourcecode:: jinja
+
+        {{ numbers|select("odd") }}
+
+    .. versionadded:: 2.7
+    """
+    return _select_or_reject(args, kwargs, lambda x: x, False)
+
+
+@contextfilter
+def do_reject(*args, **kwargs):
+    """Filters a sequence of objects by appying a test to either the object
+    or the attribute and rejecting the ones with the test succeeding.
+
+    Example usage:
+
+    .. sourcecode:: jinja
+
+        {{ numbers|reject("odd") }}
+
+    .. versionadded:: 2.7
+    """
+    return _select_or_reject(args, kwargs, lambda x: not x, False)
+
+
+@contextfilter
+def do_selectattr(*args, **kwargs):
+    """Filters a sequence of objects by appying a test to either the object
+    or the attribute and only selecting the ones with the test succeeding.
+
+    Example usage:
+
+    .. sourcecode:: jinja
+
+        {{ users|selectattr("is_active") }}
+        {{ users|selectattr("email", "none") }}
+
+    .. versionadded:: 2.7
+    """
+    return _select_or_reject(args, kwargs, lambda x: x, True)
+
+
+@contextfilter
+def do_rejectattr(*args, **kwargs):
+    """Filters a sequence of objects by appying a test to either the object
+    or the attribute and rejecting the ones with the test succeeding.
+
+    .. sourcecode:: jinja
+
+        {{ users|rejectattr("is_active") }}
+        {{ users|rejectattr("email", "none") }}
+
+    .. versionadded:: 2.7
+    """
+    return _select_or_reject(args, kwargs, lambda x: not x, True)
+
+
+def _select_or_reject(args, kwargs, modfunc, lookup_attr):
+    context = args[0]
+    seq = args[1]
+    if lookup_attr:
+        try:
+            attr = args[2]
+        except LookupError:
+            raise FilterArgumentError('Missing parameter for attribute name')
+        transfunc = make_attrgetter(context.environment, attr)
+        off = 1
+    else:
+        off = 0
+        transfunc = lambda x: x
+
+    try:
+        name = args[2 + off]
+        args = args[3 + off:]
+        func = lambda item: context.environment.call_test(
+            name, item, args, kwargs)
+    except LookupError:
+        func = bool
+
+    if seq:
+        for item in seq:
+            if modfunc(func(transfunc(item))):
+                yield item
+
+
 FILTERS = {
     'attr':                 do_attr,
     'replace':              do_replace,
@@ -814,7 +952,10 @@ FILTERS = {
     'capitalize':           do_capitalize,
     'first':                do_first,
     'last':                 do_last,
+    'map':                  do_map,
     'random':               do_random,
+    'reject':               do_reject,
+    'rejectattr':           do_rejectattr,
     'filesizeformat':       do_filesizeformat,
     'pprint':               do_pprint,
     'truncate':             do_truncate,
@@ -828,6 +969,8 @@ FILTERS = {
     'format':               do_format,
     'trim':                 do_trim,
     'striptags':            do_striptags,
+    'select':               do_select,
+    'selectattr':           do_selectattr,
     'slice':                do_slice,
     'batch':                do_batch,
     'sum':                  do_sum,

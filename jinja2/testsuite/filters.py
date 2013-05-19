@@ -392,6 +392,109 @@ class FilterTestCase(JinjaTestCase):
         assert tmpl.render(o={u"\u203d": 1}) == "%E2%80%BD=1"
         assert tmpl.render(o={0: 1}) == "0=1"
 
+    def test_simple_map(self):
+        env = Environment()
+        tmpl = env.from_string('{{ ["1", "2", "3"]|map("int")|sum }}')
+        self.assertEqual(tmpl.render(), '6')
+
+    def test_attribute_map(self):
+        class User(object):
+            def __init__(self, name):
+                self.name = name
+        env = Environment()
+        users = [
+            User('john'),
+            User('jane'),
+            User('mike'),
+        ]
+        tmpl = env.from_string('{{ users|map(attribute="name")|join("|") }}')
+        self.assertEqual(tmpl.render(users=users), 'john|jane|mike')
+
+    def test_empty_map(self):
+        env = Environment()
+        tmpl = env.from_string('{{ none|map("upper")|list }}')
+        self.assertEqual(tmpl.render(), '[]')
+
+    def test_simple_select(self):
+        env = Environment()
+        tmpl = env.from_string('{{ [1, 2, 3, 4, 5]|select("odd")|join("|") }}')
+        self.assertEqual(tmpl.render(), '1|3|5')
+
+    def test_bool_select(self):
+        env = Environment()
+        tmpl = env.from_string('{{ [none, false, 0, 1, 2, 3, 4, 5]|select|join("|") }}')
+        self.assertEqual(tmpl.render(), '1|2|3|4|5')
+
+    def test_simple_reject(self):
+        env = Environment()
+        tmpl = env.from_string('{{ [1, 2, 3, 4, 5]|reject("odd")|join("|") }}')
+        self.assertEqual(tmpl.render(), '2|4')
+
+    def test_bool_reject(self):
+        env = Environment()
+        tmpl = env.from_string('{{ [none, false, 0, 1, 2, 3, 4, 5]|reject|join("|") }}')
+        self.assertEqual(tmpl.render(), 'None|False|0')
+
+    def test_simple_select_attr(self):
+        class User(object):
+            def __init__(self, name, is_active):
+                self.name = name
+                self.is_active = is_active
+        env = Environment()
+        users = [
+            User('john', True),
+            User('jane', True),
+            User('mike', False),
+        ]
+        tmpl = env.from_string('{{ users|selectattr("is_active")|'
+            'map(attribute="name")|join("|") }}')
+        self.assertEqual(tmpl.render(users=users), 'john|jane')
+
+    def test_simple_reject_attr(self):
+        class User(object):
+            def __init__(self, name, is_active):
+                self.name = name
+                self.is_active = is_active
+        env = Environment()
+        users = [
+            User('john', True),
+            User('jane', True),
+            User('mike', False),
+        ]
+        tmpl = env.from_string('{{ users|rejectattr("is_active")|'
+            'map(attribute="name")|join("|") }}')
+        self.assertEqual(tmpl.render(users=users), 'mike')
+
+    def test_func_select_attr(self):
+        class User(object):
+            def __init__(self, id, name):
+                self.id = id
+                self.name = name
+        env = Environment()
+        users = [
+            User(1, 'john'),
+            User(2, 'jane'),
+            User(3, 'mike'),
+        ]
+        tmpl = env.from_string('{{ users|selectattr("id", "odd")|'
+            'map(attribute="name")|join("|") }}')
+        self.assertEqual(tmpl.render(users=users), 'john|mike')
+
+    def test_func_reject_attr(self):
+        class User(object):
+            def __init__(self, id, name):
+                self.id = id
+                self.name = name
+        env = Environment()
+        users = [
+            User(1, 'john'),
+            User(2, 'jane'),
+            User(3, 'mike'),
+        ]
+        tmpl = env.from_string('{{ users|rejectattr("id", "odd")|'
+            'map(attribute="name")|join("|") }}')
+        self.assertEqual(tmpl.render(users=users), 'jane')
+
 
 def suite():
     suite = unittest.TestSuite()
