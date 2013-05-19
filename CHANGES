@@ -24,6 +24,8 @@ Version 2.7
   filter.
 - Added support for ignoring memcache errors silently.
 - Added support for keeping the trailing newline in templates.
+- Added finer grained support for stripping whitespace on the left side
+  of blocks.
 
 Version 2.6
 -----------

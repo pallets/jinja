@@ -189,7 +189,7 @@ Django template::
         No items!
     {% endfor %}
 
-would be handled in Flask as::
+would be handled in Jinja2 as::
 
     {% for item in items %}
         {{item}}
