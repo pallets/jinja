@@ -239,7 +239,7 @@ class BugFixTestCase(JinjaTestCase):
         """
         try:
             tmpl = env.get_template('doublee')
-        except Exception, e:
+        except Exception as e:
             assert isinstance(e, TemplateError)
 
 

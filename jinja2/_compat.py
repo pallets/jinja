@@ -4,9 +4,9 @@
     ~~~~~~~~~~~~~~
 
     Some py2/py3 compatibility support that is not yet available in
-     "six" 1.3.0.
-    There are bugs open for "six" for all this stuff, so we can remove it
-    again from here as soon as we require a new enough "six" release.
+    "six" 1.3.0.  Generally all uses of six should go through this module
+    so that we have one central place to remove stuff from when we
+    eventually drop 2.x.
 
     :copyright: Copyright 2013 by the Jinja team, see AUTHORS.
     :license: BSD, see LICENSE for details.
