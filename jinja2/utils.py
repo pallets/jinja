@@ -565,14 +565,5 @@ class Joiner(object):
         return self.sep
 
 
-# try markupsafe first, if that fails go with Jinja2's bundled version
-# of markupsafe.  Markupsafe was previously Jinja2's implementation of
-# the Markup object but was moved into a separate package in a patchlevel
-# release
-try:
-    from markupsafe import Markup, escape, soft_unicode
-except ImportError:
-    from jinja2._markupsafe import Markup, escape, soft_unicode
-
-
-from functools import partial
+# Imported here because that's where it was in the past
+from markupsafe import Markup, escape, soft_unicode
