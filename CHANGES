@@ -20,6 +20,7 @@ Version 2.7
 - Allow `contextfunction` and other decorators to be applied to `__call__`.
 - Added support for changing from newline to different signs in the `wordwrap`
   filter.
+- Added support for ignoring memcache errors silently.
 
 Version 2.6
 -----------

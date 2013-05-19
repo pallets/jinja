@@ -281,17 +281,25 @@ class MemcachedBytecodeCache(BytecodeCache):
 
     This bytecode cache does not support clearing of used items in the cache.
     The clear method is a no-operation function.
+
+    .. versionadded:: 2.7
+       Added support for ignoring memcache errors through the
+       `ignore_memcache_errors` parameter.
     """
 
-    def __init__(self, client, prefix='jinja2/bytecode/', timeout=None):
+    def __init__(self, client, prefix='jinja2/bytecode/', timeout=None,
+                 ignore_memcache_errors=True):
         self.client = client
         self.prefix = prefix
         self.timeout = timeout
+        self.ignore_memcache_errors = ignore_memcache_errors
 
     def load_bytecode(self, bucket):
         try:
             code = self.client.get(self.prefix + bucket.key)
-        except:
+        except Exception:
+            if not self.ignore_memcache_errors:
+                raise
             code = None
         if code is not None:
             bucket.bytecode_from_string(code)
@@ -302,5 +310,6 @@ class MemcachedBytecodeCache(BytecodeCache):
             args += (self.timeout,)
         try:
             self.client.set(*args)
-        except:
-            pass
+        except Exception:
+            if not self.ignore_memcache_errors:
+                raise
