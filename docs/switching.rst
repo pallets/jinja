@@ -184,7 +184,7 @@ In addition, the Django `empty` argument is called `else` in Jinja2. For example
 Django template::
 
     {% for item in items %}
-        {{item}}
+        {{ item }}
     {% empty %}
         No items!
     {% endfor %}
@@ -192,7 +192,7 @@ Django template::
 would be handled in Jinja2 as::
 
     {% for item in items %}
-        {{item}}
+        {{ item }}
     {% else %}
         No items!
     {% endfor %}
