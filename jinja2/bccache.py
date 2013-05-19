@@ -21,11 +21,11 @@ import tempfile
 import fnmatch
 from hashlib import sha1
 from jinja2.utils import open_if_exists
-from jinja2._compat import BytesIO, pickle, PY3
+from jinja2._compat import BytesIO, pickle, PY2
 
 
 # marshal works better on 3.x, one hack less required
-if PY3:
+if not PY2:
     marshal_dump = marshal.dump
     marshal_load = marshal.load
 else:

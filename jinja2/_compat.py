@@ -3,53 +3,87 @@
     jinja2._compat
     ~~~~~~~~~~~~~~
 
-    Some py2/py3 compatibility support that is not yet available in
-    "six" 1.3.0.  Generally all uses of six should go through this module
-    so that we have one central place to remove stuff from when we
-    eventually drop 2.x.
+    Some py2/py3 compatibility support based on a stripped down
+    version of six so we don't have to depend on a specific version
+    of it.
 
     :copyright: Copyright 2013 by the Jinja team, see AUTHORS.
     :license: BSD, see LICENSE for details.
 """
-import six
 import sys
 
-PY3 = six.PY3
+PY2 = sys.version_info[0] == 2
 
-# https://bitbucket.org/gutworth/six/issue/25/add-unichr
-try:
-    unichr = unichr  # py2
-except NameError:
-    unichr = chr  # py3
 
-range_type = six.moves.xrange
-next = six.advance_iterator
-imap = six.moves.map
-izip = six.moves.zip
-text_type = six.text_type
-string_types = six.string_types
+if not PY2:
+    unichr = chr
+    range_type = range
+    text_type = str
+    string_types = (str,)
 
-iteritems = six.iteritems
-iterkeys = six.iterkeys
-itervalues = six.itervalues
+    _iterkeys = 'keys'
+    _itervalues = 'values'
+    _iteritems = 'items'
 
-if six.PY3:
     from io import BytesIO, StringIO
     NativeStringIO = StringIO
+
+    ifilter = filter
+    imap = map
+    izip = zip
+
+    def reraise(tp, value, tb=None):
+        if value.__traceback__ is not tb:
+            raise value.with_traceback(tb)
+        raise value
+
+    Iterator = object
 else:
+    text_type = unicode
+    unichr = unichr
+    string_types = (str, unicode)
+
+    _iterkeys = 'iterkeys'
+    _itervalues = 'itervalues'
+    _iteritems = 'iteritems'
+
+    from itertools import imap, izip, ifilter
+    range_type = xrange
+
     from cStringIO import StringIO as BytesIO
     from StringIO import StringIO
     NativeStringIO = BytesIO
+
+    exec('def reraise(tp, value, tb=None):\n raise tp, value, tb')
+
+    class Iterator(object):
+        def next(self):
+            return self.__next__()
+
+try:
+    next = next
+except NameError:
+    def next(it):
+        return it.next()
+
+
+def with_metaclass(meta, *bases):
+    """Create a base class with a metaclass."""
+    return meta('NewBase', bases, {})
+
+def iterkeys(d, **kw):
+    return iter(getattr(d, _iterkeys)(**kw))
+
+def itervalues(d, **kw):
+    return iter(getattr(d, _itervalues)(**kw))
+
+def iteritems(d, **kw):
+    return iter(getattr(d, _iteritems)(**kw))
 
 try:
     import cPickle as pickle
 except ImportError:
     import pickle
-
-ifilter = six.moves.filter
-reraise = six.reraise
-Iterator = six.Iterator
-with_metaclass = six.with_metaclass
 
 try:
     from collections import Mapping as mapping_types

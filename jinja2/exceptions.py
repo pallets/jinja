@@ -8,13 +8,13 @@
     :copyright: (c) 2010 by the Jinja Team.
     :license: BSD, see LICENSE for more details.
 """
-from jinja2._compat import imap, text_type, PY3
+from jinja2._compat import imap, text_type, PY2
 
 
 class TemplateError(Exception):
     """Baseclass for all template errors."""
 
-    if not PY3:
+    if PY2:
         def __init__(self, message=None):
             if message is not None:
                 message = text_type(message).encode('utf-8')
@@ -115,12 +115,12 @@ class TemplateSyntaxError(TemplateError):
 
         return u'\n'.join(lines)
 
-    if PY3:
-        __str__ = __unicode__
-        del __unicode__
-    else:
+    if PY2:
         def __str__(self):
             return self.__unicode__().encode('utf-8')
+    else:
+        __str__ = __unicode__
+        del __unicode__
 
 
 class TemplateAssertionError(TemplateSyntaxError):

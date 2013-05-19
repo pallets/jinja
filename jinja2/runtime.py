@@ -15,7 +15,7 @@ from jinja2.utils import Markup, soft_unicode, escape, missing, concat, \
 from jinja2.exceptions import UndefinedError, TemplateRuntimeError, \
      TemplateNotFound
 from jinja2._compat import next, imap, text_type, iteritems, Iterator, \
-     string_types, PY3
+     string_types, PY2
 
 
 # these variables are exported to the template runtime
@@ -501,12 +501,12 @@ class Undefined(object):
     def __unicode__(self):
         return u''
 
-    if PY3:
-        __str__ = __unicode__
-        del __unicode__
-    else:
+    if PY2:
         def __str__(self):
             return self.__unicode__().encode('utf-8')
+    else:
+        __str__ = __unicode__
+        del __unicode__
 
     def __len__(self):
         return 0
@@ -547,7 +547,7 @@ class DebugUndefined(Undefined):
             )
         return u'{{ undefined value printed: %s }}' % self._undefined_hint
 
-    if PY3:
+    if not PY2:
         __str__ = __unicode__
         del __unicode__
 
@@ -575,7 +575,7 @@ class StrictUndefined(Undefined):
     __iter__ = __str__ = __len__ = __nonzero__ = __eq__ = \
         __ne__ = __bool__ = Undefined._fail_with_undefined_error
 
-    if not PY3:
+    if PY2:
         __unicode__ = Undefined._fail_with_undefined_error
 
 

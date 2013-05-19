@@ -23,7 +23,7 @@ except ImportError:
     except ImportError:
         from dummy_thread import allocate_lock
 from collections import deque
-from jinja2._compat import text_type, string_types, Iterator, PY3
+from jinja2._compat import text_type, string_types, Iterator, PY2
 
 
 _word_split_re = re.compile(r'(\s+)')
@@ -53,7 +53,7 @@ concat = u''.join
 # This is used in a couple of places.  As far as Jinja is concerned
 # filenames are unicode *or* bytestrings in 2.x and unicode only in
 # 3.x because compile cannot handle bytes
-if not PY3:
+if PY2:
     def _encode_filename(filename):
         if isinstance(filename, unicode):
             return filename.encode('utf-8')

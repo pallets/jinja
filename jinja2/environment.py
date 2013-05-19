@@ -28,7 +28,7 @@ from jinja2.exceptions import TemplateSyntaxError, TemplateNotFound, \
 from jinja2.utils import import_string, LRUCache, Markup, missing, \
      concat, consume, internalcode, _encode_filename
 from jinja2._compat import imap, ifilter, string_types, iteritems, \
-     text_type, reraise, PY3, Iterator, next
+     text_type, reraise, PY2, Iterator, next
 from functools import reduce
 
 
@@ -1065,12 +1065,15 @@ class TemplateModule(object):
     def __html__(self):
         return Markup(concat(self._body_stream))
 
-    def __str__(self):
-        s = self.__unicode__()
-        return s if PY3 else s.encode('utf-8')
-
     def __unicode__(self):
         return concat(self._body_stream)
+
+    if PY2:
+        def __str__(self):
+            return self.__unicode__().encode('utf-8')
+    else:
+        __str__ = __unicode__
+        del __unicode__
 
     def __repr__(self):
         if self.__name__ is None:
