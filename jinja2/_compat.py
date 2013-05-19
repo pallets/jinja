@@ -120,4 +120,3 @@ except TypeError:
     _tb = sys.exc_info()[2]
     traceback_type = type(_tb)
     frame_type = type(_tb.tb_frame)
-del _C, _tb, _func
