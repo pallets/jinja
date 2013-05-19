@@ -114,6 +114,15 @@ class FilterTestCase(JinjaTestCase):
         out = tmpl.render(foo=list(range(10)))
         assert out == '0'
 
+    def test_firstof(self):
+        tmpl = env.from_string('{{ ["hello", False]|firstof }}')
+        out = tmpl.render()
+        assert out == 'hello'
+
+        tmpl = env.from_string('{{ ["", False, 0, None, foo, bar, baz]|firstof }}')
+        out = tmpl.render(foo=False, baz='default')
+        assert out == 'default'
+
     def test_float(self):
         tmpl = env.from_string('{{ "42"|float }}|'
                                '{{ "ajsghasjgd"|float }}|'
