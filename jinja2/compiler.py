@@ -949,9 +949,16 @@ class CodeGenerator(NodeVisitor):
             self.indent()
 
         if node.with_context:
+            self.writeline('include_context = template.new_context('
+                           'context.parent, True, locals())')
+            self.writeline('for name, context_blocks in context.'
+                           'blocks.%s():' % dict_item_iter)
+            self.indent()
+            self.writeline('include_context.blocks.setdefault('
+                           'name, [])[0:0] = context_blocks')
+            self.outdent()
             self.writeline('for event in template.root_render_func('
-                           'template.new_context(context.parent, True, '
-                           'locals())):')
+                           'include_context):')
         else:
             self.writeline('for event in template.module._body_stream:')
 
