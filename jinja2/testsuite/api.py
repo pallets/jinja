@@ -229,6 +229,7 @@ class UndefinedTestCase(JinjaTestCase):
         self.assert_equal(env.from_string('{{ missing is not defined }}').render(), 'True')
         self.assert_raises(UndefinedError, env.from_string('{{ foo.missing }}').render, foo=42)
         self.assert_raises(UndefinedError, env.from_string('{{ not missing }}').render)
+        self.assert_equal(env.from_string('{{ missing|default("default", true) }}').render(), 'default')
 
     def test_indexing_gives_undefined(self):
         t = Template("{{ var[42].foo }}")

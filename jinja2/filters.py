@@ -278,7 +278,7 @@ def do_default(value, default_value=u'', boolean=False):
 
         {{ ''|default('the string was empty', true) }}
     """
-    if (boolean and not value) or isinstance(value, Undefined):
+    if isinstance(value, Undefined) or (boolean and not value):
         return default_value
     return value
 
