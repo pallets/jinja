@@ -237,6 +237,16 @@ class BugTestCase(JinjaTestCase):
         {% endfor %}
         """)
 
+    def test_else_loop_bug(self):
+        t = Template('''
+            {% for x in y %}
+                {{ loop.index0 }}
+            {% else %}
+                {% for i in range(3) %}{{ i }}{% endfor %}
+            {% endfor %}
+        ''')
+        self.assertEqual(t.render(y=[]).strip(), '012')
+
     def test_correct_prefix_loader_name(self):
         env = Environment(loader=PrefixLoader({
             'foo':  DictLoader({})
