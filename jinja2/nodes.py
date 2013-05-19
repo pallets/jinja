@@ -12,17 +12,16 @@
     :copyright: (c) 2010 by the Jinja Team.
     :license: BSD, see LICENSE for more details.
 """
-import six
 import operator
 
 from collections import deque
-from jinja2.utils import Markup, MethodType, FunctionType
-from jinja2._compat import next
-from six.moves import zip
+from jinja2.utils import Markup
+from jinja2._compat import next, izip, with_metaclass, text_type, \
+     method_type, function_type
 
 
 #: the types we support for context functions
-_context_function_types = (FunctionType, MethodType)
+_context_function_types = (function_type, method_type)
 
 
 _binop_to_func = {
@@ -105,7 +104,7 @@ def get_eval_context(node, ctx):
     return ctx
 
 
-class Node(six.with_metaclass(NodeType, object)):
+class Node(with_metaclass(NodeType, object)):
     """Baseclass for all Jinja2 nodes.  There are a number of nodes available
     of different types.  There are four major types:
 
@@ -139,7 +138,7 @@ class Node(six.with_metaclass(NodeType, object)):
                     len(self.fields),
                     len(self.fields) != 1 and 's' or ''
                 ))
-            for name, arg in zip(self.fields, fields):
+            for name, arg in izip(self.fields, fields):
                 setattr(self, name, arg)
         for attr in self.attributes:
             setattr(self, attr, attributes.pop(attr, None))
@@ -690,7 +689,7 @@ class Concat(Expr):
 
     def as_const(self, eval_ctx=None):
         eval_ctx = get_eval_context(self, eval_ctx)
-        return ''.join(six.text_type(x.as_const(eval_ctx)) for x in self.nodes)
+        return ''.join(text_type(x.as_const(eval_ctx)) for x in self.nodes)
 
 
 class Compare(Expr):

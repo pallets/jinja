@@ -11,8 +11,6 @@
 import re
 import sys
 import errno
-import six
-from six.moves import map
 try:
     from urllib.parse import quote_from_bytes as url_quote
 except ImportError:
@@ -25,6 +23,8 @@ except ImportError:
     except ImportError:
         from dummy_thread import allocate_lock
 from collections import deque
+from jinja2._compat import text_type, string_types, Iterator
+
 
 _word_split_re = re.compile(r'(\s+)')
 _punctuation_re = re.compile(
@@ -65,26 +65,6 @@ else:
         return filename
 
 from keyword import iskeyword as is_python_keyword
-
-
-# common types.  These do exist in the special types module too which however
-# does not exist in IronPython out of the box.  Also that way we don't have
-# to deal with implementation specific stuff here
-class _C(object):
-    def method(self): pass
-def _func():
-    yield None
-FunctionType = type(_func)
-GeneratorType = type(_func())
-MethodType = type(_C().method)
-CodeType = type(_C.method.__code__)
-try:
-    raise TypeError()
-except TypeError:
-    _tb = sys.exc_info()[2]
-    TracebackType = type(_tb)
-    FrameType = type(_tb.tb_frame)
-del _C, _tb, _func
 
 
 def contextfunction(f):
@@ -247,7 +227,7 @@ def urlize(text, trim_url_limit=None, nofollow=False):
     trim_url = lambda x, limit=trim_url_limit: limit is not None \
                          and (x[:limit] + (len(x) >=limit and '...'
                          or '')) or x
-    words = _word_split_re.split(six.text_type(escape(text)))
+    words = _word_split_re.split(text_type(escape(text)))
     nofollow_attr = nofollow and ' rel="nofollow"' or ''
     for i, word in enumerate(words):
         match = _punctuation_re.match(word)
@@ -334,11 +314,11 @@ def unicode_urlencode(obj, charset='utf-8'):
     If non strings are provided they are converted to their unicode
     representation first.
     """
-    if not isinstance(obj, six.string_types):
-        obj = six.text_type(obj)
-    if isinstance(obj, six.text_type):
+    if not isinstance(obj, string_types):
+        obj = text_type(obj)
+    if isinstance(obj, text_type):
         obj = obj.encode(charset)
-    return six.text_type(url_quote(obj))
+    return text_type(url_quote(obj))
 
 
 class LRUCache(object):
@@ -526,7 +506,7 @@ except ImportError:
     pass
 
 
-class Cycler(six.Iterator):
+class Cycler(Iterator):
     """A cycle helper for templates."""
 
     def __init__(self, *items):

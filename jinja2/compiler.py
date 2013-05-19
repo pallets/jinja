@@ -8,8 +8,6 @@
     :copyright: (c) 2010 by the Jinja Team.
     :license: BSD, see LICENSE for more details.
 """
-import six
-
 from itertools import chain
 from copy import deepcopy
 from jinja2 import nodes
@@ -17,8 +15,8 @@ from jinja2.nodes import EvalContext
 from jinja2.visitor import NodeVisitor
 from jinja2.exceptions import TemplateAssertionError
 from jinja2.utils import Markup, concat, escape, is_python_keyword
-from jinja2._compat import range_type, next
-from six.moves import cStringIO as StringIO, map
+from jinja2._compat import range_type, next, text_type, string_types, \
+     iteritems, NativeStringIO, imap
 
 
 operators = {
@@ -69,7 +67,7 @@ def has_safe_repr(value):
     if value is None or value is NotImplemented or value is Ellipsis:
         return True
     if isinstance(value, (bool, int, float, complex, range_type,
-            Markup) + six.string_types):
+            Markup) + string_types):
         return True
     if isinstance(value, (tuple, list, set, frozenset)):
         for item in value:
@@ -77,7 +75,7 @@ def has_safe_repr(value):
                 return False
         return True
     elif isinstance(value, dict):
-        for key, value in six.iteritems(value):
+        for key, value in iteritems(value):
             if not has_safe_repr(key):
                 return False
             if not has_safe_repr(value):
@@ -367,7 +365,7 @@ class CodeGenerator(NodeVisitor):
     def __init__(self, environment, name, filename, stream=None,
                  defer_init=False):
         if stream is None:
-            stream = StringIO()
+            stream = NativeStringIO()
         self.environment = environment
         self.name = name
         self.filename = filename
@@ -541,7 +539,7 @@ class CodeGenerator(NodeVisitor):
                 self.write(', ')
                 self.visit(kwarg, frame)
             if extra_kwargs is not None:
-                for key, value in six.iteritems(extra_kwargs):
+                for key, value in iteritems(extra_kwargs):
                     self.write(', %s=%s' % (key, value))
         if node.dyn_args:
             self.write(', *')
@@ -557,7 +555,7 @@ class CodeGenerator(NodeVisitor):
                 self.visit(kwarg.value, frame)
                 self.write(', ')
             if extra_kwargs is not None:
-                for key, value in six.iteritems(extra_kwargs):
+                for key, value in iteritems(extra_kwargs):
                     self.write('%r: %s, ' % (key, value))
             if node.dyn_kwargs is not None:
                 self.write('}, **')
@@ -624,7 +622,7 @@ class CodeGenerator(NodeVisitor):
 
     def pop_scope(self, aliases, frame):
         """Restore all aliases and delete unused variables."""
-        for name, alias in six.iteritems(aliases):
+        for name, alias in iteritems(aliases):
             self.writeline('l_%s = %s' % (name, alias))
         to_delete = set()
         for name in frame.identifiers.declared_locally:
@@ -826,7 +824,7 @@ class CodeGenerator(NodeVisitor):
             self.outdent(2 + (not self.has_known_extends))
 
         # at this point we now have the blocks collected and can visit them too.
-        for name, block in six.iteritems(self.blocks):
+        for name, block in iteritems(self.blocks):
             block_frame = Frame(eval_ctx)
             block_frame.inspect(block.body)
             block_frame.block = name
@@ -930,7 +928,7 @@ class CodeGenerator(NodeVisitor):
 
         func_name = 'get_or_select_template'
         if isinstance(node.template, nodes.Const):
-            if isinstance(node.template.value, six.string_types):
+            if isinstance(node.template.value, string_types):
                 func_name = 'get_template'
             elif isinstance(node.template.value, (tuple, list)):
                 func_name = 'select_template'
@@ -1039,7 +1037,7 @@ class CodeGenerator(NodeVisitor):
                                discarded_names[0])
             else:
                 self.writeline('context.exported_vars.difference_'
-                               'update((%s))' % ', '.join(map(repr, discarded_names)))
+                               'update((%s))' % ', '.join(imap(repr, discarded_names)))
 
     def visit_For(self, node, frame):
         # when calculating the nodes for the inner frame we have to exclude
@@ -1224,9 +1222,9 @@ class CodeGenerator(NodeVisitor):
             return
 
         if self.environment.finalize:
-            finalize = lambda x: six.text_type(self.environment.finalize(x))
+            finalize = lambda x: text_type(self.environment.finalize(x))
         else:
-            finalize = six.text_type
+            finalize = text_type
 
         # if we are inside a frame that requires output checking, we do so
         outdent_later = False
@@ -1375,7 +1373,7 @@ class CodeGenerator(NodeVisitor):
                                    public_names[0])
                 else:
                     self.writeline('context.exported_vars.update((%s))' %
-                                   ', '.join(map(repr, public_names)))
+                                   ', '.join(imap(repr, public_names)))
 
     # -- Expression Visitors
 

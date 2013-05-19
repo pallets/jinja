@@ -13,9 +13,9 @@
 import sys
 import traceback
 from types import TracebackType
-from jinja2.utils import CodeType, missing, internal_code
+from jinja2.utils import missing, internal_code
 from jinja2.exceptions import TemplateSyntaxError
-import six
+from jinja2._compat import iteritems, reraise, code_type
 
 # on pypy we can take advantage of transparent proxies
 try:
@@ -190,7 +190,7 @@ def translate_exception(exc_info, initial_skip=0):
     # reraise it unchanged.
     # XXX: can we backup here?  when could this happen?
     if not frames:
-        six.reraise(exc_info[0], exc_info[1], exc_info[2])
+        reraise(exc_info[0], exc_info[1], exc_info[2])
 
     return ProcessedTraceback(exc_info[0], exc_info[1], frames)
 
@@ -207,7 +207,7 @@ def fake_exc_info(exc_info, filename, lineno):
             locals = ctx.get_all()
         else:
             locals = {}
-        for name, value in six.iteritems(real_locals):
+        for name, value in iteritems(real_locals):
             if name.startswith('l_') and value is not missing:
                 locals[name[2:]] = value
 
@@ -245,11 +245,11 @@ def fake_exc_info(exc_info, filename, lineno):
                 location = 'block "%s"' % function[6:]
             else:
                 location = 'template'
-        code = CodeType(0, code.co_nlocals, code.co_stacksize,
-                        code.co_flags, code.co_code, code.co_consts,
-                        code.co_names, code.co_varnames, filename,
-                        location, code.co_firstlineno,
-                        code.co_lnotab, (), ())
+        code = code_type(0, code.co_nlocals, code.co_stacksize,
+                         code.co_flags, code.co_code, code.co_consts,
+                         code.co_names, code.co_varnames, filename,
+                         location, code.co_firstlineno,
+                         code.co_lnotab, (), ())
     except:
         pass
 

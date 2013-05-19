@@ -13,11 +13,10 @@
     :license: BSD.
 """
 import operator
-import six
 from jinja2.environment import Environment
 from jinja2.exceptions import SecurityError
-from jinja2.utils import FunctionType, MethodType, TracebackType, CodeType, \
-     FrameType, GeneratorType
+from jinja2._compat import string_types, function_type, method_type, \
+     traceback_type, code_type, frame_type, generator_type
 
 
 #: maximum number of items a range may produce
@@ -125,19 +124,19 @@ def is_internal_attribute(obj, attr):
     >>> is_internal_attribute(str, "upper")
     False
     """
-    if isinstance(obj, FunctionType):
+    if isinstance(obj, function_type):
         if attr in UNSAFE_FUNCTION_ATTRIBUTES:
             return True
-    elif isinstance(obj, MethodType):
+    elif isinstance(obj, method_type):
         if attr in UNSAFE_FUNCTION_ATTRIBUTES or \
            attr in UNSAFE_METHOD_ATTRIBUTES:
             return True
     elif isinstance(obj, type):
         if attr == 'mro':
             return True
-    elif isinstance(obj, (CodeType, TracebackType, FrameType)):
+    elif isinstance(obj, (code_type, traceback_type, frame_type)):
         return True
-    elif isinstance(obj, GeneratorType):
+    elif isinstance(obj, generator_type):
         if attr == 'gi_frame':
             return True
     return attr.startswith('__')
@@ -300,7 +299,7 @@ class SandboxedEnvironment(Environment):
         try:
             return obj[argument]
         except (TypeError, LookupError):
-            if isinstance(argument, six.string_types):
+            if isinstance(argument, string_types):
                 try:
                     attr = str(argument)
                 except Exception:

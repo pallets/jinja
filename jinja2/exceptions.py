@@ -9,8 +9,7 @@
     :license: BSD, see LICENSE for more details.
 """
 import sys
-import six
-from six.moves import map
+from jinja2._compat import imap, text_type, PY3
 
 
 class TemplateError(Exception):
@@ -19,7 +18,7 @@ class TemplateError(Exception):
     if sys.version_info[0] < 3:
         def __init__(self, message=None):
             if message is not None:
-                message = six.text_type(message).encode('utf-8')
+                message = text_type(message).encode('utf-8')
             Exception.__init__(self, message)
 
         @property
@@ -75,7 +74,7 @@ class TemplatesNotFound(TemplateNotFound):
     def __init__(self, names=(), message=None):
         if message is None:
             message = u'none of the templates given were found: ' + \
-                      u', '.join(map(six.text_type, names))
+                      u', '.join(imap(text_type, names))
         TemplateNotFound.__init__(self, names and names[-1] or None, message)
         self.templates = list(names)
 
@@ -93,10 +92,6 @@ class TemplateSyntaxError(TemplateError):
         # this is set to True if the debug.translate_syntax_error
         # function translated the syntax error into a new traceback
         self.translated = False
-
-    def __str__(self):
-        s = self.__unicode__()
-        return s if six.PY3 else s.encode('utf-8')
 
     def __unicode__(self):
         # for translated errors we only return the message
@@ -120,6 +115,13 @@ class TemplateSyntaxError(TemplateError):
                 lines.append('    ' + line.strip())
 
         return u'\n'.join(lines)
+
+    if PY3:
+        __str__ = __unicode__
+        del __unicode__
+    else:
+        def __str__(self):
+            return self.__unicode__().encode('utf-8')
 
 
 class TemplateAssertionError(TemplateSyntaxError):

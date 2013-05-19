@@ -18,14 +18,10 @@ from os import path, listdir
 import sys
 import marshal
 import tempfile
-from six.moves import cPickle as pickle
-from six import BytesIO
 import fnmatch
-try:
-    from hashlib import sha1
-except ImportError:
-    from sha import new as sha1
+from hashlib import sha1
 from jinja2.utils import open_if_exists
+from jinja2._compat import BytesIO, pickle
 
 
 # marshal works better on 3.x, one hack less required

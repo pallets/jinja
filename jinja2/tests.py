@@ -10,16 +10,7 @@
 """
 import re
 from jinja2.runtime import Undefined
-import six
-
-try:
-    from collections import Mapping as MappingType
-except ImportError:
-    import UserDict
-    MappingType = (UserDict.UserDict, UserDict.DictMixin, dict)
-
-# nose, nothing here to test
-__test__ = False
+from jinja2._compat import text_type, string_types, mapping_types
 
 
 number_re = re.compile(r'^-?\d+(\.\d+)?$')
@@ -77,17 +68,17 @@ def test_none(value):
 
 def test_lower(value):
     """Return true if the variable is lowercased."""
-    return six.text_type(value).islower()
+    return text_type(value).islower()
 
 
 def test_upper(value):
     """Return true if the variable is uppercased."""
-    return six.text_type(value).isupper()
+    return text_type(value).isupper()
 
 
 def test_string(value):
     """Return true if the object is a string."""
-    return isinstance(value, six.string_types)
+    return isinstance(value, string_types)
 
 
 def test_mapping(value):
@@ -95,7 +86,7 @@ def test_mapping(value):
 
     .. versionadded:: 2.6
     """
-    return isinstance(value, MappingType)
+    return isinstance(value, mapping_types)
 
 
 def test_number(value):

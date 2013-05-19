@@ -20,8 +20,7 @@ from jinja2.environment import Environment
 from jinja2.runtime import concat
 from jinja2.exceptions import TemplateAssertionError, TemplateSyntaxError
 from jinja2.utils import contextfunction, import_string, Markup
-from jinja2._compat import next
-import six
+from jinja2._compat import next, with_metaclass, string_types, iteritems
 
 
 # the only real useful gettext functions for a Jinja template.  Note
@@ -39,7 +38,7 @@ class ExtensionRegistry(type):
         return rv
 
 
-class Extension(six.with_metaclass(ExtensionRegistry, object)):
+class Extension(with_metaclass(ExtensionRegistry, object)):
     """Extensions can be used to add extra functionality to the Jinja template
     system at the parser level.  Custom extensions are bound to an environment
     but may not store environment specific data on `self`.  The reason for
@@ -210,7 +209,7 @@ class InternationalizationExtension(Extension):
             self.environment.globals.pop(key, None)
 
     def _extract(self, source, gettext_functions=GETTEXT_FUNCTIONS):
-        if isinstance(source, six.string_types):
+        if isinstance(source, string_types):
             source = self.environment.parse(source)
         return extract_from_ast(source, gettext_functions)
 
@@ -369,7 +368,7 @@ class InternationalizationExtension(Extension):
         # enough to handle the variable expansion and autoescape
         # handling itself
         if self.environment.newstyle_gettext:
-            for key, value in six.iteritems(variables):
+            for key, value in iteritems(variables):
                 # the function adds that later anyways in case num was
                 # called num, so just skip it.
                 if num_called_num and key == 'num':
@@ -491,7 +490,7 @@ def extract_from_ast(node, gettext_functions=GETTEXT_FUNCTIONS,
         strings = []
         for arg in node.args:
             if isinstance(arg, nodes.Const) and \
-               isinstance(arg.value, six.string_types):
+               isinstance(arg.value, string_types):
                 strings.append(arg.value)
             else:
                 strings.append(None)

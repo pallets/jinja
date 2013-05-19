@@ -14,9 +14,8 @@ from jinja2.utils import Markup, soft_unicode, escape, missing, concat, \
      internalcode, object_type_repr
 from jinja2.exceptions import UndefinedError, TemplateRuntimeError, \
      TemplateNotFound
-from jinja2._compat import next
-import six
-from six.moves import map
+from jinja2._compat import next, imap, text_type, iteritems, Iterator, \
+     string_types, PY3
 
 
 # these variables are exported to the template runtime
@@ -42,7 +41,7 @@ _last_iteration = object()
 def markup_join(seq):
     """Concatenation that escapes if necessary and converts to unicode."""
     buf = []
-    iterator = map(soft_unicode, seq)
+    iterator = imap(soft_unicode, seq)
     for arg in iterator:
         buf.append(arg)
         if hasattr(arg, '__html__'):
@@ -52,7 +51,7 @@ def markup_join(seq):
 
 def unicode_join(seq):
     """Simple args to unicode conversion and concatenation."""
-    return concat(map(six.text_type, seq))
+    return concat(imap(text_type, seq))
 
 
 def new_context(environment, template_name, blocks, vars=None,
@@ -69,7 +68,7 @@ def new_context(environment, template_name, blocks, vars=None,
         # we don't want to modify the dict passed
         if shared:
             parent = dict(parent)
-        for key, value in six.iteritems(locals):
+        for key, value in iteritems(locals):
             if key[:2] == 'l_' and value is not missing:
                 parent[key[2:]] = value
     return Context(environment, parent, template_name, blocks)
@@ -125,7 +124,7 @@ class Context(object):
         # create the initial mapping of blocks.  Whenever template inheritance
         # takes place the runtime will update this mapping with the new blocks
         # from the template.
-        self.blocks = dict((k, [v]) for k, v in six.iteritems(blocks))
+        self.blocks = dict((k, [v]) for k, v in iteritems(blocks))
 
     def super(self, name, current):
         """Render a parent block."""
@@ -208,7 +207,7 @@ class Context(object):
                               self.parent, True, None, locals)
         context.vars.update(self.vars)
         context.eval_ctx = self.eval_ctx
-        context.blocks.update((k, list(v)) for k, v in six.iteritems(self.blocks))
+        context.blocks.update((k, list(v)) for k, v in iteritems(self.blocks))
         return context
 
     def _all(meth):
@@ -357,7 +356,7 @@ class LoopContext(object):
         )
 
 
-class LoopContextIterator(six.Iterator):
+class LoopContextIterator(Iterator):
     """The iterator for a loop context."""
     __slots__ = ('context',)
 
@@ -472,7 +471,7 @@ class Undefined(object):
         if self._undefined_hint is None:
             if self._undefined_obj is missing:
                 hint = '%r is undefined' % self._undefined_name
-            elif not isinstance(self._undefined_name, six.string_types):
+            elif not isinstance(self._undefined_name, string_types):
                 hint = '%s has no element %r' % (
                     object_type_repr(self._undefined_obj),
                     self._undefined_name
@@ -499,12 +498,15 @@ class Undefined(object):
     __float__ = __complex__ = __pow__ = __rpow__ = \
         _fail_with_undefined_error
 
-    def __str__(self):
-        s = self.__unicode__()
-        return s if six.PY3 else s.encode('utf-8')
-
     def __unicode__(self):
         return u''
+
+    if PY3:
+        __str__ = __unicode__
+        del __unicode__
+    else:
+        def __str__(self):
+            return self.__unicode__().encode('utf-8')
 
     def __len__(self):
         return 0
@@ -535,10 +537,6 @@ class DebugUndefined(Undefined):
     """
     __slots__ = ()
 
-    def __str__(self):
-        s = self.__unicode__()
-        return s if six.PY3 else s.encode('utf-8')
-
     def __unicode__(self):
         if self._undefined_hint is None:
             if self._undefined_obj is missing:
@@ -548,6 +546,10 @@ class DebugUndefined(Undefined):
                 self._undefined_name
             )
         return u'{{ undefined value printed: %s }}' % self._undefined_hint
+
+    if PY3:
+        __str__ = __unicode__
+        del __unicode__
 
 
 class StrictUndefined(Undefined):
@@ -570,8 +572,11 @@ class StrictUndefined(Undefined):
     UndefinedError: 'foo' is undefined
     """
     __slots__ = ()
-    __iter__ = __unicode__ = __str__ = __len__ = __nonzero__ = __eq__ = \
+    __iter__ = __str__ = __len__ = __nonzero__ = __eq__ = \
         __ne__ = __bool__ = Undefined._fail_with_undefined_error
+
+    if not PY3:
+        __unicode__ = Undefined._fail_with_undefined_error
 
 
 # remove remaining slots attributes, after the metaclass did the magic they
