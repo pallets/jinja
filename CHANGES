@@ -13,6 +13,8 @@ Version 2.7
 - Added `urlencode` filter that automatically quotes values for
   URL safe usage with utf-8 as only supported encoding.  If applications
   want to change this encoding they can override the filter.
+- Added `keep-trailing-newline` configuration to environments and
+  templates to optionally preserve the final trailing newline.
 - Accessing `last` on the loop context no longer causes the iterator
   to be consumed into a list.
 - Python requirement changed: 2.6, 2.7 or >= 3.3 are required now,

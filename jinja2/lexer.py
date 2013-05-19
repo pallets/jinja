@@ -391,7 +391,8 @@ def get_lexer(environment):
            environment.line_statement_prefix,
            environment.line_comment_prefix,
            environment.trim_blocks,
-           environment.newline_sequence)
+           environment.newline_sequence,
+           environment.keep_trailing_newline)
     lexer = _lexer_cache.get(key)
     if lexer is None:
         lexer = Lexer(environment)
@@ -434,6 +435,7 @@ class Lexer(object):
         block_suffix_re = environment.trim_blocks and '\\n?' or ''
 
         self.newline_sequence = environment.newline_sequence
+        self.keep_trailing_newline = environment.keep_trailing_newline
 
         # global lexing rules
         self.rules = {
@@ -557,7 +559,14 @@ class Lexer(object):
         """This method tokenizes the text and returns the tokens in a
         generator.  Use this method if you just want to tokenize a template.
         """
-        source = '\n'.join(six.text_type(source).splitlines())
+        source = six.text_type(source)
+        lines = source.splitlines()
+        if self.keep_trailing_newline and source:
+            for newline in ('\r\n', '\r', '\n'):
+                if source.endswith(newline):
+                    lines.append('')
+                    break
+        source = '\n'.join(lines)
         pos = 0
         lineno = 1
         stack = ['root']

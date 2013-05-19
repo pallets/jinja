@@ -108,6 +108,19 @@ class LexerTestCase(JinjaTestCase):
             result = tmpl.render()
             assert result.replace(seq, 'X') == '1X2X3X4'
 
+    def test_trailing_newline(self):
+        for keep in [True, False]:
+            env = Environment(keep_trailing_newline=keep)
+            for template,expected in [
+                    ('', {}),
+                    ('no\nnewline', {}),
+                    ('with\nnewline\n', {False: 'with\nnewline'}),
+                    ('with\nseveral\n\n\n', {False: 'with\nseveral\n\n'}),
+                    ]:
+                tmpl = env.from_string(template)
+                expect = expected.get(keep, template)
+                result = tmpl.render()
+                assert result == expect, (keep, template, result, expect)
 
 class ParserTestCase(JinjaTestCase):
 

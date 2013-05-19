@@ -15,7 +15,8 @@ from jinja2.defaults import BLOCK_START_STRING, \
      BLOCK_END_STRING, VARIABLE_START_STRING, VARIABLE_END_STRING, \
      COMMENT_START_STRING, COMMENT_END_STRING, LINE_STATEMENT_PREFIX, \
      LINE_COMMENT_PREFIX, TRIM_BLOCKS, NEWLINE_SEQUENCE, \
-     DEFAULT_FILTERS, DEFAULT_TESTS, DEFAULT_NAMESPACE
+     DEFAULT_FILTERS, DEFAULT_TESTS, DEFAULT_NAMESPACE, \
+     KEEP_TRAILING_NEWLINE
 from jinja2.lexer import get_lexer, TokenStream
 from jinja2.parser import Parser
 from jinja2.optimizer import optimize
@@ -147,6 +148,13 @@ class Environment(object):
             useful default for Linux and OS X systems as well as web
             applications.
 
+        `keep_trailing_newline`
+            Preserve the trailing newline when rendering templates.
+            The default is ``False``, which causes a single newline,
+            if present, to be stripped from the end of the template.
+
+            .. versionadded:: 2.7
+
         `extensions`
             List of Jinja extensions to use.  This can either be import paths
             as strings or extension classes.  For more information have a
@@ -232,6 +240,7 @@ class Environment(object):
                  line_comment_prefix=LINE_COMMENT_PREFIX,
                  trim_blocks=TRIM_BLOCKS,
                  newline_sequence=NEWLINE_SEQUENCE,
+                 keep_trailing_newline=KEEP_TRAILING_NEWLINE,
                  extensions=(),
                  optimized=True,
                  undefined=Undefined,
@@ -263,6 +272,7 @@ class Environment(object):
         self.line_comment_prefix = line_comment_prefix
         self.trim_blocks = trim_blocks
         self.newline_sequence = newline_sequence
+        self.keep_trailing_newline = keep_trailing_newline
 
         # runtime information
         self.undefined = undefined
@@ -828,6 +838,7 @@ class Template(object):
                 line_comment_prefix=LINE_COMMENT_PREFIX,
                 trim_blocks=TRIM_BLOCKS,
                 newline_sequence=NEWLINE_SEQUENCE,
+                keep_trailing_newline=KEEP_TRAILING_NEWLINE,
                 extensions=(),
                 optimized=True,
                 undefined=Undefined,
@@ -837,8 +848,8 @@ class Template(object):
             block_start_string, block_end_string, variable_start_string,
             variable_end_string, comment_start_string, comment_end_string,
             line_statement_prefix, line_comment_prefix, trim_blocks,
-            newline_sequence, frozenset(extensions), optimized, undefined,
-            finalize, autoescape, None, 0, False, None)
+            newline_sequence, keep_trailing_newline, frozenset(extensions),
+            optimized, undefined, finalize, autoescape, None, 0, False, None)
         return env.from_string(source, template_class=cls)
 
     @classmethod
