@@ -12,7 +12,12 @@ useful for templating environments.
 Prerequisites
 -------------
 
-Jinja2 works with Python 2.6.x, 2.7.x and >= 3.3.
+Jinja2 works with Python 2.6.x, 2.7.x and >= 3.3.  If you are using Python
+3.2 you can use an older release of Jinja2 (2.6) as support for 3.2 was
+dropped in 2.7.
+
+If you wish to use the :class:`~jinja2.PackageLoader` class, you will also
+need setuptools or distribute installed at runtime.
 
 Installation
 ------------
@@ -31,7 +36,7 @@ You can install the most recent Jinja2 version using `easy_install`_ or `pip`_::
 This will install a Jinja2 egg in your Python installation's site-packages
 directory.
 
-(If you are installing from the windows command line omit the `sudo` and make
+(If you are installing from the Windows command line omit the `sudo` and make
 sure to run the command as user with administrator rights)
 
 From the tarball release
@@ -41,7 +46,7 @@ From the tarball release
 2.  Unpack the tarball
 3.  ``sudo python setup.py install``
 
-Note that you either have to have setuptools or `distribute`_ installed,
+Note that you either have to have setuptools or `distribute`_ installed;
 the latter is preferred.
 
 This will install Jinja2 into your Python installation's site-packages directory.
@@ -84,6 +89,22 @@ using Jinja2 with autoescaping.
 .. _MarkupSafe: http://pypi.python.org/pypi/MarkupSafe
 
 
+<<<<<<< HEAD
+=======
+Enable the debug support Module
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+By default Jinja2 will not compile the debug support module.  Enabling this
+will fail if you don't have the Python headers or a working compiler.  This
+is often the case if you are installing Jinja2 from a Windows machine.
+
+Because the debug support is only necessary for Python 2.4 you will not
+have to do this unless you run 2.4::
+
+    sudo python setup.py --with-debugsupport install
+
+
+>>>>>>> Talksum/distribute_required
 Basic API Usage
 ---------------
 
