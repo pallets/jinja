@@ -588,6 +588,10 @@ The following example implements a sitemap with recursive loops::
     {%- endfor %}
     </ul>
 
+The `loop` variable always refers to the closest (innermost) loop. If we
+have more than one levels of loops, we can rebind the variable `loop` by
+writing `{% set outer_loop = loop %}` after the loop that we want to
+use recursively. Then, we can call it using `{{ outer_loop(...) }}`
 
 If
 ~~
