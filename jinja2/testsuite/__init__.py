@@ -16,6 +16,7 @@ import sys
 import unittest
 from traceback import format_exception
 from jinja2 import loaders
+from jinja2._compat import PY3
 
 
 here = os.path.dirname(os.path.abspath(__file__))
@@ -89,7 +90,7 @@ def suite():
 
     # doctests will not run on python 3 currently.  Too many issues
     # with that, do not test that on that platform.
-    if sys.version_info[0] < 3:
+    if not PY3:
         suite.addTest(doctests.suite())
 
     return suite

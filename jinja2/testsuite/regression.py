@@ -14,7 +14,7 @@ from jinja2.testsuite import JinjaTestCase
 
 from jinja2 import Template, Environment, DictLoader, TemplateSyntaxError, \
      TemplateNotFound, PrefixLoader
-import six
+from jinja2._compat import text_type
 
 env = Environment()
 
@@ -119,7 +119,7 @@ class BugTestCase(JinjaTestCase):
 
         ''')
 
-        assert tmpl.render().split() == [six.text_type(x) for x in range(1, 11)] * 5
+        assert tmpl.render().split() == [text_type(x) for x in range(1, 11)] * 5
 
     def test_weird_inline_comment(self):
         env = Environment(line_statement_prefix='%')

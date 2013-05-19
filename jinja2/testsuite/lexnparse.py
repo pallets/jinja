@@ -8,22 +8,20 @@
     :copyright: (c) 2010 by the Jinja Team.
     :license: BSD, see LICENSE for more details.
 """
-import sys
-import six
 import unittest
 
 from jinja2.testsuite import JinjaTestCase
 
 from jinja2 import Environment, Template, TemplateSyntaxError, \
      UndefinedError, nodes
-from jinja2._compat import next
+from jinja2._compat import next, iteritems, text_type, PY3
 from jinja2.lexer import Token, TokenStream, TOKEN_EOF, TOKEN_BLOCK_BEGIN, TOKEN_BLOCK_END
 
 env = Environment()
 
 
 # how does a string look like in jinja syntax?
-if sys.version_info[0] < 3:
+if not PY3:
     def jinja_string_repr(string):
         return repr(string)[1:]
 else:
@@ -95,7 +93,7 @@ class LexerTestCase(JinjaTestCase):
 
     def test_operators(self):
         from jinja2.lexer import operators
-        for test, expect in six.iteritems(operators):
+        for test, expect in iteritems(operators):
             if test in '([{}])':
                 continue
             stream = env.lexer.tokenize('{{ %s }}' % test)
@@ -377,7 +375,7 @@ class SyntaxTestCase(JinjaTestCase):
     def test_notin(self):
         bar = range(100)
         tmpl = env.from_string('''{{ not 42 in bar }}''')
-        assert tmpl.render(bar=bar) == six.text_type(not 42 in bar)
+        assert tmpl.render(bar=bar) == text_type(not 42 in bar)
 
     def test_implicit_subscribed_tuple(self):
         class Foo(object):

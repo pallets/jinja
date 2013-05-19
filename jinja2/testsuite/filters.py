@@ -12,8 +12,7 @@ import unittest
 from jinja2.testsuite import JinjaTestCase
 
 from jinja2 import Markup, Environment
-import six
-from six.moves import map
+from jinja2._compat import text_type, PY3
 
 env = Environment()
 
@@ -190,7 +189,7 @@ class FilterTestCase(JinjaTestCase):
     def test_string(self):
         x = [1, 2, 3, 4, 5]
         tmpl = env.from_string('''{{ obj|string }}''')
-        assert tmpl.render(obj=x) == six.text_type(x)
+        assert tmpl.render(obj=x) == text_type(x)
 
     def test_title(self):
         tmpl = env.from_string('''{{ "foo bar"|title }}''')
@@ -299,8 +298,13 @@ class FilterTestCase(JinjaTestCase):
             def __init__(self, value):
                 self.value = value
             def __unicode__(self):
-                return six.text_type(self.value)
-            __str__ = __unicode__
+                return text_type(self.value)
+            if PY3:
+                __str__ = __unicode__
+                del __unicode__
+            else:
+                def __str__(self):
+                    return self.__unicode__().encode('utf-8')
         tmpl = env.from_string('''{{ items|sort(attribute='value')|join }}''')
         assert tmpl.render(items=map(Magic, [3, 2, 4, 1])) == '1234'
 

@@ -9,7 +9,6 @@
     :license: BSD, see LICENSE for more details.
 """
 import re
-import six
 import unittest
 
 from jinja2.testsuite import JinjaTestCase
@@ -18,8 +17,7 @@ from jinja2 import Environment, DictLoader, contextfunction, nodes
 from jinja2.exceptions import TemplateAssertionError
 from jinja2.ext import Extension
 from jinja2.lexer import Token, count_newlines
-from jinja2._compat import next
-from six import BytesIO
+from jinja2._compat import next, BytesIO, itervalues, text_type
 
 importable_object = 23
 
@@ -219,7 +217,7 @@ class ExtensionsTestCase(JinjaTestCase):
         original = Environment(extensions=[TestExtension])
         overlay = original.overlay()
         for env in original, overlay:
-            for ext in six.itervalues(env.extensions):
+            for ext in itervalues(env.extensions):
                 assert ext.environment is env
 
     def test_preprocessor_extension(self):
@@ -438,7 +436,7 @@ class AutoEscapeTestCase(JinjaTestCase):
         '''
         tmpl = env.from_string(tmplsource)
         assert tmpl.render(val=True).split()[0] == 'Markup'
-        assert tmpl.render(val=False).split()[0] == six.text_type.__name__
+        assert tmpl.render(val=False).split()[0] == text_type.__name__
 
         # looking at the source we should see <testing> there in raw
         # (and then escaped as well)

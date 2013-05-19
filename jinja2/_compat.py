@@ -30,6 +30,8 @@ text_type = six.text_type
 string_types = six.string_types
 
 iteritems = six.iteritems
+iterkeys = six.iterkeys
+itervalues = six.itervalues
 
 if six.PY3:
     from io import BytesIO, StringIO

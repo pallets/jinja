@@ -8,14 +8,13 @@
     :copyright: (c) 2010 by the Jinja Team.
     :license: BSD, see LICENSE for more details.
 """
-import sys
 from jinja2._compat import imap, text_type, PY3
 
 
 class TemplateError(Exception):
     """Baseclass for all template errors."""
 
-    if sys.version_info[0] < 3:
+    if not PY3:
         def __init__(self, message=None):
             if message is not None:
                 message = text_type(message).encode('utf-8')
