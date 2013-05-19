@@ -445,16 +445,17 @@ def do_truncate(s, length=255, killwords=False, end='...'):
     """Return a truncated copy of the string. The length is specified
     with the first parameter which defaults to ``255``. If the second
     parameter is ``true`` the filter will cut the text at length. Otherwise
-    it will try to save the last word. If the text was in fact
+    it will discard the last word. If the text was in fact
     truncated it will append an ellipsis sign (``"..."``). If you want a
     different ellipsis sign than ``"..."`` you can specify it using the
     third parameter.
 
-    .. sourcecode jinja::
+    .. sourcecode:: jinja
 
-        {{ mytext|truncate(300, false, '&raquo;') }}
-            truncate mytext to 300 chars, don't split up words, use a
-            right pointing double arrow as ellipsis sign.
+        {{ "foo bar"|truncate(5) }}
+            -> "foo ..."
+        {{ "foo bar"|truncate(5, True) }}
+            -> "foo b..."
     """
     if len(s) <= length:
         return s
