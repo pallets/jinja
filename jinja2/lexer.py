@@ -391,6 +391,7 @@ def get_lexer(environment):
            environment.line_statement_prefix,
            environment.line_comment_prefix,
            environment.trim_blocks,
+           environment.lstrip_blocks,
            environment.newline_sequence,
            environment.keep_trailing_newline)
     lexer = _lexer_cache.get(key)
@@ -434,6 +435,42 @@ class Lexer(object):
         # block suffix if trimming is enabled
         block_suffix_re = environment.trim_blocks and '\\n?' or ''
 
+        # strip leading spaces if lstrip_blocks is enabled
+        prefix_re = {}
+        if environment.lstrip_blocks:
+            # use '{%+' to manually disable lstrip_blocks behavior
+            no_lstrip_re = e('+')
+            # detect overlap between block and variable or comment strings
+            block_diff = c(r'^%s(.*)' % e(environment.block_start_string))
+            # make sure we don't mistake a block for a variable or a comment
+            m = block_diff.match(environment.comment_start_string)
+            no_lstrip_re += m and r'|%s' % e(m.group(1)) or ''
+            m = block_diff.match(environment.variable_start_string)
+            no_lstrip_re += m and r'|%s' % e(m.group(1)) or ''
+
+            # detect overlap between comment and variable strings
+            comment_diff = c(r'^%s(.*)' % e(environment.comment_start_string))
+            m = comment_diff.match(environment.variable_start_string)
+            no_variable_re = m and r'(?!%s)' % e(m.group(1)) or ''
+
+            lstrip_re = r'^[ \t]*'
+            block_prefix_re = r'%s%s(?!%s)|%s\+?' % (
+                    lstrip_re,
+                    e(environment.block_start_string),
+                    no_lstrip_re,
+                    e(environment.block_start_string),
+                    )
+            comment_prefix_re = r'%s%s%s|%s\+?' % (
+                    lstrip_re,
+                    e(environment.comment_start_string),
+                    no_variable_re,
+                    e(environment.comment_start_string),
+                    )
+            prefix_re['block'] = block_prefix_re
+            prefix_re['comment'] = comment_prefix_re
+        else:
+            block_prefix_re = '%s' % e(environment.block_start_string)
+
         self.newline_sequence = environment.newline_sequence
         self.keep_trailing_newline = environment.keep_trailing_newline
 
@@ -444,11 +481,11 @@ class Lexer(object):
                 (c('(.*?)(?:%s)' % '|'.join(
                     [r'(?P<raw_begin>(?:\s*%s\-|%s)\s*raw\s*(?:\-%s\s*|%s))' % (
                         e(environment.block_start_string),
-                        e(environment.block_start_string),
+                        block_prefix_re,
                         e(environment.block_end_string),
                         e(environment.block_end_string)
                     )] + [
-                        r'(?P<%s_begin>\s*%s\-|%s)' % (n, r, r)
+                        r'(?P<%s_begin>\s*%s\-|%s)' % (n, r, prefix_re.get(n,r))
                         for n, r in root_tag_rules
                     ])), (TOKEN_DATA, '#bygroup'), '#bygroup'),
                 # data
@@ -482,7 +519,7 @@ class Lexer(object):
             TOKEN_RAW_BEGIN: [
                 (c('(.*?)((?:\s*%s\-|%s)\s*endraw\s*(?:\-%s\s*|%s%s))' % (
                     e(environment.block_start_string),
-                    e(environment.block_start_string),
+                    block_prefix_re,
                     e(environment.block_end_string),
                     e(environment.block_end_string),
                     block_suffix_re

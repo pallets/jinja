@@ -23,6 +23,7 @@ Version 2.7
 - Added support for changing from newline to different signs in the `wordwrap`
   filter.
 - Added support for ignoring memcache errors silently.
+- Added support for keeping the trailing newline in templates.
 
 Version 2.6
 -----------

@@ -16,7 +16,7 @@ from jinja2.defaults import BLOCK_START_STRING, \
      COMMENT_START_STRING, COMMENT_END_STRING, LINE_STATEMENT_PREFIX, \
      LINE_COMMENT_PREFIX, TRIM_BLOCKS, NEWLINE_SEQUENCE, \
      DEFAULT_FILTERS, DEFAULT_TESTS, DEFAULT_NAMESPACE, \
-     KEEP_TRAILING_NEWLINE
+     KEEP_TRAILING_NEWLINE, LSTRIP_BLOCKS
 from jinja2.lexer import get_lexer, TokenStream
 from jinja2.parser import Parser
 from jinja2.optimizer import optimize
@@ -142,6 +142,10 @@ class Environment(object):
             If this is set to ``True`` the first newline after a block is
             removed (block, not variable tag!).  Defaults to `False`.
 
+        `lstrip_blocks`
+            If this is set to ``True`` leading spaces and tabs are stripped
+            from the start of a line to a block.  Defaults to `False`.
+
         `newline_sequence`
             The sequence that starts a newline.  Must be one of ``'\r'``,
             ``'\n'`` or ``'\r\n'``.  The default is ``'\n'`` which is a
@@ -239,6 +243,7 @@ class Environment(object):
                  line_statement_prefix=LINE_STATEMENT_PREFIX,
                  line_comment_prefix=LINE_COMMENT_PREFIX,
                  trim_blocks=TRIM_BLOCKS,
+                 lstrip_blocks=LSTRIP_BLOCKS,
                  newline_sequence=NEWLINE_SEQUENCE,
                  keep_trailing_newline=KEEP_TRAILING_NEWLINE,
                  extensions=(),
@@ -271,6 +276,7 @@ class Environment(object):
         self.line_statement_prefix = line_statement_prefix
         self.line_comment_prefix = line_comment_prefix
         self.trim_blocks = trim_blocks
+        self.lstrip_blocks = lstrip_blocks
         self.newline_sequence = newline_sequence
         self.keep_trailing_newline = keep_trailing_newline
 
@@ -317,7 +323,8 @@ class Environment(object):
                 variable_start_string=missing, variable_end_string=missing,
                 comment_start_string=missing, comment_end_string=missing,
                 line_statement_prefix=missing, line_comment_prefix=missing,
-                trim_blocks=missing, extensions=missing, optimized=missing,
+                trim_blocks=missing, lstrip_blocks=missing,
+                extensions=missing, optimized=missing,
                 undefined=missing, finalize=missing, autoescape=missing,
                 loader=missing, cache_size=missing, auto_reload=missing,
                 bytecode_cache=missing):
@@ -837,6 +844,7 @@ class Template(object):
                 line_statement_prefix=LINE_STATEMENT_PREFIX,
                 line_comment_prefix=LINE_COMMENT_PREFIX,
                 trim_blocks=TRIM_BLOCKS,
+                lstrip_blocks=LSTRIP_BLOCKS,
                 newline_sequence=NEWLINE_SEQUENCE,
                 keep_trailing_newline=KEEP_TRAILING_NEWLINE,
                 extensions=(),
@@ -848,8 +856,9 @@ class Template(object):
             block_start_string, block_end_string, variable_start_string,
             variable_end_string, comment_start_string, comment_end_string,
             line_statement_prefix, line_comment_prefix, trim_blocks,
-            newline_sequence, keep_trailing_newline, frozenset(extensions),
-            optimized, undefined, finalize, autoescape, None, 0, False, None)
+            lstrip_blocks, newline_sequence, keep_trailing_newline,
+            frozenset(extensions), optimized, undefined, finalize, autoescape,
+            None, 0, False, None)
         return env.from_string(source, template_class=cls)
 
     @classmethod

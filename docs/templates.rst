@@ -155,12 +155,46 @@ Whitespace Control
 In the default configuration, a single trailing newline is stripped if
 present, and whitespace is not further modified by the template engine. Each
 whitespace (spaces, tabs, newlines etc.) is returned unchanged.  If the
-application configures Jinja to `trim_blocks` the first newline after a a
-template tag is removed automatically (like in PHP).  To keep the
-single trailing newline when it is present, configure Jinja to
-`keep_trailing_newline`.
+application configures Jinja to `trim_blocks` the first newline after a
+template tag is removed automatically (like in PHP). The `lstrip_blocks`
+option can also be set to strip tabs and spaces from the beginning of
+line to the start of a block. (Nothing will be stripped if there are
+other characters before the start of the block.)
 
-But you can also strip whitespace in templates by hand.  If you put an minus
+With both `trim_blocks` and `lstrip_blocks` enabled you can put block tags
+on their own lines, and the entire block line will be removed when
+rendered, preserving the whitespace of the contents.  For example,
+without the `trim_blocks` and `lstrip_blocks` options, this template::
+
+    <div>
+        {% if True %}
+            yay
+        {% endif %}
+    </div>
+
+gets rendered with blank lines inside the div::
+
+    <div>
+    
+            yay
+    
+    </div>
+
+But with both `trim_blocks` and `lstrip_blocks` enabled, the lines with the 
+template blocks are removed while preserving the whitespace of the contents::
+    
+    <div>
+            yay
+    </div>
+
+You can manually disable the `lstrip_blocks` behavior by putting a
+plus sign (``+``) at the start of a block::
+
+    <div>
+            {%+ if something %}yay{% endif %}
+    </div>
+
+You can also strip whitespace in templates by hand.  If you put an minus
 sign (``-``) to the start or end of an block (for example a for tag), a
 comment or variable expression you can remove the whitespaces after or before
 that block::
@@ -174,6 +208,10 @@ a list of numbers from ``1`` to ``9`` the output would be ``123456789``.
 
 If :ref:`line-statements` are enabled they strip leading whitespace
 automatically up to the beginning of the line.
+
+Jinja2 by default also removes trailing newlines.  To keep the single
+trailing newline when it is present, configure Jinja to
+`keep_trailing_newline`.
 
 .. admonition:: Note
 
