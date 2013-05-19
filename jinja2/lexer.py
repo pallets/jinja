@@ -204,7 +204,7 @@ def compile_rules(environment):
 
     if environment.line_statement_prefix is not None:
         rules.append((len(environment.line_statement_prefix), 'linestatement',
-                      r'^\s*' + e(environment.line_statement_prefix)))
+                      r'^[ \t\v]*' + e(environment.line_statement_prefix)))
     if environment.line_comment_prefix is not None:
         rules.append((len(environment.line_comment_prefix), 'linecomment',
                       r'(?:^|(?<=\S))[^\S\r\n]*' +
