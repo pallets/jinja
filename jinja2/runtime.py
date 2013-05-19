@@ -15,7 +15,7 @@ from jinja2.utils import Markup, soft_unicode, escape, missing, concat, \
 from jinja2.exceptions import UndefinedError, TemplateRuntimeError, \
      TemplateNotFound
 from jinja2._compat import next, imap, text_type, iteritems, Iterator, \
-     string_types, PY2
+     string_types, PY2, UnicodeMixin
 
 
 # these variables are exported to the template runtime
@@ -440,7 +440,7 @@ class Macro(object):
         )
 
 
-class Undefined(object):
+class Undefined(UnicodeMixin):
     """The default undefined type.  This undefined type can be printed and
     iterated over, but every other access will raise an :exc:`UndefinedError`:
 
@@ -501,13 +501,6 @@ class Undefined(object):
     def __unicode__(self):
         return u''
 
-    if PY2:
-        def __str__(self):
-            return self.__unicode__().encode('utf-8')
-    else:
-        __str__ = __unicode__
-        del __unicode__
-
     def __len__(self):
         return 0
 
@@ -547,10 +540,6 @@ class DebugUndefined(Undefined):
             )
         return u'{{ undefined value printed: %s }}' % self._undefined_hint
 
-    if not PY2:
-        __str__ = __unicode__
-        del __unicode__
-
 
 class StrictUndefined(Undefined):
     """An undefined that barks on print and iteration as well as boolean
@@ -572,11 +561,8 @@ class StrictUndefined(Undefined):
     UndefinedError: 'foo' is undefined
     """
     __slots__ = ()
-    __iter__ = __str__ = __len__ = __nonzero__ = __eq__ = \
+    __iter__ = __unicode__ = __len__ = __nonzero__ = __eq__ = \
         __ne__ = __bool__ = Undefined._fail_with_undefined_error
-
-    if PY2:
-        __unicode__ = Undefined._fail_with_undefined_error
 
 
 # remove remaining slots attributes, after the metaclass did the magic they

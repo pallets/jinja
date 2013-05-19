@@ -28,7 +28,7 @@ from jinja2.exceptions import TemplateSyntaxError, TemplateNotFound, \
 from jinja2.utils import import_string, LRUCache, Markup, missing, \
      concat, consume, internalcode, _encode_filename
 from jinja2._compat import imap, ifilter, string_types, iteritems, \
-     text_type, reraise, PY2, Iterator, next
+     text_type, reraise, Iterator, next, UnicodeMixin
 from functools import reduce
 
 
@@ -1051,7 +1051,7 @@ class Template(object):
         return '<%s %s>' % (self.__class__.__name__, name)
 
 
-class TemplateModule(object):
+class TemplateModule(UnicodeMixin):
     """Represents an imported template.  All the exported names of the
     template are available as attributes on this object.  Additionally
     converting it into an unicode- or bytestrings renders the contents.
@@ -1067,13 +1067,6 @@ class TemplateModule(object):
 
     def __unicode__(self):
         return concat(self._body_stream)
-
-    if PY2:
-        def __str__(self):
-            return self.__unicode__().encode('utf-8')
-    else:
-        __str__ = __unicode__
-        del __unicode__
 
     def __repr__(self):
         if self.__name__ is None:

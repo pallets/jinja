@@ -38,6 +38,11 @@ if not PY2:
         raise value
 
     Iterator = object
+
+    class UnicodeMixin(object):
+        __slots__ = ()
+        def __str__(self):
+            return self.__unicode__()
 else:
     text_type = unicode
     unichr = unichr
@@ -56,7 +61,13 @@ else:
 
     exec('def reraise(tp, value, tb=None):\n raise tp, value, tb')
 
+    class UnicodeMixin(object):
+        __slots__ = ()
+        def __str__(self):
+            return self.__unicode__().encode('utf-8')
+
     class Iterator(object):
+        __slots__ = ()
         def next(self):
             return self.__next__()
 

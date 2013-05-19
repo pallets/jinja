@@ -8,7 +8,7 @@
     :copyright: (c) 2010 by the Jinja Team.
     :license: BSD, see LICENSE for more details.
 """
-from jinja2._compat import imap, text_type, PY2
+from jinja2._compat import imap, text_type, PY2, UnicodeMixin
 
 
 class TemplateError(Exception):
@@ -36,7 +36,7 @@ class TemplateError(Exception):
                     return message
 
 
-class TemplateNotFound(IOError, LookupError, TemplateError):
+class TemplateNotFound(IOError, LookupError, TemplateError, UnicodeMixin):
     """Raised if a template does not exist."""
 
     # looks weird, but removes the warning descriptor that just
@@ -51,13 +51,6 @@ class TemplateNotFound(IOError, LookupError, TemplateError):
         self.name = name
         self.templates = [name]
 
-    def __str__(self):
-        return self.message.encode('utf-8')
-
-    # unicode goes after __str__ because we configured 2to3 to rename
-    # __unicode__ to __str__.  because the 2to3 tree is not designed to
-    # remove nodes from it, we leave the above __str__ around and let
-    # it override at runtime.
     def __unicode__(self):
         return self.message
 
@@ -78,7 +71,7 @@ class TemplatesNotFound(TemplateNotFound):
         self.templates = list(names)
 
 
-class TemplateSyntaxError(TemplateError):
+class TemplateSyntaxError(UnicodeMixin, TemplateError):
     """Raised to tell the user that there is a problem with the template."""
 
     def __init__(self, message, lineno, name=None, filename=None):
@@ -114,13 +107,6 @@ class TemplateSyntaxError(TemplateError):
                 lines.append('    ' + line.strip())
 
         return u'\n'.join(lines)
-
-    if PY2:
-        def __str__(self):
-            return self.__unicode__().encode('utf-8')
-    else:
-        __str__ = __unicode__
-        del __unicode__
 
 
 class TemplateAssertionError(TemplateSyntaxError):
