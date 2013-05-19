@@ -125,24 +125,6 @@ instead that one can assign to a variable by using set::
 
     {% set comments = get_latest_comments() %}
 
-What is the speedups module and why is it missing?
---------------------------------------------------
-
-To achieve a good performance with automatic escaping enabled, the escaping
-function was also implemented in pure C in older Jinja2 releases and used if
-Jinja2 was installed with the speedups module.
-
-Because this feature itself is very useful for non-template engines as
-well it was moved into a separate project on PyPI called `MarkupSafe`_.
-
-Jinja2 no longer ships with a C implementation of it but only the pure
-Python implementation.  It will however check if MarkupSafe is available
-and installed, and if it is, use the Markup class from MarkupSafe.
-
-So if you want the speedups, just install MarkupSafe.
-
-.. _MarkupSafe: http://pypi.python.org/pypi/MarkupSafe
-
 My tracebacks look weird.  What's happening?
 --------------------------------------------
 

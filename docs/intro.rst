@@ -72,39 +72,15 @@ has the advantage that the C extensions are compiled.
 .. _git: http://git-scm.org/
 
 
-More Speed with MarkupSafe
-~~~~~~~~~~~~~~~~~~~~~~~~~~
+MarkupSafe Dependency
+~~~~~~~~~~~~~~~~~~~~~
 
-As of version 2.5.1 Jinja2 will check for an installed `MarkupSafe`_
-module.  If it can find it, it will use the Markup class of that module
-instead of the one that comes with Jinja2.  `MarkupSafe` replaces the
-older speedups module that came with Jinja2 and has the advantage that is
-has a better setup script and will automatically attempt to install the C
-version and nicely fall back to a pure Python implementation if that is
-not possible.
-
-The C implementation of MarkupSafe is much faster and recommended when
-using Jinja2 with autoescaping.
+As of version 2.7 Jinja2 depends on the `MarkupSafe`_ module.  If you
+install Jinja2 via `pip` or `easy_install` it will be installed
+automatically for you.
 
 .. _MarkupSafe: http://pypi.python.org/pypi/MarkupSafe
 
-
-<<<<<<< HEAD
-=======
-Enable the debug support Module
-~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-
-By default Jinja2 will not compile the debug support module.  Enabling this
-will fail if you don't have the Python headers or a working compiler.  This
-is often the case if you are installing Jinja2 from a Windows machine.
-
-Because the debug support is only necessary for Python 2.4 you will not
-have to do this unless you run 2.4::
-
-    sudo python setup.py --with-debugsupport install
-
-
->>>>>>> Talksum/distribute_required
 Basic API Usage
 ---------------
 
