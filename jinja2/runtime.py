@@ -280,11 +280,12 @@ class BlockReference(object):
 class LoopContext(object):
     """A loop context for dynamic iteration."""
 
-    def __init__(self, iterable, recurse=None):
+    def __init__(self, iterable, recurse=None, depth0=0):
         self._iterator = iter(iterable)
         self._recurse = recurse
         self._after = self._safe_next()
         self.index0 = -1
+        self.depth0 = depth0
 
         # try to get the length of the iterable early.  This must be done
         # here because there are some broken iterators around where there
@@ -306,6 +307,7 @@ class LoopContext(object):
     index = property(lambda x: x.index0 + 1)
     revindex = property(lambda x: x.length - x.index0)
     revindex0 = property(lambda x: x.length - x.index)
+    depth = property(lambda x: x.depth0 + 1)
 
     def __len__(self):
         return self.length
@@ -324,7 +326,7 @@ class LoopContext(object):
         if self._recurse is None:
             raise TypeError('Tried to call non recursive loop.  Maybe you '
                             "forgot the 'recursive' modifier.")
-        return self._recurse(iterable, self._recurse)
+        return self._recurse(iterable, self._recurse, self.depth0 + 1)
 
     # a nifty trick to enhance the error message if someone tried to call
     # the the loop without or with too many arguments.

@@ -576,6 +576,12 @@ Inside of a for-loop block you can access some special variables:
 | `loop.cycle`          | A helper function to cycle between a list of      |
 |                       | sequences.  See the explanation below.            |
 +-----------------------+---------------------------------------------------+
+| `loop.depth`          | Indicates how deep in deep in a recursive loop    |
+|                       | the rendering currently is.  Starts at level 1    |
++-----------------------+---------------------------------------------------+
+| `loop.depth0          | Indicates how deep in deep in a recursive loop    |
+|                       | the rendering currently is.  Starts at level 0    |
++-----------------------+---------------------------------------------------+
 
 Within a for-loop, it's possible to cycle among a list of strings/variables
 each time through the loop by using the special `loop.cycle` helper::

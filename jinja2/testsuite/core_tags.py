@@ -85,6 +85,26 @@ class ForLoopTestCase(JinjaTestCase):
             dict(a=3, b=[dict(a='a')])
         ]) == '[1<[1][2]>][2<[1][2]>][3<[a]>]'
 
+    def test_recursive_depth0(self):
+        tmpl = env.from_string('''{% for item in seq recursive -%}
+            [{{ loop.depth0 }}:{{ item.a }}{% if item.b %}<{{ loop(item.b) }}>{% endif %}]
+        {%- endfor %}''')
+        self.assertEqual(tmpl.render(seq=[
+            dict(a=1, b=[dict(a=1), dict(a=2)]),
+            dict(a=2, b=[dict(a=1), dict(a=2)]),
+            dict(a=3, b=[dict(a='a')])
+        ]), '[0:1<[1:1][1:2]>][0:2<[1:1][1:2]>][0:3<[1:a]>]')
+
+    def test_recursive_depth(self):
+        tmpl = env.from_string('''{% for item in seq recursive -%}
+            [{{ loop.depth }}:{{ item.a }}{% if item.b %}<{{ loop(item.b) }}>{% endif %}]
+        {%- endfor %}''')
+        self.assertEqual(tmpl.render(seq=[
+            dict(a=1, b=[dict(a=1), dict(a=2)]),
+            dict(a=2, b=[dict(a=1), dict(a=2)]),
+            dict(a=3, b=[dict(a='a')])
+        ]), '[1:1<[2:1][2:2]>][1:2<[2:1][2:2]>][1:3<[2:a]>]')
+
     def test_looploop(self):
         tmpl = env.from_string('''{% for row in table %}
             {%- set rowloop = loop -%}

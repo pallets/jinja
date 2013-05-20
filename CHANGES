@@ -28,6 +28,8 @@ Version 2.7
   of blocks.
 - Added `map`, `select`, `reject`, `selectattr` and `rejectattr`
   filters.
+- Added support for `loop.depth` to figure out how deep inside a recursive
+  loop the code is.
 
 Version 2.6
 -----------

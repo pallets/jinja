@@ -1066,7 +1066,7 @@ class CodeGenerator(NodeVisitor):
 
         # otherwise we set up a buffer and add a function def
         else:
-            self.writeline('def loop(reciter, loop_render_func):', node)
+            self.writeline('def loop(reciter, loop_render_func, depth=0):', node)
             self.indent()
             self.buffer(loop_frame)
             aliases = {}
@@ -1125,7 +1125,7 @@ class CodeGenerator(NodeVisitor):
             self.visit(node.iter, loop_frame)
 
         if node.recursive:
-            self.write(', recurse=loop_render_func):')
+            self.write(', loop_render_func, depth):')
         else:
             self.write(extended_loop and '):' or ':')
 
