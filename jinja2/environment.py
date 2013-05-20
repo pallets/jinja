@@ -26,10 +26,10 @@ from jinja2.runtime import Undefined, new_context
 from jinja2.exceptions import TemplateSyntaxError, TemplateNotFound, \
      TemplatesNotFound, TemplateRuntimeError
 from jinja2.utils import import_string, LRUCache, Markup, missing, \
-     concat, consume, internalcode, _encode_filename
+     concat, consume, internalcode
 from jinja2._compat import imap, ifilter, string_types, iteritems, \
      text_type, reraise, implements_iterator, implements_to_string, \
-     get_next
+     get_next, encode_filename
 from functools import reduce
 
 
@@ -456,7 +456,7 @@ class Environment(object):
 
     def _parse(self, source, name, filename):
         """Internal parsing function used by `parse` and `compile`."""
-        return Parser(self, source, name, _encode_filename(filename)).parse()
+        return Parser(self, source, name, encode_filename(filename)).parse()
 
     def lex(self, source, name=None, filename=None):
         """Lex the given sourcecode and return a generator that yields
@@ -547,7 +547,7 @@ class Environment(object):
             if filename is None:
                 filename = '<template>'
             else:
-                filename = _encode_filename(filename)
+                filename = encode_filename(filename)
             return self._compile(source, filename)
         except TemplateSyntaxError:
             exc_info = sys.exc_info()
@@ -671,7 +671,7 @@ class Environment(object):
                 filename = ModuleLoader.get_module_filename(name)
 
                 if py_compile:
-                    c = self._compile(code, _encode_filename(filename))
+                    c = self._compile(code, encode_filename(filename))
                     write_file(filename + 'c', py_header +
                                marshal.dumps(c), 'wb')
                     log_function('Byte-compiled "%s" as %s' %

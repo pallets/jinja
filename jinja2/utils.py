@@ -9,21 +9,10 @@
     :license: BSD, see LICENSE for more details.
 """
 import re
-import sys
 import errno
-try:
-    from urllib.parse import quote_from_bytes as url_quote
-except ImportError:
-    from urllib import quote as url_quote
-try:
-    from thread import allocate_lock
-except ImportError:
-    try:
-        from _thread import allocate_lock  # py 3
-    except ImportError:
-        from dummy_thread import allocate_lock
 from collections import deque
-from jinja2._compat import text_type, string_types, implements_iterator, PY2
+from jinja2._compat import text_type, string_types, implements_iterator, \
+     allocate_lock, url_quote, encode_filename, PY2
 
 
 _word_split_re = re.compile(r'(\s+)')
@@ -46,23 +35,6 @@ missing = type('MissingType', (), {'__repr__': lambda x: 'missing'})()
 internal_code = set()
 
 concat = u''.join
-
-
-# if this python version is unable to deal with unicode filenames
-# when passed to encode we let this function encode it properly.
-# This is used in a couple of places.  As far as Jinja is concerned
-# filenames are unicode *or* bytestrings in 2.x and unicode only in
-# 3.x because compile cannot handle bytes
-if PY2:
-    def _encode_filename(filename):
-        if isinstance(filename, unicode):
-            return filename.encode('utf-8')
-        return filename
-else:
-    def _encode_filename(filename):
-        assert filename is None or isinstance(filename, str), \
-            'filenames must be strings'
-        return filename
 
 
 def contextfunction(f):

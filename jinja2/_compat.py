@@ -13,9 +13,11 @@
 import sys
 
 PY2 = sys.version_info[0] == 2
+_identity = lambda x: x
 
 
 if not PY2:
+
     unichr = chr
     range_type = range
     text_type = str
@@ -39,8 +41,9 @@ if not PY2:
     izip = zip
     intern = sys.intern
 
-    implements_iterator = lambda x: x
-    implements_to_string = lambda x: x
+    implements_iterator = _identity
+    implements_to_string = _identity
+    encode_filename = _identity
     get_next = lambda x: x.__next__
 else:
     unichr = unichr
@@ -73,6 +76,10 @@ else:
 
     get_next = lambda x: x.next
 
+    def encode_filename(filename):
+        if isinstance(filename, unicode):
+            return filename.encode('utf-8')
+        return filename
 
 try:
     next = next
@@ -125,3 +132,18 @@ except TypeError:
     _tb = sys.exc_info()[2]
     traceback_type = type(_tb)
     frame_type = type(_tb.tb_frame)
+
+
+try:
+    from urllib.parse import quote_from_bytes as url_quote
+except ImportError:
+    from urllib import quote as url_quote
+
+
+try:
+    from thread import allocate_lock
+except ImportError:
+    try:
+        from threading import Lock as allocate_lock
+    except ImportError:
+        from dummy_thread import allocate_lock
