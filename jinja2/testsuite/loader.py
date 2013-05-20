@@ -221,5 +221,8 @@ class ModuleLoaderTestCase(JinjaTestCase):
 def suite():
     suite = unittest.TestSuite()
     suite.addTest(unittest.makeSuite(LoaderTestCase))
-    suite.addTest(unittest.makeSuite(ModuleLoaderTestCase))
+    # pypy currently does not support compiled jinja modules because
+    # of changes in the load system.
+    if not hasattr(sys, 'pypy_version_info'):
+        suite.addTest(unittest.makeSuite(ModuleLoaderTestCase))
     return suite
