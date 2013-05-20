@@ -1,6 +1,12 @@
 test:
 	python setup.py test
 
+develop:
+	pip install --editable .
+
+tox-test:
+	@tox
+
 release:
 	python scripts/make-release.py
 
