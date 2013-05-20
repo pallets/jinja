@@ -28,6 +28,9 @@ class TemplateError(Exception):
                     return message.decode('utf-8', 'replace')
 
     else:
+        def __init__(self, message=None):
+            Exception.__init__(self, message)
+
         @property
         def message(self):
             if self.args:
