@@ -27,6 +27,8 @@ class TemplateError(Exception):
                 if message is not None:
                     return message.decode('utf-8', 'replace')
 
+        def __unicode__(self):
+            return self.message or u''
     else:
         def __init__(self, message=None):
             Exception.__init__(self, message)
