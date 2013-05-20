@@ -1,5 +1,5 @@
 test:
-	python setup.py test
+	python run-tests.py
 
 develop:
 	pip install --editable .

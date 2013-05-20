@@ -69,6 +69,57 @@ class JinjaTestCase(unittest.TestCase):
             self.fail('Expected exception')
 
 
+def find_all_tests(suite):
+    """Yields all the tests and their names from a given suite."""
+    suites = [suite]
+    while suites:
+        s = suites.pop()
+        try:
+            suites.extend(s)
+        except TypeError:
+            yield s, '%s.%s.%s' % (
+                s.__class__.__module__,
+                s.__class__.__name__,
+                s._testMethodName
+            )
+
+
+class BetterLoader(unittest.TestLoader):
+    """A nicer loader that solves two problems.  First of all we are setting
+    up tests from different sources and we're doing this programmatically
+    which breaks the default loading logic so this is required anyways.
+    Secondly this loader has a nicer interpolation for test names than the
+    default one so you can just do ``run-tests.py ViewTestCase`` and it
+    will work.
+    """
+
+    def getRootSuite(self):
+        return suite()
+
+    def loadTestsFromName(self, name, module=None):
+        root = self.getRootSuite()
+        if name == 'suite':
+            return root
+
+        all_tests = []
+        for testcase, testname in find_all_tests(root):
+            if testname == name or \
+               testname.endswith('.' + name) or \
+               ('.' + name + '.') in testname or \
+               testname.startswith(name + '.'):
+                all_tests.append(testcase)
+
+        if not all_tests:
+            raise LookupError('could not find test case for "%s"' % name)
+
+        if len(all_tests) == 1:
+            return all_tests[0]
+        rv = unittest.TestSuite()
+        for test in all_tests:
+            rv.addTest(test)
+        return rv
+
+
 def suite():
     from jinja2.testsuite import ext, filters, tests, core_tags, \
          loader, inheritance, imports, lexnparse, security, api, \
@@ -94,3 +145,11 @@ def suite():
         suite.addTest(doctests.suite())
 
     return suite
+
+
+def main():
+    """Runs the testsuite as command line application."""
+    try:
+        unittest.main(testLoader=BetterLoader(), defaultTest='suite')
+    except Exception as e:
+        print('Error: %s' % e)
