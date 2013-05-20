@@ -579,7 +579,7 @@ Inside of a for-loop block you can access some special variables:
 | `loop.depth`          | Indicates how deep in deep in a recursive loop    |
 |                       | the rendering currently is.  Starts at level 1    |
 +-----------------------+---------------------------------------------------+
-| `loop.depth0          | Indicates how deep in deep in a recursive loop    |
+| `loop.depth0`         | Indicates how deep in deep in a recursive loop    |
 |                       | the rendering currently is.  Starts at level 0    |
 +-----------------------+---------------------------------------------------+
 
