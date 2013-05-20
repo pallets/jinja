@@ -98,14 +98,14 @@ def with_metaclass(meta, *bases):
     #
     # This has the advantage over six.with_metaclass in that it does not
     # introduce dummy classes into the final MRO.
-    class __metaclass__(meta):
+    class metaclass(meta):
         __call__ = type.__call__
         __init__ = type.__init__
         def __new__(cls, name, this_bases, d):
             if this_bases is None:
                 return type.__new__(cls, name, (), d)
             return meta(name, bases, d)
-    return __metaclass__('<dummy_class>', None, {})
+    return metaclass('temporary_class', None, {})
 
 
 try:
