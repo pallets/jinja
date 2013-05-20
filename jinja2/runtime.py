@@ -15,7 +15,7 @@ from jinja2.utils import Markup, soft_unicode, escape, missing, concat, \
 from jinja2.exceptions import UndefinedError, TemplateRuntimeError, \
      TemplateNotFound
 from jinja2._compat import next, imap, text_type, iteritems, \
-     implements_iterator, implements_to_string, string_types
+     implements_iterator, implements_to_string, string_types, PY2
 
 
 # these variables are exported to the template runtime
@@ -216,7 +216,7 @@ class Context(object):
     items = _all('items')
 
     # not available on python 3
-    if hasattr(dict, 'iterkeys'):
+    if PY2:
         iterkeys = _all('iterkeys')
         itervalues = _all('itervalues')
         iteritems = _all('iteritems')
