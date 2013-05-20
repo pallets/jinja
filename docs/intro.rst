@@ -13,8 +13,8 @@ Prerequisites
 -------------
 
 Jinja2 works with Python 2.6.x, 2.7.x and >= 3.3.  If you are using Python
-3.2 you can use an older release of Jinja2 (2.6) as support for 3.2 was
-dropped in 2.7.
+3.2 you can use an older release of Jinja2 (2.6) as support for Python 3.2
+was dropped in Jinja2 version 2.7.
 
 If you wish to use the :class:`~jinja2.PackageLoader` class, you will also
 need setuptools or distribute installed at runtime.
