@@ -64,8 +64,6 @@ else:
             'filenames must be strings'
         return filename
 
-from keyword import iskeyword as is_python_keyword
-
 
 def contextfunction(f):
     """This decorator can be used to mark a function or method context callable.

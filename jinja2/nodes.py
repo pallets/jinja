@@ -120,7 +120,6 @@ class Node(with_metaclass(NodeType, object)):
     The `environment` attribute is set at the end of the parsing process for
     all nodes automatically.
     """
-    __metaclass__ = NodeType
     fields = ()
     attributes = ('lineno', 'environment')
     abstract = True

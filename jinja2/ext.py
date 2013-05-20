@@ -56,7 +56,6 @@ class Extension(with_metaclass(ExtensionRegistry, object)):
     is a terrible name, ``fragment_cache_prefix`` on the other hand is a good
     name as includes the name of the extension (fragment cache).
     """
-    __metaclass__ = ExtensionRegistry
 
     #: if this extension parses this is the list of tags it's listening to.
     tags = set()
