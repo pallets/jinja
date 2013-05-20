@@ -104,22 +104,6 @@ def with_metaclass(meta, *bases):
 
 
 try:
-    from collections import Mapping as mapping_types
-except ImportError:
-    import UserDict
-    mapping_types = (UserDict.UserDict, UserDict.DictMixin, dict)
-
-
-try:
     from urllib.parse import quote_from_bytes as url_quote
 except ImportError:
     from urllib import quote as url_quote
-
-
-try:
-    from thread import allocate_lock
-except ImportError:
-    try:
-        from threading import Lock as allocate_lock
-    except ImportError:
-        from dummy_thread import allocate_lock

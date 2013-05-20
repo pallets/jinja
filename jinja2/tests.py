@@ -9,8 +9,9 @@
     :license: BSD, see LICENSE for more details.
 """
 import re
+from collections import Mapping
 from jinja2.runtime import Undefined
-from jinja2._compat import text_type, string_types, mapping_types
+from jinja2._compat import text_type, string_types
 
 
 number_re = re.compile(r'^-?\d+(\.\d+)?$')
@@ -82,7 +83,7 @@ def test_mapping(value):
 
     .. versionadded:: 2.6
     """
-    return isinstance(value, mapping_types)
+    return isinstance(value, Mapping)
 
 
 def test_number(value):
