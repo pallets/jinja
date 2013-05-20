@@ -256,6 +256,14 @@ class FilterTestCase(JinjaTestCase):
             {'real': {'value': 18}},
         ]) == '42'
 
+    def test_sum_attributes_tuple(self):
+        tmpl = env.from_string('''{{ values.items()|sum('1') }}''')
+        assert tmpl.render(values={
+            'foo': 23,
+            'bar': 1,
+            'baz': 18,
+        }) == '42'
+
     def test_abs(self):
         tmpl = env.from_string('''{{ -1|abs }}|{{ 1|abs }}''')
         assert tmpl.render() == '1|1', tmpl.render()

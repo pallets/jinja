@@ -54,13 +54,17 @@ def environmentfilter(f):
 def make_attrgetter(environment, attribute):
     """Returns a callable that looks up the given attribute from a
     passed object with the rules of the environment.  Dots are allowed
-    to access attributes of attributes.
+    to access attributes of attributes.  Integer parts in paths are
+    looked up as integers.
     """
-    if not isinstance(attribute, string_types) or '.' not in attribute:
+    if not isinstance(attribute, string_types) \
+       or ('.' not in attribute and not attribute.isdigit()):
         return lambda x: environment.getitem(x, attribute)
     attribute = attribute.split('.')
     def attrgetter(item):
         for part in attribute:
+            if part.isdigit():
+                part = int(part)
             item = environment.getitem(item, part)
         return item
     return attrgetter
