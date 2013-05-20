@@ -17,7 +17,7 @@ from jinja2 import Environment, DictLoader, contextfunction, nodes
 from jinja2.exceptions import TemplateAssertionError
 from jinja2.ext import Extension
 from jinja2.lexer import Token, count_newlines
-from jinja2._compat import next, BytesIO, itervalues, text_type
+from jinja2._compat import BytesIO, itervalues, text_type
 
 importable_object = 23
 

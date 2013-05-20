@@ -82,12 +82,6 @@ else:
             return filename.encode('utf-8')
         return filename
 
-try:
-    next = next
-except NameError:
-    def next(it):
-        return it.next()
-
 
 def with_metaclass(meta, *bases):
     # This requires a bit of explanation: the basic idea is to make a

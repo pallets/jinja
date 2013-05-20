@@ -14,7 +14,7 @@ from jinja2.testsuite import JinjaTestCase
 
 from jinja2 import Environment, Template, TemplateSyntaxError, \
      UndefinedError, nodes
-from jinja2._compat import next, iteritems, text_type, PY2
+from jinja2._compat import iteritems, text_type, PY2
 from jinja2.lexer import Token, TokenStream, TOKEN_EOF, \
      TOKEN_BLOCK_BEGIN, TOKEN_BLOCK_END
 

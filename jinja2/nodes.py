@@ -16,7 +16,7 @@ import operator
 
 from collections import deque
 from jinja2.utils import Markup
-from jinja2._compat import next, izip, with_metaclass, text_type, \
+from jinja2._compat import izip, with_metaclass, text_type, \
      method_type, function_type
 
 

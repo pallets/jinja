@@ -14,7 +14,6 @@ import tempfile
 import shutil
 
 from jinja2.testsuite import JinjaTestCase
-from jinja2._compat import next
 
 from jinja2 import Environment, Undefined, DebugUndefined, \
      StrictUndefined, UndefinedError, meta, \

@@ -14,7 +14,7 @@ from jinja2.utils import Markup, soft_unicode, escape, missing, concat, \
      internalcode, object_type_repr
 from jinja2.exceptions import UndefinedError, TemplateRuntimeError, \
      TemplateNotFound
-from jinja2._compat import next, imap, text_type, iteritems, \
+from jinja2._compat import imap, text_type, iteritems, \
      implements_iterator, implements_to_string, string_types, PY2
 
 

@@ -18,7 +18,7 @@ from jinja2.utils import Markup, escape, pformat, urlize, soft_unicode, \
      unicode_urlencode
 from jinja2.runtime import Undefined
 from jinja2.exceptions import FilterArgumentError
-from jinja2._compat import next, imap, string_types, text_type, iteritems
+from jinja2._compat import imap, string_types, text_type, iteritems
 
 
 _word_re = re.compile(r'\w+(?u)')

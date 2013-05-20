@@ -16,7 +16,7 @@ from jinja2.nodes import EvalContext
 from jinja2.visitor import NodeVisitor
 from jinja2.exceptions import TemplateAssertionError
 from jinja2.utils import Markup, concat, escape
-from jinja2._compat import range_type, next, text_type, string_types, \
+from jinja2._compat import range_type, text_type, string_types, \
      iteritems, NativeStringIO, imap
 
 

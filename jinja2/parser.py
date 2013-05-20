@@ -11,7 +11,7 @@
 from jinja2 import nodes
 from jinja2.exceptions import TemplateSyntaxError, TemplateAssertionError
 from jinja2.lexer import describe_token, describe_token_expr
-from jinja2._compat import next, imap
+from jinja2._compat import imap
 
 
 #: statements that callinto 
