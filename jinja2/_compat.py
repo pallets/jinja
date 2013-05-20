@@ -21,55 +21,58 @@ if not PY2:
     text_type = str
     string_types = (str,)
 
-    _iterkeys = 'keys'
-    _itervalues = 'values'
-    _iteritems = 'items'
+    iterkeys = lambda d: iter(d.keys())
+    itervalues = lambda d: iter(d.values())
+    iteritems = lambda d: iter(d.items())
 
+    import pickle
     from io import BytesIO, StringIO
     NativeStringIO = StringIO
-
-    ifilter = filter
-    imap = map
-    izip = zip
 
     def reraise(tp, value, tb=None):
         if value.__traceback__ is not tb:
             raise value.with_traceback(tb)
         raise value
 
-    Iterator = object
+    ifilter = filter
+    imap = map
+    izip = zip
+    intern = sys.intern
 
-    class UnicodeMixin(object):
-        __slots__ = ()
-        def __str__(self):
-            return self.__unicode__()
+    implements_iterator = lambda x: x
+    implements_to_string = lambda x: x
+    get_next = lambda x: x.__next__
 else:
-    text_type = unicode
     unichr = unichr
+    text_type = unicode
+    range_type = xrange
     string_types = (str, unicode)
 
-    _iterkeys = 'iterkeys'
-    _itervalues = 'itervalues'
-    _iteritems = 'iteritems'
+    iterkeys = lambda d: d.iterkeys()
+    itervalues = lambda d: d.itervalues()
+    iteritems = lambda d: d.iteritems()
 
-    from itertools import imap, izip, ifilter
-    range_type = xrange
-
-    from cStringIO import StringIO as BytesIO
-    from StringIO import StringIO
+    import cPickle as pickle
+    from cStringIO import StringIO as BytesIO, StringIO
     NativeStringIO = BytesIO
 
     exec('def reraise(tp, value, tb=None):\n raise tp, value, tb')
 
-    class UnicodeMixin(object):
-        __slots__ = ()
-        def __str__(self):
-            return self.__unicode__().encode('utf-8')
+    from itertools import imap, izip, ifilter
+    intern = intern
 
-    class Iterator(object):
-        __slots__ = ()
-        def next(self):
-            return self.__next__()
+    def implements_iterator(cls):
+        cls.next = cls.__next__
+        del cls.__next__
+        return cls
+
+    def implements_to_string(cls):
+        cls.__unicode__ = cls.__str__
+        cls.__str__ = lambda x: x.__unicode__().encode('utf-8')
+        return cls
+
+    get_next = lambda x: x.next
+
 
 try:
     next = next
@@ -79,22 +82,15 @@ except NameError:
 
 
 def with_metaclass(meta, *bases):
-    """Create a base class with a metaclass."""
-    return meta('NewBase', bases, {})
+    class __metaclass__(meta):
+        __call__ = type.__call__
+        __init__ = type.__init__
+        def __new__(cls, name, this_bases, d):
+            if this_bases is None:
+                return type.__new__(cls, name, (), d)
+            return meta(name, bases, d)
+    return __metaclass__('<dummy_class>', None, {})
 
-def iterkeys(d, **kw):
-    return iter(getattr(d, _iterkeys)(**kw))
-
-def itervalues(d, **kw):
-    return iter(getattr(d, _itervalues)(**kw))
-
-def iteritems(d, **kw):
-    return iter(getattr(d, _iteritems)(**kw))
-
-try:
-    import cPickle as pickle
-except ImportError:
-    import pickle
 
 try:
     from collections import Mapping as mapping_types

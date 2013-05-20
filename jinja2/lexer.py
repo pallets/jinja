@@ -20,7 +20,8 @@ from operator import itemgetter
 from collections import deque
 from jinja2.exceptions import TemplateSyntaxError
 from jinja2.utils import LRUCache
-from jinja2._compat import next, iteritems, Iterator, text_type
+from jinja2._compat import next, iteritems, implements_iterator, text_type, \
+     intern
 
 
 # cache for the lexers. Exists in order to be able to have multiple
@@ -46,12 +47,6 @@ else:
 
 float_re = re.compile(r'(?<!\.)\d+\.\d+')
 newline_re = re.compile(r'(\r\n|\r|\n)')
-
-try:
-    intern = intern  # py2
-except NameError:
-    import sys
-    intern = sys.intern  # py3
 
 # internal the tokens and keep references to them
 TOKEN_ADD = intern('add')
@@ -270,7 +265,8 @@ class Token(tuple):
         )
 
 
-class TokenStreamIterator(Iterator):
+@implements_iterator
+class TokenStreamIterator(object):
     """The iterator for tokenstreams.  Iterate over the stream
     until the eof token is reached.
     """
@@ -290,7 +286,8 @@ class TokenStreamIterator(Iterator):
         return token
 
 
-class TokenStream(Iterator):
+@implements_iterator
+class TokenStream(object):
     """A token stream is an iterable that yields :class:`Token`\s.  The
     parser however does not iterate over it but calls :meth:`next` to go
     one token ahead.  The current active token is stored as :attr:`current`.

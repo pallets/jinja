@@ -28,7 +28,8 @@ from jinja2.exceptions import TemplateSyntaxError, TemplateNotFound, \
 from jinja2.utils import import_string, LRUCache, Markup, missing, \
      concat, consume, internalcode, _encode_filename
 from jinja2._compat import imap, ifilter, string_types, iteritems, \
-     text_type, reraise, Iterator, next, UnicodeMixin
+     text_type, reraise, implements_iterator, implements_to_string, \
+     get_next
 from functools import reduce
 
 
@@ -1051,7 +1052,8 @@ class Template(object):
         return '<%s %s>' % (self.__class__.__name__, name)
 
 
-class TemplateModule(UnicodeMixin):
+@implements_to_string
+class TemplateModule(object):
     """Represents an imported template.  All the exported names of the
     template are available as attributes on this object.  Additionally
     converting it into an unicode- or bytestrings renders the contents.
@@ -1065,7 +1067,7 @@ class TemplateModule(UnicodeMixin):
     def __html__(self):
         return Markup(concat(self._body_stream))
 
-    def __unicode__(self):
+    def __str__(self):
         return concat(self._body_stream)
 
     def __repr__(self):
@@ -1095,7 +1097,8 @@ class TemplateExpression(object):
         return rv
 
 
-class TemplateStream(Iterator):
+@implements_iterator
+class TemplateStream(object):
     """A template stream works pretty much like an ordinary python generator
     but it can buffer multiple items to reduce the number of total iterations.
     Per default the output is unbuffered which means that for every unbuffered
@@ -1139,7 +1142,7 @@ class TemplateStream(Iterator):
 
     def disable_buffering(self):
         """Disable the output buffering."""
-        self._next = lambda: next(self._gen)
+        self._next = get_next(self._gen)
         self.buffered = False
 
     def enable_buffering(self, size=5):
@@ -1167,7 +1170,7 @@ class TemplateStream(Iterator):
                 c_size = 0
 
         self.buffered = True
-        self._next = lambda: next(generator(lambda: next(self._gen)))
+        self._next = get_next(generator(get_next(self._gen)))
 
     def __iter__(self):
         return self

@@ -23,7 +23,7 @@ except ImportError:
     except ImportError:
         from dummy_thread import allocate_lock
 from collections import deque
-from jinja2._compat import text_type, string_types, Iterator, PY2
+from jinja2._compat import text_type, string_types, implements_iterator, PY2
 
 
 _word_split_re = re.compile(r'(\s+)')
@@ -506,7 +506,8 @@ except ImportError:
     pass
 
 
-class Cycler(Iterator):
+@implements_iterator
+class Cycler(object):
     """A cycle helper for templates."""
 
     def __init__(self, *items):

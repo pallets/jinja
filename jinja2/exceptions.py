@@ -8,7 +8,7 @@
     :copyright: (c) 2010 by the Jinja Team.
     :license: BSD, see LICENSE for more details.
 """
-from jinja2._compat import imap, text_type, PY2, UnicodeMixin
+from jinja2._compat import imap, text_type, PY2, implements_to_string
 
 
 class TemplateError(Exception):
@@ -36,7 +36,8 @@ class TemplateError(Exception):
                     return message
 
 
-class TemplateNotFound(IOError, LookupError, TemplateError, UnicodeMixin):
+@implements_to_string
+class TemplateNotFound(IOError, LookupError, TemplateError):
     """Raised if a template does not exist."""
 
     # looks weird, but removes the warning descriptor that just
@@ -51,7 +52,7 @@ class TemplateNotFound(IOError, LookupError, TemplateError, UnicodeMixin):
         self.name = name
         self.templates = [name]
 
-    def __unicode__(self):
+    def __str__(self):
         return self.message
 
 
@@ -71,7 +72,8 @@ class TemplatesNotFound(TemplateNotFound):
         self.templates = list(names)
 
 
-class TemplateSyntaxError(UnicodeMixin, TemplateError):
+@implements_to_string
+class TemplateSyntaxError(TemplateError):
     """Raised to tell the user that there is a problem with the template."""
 
     def __init__(self, message, lineno, name=None, filename=None):
@@ -85,7 +87,7 @@ class TemplateSyntaxError(UnicodeMixin, TemplateError):
         # function translated the syntax error into a new traceback
         self.translated = False
 
-    def __unicode__(self):
+    def __str__(self):
         # for translated errors we only return the message
         if self.translated:
             return self.message

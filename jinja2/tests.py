@@ -17,11 +17,7 @@ number_re = re.compile(r'^-?\d+(\.\d+)?$')
 regex_type = type(number_re)
 
 
-try:
-    test_callable = callable
-except NameError:
-    def test_callable(x):
-        return hasattr(x, '__call__')
+test_callable = callable
 
 
 def test_odd(value):

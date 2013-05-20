@@ -12,7 +12,7 @@ import unittest
 from jinja2.testsuite import JinjaTestCase
 
 from jinja2 import Markup, Environment
-from jinja2._compat import text_type, UnicodeMixin
+from jinja2._compat import text_type, implements_to_string
 
 env = Environment()
 
@@ -294,10 +294,11 @@ class FilterTestCase(JinjaTestCase):
         assert tmpl.render() == "['Bar', 'blah', 'foo']"
 
     def test_sort4(self):
-        class Magic(UnicodeMixin):
+        @implements_to_string
+        class Magic(object):
             def __init__(self, value):
                 self.value = value
-            def __unicode__(self):
+            def __str__(self):
                 return text_type(self.value)
         tmpl = env.from_string('''{{ items|sort(attribute='value')|join }}''')
         assert tmpl.render(items=map(Magic, [3, 2, 4, 1])) == '1234'

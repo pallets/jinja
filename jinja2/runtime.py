@@ -14,8 +14,8 @@ from jinja2.utils import Markup, soft_unicode, escape, missing, concat, \
      internalcode, object_type_repr
 from jinja2.exceptions import UndefinedError, TemplateRuntimeError, \
      TemplateNotFound
-from jinja2._compat import next, imap, text_type, iteritems, Iterator, \
-     string_types, PY2, UnicodeMixin
+from jinja2._compat import next, imap, text_type, iteritems, \
+     implements_iterator, implements_to_string, string_types
 
 
 # these variables are exported to the template runtime
@@ -25,12 +25,8 @@ __all__ = ['LoopContext', 'TemplateReference', 'Macro', 'Markup',
            'TemplateNotFound']
 
 #: the name of the function that is used to convert something into
-#: a string.  2to3 will adopt that automatically and the generated
-#: code can take advantage of it.
-try:
-    to_string = unicode
-except NameError:
-    to_string = str
+#: a string.  We can just use the text type here.
+to_string = text_type
 
 #: the identity function.  Useful for certain things in the environment
 identity = lambda x: x
@@ -356,7 +352,8 @@ class LoopContext(object):
         )
 
 
-class LoopContextIterator(Iterator):
+@implements_iterator
+class LoopContextIterator(object):
     """The iterator for a loop context."""
     __slots__ = ('context',)
 
@@ -440,7 +437,8 @@ class Macro(object):
         )
 
 
-class Undefined(UnicodeMixin):
+@implements_to_string
+class Undefined(object):
     """The default undefined type.  This undefined type can be printed and
     iterated over, but every other access will raise an :exc:`UndefinedError`:
 
@@ -498,7 +496,7 @@ class Undefined(UnicodeMixin):
     __float__ = __complex__ = __pow__ = __rpow__ = \
         _fail_with_undefined_error
 
-    def __unicode__(self):
+    def __str__(self):
         return u''
 
     def __len__(self):
@@ -515,6 +513,7 @@ class Undefined(UnicodeMixin):
         return 'Undefined'
 
 
+@implements_to_string
 class DebugUndefined(Undefined):
     """An undefined that returns the debug info when printed.
 
@@ -530,7 +529,7 @@ class DebugUndefined(Undefined):
     """
     __slots__ = ()
 
-    def __unicode__(self):
+    def __str__(self):
         if self._undefined_hint is None:
             if self._undefined_obj is missing:
                 return u'{{ %s }}' % self._undefined_name
@@ -541,6 +540,7 @@ class DebugUndefined(Undefined):
         return u'{{ undefined value printed: %s }}' % self._undefined_hint
 
 
+@implements_to_string
 class StrictUndefined(Undefined):
     """An undefined that barks on print and iteration as well as boolean
     tests and all kinds of comparisons.  In other words: you can do nothing
@@ -561,7 +561,7 @@ class StrictUndefined(Undefined):
     UndefinedError: 'foo' is undefined
     """
     __slots__ = ()
-    __iter__ = __unicode__ = __len__ = __nonzero__ = __eq__ = \
+    __iter__ = __str__ = __len__ = __nonzero__ = __eq__ = \
         __ne__ = __bool__ = Undefined._fail_with_undefined_error
 
 

@@ -16,7 +16,7 @@ import operator
 from jinja2.environment import Environment
 from jinja2.exceptions import SecurityError
 from jinja2._compat import string_types, function_type, method_type, \
-     traceback_type, code_type, frame_type, generator_type
+     traceback_type, code_type, frame_type, generator_type, PY2
 
 
 #: maximum number of items a range may produce
@@ -29,6 +29,13 @@ UNSAFE_FUNCTION_ATTRIBUTES = set(['func_closure', 'func_code', 'func_dict',
 #: unsafe method attributes.  function attributes are unsafe for methods too
 UNSAFE_METHOD_ATTRIBUTES = set(['im_class', 'im_func', 'im_self'])
 
+#: unsafe generator attirbutes.
+UNSAFE_GENERATOR_ATTRIBUTES = set(['gi_frame', 'gi_code'])
+
+# On versions > python 2 the special attributes on functions are gone,
+# but they remain on methods and generators for whatever reason.
+if not PY2:
+    UNSAFE_FUNCTION_ATTRIBUTES = set()
 
 import warnings
 
@@ -137,7 +144,7 @@ def is_internal_attribute(obj, attr):
     elif isinstance(obj, (code_type, traceback_type, frame_type)):
         return True
     elif isinstance(obj, generator_type):
-        if attr == 'gi_frame':
+        if attr in UNSAFE_GENERATOR_ATTRIBUTES:
             return True
     return attr.startswith('__')
 
