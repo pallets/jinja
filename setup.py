@@ -46,7 +46,7 @@ try:
 except ValueError:
     pass
 else:
-    sys.argv[speedups_pos] = ''
+    del sys.argv[speedups_pos]
     sys.stderr.write('*' * 74 + '\n')
     sys.stderr.write('WARNING:\n')
     sys.stderr.write('  the --with-speedups flag is deprecated\n')
