@@ -12,16 +12,16 @@
     :copyright: (c) 2010 by the Jinja Team.
     :license: BSD, see LICENSE for more details.
 """
+import types
 import operator
 
 from collections import deque
 from jinja2.utils import Markup
-from jinja2._compat import izip, with_metaclass, text_type, \
-     method_type, function_type
+from jinja2._compat import izip, with_metaclass, text_type
 
 
 #: the types we support for context functions
-_context_function_types = (function_type, method_type)
+_context_function_types = (types.FunctionType, types.MethodType)
 
 
 _binop_to_func = {

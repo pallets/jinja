@@ -12,11 +12,11 @@
     :copyright: (c) 2010 by the Jinja Team.
     :license: BSD.
 """
+import types
 import operator
 from jinja2.environment import Environment
 from jinja2.exceptions import SecurityError
-from jinja2._compat import string_types, function_type, method_type, \
-     traceback_type, code_type, frame_type, generator_type, PY2
+from jinja2._compat import string_types, PY2
 
 
 #: maximum number of items a range may produce
@@ -131,19 +131,19 @@ def is_internal_attribute(obj, attr):
     >>> is_internal_attribute(str, "upper")
     False
     """
-    if isinstance(obj, function_type):
+    if isinstance(obj, types.FunctionType):
         if attr in UNSAFE_FUNCTION_ATTRIBUTES:
             return True
-    elif isinstance(obj, method_type):
+    elif isinstance(obj, types.MethodType):
         if attr in UNSAFE_FUNCTION_ATTRIBUTES or \
            attr in UNSAFE_METHOD_ATTRIBUTES:
             return True
     elif isinstance(obj, type):
         if attr == 'mro':
             return True
-    elif isinstance(obj, (code_type, traceback_type, frame_type)):
+    elif isinstance(obj, (types.CodeType, types.TracebackType, types.FrameType)):
         return True
-    elif isinstance(obj, generator_type):
+    elif isinstance(obj, types.GeneratorType):
         if attr in UNSAFE_GENERATOR_ATTRIBUTES:
             return True
     return attr.startswith('__')

@@ -110,25 +110,6 @@ except ImportError:
     mapping_types = (UserDict.UserDict, UserDict.DictMixin, dict)
 
 
-# common types.  These do exist in the special types module too which however
-# does not exist in IronPython out of the box.  Also that way we don't have
-# to deal with implementation specific stuff here
-class _C(object):
-    def method(self): pass
-def _func():
-    yield None
-function_type = type(_func)
-generator_type = type(_func())
-method_type = type(_C().method)
-code_type = type(_C.method.__code__)
-try:
-    raise TypeError()
-except TypeError:
-    _tb = sys.exc_info()[2]
-    traceback_type = type(_tb)
-    frame_type = type(_tb.tb_frame)
-
-
 try:
     from urllib.parse import quote_from_bytes as url_quote
 except ImportError:
