@@ -133,7 +133,7 @@ def main():
     if version in tags:
         fail('Version "%s" is already tagged', version)
     if release_date.date() != date.today():
-        fail('Release date is not today (%s != %s)')
+        fail('Release date is not today (%s != %s)', release_date.date(), date.today())
 
     if not git_is_clean():
         fail('You have uncommitted changes in git')
