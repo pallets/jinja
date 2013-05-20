@@ -17,7 +17,6 @@ _identity = lambda x: x
 
 
 if not PY2:
-
     unichr = chr
     range_type = range
     text_type = str
@@ -45,6 +44,7 @@ if not PY2:
     implements_to_string = _identity
     encode_filename = _identity
     get_next = lambda x: x.__next__
+
 else:
     unichr = unichr
     text_type = unicode
