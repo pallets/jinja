@@ -19,6 +19,7 @@ from jinja2.testsuite import JinjaTestCase, dict_loader, \
      choice_loader, prefix_loader
 
 from jinja2 import Environment, loaders
+from jinja2._compat import PYPY, PY2
 from jinja2.loaders import split_template_path
 from jinja2.exceptions import TemplateNotFound
 
@@ -181,17 +182,18 @@ class ModuleLoaderTestCase(JinjaTestCase):
 
         assert name not in sys.modules
 
-    def test_byte_compilation(self):
-        log = self.compile_down(py_compile=True)
-        assert 'Byte-compiled "a/test.html"' in log
-        tmpl1 = self.mod_env.get_template('a/test.html')
-        mod = self.mod_env.loader.module. \
-            tmpl_3c4ddf650c1a73df961a6d3d2ce2752f1b8fd490
-        assert mod.__file__.endswith('.pyc')
+    # This test only makes sense on non-pypy python 2
+    if PY2 and not PYPY:
+        def test_byte_compilation(self):
+            log = self.compile_down(py_compile=True)
+            assert 'Byte-compiled "a/test.html"' in log
+            tmpl1 = self.mod_env.get_template('a/test.html')
+            mod = self.mod_env.loader.module. \
+                tmpl_3c4ddf650c1a73df961a6d3d2ce2752f1b8fd490
+            assert mod.__file__.endswith('.pyc')
 
     def test_choice_loader(self):
-        log = self.compile_down(py_compile=True)
-        assert 'Byte-compiled "a/test.html"' in log
+        log = self.compile_down()
 
         self.mod_env.loader = loaders.ChoiceLoader([
             self.mod_env.loader,
@@ -204,8 +206,7 @@ class ModuleLoaderTestCase(JinjaTestCase):
         self.assert_equal(tmpl2.render(), 'DICT_TEMPLATE')
 
     def test_prefix_loader(self):
-        log = self.compile_down(py_compile=True)
-        assert 'Byte-compiled "a/test.html"' in log
+        log = self.compile_down()
 
         self.mod_env.loader = loaders.PrefixLoader({
             'MOD':      self.mod_env.loader,
@@ -221,8 +222,5 @@ class ModuleLoaderTestCase(JinjaTestCase):
 def suite():
     suite = unittest.TestSuite()
     suite.addTest(unittest.makeSuite(LoaderTestCase))
-    # pypy currently does not support compiled jinja modules because
-    # of changes in the load system.
-    if not hasattr(sys, 'pypy_version_info'):
-        suite.addTest(unittest.makeSuite(ModuleLoaderTestCase))
+    suite.addTest(unittest.makeSuite(ModuleLoaderTestCase))
     return suite

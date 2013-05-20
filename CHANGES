@@ -30,6 +30,7 @@ Version 2.7
   filters.
 - Added support for `loop.depth` to figure out how deep inside a recursive
   loop the code is.
+- Disabled py_compile for pypy and python 3.
 
 Version 2.6
 -----------

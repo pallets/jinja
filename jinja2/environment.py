@@ -29,7 +29,7 @@ from jinja2.utils import import_string, LRUCache, Markup, missing, \
      concat, consume, internalcode
 from jinja2._compat import imap, ifilter, string_types, iteritems, \
      text_type, reraise, implements_iterator, implements_to_string, \
-     get_next, encode_filename
+     get_next, encode_filename, PY2, PYPY
 from functools import reduce
 
 
@@ -617,7 +617,9 @@ class Environment(object):
         to `False` and you will get an exception on syntax errors.
 
         If `py_compile` is set to `True` .pyc files will be written to the
-        target instead of standard .py files.
+        target instead of standard .py files.  This flag does not do anything
+        on pypy and Python 3 where pyc files are not picked up by itself and
+        don't give much benefit.
 
         .. versionadded:: 2.4
         """
@@ -627,13 +629,18 @@ class Environment(object):
             log_function = lambda x: None
 
         if py_compile:
-            import imp, marshal
-            py_header = imp.get_magic() + \
-                u'\xff\xff\xff\xff'.encode('iso-8859-15')
+            if not PY2 or PYPY:
+                from warnings import warn
+                warn(Warning('py_compile has no effect on pypy or Python 3'))
+                py_compile = False
+            else:
+                import imp, marshal
+                py_header = imp.get_magic() + \
+                    u'\xff\xff\xff\xff'.encode('iso-8859-15')
 
-            # Python 3.3 added a source filesize to the header
-            if sys.version_info >= (3, 3):
-                py_header += u'\x00\x00\x00\x00'.encode('iso-8859-15')
+                # Python 3.3 added a source filesize to the header
+                if sys.version_info >= (3, 3):
+                    py_header += u'\x00\x00\x00\x00'.encode('iso-8859-15')
 
         def write_file(filename, data, mode):
             if zip:
