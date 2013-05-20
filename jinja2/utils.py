@@ -12,7 +12,7 @@ import re
 import errno
 from collections import deque
 from jinja2._compat import text_type, string_types, implements_iterator, \
-     allocate_lock, url_quote, encode_filename, PY2
+     allocate_lock, url_quote
 
 
 _word_split_re = re.compile(r'(\s+)')
