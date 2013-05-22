@@ -80,7 +80,7 @@ setup(
         'Topic :: Text Processing :: Markup :: HTML'
     ],
     packages=['jinja2', 'jinja2.testsuite', 'jinja2.testsuite.res'],
-    install_requires=['markupsafe'],
+    install_requires=['MarkupSafe'],
     extras_require={'i18n': ['Babel>=0.8']},
     test_suite='jinja2.testsuite.suite',
     include_package_data=True,
