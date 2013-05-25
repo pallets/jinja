@@ -474,7 +474,7 @@ include characters that affect the resulting HTML.  There are two approaches:
 manually escaping each variable or automatically escaping everything by default.
 
 Jinja supports both, but what is used depends on the application configuration.
-The default configuaration is no automatic escaping for various reasons:
+The default configuration is no automatic escaping for various reasons:
 
 -   escaping everything except of safe values will also mean that Jinja is
     escaping variables known to not include HTML such as numbers which is
@@ -1033,7 +1033,7 @@ but exists for completeness' sake.  The following operators are supported:
     a look at the ``~`` operator.  ``{{ 1 + 1 }}`` is ``2``.
 
 \-
-    Substract the second number from the first one.  ``{{ 3 - 2 }}`` is ``1``.
+    Subtract the second number from the first one.  ``{{ 3 - 2 }}`` is ``1``.
 
 /
     Divide two numbers.  The return value will be a floating point number.

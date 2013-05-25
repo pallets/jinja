@@ -450,7 +450,7 @@ This is especially useful if you have a web application that is initialized on
 the first request and Jinja compiles many templates at once which slows down
 the application.
 
-To use a bytecode cache, instanciate it and pass it to the :class:`Environment`.
+To use a bytecode cache, instantiate it and pass it to the :class:`Environment`.
 
 .. autoclass:: jinja2.BytecodeCache
     :members: load_bytecode, dump_bytecode, clear
@@ -618,7 +618,7 @@ Evaluation Context
 ------------------
 
 The evaluation context (short eval context or eval ctx) is a new object
-introducted in Jinja 2.4 that makes it possible to activate and deactivate
+introduced in Jinja 2.4 that makes it possible to activate and deactivate
 compiled features at runtime.
 
 Currently it is only used to enable and disable the automatic escaping but

@@ -54,7 +54,7 @@ Operator Intercepting
 
 .. versionadded:: 2.6
 
-For maximum performace Jinja2 will let operators call directly the type
+For maximum performance Jinja2 will let operators call directly the type
 specific callback methods.  This means that it's not possible to have this
 intercepted by overriding :meth:`Environment.call`.  Furthermore a
 conversion from operator to special method is not always directly possible

@@ -213,7 +213,7 @@ Writing Extensions
 
 .. module:: jinja2.ext
 
-By writing extensions you can add custom tags to Jinja2.  This is a non trival
+By writing extensions you can add custom tags to Jinja2.  This is a non-trivial
 task and usually not needed as the default tags and expressions cover all
 common use cases.  The i18n extension is a good example of why extensions are
 useful, another one would be fragment caching.
