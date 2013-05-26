@@ -759,7 +759,7 @@ class Environment(object):
             raise TypeError('no loader for this environment specified')
         if self.cache is not None:
             template = self.cache.get(name)
-            if template is not None and (not self.auto_reload or \
+            if template is not None and (not self.auto_reload or
                                          template.is_up_to_date):
                 return template
         template = self.loader.load(self, name, globals)
