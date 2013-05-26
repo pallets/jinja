@@ -18,10 +18,10 @@ Version 2.7
 - Accessing `last` on the loop context no longer causes the iterator
   to be consumed into a list.
 - Python requirement changed: 2.6, 2.7 or >= 3.3 are required now,
-  supported by same source code, using the "six" compatibility library.
+  supported by same source code.
 - Allow `contextfunction` and other decorators to be applied to `__call__`.
-- Added support for changing from newline to different signs in the `wordwrap`
-  filter.
+- Added support for changing from newline to different characters in the
+  `wordwrap` filter.
 - Added support for ignoring memcache errors silently.
 - Added support for keeping the trailing newline in templates.
 - Added finer grained support for stripping whitespace on the left side
