@@ -952,8 +952,6 @@ FILTERS = {
     'reverse':              do_reverse,
     'center':               do_center,
     'indent':               do_indent,
-    'title':                do_title,
-    'capitalize':           do_capitalize,
     'first':                do_first,
     'last':                 do_last,
     'map':                  do_map,
