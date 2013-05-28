@@ -125,6 +125,7 @@ class TestModuleLoader():
         return ''.join(log)
 
     def teardown(self):
+        del self.mod_env
         if hasattr(self, 'mod_env'):
             if os.path.isfile(self.archive):
                 os.remove(self.archive)
