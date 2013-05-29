@@ -183,7 +183,7 @@ def do_title(s):
     uppercase letters, all remaining characters are lowercase.
     """
     rv = []
-    for item in re.compile(r'([-\s]+)(?u)').split(s):
+    for item in re.compile(r'([-\s]+)(?u)').split(soft_unicode(s)):
         if not item:
             continue
         rv.append(item[0].upper() + item[1:])
