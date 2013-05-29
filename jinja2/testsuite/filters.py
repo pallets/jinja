@@ -205,6 +205,14 @@ class FilterTestCase(JinjaTestCase):
         tmpl = env.from_string('''{{ "foo\tbar"|title }}''')
         assert tmpl.render() == "Foo\tBar"
 
+        class Foo:
+            def __str__(self):
+                return 'foo-bar'
+
+        tmpl = env.from_string('''{{ data|title }}''')
+        out = tmpl.render(data=Foo())
+        assert out == 'Foo-Bar'
+
     def test_truncate(self):
         tmpl = env.from_string(
             '{{ data|truncate(15, true, ">>>") }}|'
