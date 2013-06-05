@@ -842,13 +842,14 @@ def do_map(*args, **kwargs):
 
 @contextfilter
 def do_select(*args, **kwargs):
-    """Filters a sequence of objects by appying a test to either the object
-    or the attribute and only selecting the ones with the test succeeding.
+    """Filters a sequence of objects by appying a test to the object and only
+    selecting the ones with the test succeeding.
 
     Example usage:
 
     .. sourcecode:: jinja
 
+        {{ numbers|select("odd") }}
         {{ numbers|select("odd") }}
 
     .. versionadded:: 2.7
@@ -858,8 +859,8 @@ def do_select(*args, **kwargs):
 
 @contextfilter
 def do_reject(*args, **kwargs):
-    """Filters a sequence of objects by appying a test to either the object
-    or the attribute and rejecting the ones with the test succeeding.
+    """Filters a sequence of objects by appying a test to the object and
+    rejecting the ones with the test succeeding.
 
     Example usage:
 
@@ -874,8 +875,8 @@ def do_reject(*args, **kwargs):
 
 @contextfilter
 def do_selectattr(*args, **kwargs):
-    """Filters a sequence of objects by appying a test to either the object
-    or the attribute and only selecting the ones with the test succeeding.
+    """Filters a sequence of objects by appying a test to an attribute of an
+    object and only selecting the ones with the test succeeding.
 
     Example usage:
 
@@ -891,8 +892,8 @@ def do_selectattr(*args, **kwargs):
 
 @contextfilter
 def do_rejectattr(*args, **kwargs):
-    """Filters a sequence of objects by appying a test to either the object
-    or the attribute and rejecting the ones with the test succeeding.
+    """Filters a sequence of objects by appying a test to an attribute of an
+    object or the attribute and rejecting the ones with the test succeeding.
 
     .. sourcecode:: jinja
 
