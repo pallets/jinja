@@ -15,7 +15,7 @@ import traceback
 from types import TracebackType, CodeType
 from jinja2.utils import missing, internal_code
 from jinja2.exceptions import TemplateSyntaxError
-from jinja2._compat import iteritems, reraise
+from jinja2._compat import iteritems, reraise, u
 
 # on pypy we can take advantage of transparent proxies
 try:
@@ -103,7 +103,7 @@ class ProcessedTraceback(object):
     def render_as_html(self, full=False):
         """Return a unicode string with the traceback as rendered HTML."""
         from jinja2.debugrenderer import render_traceback
-        return u'%s\n\n<!--\n%s\n-->' % (
+        return u('%s\n\n<!--\n%s\n-->') % (
             render_traceback(self, full=full),
             self.render_as_text().decode('utf-8', 'replace')
         )

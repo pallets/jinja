@@ -29,7 +29,7 @@ from jinja2.utils import import_string, LRUCache, Markup, missing, \
      concat, consume, internalcode
 from jinja2._compat import imap, ifilter, string_types, iteritems, \
      text_type, reraise, implements_iterator, implements_to_string, \
-     get_next, encode_filename, PY2, PYPY
+     get_next, encode_filename, PY2, PYPY, u
 from functools import reduce
 
 
@@ -636,11 +636,11 @@ class Environment(object):
             else:
                 import imp, marshal
                 py_header = imp.get_magic() + \
-                    u'\xff\xff\xff\xff'.encode('iso-8859-15')
+                    u('\xff\xff\xff\xff').encode('iso-8859-15')
 
                 # Python 3.3 added a source filesize to the header
                 if sys.version_info >= (3, 3):
-                    py_header += u'\x00\x00\x00\x00'.encode('iso-8859-15')
+                    py_header += u('\x00\x00\x00\x00').encode('iso-8859-15')
 
         def write_file(filename, data, mode):
             if zip:
@@ -803,8 +803,8 @@ class Environment(object):
            from the function unchanged.
         """
         if not names:
-            raise TemplatesNotFound(message=u'Tried to select from an empty list '
-                                            u'of templates.')
+            raise TemplatesNotFound(message=u('Tried to select from an empty list '
+                                            'of templates.'))
         globals = self.make_globals(globals)
         for name in names:
             if isinstance(name, Template):

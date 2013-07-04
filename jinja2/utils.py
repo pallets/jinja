@@ -13,7 +13,7 @@ import errno
 from collections import deque
 from threading import Lock
 from jinja2._compat import text_type, string_types, implements_iterator, \
-     url_quote
+     url_quote, u
 
 
 _word_split_re = re.compile(r'(\s+)')
@@ -35,7 +35,7 @@ missing = type('MissingType', (), {'__repr__': lambda x: 'missing'})()
 # internal code
 internal_code = set()
 
-concat = u''.join
+concat = u('').join
 
 
 def contextfunction(f):
@@ -225,7 +225,7 @@ def urlize(text, trim_url_limit=None, nofollow=False):
                 middle = '<a href="mailto:%s">%s</a>' % (middle, middle)
             if lead + middle + trail != word:
                 words[i] = lead + middle + trail
-    return u''.join(words)
+    return u('').join(words)
 
 
 def generate_lorem_ipsum(n=5, html=True, min=20, max=100):
@@ -265,7 +265,7 @@ def generate_lorem_ipsum(n=5, html=True, min=20, max=100):
             p.append(word)
 
         # ensure that the paragraph ends with a dot.
-        p = u' '.join(p)
+        p = u(' ').join(p)
         if p.endswith(','):
             p = p[:-1] + '.'
         elif not p.endswith('.'):
@@ -273,8 +273,8 @@ def generate_lorem_ipsum(n=5, html=True, min=20, max=100):
         result.append(p)
 
     if not html:
-        return u'\n\n'.join(result)
-    return Markup(u'\n'.join(u'<p>%s</p>' % escape(x) for x in result))
+        return u('\n\n').join(result)
+    return Markup(u('\n').join(u('<p>%s</p>') % escape(x) for x in result))
 
 
 def unicode_urlencode(obj, charset='utf-8'):
@@ -506,14 +506,14 @@ class Cycler(object):
 class Joiner(object):
     """A joining helper for templates."""
 
-    def __init__(self, sep=u', '):
+    def __init__(self, sep=u(', ')):
         self.sep = sep
         self.used = False
 
     def __call__(self):
         if not self.used:
             self.used = True
-            return u''
+            return u('')
         return self.sep
 
 

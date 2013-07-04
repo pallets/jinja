@@ -1,8 +1,9 @@
 from jinja2 import Environment
 from jinja2.loaders import DictLoader
+from jinja2._compat import u
 
 env = Environment(loader=DictLoader({
-'child.html': u'''\
+'child.html': u('''\
 {% extends master_layout or 'master.html' %}
 {% include helpers = 'helpers.html' %}
 {% macro get_the_answer() %}42{% endmacro %}
@@ -11,15 +12,15 @@ env = Environment(loader=DictLoader({
     {{ get_the_answer() }}
     {{ helpers.conspirate() }}
 {% endblock %}
-''',
-'master.html': u'''\
+'''),
+'master.html': u('''\
 <!doctype html>
 <title>{{ title }}</title>
 {% block body %}{% endblock %}
-''',
-'helpers.html': u'''\
+'''),
+'helpers.html': u('''\
 {% macro conspirate() %}23{% endmacro %}
-'''
+''')
 }))
 
 
