@@ -1,6 +1,13 @@
 Jinja2 Changelog
 ================
 
+Version 2.7.1
+-------------
+(bugfix release)
+
+- Fixed a bug with ``call_filter`` not working properly on environment
+  and context filters.
+
 Version 2.7
 -----------
 (codename Translation, released on May 20th 2013)

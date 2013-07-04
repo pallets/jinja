@@ -19,6 +19,10 @@ env = Environment()
 
 class FilterTestCase(JinjaTestCase):
 
+    def test_filter_calling(self):
+        rv = env.call_filter('sum', [1, 2, 3])
+        self.assert_equal(rv, 6)
+
     def test_capitalize(self):
         tmpl = env.from_string('{{ "foo bar"|capitalize }}')
         assert tmpl.render() == 'Foo bar'
