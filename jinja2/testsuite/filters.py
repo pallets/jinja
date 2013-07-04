@@ -384,6 +384,16 @@ class FilterTestCase(JinjaTestCase):
         tmpl = env.from_string('{{ string|replace("o", ">x<") }}')
         assert tmpl.render(string=Markup('foo')) == 'f&gt;x&lt;&gt;x&lt;'
 
+    def test_sub(self):
+        env = Environment()
+        tmpl = env.from_string('{{ string|sub("(?<!f)o", 42) }}')
+        assert tmpl.render(string='<foo>') == '<fo42>'
+        env = Environment(autoescape=True)
+        tmpl = env.from_string('{{ string|sub("(?<!f)o", 42) }}')
+        assert tmpl.render(string='<foo>') == '&lt;fo42&gt;'
+        tmpl = env.from_string('{{ string|sub("^.", 42) }}')
+        assert tmpl.render(string='<foo>') == '42foo&gt;'
+
     def test_forceescape(self):
         tmpl = env.from_string('{{ x|forceescape }}')
         assert tmpl.render(x=Markup('<div />')) == u'&lt;div /&gt;'
