@@ -15,7 +15,7 @@ from jinja2.utils import Markup, soft_unicode, escape, missing, concat, \
 from jinja2.exceptions import UndefinedError, TemplateRuntimeError, \
      TemplateNotFound
 from jinja2._compat import imap, text_type, iteritems, \
-     implements_iterator, implements_to_string, string_types, PY2
+     implements_iterator, implements_to_string, string_types, PY2, u
 
 
 # these variables are exported to the template runtime
@@ -41,7 +41,7 @@ def markup_join(seq):
     for arg in iterator:
         buf.append(arg)
         if hasattr(arg, '__html__'):
-            return Markup(u'').join(chain(buf, iterator))
+            return Markup(u('')).join(chain(buf, iterator))
     return concat(buf)
 
 
@@ -498,7 +498,7 @@ class Undefined(object):
         _fail_with_undefined_error
 
     def __str__(self):
-        return u''
+        return u('')
 
     def __len__(self):
         return 0
@@ -533,12 +533,12 @@ class DebugUndefined(Undefined):
     def __str__(self):
         if self._undefined_hint is None:
             if self._undefined_obj is missing:
-                return u'{{ %s }}' % self._undefined_name
+                return u('{{ %s }}') % self._undefined_name
             return '{{ no such element: %s[%r] }}' % (
                 object_type_repr(self._undefined_obj),
                 self._undefined_name
             )
-        return u'{{ undefined value printed: %s }}' % self._undefined_hint
+        return u('{{ undefined value printed: %s }}') % self._undefined_hint
 
 
 @implements_to_string

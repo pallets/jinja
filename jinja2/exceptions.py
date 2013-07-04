@@ -8,7 +8,7 @@
     :copyright: (c) 2010 by the Jinja Team.
     :license: BSD, see LICENSE for more details.
 """
-from jinja2._compat import imap, text_type, PY2, implements_to_string
+from jinja2._compat import imap, text_type, PY2, implements_to_string, u
 
 
 class TemplateError(Exception):
@@ -28,7 +28,7 @@ class TemplateError(Exception):
                     return message.decode('utf-8', 'replace')
 
         def __unicode__(self):
-            return self.message or u''
+            return self.message or u('')
     else:
         def __init__(self, message=None):
             Exception.__init__(self, message)
@@ -71,8 +71,8 @@ class TemplatesNotFound(TemplateNotFound):
 
     def __init__(self, names=(), message=None):
         if message is None:
-            message = u'none of the templates given were found: ' + \
-                      u', '.join(imap(text_type, names))
+            message = u('none of the templates given were found: ') + \
+                      u(', ').join(imap(text_type, names))
         TemplateNotFound.__init__(self, names and names[-1] or None, message)
         self.templates = list(names)
 
@@ -113,7 +113,7 @@ class TemplateSyntaxError(TemplateError):
             if line:
                 lines.append('    ' + line.strip())
 
-        return u'\n'.join(lines)
+        return u('\n').join(lines)
 
 
 class TemplateAssertionError(TemplateSyntaxError):

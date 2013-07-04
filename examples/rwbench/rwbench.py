@@ -24,6 +24,7 @@ from datetime import datetime
 from timeit import Timer
 from jinja2 import Environment, FileSystemLoader
 from jinja2.utils import generate_lorem_ipsum
+from jinja2._compat import u
 from mako.lookup import TemplateLookup
 from genshi.template import TemplateLoader as GenshiTemplateLoader
 
@@ -56,7 +57,7 @@ class User(object):
         self.username = username
 
 
-users = map(User, [u'John Doe', u'Jane Doe', u'Peter Somewhat'])
+users = map(User, [u('John Doe'), u('Jane Doe'), u('Peter Somewhat')])
 articles = map(Article, range(20))
 navigation = [
     ('index',           'Index'),
