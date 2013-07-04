@@ -47,9 +47,9 @@ if not PY2:
     get_next = lambda x: x.__next__
 
     def b(s):
-        return s
+        return s.encode("latin-1")
     def u(s):
-        return unicode(s, "unicode_escape")
+        return s
 
 else:
     unichr = unichr
@@ -88,9 +88,9 @@ else:
         return filename
 
     def b(s):
-        return s.encode("latin-1")
-    def u(s):
         return s
+    def u(s):
+        return unicode(s, "unicode_escape")
 
 
 def with_metaclass(meta, *bases):
