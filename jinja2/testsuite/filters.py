@@ -154,6 +154,19 @@ class FilterTestCase(JinjaTestCase):
         tmpl = env.from_string('''{{ users|join(', ', 'username') }}''')
         assert tmpl.render(users=map(User, ['foo', 'bar'])) == 'foo, bar'
 
+    def test_split(self):
+        tmpl = env.from_string('{{ "1  2  \t\n 3"|split }}')
+        out = tmpl.render()
+        self.assertEqual(out, u"['1', '2', '3']")
+
+        tmpl = env.from_string('{{ "1 and 2 and 3"|split(" and ") }}')
+        out = tmpl.render()
+        self.assertEqual(out, u"['1', '2', '3']")
+
+        tmpl = env.from_string('{{ "1 and 2 and 3"|split(" and ", 1) }}')
+        out = tmpl.render()
+        self.assertEqual(out, u"['1', '2 and 3']")
+
     def test_last(self):
         tmpl = env.from_string('''{{ foo|last }}''')
         out = tmpl.render(foo=list(range(10)))
