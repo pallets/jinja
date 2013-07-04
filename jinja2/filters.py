@@ -337,6 +337,25 @@ def do_join(eval_ctx, value, d=u'', attribute=None):
     return soft_unicode(d).join(imap(soft_unicode, value))
 
 
+@evalcontextfilter
+def do_split(eval_ctx, value, d=None, maxsplit=-1):
+    """Return a list resulting from splitting a string on a delimiter, exactly
+    like Python ``split()``.
+
+    .. sourcecode:: jinja
+
+        {{ '1  2  \t\n 3'|split }}
+            -> ['1', '2', '3']
+
+        {{ '1 and 2 and 3'|split(' and  ') }}
+            -> ['1', '2', '3']
+
+        {{ '1 and 2 and 3'|split(' and  ', 1) }}
+            -> [1, '2 and 3']
+    """
+    return value.split(d, maxsplit)
+
+
 def do_center(value, width=80):
     """Centers the value in a field of a given width."""
     return text_type(value).center(width)
@@ -946,6 +965,7 @@ FILTERS = {
     'default':              do_default,
     'd':                    do_default,
     'join':                 do_join,
+    'split':                do_split,
     'count':                len,
     'dictsort':             do_dictsort,
     'sort':                 do_sort,
