@@ -144,7 +144,7 @@ def do_xmlattr(_eval_ctx, d, autospace=True):
     .. sourcecode:: html+jinja
 
         <ul{{ {'class': 'my_list', 'missing': none,
-                'id': 'list-%d'|format(variable)}|xmlattr }}>
+                'id': 'list-%d'}|format(variable)}|xmlattr }}>
         ...
         </ul>
 
