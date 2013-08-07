@@ -5,6 +5,9 @@ Version 2.7.2
 -------------
 (bugfix release, release date to be decided)
 
+- Prefix loader was not forwarding the locals properly to
+  inner loaders.  This is now fixed.
+
 Version 2.7.1
 -------------
 (bugfix release, released on August 7th 2013)
