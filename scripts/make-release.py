@@ -17,6 +17,9 @@ from datetime import datetime, date
 from subprocess import Popen, PIPE
 
 
+_date_strip_re = re.compile(r'(?<=\d)(st|nd|rd|th)')
+
+
 def parse_changelog():
     with open('CHANGES') as f:
         lineiter = iter(f)
@@ -53,8 +56,7 @@ def bump_version(version):
 
 
 def parse_date(string):
-    string = string.replace('th ', ' ').replace('nd ', ' ') \
-                   .replace('rd ', ' ').replace('st ', ' ')
+    string = _date_strip_re.sub('', string)
     return datetime.strptime(string, '%B %d %Y')
 
 
