@@ -186,7 +186,7 @@ def do_title(s):
     for item in re.compile(r'([-\s]+)(?u)').split(s):
         if not item:
             continue
-        rv.append(item[0].upper() + item[1:])
+        rv.append(item[0].upper() + item[1:].lower())
     return ''.join(rv)
 
 

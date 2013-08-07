@@ -13,6 +13,8 @@ Version 2.7.1
 - Fixed some warnings with hashing of undefineds and nodes if Python
   is run with warnings for Python 3.
 - Added support for properly hashing undefined objects.
+- Fixed a bug with the title filter not working on already uppercase
+  strings.
 
 Version 2.7
 -----------
