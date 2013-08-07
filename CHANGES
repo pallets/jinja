@@ -7,6 +7,7 @@ Version 2.7.1
 
 - Fixed a bug with ``call_filter`` not working properly on environment
   and context filters.
+- Fixed lack of Python 3 support for bytecode caches.
 
 Version 2.7
 -----------
