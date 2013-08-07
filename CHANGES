@@ -10,6 +10,9 @@ Version 2.7.1
 - Fixed lack of Python 3 support for bytecode caches.
 - Reverted support for defining blocks in included templates as this
   broke existing templates for users.
+- Fixed some warnings with hashing of undefineds and nodes if Python
+  is run with warnings for Python 3.
+- Added support for properly hashing undefined objects.
 
 Version 2.7
 -----------
