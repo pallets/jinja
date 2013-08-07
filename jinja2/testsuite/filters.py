@@ -208,6 +208,8 @@ class FilterTestCase(JinjaTestCase):
         assert tmpl.render() == "Foo-Bar"
         tmpl = env.from_string('''{{ "foo\tbar"|title }}''')
         assert tmpl.render() == "Foo\tBar"
+        tmpl = env.from_string('''{{ "FOO\tBAR"|title }}''')
+        assert tmpl.render() == "Foo\tBar"
 
         class Foo:
             def __str__(self):

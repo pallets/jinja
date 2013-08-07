@@ -232,6 +232,9 @@ class Node(with_metaclass(NodeType, object)):
     def __ne__(self, other):
         return not self.__eq__(other)
 
+    # Restore Python 2 hashing behavior on Python 3
+    __hash__ = object.__hash__
+
     def __repr__(self):
         return '%s(%s)' % (
             self.__class__.__name__,

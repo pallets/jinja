@@ -3,11 +3,18 @@ Jinja2 Changelog
 
 Version 2.7.1
 -------------
-(bugfix release)
+(bugfix release, released on August 7th 2013)
 
 - Fixed a bug with ``call_filter`` not working properly on environment
   and context filters.
 - Fixed lack of Python 3 support for bytecode caches.
+- Reverted support for defining blocks in included templates as this
+  broke existing templates for users.
+- Fixed some warnings with hashing of undefineds and nodes if Python
+  is run with warnings for Python 3.
+- Added support for properly hashing undefined objects.
+- Fixed a bug with the title filter not working on already uppercase
+  strings.
 
 Version 2.7
 -----------
