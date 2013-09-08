@@ -456,21 +456,22 @@ def do_truncate(s, length=255, killwords=False, end='...'):
 
     .. sourcecode:: jinja
 
-        {{ "foo bar"|truncate(5) }}
+        {{ "foo bar baz"|truncate(9) }}
+            -> "foo ba..."
+        {{ "foo bar baz"|truncate(9, True) }}
             -> "foo ..."
-        {{ "foo bar"|truncate(5, True) }}
-            -> "foo b..."
+
     """
-    if len(s) <= length:
+    if len(s) <= (length + len(end)):
         return s
     elif killwords:
-        return s[:length] + end
+        return s[:length - len(end)] + end
     words = s.split(' ')
     result = []
     m = 0
     for word in words:
         m += len(word) + 1
-        if m > length:
+        if m > (length - len(end)):
             break
         result.append(word)
     result.append(end)
