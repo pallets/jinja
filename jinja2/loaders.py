@@ -141,20 +141,28 @@ class FileSystemLoader(BaseLoader):
 
     The loader takes the path to the templates as string, or if multiple
     locations are wanted a list of them which is then looked up in the
-    given order:
+    given order::
 
     >>> loader = FileSystemLoader('/path/to/templates')
     >>> loader = FileSystemLoader(['/path/to/templates', '/other/path'])
 
     Per default the template encoding is ``'utf-8'`` which can be changed
     by setting the `encoding` parameter to something else.
+
+    To follow symbolic links, set the *followlinks* parameter to ``True``::
+
+    >>> loader = FileSystemLoader('/path/to/templates', followlinks=True)
+
+    .. versionchanged:: 2.8+
+       The *followlinks* parameter was added.
     """
 
-    def __init__(self, searchpath, encoding='utf-8'):
+    def __init__(self, searchpath, encoding='utf-8', followlinks=False):
         if isinstance(searchpath, string_types):
             searchpath = [searchpath]
         self.searchpath = list(searchpath)
         self.encoding = encoding
+        self.followlinks = followlinks
 
     def get_source(self, environment, template):
         pieces = split_template_path(template)
@@ -169,6 +177,7 @@ class FileSystemLoader(BaseLoader):
                 f.close()
 
             mtime = path.getmtime(filename)
+
             def uptodate():
                 try:
                     return path.getmtime(filename) == mtime
@@ -180,7 +189,8 @@ class FileSystemLoader(BaseLoader):
     def list_templates(self):
         found = set()
         for searchpath in self.searchpath:
-            for dirpath, dirnames, filenames in os.walk(searchpath):
+            walk_dir = os.walk(searchpath, followlinks=self.followlinks)
+            for dirpath, dirnames, filenames in walk_dir:
                 for filename in filenames:
                     template = os.path.join(dirpath, filename) \
                         [len(searchpath):].strip(os.path.sep) \
