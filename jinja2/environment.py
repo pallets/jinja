@@ -411,7 +411,7 @@ class Environment(object):
         func = self.filters.get(name)
         if func is None:
             raise TemplateRuntimeError('no filter named %r' % name)
-        args = list(args or ())
+        args = [value] + list(args or ())
         if getattr(func, 'contextfilter', False):
             if context is None:
                 raise TemplateRuntimeError('Attempted to invoke context '
@@ -426,7 +426,7 @@ class Environment(object):
             args.insert(0, eval_ctx)
         elif getattr(func, 'environmentfilter', False):
             args.insert(0, self)
-        return func(value, *args, **(kwargs or {}))
+        return func(*args, **(kwargs or {}))
 
     def call_test(self, name, value, args=None, kwargs=None):
         """Invokes a test on a value the same way the compiler does it.

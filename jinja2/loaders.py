@@ -349,7 +349,7 @@ class PrefixLoader(BaseLoader):
     def load(self, environment, name, globals=None):
         loader, local_name = self.get_loader(name)
         try:
-            return loader.load(environment, local_name)
+            return loader.load(environment, local_name, globals)
         except TemplateNotFound:
             # re-raise the exception with the correct fileame here.
             # (the one that includes the prefix)
