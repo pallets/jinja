@@ -53,9 +53,10 @@ latter prints the result of the expression to the template.
 Variables
 ---------
 
-The application passes variables to the templates you can mess around with in
-the template.  Variables may have attributes or elements on them you can access
-too.  How a variable looks heavily depends on the application providing it.
+You can mess around with the variables in templates provided they are passed in
+by the application.  Variables may have attributes or elements on them you can
+access too.  What attributes a variable has depends heavily on the application
+providing it.
 
 You can use a dot (``.``) to access attributes of a variable, but alternatively
 the so-called "subscript" syntax (``[]``) can be used.  The following lines do
