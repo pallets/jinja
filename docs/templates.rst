@@ -53,25 +53,25 @@ latter prints the result of the expression to the template.
 Variables
 ---------
 
-The application passes variables to the templates you can mess around in the
-template.  Variables may have attributes or elements on them you can access
-too.  How a variable looks like, heavily depends on the application providing
-those.
+You can mess around with the variables in templates provided they are passed in
+by the application.  Variables may have attributes or elements on them you can
+access too.  What attributes a variable has depends heavily on the application
+providing that variable.
 
-You can use a dot (``.``) to access attributes of a variable, alternative the
-so-called "subscript" syntax (``[]``) can be used.  The following lines do
-the same::
+You can use a dot (``.``) to access attributes of a variable, but alternatively
+the so-called "subscript" syntax (``[]``) can be used.  The following lines do
+the same thing::
 
     {{ foo.bar }}
     {{ foo['bar'] }}
 
-It's important to know that the curly braces are *not* part of the variable
+It's important to know that the curly braces are *not* part of the variable,
 but the print statement.  If you access variables inside tags don't put the
-braces around.
+braces around them.
 
 If a variable or attribute does not exist you will get back an undefined
 value.  What you can do with that kind of value depends on the application
-configuration, the default behavior is that it evaluates to an empty string
+configuration: the default behavior is that it evaluates to an empty string
 if printed and that you can iterate over it, but every other operation fails.
 
 .. _notes-on-subscriptions:
