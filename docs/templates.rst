@@ -56,7 +56,7 @@ Variables
 You can mess around with the variables in templates provided they are passed in
 by the application.  Variables may have attributes or elements on them you can
 access too.  What attributes a variable has depends heavily on the application
-providing it.
+providing that variable.
 
 You can use a dot (``.``) to access attributes of a variable, but alternatively
 the so-called "subscript" syntax (``[]``) can be used.  The following lines do
