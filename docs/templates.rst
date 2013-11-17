@@ -499,7 +499,7 @@ Working with Automatic Escaping
 
 When automatic escaping is enabled everything is escaped by default except
 for values explicitly marked as safe.  Those can either be marked by the
-application or in the template by using the `|safe` filter.  The main
+application or in the template by using the ``|safe`` filter.  The main
 problem with this approach is that Python itself doesn't have the concept
 of tainted values so the information if a value is safe or unsafe can get
 lost.  If the information is lost escaping will take place which means that
@@ -515,6 +515,10 @@ safe markup always.
 String literals in templates with automatic escaping are considered unsafe
 too.  The reason for this is that the safe string is an extension to Python
 and not every library will work properly with it.
+
+.. note::
+
+    Flask enables automatic escaping by default
 
 
 List of Control Structures
