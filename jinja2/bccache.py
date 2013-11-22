@@ -88,7 +88,7 @@ class Bucket(object):
         # if marshal_load fails then we need to reload
         try:
             self.code = marshal_load(f)
-        except:
+        except (EOFError, ValueError, TypeError):
             self.reset()
             return
 
