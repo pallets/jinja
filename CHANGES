@@ -7,6 +7,7 @@ Version 2.8
 
 - Added `target` parameter to urlize function.
 - Added support for `followsymlinks` to the file system loader.
+- The truncate filter now counts the length.
 
 Version 2.7.2
 -------------
