@@ -102,6 +102,7 @@ def test_sequence(value):
         return False
     return True
 
+
 def test_equalto(value, other):
     """Check if an object has the same value as another object:
 
@@ -110,8 +111,17 @@ def test_equalto(value, other):
         {% if foo.expression is equalto 42 %}
             the foo attribute evaluates to the constant 42
         {% endif %}
+
+    This appears to be a useless test as it does exactly the same as the
+    ``==`` operator, but it can be useful when used together with the
+    `selectattr` function:
+
+    .. sourcecode:: jinja
+
+        {{ users|selectattr("email", "equalto", "foo@bar.invalid") }}
     """
     return value == other
+
 
 def test_sameas(value, other):
     """Check if an object points to the same memory address than another
