@@ -5,7 +5,8 @@ Version 2.8
 -----------
 (codename Translation, release date to be decided)
 
-- Added target keyword to urlize function.
+- Added `target` parameter to urlize function.
+- Added support for `followsymlinks` to the file system loader.
 
 Version 2.7.2
 -------------
