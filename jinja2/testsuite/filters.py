@@ -227,7 +227,13 @@ class FilterTestCase(JinjaTestCase):
         )
         out = tmpl.render(data='foobar baz bar' * 1000,
                           smalldata='foobar baz bar')
-        assert out == 'foobar baz barf>>>|foobar baz >>>|foobar baz bar'
+        msg = 'Current output: %s' % out
+        assert out == 'foobar baz b>>>|foobar baz >>>|foobar baz bar', msg
+
+    def test_truncate_end_length(self):
+        tmpl = env.from_string('{{ "Joel is a slug"|truncate(9, true) }}')
+        out = tmpl.render()
+        assert out == 'Joel i...', 'Current output: %s' % out
 
     def test_upper(self):
         tmpl = env.from_string('{{ "foo"|upper }}')
