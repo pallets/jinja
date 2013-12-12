@@ -72,6 +72,17 @@ class TestsTestCase(JinjaTestCase):
         tmpl = env.from_string('{{ "FOO" is upper }}|{{ "foo" is upper }}')
         assert tmpl.render() == 'True|False'
 
+    def test_equalto(self):
+        tmpl = env.from_string('{{ foo is equalto 12 }}|'
+                               '{{ foo is equalto 0 }}|'
+                               '{{ foo is equalto (3 * 4) }}|'
+                               '{{ bar is equalto "baz" }}|'
+                               '{{ bar is equalto "zab" }}|'
+                               '{{ bar is equalto ("ba" + "z") }}|'
+                               '{{ bar is equalto bar }}|'
+                               '{{ bar is equalto foo }}')
+        assert tmpl.render(foo=12, bar="baz") == 'True|False|True|True|False|True|True|False'
+
     def test_sameas(self):
         tmpl = env.from_string('{{ foo is sameas false }}|'
                                '{{ 0 is sameas false }}')

@@ -102,6 +102,16 @@ def test_sequence(value):
         return False
     return True
 
+def test_equalto(value, other):
+    """Check if an object has the same value as another object:
+
+    .. sourcecode:: jinja
+
+        {% if foo.expression is equalto 42 %}
+            the foo attribute evaluates to the constant 42
+        {% endif %}
+    """
+    return value == other
 
 def test_sameas(value, other):
     """Check if an object points to the same memory address than another
@@ -146,5 +156,6 @@ TESTS = {
     'iterable':         test_iterable,
     'callable':         test_callable,
     'sameas':           test_sameas,
+    'equalto':          test_equalto,
     'escaped':          test_escaped
 }
