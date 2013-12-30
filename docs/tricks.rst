@@ -15,7 +15,7 @@ Null-Master Fallback
 Jinja2 supports dynamic inheritance and does not distinguish between parent
 and child template as long as no `extends` tag is visited.  While this leads
 to the surprising behavior that everything before the first `extends` tag
-including whitespace is printed out instead of being igored, it can be used
+including whitespace is printed out instead of being ignored, it can be used
 for a neat trick.
 
 Usually child templates extend from one template that adds a basic HTML
