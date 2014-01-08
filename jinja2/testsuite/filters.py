@@ -125,9 +125,15 @@ class FilterTestCase(JinjaTestCase):
         assert out == '42.0|0.0|32.32'
 
     def test_format(self):
-        tmpl = env.from_string('''{{ "%s|%s"|format("a", "b") }}''')
+        tmpl = env.from_string(
+            '{{ "%s|%s"|format("a", "b") }}|'
+            '{{ "%(c)s|%(d)s"|format(c="c",d="d")}}|'
+            '{{ "{}|{}"|format("e","f") }}|'
+            '{{ "{g}|{h}"|format(g="g", h="h") }}|'
+            '{{ "{:,}"|format(10000) }}'
+        )
         out = tmpl.render()
-        assert out == 'a|b'
+        assert out == 'a|b|c|d|e|f|g|h|10,000'
 
     def test_indent(self):
         tmpl = env.from_string('{{ foo|indent(2) }}|{{ foo|indent(2, true) }}')
