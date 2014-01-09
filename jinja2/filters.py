@@ -557,11 +557,13 @@ def do_format(value, *args, **kwargs):
         ret = soft_unicode(value) % (kwargs or args)
         if ret != value:
             return ret
-    except TypeError, e:
-        try:
-            return soft_unicode(value).format(**kwargs)
-        except Exception, e:
-            return soft_unicode(value).format(*args)
+    except TypeError:
+        pass
+
+    try:
+        return soft_unicode(value).format(**kwargs)
+    except Exception:
+        return soft_unicode(value).format(*args)
 
     raise FilterArgumentError('Your format filter is badly formed')
 

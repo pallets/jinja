@@ -128,7 +128,7 @@ class FilterTestCase(JinjaTestCase):
         tmpl = env.from_string(
             '{{ "%s|%s"|format("a", "b") }}|'
             '{{ "%(c)s|%(d)s"|format(c="c",d="d")}}|'
-            '{{ "{}|{}"|format("e","f") }}|'
+            '{{ "{0}|{1}"|format("e","f") }}|'
             '{{ "{g}|{h}"|format(g="g", h="h") }}|'
             '{{ "{:,}"|format(10000) }}'
         )
