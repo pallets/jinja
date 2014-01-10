@@ -3,7 +3,7 @@ Jinja2 Changelog
 
 Version 2.7.2
 -------------
-(bugfix release, release date to be decided)
+(bugfix release, released on January 10th 2014)
 
 - Prefix loader was not forwarding the locals properly to
   inner loaders.  This is now fixed.
