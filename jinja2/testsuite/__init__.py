@@ -123,7 +123,7 @@ class BetterLoader(unittest.TestLoader):
 def suite():
     from jinja2.testsuite import ext, filters, tests, core_tags, \
          loader, inheritance, imports, lexnparse, security, api, \
-         regression, debug, utils, bytecode_cache, doctests
+         regression, debug, utils, bytecode_cache, doctests, script
     suite = unittest.TestSuite()
     suite.addTest(ext.suite())
     suite.addTest(filters.suite())
@@ -139,6 +139,7 @@ def suite():
     suite.addTest(debug.suite())
     suite.addTest(utils.suite())
     suite.addTest(bytecode_cache.suite())
+    suite.addTest(script.suite())
 
     # doctests will not run on python 3 currently.  Too many issues
     # with that, do not test that on that platform.

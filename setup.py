@@ -87,5 +87,8 @@ setup(
     entry_points="""
     [babel.extractors]
     jinja2 = jinja2.ext:babel_extract[i18n]
+
+    [console_scripts]
+    jinja2 = jinja2.__main__:main
     """
 )
