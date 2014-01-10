@@ -224,7 +224,8 @@ class FileSystemBytecodeCache(BytecodeCache):
         dirname = '_jinja2-cache-%d' % os.getuid()
         actual_dir = os.path.join(tmpdir, dirname)
         try:
-            os.mkdir(actual_dir, 0700)
+            # 448 == 0700
+            os.mkdir(actual_dir, 448)
         except OSError as e:
             if e.errno != errno.EEXIST:
                 raise
