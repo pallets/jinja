@@ -108,7 +108,7 @@ class Environment(object):
     Modifications on environments after the first template was loaded
     will lead to surprising effects and undefined behavior.
 
-    Here the possible initialization parameters:
+    Here are the possible initialization parameters:
 
         `block_start_string`
             The string marking the begin of a block.  Defaults to ``'{%'``.

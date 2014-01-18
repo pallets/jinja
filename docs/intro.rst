@@ -17,7 +17,7 @@ Jinja2 works with Python 2.6.x, 2.7.x and >= 3.3.  If you are using Python
 was dropped in Jinja2 version 2.7.
 
 If you wish to use the :class:`~jinja2.PackageLoader` class, you will also
-need setuptools or distribute installed at runtime.
+need `setuptools`_ or `distribute`_ installed at runtime.
 
 Installation
 ------------
@@ -25,8 +25,8 @@ Installation
 You have multiple ways to install Jinja2.  If you are unsure what to do, go
 with the Python egg or tarball.
 
-As a Python egg (via easy_install)
-~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+As a Python egg (via `easy_install`)
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
 You can install the most recent Jinja2 version using `easy_install`_ or `pip`_::
 
@@ -46,12 +46,10 @@ From the tarball release
 2.  Unpack the tarball
 3.  ``sudo python setup.py install``
 
-Note that you either have to have setuptools or `distribute`_ installed;
+Note that you either have to have `setuptools` or `distribute` installed;
 the latter is preferred.
 
 This will install Jinja2 into your Python installation's site-packages directory.
-
-.. _distribute: http://pypi.python.org/pypi/distribute
 
 Installing the development version
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
@@ -62,10 +60,11 @@ Installing the development version
 4.  ``ln -s jinja2 /usr/lib/python2.X/site-packages``
 
 As an alternative to steps 4 you can also do ``python setup.py develop``
-which will install the package via distribute in development mode.  This also
+which will install the package via `distribute` in development mode.  This also
 has the advantage that the C extensions are compiled.
 
 .. _download page: http://pypi.python.org/pypi/Jinja2
+.. _distribute: http://pypi.python.org/pypi/distribute 
 .. _setuptools: http://peak.telecommunity.com/DevCenter/setuptools
 .. _easy_install: http://peak.telecommunity.com/DevCenter/EasyInstall
 .. _pip: http://pypi.python.org/pypi/pip
@@ -117,7 +116,7 @@ there and behavior might be inconsistent.  If you notice any bugs, please
 provide feedback in the `Jinja bug tracker`_.
 
 Also please keep in mind that the documentation is written with Python 2
-in mind, you will have to adapt the shown code examples to Python 3 syntax
+in mind, so you will have to adapt the shown code examples to Python 3 syntax
 for yourself.
 
 
