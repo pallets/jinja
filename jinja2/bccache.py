@@ -15,9 +15,7 @@
     :license: BSD.
 """
 from os import path, listdir
-import os
 import sys
-import errno
 import marshal
 import tempfile
 import fnmatch
@@ -206,31 +204,9 @@ class FileSystemBytecodeCache(BytecodeCache):
 
     def __init__(self, directory=None, pattern='__jinja2_%s.cache'):
         if directory is None:
-            directory = self._get_default_cache_dir()
+            directory = tempfile.mkdtemp(prefix="jinja2-cache-")
         self.directory = directory
         self.pattern = pattern
-
-    def _get_default_cache_dir(self):
-        tmpdir = tempfile.gettempdir()
-
-        # On windows the temporary directory is used specific unless
-        # explicitly forced otherwise.  We can just use that.
-        if os.name == 'n':
-            return tmpdir
-        if not hasattr(os, 'getuid'):
-            raise RuntimeError('Cannot determine safe temp directory.  You '
-                               'need to explicitly provide one.')
-
-        dirname = '_jinja2-cache-%d' % os.getuid()
-        actual_dir = os.path.join(tmpdir, dirname)
-        try:
-            # 448 == 0700
-            os.mkdir(actual_dir, 448)
-        except OSError as e:
-            if e.errno != errno.EEXIST:
-                raise
-
-        return actual_dir
 
     def _get_cache_filename(self, bucket):
         return path.join(self.directory, self.pattern % bucket.key)
