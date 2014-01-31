@@ -54,6 +54,10 @@ else:
                      'package.\n')
     sys.stderr.write('*' * 74 + '\n')
 
+install_requires = ['MarkupSafe']
+if sys.version_info[:2] < (2, 7):
+    install_requires.append('argparse')
+
 
 setup(
     name='Jinja2',
@@ -80,7 +84,7 @@ setup(
         'Topic :: Text Processing :: Markup :: HTML'
     ],
     packages=['jinja2', 'jinja2.testsuite', 'jinja2.testsuite.res'],
-    install_requires=['MarkupSafe'],
+    install_requires=install_requires,
     extras_require={'i18n': ['Babel>=0.8']},
     test_suite='jinja2.testsuite.suite',
     include_package_data=True,

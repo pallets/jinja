@@ -18,7 +18,7 @@ from . import Environment, StrictUndefined
 def parse_cmdline_vars(cmdline_vars, eval_values):
     args = dict(var.split('=', 1) for var in cmdline_vars)
     if eval_values:
-        args = dict((key, eval(val)) for (key, val) in args.iteritems())
+        args = dict((key, eval(val)) for (key, val) in args.items())
     return args
 
 

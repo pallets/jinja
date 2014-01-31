@@ -14,7 +14,7 @@ from jinja2.testsuite import JinjaTestCase, here
 from glob import glob
 from os.path import join, isfile
 from subprocess import Popen, PIPE
-from sys import executable
+from sys import executable, version_info
 import unittest
 
 
@@ -80,10 +80,16 @@ class ScriptTestCase(JinjaTestCase):
 
     def run_script(self, data, args):
         '''Run a script with args, return output and return code'''
-        pipe = Popen([executable, '-mjinja2'] + args, stdin=PIPE, stdout=PIPE)
-        pipe.stdin.write(data)
+        if version_info[:2] > (2, 6):
+            module = 'jinja2'
+        else:
+            module = 'jinja2.__main__'
+
+        cmd = [executable, '-m{0}'.format(module)] + args
+        pipe = Popen(cmd, stdin=PIPE, stdout=PIPE)
+        pipe.stdin.write(data.encode('UTF-8'))
         pipe.stdin.close()
-        out = pipe.stdout.read()
+        out = pipe.stdout.read().decode('UTF-8')
 
         return out, pipe.wait()
 
