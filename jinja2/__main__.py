@@ -15,11 +15,17 @@ Example:
 from . import Environment, StrictUndefined
 
 
-def parse_cmdline_vars(cmdline_vars, eval_values):
-    args = dict(var.split('=', 1) for var in cmdline_vars)
-    if eval_values:
-        args = dict((key, eval(val)) for (key, val) in args.items())
-    return args
+def parse_value(value):
+    prefix = 'py:'
+    if value[:3] != prefix:
+        return value
+
+    return eval(value[len(prefix):])
+
+
+def parse_cmdline_vars(cmdline_vars):
+    kvs = (var.split('=', 1) for var in cmdline_vars)
+    return dict((var, parse_value(val)) for var, val in kvs)
 
 
 def main(argv=None):
@@ -31,16 +37,15 @@ def main(argv=None):
     parser = ArgumentParser(description='Expand Jinja2 template')
     parser.add_argument('template', help='template file to expand',
                         type=FileType('r'), nargs='?', default=sys.stdin)
-    parser.add_argument('--var', '-v', action='append',
-                        help='template variables (in X=Y format)')
-    parser.add_argument('--eval', '-e', action='store_true', default=False,
-                        help='eval arguments (e.g. "[1, 2]" -> [1, 2])')
+    parser.add_argument(
+        '--var', '-v', action='append',
+        help='template variables (in X=Y format, prefix with py: to eval)')
     parser.add_argument('--output', '-o', help='output file',
                         type=FileType('w'), nargs='?', default=sys.stdout)
 
     args = parser.parse_args(argv[1:])
 
-    tvars = parse_cmdline_vars(args.var or [], args.eval)
+    tvars = parse_cmdline_vars(args.var or [])
 
     # Fail on undefined
     env = Environment(undefined=StrictUndefined)

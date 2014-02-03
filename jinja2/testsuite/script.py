@@ -20,22 +20,18 @@ import unittest
 
 parse_test_cases = [
     {
-        'eval': False,
         'in': [],
         'out': {},
     },
     {
-        'eval': False,
         'in': ['x=1', 'y=2'],
         'out': {'x': '1', 'y': '2'},
     },
     {
-        'eval': True,
-        'in': ['x=1'],
+        'in': ['x=py:1'],
         'out': {'x': 1},
     },
     {
-        'eval': False,
         'in': ['x=1=2'],
         'out': {'x': '1=2'},
     },
@@ -51,9 +47,9 @@ class ScriptTestCase(JinjaTestCase):
 
     def test_parse_cmdline_vars(self):
         for case in parse_test_cases:
-            out = script.parse_cmdline_vars(case['in'], case['eval'])
+            out = script.parse_cmdline_vars(case['in'])
             expected = case['out']
-            assert out == expected, '{in} failed [eval={eval}]'.format(**case)
+            assert out == expected, '{in} failed'.format(**case)
 
     def load_args(self, argsfile):
         if not isfile(argsfile):
