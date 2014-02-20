@@ -910,6 +910,11 @@ class CodeGenerator(NodeVisitor):
                        'append(parent_block)')
         self.outdent()
 
+        # to have all the context variables in the `extended` template
+        self.writeline('ctx = parent_template.new_context('
+                       'context.parent, False, locals())')
+        self.writeline('context.vars.update(ctx.parent)')
+
         # if this extends statement was in the root level we can take
         # advantage of that information and simplify the generated code
         # in the top level from this point onwards
