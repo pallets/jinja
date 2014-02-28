@@ -21,7 +21,7 @@ from collections import deque
 from jinja2.exceptions import TemplateSyntaxError
 from jinja2.utils import LRUCache
 from jinja2._compat import iteritems, implements_iterator, text_type, \
-     intern
+     intern, PY2
 
 
 # cache for the lexers. Exists in order to be able to have multiple
@@ -576,12 +576,12 @@ class Lexer(object):
                     raise TemplateSyntaxError(msg, lineno, name, filename)
                 # if we can express it as bytestring (ascii only)
                 # we do that for support of semi broken APIs
-                # as datetime.datetime.strftime.  On python 3 this
-                # call becomes a noop thanks to 2to3
-                try:
-                    value = str(value)
-                except UnicodeError:
-                    pass
+                # as datetime.datetime.strftime.
+                if PY2:
+                    try:
+                        value = value.encode('ascii')
+                    except UnicodeError:
+                        pass
             elif token == 'integer':
                 value = int(value)
             elif token == 'float':
