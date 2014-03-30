@@ -339,10 +339,11 @@ class LoopContext(object):
             # if was not possible to get the length of the iterator when
             # the loop context was created (ie: iterating over a generator)
             # we have to convert the iterable into a sequence and use the
-            # length of that.
+            # length of that + the number of iterations so far.
             iterable = tuple(self._iterator)
             self._iterator = iter(iterable)
-            self._length = len(iterable) + self.index0 + 1
+            iterations_done = self.index0 + 2
+            self._length = len(iterable) + iterations_done
         return self._length
 
     def __repr__(self):

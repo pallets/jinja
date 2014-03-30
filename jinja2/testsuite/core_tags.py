@@ -33,23 +33,25 @@ class ForLoopTestCase(JinjaTestCase):
         assert tmpl.render() == '<>'
 
     def test_context_vars(self):
-        tmpl = env.from_string('''{% for item in seq -%}
-        {{ loop.index }}|{{ loop.index0 }}|{{ loop.revindex }}|{{
-            loop.revindex0 }}|{{ loop.first }}|{{ loop.last }}|{{
-           loop.length }}###{% endfor %}''')
-        one, two, _ = tmpl.render(seq=[0, 1]).split('###')
-        (one_index, one_index0, one_revindex, one_revindex0, one_first,
-         one_last, one_length) = one.split('|')
-        (two_index, two_index0, two_revindex, two_revindex0, two_first,
-         two_last, two_length) = two.split('|')
+        slist = [42, 24]
+        for seq in [slist, iter(slist), reversed(slist), (_ for _ in slist)]:
+            tmpl = env.from_string('''{% for item in seq -%}
+            {{ loop.index }}|{{ loop.index0 }}|{{ loop.revindex }}|{{
+                loop.revindex0 }}|{{ loop.first }}|{{ loop.last }}|{{
+               loop.length }}###{% endfor %}''')
+            one, two, _ = tmpl.render(seq=seq).split('###')
+            (one_index, one_index0, one_revindex, one_revindex0, one_first,
+             one_last, one_length) = one.split('|')
+            (two_index, two_index0, two_revindex, two_revindex0, two_first,
+             two_last, two_length) = two.split('|')
 
-        assert int(one_index) == 1 and int(two_index) == 2
-        assert int(one_index0) == 0 and int(two_index0) == 1
-        assert int(one_revindex) == 2 and int(two_revindex) == 1
-        assert int(one_revindex0) == 1 and int(two_revindex0) == 0
-        assert one_first == 'True' and two_first == 'False'
-        assert one_last == 'False' and two_last == 'True'
-        assert one_length == two_length == '2'
+            assert int(one_index) == 1 and int(two_index) == 2
+            assert int(one_index0) == 0 and int(two_index0) == 1
+            assert int(one_revindex) == 2 and int(two_revindex) == 1
+            assert int(one_revindex0) == 1 and int(two_revindex0) == 0
+            assert one_first == 'True' and two_first == 'False'
+            assert one_last == 'False' and two_last == 'True'
+            assert one_length == two_length == '2'
 
     def test_cycling(self):
         tmpl = env.from_string('''{% for item in seq %}{{
