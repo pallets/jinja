@@ -603,7 +603,7 @@ class Environment(object):
                           ignore_errors=True, py_compile=False):
         """Finds all the templates the loader can find, compiles them
         and stores them in `target`.  If `zip` is `None`, instead of in a
-        zipfile, the templates will be will be stored in a directory.
+        zipfile, the templates will be stored in a directory.
         By default a deflate zip algorithm is used, to switch to
         the stored algorithm, `zip` can be set to ``'stored'``.
 
