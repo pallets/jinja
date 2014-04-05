@@ -111,13 +111,13 @@ class Environment(object):
     Here the possible initialization parameters:
 
         `block_start_string`
-            The string marking the begin of a block.  Defaults to ``'{%'``.
+            The string marking the beginning of a block.  Defaults to ``'{%'``.
 
         `block_end_string`
             The string marking the end of a block.  Defaults to ``'%}'``.
 
         `variable_start_string`
-            The string marking the begin of a print statement.
+            The string marking the beginning of a print statement.
             Defaults to ``'{{'``.
 
         `variable_end_string`
@@ -125,7 +125,7 @@ class Environment(object):
             ``'}}'``.
 
         `comment_start_string`
-            The string marking the begin of a comment.  Defaults to ``'{#'``.
+            The string marking the beginning of a comment.  Defaults to ``'{#'``.
 
         `comment_end_string`
             The string marking the end of a comment.  Defaults to ``'#}'``.
@@ -180,7 +180,7 @@ class Environment(object):
 
         `autoescape`
             If set to true the XML/HTML autoescaping feature is enabled by
-            default.  For more details about auto escaping see
+            default.  For more details about autoescaping see
             :class:`~jinja2.utils.Markup`.  As of Jinja 2.4 this can also
             be a callable that is passed the template name and has to
             return `True` or `False` depending on autoescape should be
@@ -330,7 +330,7 @@ class Environment(object):
                 loader=missing, cache_size=missing, auto_reload=missing,
                 bytecode_cache=missing):
         """Create a new overlay environment that shares all the data with the
-        current environment except of cache and the overridden attributes.
+        current environment except for cache and the overridden attributes.
         Extensions cannot be removed for an overlayed environment.  An overlayed
         environment automatically gets all the extensions of the environment it
         is linked to plus optional extra extensions.
@@ -603,8 +603,8 @@ class Environment(object):
                           ignore_errors=True, py_compile=False):
         """Finds all the templates the loader can find, compiles them
         and stores them in `target`.  If `zip` is `None`, instead of in a
-        zipfile, the templates will be will be stored in a directory.
-        By default a deflate zip algorithm is used, to switch to
+        zipfile, the templates will be stored in a directory.
+        By default a deflate zip algorithm is used. To switch to
         the stored algorithm, `zip` can be set to ``'stored'``.
 
         `extensions` and `filter_func` are passed to :meth:`list_templates`.
