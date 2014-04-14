@@ -1122,8 +1122,12 @@ class TemplateStream(object):
 
     def dump(self, fp, encoding=None, errors='strict'):
         """Dump the complete stream into a file or file-like object.
-        Per default unicode strings are written, if you want to encode
-        before writing specify an `encoding`.
+        Per default the system locales encoding is used for output,
+        if you want to encode before writing specify an `encoding`.
+
+        It that it can be neccesary to manually specify an encoding
+        if you are using characters that can not be converted to your
+        system locales encoding.
 
         Example usage::
 
