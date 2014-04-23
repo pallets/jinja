@@ -1,6 +1,5 @@
 include MANIFEST.in Makefile CHANGES LICENSE AUTHORS run-tests.py
 recursive-include docs *
-recursive-include custom_fixers *
 recursive-include ext *
 recursive-include artwork *
 recursive-include examples *
