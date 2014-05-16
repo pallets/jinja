@@ -757,14 +757,16 @@ class Environment(object):
     def _load_template(self, name, globals):
         if self.loader is None:
             raise TypeError('no loader for this environment specified')
+        # use abs path to store cache
+        cache_key = self.loader.get_source(self, name)[1]
         if self.cache is not None:
-            template = self.cache.get(name)
+            template = self.cache.get(cache_key)
             if template is not None and (not self.auto_reload or \
                                          template.is_up_to_date):
                 return template
         template = self.loader.load(self, name, globals)
         if self.cache is not None:
-            self.cache[name] = template
+            self.cache[cache_key] = template
         return template
 
     @internalcode
