@@ -758,7 +758,10 @@ class Environment(object):
         if self.loader is None:
             raise TypeError('no loader for this environment specified')
         # use abs path for cache key
-        cache_key = self.loader.get_source(self, name)[1]
+        _, cache_key, _ = self.loader.get_source(self, name)
+        # if template is not file, use name for cache key
+        if cache_key is None:
+            cache_key = name
         if self.cache is not None:
             template = self.cache.get(cache_key)
             if template is not None and (not self.auto_reload or \
