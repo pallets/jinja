@@ -759,7 +759,7 @@ class Environment(object):
             raise TypeError('no loader for this environment specified')
         try:
             # use abs path for cache key
-            _, cache_key, _ = self.loader.get_source(self, name)
+            cache_key = self.loader.get_source(self, name)[1]
         except RuntimeError:
             # if loader does not implement get_source()
             cache_key = None
