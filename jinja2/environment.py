@@ -757,8 +757,12 @@ class Environment(object):
     def _load_template(self, name, globals):
         if self.loader is None:
             raise TypeError('no loader for this environment specified')
-        # use abs path for cache key
-        _, cache_key, _ = self.loader.get_source(self, name)
+        try:
+            # use abs path for cache key
+            _, cache_key, _ = self.loader.get_source(self, name)
+        except RuntimeError:
+            # if loader does not implement get_source()
+            cache_key = None
         # if template is not file, use name for cache key
         if cache_key is None:
             cache_key = name
