@@ -40,21 +40,6 @@ import sys
 from setuptools import setup
 
 
-# ignore the old '--with-speedups' flag
-try:
-    speedups_pos = sys.argv.index('--with-speedups')
-except ValueError:
-    pass
-else:
-    del sys.argv[speedups_pos]
-    sys.stderr.write('*' * 74 + '\n')
-    sys.stderr.write('WARNING:\n')
-    sys.stderr.write('  the --with-speedups flag is deprecated\n')
-    sys.stderr.write('  For the actual speedups install the MarkupSafe '
-                     'package.\n')
-    sys.stderr.write('*' * 74 + '\n')
-
-
 setup(
     name='Jinja2',
     version='2.8-dev',
