@@ -16,6 +16,10 @@ import re
 from datetime import datetime, date
 from subprocess import Popen, PIPE
 
+try:
+    import wheel
+except ImportError:
+    wheel = None
 
 _date_strip_re = re.compile(r'(?<=\d)(st|nd|rd|th)')
 
@@ -88,7 +92,10 @@ def set_setup_version(version):
 
 
 def build_and_upload():
-    Popen([sys.executable, 'setup.py', 'release', 'sdist', 'upload']).wait()
+    cmd = [sys.executable, 'setup.py', 'release', 'sdist', 'upload']
+    if wheel is not None:
+        cmd.insert(4, 'bdist_wheel')
+    Popen(cmd).wait()
 
 
 def fail(message, *args):
@@ -139,6 +146,10 @@ def main():
 
     if not git_is_clean():
         fail('You have uncommitted changes in git')
+
+    if wheel is None:
+        print ('Warning: You need to install the wheel package '
+               'to upload a wheel distribution.')
 
     set_init_version(version)
     set_setup_version(version)
