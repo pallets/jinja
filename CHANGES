@@ -16,6 +16,8 @@ Version 2.8
   Python 2 to work when people break their default encoding.
 - Added :func:`make_logging_undefined` which returns an undefined
   object that logs failures into a logger.
+- If unmarshalling of cached data fails the template will be
+  reloaded now.
 
 Version 2.7.3
 -------------
