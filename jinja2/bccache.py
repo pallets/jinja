@@ -88,7 +88,12 @@ class Bucket(object):
         if self.checksum != checksum:
             self.reset()
             return
-        self.code = marshal_load(f)
+        # if marshal_load fails then we need to reload
+        try:
+            self.code = marshal_load(f)
+        except (EOFError, ValueError, TypeError):
+            self.reset()
+            return
 
     def write_bytecode(self, f):
         """Dump the bytecode into the file or file like object passed."""
