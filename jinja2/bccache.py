@@ -215,7 +215,7 @@ class FileSystemBytecodeCache(BytecodeCache):
 
         # On windows the temporary directory is used specific unless
         # explicitly forced otherwise.  We can just use that.
-        if os.name == 'n':
+        if os.name == 'nt':
             return tmpdir
         if not hasattr(os, 'getuid'):
             raise RuntimeError('Cannot determine safe temp directory.  You '
