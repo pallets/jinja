@@ -17,6 +17,13 @@ Version 2.8
 - Added :func:`make_logging_undefined` which returns an undefined
   object that logs failures into a logger.
 
+Version 2.7.3
+-------------
+(bugfix release, released on June 6th 2014)
+
+- Security issue: Corrected the security fix for the cache folder.  This
+  fix was provided by RedHat.
+
 Version 2.7.2
 -------------
 (bugfix release, released on January 10th 2014)

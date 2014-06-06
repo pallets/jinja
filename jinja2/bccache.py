@@ -240,8 +240,16 @@ class FileSystemBytecodeCache(BytecodeCache):
                or not stat.S_ISDIR(actual_dir_stat.st_mode) \
                or stat.S_IMODE(actual_dir_stat.st_mode) != stat.S_IRWXU:
                 _unsafe_dir()
-        except OSError:
+        except OSError as e:
+            if e.errno != errno.EEXIST:
+                raise
+
+        actual_dir_stat = os.lstat(actual_dir)
+        if actual_dir_stat.st_uid != os.getuid() \
+           or not stat.S_ISDIR(actual_dir_stat.st_mode) \
+           or stat.S_IMODE(actual_dir_stat.st_mode) != stat.S_IRWXU:
             _unsafe_dir()
+
         return actual_dir
 
     def _get_cache_filename(self, bucket):

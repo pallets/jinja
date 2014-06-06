@@ -35,8 +35,6 @@ For more informations visit the new `Jinja2 webpage`_ and `documentation`_.
 .. _Jinja2 webpage: http://jinja.pocoo.org/
 .. _documentation: http://jinja.pocoo.org/2/documentation/
 """
-import sys
-
 from setuptools import setup
 
 
