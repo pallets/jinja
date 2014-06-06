@@ -12,6 +12,8 @@ Version 2.8
 - Changed cache keys to use absolute file names if available
   instead of load names.
 - Fixed loop length calculation for some iterators.
+- Changed how Jinja2 enforces strings to be native strings in
+  Python 2 to work when people break their default encoding.
 
 Version 2.7.2
 -------------
