@@ -316,6 +316,11 @@ disallows all operations beside testing if it's an undefined object.
 
 .. autoclass:: jinja2.StrictUndefined()
 
+There is also a factory function that can decorate undefined objects to
+implement logging on failures:
+
+.. autofunction:: jinja2.make_logging_undefined
+
 Undefined objects are created by calling :attr:`undefined`.
 
 .. admonition:: Implementation

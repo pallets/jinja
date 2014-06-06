@@ -527,9 +527,24 @@ class Undefined(object):
 
 
 def make_logging_undefined(logger=None, base=None):
-    """Given a logger object this returns a new undefined class that
-    will log all failures into it.  If no logger is given a default
-    logger is created.
+    """Given a logger object this returns a new undefined class that will
+    log certain failures.  It will log iterations and printing.  If no
+    logger is given a default logger is created.
+
+    Example::
+
+        logger = logging.getLogger(__name__)
+        LoggingUndefined = make_logging_undefined(
+            logger=logger,
+            base=Undefined
+        )
+
+    .. versionadded:: 2.8
+
+    :param logger: the logger to use.  If not provided, a default logger
+                   is created.
+    :param base: the base class to add logging functionality to.  This
+                 defaults to :class:`Undefined`.
     """
     if logger is None:
         import logging
@@ -538,23 +553,51 @@ def make_logging_undefined(logger=None, base=None):
     if base is None:
         base = Undefined
 
-    class LoggingUndefined(base):
-        def __str__(self):
-            if self._undefined_hint is None:
-                if self._undefined_obj is missing:
-                    hint = '%s is undefined' % self._undefined_name
-                elif not isinstance(self._undefined_name, string_types):
-                    hint = '%s has no element %s' % (
-                        object_type_repr(self._undefined_obj),
-                        self._undefined_name)
-                else:
-                    hint = '%s has no attribute %s' % (
-                        object_type_repr(self._undefined_obj),
-                        self._undefined_name)
+    def _log_message(undef):
+        if undef._undefined_hint is None:
+            if undef._undefined_obj is missing:
+                hint = '%s is undefined' % undef._undefined_name
+            elif not isinstance(undef._undefined_name, string_types):
+                hint = '%s has no element %s' % (
+                    object_type_repr(undef._undefined_obj),
+                    undef._undefined_name)
             else:
-                hint = self._undefined_hint
-            logger.error('Template error: %s', hint)
-            return base.__str__(self)
+                hint = '%s has no attribute %s' % (
+                    object_type_repr(undef._undefined_obj),
+                    undef._undefined_name)
+        else:
+            hint = undef._undefined_hint
+        logger.warning('Template variable warning: %s', hint)
+
+    class LoggingUndefined(base):
+
+        def _fail_with_undefined_error(self, *args, **kwargs):
+            try:
+                return base._fail_with_undefined_error(self, *args, **kwargs)
+            except self._undefined_exception as e:
+                logger.error('Template variable error: %s', str(e))
+                raise e
+
+        def __str__(self):
+            rv = base.__str__(self)
+            _log_message(self)
+            return rv
+
+        if PY2:
+            def __unicode__(self):
+                rv = base.__unicode__(self)
+                _log_message(self)
+                return rv
+
+        def __iter__(self):
+            rv = base.__iter__(self)
+            _log_message(self)
+            return rv
+
+        def __nonzero__(self):
+            rv = base.__nonzero__(self)
+            _log_message(self)
+            return rv
 
     return LoggingUndefined
 

@@ -17,7 +17,7 @@ from jinja2.testsuite import JinjaTestCase
 
 from jinja2 import Environment, Undefined, DebugUndefined, \
      StrictUndefined, UndefinedError, meta, \
-     is_undefined, Template, DictLoader
+     is_undefined, Template, DictLoader, make_logging_undefined
 from jinja2.utils import Cycler
 
 env = Environment()
@@ -198,6 +198,31 @@ class UndefinedTestCase(JinjaTestCase):
             pass
         else:
             assert False, "Expected actual attribute error"
+
+    def test_logging_undefined(self):
+        _messages = []
+        class DebugLogger(object):
+            def warning(self, msg, *args):
+                _messages.append('W:' + msg % args)
+            def error(self, msg, *args):
+                _messages.append('E:' + msg % args)
+
+        logging_undefined = make_logging_undefined(DebugLogger())
+        env = Environment(undefined=logging_undefined)
+        self.assert_equal(env.from_string('{{ missing }}').render(), u'')
+        self.assert_raises(UndefinedError,
+                           env.from_string('{{ missing.attribute }}').render)
+        self.assert_equal(env.from_string('{{ missing|list }}').render(), '[]')
+        self.assert_equal(env.from_string('{{ missing is not defined }}').render(), 'True')
+        self.assert_equal(env.from_string('{{ foo.missing }}').render(foo=42), '')
+        self.assert_equal(env.from_string('{{ not missing }}').render(), 'True')
+        self.assert_equal(_messages, [
+            'W:Template variable warning: missing is undefined',
+            "E:Template variable error: 'missing' is undefined",
+            'W:Template variable warning: missing is undefined',
+            'W:Template variable warning: int object has no attribute missing',
+            'W:Template variable warning: missing is undefined',
+        ])
 
     def test_default_undefined(self):
         env = Environment(undefined=Undefined)
