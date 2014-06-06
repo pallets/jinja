@@ -521,6 +521,7 @@ class Undefined(object):
 
     def __nonzero__(self):
         return False
+    __bool__ = __nonzero__
 
     def __repr__(self):
         return 'Undefined'
@@ -583,21 +584,26 @@ def make_logging_undefined(logger=None, base=None):
             _log_message(self)
             return rv
 
-        if PY2:
-            def __unicode__(self):
-                rv = base.__unicode__(self)
-                _log_message(self)
-                return rv
-
         def __iter__(self):
             rv = base.__iter__(self)
             _log_message(self)
             return rv
 
-        def __nonzero__(self):
-            rv = base.__nonzero__(self)
-            _log_message(self)
-            return rv
+        if PY2:
+            def __nonzero__(self):
+                rv = base.__nonzero__(self)
+                _log_message(self)
+                return rv
+
+            def __unicode__(self):
+                rv = base.__unicode__(self)
+                _log_message(self)
+                return rv
+        else:
+            def __bool__(self):
+                rv = base.__bool__(self)
+                _log_message(self)
+                return rv
 
     return LoggingUndefined
 
