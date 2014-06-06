@@ -12,7 +12,7 @@ Basics
 ------
 
 Jinja2 uses a central object called the template :class:`Environment`.
-Instances of this class are used to store the configuration, global objects
+Instances of this class are used to store the configuration and global objects,
 and are used to load templates from the file system or other locations.
 Even if you are creating templates from strings by using the constructor of
 :class:`Template` class, an environment is created automatically for you,

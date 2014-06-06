@@ -204,8 +204,7 @@ def do_dictsort(value, case_sensitive=False, by='key'):
             sort the dict by key, case sensitive
 
         {% for item in mydict|dictsort(false, 'value') %}
-            sort the dict by key, case insensitive, sorted
-            normally and ordered by value.
+            sort the dict by value, case insensitive
     """
     if by == 'key':
         pos = 0
