@@ -1140,7 +1140,9 @@ class TemplateStream(object):
         """
         close = False
         if isinstance(fp, string_types):
-            fp = open(fp, encoding is None and 'w' or 'wb')
+            if encoding is None:
+                encoding = 'utf-8'
+            fp = open(fp, 'wb')
             close = True
         try:
             if encoding is not None:
