@@ -299,9 +299,24 @@ class MacrosTestCase(JinjaTestCase):
         assert tmpl.render() == '5|4|3|2|1'
 
 
+class SetTestCase(JinjaTestCase):
+    env = Environment(trim_blocks=True)
+
+    def test_normal(self):
+        tmpl = self.env.from_string('{% set foo = 1 %}{{ foo }}')
+        assert tmpl.render() == '1'
+        assert tmpl.module.foo == 1
+
+    def test_block(self):
+        tmpl = self.env.from_string('{% set foo %}42{% endset %}{{ foo }}')
+        assert tmpl.render() == '42'
+        assert tmpl.module.foo == u'42'
+
+
 def suite():
     suite = unittest.TestSuite()
     suite.addTest(unittest.makeSuite(ForLoopTestCase))
     suite.addTest(unittest.makeSuite(IfConditionTestCase))
     suite.addTest(unittest.makeSuite(MacrosTestCase))
+    suite.addTest(unittest.makeSuite(SetTestCase))
     return suite

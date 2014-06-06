@@ -347,6 +347,11 @@ class Assign(Stmt):
     fields = ('target', 'node')
 
 
+class AssignBlock(Stmt):
+    """Assigns a block to a target."""
+    fields = ('target', 'body')
+
+
 class Expr(Node):
     """Baseclass for all expressions."""
     abstract = True

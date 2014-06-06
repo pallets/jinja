@@ -18,6 +18,7 @@ Version 2.8
   object that logs failures into a logger.
 - If unmarshalling of cached data fails the template will be
   reloaded now.
+- Implemented a block ``set`` tag.
 
 Version 2.7.3
 -------------
