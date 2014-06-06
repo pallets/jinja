@@ -115,7 +115,8 @@ class ModuleLoaderTestCase(JinjaTestCase):
         log = []
         self.reg_env = Environment(loader=prefix_loader)
         if zip is not None:
-            self.archive = tempfile.mkstemp(suffix='.zip')[1]
+            fd, self.archive = tempfile.mkstemp(suffix='.zip')
+            os.close(fd)
         else:
             self.archive = tempfile.mkdtemp()
         self.reg_env.compile_templates(self.archive, zip=zip,
