@@ -9,6 +9,8 @@ Version 2.8
 - Added support for `followsymlinks` to the file system loader.
 - The truncate filter now counts the length.
 - Added equalto filter that helps with select filters.
+- Changed cache keys to use absolute file names if available
+  instead of load names.
 
 Version 2.7.2
 -------------
