@@ -17,6 +17,7 @@
 from os import path, listdir
 import os
 import sys
+import stat
 import errno
 import marshal
 import tempfile
@@ -227,15 +228,17 @@ class FileSystemBytecodeCache(BytecodeCache):
         dirname = '_jinja2-cache-%d' % os.getuid()
         actual_dir = os.path.join(tmpdir, dirname)
 
-        # 448 == 0700
         try:
-            os.mkdir(actual_dir, 448)
+            os.mkdir(actual_dir, stat.S_IRWXU)
         except OSError as e:
             if e.errno != errno.EEXIST:
                 raise
         try:
-            os.chmod(actual_dir, 448)
-            if os.stat(actual_dir).st_uid != os.getuid():
+            os.chmod(actual_dir, stat.S_IRWXU)
+            actual_dir_stat = os.lstat(actual_dir)
+            if actual_dir_stat.st_uid != os.getuid() \
+               or not stat.S_ISDIR(actual_dir_stat.st_mode) \
+               or stat.S_IMODE(actual_dir_stat.st_mode) != stat.S_IRWXU:
                 _unsafe_dir()
         except OSError:
             _unsafe_dir()
