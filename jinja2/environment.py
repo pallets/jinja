@@ -90,13 +90,13 @@ def load_extensions(environment, extensions):
 def _environment_sanity_check(environment):
     """Perform a sanity check on the environment."""
     assert issubclass(environment.undefined, Undefined), 'undefined must ' \
-           'be a subclass of undefined because filters depend on it.'
+        'be a subclass of undefined because filters depend on it.'
     assert environment.block_start_string != \
-           environment.variable_start_string != \
-           environment.comment_start_string, 'block, variable and comment ' \
-           'start strings must be different'
+        environment.variable_start_string != \
+        environment.comment_start_string, 'block, variable and comment ' \
+        'start strings must be different'
     assert environment.newline_sequence in ('\r', '\r\n', '\n'), \
-           'newline_sequence set to unknown line ending string.'
+        'newline_sequence set to unknown line ending string.'
     return environment
 
 
@@ -551,7 +551,7 @@ class Environment(object):
             return self._compile(source, filename)
         except TemplateSyntaxError:
             exc_info = sys.exc_info()
-        self.handle_exception(exc_info, source_hint=source)
+        self.handle_exception(exc_info, source_hint=source_hint)
 
     def compile_expression(self, source, undefined_to_none=True):
         """A handy helper method that returns a callable that accepts keyword
@@ -634,7 +634,8 @@ class Environment(object):
                 warn(Warning('py_compile has no effect on pypy or Python 3'))
                 py_compile = False
             else:
-                import imp, marshal
+                import imp
+                import marshal
                 py_header = imp.get_magic() + \
                     u'\xff\xff\xff\xff'.encode('iso-8859-15')
 
@@ -768,7 +769,7 @@ class Environment(object):
             cache_key = name
         if self.cache is not None:
             template = self.cache.get(cache_key)
-            if template is not None and (not self.auto_reload or \
+            if template is not None and (not self.auto_reload or
                                          template.is_up_to_date):
                 return template
         template = self.loader.load(self, name, globals)
