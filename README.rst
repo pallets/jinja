@@ -35,4 +35,4 @@ Jinja2==dev``.
 .. _Django: http://www.djangoproject.com/
 .. _Jinja2 webpage: http://jinja.pocoo.org/
 .. _documentation: http://jinja.pocoo.org/2/documentation/
-.. _Jinja2 tip: http://dev.pocoo.org/hg/jinja2-main/archive/tip.tar.gz#egg=Jinja2-dev
+.. _Jinja2 tip: http://jinja.pocoo.org/docs/intro/#as-a-python-egg-via-easy-install
