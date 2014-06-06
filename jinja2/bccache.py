@@ -211,6 +211,10 @@ class FileSystemBytecodeCache(BytecodeCache):
         self.pattern = pattern
 
     def _get_default_cache_dir(self):
+        def _unsafe_dir():
+            raise RuntimeError('Cannot determine safe temp directory.  You '
+                               'need to explicitly provide one.')
+
         tmpdir = tempfile.gettempdir()
 
         # On windows the temporary directory is used specific unless
@@ -218,18 +222,23 @@ class FileSystemBytecodeCache(BytecodeCache):
         if os.name == 'nt':
             return tmpdir
         if not hasattr(os, 'getuid'):
-            raise RuntimeError('Cannot determine safe temp directory.  You '
-                               'need to explicitly provide one.')
+            _unsafe_dir()
 
         dirname = '_jinja2-cache-%d' % os.getuid()
         actual_dir = os.path.join(tmpdir, dirname)
+
+        # 448 == 0700
         try:
-            # 448 == 0700
             os.mkdir(actual_dir, 448)
         except OSError as e:
             if e.errno != errno.EEXIST:
                 raise
-
+        try:
+            os.chmod(actual_dir, 448)
+            if os.stat(actual_dir).st_uid != os.getuid():
+                _unsafe_dir()
+        except OSError:
+            _unsafe_dir()
         return actual_dir
 
     def _get_cache_filename(self, bucket):
