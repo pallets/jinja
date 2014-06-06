@@ -11,6 +11,7 @@ Version 2.8
 - Added equalto filter that helps with select filters.
 - Changed cache keys to use absolute file names if available
   instead of load names.
+- Fixed loop length calculation for some iterators.
 
 Version 2.7.2
 -------------
