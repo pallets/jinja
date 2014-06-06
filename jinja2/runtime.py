@@ -8,14 +8,19 @@
     :copyright: (c) 2010 by the Jinja Team.
     :license: BSD.
 """
+import sys
+import logging
+
 from itertools import chain
 from jinja2.nodes import EvalContext, _context_function_types
 from jinja2.utils import Markup, soft_unicode, escape, missing, concat, \
-     internalcode, object_type_repr
+    internalcode, object_type_repr
 from jinja2.exceptions import UndefinedError, TemplateRuntimeError, \
-     TemplateNotFound
+    TemplateNotFound
 from jinja2._compat import imap, text_type, iteritems, \
-     implements_iterator, implements_to_string, string_types, PY2
+    implements_iterator, implements_to_string, string_types, PY2
+
+logger = logging.getLogger(__name__)
 
 
 # these variables are exported to the template runtime
@@ -456,12 +461,16 @@ class Undefined(object):
     """
     __slots__ = ('_undefined_hint', '_undefined_obj', '_undefined_name',
                  '_undefined_exception')
+    logger = logging.getLogger(__name__)
 
     def __init__(self, hint=None, obj=missing, name=None, exc=UndefinedError):
         self._undefined_hint = hint
         self._undefined_obj = obj
         self._undefined_name = name
         self._undefined_exception = exc
+
+        ch = logging.StreamHandler(sys.stdout)
+        self.logger.addHandler(ch)
 
     @internalcode
     def _fail_with_undefined_error(self, *args, **kwargs):
@@ -508,6 +517,23 @@ class Undefined(object):
         return id(type(self))
 
     def __str__(self):
+        if self._undefined_hint is None:
+            if self._undefined_obj is missing:
+                hint = '{variable} is undefined'.format(
+                    variable=self._undefined_name)
+            elif not isinstance(self._undefined_name, string_types):
+                hint = '{object} has no element {element}'.format(
+                    object=object_type_repr(self._undefined_obj),
+                    element=self._undefined_name)
+            else:
+                hint = '{object} has no attribute {attribute}'.format(
+                    object=object_type_repr(self._undefined_obj),
+                    attribute=self._undefined_name)
+        else:
+            hint = self._undefined_hint
+        self.logger.error('Template error: {hint}'.format(hint=hint))
+        # Return a empty string so that the variable in the template is empty
+        # on render.
         return u''
 
     def __len__(self):
