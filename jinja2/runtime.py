@@ -8,6 +8,8 @@
     :copyright: (c) 2010 by the Jinja Team.
     :license: BSD.
 """
+import sys
+
 from itertools import chain
 from jinja2.nodes import EvalContext, _context_function_types
 from jinja2.utils import Markup, soft_unicode, escape, missing, concat, \
@@ -22,7 +24,7 @@ from jinja2._compat import imap, text_type, iteritems, \
 __all__ = ['LoopContext', 'TemplateReference', 'Macro', 'Markup',
            'TemplateRuntimeError', 'missing', 'concat', 'escape',
            'markup_join', 'unicode_join', 'to_string', 'identity',
-           'TemplateNotFound']
+           'TemplateNotFound', 'make_logging_undefined']
 
 #: the name of the function that is used to convert something into
 #: a string.  We can just use the text type here.
@@ -171,7 +173,7 @@ class Context(object):
         :func:`environmentfunction`.
         """
         if __debug__:
-            __traceback_hide__ = True
+            __traceback_hide__ = True  # noqa
 
         # Allow callable classes to take a context
         fn = __obj.__call__
@@ -492,10 +494,10 @@ class Undefined(object):
         return self._fail_with_undefined_error()
 
     __add__ = __radd__ = __mul__ = __rmul__ = __div__ = __rdiv__ = \
-    __truediv__ = __rtruediv__ = __floordiv__ = __rfloordiv__ = \
-    __mod__ = __rmod__ = __pos__ = __neg__ = __call__ = \
-    __getitem__ = __lt__ = __le__ = __gt__ = __ge__ = __int__ = \
-    __float__ = __complex__ = __pow__ = __rpow__ = \
+        __truediv__ = __rtruediv__ = __floordiv__ = __rfloordiv__ = \
+        __mod__ = __rmod__ = __pos__ = __neg__ = __call__ = \
+        __getitem__ = __lt__ = __le__ = __gt__ = __ge__ = __int__ = \
+        __float__ = __complex__ = __pow__ = __rpow__ = \
         _fail_with_undefined_error
 
     def __eq__(self, other):
@@ -522,6 +524,39 @@ class Undefined(object):
 
     def __repr__(self):
         return 'Undefined'
+
+
+def make_logging_undefined(logger=None, base=None):
+    """Given a logger object this returns a new undefined class that
+    will log all failures into it.  If no logger is given a default
+    logger is created.
+    """
+    if logger is None:
+        import logging
+        logger = logging.getLogger(__name__)
+        logger.addHandler(logging.StreamHandler(sys.stderr))
+    if base is None:
+        base = Undefined
+
+    class LoggingUndefined(base):
+        def __str__(self):
+            if self._undefined_hint is None:
+                if self._undefined_obj is missing:
+                    hint = '%s is undefined' % self._undefined_name
+                elif not isinstance(self._undefined_name, string_types):
+                    hint = '%s has no element %s' % (
+                        object_type_repr(self._undefined_obj),
+                        self._undefined_name)
+                else:
+                    hint = '%s has no attribute %s' % (
+                        object_type_repr(self._undefined_obj),
+                        self._undefined_name)
+            else:
+                hint = self._undefined_hint
+            logger.error('Template error: %s', hint)
+            return base.__str__(self)
+
+    return LoggingUndefined
 
 
 @implements_to_string
