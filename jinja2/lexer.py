@@ -136,8 +136,8 @@ operator_re = re.compile('(%s)' % '|'.join(re.escape(x) for x in
 
 ignored_tokens = frozenset([TOKEN_COMMENT_BEGIN, TOKEN_COMMENT,
                             TOKEN_COMMENT_END, TOKEN_WHITESPACE,
-                            TOKEN_WHITESPACE, TOKEN_LINECOMMENT_BEGIN,
-                            TOKEN_LINECOMMENT_END, TOKEN_LINECOMMENT])
+                            TOKEN_LINECOMMENT_BEGIN, TOKEN_LINECOMMENT_END,
+                            TOKEN_LINECOMMENT])
 ignore_if_empty = frozenset([TOKEN_WHITESPACE, TOKEN_DATA,
                              TOKEN_COMMENT, TOKEN_LINECOMMENT])
 
