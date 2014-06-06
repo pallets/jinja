@@ -4,7 +4,7 @@ Extensions
 ==========
 
 Jinja2 supports extensions that can add extra filters, tests, globals or even
-extend the parser.  The main motivation of extensions is it to move often used
+extend the parser.  The main motivation of extensions is to move often used
 code into a reusable class like adding support for internationalization.
 
 
@@ -14,7 +14,7 @@ Adding Extensions
 Extensions are added to the Jinja2 environment at creation time.  Once the
 environment is created additional extensions cannot be added.  To add an
 extension pass a list of extension classes or import paths to the
-`environment` parameter of the :class:`Environment` constructor.  The following
+`extensions` parameter of the :class:`Environment` constructor.  The following
 example creates a Jinja2 environment with the i18n extension loaded::
 
     jinja_env = Environment(extensions=['jinja2.ext.i18n'])
@@ -32,20 +32,20 @@ used in combination with `gettext`_ or `babel`_.  If the i18n extension is
 enabled Jinja2 provides a `trans` statement that marks the wrapped string as
 translatable and calls `gettext`.
 
-After enabling dummy `_` function that forwards calls to `gettext` is added
+After enabling, dummy `_` function that forwards calls to `gettext` is added
 to the environment globals.  An internationalized application then has to
-provide at least an `gettext` and optionally a `ngettext` function into the
-namespace.  Either globally or for each rendering.
+provide a `gettext` function and optionally an `ngettext` function into the
+namespace, either globally or for each rendering.
 
 Environment Methods
 ~~~~~~~~~~~~~~~~~~~
 
-After enabling of the extension the environment provides the following
+After enabling the extension, the environment provides the following
 additional methods:
 
 .. method:: jinja2.Environment.install_gettext_translations(translations, newstyle=False)
 
-    Installs a translation globally for that environment.  The tranlations
+    Installs a translation globally for that environment.  The translations
     object provided must implement at least `ugettext` and `ungettext`.
     The `gettext.NullTranslations` and `gettext.GNUTranslations` classes
     as well as `Babel`_\s `Translations` class are supported.
@@ -89,7 +89,7 @@ additional methods:
     *  `message` is the string itself (a `unicode` object, or a tuple
        of `unicode` objects for functions with multiple string arguments).
 
-    If `Babel`_ is installed :ref:`the babel integration <babel-integration>`
+    If `Babel`_ is installed, :ref:`the babel integration <babel-integration>`
     can be used to extract strings for babel.
 
 For a web application that is available in multiple languages but gives all
@@ -125,7 +125,7 @@ extraction tools in case you are not using Babel's.
 What's the big difference between standard and newstyle gettext calls?  In
 general they are less to type and less error prone.  Also if they are used
 in an autoescaping environment they better support automatic escaping.
-Here some common differences between old and new calls:
+Here are some common differences between old and new calls:
 
 standard gettext:
 
@@ -145,7 +145,7 @@ newstyle gettext looks like this instead:
     {{ gettext('Hello %(name)s!', name='World') }}
     {{ ngettext('%(num)d apple', '%(num)d apples', apples|count) }}
 
-The advantages of newstyle gettext is that you have less to type and that
+The advantages of newstyle gettext are that you have less to type and that
 named placeholders become mandatory.  The latter sounds like a
 disadvantage but solves a lot of troubles translators are often facing
 when they are unable to switch the positions of two placeholder.  With
@@ -174,7 +174,7 @@ Loop Controls
 **Import name:** `jinja2.ext.loopcontrols`
 
 This extension adds support for `break` and `continue` in loops.  After
-enabling Jinja2 provides those two keywords which work exactly like in
+enabling, Jinja2 provides those two keywords which work exactly like in
 Python.
 
 .. _with-extension:
@@ -216,7 +216,7 @@ Writing Extensions
 By writing extensions you can add custom tags to Jinja2.  This is a non trival
 task and usually not needed as the default tags and expressions cover all
 common use cases.  The i18n extension is a good example of why extensions are
-useful, another one would be fragment caching.
+useful. Another one would be fragment caching.
 
 When writing extensions you have to keep in mind that you are working with the
 Jinja2 template compiler which does not validate the node tree you are passing
