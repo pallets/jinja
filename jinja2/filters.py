@@ -477,16 +477,11 @@ def do_truncate(s, length=255, killwords=False, end='...'):
         return s
     elif killwords:
         return s[:length - len(end)] + end
-    words = s.split(' ')
-    result = []
-    m = 0
-    for word in words:
-        m += len(word) + 1
-        if m > (length - len(end)):
-            break
-        result.append(word)
-    result.append(end)
-    return u' '.join(result)
+
+    result = s[:length - len(end)].rsplit(' ', 1)[0]
+    if len(result) < length:
+        result += ' '
+    return result + end
 
 @environmentfilter
 def do_wordwrap(environment, s, width=79, break_long_words=True,
