@@ -473,7 +473,7 @@ def do_truncate(s, length=255, killwords=False, end='...'):
             -> "foo ..."
 
     """
-    if len(s) <= (length + len(end)):
+    if len(s) <= length:
         return s
     elif killwords:
         return s[:length - len(end)] + end
@@ -482,6 +482,7 @@ def do_truncate(s, length=255, killwords=False, end='...'):
     if len(result) < length:
         result += ' '
     return result + end
+
 
 @environmentfilter
 def do_wordwrap(environment, s, width=79, break_long_words=True,

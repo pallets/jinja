@@ -230,6 +230,14 @@ class FilterTestCase(JinjaTestCase):
         msg = 'Current output: %s' % out
         assert out == 'foobar baz b>>>|foobar baz >>>|foobar baz bar', msg
 
+    def test_truncate_very_short(self):
+        tmpl = env.from_string(
+            '{{ "foo bar baz"|truncate(9) }}|'
+            '{{ "foo bar baz"|truncate(9, true) }}'
+        )
+        out = tmpl.render()
+        assert out == 'foo ...|foo ba...', out
+
     def test_truncate_end_length(self):
         tmpl = env.from_string('{{ "Joel is a slug"|truncate(9, true) }}')
         out = tmpl.render()
