@@ -125,6 +125,16 @@ def do_replace(eval_ctx, s, old, new, count=None):
     return s.replace(soft_unicode(old), soft_unicode(new), count)
 
 
+@evalcontextfilter
+def do_sub(eval_ctx, string, pattern, repl, count=0, flags=0):
+    """Return the string obtained by replacing the leftmost non-overlapping
+    occurrences of pattern in string by the replacement repl. Like Python's
+    ``re.sub``, except that the source string is the filter input (so the
+    first argument is the pattern) and the flag UNICODE is forced on."""
+    return re.sub(unicode(pattern), unicode(repl), unicode(string),
+                  count, flags | re.UNICODE)
+
+
 def do_upper(s):
     """Convert a value to uppercase."""
     return soft_unicode(s).upper()
@@ -943,6 +953,7 @@ def _select_or_reject(args, kwargs, modfunc, lookup_attr):
 FILTERS = {
     'attr':                 do_attr,
     'replace':              do_replace,
+    'sub':                  do_sub,
     'upper':                do_upper,
     'lower':                do_lower,
     'escape':               escape,
