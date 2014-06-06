@@ -15,11 +15,11 @@ Null-Master Fallback
 Jinja2 supports dynamic inheritance and does not distinguish between parent
 and child template as long as no `extends` tag is visited.  While this leads
 to the surprising behavior that everything before the first `extends` tag
-including whitespace is printed out instead of being igored, it can be used
+including whitespace is printed out instead of being ignored, it can be used
 for a neat trick.
 
 Usually child templates extend from one template that adds a basic HTML
-skeleton.  However it's possible put the `extends` tag into an `if` tag to
+skeleton.  However it's possible to put the `extends` tag into an `if` tag to
 only extend from the layout template if the `standalone` variable evaluates
 to false which it does per default if it's not defined.  Additionally a very
 basic skeleton is added to the file so that if it's indeed rendered with
