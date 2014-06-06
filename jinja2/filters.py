@@ -619,7 +619,6 @@ def do_batch(value, linecount, fill_with=None):
         {%- endfor %}
         </table>
     """
-    result = []
     tmp = []
     for item in value:
         if len(tmp) == linecount:
