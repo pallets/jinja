@@ -717,7 +717,7 @@ class Environment(object):
             filter_func = lambda x: '.' in x and \
                                     x.rsplit('.', 1)[1] in extensions
         if filter_func is not None:
-            x = ifilter(filter_func, x)
+            x = list(ifilter(filter_func, x))
         return x
 
     def handle_exception(self, exc_info=None, rendered=False, source_hint=None):
