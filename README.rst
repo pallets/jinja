@@ -34,5 +34,5 @@ Jinja2==dev``.
 .. _sandboxed: http://en.wikipedia.org/wiki/Sandbox_(computer_security)
 .. _Django: http://www.djangoproject.com/
 .. _Jinja2 webpage: http://jinja.pocoo.org/
-.. _documentation: http://jinja.pocoo.org/2/documentation/
+.. _documentation: http://jinja.pocoo.org/docs/
 .. _Jinja2 tip: http://jinja.pocoo.org/docs/intro/#as-a-python-egg-via-easy-install
