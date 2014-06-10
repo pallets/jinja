@@ -751,7 +751,7 @@ class Add(BinExpr):
 
 
 class Sub(BinExpr):
-    """Substract the right from the left node."""
+    """Subtract the right from the left node."""
     operator = '-'
 
 
