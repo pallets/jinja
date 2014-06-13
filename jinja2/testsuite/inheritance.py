@@ -99,7 +99,7 @@ class InheritanceTestCase(JinjaTestCase):
         assert tmpl.render() == ('|block 1 from level1|block 5 from level3|'
                                  'block 4 from level3|')
 
-    def test_level4(sel):
+    def test_level4(self):
         tmpl = env.get_template('level4')
         assert tmpl.render() == ('|block 1 from level1|block 5 from '
                                  'level3|block 3 from level4|')
