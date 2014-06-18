@@ -119,6 +119,8 @@ def test_equalto(value, other):
     .. sourcecode:: jinja
 
         {{ users|selectattr("email", "equalto", "foo@bar.invalid") }}
+
+    .. versionadded:: 2.8
     """
     return value == other
 
