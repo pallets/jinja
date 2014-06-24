@@ -93,7 +93,7 @@ desired to have access to an outer loop it's possible to alias it::
       <tr>
       {% set rowloop = loop %}
       {% for cell in row %}
-        <td id="cell-{{ rowloop.index }}-{{ loop.index }}>{{ cell }}</td>
+        <td id="cell-{{ rowloop.index }}-{{ loop.index }}">{{ cell }}</td>
       {% endfor %}
       </tr>
     {% endfor %}
