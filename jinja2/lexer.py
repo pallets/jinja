@@ -530,7 +530,7 @@ class Lexer(object):
             ] + tag_rules,
             # line comments
             TOKEN_LINECOMMENT_BEGIN: [
-                (c(r'(.*?)()(?=\n|$)'), (TOKEN_LINECOMMENT,
+                (c(r'(.*?)()(\n|$)'), (TOKEN_LINECOMMENT,
                  TOKEN_LINECOMMENT_END), '#pop')
             ]
         }

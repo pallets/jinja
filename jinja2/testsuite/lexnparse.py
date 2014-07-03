@@ -182,7 +182,6 @@ and bar comment #}
                 list(range(5))
 
     def test_line_syntax_priority(self):
-        # XXX: why is the whitespace there in front of the newline?
         env = Environment('{%', '%}', '${', '}', '/*', '*/', '##', '#')
         tmpl = env.from_string('''\
 /* ignore me.
@@ -190,7 +189,8 @@ and bar comment #}
 ## for item in seq:
 * ${item}          # this is just extra stuff
 ## endfor''')
-        assert tmpl.render(seq=[1, 2]).strip() == '* 1\n* 2'
+        result = tmpl.render(seq=[1, 2]).strip()
+        assert result == '* 1* 2'
         env = Environment('{%', '%}', '${', '}', '/*', '*/', '#', '##')
         tmpl = env.from_string('''\
 /* ignore me.
@@ -199,7 +199,7 @@ and bar comment #}
 * ${item}          ## this is just extra stuff
     ## extra stuff i just want to ignore
 # endfor''')
-        assert tmpl.render(seq=[1, 2]).strip() == '* 1\n\n* 2'
+        assert tmpl.render(seq=[1, 2]).strip() == '* 1* 2'
 
     def test_error_messages(self):
         def assert_error(code, expected):
@@ -465,7 +465,7 @@ class LstripBlocksTestCase(JinjaTestCase):
         env = Environment(lstrip_blocks=True, trim_blocks=False)
         tmpl = env.from_string('''\n\n\n{% set hello = 1 %}''')
         assert tmpl.render() == '\n\n\n'
-        
+
     def test_lstrip_comment(self):
         env = Environment(lstrip_blocks=True, trim_blocks=False)
         tmpl = env.from_string('''    {# if True #}
@@ -493,9 +493,9 @@ hello
     <% for item in seq %>
 ${item} ## the rest of the stuff
    <% endfor %>''')
-        assert tmpl.render(seq=range(5)) == \
-                ''.join('%s\n' % x for x in range(5))
-        
+        result = tmpl.render(seq=range(5))
+        assert result == ''.join('%s' % x for x in range(5))
+
     def test_lstrip_angle_bracket_compact(self):
         env = Environment('<%', '%>', '${', '}', '<%#', '%>', '%', '##',
             lstrip_blocks=True, trim_blocks=True)
@@ -504,9 +504,9 @@ ${item} ## the rest of the stuff
     <%for item in seq%>
 ${item} ## the rest of the stuff
    <%endfor%>''')
-        assert tmpl.render(seq=range(5)) == \
-                ''.join('%s\n' % x for x in range(5))
-        
+        result = tmpl.render(seq=range(5))
+        assert result == ''.join('%s' % x for x in range(5))
+
     def test_php_syntax_with_manual(self):
         env = Environment('<?', '?>', '<?=', '?>', '<!--', '-->',
             lstrip_blocks=True, trim_blocks=True)
@@ -582,6 +582,17 @@ ${item} ## the rest of the stuff
     ${item}
 <!--- endfor -->''')
         assert tmpl.render(seq=range(5)) == '01234'
+
+    def test_multiple_comments(self):
+        '''there should be no whitespace'''
+        env = Environment(line_comment_prefix='##')
+        tmpl = env.from_string('''\
+## comment
+## comment
+##
+## comment''')
+        assert tmpl.render() == ''
+
 
 def suite():
     suite = unittest.TestSuite()
