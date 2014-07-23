@@ -1244,10 +1244,10 @@ The following functions are available in the global scope by default:
         {% set row_class = cycler('odd', 'even') %}
         <ul class="browser">
         {% for folder in folders %}
-          <li class="folder {{ row_class.next() }}">{{ folder|e }}</li>
+          <li class="folder {{ row_class.__next__() }}">{{ folder|e }}</li>
         {% endfor %}
         {% for filename in files %}
-          <li class="file {{ row_class.next() }}">{{ filename|e }}</li>
+          <li class="file {{ row_class.__next__() }}">{{ filename|e }}</li>
         {% endfor %}
         </ul>
 
@@ -1257,7 +1257,7 @@ The following functions are available in the global scope by default:
 
         Resets the cycle to the first item.
 
-    .. method:: next()
+    .. method:: __next__()
 
         Goes one item a head and returns the then current item.
 
