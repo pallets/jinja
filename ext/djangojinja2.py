@@ -45,7 +45,7 @@ def create_env():
     searchpath = list(settings.JINJA2_TEMPLATE_DIRS)
     return Environment(loader=FileSystemLoader(searchpath),
                        auto_reload=settings.TEMPLATE_DEBUG,
-                       cache_size=getattr(settings, 'JINJA2_CACHE_SIZE', 50),
+                       cache_size=getattr(settings, 'JINJA2_CACHE_SIZE', 400),
                        extensions=getattr(settings, 'JINJA2_EXTENSIONS', ()))
 
 
