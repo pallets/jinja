@@ -1288,18 +1288,48 @@ The following functions are available in the global scope by default:
     **new in Jinja 2.1**
 
 
-Extensions
-----------
+Jinja2 Extensions
+-----------------
 
-The following sections cover the built-in Jinja2 extensions that may be
-enabled by the application.  The application could also provide further
-extensions not covered by this documentation.  In that case there should
-be a separate document explaining the extensions.
+The following section covers the built-in Jinja2 extensions that can be enabled
+run-time by the application. The application itself could also provide
+additional extensions that are not covered by this documentation. In that case
+consult the application-specific documentation.
+
+Autoescape *(extension)*
+~~~~~~~~~~~~~~~~~~~~~~~~
+
+.. versionadded:: 2.4
+
+If the application enables the :ref:`autoescape-extension` one can
+activate and deactivate the autoescaping from within the templates.
+
+Example::
+
+    {% autoescape true %}
+        Autoescaping is active within this block
+    {% endautoescape %}
+
+    {% autoescape false %}
+        Autoescaping is inactive within this block
+    {% endautoescape %}
+
+After the `endautoescape` the behavior is reverted to what it was before.
+
+Expression Statement *(extension)*
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+If the expression-statement extension is loaded a tag called `do` is available
+that works exactly like the regular variable expression (``{{ ... }}``) just
+that it doesn't print anything.  This can be used to modify lists::
+
+    {% do navigation.append('a string') %}
+
 
 .. _i18n-in-templates:
 
-i18n
-~~~~
+i18n *(extension)*
+~~~~~~~~~~~~~~~~~~
 
 If the i18n extension is enabled it's possible to mark parts in the template
 as translatable.  To mark a section as translatable you can use `trans`::
@@ -1340,7 +1370,7 @@ which should be used for pluralizing by adding it as parameter to `pluralize`::
 It's also possible to translate strings in expressions.  For that purpose
 three functions exist:
 
-_   `gettext`: translate a single string
+-   `gettext`: translate a single string
 -   `ngettext`: translate a pluralizable string
 -   `_`: alias for `gettext`
 
@@ -1370,18 +1400,8 @@ Note that the `ngettext` function's format string automatically receives
 the count as `num` parameter additionally to the regular parameters.
 
 
-Expression Statement
-~~~~~~~~~~~~~~~~~~~~
-
-If the expression-statement extension is loaded a tag called `do` is available
-that works exactly like the regular variable expression (``{{ ... }}``) just
-that it doesn't print anything.  This can be used to modify lists::
-
-    {% do navigation.append('a string') %}
-
-
-Loop Controls
-~~~~~~~~~~~~~
+Loop Controls *(extension)*
+~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
 If the application enables the :ref:`loopcontrols-extension` it's possible to
 use `break` and `continue` in loops.  When `break` is reached, the loop is
@@ -1402,8 +1422,8 @@ Likewise a look that stops processing after the 10th iteration::
     {%- endfor %}
 
 
-With Statement
-~~~~~~~~~~~~~~
+With Statement *(extension)*
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
 .. versionadded:: 2.3
 
@@ -1420,9 +1440,8 @@ With in a nutshell::
     {% endwith %}
     foo is not visible here any longer
 
-Because it is common to set variables at the beginning of the scope
-you can do that within the with statement.  The following two examples
-are equivalent::
+Because it is common to set variables at the beginning of the scope you can do
+that within the `with` statement.  The following two examples are equivalent::
 
     {% with foo = 42 %}
         {{ foo }}
@@ -1435,22 +1454,3 @@ are equivalent::
 
 .. _autoescape-overrides:
 
-Autoescape Extension
---------------------
-
-.. versionadded:: 2.4
-
-If the application enables the :ref:`autoescape-extension` one can
-activate and deactivate the autoescaping from within the templates.
-
-Example::
-
-    {% autoescape true %}
-        Autoescaping is active within this block
-    {% endautoescape %}
-
-    {% autoescape false %}
-        Autoescaping is inactive within this block
-    {% endautoescape %}
-
-After the `endautoescape` the behavior is reverted to what it was before.
