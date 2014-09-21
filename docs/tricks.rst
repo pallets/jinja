@@ -63,7 +63,7 @@ child template::
     {% set active_page = "index" %}
 
 The layout template can then access `active_page`.  Additionally it makes
-sense to defined a default for that variable::
+sense to define a default for that variable::
 
     {% set navigation_bar = [
         ('/', 'index', 'Index'),
