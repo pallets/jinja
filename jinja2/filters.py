@@ -10,6 +10,7 @@
 """
 import re
 import math
+import os
 
 from random import choice
 from operator import itemgetter
@@ -774,6 +775,10 @@ def do_reverse(value):
         except TypeError:
             raise FilterArgumentError('argument must be iterable')
 
+def do_readlink(value):
+    """Readlink of a path"""
+    return os.readlink(value)
+
 
 @environmentfilter
 def do_attr(environment, obj, name):
@@ -990,5 +995,6 @@ FILTERS = {
     'groupby':              do_groupby,
     'safe':                 do_mark_safe,
     'xmlattr':              do_xmlattr,
-    'urlencode':            do_urlencode
+    'urlencode':            do_urlencode,
+    'readlink':             do_readlink
 }
