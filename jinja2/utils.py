@@ -235,7 +235,7 @@ def urlize(text, trim_url_limit=None, nofollow=False, target=None):
 
 
 def generate_lorem_ipsum(n=5, html=True, min=20, max=100):
-    """Generate some lorem impsum for the template."""
+    """Generate some lorem ipsum for the template."""
     from jinja2.constants import LOREM_IPSUM_WORDS
     from random import choice, randrange
     words = LOREM_IPSUM_WORDS.split()
