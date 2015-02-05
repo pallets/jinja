@@ -778,7 +778,7 @@ def do_reverse(value):
 @environmentfilter
 def do_attr(environment, obj, name):
     """Get an attribute of an object.  ``foo|attr("bar")`` works like
-    ``foo["bar"]`` just that always an attribute is returned and items are not
+    ``foo.bar`` just that always an attribute is returned and items are not
     looked up.
 
     See :ref:`Notes on subscriptions <notes-on-subscriptions>` for more details.
