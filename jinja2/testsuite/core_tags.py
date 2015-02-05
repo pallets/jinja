@@ -244,6 +244,15 @@ class MacrosTestCase(JinjaTestCase):
 {{ m() }}|{{ m('a') }}|{{ m('a', 'b') }}|{{ m(1, 2, 3) }}''')
         assert tmpl.render() == '||c|d|a||c|d|a|b|c|d|1|2|3|d'
 
+    def test_arguments_defaults_nonsense(self):
+        self.assert_raises(TemplateSyntaxError, self.env.from_string, '''\
+{% macro m(a, b=1, c) %}a={{ a }}, b={{ b }}, c={{ c }}{% endmacro %}''')
+
+    def test_caller_defaults_nonsense(self):
+        self.assert_raises(TemplateSyntaxError, self.env.from_string, '''\
+{% macro a() %}{{ caller() }}{% endmacro %}
+{% call(x, y=1, z) a() %}{% endcall %}''')
+
     def test_varargs(self):
         tmpl = self.env.from_string('''\
 {% macro test() %}{{ varargs|join('|') }}{% endmacro %}\
