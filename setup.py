@@ -35,12 +35,21 @@ For more informations visit the new `Jinja2 webpage`_ and `documentation`_.
 .. _Jinja2 webpage: http://jinja.pocoo.org/
 .. _documentation: http://jinja.pocoo.org/2/documentation/
 """
+import re
+import ast
 from setuptools import setup
+
+
+_version_re = re.compile(r'__version__\s+=\s+(.*)')
+
+with open('jinja2/__init__.py', 'rb') as f:
+    version = str(ast.literal_eval(_version_re.search(
+        f.read().decode('utf-8')).group(1)))
 
 
 setup(
     name='Jinja2',
-    version='2.8.dev0',
+    version=version,
     url='http://jinja.pocoo.org/',
     license='BSD',
     author='Armin Ronacher',
