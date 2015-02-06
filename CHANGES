@@ -20,6 +20,7 @@ Version 2.8
   reloaded now.
 - Implemented a block ``set`` tag.
 - Default cache size was incrased to 400 from a low 50.
+- Fixed ``is number`` test to accept long integers in all Python versions.
 
 Version 2.7.3
 -------------

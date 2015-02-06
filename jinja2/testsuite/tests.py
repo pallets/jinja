@@ -51,13 +51,15 @@ class TestsTestCase(JinjaTestCase):
             {{ {} is mapping }}
             {{ mydict is mapping }}
             {{ [] is mapping }}
+            {{ 10 is number }}
+            {{ (10 ** 100) is number }}
         ''')
         class MyDict(dict):
             pass
         assert tmpl.render(mydict=MyDict()).split() == [
             'False', 'True', 'False', 'True', 'True', 'False',
             'True', 'True', 'True', 'True', 'False', 'True',
-            'True', 'True', 'False'
+            'True', 'True', 'False', 'True', 'True'
         ]
 
     def test_sequence(self):

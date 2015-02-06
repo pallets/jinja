@@ -11,7 +11,7 @@
 import re
 from collections import Mapping
 from jinja2.runtime import Undefined
-from jinja2._compat import text_type, string_types
+from jinja2._compat import text_type, string_types, integer_types
 
 
 number_re = re.compile(r'^-?\d+(\.\d+)?$')
@@ -88,7 +88,7 @@ def test_mapping(value):
 
 def test_number(value):
     """Return true if the variable is a number."""
-    return isinstance(value, (int, float, complex))
+    return isinstance(value, integer_types + (float, complex))
 
 
 def test_sequence(value):
