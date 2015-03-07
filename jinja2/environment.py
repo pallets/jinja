@@ -136,7 +136,7 @@ class Environment(object):
 
         `line_comment_prefix`
             If given and a string, this will be used as prefix for line based
-            based comments.  See also :ref:`line-statements`.
+            comments.  See also :ref:`line-statements`.
 
             .. versionadded:: 2.2
 
