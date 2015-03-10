@@ -848,7 +848,7 @@ def do_map(*args, **kwargs):
 
 @contextfilter
 def do_select(*args, **kwargs):
-    """Filters a sequence of objects by appying a test to the object and only
+    """Filters a sequence of objects by applying a test to the object and only
     selecting the ones with the test succeeding.
 
     Example usage:
@@ -865,7 +865,7 @@ def do_select(*args, **kwargs):
 
 @contextfilter
 def do_reject(*args, **kwargs):
-    """Filters a sequence of objects by appying a test to the object and
+    """Filters a sequence of objects by applying a test to the object and
     rejecting the ones with the test succeeding.
 
     Example usage:
@@ -881,7 +881,7 @@ def do_reject(*args, **kwargs):
 
 @contextfilter
 def do_selectattr(*args, **kwargs):
-    """Filters a sequence of objects by appying a test to an attribute of an
+    """Filters a sequence of objects by applying a test to an attribute of an
     object and only selecting the ones with the test succeeding.
 
     Example usage:
@@ -898,7 +898,7 @@ def do_selectattr(*args, **kwargs):
 
 @contextfilter
 def do_rejectattr(*args, **kwargs):
-    """Filters a sequence of objects by appying a test to an attribute of an
+    """Filters a sequence of objects by applying a test to an attribute of an
     object or the attribute and rejecting the ones with the test succeeding.
 
     .. sourcecode:: jinja

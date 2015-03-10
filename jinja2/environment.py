@@ -136,7 +136,7 @@ class Environment(object):
 
         `line_comment_prefix`
             If given and a string, this will be used as prefix for line based
-            based comments.  See also :ref:`line-statements`.
+            comments.  See also :ref:`line-statements`.
 
             .. versionadded:: 2.2
 
@@ -193,11 +193,14 @@ class Environment(object):
             The template loader for this environment.
 
         `cache_size`
-            The size of the cache.  Per default this is ``50`` which means
-            that if more than 50 templates are loaded the loader will clean
+            The size of the cache.  Per default this is ``400`` which means
+            that if more than 400 templates are loaded the loader will clean
             out the least recently used template.  If the cache size is set to
             ``0`` templates are recompiled all the time, if the cache size is
             ``-1`` the cache will not be cleaned.
+
+            .. versionchanged:: 2.8
+               The cache size was increased to 400 from a low 50.
 
         `auto_reload`
             Some loaders load templates from locations where the template
@@ -254,7 +257,7 @@ class Environment(object):
                  finalize=None,
                  autoescape=False,
                  loader=None,
-                 cache_size=50,
+                 cache_size=400,
                  auto_reload=True,
                  bytecode_cache=None):
         # !!Important notice!!

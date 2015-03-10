@@ -314,6 +314,8 @@ class Parser(object):
             arg.set_ctx('param')
             if self.stream.skip_if('assign'):
                 defaults.append(self.parse_expression())
+            elif defaults:
+                self.fail('non-default argument follows default argument')
             args.append(arg)
         self.stream.expect('rparen')
 
