@@ -542,7 +542,7 @@ As variables in templates retain their object properties, it is possible to
 iterate over containers like `dict`::
 
     <dl>
-    {% for key, value in my_dict.items() %}
+    {% for key, value in my_dict.iteritems() %}
         <dt>{{ key|e }}</dt>
         <dd>{{ value|e }}</dd>
     {% endfor %}
