@@ -467,9 +467,9 @@ def do_truncate(s, length=255, killwords=False, end='...'):
     .. sourcecode:: jinja
 
         {{ "foo bar baz"|truncate(9) }}
-            -> "foo ba..."
-        {{ "foo bar baz"|truncate(9, True) }}
             -> "foo ..."
+        {{ "foo bar baz"|truncate(9, True) }}
+            -> "foo ba..."
 
     """
     if len(s) <= length:
