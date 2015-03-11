@@ -100,21 +100,21 @@ different we won't cover it here.
 Method Calls
 ~~~~~~~~~~~~
 
-In Django method calls work implicitly.  With Jinja2 you have to specify that
-you want to call an object.  Thus this Django code::
+In Django method calls work implicitly, while Jinja requires the explicit
+Python syntax. Thus this Django code::
 
     {% for page in user.get_created_pages %}
         ...
     {% endfor %}
-    
-will look like this in Jinja::
+
+...looks like this in Jinja::
 
     {% for page in user.get_created_pages() %}
         ...
     {% endfor %}
 
-This allows you to pass variables to the function which is also used for macros
-which is not possible in Django.
+This allows you to pass variables to the method, which is not possible in
+Django. This syntax is also used for macros.
 
 Conditions
 ~~~~~~~~~~
@@ -159,7 +159,7 @@ looks like this in Jinja2::
 
     {{ items|join(', ') }}
 
-In fact it's a bit more verbose but it allows different types of arguments -
+It is a bit more verbose, but it allows different types of arguments -
 including variables - and more than one of them.
 
 Tests
@@ -177,11 +177,11 @@ operator.  Here are some examples::
 Loops
 ~~~~~
 
-For loops work very similar to Django. Notably, in Jinja2 the special variable for 
-the loop context is called `loop` and not `forloop` like in Django.
+For loops work very similarly to Django, but notably the Jinja2 special
+variable for the loop context is called `loop`, not `forloop` as in Django.
 
-In addition, the Django `empty` argument is called `else` in Jinja2. For example, the
-Django template::
+In addition, the Django `empty` argument is called `else` in Jinja2. For
+example, the Django template::
 
     {% for item in items %}
         {{ item }}
@@ -189,7 +189,7 @@ Django template::
         No items!
     {% endfor %}
 
-would be handled in Jinja2 as::
+...looks like this in Jinja2::
 
     {% for item in items %}
         {{ item }}
@@ -200,9 +200,8 @@ would be handled in Jinja2 as::
 Cycle
 ~~~~~
 
-The ``{% cycle %}`` tag does not exist in Jinja because of it's implicit
-nature.  However you can achieve mostly the same by using the `cycle`
-method on a loop object.
+The ``{% cycle %}`` tag does not exist in Jinja2; however, you can achieve the
+same output by using the `cycle` method on the loop context special variable.
 
 The following Django template::
 
@@ -210,7 +209,7 @@ The following Django template::
         <li class="{% cycle 'odd' 'even' %}">{{ user }}</li>
     {% endfor %}
 
-Would look like this in Jinja::
+...looks like this in Jinja2::
 
     {% for user in users %}
         <li class="{{ loop.cycle('odd', 'even') }}">{{ user }}</li>
@@ -231,11 +230,11 @@ Jinja2 to look more like Mako:
 
     env = Environment('<%', '%>', '${', '}', '<%doc>', '</%doc>', '%', '##')
 
-Once the environment is configured like that Jinja2 should be able to interpret
-a small subset of Mako templates.  Jinja2 does not support embedded Python code
-so you would have to move that out of the template.  The syntax for defs (in
-Jinja2 defs are called macros) and template inheritance is different too.  The
-following Mako template::
+With an environment configured like that, Jinja2 should be able to interpret
+a small subset of Mako templates.  Jinja2 does not support embedded Python
+code, so you would have to move that out of the template.  The syntax for defs
+(which are called macros in Jinja2) and template inheritance is different too.
+The following Mako template::
 
     <%inherit file="layout.html" />
     <%def name="title()">Page Title</%def>
