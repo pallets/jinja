@@ -25,7 +25,7 @@ Python.
 Below is a minimal template that illustrates a few basics using the default
 Jinja configuration.  We will cover the details later in this document::
 
-    <!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01//EN">
+    <!DOCTYPE html>
     <html lang="en">
     <head>
         <title>My Webpage</title>
@@ -343,9 +343,8 @@ This template, which we'll call ``base.html``, defines a simple HTML skeleton
 document that you might use for a simple two-column page. It's the job of
 "child" templates to fill the empty blocks with content::
 
-    <!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01//EN">
+    <!DOCTYPE html>
     <html lang="en">
-    <html xmlns="http://www.w3.org/1999/xhtml">
     <head>
         {% block head %}
         <link rel="stylesheet" href="style.css" />
@@ -360,6 +359,7 @@ document that you might use for a simple two-column page. It's the job of
             {% endblock %}
         </div>
     </body>
+    </html>
 
 In this example, the ``{% block %}`` tags define four blocks that child templates
 can fill in. All the `block` tag does is tell the template engine that a
