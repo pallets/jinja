@@ -273,7 +273,7 @@ def _init_ugly_crap():
     import ctypes
     from types import TracebackType
 
-    # figure out side of _Py_ssize_t
+    # figure out size of _Py_ssize_t
     if hasattr(ctypes.pythonapi, 'Py_InitModule4_64'):
         _Py_ssize_t = ctypes.c_int64
     else:
