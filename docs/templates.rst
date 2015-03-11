@@ -14,9 +14,8 @@ Synopsis
 --------
 
 A Jinja template is simply a text file. Jinja can generate any text-based
-format (HTML, XML, CSV, LaTeX, etc.).  A Jinja template
-doesn't need to have a specific extension:
-``.html``, ``.xml``, ``.html.jinja2``, and ``.j2`` are all just fine.
+format (HTML, XML, CSV, LaTeX, etc.).  A Jinja template doesn't need to have a
+specific extension: ``.html``, ``.xml``, or any other extension is just fine.
 
 A template contains **variables** and/or **expressions**,
 which get replaced with values when a template is *rendered*; and **tags**,
