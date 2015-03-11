@@ -100,8 +100,8 @@ different we won't cover it here.
 Method Calls
 ~~~~~~~~~~~~
 
-In Django method calls work implicitly; with Jinja2 you have to specify that
-you want to call a method explicitly.  Thus this Django code::
+In Django method calls work implicitly, while Jinja requires the explicit
+Python syntax. Thus this Django code::
 
     {% for page in user.get_created_pages %}
         ...
