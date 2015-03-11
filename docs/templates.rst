@@ -17,14 +17,13 @@ A Jinja template is simply a text file. Jinja can generate any text-based
 format (HTML, XML, CSV, LaTeX, etc.).  A Jinja template doesn't need to have a
 specific extension: ``.html``, ``.xml``, or any other extension is just fine.
 
-A template contains **variables** and/or **expressions**,
-which get replaced with values when a template is *rendered*; and **tags**,
-which control the logic of the template.
-The template syntax is heavily inspired by Django and Python.
+A template contains **variables** and/or **expressions**, which get replaced
+with values when a template is *rendered*; and **tags**, which control the
+logic of the template.  The template syntax is heavily inspired by Django and
+Python.
 
-Below is a minimal template that illustrates a few basics using
-the default Jinja configuration.  We will cover
-the details later in this document::
+Below is a minimal template that illustrates a few basics using the default
+Jinja configuration.  We will cover the details later in this document::
 
     <!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01//EN">
     <html lang="en">
@@ -45,25 +44,17 @@ the details later in this document::
     </body>
     </html>
 
-This example shows the default configuration settings.
-An application developer can change the syntax configuration
-from ``{% foo %}`` to ``<% foo %>``, or something similar.
+The following example shows the default configuration settings.  An application
+developer can change the syntax configuration from ``{% foo %}`` to ``<% foo
+%>``, or something similar.
 
 There are a few kinds of delimiters. The default Jinja delimiters are
 configured as follows:
 
-* ``{% ... %}`` -- :ref:`Statements <list-of-control-structures>`
-  like
-  :ref:`for-loop`,
-  :ref:`if`,
-  :ref:`macros`,
-  :ref:`assignments`,
-  :ref:`extends`,
-  and
-  :ref:`blocks`
-* ``{{ ... }}`` -- :ref:`Expressions` to print to the template output
-* ``{# ... #}`` -- :ref:`Comments` not included in the template output
-* ``#  ... ##`` -- :ref:`Line Statements <line-statements>`
+* ``{% ... %}`` for :ref:`Statements <list-of-control-structures>`
+* ``{{ ... }}`` for :ref:`Expressions` to print to the template output
+* ``{# ... #}`` for :ref:`Comments` not included in the template output
+* ``#  ... ##`` for :ref:`Line Statements <line-statements>`
 
 
 .. _variables:
@@ -87,21 +78,21 @@ The following lines do the same thing::
     {{ foo.bar }}
     {{ foo['bar'] }}
 
-It's important to know that the outer double-curly braces are *not*
-part of the variable, but the print statement.
-If you access variables inside tags don't put the braces around them.
+It's important to know that the outer double-curly braces are *not* part of the
+variable, but the print statement.  If you access variables inside tags don't
+put the braces around them.
 
 If a variable or attribute does not exist, you will get back an undefined
 value.  What you can do with that kind of value depends on the application
-configuration: the default behavior is to evaluate to an empty string
-if printed or iterated over, and to fail for every other operation.
+configuration: the default behavior is to evaluate to an empty string if
+printed or iterated over, and to fail for every other operation.
 
 .. _notes-on-subscriptions:
 
 .. admonition:: Implementation
 
     For the sake of convenience, ``foo.bar`` in Jinja2 does the following
-    Python things:
+    things on the Python layer:
 
     -   check for an attribute called `bar` on `foo`
         (``getattr(foo, 'bar')``)
@@ -111,7 +102,7 @@ if printed or iterated over, and to fail for every other operation.
 
     ``foo['bar']`` works mostly the same with a small difference in sequence:
 
-    -   check for an item ``'bar'`` in `foo`
+    -   check for an item ``'bar'`` in `foo`.
         (``foo.__getitem__('bar')``)
     -   if there is not, check for an attribute called `bar` on `foo`.
         (``getattr(foo, 'bar')``)
@@ -133,10 +124,9 @@ applied to the next.
 For example, ``{{ name|striptags|title }}`` will remove all HTML Tags from
 variable `name` and title-case the output (``title(striptags(name))``).
 
-Filters that accept arguments have parentheses
-around the arguments, just like a function call.  For example:
-``{{ listx|join(', ') }}`` 
-will join a list with commas (``str.join(', ', listx)``).
+Filters that accept arguments have parentheses around the arguments, just like
+a function call.  For example: ``{{ listx|join(', ') }}`` will join a list with
+commas (``str.join(', ', listx)``).
 
 The :ref:`builtin-filters` below describes all the builtin filters.
 
@@ -185,7 +175,7 @@ Whitespace Control
 In the default configuration:
 
 * a single trailing newline is stripped if present
-* other whitespaces (spaces, tabs, newlines etc.) are returned unchanged
+* other whitespace (spaces, tabs, newlines etc.) is returned unchanged
 
 If an application configures Jinja to `trim_blocks`, the first newline after a
 template tag is removed automatically (like in PHP). The `lstrip_blocks`
@@ -538,22 +528,20 @@ can be marked as safe either in:
 a. the context dictionary by the application with `MarkupSafe.Markup`, or
 b. the template, with the `|safe` filter
    
-The main problem with this approach is that
-Python itself doesn't have the concept of tainted values;
-so whether a value is safe or unsafe can get lost.
+The main problem with this approach is that Python itself doesn't have the
+concept of tainted values; so whether a value is safe or unsafe can get lost.
 
-If a value is not marked safe, auto-escaping will take place;
-which means that you could end up with double-escaped contents.
-Double-escaping is easy to avoid, however: just rely on the tools Jinja2
-provides and *don't use builtin Python constructs such as
-str.format or the string modulo operator (%)*.
+If a value is not marked safe, auto-escaping will take place; which means that
+you could end up with double-escaped contents.  Double-escaping is easy to
+avoid, however: just rely on the tools Jinja2 provides and *don't use builtin
+Python constructs such as str.format or the string modulo operator (%)*.
 
-Jinja2 functions (macros, `super`, `self.BLOCKNAME`) 
-always return template data that is marked as safe.
+Jinja2 functions (macros, `super`, `self.BLOCKNAME`) always return template
+data that is marked as safe.
 
 String literals in templates with automatic escaping are considered unsafe
-because native Python strings (``str``, ``unicode``, ``basestring``)
-are not `MarkupSafe.Markup` strings with an ``__html__`` attribute.
+because native Python strings (``str``, ``unicode``, ``basestring``) are not
+`MarkupSafe.Markup` strings with an ``__html__`` attribute.
 
 .. _list-of-control-structures:
 
@@ -562,8 +550,8 @@ List of Control Structures
 
 A control structure refers to all those things that control the flow of a
 program - conditionals (i.e. if/elif/else), for-loops, as well as things like
-macros and blocks.  With the default syntax,
-control structures appear inside ``{% ... %}`` blocks.
+macros and blocks.  With the default syntax, control structures appear inside
+``{% ... %}`` blocks.
 
 .. _for-loop:
 
@@ -591,7 +579,7 @@ iterate over containers like `dict`::
     </dl>
 
 Note, however, that **Python dicts are not ordered**; so you might want to
-either pass a sorted ``list`` of ``tuple`` s -- or a 
+either pass a sorted ``list`` of ``tuple`` s -- or a
 ``collections.OrderedDict`` -- to the template, or use the `dictsort` filter.
 
 Inside of a for-loop block, you can access some special variables:
@@ -883,9 +871,9 @@ The `navigation` variable then contains the navigation HTML source.
 Extends
 ~~~~~~~
 
-The `extends` tag can be used to extend one template from another.  You
-can have multiple `extends` tags in a file,
-but only one of them may be executed at a time.
+The `extends` tag can be used to extend one template from another.  You can
+have multiple `extends` tags in a file, but only one of them may be executed at
+a time.
 
 See the section about :ref:`template-inheritance` above.
 
