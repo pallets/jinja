@@ -21,7 +21,7 @@ Version 2.8
 - Implemented a block ``set`` tag.
 - Default cache size was incrased to 400 from a low 50.
 - Fixed ``is number`` test to accept long integers in all Python versions.
-- ``is number`` to accept Decimal as a number.
+- Changed ``is number`` to accept Decimal as a number.
 - Added a check for default arguments followed by non-default arguments. This
   change makes ``{% macro m(x, y=1, z) %}...{% endmacro %}`` a syntax error. The
   previous behavior for this code was broken anyway (resulting in the default
