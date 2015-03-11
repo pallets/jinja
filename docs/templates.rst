@@ -381,7 +381,7 @@ A child template might look like this::
     {% block content %}
         <h1>Index</h1>
         <p class="important">
-          Welcome on my awesome homepage.
+          Welcome to my awesome homepage.
         </p>
     {% endblock %}
 
