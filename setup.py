@@ -46,6 +46,10 @@ with open('jinja2/__init__.py', 'rb') as f:
     version = str(ast.literal_eval(_version_re.search(
         f.read().decode('utf-8')).group(1)))
 
+install_requires = ['MarkupSafe']
+if sys.version_info[:2] < (2, 7):
+    install_requires.append('argparse')
+
 
 setup(
     name='Jinja2',
@@ -72,12 +76,15 @@ setup(
         'Topic :: Text Processing :: Markup :: HTML'
     ],
     packages=['jinja2', 'jinja2.testsuite', 'jinja2.testsuite.res'],
-    install_requires=['MarkupSafe'],
+    install_requires=install_requires,
     extras_require={'i18n': ['Babel>=0.8']},
     test_suite='jinja2.testsuite.suite',
     include_package_data=True,
     entry_points="""
     [babel.extractors]
     jinja2 = jinja2.ext:babel_extract[i18n]
+
+    [console_scripts]
+    jinja2 = jinja2.__main__:main
     """
 )
