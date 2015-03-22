@@ -8,9 +8,7 @@
     :copyright: (c) 2010 by the Jinja Team.
     :license: BSD, see LICENSE for more details.
 """
-import unittest
-
-from jinja2.testsuite import JinjaTestCase
+import pytest
 
 from jinja2 import Environment
 from jinja2.sandbox import SandboxedEnvironment, \
@@ -42,38 +40,40 @@ class PublicStuff(object):
         return 'PublicStuff'
 
 
-class SandboxTestCase(JinjaTestCase):
+@pytest.mark.sandbox
+class TestSandbox():
 
-    def test_unsafe(self):
+    def test_unsafe(self, env):
         env = SandboxedEnvironment()
-        self.assert_raises(SecurityError, env.from_string("{{ foo.foo() }}").render,
-                           foo=PrivateStuff())
-        self.assert_equal(env.from_string("{{ foo.bar() }}").render(foo=PrivateStuff()), '23')
+        pytest.raises(SecurityError, env.from_string("{{ foo.foo() }}").render,
+                      foo=PrivateStuff())
+        assert env.from_string("{{ foo.bar() }}").render(foo=PrivateStuff()) == '23'
 
-        self.assert_raises(SecurityError, env.from_string("{{ foo._foo() }}").render,
-                           foo=PublicStuff())
-        self.assert_equal(env.from_string("{{ foo.bar() }}").render(foo=PublicStuff()), '23')
-        self.assert_equal(env.from_string("{{ foo.__class__ }}").render(foo=42), '')
-        self.assert_equal(env.from_string("{{ foo.func_code }}").render(foo=lambda:None), '')
+        pytest.raises(SecurityError,
+                      env.from_string("{{ foo._foo() }}").render,
+                      foo=PublicStuff())
+        assert env.from_string("{{ foo.bar() }}").render(foo=PublicStuff()) == '23'
+        assert env.from_string("{{ foo.__class__ }}").render(foo=42) == ''
+        assert env.from_string("{{ foo.func_code }}").render(foo=lambda:None) == ''
         # security error comes from __class__ already.
-        self.assert_raises(SecurityError, env.from_string(
+        pytest.raises(SecurityError, env.from_string(
             "{{ foo.__class__.__subclasses__() }}").render, foo=42)
 
-    def test_immutable_environment(self):
+    def test_immutable_environment(self, env):
         env = ImmutableSandboxedEnvironment()
-        self.assert_raises(SecurityError, env.from_string(
+        pytest.raises(SecurityError, env.from_string(
             '{{ [].append(23) }}').render)
-        self.assert_raises(SecurityError, env.from_string(
+        pytest.raises(SecurityError, env.from_string(
             '{{ {1:2}.clear() }}').render)
 
-    def test_restricted(self):
+    def test_restricted(self, env):
         env = SandboxedEnvironment()
-        self.assert_raises(TemplateSyntaxError, env.from_string,
+        pytest.raises(TemplateSyntaxError, env.from_string,
                       "{% for item.attribute in seq %}...{% endfor %}")
-        self.assert_raises(TemplateSyntaxError, env.from_string,
+        pytest.raises(TemplateSyntaxError, env.from_string,
                       "{% for foo, bar.baz in seq %}...{% endfor %}")
 
-    def test_markup_operations(self):
+    def test_markup_operations(self, env):
         # adding two strings should escape the unsafe one
         unsafe = '<script type="application/x-some-script">alert("foo");</script>'
         safe = Markup('<em>username</em>')
@@ -81,7 +81,7 @@ class SandboxTestCase(JinjaTestCase):
 
         # string interpolations are safe to use too
         assert Markup('<em>%s</em>') % '<bad user>' == \
-               '<em>&lt;bad user&gt;</em>'
+            '<em>&lt;bad user&gt;</em>'
         assert Markup('<em>%(username)s</em>') % {
             'username': '<bad user>'
         } == '<em>&lt;bad user&gt;</em>'
@@ -97,18 +97,19 @@ class SandboxTestCase(JinjaTestCase):
         class Foo(object):
             def __html__(self):
                 return '<em>awesome</em>'
+
             def __unicode__(self):
                 return 'awesome'
         assert Markup(Foo()) == '<em>awesome</em>'
         assert Markup('<strong>%s</strong>') % Foo() == \
-               '<strong><em>awesome</em></strong>'
+            '<strong><em>awesome</em></strong>'
 
         # escaping and unescaping
         assert escape('"<>&\'') == '&#34;&lt;&gt;&amp;&#39;'
         assert Markup("<em>Foo &amp; Bar</em>").striptags() == "Foo & Bar"
         assert Markup("&lt;test&gt;").unescape() == "<test>"
 
-    def test_template_data(self):
+    def test_template_data(self, env):
         env = Environment(autoescape=True)
         t = env.from_string('{% macro say_hello(name) %}'
                             '<p>Hello {{ name }}!</p>{% endmacro %}'
@@ -120,12 +121,12 @@ class SandboxTestCase(JinjaTestCase):
         assert t.module.say_hello('<blink>foo</blink>') == escaped_out
         assert escape(t.module.say_hello('<blink>foo</blink>')) == escaped_out
 
-    def test_attr_filter(self):
+    def test_attr_filter(self, env):
         env = SandboxedEnvironment()
         tmpl = env.from_string('{{ cls|attr("__subclasses__")() }}')
-        self.assert_raises(SecurityError, tmpl.render, cls=int)
+        pytest.raises(SecurityError, tmpl.render, cls=int)
 
-    def test_binary_operator_intercepting(self):
+    def test_binary_operator_intercepting(self, env):
         def disable_op(left, right):
             raise TemplateRuntimeError('that operator so does not work')
         for expr, ctx, rv in ('1 + 2', {}, '3'), ('a + 2', {'a': 2}, '4'):
@@ -140,9 +141,9 @@ class SandboxTestCase(JinjaTestCase):
             except TemplateRuntimeError as e:
                 pass
             else:
-                self.fail('expected runtime error')
+                assert False, 'expected runtime error'
 
-    def test_unary_operator_intercepting(self):
+    def test_unary_operator_intercepting(self, env):
         def disable_op(arg):
             raise TemplateRuntimeError('that operator so does not work')
         for expr, ctx, rv in ('-1', {}, '-1'), ('-a', {'a': 2}, '-2'):
@@ -157,10 +158,4 @@ class SandboxTestCase(JinjaTestCase):
             except TemplateRuntimeError as e:
                 pass
             else:
-                self.fail('expected runtime error')
-
-
-def suite():
-    suite = unittest.TestSuite()
-    suite.addTest(unittest.makeSuite(SandboxTestCase))
-    return suite
+                assert False, 'expected runtime error'

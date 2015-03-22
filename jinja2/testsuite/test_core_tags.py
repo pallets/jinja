@@ -8,31 +8,34 @@
     :copyright: (c) 2010 by the Jinja Team.
     :license: BSD, see LICENSE for more details.
 """
-import unittest
-
-from jinja2.testsuite import JinjaTestCase
-
+import pytest
 from jinja2 import Environment, TemplateSyntaxError, UndefinedError, \
      DictLoader
 
-env = Environment()
+
+@pytest.fixture
+def env_trim():
+    return Environment(trim_blocks=True)
 
 
-class ForLoopTestCase(JinjaTestCase):
+@pytest.mark.core_tags
+@pytest.mark.for_loop
+class TestForLoop():
 
-    def test_simple(self):
+    def test_simple(self, env):
         tmpl = env.from_string('{% for item in seq %}{{ item }}{% endfor %}')
         assert tmpl.render(seq=list(range(10))) == '0123456789'
 
-    def test_else(self):
-        tmpl = env.from_string('{% for item in seq %}XXX{% else %}...{% endfor %}')
+    def test_else(self, env):
+        tmpl = env.from_string(
+            '{% for item in seq %}XXX{% else %}...{% endfor %}')
         assert tmpl.render() == '...'
 
-    def test_empty_blocks(self):
+    def test_empty_blocks(self, env):
         tmpl = env.from_string('<{% for item in seq %}{% else %}{% endfor %}>')
         assert tmpl.render() == '<>'
 
-    def test_context_vars(self):
+    def test_context_vars(self, env):
         slist = [42, 24]
         for seq in [slist, iter(slist), reversed(slist), (_ for _ in slist)]:
             tmpl = env.from_string('''{% for item in seq -%}
@@ -53,19 +56,19 @@ class ForLoopTestCase(JinjaTestCase):
             assert one_last == 'False' and two_last == 'True'
             assert one_length == two_length == '2'
 
-    def test_cycling(self):
+    def test_cycling(self, env):
         tmpl = env.from_string('''{% for item in seq %}{{
             loop.cycle('<1>', '<2>') }}{% endfor %}{%
             for item in seq %}{{ loop.cycle(*through) }}{% endfor %}''')
         output = tmpl.render(seq=list(range(4)), through=('<1>', '<2>'))
         assert output == '<1><2>' * 4
 
-    def test_scope(self):
+    def test_scope(self, env):
         tmpl = env.from_string('{% for item in seq %}{% endfor %}{{ item }}')
         output = tmpl.render(seq=list(range(10)))
         assert not output
 
-    def test_varlen(self):
+    def test_varlen(self, env):
         def inner():
             for item in range(5):
                 yield item
@@ -73,11 +76,11 @@ class ForLoopTestCase(JinjaTestCase):
         output = tmpl.render(iter=inner())
         assert output == '01234'
 
-    def test_noniter(self):
+    def test_noniter(self, env):
         tmpl = env.from_string('{% for item in none %}...{% endfor %}')
-        self.assert_raises(TypeError, tmpl.render)
+        pytest.raises(TypeError, tmpl.render)
 
-    def test_recursive(self):
+    def test_recursive(self, env):
         tmpl = env.from_string('''{% for item in seq recursive -%}
             [{{ item.a }}{% if item.b %}<{{ loop(item.b) }}>{% endif %}]
         {%- endfor %}''')
@@ -87,27 +90,27 @@ class ForLoopTestCase(JinjaTestCase):
             dict(a=3, b=[dict(a='a')])
         ]) == '[1<[1][2]>][2<[1][2]>][3<[a]>]'
 
-    def test_recursive_depth0(self):
+    def test_recursive_depth0(self, env):
         tmpl = env.from_string('''{% for item in seq recursive -%}
             [{{ loop.depth0 }}:{{ item.a }}{% if item.b %}<{{ loop(item.b) }}>{% endif %}]
         {%- endfor %}''')
-        self.assertEqual(tmpl.render(seq=[
+        assert tmpl.render(seq=[
             dict(a=1, b=[dict(a=1), dict(a=2)]),
             dict(a=2, b=[dict(a=1), dict(a=2)]),
             dict(a=3, b=[dict(a='a')])
-        ]), '[0:1<[1:1][1:2]>][0:2<[1:1][1:2]>][0:3<[1:a]>]')
+        ]) == '[0:1<[1:1][1:2]>][0:2<[1:1][1:2]>][0:3<[1:a]>]'
 
-    def test_recursive_depth(self):
+    def test_recursive_depth(self, env):
         tmpl = env.from_string('''{% for item in seq recursive -%}
             [{{ loop.depth }}:{{ item.a }}{% if item.b %}<{{ loop(item.b) }}>{% endif %}]
         {%- endfor %}''')
-        self.assertEqual(tmpl.render(seq=[
+        assert tmpl.render(seq=[
             dict(a=1, b=[dict(a=1), dict(a=2)]),
             dict(a=2, b=[dict(a=1), dict(a=2)]),
             dict(a=3, b=[dict(a='a')])
-        ]), '[1:1<[2:1][2:2]>][1:2<[2:1][2:2]>][1:3<[2:a]>]')
+        ]) == '[1:1<[2:1][2:2]>][1:2<[2:1][2:2]>][1:3<[2:a]>]'
 
-    def test_looploop(self):
+    def test_looploop(self, env):
         tmpl = env.from_string('''{% for row in table %}
             {%- set rowloop = loop -%}
             {% for cell in row -%}
@@ -116,21 +119,21 @@ class ForLoopTestCase(JinjaTestCase):
         {%- endfor %}''')
         assert tmpl.render(table=['ab', 'cd']) == '[1|1][1|2][2|1][2|2]'
 
-    def test_reversed_bug(self):
+    def test_reversed_bug(self, env):
         tmpl = env.from_string('{% for i in items %}{{ i }}'
                                '{% if not loop.last %}'
                                ',{% endif %}{% endfor %}')
         assert tmpl.render(items=reversed([3, 2, 1])) == '1,2,3'
 
-    def test_loop_errors(self):
+    def test_loop_errors(self, env):
         tmpl = env.from_string('''{% for item in [1] if loop.index
                                       == 0 %}...{% endfor %}''')
-        self.assert_raises(UndefinedError, tmpl.render)
+        pytest.raises(UndefinedError, tmpl.render)
         tmpl = env.from_string('''{% for item in [] %}...{% else
             %}{{ loop }}{% endfor %}''')
         assert tmpl.render() == ''
 
-    def test_loop_filter(self):
+    def test_loop_filter(self, env):
         tmpl = env.from_string('{% for item in range(10) if item '
                                'is even %}[{{ item }}]{% endfor %}')
         assert tmpl.render() == '[0][2][4][6][8]'
@@ -139,16 +142,18 @@ class ForLoopTestCase(JinjaTestCase):
                 loop.index }}:{{ item }}]{% endfor %}''')
         assert tmpl.render() == '[1:0][2:2][3:4][4:6][5:8]'
 
-    def test_loop_unassignable(self):
-        self.assert_raises(TemplateSyntaxError, env.from_string,
-                           '{% for loop in seq %}...{% endfor %}')
+    def test_loop_unassignable(self, env):
+        pytest.raises(TemplateSyntaxError, env.from_string,
+                      '{% for loop in seq %}...{% endfor %}')
 
-    def test_scoped_special_var(self):
-        t = env.from_string('{% for s in seq %}[{{ loop.first }}{% for c in s %}'
-                            '|{{ loop.first }}{% endfor %}]{% endfor %}')
-        assert t.render(seq=('ab', 'cd')) == '[True|True|False][False|True|False]'
+    def test_scoped_special_var(self, env):
+        t = env.from_string(
+            '{% for s in seq %}[{{ loop.first }}{% for c in s %}'
+            '|{{ loop.first }}{% endfor %}]{% endfor %}')
+        assert t.render(seq=('ab', 'cd')) \
+            == '[True|True|False][False|True|False]'
 
-    def test_scoped_loop_var(self):
+    def test_scoped_loop_var(self, env):
         t = env.from_string('{% for x in seq %}{{ loop.first }}'
                             '{% for y in seq %}{% endfor %}{% endfor %}')
         assert t.render(seq='ab') == 'TrueFalse'
@@ -156,13 +161,13 @@ class ForLoopTestCase(JinjaTestCase):
                             '{{ loop.first }}{% endfor %}{% endfor %}')
         assert t.render(seq='ab') == 'TrueFalseTrueFalse'
 
-    def test_recursive_empty_loop_iter(self):
+    def test_recursive_empty_loop_iter(self, env):
         t = env.from_string('''
         {%- for item in foo recursive -%}{%- endfor -%}
         ''')
         assert t.render(dict(foo=[])) == ''
 
-    def test_call_in_loop(self):
+    def test_call_in_loop(self, env):
         t = env.from_string('''
         {%- macro do_something() -%}
             [{{ caller() }}]
@@ -176,7 +181,7 @@ class ForLoopTestCase(JinjaTestCase):
         ''')
         assert t.render() == '[1][2][3]'
 
-    def test_scoping_bug(self):
+    def test_scoping_bug(self, env):
         t = env.from_string('''
         {%- for item in foo %}...{{ item }}...{% endfor %}
         {%- macro item(a) %}...{{ a }}...{% endmacro %}
@@ -184,110 +189,119 @@ class ForLoopTestCase(JinjaTestCase):
         ''')
         assert t.render(foo=(1,)) == '...1......2...'
 
-    def test_unpacking(self):
+    def test_unpacking(self, env):
         tmpl = env.from_string('{% for a, b, c in [[1, 2, 3]] %}'
-            '{{ a }}|{{ b }}|{{ c }}{% endfor %}')
+                               '{{ a }}|{{ b }}|{{ c }}{% endfor %}')
         assert tmpl.render() == '1|2|3'
 
 
-class IfConditionTestCase(JinjaTestCase):
+@pytest.mark.core_tags
+@pytest.mark.if_condition
+class TestIfCondition():
 
-    def test_simple(self):
+    def test_simple(self, env):
         tmpl = env.from_string('''{% if true %}...{% endif %}''')
         assert tmpl.render() == '...'
 
-    def test_elif(self):
+    def test_elif(self, env):
         tmpl = env.from_string('''{% if false %}XXX{% elif true
             %}...{% else %}XXX{% endif %}''')
         assert tmpl.render() == '...'
 
-    def test_else(self):
+    def test_else(self, env):
         tmpl = env.from_string('{% if false %}XXX{% else %}...{% endif %}')
         assert tmpl.render() == '...'
 
-    def test_empty(self):
+    def test_empty(self, env):
         tmpl = env.from_string('[{% if true %}{% else %}{% endif %}]')
         assert tmpl.render() == '[]'
 
-    def test_complete(self):
+    def test_complete(self, env):
         tmpl = env.from_string('{% if a %}A{% elif b %}B{% elif c == d %}'
                                'C{% else %}D{% endif %}')
         assert tmpl.render(a=0, b=False, c=42, d=42.0) == 'C'
 
-    def test_no_scope(self):
-        tmpl = env.from_string('{% if a %}{% set foo = 1 %}{% endif %}{{ foo }}')
+    def test_no_scope(self, env):
+        tmpl = env.from_string(
+            '{% if a %}{% set foo = 1 %}{% endif %}{{ foo }}')
         assert tmpl.render(a=True) == '1'
-        tmpl = env.from_string('{% if true %}{% set foo = 1 %}{% endif %}{{ foo }}')
+        tmpl = env.from_string(
+            '{% if true %}{% set foo = 1 %}{% endif %}{{ foo }}')
         assert tmpl.render() == '1'
 
 
-class MacrosTestCase(JinjaTestCase):
-    env = Environment(trim_blocks=True)
-
-    def test_simple(self):
-        tmpl = self.env.from_string('''\
+@pytest.mark.core_tags
+@pytest.mark.macros
+class TestMacros():
+    def test_simple(self, env_trim):
+        tmpl = env_trim.from_string('''\
 {% macro say_hello(name) %}Hello {{ name }}!{% endmacro %}
 {{ say_hello('Peter') }}''')
         assert tmpl.render() == 'Hello Peter!'
 
-    def test_scoping(self):
-        tmpl = self.env.from_string('''\
+    def test_scoping(self, env_trim):
+        tmpl = env_trim.from_string('''\
 {% macro level1(data1) %}
 {% macro level2(data2) %}{{ data1 }}|{{ data2 }}{% endmacro %}
 {{ level2('bar') }}{% endmacro %}
 {{ level1('foo') }}''')
         assert tmpl.render() == 'foo|bar'
 
-    def test_arguments(self):
-        tmpl = self.env.from_string('''\
+    def test_arguments(self, env_trim):
+        tmpl = env_trim.from_string('''\
 {% macro m(a, b, c='c', d='d') %}{{ a }}|{{ b }}|{{ c }}|{{ d }}{% endmacro %}
 {{ m() }}|{{ m('a') }}|{{ m('a', 'b') }}|{{ m(1, 2, 3) }}''')
         assert tmpl.render() == '||c|d|a||c|d|a|b|c|d|1|2|3|d'
 
-    def test_arguments_defaults_nonsense(self):
-        self.assert_raises(TemplateSyntaxError, self.env.from_string, '''\
+    def test_arguments_defaults_nonsense(self, env_trim):
+        pytest.raises(TemplateSyntaxError, env_trim.from_string, '''\
 {% macro m(a, b=1, c) %}a={{ a }}, b={{ b }}, c={{ c }}{% endmacro %}''')
 
-    def test_caller_defaults_nonsense(self):
-        self.assert_raises(TemplateSyntaxError, self.env.from_string, '''\
+    def test_caller_defaults_nonsense(self, env_trim):
+        pytest.raises(TemplateSyntaxError, env_trim.from_string, '''\
 {% macro a() %}{{ caller() }}{% endmacro %}
 {% call(x, y=1, z) a() %}{% endcall %}''')
 
-    def test_varargs(self):
-        tmpl = self.env.from_string('''\
+    def test_varargs(self, env_trim):
+        tmpl = env_trim.from_string('''\
 {% macro test() %}{{ varargs|join('|') }}{% endmacro %}\
 {{ test(1, 2, 3) }}''')
         assert tmpl.render() == '1|2|3'
 
-    def test_simple_call(self):
-        tmpl = self.env.from_string('''\
+    def test_simple_call(self, env_trim):
+        tmpl = env_trim.from_string('''\
 {% macro test() %}[[{{ caller() }}]]{% endmacro %}\
 {% call test() %}data{% endcall %}''')
         assert tmpl.render() == '[[data]]'
 
-    def test_complex_call(self):
-        tmpl = self.env.from_string('''\
+    def test_complex_call(self, env_trim):
+        tmpl = env_trim.from_string('''\
 {% macro test() %}[[{{ caller('data') }}]]{% endmacro %}\
 {% call(data) test() %}{{ data }}{% endcall %}''')
         assert tmpl.render() == '[[data]]'
 
-    def test_caller_undefined(self):
-        tmpl = self.env.from_string('''\
+    def test_caller_undefined(self, env_trim):
+        tmpl = env_trim.from_string('''\
 {% set caller = 42 %}\
 {% macro test() %}{{ caller is not defined }}{% endmacro %}\
 {{ test() }}''')
         assert tmpl.render() == 'True'
 
-    def test_include(self):
-        self.env = Environment(loader=DictLoader({'include':
-            '{% macro test(foo) %}[{{ foo }}]{% endmacro %}'}))
-        tmpl = self.env.from_string('{% from "include" import test %}{{ test("foo") }}')
+    def test_include(self, env_trim):
+        env_trim = Environment(
+            loader=DictLoader({
+                'include': '{% macro test(foo) %}[{{ foo }}]{% endmacro %}'
+            })
+        )
+        tmpl = env_trim.from_string(
+            '{% from "include" import test %}{{ test("foo") }}')
         assert tmpl.render() == '[foo]'
 
-    def test_macro_api(self):
-        tmpl = self.env.from_string('{% macro foo(a, b) %}{% endmacro %}'
-                               '{% macro bar() %}{{ varargs }}{{ kwargs }}{% endmacro %}'
-                               '{% macro baz() %}{{ caller() }}{% endmacro %}')
+    def test_macro_api(self, env_trim):
+        tmpl = env_trim.from_string(
+            '{% macro foo(a, b) %}{% endmacro %}'
+            '{% macro bar() %}{{ varargs }}{{ kwargs }}{% endmacro %}'
+            '{% macro baz() %}{{ caller() }}{% endmacro %}')
         assert tmpl.module.foo.arguments == ('a', 'b')
         assert tmpl.module.foo.defaults == ()
         assert tmpl.module.foo.name == 'foo'
@@ -301,31 +315,23 @@ class MacrosTestCase(JinjaTestCase):
         assert tmpl.module.bar.catch_varargs
         assert tmpl.module.baz.caller
 
-    def test_callself(self):
-        tmpl = self.env.from_string('{% macro foo(x) %}{{ x }}{% if x > 1 %}|'
+    def test_callself(self, env_trim):
+        tmpl = env_trim.from_string('{% macro foo(x) %}{{ x }}{% if x > 1 %}|'
                                     '{{ foo(x - 1) }}{% endif %}{% endmacro %}'
                                     '{{ foo(5) }}')
         assert tmpl.render() == '5|4|3|2|1'
 
 
-class SetTestCase(JinjaTestCase):
-    env = Environment(trim_blocks=True)
+@pytest.mark.core_tags
+@pytest.mark.set
+class TestSet():
 
-    def test_normal(self):
-        tmpl = self.env.from_string('{% set foo = 1 %}{{ foo }}')
+    def test_normal(self, env_trim):
+        tmpl = env_trim.from_string('{% set foo = 1 %}{{ foo }}')
         assert tmpl.render() == '1'
         assert tmpl.module.foo == 1
 
-    def test_block(self):
-        tmpl = self.env.from_string('{% set foo %}42{% endset %}{{ foo }}')
+    def test_block(self, env_trim):
+        tmpl = env_trim.from_string('{% set foo %}42{% endset %}{{ foo }}')
         assert tmpl.render() == '42'
         assert tmpl.module.foo == u'42'
-
-
-def suite():
-    suite = unittest.TestSuite()
-    suite.addTest(unittest.makeSuite(ForLoopTestCase))
-    suite.addTest(unittest.makeSuite(IfConditionTestCase))
-    suite.addTest(unittest.makeSuite(MacrosTestCase))
-    suite.addTest(unittest.makeSuite(SetTestCase))
-    return suite
