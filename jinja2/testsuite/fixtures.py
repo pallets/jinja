@@ -39,7 +39,7 @@ def dict_loader():
 def package_loader():
     '''returns PackageLoader initialized from templates
     '''
-    return loaders.PackageLoader('jinja2.testsuite.res', 'templates')
+    return loaders.PackageLoader('res', 'templates')
 
 
 @pytest.fixture
