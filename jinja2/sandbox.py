@@ -23,19 +23,20 @@ from jinja2._compat import string_types, PY2
 MAX_RANGE = 100000
 
 #: attributes of function objects that are considered unsafe.
-UNSAFE_FUNCTION_ATTRIBUTES = set(['func_closure', 'func_code', 'func_dict',
-                                  'func_defaults', 'func_globals'])
+if PY2:
+    UNSAFE_FUNCTION_ATTRIBUTES = set(['func_closure', 'func_code', 'func_dict',
+                                      'func_defaults', 'func_globals'])
+else:
+    # On versions > python 2 the special attributes on functions are gone,
+    # but they remain on methods and generators for whatever reason.
+    UNSAFE_FUNCTION_ATTRIBUTES = set()
+
 
 #: unsafe method attributes.  function attributes are unsafe for methods too
 UNSAFE_METHOD_ATTRIBUTES = set(['im_class', 'im_func', 'im_self'])
 
 #: unsafe generator attirbutes.
 UNSAFE_GENERATOR_ATTRIBUTES = set(['gi_frame', 'gi_code'])
-
-# On versions > python 2 the special attributes on functions are gone,
-# but they remain on methods and generators for whatever reason.
-if not PY2:
-    UNSAFE_FUNCTION_ATTRIBUTES = set()
 
 import warnings
 
@@ -124,9 +125,7 @@ def is_internal_attribute(obj, attr):
     :meth:`~SandboxedEnvironment.is_safe_attribute` is overridden.
 
     >>> from jinja2.sandbox import is_internal_attribute
-    >>> is_internal_attribute(lambda: None, "func_code")
-    True
-    >>> is_internal_attribute((lambda x:x).func_code, 'co_code')
+    >>> is_internal_attribute(str, "mro")
     True
     >>> is_internal_attribute(str, "upper")
     False

@@ -444,7 +444,7 @@ class Macro(object):
 @implements_to_string
 class Undefined(object):
     """The default undefined type.  This undefined type can be printed and
-    iterated over, but every other access will raise an :exc:`UndefinedError`:
+    iterated over, but every other access will raise an :exc:`jinja2.exceptions.UndefinedError`:
 
     >>> foo = Undefined(name='foo')
     >>> str(foo)
@@ -454,7 +454,7 @@ class Undefined(object):
     >>> foo + 42
     Traceback (most recent call last):
       ...
-    UndefinedError: 'foo' is undefined
+    jinja2.exceptions.UndefinedError: 'foo' is undefined
     """
     __slots__ = ('_undefined_hint', '_undefined_obj', '_undefined_name',
                  '_undefined_exception')
@@ -468,7 +468,7 @@ class Undefined(object):
     @internalcode
     def _fail_with_undefined_error(self, *args, **kwargs):
         """Regular callback function for undefined objects that raises an
-        `UndefinedError` on call.
+        `jinja2.exceptions.UndefinedError` on call.
         """
         if self._undefined_hint is None:
             if self._undefined_obj is missing:
@@ -620,7 +620,7 @@ class DebugUndefined(Undefined):
     >>> foo + 42
     Traceback (most recent call last):
       ...
-    UndefinedError: 'foo' is undefined
+    jinja2.exceptions.UndefinedError: 'foo' is undefined
     """
     __slots__ = ()
 
@@ -645,15 +645,15 @@ class StrictUndefined(Undefined):
     >>> str(foo)
     Traceback (most recent call last):
       ...
-    UndefinedError: 'foo' is undefined
+    jinja2.exceptions.UndefinedError: 'foo' is undefined
     >>> not foo
     Traceback (most recent call last):
       ...
-    UndefinedError: 'foo' is undefined
+    jinja2.exceptions.UndefinedError: 'foo' is undefined
     >>> foo + 42
     Traceback (most recent call last):
       ...
-    UndefinedError: 'foo' is undefined
+    jinja2.exceptions.UndefinedError: 'foo' is undefined
     """
     __slots__ = ()
     __iter__ = __str__ = __len__ = __nonzero__ = __eq__ = \

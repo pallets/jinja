@@ -879,13 +879,12 @@ class Template(object):
     and compatible settings.
 
     >>> template = Template('Hello {{ name }}!')
-    >>> template.render(name='John Doe')
-    u'Hello John Doe!'
-
+    >>> template.render(name='John Doe') == u'Hello John Doe!'
+    True
     >>> stream = template.stream(name='John Doe')
-    >>> stream.next()
-    u'Hello John Doe!'
-    >>> stream.next()
+    >>> next(stream) == u'Hello John Doe!'
+    True
+    >>> next(stream)
     Traceback (most recent call last):
         ...
     StopIteration
@@ -1032,10 +1031,10 @@ class Template(object):
         exported template variables from the Python layer:
 
         >>> t = Template('{% macro foo() %}42{% endmacro %}23')
-        >>> unicode(t.module)
-        u'23'
-        >>> t.module.foo()
-        u'42'
+        >>> str(t.module)
+        '23'
+        >>> t.module.foo() == u'42'
+        True
         """
         if self._module is not None:
             return self._module
