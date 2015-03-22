@@ -13,7 +13,6 @@ import sys
 import tempfile
 import shutil
 import pytest
-import unittest
 
 from jinja2 import Environment, loaders
 from jinja2._compat import PYPY, PY2
