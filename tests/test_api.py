@@ -188,7 +188,7 @@ class TestStreaming():
 @pytest.mark.undefined
 class TestUndefined():
 
-    def test_stopiteration_is_undefined(self, env):
+    def test_stopiteration_is_undefined(self):
         def test():
             raise StopIteration()
         t = Template('A{{ test() }}B')
@@ -196,7 +196,7 @@ class TestUndefined():
         t = Template('A{{ test().missingattribute }}B')
         pytest.raises(UndefinedError, t.render, test=test)
 
-    def test_undefined_and_special_attributes(self, env):
+    def test_undefined_and_special_attributes(self):
         try:
             Undefined('Foo').__dict__
         except AttributeError:
@@ -204,7 +204,7 @@ class TestUndefined():
         else:
             assert False, "Expected actual attribute error"
 
-    def test_logging_undefined(self, env):
+    def test_logging_undefined(self):
         _messages = []
 
         class DebugLogger(object):
@@ -232,7 +232,7 @@ class TestUndefined():
             'W:Template variable warning: missing is undefined',
         ]
 
-    def test_default_undefined(self, env):
+    def test_default_undefined(self):
         env = Environment(undefined=Undefined)
         assert env.from_string('{{ missing }}').render() == u''
         pytest.raises(UndefinedError,
@@ -243,7 +243,7 @@ class TestUndefined():
         assert env.from_string('{{ foo.missing }}').render(foo=42) == ''
         assert env.from_string('{{ not missing }}').render() == 'True'
 
-    def test_debug_undefined(self, env):
+    def test_debug_undefined(self):
         env = Environment(undefined=DebugUndefined)
         assert env.from_string('{{ missing }}').render() == '{{ missing }}'
         pytest.raises(UndefinedError,
@@ -255,7 +255,7 @@ class TestUndefined():
             == u"{{ no such element: int object['missing'] }}"
         assert env.from_string('{{ not missing }}').render() == 'True'
 
-    def test_strict_undefined(self, env):
+    def test_strict_undefined(self):
         env = Environment(undefined=StrictUndefined)
         pytest.raises(UndefinedError, env.from_string('{{ missing }}').render)
         pytest.raises(UndefinedError,
@@ -271,11 +271,11 @@ class TestUndefined():
         assert env.from_string('{{ missing|default("default", true) }}')\
             .render() == 'default'
 
-    def test_indexing_gives_undefined(self, env):
+    def test_indexing_gives_undefined(self):
         t = Template("{{ var[42].foo }}")
         pytest.raises(UndefinedError, t.render, var=0)
 
-    def test_none_gives_proper_error(self, env):
+    def test_none_gives_proper_error(self):
         try:
             Environment().getattr(None, 'split')()
         except UndefinedError as e:
@@ -283,7 +283,7 @@ class TestUndefined():
         else:
             assert False, 'expected exception'
 
-    def test_object_repr(self, env):
+    def test_object_repr(self):
         try:
             Undefined(obj=42, name='upper')()
         except UndefinedError as e:
