@@ -1,5 +1,5 @@
 test:
-	py.test jinja2
+	py.test --doctest-modules testsuite jinja2
 
 develop:
 	pip install --editable .

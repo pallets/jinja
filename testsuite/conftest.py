@@ -1,9 +1,9 @@
 # -*- coding: utf-8 -*-
 """
-    jinja2.testsuite.fixtures
+    jinja2.testsuite.conftest
     ~~~~~~~~~~~~~~~~~~~~~~~~~
 
-    Contains fixtures used by tests.
+    Configuration and Fixtures for the tests
 
     :copyright: (c) 2010 by the Jinja Team.
     :license: BSD, see LICENSE for more details.
