@@ -12,11 +12,7 @@ import os
 import sys
 import tempfile
 import shutil
-import unittest
-
-from jinja2.testsuite import JinjaTestCase, dict_loader, \
-     package_loader, filesystem_loader, function_loader, \
-     choice_loader, prefix_loader
+import pytest
 
 from jinja2 import Environment, loaders
 from jinja2._compat import PYPY, PY2
@@ -24,52 +20,54 @@ from jinja2.loaders import split_template_path
 from jinja2.exceptions import TemplateNotFound
 
 
-class LoaderTestCase(JinjaTestCase):
+@pytest.mark.loaders
+class TestLoaders():
 
-    def test_dict_loader(self):
+    def test_dict_loader(self, dict_loader):
         env = Environment(loader=dict_loader)
         tmpl = env.get_template('justdict.html')
         assert tmpl.render().strip() == 'FOO'
-        self.assert_raises(TemplateNotFound, env.get_template, 'missing.html')
+        pytest.raises(TemplateNotFound, env.get_template, 'missing.html')
 
-    def test_package_loader(self):
+    def test_package_loader(self, package_loader):
         env = Environment(loader=package_loader)
         tmpl = env.get_template('test.html')
         assert tmpl.render().strip() == 'BAR'
-        self.assert_raises(TemplateNotFound, env.get_template, 'missing.html')
+        pytest.raises(TemplateNotFound, env.get_template, 'missing.html')
 
-    def test_filesystem_loader(self):
+    def test_filesystem_loader(self, filesystem_loader):
         env = Environment(loader=filesystem_loader)
         tmpl = env.get_template('test.html')
         assert tmpl.render().strip() == 'BAR'
         tmpl = env.get_template('foo/test.html')
         assert tmpl.render().strip() == 'FOO'
-        self.assert_raises(TemplateNotFound, env.get_template, 'missing.html')
+        pytest.raises(TemplateNotFound, env.get_template, 'missing.html')
 
-    def test_choice_loader(self):
+    def test_choice_loader(self, choice_loader):
         env = Environment(loader=choice_loader)
         tmpl = env.get_template('justdict.html')
         assert tmpl.render().strip() == 'FOO'
         tmpl = env.get_template('test.html')
         assert tmpl.render().strip() == 'BAR'
-        self.assert_raises(TemplateNotFound, env.get_template, 'missing.html')
+        pytest.raises(TemplateNotFound, env.get_template, 'missing.html')
 
-    def test_function_loader(self):
+    def test_function_loader(self, function_loader):
         env = Environment(loader=function_loader)
         tmpl = env.get_template('justfunction.html')
         assert tmpl.render().strip() == 'FOO'
-        self.assert_raises(TemplateNotFound, env.get_template, 'missing.html')
+        pytest.raises(TemplateNotFound, env.get_template, 'missing.html')
 
-    def test_prefix_loader(self):
+    def test_prefix_loader(self, prefix_loader):
         env = Environment(loader=prefix_loader)
         tmpl = env.get_template('a/test.html')
         assert tmpl.render().strip() == 'BAR'
         tmpl = env.get_template('b/justdict.html')
         assert tmpl.render().strip() == 'FOO'
-        self.assert_raises(TemplateNotFound, env.get_template, 'missing')
+        pytest.raises(TemplateNotFound, env.get_template, 'missing')
 
     def test_caching(self):
         changed = False
+
         class TestLoader(loaders.BaseLoader):
             def get_source(self, environment, template):
                 return u'foo', None, lambda: not changed
@@ -82,7 +80,7 @@ class LoaderTestCase(JinjaTestCase):
 
         env = Environment(loader=TestLoader(), cache_size=0)
         assert env.get_template('template') \
-               is not env.get_template('template')
+            is not env.get_template('template')
 
         env = Environment(loader=TestLoader(), cache_size=2)
         t1 = env.get_template('one')
@@ -104,14 +102,15 @@ class LoaderTestCase(JinjaTestCase):
     def test_split_template_path(self):
         assert split_template_path('foo/bar') == ['foo', 'bar']
         assert split_template_path('./foo/bar') == ['foo', 'bar']
-        self.assert_raises(TemplateNotFound, split_template_path, '../foo')
+        pytest.raises(TemplateNotFound, split_template_path, '../foo')
 
 
-class ModuleLoaderTestCase(JinjaTestCase):
+@pytest.mark.loaders
+@pytest.mark.moduleloader
+class TestModuleLoader():
     archive = None
 
-    def compile_down(self, zip='deflated', py_compile=False):
-        super(ModuleLoaderTestCase, self).setup()
+    def compile_down(self, prefix_loader, zip='deflated', py_compile=False):
         log = []
         self.reg_env = Environment(loader=prefix_loader)
         if zip is not None:
@@ -126,7 +125,6 @@ class ModuleLoaderTestCase(JinjaTestCase):
         return ''.join(log)
 
     def teardown(self):
-        super(ModuleLoaderTestCase, self).teardown()
         if hasattr(self, 'mod_env'):
             if os.path.isfile(self.archive):
                 os.remove(self.archive)
@@ -134,8 +132,8 @@ class ModuleLoaderTestCase(JinjaTestCase):
                 shutil.rmtree(self.archive)
             self.archive = None
 
-    def test_log(self):
-        log = self.compile_down()
+    def test_log(self, prefix_loader):
+        log = self.compile_down(prefix_loader)
         assert 'Compiled "a/foo/test.html" as ' \
                'tmpl_a790caf9d669e39ea4d280d597ec891c4ef0404a' in log
         assert 'Finished compiling templates' in log
@@ -151,20 +149,20 @@ class ModuleLoaderTestCase(JinjaTestCase):
         tmpl2 = self.mod_env.get_template('b/justdict.html')
         assert tmpl1.render() == tmpl2.render()
 
-    def test_deflated_zip_compile(self):
-        self.compile_down(zip='deflated')
+    def test_deflated_zip_compile(self, prefix_loader):
+        self.compile_down(prefix_loader, zip='deflated')
         self._test_common()
 
-    def test_stored_zip_compile(self):
-        self.compile_down(zip='stored')
+    def test_stored_zip_compile(self, prefix_loader):
+        self.compile_down(prefix_loader, zip='stored')
         self._test_common()
 
-    def test_filesystem_compile(self):
-        self.compile_down(zip=None)
+    def test_filesystem_compile(self, prefix_loader):
+        self.compile_down(prefix_loader, zip=None)
         self._test_common()
 
-    def test_weak_references(self):
-        self.compile_down()
+    def test_weak_references(self, prefix_loader):
+        self.compile_down(prefix_loader)
         tmpl = self.mod_env.get_template('a/test.html')
         key = loaders.ModuleLoader.get_template_key('a/test.html')
         name = self.mod_env.loader.module.__name__
@@ -184,17 +182,19 @@ class ModuleLoaderTestCase(JinjaTestCase):
         assert name not in sys.modules
 
     # This test only makes sense on non-pypy python 2
-    if PY2 and not PYPY:
-        def test_byte_compilation(self):
-            log = self.compile_down(py_compile=True)
-            assert 'Byte-compiled "a/test.html"' in log
-            tmpl1 = self.mod_env.get_template('a/test.html')
-            mod = self.mod_env.loader.module. \
-                tmpl_3c4ddf650c1a73df961a6d3d2ce2752f1b8fd490
-            assert mod.__file__.endswith('.pyc')
+    @pytest.mark.skipif(
+        not (PY2 and not PYPY),
+        reason='This test only makes sense on non-pypy python 2')
+    def test_byte_compilation(self, prefix_loader):
+        log = self.compile_down(prefix_loader, py_compile=True)
+        assert 'Byte-compiled "a/test.html"' in log
+        tmpl1 = self.mod_env.get_template('a/test.html')
+        mod = self.mod_env.loader.module. \
+            tmpl_3c4ddf650c1a73df961a6d3d2ce2752f1b8fd490
+        assert mod.__file__.endswith('.pyc')
 
-    def test_choice_loader(self):
-        log = self.compile_down()
+    def test_choice_loader(self, prefix_loader):
+        log = self.compile_down(prefix_loader)
 
         self.mod_env.loader = loaders.ChoiceLoader([
             self.mod_env.loader,
@@ -202,12 +202,12 @@ class ModuleLoaderTestCase(JinjaTestCase):
         ])
 
         tmpl1 = self.mod_env.get_template('a/test.html')
-        self.assert_equal(tmpl1.render(), 'BAR')
+        assert tmpl1.render() == 'BAR'
         tmpl2 = self.mod_env.get_template('DICT_SOURCE')
-        self.assert_equal(tmpl2.render(), 'DICT_TEMPLATE')
+        assert tmpl2.render() == 'DICT_TEMPLATE'
 
-    def test_prefix_loader(self):
-        log = self.compile_down()
+    def test_prefix_loader(self, prefix_loader):
+        log = self.compile_down(prefix_loader)
 
         self.mod_env.loader = loaders.PrefixLoader({
             'MOD':      self.mod_env.loader,
@@ -215,13 +215,6 @@ class ModuleLoaderTestCase(JinjaTestCase):
         })
 
         tmpl1 = self.mod_env.get_template('MOD/a/test.html')
-        self.assert_equal(tmpl1.render(), 'BAR')
+        assert tmpl1.render() == 'BAR'
         tmpl2 = self.mod_env.get_template('DICT/test.html')
-        self.assert_equal(tmpl2.render(), 'DICT_TEMPLATE')
-
-
-def suite():
-    suite = unittest.TestSuite()
-    suite.addTest(unittest.makeSuite(LoaderTestCase))
-    suite.addTest(unittest.makeSuite(ModuleLoaderTestCase))
-    return suite
+        assert tmpl2.render() == 'DICT_TEMPLATE'

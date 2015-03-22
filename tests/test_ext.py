@@ -9,9 +9,7 @@
     :license: BSD, see LICENSE for more details.
 """
 import re
-import unittest
-
-from jinja2.testsuite import JinjaTestCase
+import pytest
 
 from jinja2 import Environment, DictLoader, contextfunction, nodes
 from jinja2.exceptions import TemplateAssertionError
@@ -100,6 +98,7 @@ newstyle_i18n_env = Environment(
 )
 newstyle_i18n_env.install_gettext_callables(gettext, ngettext, newstyle=True)
 
+
 class TestExtension(Extension):
     tags = set(['test'])
     ext_attr = 42
@@ -160,12 +159,14 @@ class StreamFilterExtension(Extension):
             yield Token(lineno, 'data', token.value[pos:])
 
 
-class ExtensionsTestCase(JinjaTestCase):
+@pytest.mark.ext
+class TestExtensions():
 
     def test_extend_late(self):
         env = Environment()
         env.add_extension('jinja2.ext.autoescape')
-        t = env.from_string('{% autoescape true %}{{ "<test>" }}{% endautoescape %}')
+        t = env.from_string(
+            '{% autoescape true %}{{ "<test>" }}{% endautoescape %}')
         assert t.render() == '&lt;test&gt;'
 
     def test_loop_controls(self):
@@ -235,6 +236,7 @@ class ExtensionsTestCase(JinjaTestCase):
     def test_extension_ordering(self):
         class T1(Extension):
             priority = 1
+
         class T2(Extension):
             priority = 2
         env = Environment(extensions=[T1, T2])
@@ -243,7 +245,8 @@ class ExtensionsTestCase(JinjaTestCase):
         assert ext[1].__class__ is T2
 
 
-class InternationalizationTestCase(JinjaTestCase):
+@pytest.mark.ext
+class TestInternationalization():
 
     def test_trans(self):
         tmpl = i18n_env.get_template('child.html')
@@ -251,24 +254,28 @@ class InternationalizationTestCase(JinjaTestCase):
 
     def test_trans_plural(self):
         tmpl = i18n_env.get_template('plural.html')
-        assert tmpl.render(LANGUAGE='de', user_count=1) == 'Ein Benutzer online'
+        assert tmpl.render(LANGUAGE='de', user_count=1) \
+            == 'Ein Benutzer online'
         assert tmpl.render(LANGUAGE='de', user_count=2) == '2 Benutzer online'
 
     def test_trans_plural_with_functions(self):
         tmpl = i18n_env.get_template('plural2.html')
+
         def get_user_count():
             get_user_count.called += 1
             return 1
         get_user_count.called = 0
-        assert tmpl.render(LANGUAGE='de', get_user_count=get_user_count) == '1s'
+        assert tmpl.render(LANGUAGE='de', get_user_count=get_user_count) \
+            == '1s'
         assert get_user_count.called == 1
 
     def test_complex_plural(self):
-        tmpl = i18n_env.from_string('{% trans foo=42, count=2 %}{{ count }} item{% '
-                                    'pluralize count %}{{ count }} items{% endtrans %}')
+        tmpl = i18n_env.from_string(
+            '{% trans foo=42, count=2 %}{{ count }} item{% '
+            'pluralize count %}{{ count }} items{% endtrans %}')
         assert tmpl.render() == '2 items'
-        self.assert_raises(TemplateAssertionError, i18n_env.from_string,
-                           '{% trans foo %}...{% pluralize bar %}...{% endtrans %}')
+        pytest.raises(TemplateAssertionError, i18n_env.from_string,
+                      '{% trans foo %}...{% pluralize bar %}...{% endtrans %}')
 
     def test_trans_stringformatting(self):
         tmpl = i18n_env.get_template('stringformat.html')
@@ -280,8 +287,9 @@ class InternationalizationTestCase(JinjaTestCase):
         {{ gettext('Hello World') }}
         {% trans %}Hello World{% endtrans %}
         {% trans %}{{ users }} user{% pluralize %}{{ users }} users{% endtrans %}
-        '''.encode('ascii')) # make python 3 happy
-        assert list(babel_extract(source, ('gettext', 'ngettext', '_'), [], {})) == [
+        '''.encode('ascii'))  # make python 3 happy
+        assert list(babel_extract(source,
+                                  ('gettext', 'ngettext', '_'), [], {})) == [
             (2, 'gettext', u'Hello World', []),
             (3, 'gettext', u'Hello World', []),
             (4, 'ngettext', (u'%(users)s user', u'%(users)s users', None), [])
@@ -295,15 +303,19 @@ class InternationalizationTestCase(JinjaTestCase):
         {% trans %}Hello World{% endtrans %}{# trans second #}
         {#: third #}
         {% trans %}{{ users }} user{% pluralize %}{{ users }} users{% endtrans %}
-        '''.encode('utf-8')) # make python 3 happy
-        assert list(babel_extract(source, ('gettext', 'ngettext', '_'), ['trans', ':'], {})) == [
+        '''.encode('utf-8'))  # make python 3 happy
+        assert list(babel_extract(source,
+                                  ('gettext', 'ngettext', '_'),
+                                  ['trans', ':'], {})) == [
             (3, 'gettext', u'Hello World', ['first']),
             (4, 'gettext', u'Hello World', ['second']),
-            (6, 'ngettext', (u'%(users)s user', u'%(users)s users', None), ['third'])
+            (6, 'ngettext', (u'%(users)s user', u'%(users)s users', None),
+             ['third'])
         ]
 
 
-class NewstyleInternationalizationTestCase(JinjaTestCase):
+@pytest.mark.ext
+class TestNewstyleInternationalization():
 
     def test_trans(self):
         tmpl = newstyle_i18n_env.get_template('child.html')
@@ -311,15 +323,17 @@ class NewstyleInternationalizationTestCase(JinjaTestCase):
 
     def test_trans_plural(self):
         tmpl = newstyle_i18n_env.get_template('plural.html')
-        assert tmpl.render(LANGUAGE='de', user_count=1) == 'Ein Benutzer online'
+        assert tmpl.render(LANGUAGE='de', user_count=1) \
+            == 'Ein Benutzer online'
         assert tmpl.render(LANGUAGE='de', user_count=2) == '2 Benutzer online'
 
     def test_complex_plural(self):
-        tmpl = newstyle_i18n_env.from_string('{% trans foo=42, count=2 %}{{ count }} item{% '
-                                    'pluralize count %}{{ count }} items{% endtrans %}')
+        tmpl = newstyle_i18n_env.from_string(
+            '{% trans foo=42, count=2 %}{{ count }} item{% '
+            'pluralize count %}{{ count }} items{% endtrans %}')
         assert tmpl.render() == '2 items'
-        self.assert_raises(TemplateAssertionError, i18n_env.from_string,
-                           '{% trans foo %}...{% pluralize bar %}...{% endtrans %}')
+        pytest.raises(TemplateAssertionError, i18n_env.from_string,
+                      '{% trans foo %}...{% pluralize bar %}...{% endtrans %}')
 
     def test_trans_stringformatting(self):
         tmpl = newstyle_i18n_env.get_template('stringformat.html')
@@ -333,8 +347,9 @@ class NewstyleInternationalizationTestCase(JinjaTestCase):
     def test_autoescape_support(self):
         env = Environment(extensions=['jinja2.ext.autoescape',
                                       'jinja2.ext.i18n'])
-        env.install_gettext_callables(lambda x: u'<strong>Wert: %(name)s</strong>',
-                                      lambda s, p, n: s, newstyle=True)
+        env.install_gettext_callables(
+            lambda x: u'<strong>Wert: %(name)s</strong>',
+            lambda s, p, n: s, newstyle=True)
         t = env.from_string('{% autoescape ae %}{{ gettext("foo", name='
                             '"<test>") }}{% endautoescape %}')
         assert t.render(ae=True) == '<strong>Wert: &lt;test&gt;</strong>'
@@ -373,7 +388,8 @@ class NewstyleInternationalizationTestCase(JinjaTestCase):
         assert t.render() == '%(foo)s'
 
 
-class AutoEscapeTestCase(JinjaTestCase):
+@pytest.mark.ext
+class TestAutoEscape():
 
     def test_scoped_setting(self):
         env = Environment(extensions=['jinja2.ext.autoescape'],
@@ -419,8 +435,9 @@ class AutoEscapeTestCase(JinjaTestCase):
 
     def test_scoping(self):
         env = Environment(extensions=['jinja2.ext.autoescape'])
-        tmpl = env.from_string('{% autoescape true %}{% set x = "<x>" %}{{ x }}'
-                               '{% endautoescape %}{{ x }}{{ "<y>" }}')
+        tmpl = env.from_string(
+            '{% autoescape true %}{% set x = "<x>" %}{{ x }}'
+            '{% endautoescape %}{{ x }}{{ "<y>" }}')
         assert tmpl.render(x=1) == '&lt;x&gt;1<y>'
 
     def test_volatile_scoping(self):
@@ -448,12 +465,3 @@ class AutoEscapeTestCase(JinjaTestCase):
                           autoescape=True)
         pysource = env.compile(tmplsource, raw=True)
         assert '&lt;testing&gt;\\n' in pysource
-
-
-def suite():
-    suite = unittest.TestSuite()
-    suite.addTest(unittest.makeSuite(ExtensionsTestCase))
-    suite.addTest(unittest.makeSuite(InternationalizationTestCase))
-    suite.addTest(unittest.makeSuite(NewstyleInternationalizationTestCase))
-    suite.addTest(unittest.makeSuite(AutoEscapeTestCase))
-    return suite

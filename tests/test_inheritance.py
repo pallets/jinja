@@ -8,9 +8,7 @@
     :copyright: (c) 2010 by the Jinja Team.
     :license: BSD, see LICENSE for more details.
 """
-import unittest
-
-from jinja2.testsuite import JinjaTestCase
+import pytest
 
 from jinja2 import Environment, DictLoader, TemplateError
 
@@ -66,45 +64,48 @@ DOUBLEEXTENDS = '''\
 '''
 
 
-env = Environment(loader=DictLoader({
-    'layout':       LAYOUTTEMPLATE,
-    'level1':       LEVEL1TEMPLATE,
-    'level2':       LEVEL2TEMPLATE,
-    'level3':       LEVEL3TEMPLATE,
-    'level4':       LEVEL4TEMPLATE,
-    'working':      WORKINGTEMPLATE,
-    'doublee':      DOUBLEEXTENDS,
-}), trim_blocks=True)
+@pytest.fixture
+def env():
+    return Environment(loader=DictLoader({
+        'layout':       LAYOUTTEMPLATE,
+        'level1':       LEVEL1TEMPLATE,
+        'level2':       LEVEL2TEMPLATE,
+        'level3':       LEVEL3TEMPLATE,
+        'level4':       LEVEL4TEMPLATE,
+        'working':      WORKINGTEMPLATE,
+        'doublee':      DOUBLEEXTENDS,
+    }), trim_blocks=True)
 
 
-class InheritanceTestCase(JinjaTestCase):
+@pytest.mark.inheritance
+class TestInheritance():
 
-    def test_layout(self):
+    def test_layout(self, env):
         tmpl = env.get_template('layout')
         assert tmpl.render() == ('|block 1 from layout|block 2 from '
                                  'layout|nested block 4 from layout|')
 
-    def test_level1(self):
+    def test_level1(self, env):
         tmpl = env.get_template('level1')
         assert tmpl.render() == ('|block 1 from level1|block 2 from '
                                  'layout|nested block 4 from layout|')
 
-    def test_level2(self):
+    def test_level2(self, env):
         tmpl = env.get_template('level2')
         assert tmpl.render() == ('|block 1 from level1|nested block 5 from '
                                  'level2|nested block 4 from layout|')
 
-    def test_level3(self):
+    def test_level3(self, env):
         tmpl = env.get_template('level3')
         assert tmpl.render() == ('|block 1 from level1|block 5 from level3|'
                                  'block 4 from level3|')
 
-    def test_level4(sel):
+    def test_level4(self, env):
         tmpl = env.get_template('level4')
         assert tmpl.render() == ('|block 1 from level1|block 5 from '
                                  'level3|block 3 from level4|')
 
-    def test_super(self):
+    def test_super(self, env):
         env = Environment(loader=DictLoader({
             'a': '{% block intro %}INTRO{% endblock %}|'
                  'BEFORE|{% block data %}INNER{% endblock %}|AFTER',
@@ -117,23 +118,24 @@ class InheritanceTestCase(JinjaTestCase):
         tmpl = env.get_template('c')
         assert tmpl.render() == '--INTRO--|BEFORE|[(INNER)]|AFTER'
 
-    def test_working(self):
+    def test_working(self, env):
         tmpl = env.get_template('working')
 
-    def test_reuse_blocks(self):
+    def test_reuse_blocks(self, env):
         tmpl = env.from_string('{{ self.foo() }}|{% block foo %}42'
                                '{% endblock %}|{{ self.foo() }}')
         assert tmpl.render() == '42|42|42'
 
-    def test_preserve_blocks(self):
+    def test_preserve_blocks(self, env):
         env = Environment(loader=DictLoader({
-            'a': '{% if false %}{% block x %}A{% endblock %}{% endif %}{{ self.x() }}',
+            'a': '{% if false %}{% block x %}A{% endblock %}'
+            '{% endif %}{{ self.x() }}',
             'b': '{% extends "a" %}{% block x %}B{{ super() }}{% endblock %}'
         }))
         tmpl = env.get_template('b')
         assert tmpl.render() == 'BA'
 
-    def test_dynamic_inheritance(self):
+    def test_dynamic_inheritance(self, env):
         env = Environment(loader=DictLoader({
             'master1': 'MASTER1{% block x %}{% endblock %}',
             'master2': 'MASTER2{% block x %}{% endblock %}',
@@ -143,19 +145,20 @@ class InheritanceTestCase(JinjaTestCase):
         for m in range(1, 3):
             assert tmpl.render(master='master%d' % m) == 'MASTER%dCHILD' % m
 
-    def test_multi_inheritance(self):
+    def test_multi_inheritance(self, env):
         env = Environment(loader=DictLoader({
             'master1': 'MASTER1{% block x %}{% endblock %}',
             'master2': 'MASTER2{% block x %}{% endblock %}',
-            'child': '''{% if master %}{% extends master %}{% else %}{% extends
-                        'master1' %}{% endif %}{% block x %}CHILD{% endblock %}'''
+            'child':
+                '''{% if master %}{% extends master %}{% else %}{% extends
+                'master1' %}{% endif %}{% block x %}CHILD{% endblock %}'''
         }))
         tmpl = env.get_template('child')
         assert tmpl.render(master='master2') == 'MASTER2CHILD'
         assert tmpl.render(master='master1') == 'MASTER1CHILD'
         assert tmpl.render() == 'MASTER1CHILD'
 
-    def test_scoped_block(self):
+    def test_scoped_block(self, env):
         env = Environment(loader=DictLoader({
             'master.html': '{% for item in seq %}[{% block item scoped %}'
                            '{% endblock %}]{% endfor %}'
@@ -164,7 +167,7 @@ class InheritanceTestCase(JinjaTestCase):
                             '{{ item }}{% endblock %}')
         assert t.render(seq=list(range(5))) == '[0][1][2][3][4]'
 
-    def test_super_in_scoped_block(self):
+    def test_super_in_scoped_block(self, env):
         env = Environment(loader=DictLoader({
             'master.html': '{% for item in seq %}[{% block item scoped %}'
                            '{{ item }}{% endblock %}]{% endfor %}'
@@ -173,7 +176,7 @@ class InheritanceTestCase(JinjaTestCase):
                             '{{ super() }}|{{ item * 2 }}{% endblock %}')
         assert t.render(seq=list(range(5))) == '[0|0][1|2][2|4][3|6][4|8]'
 
-    def test_scoped_block_after_inheritance(self):
+    def test_scoped_block_after_inheritance(self, env):
         env = Environment(loader=DictLoader({
             'layout.html': '''
             {% block useless %}{% endblock %}
@@ -197,9 +200,10 @@ class InheritanceTestCase(JinjaTestCase):
         assert rv == ['43', '44', '45']
 
 
-class BugFixTestCase(JinjaTestCase):
+@pytest.mark.inheritance
+class TestBugFix():
 
-    def test_fixed_macro_scoping_bug(self):
+    def test_fixed_macro_scoping_bug(self, env):
         assert Environment(loader=DictLoader({
             'test.html': '''\
         {% extends 'details.html' %}
@@ -231,9 +235,10 @@ class BugFixTestCase(JinjaTestCase):
             'standard.html': '''
         {% block content %}&nbsp;{% endblock %}
         '''
-        })).get_template("test.html").render().split() == [u'outer_box', u'my_macro']
+        })).get_template("test.html").render().split() \
+            == [u'outer_box', u'my_macro']
 
-    def test_double_extends(self):
+    def test_double_extends(self, env):
         """Ensures that a template with more than 1 {% extends ... %} usage
         raises a ``TemplateError``.
         """
@@ -241,10 +246,3 @@ class BugFixTestCase(JinjaTestCase):
             tmpl = env.get_template('doublee')
         except Exception as e:
             assert isinstance(e, TemplateError)
-
-
-def suite():
-    suite = unittest.TestSuite()
-    suite.addTest(unittest.makeSuite(InheritanceTestCase))
-    suite.addTest(unittest.makeSuite(BugFixTestCase))
-    return suite

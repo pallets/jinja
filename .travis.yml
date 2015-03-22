@@ -6,9 +6,10 @@ python:
   - "3.4"
 
 install:
-  - "python setup.py install"
-
-script: make test
+    - pip install tox
+script:
+    - tox -e \
+      $(echo py$TRAVIS_PYTHON_VERSION | tr -d . | sed -e 's/pypypy/pypy/')-$REQUIREMENTS
 
 notifications:
   email: false
