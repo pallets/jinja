@@ -36,3 +36,14 @@ Jinja2==dev``.
 .. _Jinja2 webpage: http://jinja.pocoo.org/
 .. _documentation: http://jinja.pocoo.org/docs/
 .. _Jinja2 tip: http://jinja.pocoo.org/docs/intro/#as-a-python-egg-via-easy-install
+
+Builds
+------
+
++---------------------+------------------------------------------------------------------------------+
+| ``master``          | .. image:: https://travis-ci.org/mitsuhiko/jinja2.svg?branch=master          |
+|                     |     :target: https://travis-ci.org/mitsuhiko/jinja2                          |
++---------------------+------------------------------------------------------------------------------+
+| ``2.7-maintenance`` | .. image:: https://travis-ci.org/mitsuhiko/jinja2.svg?branch=2.7-maintenance |
+|                     |     :target: https://travis-ci.org/mitsuhiko/jinja2                          |
++---------------------+------------------------------------------------------------------------------+
