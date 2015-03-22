@@ -24,4 +24,4 @@ env = Environment(loader=DictLoader({
 
 
 tmpl = env.get_template("child.html")
-print tmpl.render()
+print(tmpl.render())

@@ -22,4 +22,4 @@ tmpl = env.from_string("""\
 % endfilter
 """)
 
-print tmpl.render(seq=range(10))
+print(tmpl.render(seq=range(10)))

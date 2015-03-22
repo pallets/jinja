@@ -9,4 +9,4 @@ tmpl = Environment().from_string("""\
 if condition: {{ 1 if foo else 0 }}
 """)
 
-print tmpl.render(foo=True)
+print(tmpl.render(foo=True))
