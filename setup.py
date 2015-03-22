@@ -72,7 +72,10 @@ setup(
         'Topic :: Text Processing :: Markup :: HTML'
     ],
     packages=['jinja2'],
-    install_requires=['MarkupSafe'],
+    install_requires=[
+        'MarkupSafe',
+        'pytest'
+    ],
     extras_require={'i18n': ['Babel>=0.8']},
     include_package_data=True,
     entry_points="""

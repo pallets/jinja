@@ -1,5 +1,5 @@
 test:
-	python run-tests.py
+	py.test jinja2
 
 develop:
 	pip install --editable .
