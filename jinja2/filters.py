@@ -666,8 +666,10 @@ def do_round(value, precision=0, method='common'):
 
 
 @environmentfilter
-def do_groupby(environment, value, attribute):
+def do_groupby(environment, value, attribute, sort=True):
     """Group a sequence of objects by a common attribute.
+
+    Use `sort=False` if the objects are already sorted accordingly.
 
     If you for example have a list of dicts or objects that represent persons
     with `gender`, `first_name` and `last_name` attributes and you want to
@@ -705,7 +707,11 @@ def do_groupby(environment, value, attribute):
        attribute of another attribute.
     """
     expr = make_attrgetter(environment, attribute)
-    return sorted(map(_GroupTuple, groupby(sorted(value, key=expr), expr)))
+    if sort:
+        return sorted(map(_GroupTuple, groupby(sorted(value, key=expr), expr)))
+    else:
+        return map(_GroupTuple, groupby(value, expr))
+
 
 
 class _GroupTuple(tuple):
