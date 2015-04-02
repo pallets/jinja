@@ -136,7 +136,7 @@ def _get_tbtype():
         return type(_tb), type(_tb.tb_frame)
 
 traceback_type, frame_type = _get_tbtype()
-del _get_tbtype()
+del _get_tbtype
 
 try:
     from urllib.parse import quote_from_bytes as url_quote
