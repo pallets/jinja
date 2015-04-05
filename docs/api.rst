@@ -167,7 +167,7 @@ useful if you want to dig deeper into Jinja2 or :ref:`develop extensions
         provided as `exc` is raised if something with the generated undefined
         object is done that the undefined object does not allow.  The default
         exception is :exc:`UndefinedError`.  If a `hint` is provided the
-        `name` may be ommited.
+        `name` may be omitted.
 
         The most common way to create an undefined object is by providing
         a name only::
@@ -187,7 +187,7 @@ useful if you want to dig deeper into Jinja2 or :ref:`develop extensions
             return environment.undefined('no first item, sequence was empty')            
 
         If it the `name` or `obj` is known (for example because an attribute
-        was accessed) it shold be passed to the undefined object, even if
+        was accessed) it should be passed to the undefined object, even if
         a custom `hint` is provided.  This gives undefined objects the
         possibility to enhance the error message.
 

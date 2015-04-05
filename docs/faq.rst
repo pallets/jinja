@@ -135,7 +135,7 @@ the traceback may be incomplete.  There is currently no good workaround
 for Jython or the AppEngine as ctypes is unavailable there and it's not
 possible to use the debugsupport extension.
 
-If you are working in the Google Appengine development server you can
+If you are working in the Google AppEngine development server you can
 whitelist the ctypes module to restore the tracebacks.  This however won't
 work in production environments::
 
