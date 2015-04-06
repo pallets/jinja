@@ -154,6 +154,12 @@ useful if you want to dig deeper into Jinja2 or :ref:`develop extensions
         to modify this dict.  For more details see :ref:`global-namespace`.
         For valid object names have a look at :ref:`identifier-naming`.
 
+    .. attribute:: code_generator_class
+
+       The class used for code generation.  This should not be changed
+       in most cases, unless you need to modify the Python code a
+       template compiles to.
+
     .. automethod:: overlay([options])
 
     .. method:: undefined([hint, obj, name, exc])
