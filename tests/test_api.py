@@ -16,6 +16,7 @@ import pytest
 from jinja2 import Environment, Undefined, DebugUndefined, \
      StrictUndefined, UndefinedError, meta, \
      is_undefined, Template, DictLoader, make_logging_undefined
+from jinja2.compiler import CodeGenerator
 from jinja2.utils import Cycler
 
 
@@ -290,3 +291,24 @@ class TestUndefined():
             assert e.message == "'int object' has no attribute 'upper'"
         else:
             assert False, 'expected exception'
+
+
+@pytest.mark.api
+@pytest.mark.lowlevel
+class TestLowLevel():
+
+    def test_custom_code_generator(self):
+        class CustomCodeGenerator(CodeGenerator):
+            def visit_Const(self, node, frame=None):
+                # This method is pure nonsense, but works fine for testing...
+                if node.value == 'foo':
+                    self.write(repr('bar'))
+                else:
+                    super(CustomCodeGenerator, self).visit_Const(node, frame)
+
+        class CustomEnvironment(Environment):
+            code_generator_class = CustomCodeGenerator
+
+        env = CustomEnvironment()
+        tmpl = env.from_string('{% set foo = "foo" %}{{ foo }}')
+        assert tmpl.render() == 'bar'
