@@ -160,6 +160,13 @@ useful if you want to dig deeper into Jinja2 or :ref:`develop extensions
        in most cases, unless you need to modify the Python code a
        template compiles to.
 
+    .. attribute:: context_class
+
+       The context used for templates.  This should not be changed
+       in most cases, unless you need to modify internals of how
+       template variables are handled.  For details, see
+       :class:`~jinja2.runtime.Context`.
+
     .. automethod:: overlay([options])
 
     .. method:: undefined([hint, obj, name, exc])

@@ -17,6 +17,7 @@ from jinja2 import Environment, Undefined, DebugUndefined, \
      StrictUndefined, UndefinedError, meta, \
      is_undefined, Template, DictLoader, make_logging_undefined
 from jinja2.compiler import CodeGenerator
+from jinja2.runtime import Context
 from jinja2.utils import Cycler
 
 
@@ -312,3 +313,15 @@ class TestLowLevel():
         env = CustomEnvironment()
         tmpl = env.from_string('{% set foo = "foo" %}{{ foo }}')
         assert tmpl.render() == 'bar'
+
+    def test_custom_context(self):
+        class CustomContext(Context):
+            def resolve(self, key):
+                return 'resolve-' + key
+
+        class CustomEnvironment(Environment):
+            context_class = CustomContext
+
+        env = CustomEnvironment()
+        tmpl = env.from_string('{{ foo }}')
+        assert tmpl.render() == 'resolve-foo'
