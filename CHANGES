@@ -26,6 +26,9 @@ Version 2.8
   change makes ``{% macro m(x, y=1, z) %}...{% endmacro %}`` a syntax error. The
   previous behavior for this code was broken anyway (resulting in the default
   value being applied to `y`).
+- Add ability to use custom subclasses of ``jinja2.compiler.CodeGenerator`` and
+  ``jinja2.runtime.Context`` by adding two new attributes to the environment
+  (`code_generator_class` and `context_class`) (pull request ``#404``).
 
 Version 2.7.3
 -------------
