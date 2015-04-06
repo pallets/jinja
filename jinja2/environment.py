@@ -21,8 +21,8 @@ from jinja2.lexer import get_lexer, TokenStream
 from jinja2.parser import Parser
 from jinja2.nodes import EvalContext
 from jinja2.optimizer import optimize
-from jinja2.compiler import generate
-from jinja2.runtime import Undefined, new_context
+from jinja2.compiler import generate, CodeGenerator
+from jinja2.runtime import Undefined, new_context, Context
 from jinja2.exceptions import TemplateSyntaxError, TemplateNotFound, \
      TemplatesNotFound, TemplateRuntimeError
 from jinja2.utils import import_string, LRUCache, Markup, missing, \
@@ -237,6 +237,14 @@ class Environment(object):
     #: these are currently EXPERIMENTAL undocumented features.
     exception_handler = None
     exception_formatter = None
+
+    #: the class that is used for code generation.  See
+    #: :class:`~jinja2.compiler.CodeGenerator` for more information.
+    code_generator_class = CodeGenerator
+
+    #: the context class thatis used for templates.  See
+    #: :class:`~jinja2.runtime.Context` for more information.
+    context_class = Context
 
     def __init__(self,
                  block_start_string=BLOCK_START_STRING,

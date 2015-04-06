@@ -69,7 +69,8 @@ def new_context(environment, template_name, blocks, vars=None,
         for key, value in iteritems(locals):
             if key[:2] == 'l_' and value is not missing:
                 parent[key[2:]] = value
-    return Context(environment, parent, template_name, blocks)
+    return environment.context_class(environment, parent, template_name,
+                                     blocks)
 
 
 class TemplateReference(object):
