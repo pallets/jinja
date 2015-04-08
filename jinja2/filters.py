@@ -516,13 +516,10 @@ def do_int(value, default=0):
     override this default using the first parameter.
     """
     try:
-        return int(value)
+        # we parse into float first so that "42.23"|int gives 42.
+        return int(float(value))
     except (TypeError, ValueError):
-        # this quirk is necessary so that "42.23"|int gives 42.
-        try:
-            return int(float(value))
-        except (TypeError, ValueError):
-            return default
+        return default
 
 
 def do_float(value, default=0.0):
