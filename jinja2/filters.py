@@ -510,13 +510,15 @@ def do_wordcount(s):
     return len(_word_re.findall(s))
 
 
-def do_int(value, default=0):
+def do_int(value, default=0, base=10):
     """Convert the value into an integer. If the
     conversion doesn't work it will return ``0``. You can
-    override this default using the first parameter.
+    override this default using the first parameter. You
+    can also override the default base (10) in the second
+    parameter.
     """
     try:
-        return int(value)
+        return int(value, base)
     except (TypeError, ValueError):
         # this quirk is necessary so that "42.23"|int gives 42.
         try:
