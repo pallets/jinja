@@ -515,7 +515,8 @@ def do_int(value, default=0, base=10):
     conversion doesn't work it will return ``0``. You can
     override this default using the first parameter. You
     can also override the default base (10) in the second
-    parameter.
+    parameter, which handles input with prefixes such as
+    0b, 0o and 0x for bases 2, 8 and 16 respectively.
     """
     try:
         return int(value, base)
