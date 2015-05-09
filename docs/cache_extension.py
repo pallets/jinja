@@ -20,7 +20,7 @@ class FragmentCacheExtension(Extension):
         # we only listen to ``'cache'`` so this will be a name token with
         # `cache` as value.  We get the line number so that we can give
         # that line number to the nodes we create by hand.
-        lineno = parser.stream.next().lineno
+        lineno = next(parser.stream).lineno
 
         # now we parse a single expression that is used as cache key.
         args = [parser.parse_expression()]
