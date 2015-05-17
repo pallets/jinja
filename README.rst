@@ -23,10 +23,10 @@ Here a small example of a Jinja template::
 Philosophy
 ----------
 
-Application logic is for the controller but don't try to make the life
-for the template designer too hard by giving him too few functionality.
+Application logic is for the controller; however, try not to make life painful
+for the template designer due to not enough functionality.
 
-For more informations visit the new `Jinja2 webpage`_ and `documentation`_.
+For more information visit the new `Jinja2 webpage`_ and `documentation`_.
 
 The `Jinja2 tip`_ is installable via `easy_install` with ``easy_install
 Jinja2==dev``.
