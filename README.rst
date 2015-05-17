@@ -23,8 +23,8 @@ Here a small example of a Jinja template::
 Philosophy
 ----------
 
-Application logic is for the controller; however, try not to make life painful
-for the template designer due to not enough functionality.
+Application logic is for the controller, but don't make the template designer's
+life difficult by restricting functionality too much.
 
 For more information visit the new `Jinja2 webpage`_ and `documentation`_.
 
