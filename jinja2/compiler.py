@@ -1220,7 +1220,12 @@ class CodeGenerator(NodeVisitor):
             return
 
         if self.environment.finalize:
-            finalize = lambda x: text_type(self.environment.finalize(x))
+            if getattr(self.environment.finalize, "contextfunction", False):
+                finalize = lambda x: text_type(
+                    self.environment.finalize(None, x)
+                )
+            else:
+                finalize = lambda x: text_type(self.environment.finalize(x))
         else:
             finalize = text_type
 
@@ -1291,6 +1296,9 @@ class CodeGenerator(NodeVisitor):
                         self.write('to_string(')
                     if self.environment.finalize is not None:
                         self.write('environment.finalize(')
+                        if getattr(self.environment.finalize,
+                                   "contextfunction", False):
+                            self.write('context, ')
                         close += 1
                     self.visit(item, frame)
                     self.write(')' * close)
@@ -1327,6 +1335,9 @@ class CodeGenerator(NodeVisitor):
                     close += 1
                 if self.environment.finalize is not None:
                     self.write('environment.finalize(')
+                    if getattr(self.environment.finalize,
+                               "contextfunction", False):
+                        self.write('context, ')
                     close += 1
                 self.visit(argument, frame)
                 self.write(')' * close + ', ')
