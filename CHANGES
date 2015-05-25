@@ -29,6 +29,8 @@ Version 2.8
 - Add ability to use custom subclasses of ``jinja2.compiler.CodeGenerator`` and
   ``jinja2.runtime.Context`` by adding two new attributes to the environment
   (`code_generator_class` and `context_class`) (pull request ``#404``).
+- added support for context/environment/evalctx decorator functions on
+  the finalize callback of the environment.
 
 Version 2.7.3
 -------------
