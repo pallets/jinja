@@ -31,6 +31,8 @@ Version 2.8
   (`code_generator_class` and `context_class`) (pull request ``#404``).
 - added support for context/environment/evalctx decorator functions on
   the finalize callback of the environment.
+- escape query strings for urlencode properly.  Previously slashes were not
+  escaped in that place.
 
 Version 2.7.3
 -------------

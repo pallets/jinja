@@ -94,7 +94,8 @@ def do_urlencode(value):
     if itemiter is None:
         return unicode_urlencode(value)
     return u'&'.join(unicode_urlencode(k) + '=' +
-                     unicode_urlencode(v) for k, v in itemiter)
+                     unicode_urlencode(v, for_qs=True)
+                     for k, v in itemiter)
 
 
 @evalcontextfilter
