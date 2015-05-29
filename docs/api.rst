@@ -44,7 +44,7 @@ To render it with some variables, just call the :meth:`render` method::
 
     print template.render(the='variables', go='here')
 
-Using a template loader rather then passing strings to :class:`Template`
+Using a template loader rather than passing strings to :class:`Template`
 or :meth:`Environment.from_string` has multiple advantages.  Besides being
 a lot easier to use it also enables template inheritance.
 
