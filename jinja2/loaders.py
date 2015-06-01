@@ -291,7 +291,7 @@ class DictLoader(BaseLoader):
 
 class FunctionLoader(BaseLoader):
     """A loader that is passed a function which does the loading.  The
-    function becomes the name of the template passed and has to return either
+    function receives the name of the template and has to return either
     an unicode string with the template source, a tuple in the form ``(source,
     filename, uptodatefunc)`` or `None` if the template does not exist.
 
