@@ -33,6 +33,7 @@ Version 2.8
   the finalize callback of the environment.
 - escape query strings for urlencode properly.  Previously slashes were not
   escaped in that place.
+- Add 'base' parameter to 'int' filter.
 
 Version 2.7.3
 -------------
