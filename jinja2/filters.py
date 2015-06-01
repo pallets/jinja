@@ -988,7 +988,7 @@ FILTERS = {
     'trim':                 do_trim,
     'truncate':             do_truncate,
     'upper':                do_upper,
-    'urlencode':            do_urlencode
+    'urlencode':            do_urlencode,
     'urlize':               do_urlize,
     'wordcount':            do_wordcount,
     'wordwrap':             do_wordwrap,
