@@ -134,9 +134,10 @@ class TestFilter():
 
     def test_int(self, env):
         tmpl = env.from_string('{{ "42"|int }}|{{ "ajsghasjgd"|int }}|'
-                               '{{ "32.32"|int }}')
+                               '{{ "32.32"|int }}|{{ "0x4d32"|int(0, 16) }}|'
+                               '{{ "011"|int(0, 8)}}|{{ "0x33FU"|int(0, 16) }}')
         out = tmpl.render()
-        assert out == '42|0|32'
+        assert out == '42|0|32|19762|9|0'
 
     def test_join(self, env):
         tmpl = env.from_string('{{ [1, 2, 3]|join("|") }}')
