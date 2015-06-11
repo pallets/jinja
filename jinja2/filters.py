@@ -999,5 +999,5 @@ FILTERS = {
     'wordcount':            do_wordcount,
     'wordwrap':             do_wordwrap,
     'xmlattr':              do_xmlattr,
-    'to_json':              do_json,
+    'tojson':              do_json,
 }
