@@ -763,7 +763,7 @@ def do_mark_unsafe(value):
 
 
 def do_reverse(value):
-    """Reverse the object or return an iterator the iterates over it the other
+    """Reverse the object or return an iterator that iterates over it the other
     way round.
     """
     if isinstance(value, string_types):
