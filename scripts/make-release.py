@@ -92,7 +92,7 @@ def set_setup_version(version):
 
 
 def build_and_upload():
-    cmd = [sys.executable, 'setup.py', 'release', 'sdist', 'upload']
+    cmd = [sys.executable, 'setup.py', 'release', 'sdist', 'bdist_wheel', 'upload']
     if wheel is not None:
         cmd.insert(4, 'bdist_wheel')
     Popen(cmd).wait()
@@ -133,7 +133,7 @@ def main():
         fail('Could not parse changelog')
 
     version, release_date, codename = rv
-    dev_version = bump_version(version) + '-dev'
+    dev_version = bump_version(version) + '.dev'
 
     info('Releasing %s (codename %s, release date %s)',
          version, codename, release_date.strftime('%d/%m/%Y'))
