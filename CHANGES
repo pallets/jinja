@@ -3,7 +3,7 @@ Jinja2 Changelog
 
 Version 2.8
 -----------
-(codename Translation, release date to be decided)
+(codename Replacement, released on July 26th 2015)
 
 - Added `target` parameter to urlize function.
 - Added support for `followsymlinks` to the file system loader.
