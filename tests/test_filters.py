@@ -13,6 +13,15 @@ from jinja2 import Markup, Environment
 from jinja2._compat import text_type, implements_to_string
 
 
+@implements_to_string
+class Magic(object):
+    def __init__(self, value):
+        self.value = value
+
+    def __str__(self):
+        return text_type(self.value)
+
+
 @pytest.mark.filter
 class TestFilter():
 
@@ -348,15 +357,20 @@ class TestFilter():
         assert tmpl.render() == "['Bar', 'blah', 'foo']"
 
     def test_sort4(self, env):
-        @implements_to_string
-        class Magic(object):
-            def __init__(self, value):
-                self.value = value
-
-            def __str__(self):
-                return text_type(self.value)
         tmpl = env.from_string('''{{ items|sort(attribute='value')|join }}''')
         assert tmpl.render(items=map(Magic, [3, 2, 4, 1])) == '1234'
+
+    def test_unique1(self, env):
+        tmpl = env.from_string('{{ "".join(["b", "A", "a", "b"]|unique) }}')
+        assert tmpl.render() == "bA"
+
+    def test_unique2(self, env):
+        tmpl = env.from_string('{{ "".join(["b", "A", "a", "b"]|unique(true)) }}')
+        assert tmpl.render() == "bAa"
+
+    def test_unique3(self, env):
+        tmpl = env.from_string("{{ items|unique(attribute='value')|join }}")
+        assert tmpl.render(items=map(Magic, [3, 2, 4, 1, 2])) == '3241'
 
     def test_groupby(self, env):
         tmpl = env.from_string('''
