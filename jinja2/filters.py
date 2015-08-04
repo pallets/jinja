@@ -13,7 +13,7 @@ import math
 
 from random import choice
 from operator import itemgetter
-from itertools import groupby
+from itertools import groupby, chain
 from jinja2.utils import Markup, escape, pformat, urlize, soft_unicode, \
      unicode_urlencode
 from jinja2.runtime import Undefined
@@ -51,21 +51,24 @@ def environmentfilter(f):
     return f
 
 
-def make_attrgetter(environment, attribute):
+def make_attrgetter(environment, attribute, lowercase=False):
     """Returns a callable that looks up the given attribute from a
     passed object with the rules of the environment.  Dots are allowed
     to access attributes of attributes.  Integer parts in paths are
     looked up as integers.
     """
-    if not isinstance(attribute, string_types) \
-       or ('.' not in attribute and not attribute.isdigit()):
-        return lambda x: environment.getitem(x, attribute)
-    attribute = attribute.split('.')
+    if attribute is None:
+        attribute = []
+    elif isinstance(attribute, string_types):
+        attribute = [int(x) if x.isdigit() else x for x in attribute.split('.')]
+    else:
+        attribute = [attribute]
+
     def attrgetter(item):
         for part in attribute:
-            if part.isdigit():
-                part = int(part)
             item = environment.getitem(item, part)
+        if lowercase and isinstance(item, string_types):
+            item = item.lower()
         return item
     return attrgetter
 
@@ -251,18 +254,57 @@ def do_sort(environment, value, reverse=False, case_sensitive=False,
     .. versionchanged:: 2.6
        The `attribute` parameter was added.
     """
-    if not case_sensitive:
-        def sort_func(item):
-            if isinstance(item, string_types):
-                item = item.lower()
-            return item
-    else:
-        sort_func = None
-    if attribute is not None:
-        getter = make_attrgetter(environment, attribute)
-        def sort_func(item, processor=sort_func or (lambda x: x)):
-            return processor(getter(item))
-    return sorted(value, key=sort_func, reverse=reverse)
+    key_func = make_attrgetter(environment, attribute, not case_sensitive)
+    return sorted(value, key=key_func, reverse=reverse)
+
+
+def _min_or_max(func, value, environment, attribute, case_sensitive):
+    it = iter(value)
+    try:
+        first = next(it)
+    except StopIteration:
+        return environment.undefined('No aggregated item, sequence was empty')
+
+    key_func = make_attrgetter(environment, attribute, not case_sensitive)
+    return func(chain([first], it), key=key_func)
+
+
+@environmentfilter
+def do_min(environment, value, attribute=None, case_sensitive=False):
+    """Return the smallest item from the sequence.
+
+    .. sourcecode:: jinja
+
+        {{ [1, 2, 3]|min }}
+            -> 1
+
+    It is also possible to get the item providing the smallest value for a
+    certain attribute:
+
+    .. sourcecode:: jinja
+
+        {{ users|min('last_login') }}
+    """
+    return _min_or_max(min, value, environment, attribute, case_sensitive)
+
+
+@environmentfilter
+def do_max(environment, value, attribute=None, case_sensitive=False):
+    """Return the largest item from the sequence.
+
+    .. sourcecode:: jinja
+
+        {{ [1, 2, 3]|max }}
+            -> 3
+
+    It is also possible to get the item providing the largest value for a
+    certain attribute:
+
+    .. sourcecode:: jinja
+
+        {{ users|max('last_login') }}
+    """
+    return _min_or_max(max, value, environment, attribute, case_sensitive)
 
 
 def do_default(value, default_value=u'', boolean=False):
@@ -969,6 +1011,8 @@ FILTERS = {
     'list':                 do_list,
     'lower':                do_lower,
     'map':                  do_map,
+    'min':                  do_min,
+    'max':                  do_max,
     'pprint':               do_pprint,
     'random':               do_random,
     'reject':               do_reject,

@@ -13,6 +13,15 @@ from jinja2 import Markup, Environment
 from jinja2._compat import text_type, implements_to_string
 
 
+@implements_to_string
+class Magic(object):
+    def __init__(self, value):
+        self.value = value
+
+    def __str__(self):
+        return text_type(self.value)
+
+
 @pytest.mark.filter
 class TestFilter():
 
@@ -348,15 +357,32 @@ class TestFilter():
         assert tmpl.render() == "['Bar', 'blah', 'foo']"
 
     def test_sort4(self, env):
-        @implements_to_string
-        class Magic(object):
-            def __init__(self, value):
-                self.value = value
-
-            def __str__(self):
-                return text_type(self.value)
         tmpl = env.from_string('''{{ items|sort(attribute='value')|join }}''')
         assert tmpl.render(items=map(Magic, [3, 2, 4, 1])) == '1234'
+
+    def test_min1(self, env):
+        tmpl = env.from_string('{{ ["a", "B"]|min }}')
+        assert tmpl.render() == 'a'
+
+    def test_min2(self, env):
+        tmpl = env.from_string('{{ []|min }}')
+        assert tmpl.render() == ''
+
+    def test_min3(self, env):
+        tmpl = env.from_string('{{ items|min("value") }}')
+        assert tmpl.render(items=map(Magic, [5, 1, 9])) == '1'
+
+    def test_max1(self, env):
+        tmpl = env.from_string('{{ ["a", "B"]|max }}')
+        assert tmpl.render() == 'B'
+
+    def test_max2(self, env):
+        tmpl = env.from_string('{{ []|max }}')
+        assert tmpl.render() == ''
+
+    def test_max3(self, env):
+        tmpl = env.from_string('{{ items|max("value") }}')
+        assert tmpl.render(items=map(Magic, [5, 9, 1])) == '9'
 
     def test_groupby(self, env):
         tmpl = env.from_string('''
