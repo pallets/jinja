@@ -914,6 +914,14 @@ def do_rejectattr(*args, **kwargs):
     """
     return _select_or_reject(args, kwargs, lambda x: not x, True)
 
+def do_json(value, **kwargs):
+    """Serializes an object as JSON. Optionally given keyword arguments
+    are passed to json.dumps(), ensure_ascii however defaults to False.
+    """
+    import json
+    kwargs.setdefault('ensure_ascii', False)
+    return json.dumps(value, **kwargs)
+
 
 def _select_or_reject(args, kwargs, modfunc, lookup_attr):
     context = args[0]
@@ -964,6 +972,7 @@ FILTERS = {
     'indent':               do_indent,
     'int':                  do_int,
     'join':                 do_join,
+    'json':                 do_json,
     'last':                 do_last,
     'length':               len,
     'list':                 do_list,
