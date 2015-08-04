@@ -12,7 +12,7 @@ import re
 import math
 import random
 
-from itertools import groupby
+from itertools import groupby, chain
 from collections import namedtuple
 from jinja2.utils import Markup, escape, pformat, urlize, soft_unicode, \
      unicode_urlencode, htmlsafe_json_dumps
@@ -311,6 +311,55 @@ def do_unique(environment, value, case_sensitive=False, attribute=None):
         if key not in seen:
             seen.add(key)
             yield item
+
+
+def _min_or_max(func, value, environment, attribute, case_sensitive):
+    it = iter(value)
+    try:
+        first = next(it)
+    except StopIteration:
+        return environment.undefined('No aggregated item, sequence was empty')
+
+    key_func = make_attrgetter(environment, attribute, not case_sensitive)
+    return func(chain([first], it), key=key_func)
+
+
+@environmentfilter
+def do_min(environment, value, attribute=None, case_sensitive=False):
+    """Return the smallest item from the sequence.
+
+    .. sourcecode:: jinja
+
+        {{ [1, 2, 3]|min }}
+            -> 1
+
+    It is also possible to get the item providing the smallest value for a
+    certain attribute:
+
+    .. sourcecode:: jinja
+
+        {{ users|min('last_login') }}
+    """
+    return _min_or_max(min, value, environment, attribute, case_sensitive)
+
+
+@environmentfilter
+def do_max(environment, value, attribute=None, case_sensitive=False):
+    """Return the largest item from the sequence.
+
+    .. sourcecode:: jinja
+
+        {{ [1, 2, 3]|max }}
+            -> 3
+
+    It is also possible to get the item providing the largest value for a
+    certain attribute:
+
+    .. sourcecode:: jinja
+
+        {{ users|max('last_login') }}
+    """
+    return _min_or_max(max, value, environment, attribute, case_sensitive)
 
 
 def do_default(value, default_value=u'', boolean=False):
@@ -1097,6 +1146,8 @@ FILTERS = {
     'list':                 do_list,
     'lower':                do_lower,
     'map':                  do_map,
+    'min':                  do_min,
+    'max':                  do_max,
     'pprint':               do_pprint,
     'random':               do_random,
     'reject':               do_reject,
