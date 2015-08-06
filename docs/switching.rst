@@ -116,37 +116,6 @@ Python syntax. Thus this Django code::
 This allows you to pass variables to the method, which is not possible in
 Django. This syntax is also used for macros.
 
-Conditions
-~~~~~~~~~~
-
-In Django you can use the following constructs to check for equality::
-
-    {% ifequal foo "bar" %}
-        ...
-    {% else %}
-        ...
-    {% endifequal %}
-
-In Jinja2 you can use the normal if statement in combination with operators::
-
-    {% if foo == 'bar' %}
-        ...
-    {% else %}
-        ...
-    {% endif %}
-
-You can also have multiple elif branches in your template::
-
-    {% if something %}
-        ...
-    {% elif otherthing %}
-        ...
-    {% elif foothing %}
-        ...
-    {% else %}
-        ...
-    {% endif %}
-
 Filter Arguments
 ~~~~~~~~~~~~~~~~
 
