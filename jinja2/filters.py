@@ -12,8 +12,8 @@ import re
 import math
 
 from random import choice
-from operator import itemgetter
 from itertools import groupby
+from collections import namedtuple
 from jinja2.utils import Markup, escape, pformat, urlize, soft_unicode, \
      unicode_urlencode
 from jinja2.runtime import Undefined
@@ -669,6 +669,8 @@ def do_round(value, precision=0, method='common'):
     return func(value * (10 ** precision)) / (10 ** precision)
 
 
+_GroupTuple = namedtuple('_GroupTuple', ['grouper', 'list'])
+
 @environmentfilter
 def do_groupby(environment, value, attribute):
     """Group a sequence of objects by a common attribute.
@@ -709,17 +711,7 @@ def do_groupby(environment, value, attribute):
        attribute of another attribute.
     """
     expr = make_attrgetter(environment, attribute)
-    return sorted(map(_GroupTuple, groupby(sorted(value, key=expr), expr)))
-
-
-class _GroupTuple(tuple):
-    __slots__ = ()
-    grouper = property(itemgetter(0))
-    list = property(itemgetter(1))
-
-    def __new__(cls, xxx_todo_changeme):
-        (key, value) = xxx_todo_changeme
-        return tuple.__new__(cls, (key, list(value)))
+    return [_GroupTuple(key, list(values)) for key, values in groupby(sorted(value, key=expr), expr)]
 
 
 @environmentfilter
