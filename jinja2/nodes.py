@@ -563,8 +563,7 @@ class Filter(Expr):
         filter_ = self.environment.filters.get(self.name)
         if filter_ is None or getattr(filter_, 'contextfilter', False):
             raise Impossible()
-        obj = self.node.as_const(eval_ctx)
-        args = [x.as_const(eval_ctx) for x in self.args]
+        args = [x.as_const(eval_ctx) for x in [self.node] + self.args]
         if getattr(filter_, 'evalcontextfilter', False):
             args.insert(0, eval_ctx)
         elif getattr(filter_, 'environmentfilter', False):
