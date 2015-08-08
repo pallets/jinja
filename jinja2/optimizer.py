@@ -31,6 +31,7 @@ class Optimizer(NodeTransformer):
 
     def __init__(self, environment):
         self.environment = environment
+        self.eval_ctx = nodes.EvalContext(environment)
 
     def visit_If(self, node):
         """Eliminate dead code."""
@@ -39,7 +40,7 @@ class Optimizer(NodeTransformer):
         if node.find(nodes.Block) is not None:
             return self.generic_visit(node)
         try:
-            val = self.visit(node.test).as_const()
+            val = self.visit(node.test).as_const(self.eval_ctx)
         except nodes.Impossible:
             return self.generic_visit(node)
         if val:
@@ -51,11 +52,27 @@ class Optimizer(NodeTransformer):
             result.extend(self.visit_list(node))
         return result
 
+    def visit_EvalContextModifier(self, node):
+        for keyword in node.options:
+            try:
+                value = keyword.value.as_const(self.eval_ctx)
+            except nodes.Impossible:
+                self.eval_ctx.volatile = True
+            else:
+                setattr(self.eval_ctx, keyword.key, value)
+        return self.generic_visit(node)
+
+    def visit_ScopedEvalContextModifier(self, node):
+        backup = self.eval_ctx.save()
+        node = self.visit_EvalContextModifier(node)
+        self.eval_ctx.revert(backup)
+        return node
+
     def fold(self, node):
         """Do constant folding."""
         node = self.generic_visit(node)
         try:
-            return nodes.Const.from_untrusted(node.as_const(),
+            return nodes.Const.from_untrusted(node.as_const(self.eval_ctx),
                                               lineno=node.lineno,
                                               environment=self.environment)
         except nodes.Impossible:
