@@ -8,6 +8,7 @@
     :copyright: (c) 2010 by the Jinja Team.
     :license: BSD, see LICENSE for more details.
 """
+import random
 import pytest
 from jinja2 import Markup, Environment
 from jinja2._compat import text_type, implements_to_string
@@ -177,11 +178,17 @@ class TestFilter():
         data = list(range(1000))
         assert tmpl.render(data=data) == pformat(data)
 
-    def test_random(self, env):
+    def test_random1(self, env):
         tmpl = env.from_string('''{{ seq|random }}''')
         seq = list(range(100))
         for _ in range(10):
             assert int(tmpl.render(seq=seq)) in seq
+
+    def test_random2(self, env, monkeypatch):
+        monkeypatch.setattr(random, 'choice', lambda seq: seq[0])
+        tmpl = env.from_string('''{{ range(100)|random }}''')
+        monkeypatch.setattr(random, 'choice', lambda seq: seq[2])
+        assert tmpl.render() == '2'
 
     def test_reverse(self, env):
         tmpl = env.from_string('{{ "foobar"|reverse|join }}|'
