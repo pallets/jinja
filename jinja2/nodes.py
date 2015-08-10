@@ -529,7 +529,7 @@ class Filter(Expr):
     fields = ('node', 'name', 'args', 'kwargs', 'dyn_args', 'dyn_kwargs')
 
     def as_const(self, eval_ctx):
-        if eval_ctx.volatile or self.node is None:
+        if self.node is None:
             raise Impossible()
         # we have to be careful here because we call filter_ below.
         # if this variable would be called filter, 2to3 would wrap the
@@ -541,6 +541,8 @@ class Filter(Expr):
             raise Impossible()
         args = [x.as_const(eval_ctx) for x in [self.node] + self.args]
         if getattr(filter_, 'evalcontextfilter', False):
+            if eval_ctx.volatile:
+                raise Impossible()
             args.insert(0, eval_ctx)
         elif getattr(filter_, 'environmentfilter', False):
             args.insert(0, self.environment)
@@ -578,8 +580,6 @@ class Call(Expr):
     fields = ('node', 'args', 'kwargs', 'dyn_args', 'dyn_kwargs')
 
     def as_const(self, eval_ctx):
-        if eval_ctx.volatile:
-            raise Impossible()
         obj = self.node.as_const(eval_ctx)
 
         # don't evaluate context functions
@@ -588,6 +588,8 @@ class Call(Expr):
             if getattr(obj, 'contextfunction', False):
                 raise Impossible()
             elif getattr(obj, 'evalcontextfunction', False):
+                if eval_ctx.volatile:
+                    raise Impossible()
                 args.insert(0, eval_ctx)
             elif getattr(obj, 'environmentfunction', False):
                 args.insert(0, self.environment)
