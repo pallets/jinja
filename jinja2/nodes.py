@@ -387,7 +387,7 @@ class Assign(Stmt):
 
 class AssignBlock(Stmt):
     """Assigns a block to a target."""
-    fields = ('target', 'body')
+    fields = ('target', 'filter', 'body')
 
 
 class Expr(Node):

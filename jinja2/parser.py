@@ -180,9 +180,10 @@ class Parser(object):
         if self.stream.skip_if('assign'):
             expr = self.parse_tuple()
             return nodes.Assign(target, expr, lineno=lineno)
+        filter_node = self.parse_filter(None)
         body = self.parse_statements(('name:endset',),
                                      drop_needle=True)
-        return nodes.AssignBlock(target, body, lineno=lineno)
+        return nodes.AssignBlock(target, filter_node, body, lineno=lineno)
 
     def parse_for(self):
         """Parse a for loop."""

@@ -947,6 +947,17 @@ Example::
 
 The `navigation` variable then contains the navigation HTML source.
 
+.. versionchanged:: 2.10
+
+Starting with Jinja 2.10, the block assignment supports filters.
+
+Example::
+
+    {% set reply | wordwrap %}
+        You wrote:
+        {{ message }}
+    {% endset %}
+
 
 .. _extends:
 

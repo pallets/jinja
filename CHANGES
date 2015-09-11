@@ -33,10 +33,12 @@ Version 2.10
 - Add ``reverse`` argument for ``dictsort`` filter. (`#692`_)
 - Add a ``NativeEnvironment`` that renders templates to native Python types
   instead of strings. (`#708`_)
+- Added filter support to the block ``set`` tag. (`#489`_)
 
 .. _#469: https://github.com/pallets/jinja/pull/469
 .. _#475: https://github.com/pallets/jinja/pull/475
 .. _#478: https://github.com/pallets/jinja/pull/478
+.. _#489: https://github.com/pallets/jinja/pull/489
 .. _#617: https://github.com/pallets/jinja/pull/617
 .. _#618: https://github.com/pallets/jinja/pull/618
 .. _#665: https://github.com/pallets/jinja/pull/665
