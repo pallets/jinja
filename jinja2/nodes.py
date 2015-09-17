@@ -722,7 +722,7 @@ class Operand(Helper):
     """Holds an operator and an expression."""
     fields = ('op', 'expr')
 
-if __debug__:
+if __debug__ and Operand.__doc__:
     Operand.__doc__ += '\nThe following operators are available: ' + \
         ', '.join(sorted('``%s``' % x for x in set(_binop_to_func) |
                   set(_uaop_to_func) | set(_cmpop_to_func)))
