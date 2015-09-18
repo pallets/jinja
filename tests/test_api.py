@@ -54,7 +54,7 @@ class TestExtendedAPI():
         for item in items + items:
             assert c.current == item
             assert c.next() == item
-        c.next()
+        next(c)
         assert c.current == 2
         c.reset()
         assert c.current == 1
