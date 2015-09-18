@@ -487,7 +487,6 @@ except ImportError:
     pass
 
 
-@implements_iterator
 class Cycler(object):
     """A cycle helper for templates."""
 
@@ -495,7 +494,7 @@ class Cycler(object):
         if not items:
             raise RuntimeError('at least one item has to be provided')
         self.items = items
-        self.reset()
+        self.reset()        
 
     def reset(self):
         """Resets the cycle."""
@@ -511,6 +510,8 @@ class Cycler(object):
         rv = self.current
         self.pos = (self.pos + 1) % len(self.items)
         return rv
+
+    next = __next__
 
 
 class Joiner(object):
