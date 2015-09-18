@@ -494,7 +494,7 @@ class Cycler(object):
         if not items:
             raise RuntimeError('at least one item has to be provided')
         self.items = items
-        self.reset()        
+        self.reset()
 
     def reset(self):
         """Resets the cycle."""
