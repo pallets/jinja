@@ -53,8 +53,8 @@ class TestExtendedAPI():
         c = Cycler(*items)
         for item in items + items:
             assert c.current == item
-            assert next(c) == item
-        next(c)
+            assert c.next() == item
+        c.next()
         assert c.current == 2
         c.reset()
         assert c.current == 1
