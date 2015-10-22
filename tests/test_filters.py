@@ -31,9 +31,11 @@ class TestFilter():
     def test_default(self, env):
         tmpl = env.from_string(
             "{{ missing|default('no') }}|{{ false|default('no') }}|"
-            "{{ false|default('no', true) }}|{{ given|default('no') }}"
+            "{{ false|default('no', true) }}|{{ given|default('no') }}|"
+            "{{ missing['subelement']|default('no') }}|"
+            "{{ missing.subelement|default('no') }}"
         )
-        assert tmpl.render(given='yes') == 'no|False|no|yes'
+        assert tmpl.render(given='yes') == 'no|False|no|yes|no|no'
 
     def test_dictsort(self, env):
         tmpl = env.from_string(
