@@ -203,7 +203,7 @@ def urlize(text, trim_url_limit=None, nofollow=False, target=None):
     words = _word_split_re.split(text_type(escape(text)))
     nofollow_attr = nofollow and ' rel="nofollow"' or ''
     if target is not None and isinstance(target, string_types):
-        target_attr = ' target="%s"' % target
+        target_attr = ' target="%s"' % escape(target)
     else:
         target_attr = ''
     for i, word in enumerate(words):

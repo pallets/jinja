@@ -14,7 +14,7 @@ import pytest
 
 import pickle
 
-from jinja2.utils import LRUCache, escape, object_type_repr
+from jinja2.utils import LRUCache, escape, object_type_repr, urlize
 
 
 @pytest.mark.utils
@@ -74,3 +74,14 @@ class TestMarkupLeak():
                 escape(u"<foo>")
             counts.add(len(gc.get_objects()))
         assert len(counts) == 1, 'ouch, c extension seems to leak objects'
+
+
+@pytest.mark.utils
+@pytest.mark.escapeUrlizeTarget
+class TestEscapeUrlizeTarget():
+    def test_escape_urlize_target(self):
+        url = "http://example.org"
+        target = "<script>"
+        assert urlize(url, target=target) == ('<a href="http://example.org"'
+                                              ' target="&lt;script&gt;">'
+                                              'http://example.org</a>')
