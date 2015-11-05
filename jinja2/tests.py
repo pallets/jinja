@@ -125,6 +125,28 @@ def test_equalto(value, other):
     return value == other
 
 
+def test_notequalto(value, other):
+    """Check if an object has a different value as another object:
+
+    .. sourcecode:: jinja
+
+        {% if foo.expression is notequalto 42 %}
+            the foo attribute doesn't evaluate to the constant 42
+        {% endif %}
+
+    This appears to be a useless test as it does exactly the same as the
+    ``!=`` operator, but it can be useful when used together with the
+    `selectattr` function:
+
+    .. sourcecode:: jinja
+
+        {{ users|selectattr("email", "notequalto", "foo@bar.valid") }}
+
+    .. versionadded:: 2.9
+    """
+    return value != other
+
+
 def test_sameas(value, other):
     """Check if an object points to the same memory address than another
     object:
@@ -169,5 +191,6 @@ TESTS = {
     'callable':         test_callable,
     'sameas':           test_sameas,
     'equalto':          test_equalto,
+    'notequalto':       test_notequalto,
     'escaped':          test_escaped
 }

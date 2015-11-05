@@ -89,6 +89,18 @@ class TestTestsCase():
         assert tmpl.render(foo=12, bar="baz") \
             == 'True|False|True|True|False|True|True|False'
 
+    def test_notequalto(self, env):
+        tmpl = env.from_string('{{ foo is notequalto 12 }}|'
+                               '{{ foo is notequalto 0 }}|'
+                               '{{ foo is notequalto (3 * 4) }}|'
+                               '{{ bar is notequalto "baz" }}|'
+                               '{{ bar is notequalto "zab" }}|'
+                               '{{ bar is notequalto ("ba" + "z") }}|'
+                               '{{ bar is notequalto bar }}|'
+                               '{{ bar is notequalto foo }}')
+        assert tmpl.render(foo=12, bar="baz") \
+            == 'False|True|False|False|True|False|False|True'
+
     def test_sameas(self, env):
         tmpl = env.from_string('{{ foo is sameas false }}|'
                                '{{ 0 is sameas false }}')
