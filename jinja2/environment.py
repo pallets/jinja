@@ -1012,16 +1012,24 @@ class Template(object):
             return
         yield self.environment.handle_exception(exc_info, True)
 
-    def new_context(self, vars=None, shared=False, locals=None):
+    def new_context(self, vars=None, shared=False, locals=None, args=None):
         """Create a new :class:`Context` for this template.  The vars
         provided will be passed to the template.  Per default the globals
         are added to the context.  If shared is set to `True` the data
         is passed as it to the context without adding the globals.
 
         `locals` can be a dict of local variables for internal usage.
+        `args` suplements `locals` with more values to be added to the context.
         """
+        if args:
+            new_locals = dict(locals) if locals else {}
+            for key, value in iteritems(args):
+                new_locals['l_' + key] = value
+        else:
+            new_locals = locals
+
         return new_context(self.environment, self.name, self.blocks,
-                           vars, shared, self.globals, locals)
+                           vars, shared, self.globals, new_locals)
 
     def make_module(self, vars=None, shared=False, locals=None):
         """This method works like the :attr:`module` attribute when called

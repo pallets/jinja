@@ -255,7 +255,27 @@ class Parser(object):
             self.stream.skip(2)
         else:
             node.ignore_missing = False
-        return self.parse_import_context(node, True)
+
+        node.with_expression = None
+        if self.stream.current.test_any('name:with', 'name:without') and \
+           self.stream.look().test('name:context'):
+            node.with_context = next(self.stream).value == 'with'
+            self.stream.skip()
+        elif self.stream.current.test('name:with'):
+            self.stream.skip()
+            node.with_expression = self.parse_expression()
+            if self.stream.current.test('name:only'):
+                node.with_context = False
+                self.stream.skip()
+            else:
+                node.with_context = True
+
+        elif self.stream.current.test('name:only'):
+            node.with_context = False
+            self.stream.skip()
+        else:
+            node.with_context = True
+        return node
 
     def parse_import(self):
         node = nodes.Import(lineno=next(self.stream).lineno)

@@ -70,7 +70,7 @@ class TestImports():
         assert not hasattr(m, '__missing')
         assert m.variable == 42
         assert not hasattr(m, 'notthere')
-
+        
 
 @pytest.mark.imports
 @pytest.mark.includes
@@ -146,3 +146,48 @@ class TestIncludes():
             {{ outer("FOO") }}
         """)
         assert t.render().strip() == '(FOO)'
+
+    def test_include_with(self, test_env):
+
+        tmpl = test_env.from_string("{{ foo }}")
+        t = test_env.from_string("{% set foo = 'bar' %}{% include tmpl %}")
+        assert t.render({"tmpl":tmpl}).strip() == "bar"
+
+        t = test_env.from_string("{% include tmpl with { 'foo' : 'BIZ' } %}")
+        assert t.render({"tmpl":tmpl}).strip() == "BIZ"
+
+        t = test_env.from_string("{% set foo = 'bar' %}{% include tmpl only %}")
+        assert t.render({"tmpl":tmpl}).strip() == ""
+
+        tmpl = test_env.from_string("{{ from_with }} {{ from_context }}")
+        t = test_env.from_string("{% set from_context = 'CONTEXT' %}" +
+                                 "{% include tmpl with { 'from_with' : 'WITH' } %}")
+        assert t.render({"tmpl":tmpl}).strip() == "WITH CONTEXT"
+        
+        tmpl = test_env.from_string("{{ from_with }} {{ from_context }}")
+        t = test_env.from_string("{% set from_context = 'CONTEXT' %}" +
+                                 "{% include tmpl with { 'from_with' : 'WITH' } only %}")
+        assert t.render({"tmpl":tmpl}).strip() == "WITH"
+        
+        env = Environment(loader=DictLoader(dict(
+            inner="{{ global_var }} {{ arg }} {{ global_func(22) }}",
+            main1="{% include 'inner' with context %}",
+            main2="{% include 'inner' without context %}",
+            main3="{% include 'inner' with { 'arg' : 43 } %}",
+            main4="{% include 'inner' with { 'arg' : 43 } only %}",
+            main5="{% include ['outer', 'inner'] with { 'arg' : 43 } only %}",
+            main6="{% include 'inner' ignore missing with { 'arg' : 43 } only %}",
+            main7="{% include 'outer' ignore missing with { 'arg' : 43 } only %}"
+        )))
+        env.globals['global_var'] = 42
+        env.globals['global_func'] = lambda x: x * 2
+
+        assert env.get_template("inner").render() == "42  44"
+        assert env.get_template("main1").render() == "42  44"
+        assert env.get_template("main2").render() == "42  44"
+        assert env.get_template("main3").render() == "42 43 44"
+        assert env.get_template("main4").render() == "42 43 44"
+        assert env.get_template("main5").render() == "42 43 44"
+        assert env.get_template("main6").render() == "42 43 44"
+        assert env.get_template("main7").render() == ""
+        

@@ -952,12 +952,23 @@ class CodeGenerator(NodeVisitor):
             self.writeline('else:')
             self.indent()
 
-        if node.with_context:
-            self.writeline('for event in template.root_render_func('
-                           'template.new_context(context.parent, True, '
-                           'locals())):')
+        if node.with_expression:
+            self.writeline('args = dict(')
+            self.visit(node.with_expression, frame)
+            self.write(')')
+
+            self.writeline('vars = dict(context.parent)')
+            if node.with_context:
+                self.writeline('ctxt = template.new_context(vars, True, locals(), args)')
+            else:
+                self.writeline('ctxt = template.new_context(vars, True, {}, args)')
+            self.writeline('for event in template.root_render_func(ctxt):')
         else:
-            self.writeline('for event in template.module._body_stream:')
+            if node.with_context:
+                self.writeline('ctxt = template.new_context(context.parent, True, locals())')
+                self.writeline('for event in template.root_render_func(ctxt):')
+            else:
+                self.writeline('for event in template.module._body_stream:')
 
         self.indent()
         self.simple_write('event', frame)
