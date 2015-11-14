@@ -183,8 +183,8 @@ class SandboxedEnvironment(Environment):
     attributes or functions are safe to access.
 
     If the template tries to access insecure code a :exc:`SecurityError` is
-    raised.  However also other exceptions may occour during the rendering so
-    the caller has to ensure that all exceptions are catched.
+    raised.  However also other exceptions may occur during the rendering so
+    the caller has to ensure that all exceptions are caught.
     """
     sandboxed = True
 
