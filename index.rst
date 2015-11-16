@@ -39,7 +39,7 @@ Wide Range of Features
 -   Sandboxed execution mode.  Every aspect of the template execution is
     monitored and explicitly whitelisted or blacklisted, whatever is
     preferred.  This makes it possible to execute untrusted templates.
--   powerful automatic HTML escaping system for cross site scripting
+-   Powerful automatic HTML escaping system for cross site scripting
     prevention.
 -   Template inheritance makes it possible to use the same or a similar
     layout for all templates.
