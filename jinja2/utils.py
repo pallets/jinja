@@ -295,7 +295,7 @@ def unicode_urlencode(obj, charset='utf-8', for_qs=False):
         obj = text_type(obj)
     if isinstance(obj, text_type):
         obj = obj.encode(charset)
-    safe = for_qs and b'' or b'/'
+    safe = not for_qs and b'/' or b''
     rv = text_type(url_quote(obj, safe))
     if for_qs:
         rv = rv.replace('%20', '+')
