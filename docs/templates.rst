@@ -681,7 +681,7 @@ If
 
 The `if` statement in Jinja is comparable with the Python if statement.
 In the simplest form, you can use it to test if a variable is defined, not
-empty or not false::
+empty and not false::
 
     {% if users %}
     <ul>
