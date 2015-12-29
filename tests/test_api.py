@@ -59,6 +59,17 @@ class TestExtendedAPI():
         c.reset()
         assert c.current == 1
 
+    def test_cycler_nextmethod(self, env):
+        items = 1, 2, 3
+        c = Cycler(*items)
+        for item in items + items:
+            assert c.current == item
+            assert c.next() == item
+        c.next()
+        assert c.current == 2
+        c.reset()
+        assert c.current == 1        
+
     def test_expressions(self, env):
         expr = env.compile_expression("foo")
         assert expr() is None

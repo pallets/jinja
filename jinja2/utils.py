@@ -506,11 +506,13 @@ class Cycler(object):
         """Returns the current item."""
         return self.items[self.pos]
 
-    def __next__(self):
+    def next(self):
         """Goes one item ahead and returns it."""
         rv = self.current
         self.pos = (self.pos + 1) % len(self.items)
         return rv
+
+    __next__ = next
 
 
 class Joiner(object):
