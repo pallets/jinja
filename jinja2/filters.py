@@ -44,7 +44,7 @@ def evalcontextfilter(f):
 
 
 def environmentfilter(f):
-    """Decorator for marking evironment dependent filters.  The current
+    """Decorator for marking environment dependent filters.  The current
     :class:`Environment` is passed to the filter as first argument.
     """
     f.environmentfilter = True
