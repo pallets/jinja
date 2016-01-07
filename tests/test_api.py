@@ -244,6 +244,8 @@ class TestUndefined():
             == 'True'
         assert env.from_string('{{ foo.missing }}').render(foo=42) == ''
         assert env.from_string('{{ not missing }}').render() == 'True'
+        pytest.raises(UndefinedError,
+                      env.from_string('{{ missing - 1}}').render)
 
     def test_debug_undefined(self):
         env = Environment(undefined=DebugUndefined)
