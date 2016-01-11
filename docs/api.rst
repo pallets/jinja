@@ -581,7 +581,7 @@ Custom Filters
 --------------
 
 Custom filters are just regular Python functions that take the left side of
-the filter as first argument and the the arguments passed to the filter as
+the filter as first argument and the arguments passed to the filter as
 extra arguments or keyword arguments.
 
 For example in the filter ``{{ 42|myfilter(23) }}`` the function would be
