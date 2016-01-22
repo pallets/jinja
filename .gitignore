@@ -8,3 +8,6 @@ build
 dist
 .DS_Store
 .tox
+.gitignore
+.cache/
+venv

@@ -10,7 +10,9 @@
 """
 import os
 import sys
+import glob
 import weakref
+import itertools
 from types import ModuleType
 from os import path
 from hashlib import sha1
@@ -200,6 +202,70 @@ class FileSystemLoader(BaseLoader):
                     if template not in found:
                         found.add(template)
         return sorted(found)
+
+
+class GlobLoader(BaseLoader):
+    """Uses glob from standard library to load files from a string or a list of
+    strings. Paths can be excluded by prepending an exclamation mark.
+
+    GlobLoader([ ['pages/*.html', '!pages/exclude.html'], 'partials/*.html' ])
+
+    would load all pages from the directories 'pages' and 'partials' with the
+    extension .html, except for pages/exclude.html. Paths to be excluded must
+    be in a list with the desired files.
+
+    Path expansion with ** works in Python 3.5+.
+    """
+
+    def __init__(self, paths, searchpath=None):
+
+        files = [self.concat_paths(item) for item in paths]
+        self.files = list(itertools.chain.from_iterable(files))
+        self.searchpath = searchpath
+
+    @classmethod
+    def concat_paths(cls, paths_to_concat):
+        '''
+        Concatenates paths from lists or named individually, expands them, and
+        removes paths that are excluded.
+        '''
+        positive_match = []
+        negative_match = []
+        if isinstance(paths_to_concat, list):
+            for item in paths_to_concat:
+                cls.append_path_to_list(item, positive_match, negative_match)
+        elif isinstance(paths_to_concat, str):
+            cls.append_path_to_list(paths_to_concat,
+                                    positive_match,
+                                    negative_match)
+        return list(set(positive_match) - set(negative_match))
+
+    @staticmethod
+    def append_path_to_list(path_to_append, positive_match, negative_match):
+        '''
+        Sorts paths into positive and negative matches with correct path names
+        '''
+        if path_to_append.startswith('!'):
+            negative_match += glob.glob(path_to_append[1:])
+        else:
+            positive_match += glob.glob(path_to_append)
+
+    def get_template_path(self, template):
+        if self.searchpath is not None:
+          return os.path.join(self.searchpath, template)
+        else:
+          return template
+
+    def get_source(self, environment, template):
+        template_path = self.get_template_path(template)
+        for item in self.files:
+            if item == template_path:
+                mtime = os.path.getmtime(item)
+                with open(item, 'r') as f:
+                    return (f.read(),
+                            item,
+                            lambda: mtime == os.path.getmtime(item))
+        raise TemplateNotFound(template)
 
 
 class PackageLoader(BaseLoader):

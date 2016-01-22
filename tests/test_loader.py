@@ -43,6 +43,15 @@ class TestLoaders():
         assert tmpl.render().strip() == 'FOO'
         pytest.raises(TemplateNotFound, env.get_template, 'missing.html')
 
+    def test_glob_loader(self, glob_loader):
+        env = Environment(loader=glob_loader)
+        tmpl = env.get_template('test.html')
+        assert tmpl.render().strip() == 'BAR'
+        tmpl = env.get_template('foo/test.html')
+        assert tmpl.render().strip() == 'FOO'
+        pytest.raises(TemplateNotFound, env.get_template, 'missing.html')
+        pytest.raises(TemplateNotFound, env.get_template, 'exclude.html')
+
     def test_choice_loader(self, choice_loader):
         env = Environment(loader=choice_loader)
         tmpl = env.get_template('justdict.html')
