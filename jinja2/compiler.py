@@ -1219,20 +1219,6 @@ class CodeGenerator(NodeVisitor):
         if self.has_known_extends and frame.require_output_check:
             return
 
-        allow_constant_finalize = True
-        if self.environment.finalize:
-            func = self.environment.finalize
-            if getattr(func, 'contextfunction', False) or \
-               getattr(func, 'evalcontextfunction', False):
-                allow_constant_finalize = False
-            elif getattr(func, 'environmentfunction', False):
-                finalize = lambda x: text_type(
-                    self.environment.finalize(self.environment, x))
-            else:
-                finalize = lambda x: text_type(self.environment.finalize(x))
-        else:
-            finalize = text_type
-
         # if we are inside a frame that requires output checking, we do so
         outdent_later = False
         if frame.require_output_check:
@@ -1245,8 +1231,6 @@ class CodeGenerator(NodeVisitor):
         body = []
         for child in node.nodes:
             try:
-                if not allow_constant_finalize:
-                    raise nodes.Impossible()
                 const = child.as_const(frame.eval_ctx)
             except nodes.Impossible:
                 body.append(child)
@@ -1260,7 +1244,7 @@ class CodeGenerator(NodeVisitor):
                         const = const.__html__()
                     else:
                         const = escape(const)
-                const = finalize(const)
+                const = text_type(const)
             except Exception:
                 # if something goes wrong here we evaluate the node
                 # at runtime for easier debugging
@@ -1303,8 +1287,14 @@ class CodeGenerator(NodeVisitor):
                     if self.environment.finalize is not None:
                         self.write('environment.finalize(')
                         if getattr(self.environment.finalize,
-                                   "contextfunction", False):
+                                   'contextfunction', False):
                             self.write('context, ')
+                        elif getattr(self.environment.finalize,
+                                   'evalcontextfunction', False):
+                            self.write('context.eval_ctx, ')
+                        elif getattr(self.environment.finalize,
+                                   'environmentfunction', False):
+                            self.write('environment, ')
                         close += 1
                     self.visit(item, frame)
                     self.write(')' * close)

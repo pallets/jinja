@@ -15,7 +15,8 @@ import shutil
 import pytest
 from jinja2 import Environment, Undefined, DebugUndefined, \
      StrictUndefined, UndefinedError, meta, \
-     is_undefined, Template, DictLoader, make_logging_undefined
+     is_undefined, Template, DictLoader, make_logging_undefined, \
+     contextfunction, evalcontextfunction
 from jinja2.compiler import CodeGenerator
 from jinja2.runtime import Context
 from jinja2.utils import Cycler
@@ -46,7 +47,29 @@ class TestExtendedAPI():
         tmpl = env.from_string('{% for item in seq %}|{{ item }}{% endfor %}')
         assert tmpl.render(seq=(None, 1, "foo")) == '||1|foo'
         tmpl = env.from_string('<{{ none }}>')
-        assert tmpl.render() == '<>'
+        assert tmpl.render() == '<None>'
+
+        def finalize_default(value):
+            return u''
+        env = Environment(finalize=finalize_default)
+        tmpl = env.from_string('<{{ k }}>')
+        assert tmpl.render(k='v') == '<>'
+
+    def test_finalizer_function(self, env):
+        @contextfunction
+        def finalize_contextfunction(_c, value):
+            return u''
+        env = Environment(finalize=finalize_contextfunction)
+        tmpl = env.from_string('<{{ k }}>')
+        assert tmpl.render(k='v') == '<>'
+
+        @evalcontextfunction
+        def finalize_evalcontextfunction(_ec, value):
+            return u''
+
+        env = Environment(finalize=finalize_evalcontextfunction)
+        tmpl = env.from_string('<{{ k }}>')
+        assert tmpl.render(k='v') == '<>'
 
     def test_cycler(self, env):
         items = 1, 2, 3
