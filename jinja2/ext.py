@@ -138,7 +138,10 @@ def _make_new_gettext(func):
         rv = __context.call(func, __string)
         if __context.eval_ctx.autoescape:
             rv = Markup(rv)
-        return rv % variables
+        try:
+            return rv % variables
+        except:
+            return rv
     return gettext
 
 
@@ -149,7 +152,10 @@ def _make_new_ngettext(func):
         rv = __context.call(func, __singular, __plural, __num)
         if __context.eval_ctx.autoescape:
             rv = Markup(rv)
-        return rv % variables
+        try:
+            return rv % variables
+        except:
+            return rv
     return ngettext
 
 
