@@ -107,7 +107,7 @@ The usage of the `i18n` extension for template designers is covered as part
 :ref:`of the template documentation <i18n-in-templates>`.
 
 .. _gettext: http://docs.python.org/dev/library/gettext
-.. _Babel: http://babel.edgewall.org/
+.. _Babel: http://babel.pocoo.org/
 
 .. _newstyle-gettext:
 
