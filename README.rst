@@ -41,9 +41,9 @@ Builds
 ------
 
 +---------------------+------------------------------------------------------------------------------+
-| ``master``          | .. image:: https://travis-ci.org/mitsuhiko/jinja2.svg?branch=master          |
-|                     |     :target: https://travis-ci.org/mitsuhiko/jinja2                          |
+| ``master``          | .. image:: https://travis-ci.org/pallets/jinja.svg?branch=master          |
+|                     |     :target: https://travis-ci.org/pallets/jinja                          |
 +---------------------+------------------------------------------------------------------------------+
-| ``2.7-maintenance`` | .. image:: https://travis-ci.org/mitsuhiko/jinja2.svg?branch=2.7-maintenance |
-|                     |     :target: https://travis-ci.org/mitsuhiko/jinja2                          |
+| ``2.7-maintenance`` | .. image:: https://travis-ci.org/pallets/jinja.svg?branch=2.7-maintenance |
+|                     |     :target: https://travis-ci.org/pallets/jinja                          |
 +---------------------+------------------------------------------------------------------------------+

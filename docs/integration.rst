@@ -6,7 +6,7 @@ the `Babel`_ library or your favourite editor for fancy code highlighting.
 This is a brief description of whats included.
 
 Files to help integration are available
-`here. <https://github.com/mitsuhiko/jinja2/tree/master/ext>`_
+`here. <https://github.com/pallets/jinja/tree/master/ext>`_
 
 .. _babel-integration:
 

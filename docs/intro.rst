@@ -55,7 +55,7 @@ Installing the development version
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
 1.  Install `git`_
-2.  ``git clone git://github.com/mitsuhiko/jinja2.git``
+2.  ``git clone git://github.com/pallets/jinja.git``
 3.  ``cd jinja2``
 4.  ``ln -s jinja2 /usr/lib/python2.X/site-packages``
 
@@ -120,4 +120,4 @@ in mind, so you will have to adapt the shown code examples to Python 3 syntax
 for yourself.
 
 
-.. _Jinja bug tracker: http://github.com/mitsuhiko/jinja2/issues
+.. _Jinja bug tracker: http://github.com/pallets/jinja/issues
