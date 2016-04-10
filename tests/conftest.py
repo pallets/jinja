@@ -51,6 +51,17 @@ def filesystem_loader():
 
 
 @pytest.fixture
+def glob_loader():
+    '''returns GlobLoader initialized to res/templates directory
+    '''
+    here = os.path.dirname(os.path.abspath(__file__))
+    return loaders.GlobLoader([[here + '/res/templates/*',
+                                here + '/res/templates/foo/*',
+                                '!' + here + '/res/templates/exclude.html']],
+                              here + '/res/templates/')
+
+
+@pytest.fixture
 def function_loader():
     '''returns a FunctionLoader
     '''
