@@ -19,7 +19,7 @@ Even if you are creating templates from strings by using the constructor of
 albeit a shared one.
 
 Most applications will create one :class:`Environment` object on application
-initialization and use that to load templates.  In some cases it's however
+initialization and use that to load templates.  In some cases however, it's 
 useful to have multiple environments side by side, if different configurations
 are in use.
 
