@@ -33,6 +33,10 @@ class TestLoaders():
         env = Environment(loader=package_loader)
         tmpl = env.get_template('test.html')
         assert tmpl.render().strip() == 'BAR'
+        tmpl = env.get_template('foo/test.html')
+        assert tmpl.render().strip() == 'FOO'
+        tmpl = env.get_template('foo/../foo/test.html')
+        assert tmpl.render().strip() == 'FOO'
         pytest.raises(TemplateNotFound, env.get_template, 'missing.html')
 
     def test_filesystem_loader(self, filesystem_loader):
@@ -40,6 +44,8 @@ class TestLoaders():
         tmpl = env.get_template('test.html')
         assert tmpl.render().strip() == 'BAR'
         tmpl = env.get_template('foo/test.html')
+        assert tmpl.render().strip() == 'FOO'
+        tmpl = env.get_template('foo/../foo/test.html')
         assert tmpl.render().strip() == 'FOO'
         pytest.raises(TemplateNotFound, env.get_template, 'missing.html')
 
@@ -102,8 +108,11 @@ class TestLoaders():
     def test_split_template_path(self):
         assert split_template_path('foo/bar') == ['foo', 'bar']
         assert split_template_path('./foo/bar') == ['foo', 'bar']
-        pytest.raises(TemplateNotFound, split_template_path, '../foo')
+        assert split_template_path('foo//bar') == ['foo', 'bar']
+        assert split_template_path('foo/../bar') == ['bar']
+        assert split_template_path('../foo') == ['..', 'foo']
 
+        pytest.raises(TemplateNotFound, split_template_path, '/foo/bar')
 
 @pytest.mark.loaders
 @pytest.mark.moduleloader

@@ -10,6 +10,7 @@
 """
 import os
 import sys
+import re
 import weakref
 from types import ModuleType
 from os import path
@@ -20,19 +21,13 @@ from jinja2._compat import string_types, iteritems
 
 
 def split_template_path(template):
-    """Split a path into segments and perform a sanity check.  If it detects
-    '..' in the path it will raise a `TemplateNotFound` error.
-    """
-    pieces = []
-    for piece in template.split('/'):
-        if path.sep in piece \
-           or (path.altsep and path.altsep in piece) or \
-           piece == path.pardir:
-            raise TemplateNotFound(template)
-        elif piece and piece != '.':
-            pieces.append(piece)
+    """Split a path into segments and perform a sanity check.  If it detects 
+    an absolute path it will raise a `TemplateNotFound` error."""
+    template = os.path.normpath(template)
+    altsep = os.altsep if os.altsep else ''
+    pieces = re.split(r'[%s%s]' % (os.sep, altsep), template)
+    if pieces[0] == '': raise TemplateNotFound(template)    
     return pieces
-
 
 class BaseLoader(object):
     """Baseclass for all loaders.  Subclass this and override `get_source` to
