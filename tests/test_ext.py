@@ -99,7 +99,7 @@ newstyle_i18n_env = Environment(
 newstyle_i18n_env.install_gettext_callables(gettext, ngettext, newstyle=True)
 
 
-class TestExtension(Extension):
+class ExampleExtension(Extension):
     tags = set(['test'])
     ext_attr = 42
 
@@ -207,15 +207,15 @@ class TestExtensions():
             == ['42 = 23', '1 = 2']
 
     def test_extension_nodes(self):
-        env = Environment(extensions=[TestExtension])
+        env = Environment(extensions=[ExampleExtension])
         tmpl = env.from_string('{% test %}')
         assert tmpl.render() == 'False|42|23|{}'
 
     def test_identifier(self):
-        assert TestExtension.identifier == __name__ + '.TestExtension'
+        assert ExampleExtension.identifier == __name__ + '.ExampleExtension'
 
     def test_rebinding(self):
-        original = Environment(extensions=[TestExtension])
+        original = Environment(extensions=[ExampleExtension])
         overlay = original.overlay()
         for env in original, overlay:
             for ext in itervalues(env.extensions):

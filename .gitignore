@@ -1,10 +1,12 @@
 *.so
-docs/_build
+docs/_build/
 *.pyc
 *.pyo
-*.egg-info
+*.egg-info/
 *.egg
-build
-dist
+build/
+dist/
 .DS_Store
-.tox
+.tox/
+.cache/
+.idea/
