@@ -518,9 +518,12 @@ def do_int(value, default=0, base=10):
     can also override the default base (10) in the second
     parameter, which handles input with prefixes such as
     0b, 0o and 0x for bases 2, 8 and 16 respectively.
+    The base is ignored for decimal numbers and non-string values.
     """
     try:
-        return int(value, base)
+        if isinstance(value, string_types):
+            return int(value, base)
+        return int(value)
     except (TypeError, ValueError):
         # this quirk is necessary so that "42.23"|int gives 42.
         try:

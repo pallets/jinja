@@ -7,6 +7,7 @@ Version 2.8.1
 (unreleased bugfix release)
 
 - Fixed the `for_qs` flag for `urlencode`.
+- Fixed regression when applying `int` to non-string values.
 
 Version 2.8
 -----------
