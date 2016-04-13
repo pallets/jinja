@@ -10,8 +10,8 @@
 """
 import re
 import math
+import random
 
-from random import choice
 from operator import itemgetter
 from itertools import groupby
 from jinja2.utils import Markup, escape, pformat, urlize, soft_unicode, \
@@ -360,13 +360,13 @@ def do_last(environment, seq):
         return environment.undefined('No last item, sequence was empty.')
 
 
-@environmentfilter
-def do_random(environment, seq):
+@contextfilter
+def do_random(context, seq):
     """Return a random item from the sequence."""
     try:
-        return choice(seq)
+        return random.choice(seq)
     except IndexError:
-        return environment.undefined('No random item, sequence was empty.')
+        return context.environment.undefined('No random item, sequence was empty.')
 
 
 def do_filesizeformat(value, binary=False):
