@@ -13,7 +13,7 @@ import errno
 from collections import deque
 from threading import Lock
 from jinja2._compat import text_type, string_types, implements_iterator, \
-     url_quote
+     url_quote, ifilter, get_next
 
 
 _word_split_re = re.compile(r'(\s+)')
@@ -526,6 +526,9 @@ class Joiner(object):
             return u''
         return self.sep
 
+
+def firstof(*items):
+    return get_next(ifilter(None, items))()
 
 # Imported here because that's where it was in the past
 from markupsafe import Markup, escape, soft_unicode
