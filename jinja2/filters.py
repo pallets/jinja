@@ -22,6 +22,7 @@ from jinja2._compat import imap, string_types, text_type, iteritems
 
 
 _word_re = re.compile(r'\w+(?u)')
+_word_beginning_split_re = re.compile(r'([-\s\(\{\[\<]+)(?u)')
 
 
 def contextfilter(f):
@@ -183,12 +184,10 @@ def do_title(s):
     """Return a titlecased version of the value. I.e. words will start with
     uppercase letters, all remaining characters are lowercase.
     """
-    rv = []
-    for item in re.compile(r'([-\s]+)(?u)').split(soft_unicode(s)):
-        if not item:
-            continue
-        rv.append(item[0].upper() + item[1:].lower())
-    return ''.join(rv)
+    return ''.join(
+        [item[0].upper() + item[1:].lower()
+         for item in _word_beginning_split_re.split(soft_unicode(s))
+         if item])
 
 
 def do_dictsort(value, case_sensitive=False, by='key'):

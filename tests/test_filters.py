@@ -213,6 +213,14 @@ class TestFilter():
         assert tmpl.render() == "Foo\tBar"
         tmpl = env.from_string('''{{ "FOO\tBAR"|title }}''')
         assert tmpl.render() == "Foo\tBar"
+        tmpl = env.from_string('''{{ "foo (bar)"|title }}''')
+        assert tmpl.render() == "Foo (Bar)"
+        tmpl = env.from_string('''{{ "foo {bar}"|title }}''')
+        assert tmpl.render() == "Foo {Bar}"
+        tmpl = env.from_string('''{{ "foo [bar]"|title }}''')
+        assert tmpl.render() == "Foo [Bar]"
+        tmpl = env.from_string('''{{ "foo <bar>"|title }}''')
+        assert tmpl.render() == "Foo <Bar>"
 
         class Foo:
             def __str__(self):
