@@ -28,8 +28,8 @@ life difficult by restricting functionality too much.
 
 For more information visit the new `Jinja2 webpage`_ and `documentation`_.
 
-The `Jinja2 tip`_ is installable via `easy_install` with ``easy_install
-Jinja2==dev``.
+The `Jinja2 tip`_ is installable via ``pip`` with ``pip install
+https://github.com/pallets/jinja/zipball/master``.
 
 .. _sandboxed: http://en.wikipedia.org/wiki/Sandbox_(computer_security)
 .. _Django: http://www.djangoproject.com/
