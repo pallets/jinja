@@ -10,6 +10,7 @@
 """
 import os
 import sys
+from functools import reduce, partial
 from jinja2 import nodes
 from jinja2.defaults import BLOCK_START_STRING, \
      BLOCK_END_STRING, VARIABLE_START_STRING, VARIABLE_END_STRING, \
@@ -29,8 +30,7 @@ from jinja2.utils import import_string, LRUCache, Markup, missing, \
      concat, consume, internalcode
 from jinja2._compat import imap, ifilter, string_types, iteritems, \
      text_type, reraise, implements_iterator, implements_to_string, \
-     get_next, encode_filename, PY2, PYPY
-from functools import reduce
+     encode_filename, PY2, PYPY
 
 
 # for direct template usage we have up to ten living environments
@@ -1171,35 +1171,35 @@ class TemplateStream(object):
 
     def disable_buffering(self):
         """Disable the output buffering."""
-        self._next = get_next(self._gen)
+        self._next = partial(next, self._gen)
         self.buffered = False
+
+    def _buffered_generator(self, size):
+        buf = []
+        c_size = 0
+        push = buf.append
+
+        while 1:
+            try:
+                while c_size < size:
+                    c = next(self._gen)
+                    push(c)
+                    if c:
+                        c_size += 1
+            except StopIteration:
+                if not c_size:
+                    return
+            yield concat(buf)
+            del buf[:]
+            c_size = 0
 
     def enable_buffering(self, size=5):
         """Enable buffering.  Buffer `size` items before yielding them."""
         if size <= 1:
             raise ValueError('buffer size too small')
 
-        def generator(next):
-            buf = []
-            c_size = 0
-            push = buf.append
-
-            while 1:
-                try:
-                    while c_size < size:
-                        c = next()
-                        push(c)
-                        if c:
-                            c_size += 1
-                except StopIteration:
-                    if not c_size:
-                        return
-                yield concat(buf)
-                del buf[:]
-                c_size = 0
-
         self.buffered = True
-        self._next = get_next(generator(get_next(self._gen)))
+        self._next = partial(next, self._buffered_generator(size))
 
     def __iter__(self):
         return self
