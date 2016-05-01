@@ -179,7 +179,7 @@ class Environment(object):
             `None` implicitly into an empty string here.
 
         `autoescape`
-            If set to true the XML/HTML autoescaping feature is enabled by
+            If set to `True` the XML/HTML autoescaping feature is enabled by
             default.  For more details about autoescaping see
             :class:`~jinja2.utils.Markup`.  As of Jinja 2.4 this can also
             be a callable that is passed the template name and has to
