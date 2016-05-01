@@ -36,15 +36,12 @@ You can install the most recent Jinja2 version using `easy_install`_ or `pip`_::
 This will install a Jinja2 egg in your Python installation's site-packages
 directory.
 
-(If you are installing from the Windows command line omit the `sudo` and make
-sure to run the command as user with administrator rights)
-
 From the tarball release
 ~~~~~~~~~~~~~~~~~~~~~~~~~
 
 1.  Download the most recent tarball from the `download page`_
 2.  Unpack the tarball
-3.  ``sudo python setup.py install``
+3.  ``python setup.py install``
 
 Note that you either have to have `setuptools` or `distribute` installed;
 the latter is preferred.
