@@ -167,7 +167,7 @@ class Environment(object):
             look at :ref:`the extensions documentation <jinja-extensions>`.
 
         `optimized`
-            should the optimizer be enabled?  Default is `True`.
+            should the optimizer be enabled?  Default is ``True``.
 
         `undefined`
             :class:`Undefined` or a subclass of it that is used to represent
@@ -176,14 +176,14 @@ class Environment(object):
         `finalize`
             A callable that can be used to process the result of a variable
             expression before it is output.  For example one can convert
-            `None` implicitly into an empty string here.
+            ``None`` implicitly into an empty string here.
 
         `autoescape`
-            If set to `True` the XML/HTML autoescaping feature is enabled by
+            If set to ``True`` the XML/HTML autoescaping feature is enabled by
             default.  For more details about autoescaping see
             :class:`~jinja2.utils.Markup`.  As of Jinja 2.4 this can also
             be a callable that is passed the template name and has to
-            return `True` or `False` depending on autoescape should be
+            return ``True`` or ``False`` depending on autoescape should be
             enabled by default.
 
             .. versionchanged:: 2.4
@@ -205,7 +205,7 @@ class Environment(object):
         `auto_reload`
             Some loaders load templates from locations where the template
             sources may change (ie: file system or database).  If
-            `auto_reload` is set to `True` (default) every time a template is
+            ``auto_reload`` is set to ``True`` (default) every time a template is
             requested the loader checks if the source changed and if yes, it
             will reload the template.  For higher performance it's possible to
             disable that.
