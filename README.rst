@@ -8,7 +8,9 @@ an optional `sandboxed`_ environment.
 Nutshell
 --------
 
-Here a small example of a Jinja template::
+Here a small example of a Jinja template:
+
+.. code-block:: jinja
 
     {% extends 'base.html' %}
     {% block title %}Memberlist{% endblock %}
@@ -41,9 +43,9 @@ Builds
 ------
 
 +---------------------+------------------------------------------------------------------------------+
-| ``master``          | .. image:: https://travis-ci.org/pallets/jinja.svg?branch=master          |
-|                     |     :target: https://travis-ci.org/pallets/jinja                          |
+| ``master``          | .. image:: https://travis-ci.org/pallets/jinja.svg?branch=master             |
+|                     |     :target: https://travis-ci.org/pallets/jinja                             |
 +---------------------+------------------------------------------------------------------------------+
-| ``2.7-maintenance`` | .. image:: https://travis-ci.org/pallets/jinja.svg?branch=2.7-maintenance |
-|                     |     :target: https://travis-ci.org/pallets/jinja                          |
+| ``2.7-maintenance`` | .. image:: https://travis-ci.org/pallets/jinja.svg?branch=2.7-maintenance    |
+|                     |     :target: https://travis-ci.org/pallets/jinja                             |
 +---------------------+------------------------------------------------------------------------------+
