@@ -1,0 +1,7 @@
+{% set PLUGINS = ['something-else'] %}
+{% for name in PLUGINS if name == 'assets' %}
+  {% assets %}
+  {% endassets %}
+{% else %}
+  assets is disabled
+{% endfor %}
