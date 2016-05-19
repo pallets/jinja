@@ -78,19 +78,31 @@ class TestLoaders():
         assert tmpl is not env.get_template('template')
         changed = False
 
-        env = Environment(loader=TestLoader(), cache_size=0)
-        assert env.get_template('template') \
-            is not env.get_template('template')
+    def test_no_cache(self):
+        mapping = {'foo': 'one'}
+        env = Environment(loader=loaders.DictLoader(mapping), cache_size=0)
+        assert env.get_template('foo') is not env.get_template('foo')
 
-        env = Environment(loader=TestLoader(), cache_size=2)
+    def test_limited_size_cache(self):
+        mapping = {'one': 'foo', 'two': 'bar', 'three': 'baz'}
+        loader = loaders.DictLoader(mapping)
+        env = Environment(loader=loader, cache_size=2)
         t1 = env.get_template('one')
         t2 = env.get_template('two')
         assert t2 is env.get_template('two')
         assert t1 is env.get_template('one')
         t3 = env.get_template('three')
-        assert 'one' in env.cache
-        assert 'two' not in env.cache
-        assert 'three' in env.cache
+        assert (id(loader), 'one') in env.cache
+        assert (id(loader), 'two') not in env.cache
+        assert (id(loader), 'three') in env.cache
+
+    def test_cache_loader_change(self):
+        loader1 = loaders.DictLoader({'foo': 'one'})
+        loader2 = loaders.DictLoader({'foo': 'two'})
+        env = Environment(loader=loader1, cache_size=2)
+        assert env.get_template('foo').render() == 'one'
+        env.loader = loader2
+        assert env.get_template('foo').render() == 'two'
 
     def test_dict_loader_cache_invalidates(self):
         mapping = {'foo': "one"}
