@@ -1,6 +1,14 @@
 Jinja2 Changelog
 ================
 
+Version 2.9
+-----------
+
+(unreleased feature release)
+
+- Change cache key definition in environment. This fixes a performance
+  regression introduced in 2.8.
+
 Version 2.8.1
 -------------
 
