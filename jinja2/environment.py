@@ -10,6 +10,7 @@
 """
 import os
 import sys
+import weakref
 from functools import reduce, partial
 from jinja2 import nodes
 from jinja2.defaults import BLOCK_START_STRING, \
@@ -769,7 +770,7 @@ class Environment(object):
     def _load_template(self, name, globals):
         if self.loader is None:
             raise TypeError('no loader for this environment specified')
-        cache_key = (id(self.loader), name)
+        cache_key = (weakref.ref(self.loader), name)
         if self.cache is not None:
             template = self.cache.get(cache_key)
             if template is not None and (not self.auto_reload or

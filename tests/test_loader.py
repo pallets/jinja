@@ -13,6 +13,7 @@ import sys
 import tempfile
 import shutil
 import pytest
+import weakref
 
 from jinja2 import Environment, loaders
 from jinja2._compat import PYPY, PY2
@@ -92,9 +93,10 @@ class TestLoaders():
         assert t2 is env.get_template('two')
         assert t1 is env.get_template('one')
         t3 = env.get_template('three')
-        assert (id(loader), 'one') in env.cache
-        assert (id(loader), 'two') not in env.cache
-        assert (id(loader), 'three') in env.cache
+        loader_ref = weakref.ref(loader)
+        assert (loader_ref, 'one') in env.cache
+        assert (loader_ref, 'two') not in env.cache
+        assert (loader_ref, 'three') in env.cache
 
     def test_cache_loader_change(self):
         loader1 = loaders.DictLoader({'foo': 'one'})
