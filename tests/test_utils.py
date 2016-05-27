@@ -84,6 +84,6 @@ class TestEscapeUrlizeTarget():
         url2 = "ftp://example.com"
         target = "<script>"
         result = urlize(url2, target=target)
-        assert result == ('<a href="ftp://example.org"'
+        assert result == ('<a href="ftp://example.com"'
                                               ' target="<script>">'
-                                              'http://example.org</a>')
+                                              'ftp://example.com</a>')
