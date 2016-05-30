@@ -846,8 +846,10 @@ def do_map(*args, **kwargs):
 
 @contextfilter
 def do_select(*args, **kwargs):
-    """Filters a sequence of objects by applying a test to the object and only
-    selecting the ones with the test succeeding.
+    """Filters a sequence of objects by applying a test to each object,
+    and only selecting the objects with the test succeeding.
+
+    If no test is specified, each object will be evaluated as a boolean.
 
     Example usage:
 
@@ -863,8 +865,10 @@ def do_select(*args, **kwargs):
 
 @contextfilter
 def do_reject(*args, **kwargs):
-    """Filters a sequence of objects by applying a test to the object and
-    rejecting the ones with the test succeeding.
+    """Filters a sequence of objects by applying a test to each object,
+    and rejecting the objects with the test succeeding.
+
+    If no test is specified, each object will be evaluated as a boolean.
 
     Example usage:
 
@@ -879,8 +883,12 @@ def do_reject(*args, **kwargs):
 
 @contextfilter
 def do_selectattr(*args, **kwargs):
-    """Filters a sequence of objects by applying a test to an attribute of an
-    object and only selecting the ones with the test succeeding.
+    """Filters a sequence of objects by applying a test to the specified
+    attribute of each object, and only selecting the objects with the
+    test succeeding.
+
+    If no test is specified, the attribute's value will be evaluated as
+    a boolean.
 
     Example usage:
 
@@ -896,8 +904,12 @@ def do_selectattr(*args, **kwargs):
 
 @contextfilter
 def do_rejectattr(*args, **kwargs):
-    """Filters a sequence of objects by applying a test to an attribute of an
-    object or the attribute and rejecting the ones with the test succeeding.
+    """Filters a sequence of objects by applying a test to the specified
+    attribute of each object, and rejecting the objects with the test
+    succeeding.
+
+    If no test is specified, the attribute's value will be evaluated as
+    a boolean.
 
     .. sourcecode:: jinja
 
