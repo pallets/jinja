@@ -136,10 +136,10 @@ class Environment(object):
             statements.  See also :ref:`line-statements`.
 
         `line_comment_prefix`
+            .. versionadded:: 2.2
+
             If given and a string, this will be used as prefix for line based
             comments.  See also :ref:`line-statements`.
-
-            .. versionadded:: 2.2
 
         `trim_blocks`
             If this is set to ``True`` the first newline after a block is
@@ -156,11 +156,11 @@ class Environment(object):
             applications.
 
         `keep_trailing_newline`
+            .. versionadded:: 2.7
+
             Preserve the trailing newline when rendering templates.
             The default is ``False``, which causes a single newline,
             if present, to be stripped from the end of the template.
-
-            .. versionadded:: 2.7
 
         `extensions`
             List of Jinja extensions to use.  This can either be import paths
@@ -180,6 +180,9 @@ class Environment(object):
             ``None`` implicitly into an empty string here.
 
         `autoescape`
+            .. versionchanged:: 2.4
+               `autoescape` can now be a function
+
             If set to ``True`` the XML/HTML autoescaping feature is enabled by
             default.  For more details about autoescaping see
             :class:`~jinja2.utils.Markup`.  As of Jinja 2.4 this can also
@@ -187,21 +190,19 @@ class Environment(object):
             return ``True`` or ``False`` depending on autoescape should be
             enabled by default.
 
-            .. versionchanged:: 2.4
-               `autoescape` can now be a function
 
         `loader`
             The template loader for this environment.
 
         `cache_size`
+            .. versionchanged:: 2.8
+               The cache size was increased to 400 from a low 50.
+
             The size of the cache.  Per default this is ``400`` which means
             that if more than 400 templates are loaded the loader will clean
             out the least recently used template.  If the cache size is set to
             ``0`` templates are recompiled all the time, if the cache size is
             ``-1`` the cache will not be cleaned.
-
-            .. versionchanged:: 2.8
-               The cache size was increased to 400 from a low 50.
 
         `auto_reload`
             Some loaders load templates from locations where the template
@@ -317,9 +318,10 @@ class Environment(object):
         _environment_sanity_check(self)
 
     def add_extension(self, extension):
-        """Adds an extension after the environment was created.
-
+        """
         .. versionadded:: 2.5
+
+        Adds an extension after the environment was created.
         """
         self.extensions.update(load_extensions(self, [extension]))
 
@@ -416,9 +418,10 @@ class Environment(object):
 
     def call_filter(self, name, value, args=None, kwargs=None,
                     context=None, eval_ctx=None):
-        """Invokes a filter on a value the same way the compiler does it.
-
+        """
         .. versionadded:: 2.7
+
+        Invokes a filter on a value the same way the compiler does it.
         """
         func = self.filters.get(name)
         if func is None:
@@ -441,9 +444,10 @@ class Environment(object):
         return func(*args, **(kwargs or {}))
 
     def call_test(self, name, value, args=None, kwargs=None):
-        """Invokes a test on a value the same way the compiler does it.
-
+        """
         .. versionadded:: 2.7
+
+        Invokes a test on a value the same way the compiler does it.
         """
         func = self.tests.get(name)
         if func is None:
@@ -508,25 +512,31 @@ class Environment(object):
         return stream
 
     def _generate(self, source, name, filename, defer_init=False):
-        """Internal hook that can be overridden to hook a different generate
-        method in.
-
+        """
         .. versionadded:: 2.5
+
+        Internal hook that can be overridden to hook a different generate
+        method in.
         """
         return generate(source, self, name, filename, defer_init=defer_init)
 
     def _compile(self, source, filename):
-        """Internal hook that can be overridden to hook a different compile
-        method in.
-
+        """
         .. versionadded:: 2.5
+
+        Internal hook that can be overridden to hook a different compile
+        method in.
         """
         return compile(source, filename, 'exec')
 
     @internalcode
     def compile(self, source, name=None, filename=None, raw=False,
                 defer_init=False):
-        """Compile a node or template source code.  The `name` parameter is
+        """
+        .. versionadded:: 2.4
+           `defer_init` parameter added.
+
+        Compile a node or template source code.  The `name` parameter is
         the load name of the template after it was joined using
         :meth:`join_path` if necessary, not the filename on the file system.
         the `filename` parameter is the estimated filename of the template on
@@ -541,9 +551,6 @@ class Environment(object):
         `defer_init` is use internally to aid the module code generator.  This
         causes the generated code to be able to import without the global
         environment variable to be set.
-
-        .. versionadded:: 2.4
-           `defer_init` parameter added.
         """
         source_hint = None
         try:
@@ -566,7 +573,10 @@ class Environment(object):
         self.handle_exception(exc_info, source_hint=source_hint)
 
     def compile_expression(self, source, undefined_to_none=True):
-        """A handy helper method that returns a callable that accepts keyword
+        """
+        .. versionadded:: 2.1
+
+        A handy helper method that returns a callable that accepts keyword
         arguments that appear as variables in the expression.  If called it
         returns the result of the expression.
 
@@ -590,8 +600,6 @@ class Environment(object):
         True
         >>> env.compile_expression('var', undefined_to_none=False)()
         Undefined
-
-        .. versionadded:: 2.1
         """
         parser = Parser(self, source, state='variable')
         exc_info = None
@@ -613,7 +621,10 @@ class Environment(object):
     def compile_templates(self, target, extensions=None, filter_func=None,
                           zip='deflated', log_function=None,
                           ignore_errors=True, py_compile=False):
-        """Finds all the templates the loader can find, compiles them
+        """
+        .. versionadded:: 2.4
+
+        Finds all the templates the loader can find, compiles them
         and stores them in `target`.  If `zip` is `None`, instead of in a
         zipfile, the templates will be stored in a directory.
         By default a deflate zip algorithm is used. To switch to
@@ -632,8 +643,6 @@ class Environment(object):
         target instead of standard .py files.  This flag does not do anything
         on pypy and Python 3 where pyc files are not picked up by itself and
         don't give much benefit.
-
-        .. versionadded:: 2.4
         """
         from jinja2.loaders import ModuleLoader
 
@@ -706,7 +715,10 @@ class Environment(object):
         log_function('Finished compiling templates')
 
     def list_templates(self, extensions=None, filter_func=None):
-        """Returns a list of templates for this environment.  This requires
+        """
+        .. versionadded:: 2.4
+
+        Returns a list of templates for this environment.  This requires
         that the loader supports the loader's
         :meth:`~BaseLoader.list_templates` method.
 
@@ -718,8 +730,6 @@ class Environment(object):
         in the result list.
 
         If the loader does not support that, a :exc:`TypeError` is raised.
-
-        .. versionadded:: 2.4
         """
         x = self.loader.list_templates()
         if extensions is not None:
@@ -783,7 +793,12 @@ class Environment(object):
 
     @internalcode
     def get_template(self, name, parent=None, globals=None):
-        """Load a template from the loader.  If a loader is configured this
+        """
+        .. versionchanged:: 2.4
+           If `name` is a :class:`Template` object it is returned from the
+           function unchanged.
+
+        Load a template from the loader.  If a loader is configured this
         method ask the loader for the template and returns a :class:`Template`.
         If the `parent` parameter is not `None`, :meth:`join_path` is called
         to get the real template name before loading.
@@ -793,10 +808,6 @@ class Environment(object):
 
         If the template does not exist a :exc:`TemplateNotFound` exception is
         raised.
-
-        .. versionchanged:: 2.4
-           If `name` is a :class:`Template` object it is returned from the
-           function unchanged.
         """
         if isinstance(name, Template):
             return name
@@ -806,15 +817,15 @@ class Environment(object):
 
     @internalcode
     def select_template(self, names, parent=None, globals=None):
-        """Works like :meth:`get_template` but tries a number of templates
-        before it fails.  If it cannot find any of the templates, it will
-        raise a :exc:`TemplatesNotFound` exception.
-
+        """
         .. versionadded:: 2.3
-
         .. versionchanged:: 2.4
            If `names` contains a :class:`Template` object it is returned
            from the function unchanged.
+
+        Works like :meth:`get_template` but tries a number of templates
+        before it fails.  If it cannot find any of the templates, it will
+        raise a :exc:`TemplatesNotFound` exception.
         """
         if not names:
             raise TemplatesNotFound(message=u'Tried to select from an empty list '
@@ -834,11 +845,12 @@ class Environment(object):
     @internalcode
     def get_or_select_template(self, template_name_or_list,
                                parent=None, globals=None):
-        """Does a typecheck and dispatches to :meth:`select_template`
+        """
+        .. versionadded:: 2.3
+
+        Does a typecheck and dispatches to :meth:`select_template`
         if an iterable of template names is given, otherwise to
         :meth:`get_template`.
-
-        .. versionadded:: 2.3
         """
         if isinstance(template_name_or_list, string_types):
             return self.get_template(template_name_or_list, parent, globals)
@@ -934,10 +946,11 @@ class Template(object):
 
     @classmethod
     def from_module_dict(cls, environment, module_dict, globals):
-        """Creates a template object from a module.  This is used by the
-        module loader to create a template object.
-
+        """
         .. versionadded:: 2.4
+
+        Creates a template object from a module.  This is used by the
+        module loader to create a template object.
         """
         return cls._from_namespace(environment, module_dict, globals)
 

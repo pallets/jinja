@@ -44,22 +44,24 @@ additional methods:
 
 .. method:: jinja2.Environment.install_gettext_translations(translations, newstyle=False)
 
+    .. versionchanged:: 2.5 newstyle gettext added
+
     Installs a translation globally for that environment.  The translations
     object provided must implement at least `ugettext` and `ungettext`.
     The `gettext.NullTranslations` and `gettext.GNUTranslations` classes
     as well as `Babel`_\s `Translations` class are supported.
 
-    .. versionchanged:: 2.5 newstyle gettext added
-
 .. method:: jinja2.Environment.install_null_translations(newstyle=False)
+
+    .. versionchanged:: 2.5 newstyle gettext added
 
     Install dummy gettext functions.  This is useful if you want to prepare
     the application for internationalization but don't want to implement the
     full internationalization system yet.
 
-    .. versionchanged:: 2.5 newstyle gettext added
-
 .. method:: jinja2.Environment.install_gettext_callables(gettext, ngettext, newstyle=False)
+
+    .. versionadded:: 2.5
 
     Installs the given `gettext` and `ngettext` callables into the
     environment as globals.  They are supposed to behave exactly like the
@@ -69,7 +71,6 @@ additional methods:
     If `newstyle` is activated, the callables are wrapped to work like
     newstyle callables.  See :ref:`newstyle-gettext` for more information.
 
-    .. versionadded:: 2.5
 
 .. method:: jinja2.Environment.uninstall_gettext_translations()
 

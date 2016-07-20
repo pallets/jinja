@@ -551,8 +551,7 @@ class _CommentFinder(object):
 
 
 def babel_extract(fileobj, keywords, comment_tags, options):
-    """Babel extraction method for Jinja templates.
-
+    """
     .. versionchanged:: 2.3
        Basic support for translation comments was added.  If `comment_tags`
        is now set to a list of keywords for extraction, the extractor will
@@ -568,6 +567,8 @@ def babel_extract(fileobj, keywords, comment_tags, options):
     .. versionchanged:: 2.7
        A `silent` option can now be provided.  If set to `False` template
        syntax errors are propagated instead of being ignored.
+
+    Babel extraction method for Jinja templates.
 
     :param fileobj: the file-like object the messages should be extracted from
     :param keywords: a list of keywords (i.e. function names) that should be

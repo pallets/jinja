@@ -62,11 +62,12 @@ class TemplateNotFound(IOError, LookupError, TemplateError):
 
 
 class TemplatesNotFound(TemplateNotFound):
-    """Like :class:`TemplateNotFound` but raised if multiple templates
+    """
+    .. versionadded:: 2.2
+
+    Like :class:`TemplateNotFound` but raised if multiple templates
     are selected.  This is a subclass of :class:`TemplateNotFound`
     exception, so just catching the base exception will catch both.
-
-    .. versionadded:: 2.2
     """
 
     def __init__(self, names=(), message=None):
