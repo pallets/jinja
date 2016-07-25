@@ -11,6 +11,7 @@
 import pytest
 from jinja2 import Markup, Environment
 from jinja2._compat import text_type, implements_to_string
+from jinja2.exceptions import FilterDefaultAttributeError
 
 
 @pytest.mark.filter
@@ -483,6 +484,46 @@ class TestFilter():
         env = Environment()
         tmpl = env.from_string('{{ none|map("upper")|list }}')
         assert tmpl.render() == '[]'
+
+    def test_map_default_attribute(self, env):
+        class User(object):
+            def __init__(self, name):
+                self.name = name
+        env = Environment()
+        users = [
+            User('john'),
+            User('jane'),
+            User('mike'),
+        ]
+        tmpl = env.from_string('{{ users|map(attribute="surname", default="jinja")|join("|") }}')
+        assert tmpl.render(users=users) == 'jinja|jinja|jinja'
+
+    def test_map_default_attribute_empty(self, env):
+        class User(object):
+            def __init__(self, name):
+                self.name = name
+        env = Environment()
+        users = [
+            User('john'),
+            User('jane'),
+            User('mike'),
+        ]
+        tmpl = env.from_string('{{ users|map(attribute="surname", default="")|list }}')
+        assert tmpl.render(users=users) == '[\'\', \'\', \'\']'
+
+    def test_map_default_attribute_none(self, env):
+        class User(object):
+            def __init__(self, name):
+                self.name = name
+        env = Environment()
+        users = [
+            User('john'),
+            User('jane'),
+            User('mike'),
+        ]
+        tmpl = env.from_string('{{ users|map(attribute="surname", default=none)|list }}')
+        with pytest.raises(FilterDefaultAttributeError):
+            tmpl.render(users=users)
 
     def test_simple_select(self, env):
         env = Environment()
