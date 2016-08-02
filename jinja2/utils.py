@@ -149,6 +149,8 @@ def open_if_exists(filename, mode='rb'):
     """
     try:
         return open(filename, mode)
+    except NotADirectoryError:
+        pass
     except IOError as e:
         if e.errno not in (errno.ENOENT, errno.EISDIR, errno.EINVAL):
             raise
