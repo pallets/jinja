@@ -981,6 +981,22 @@ class Template(object):
             exc_info = sys.exc_info()
         return self.environment.handle_exception(exc_info, True)
 
+    def render_blocks(self, *args, **kwargs):
+        """
+        This method renders each block of the template, and returns a dict where
+        the keys are the block names, and the values are the corresponding
+        rendered content.
+        """
+        context = self.new_context(dict(*args, **kwargs))
+        try:
+            blocks = {}
+            for name, func in self.blocks.iteritems():
+                blocks[name] = concat(func(context))
+            return blocks
+        except Exception:
+            exc_info = sys.exc_info()
+        return self.environment.handle_exception(exc_info, True)
+
     def stream(self, *args, **kwargs):
         """Works exactly like :meth:`generate` but returns a
         :class:`TemplateStream`.
