@@ -17,7 +17,7 @@ from jinja2.exceptions import TemplateAssertionError
 from jinja2.utils import Markup, concat, escape, is_python_keyword
 from jinja2._compat import range_type
 import six
-from six.moves import cStringIO as StringIO, map
+from six.moves import cStringIO as StringIO, map, xrange
 
 
 operators = {
