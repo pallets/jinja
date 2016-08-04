@@ -954,7 +954,7 @@ class CodeGenerator(NodeVisitor):
 
         if node.with_context:
             self.writeline('for event in template.root_render_func('
-                           'template.new_context(context.parent, True, '
+                           'template.new_context(context.parent, False, '
                            'locals())):')
         else:
             self.writeline('for event in template.module._body_stream:')
