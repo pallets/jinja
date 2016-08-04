@@ -31,7 +31,7 @@ of that it adds sandboxed execution and optional automatic escaping for
 applications where security is important.
 
 It is internally based on Unicode and runs on a wide range of Python
-versions from 2.4 to current versions including Python 3.
+versions from 2.4 to 2.7 and 3.3 and up.
 
 Wide Range of Features
 ----------------------
@@ -72,7 +72,7 @@ Found a bug? Have a good idea for improving Jinja2? Head over to
 `Jinja's new github <http://github.com/mitsuhiko/jinja2>`_ page and
 create a new ticket or fork.  If you just want to chat with fellow
 developers, visit the `IRC channel </community/#irc-channel>`_ or join the
-`mailinglist </community/#mailinglist>`_. 
+`mailinglist </community/#mailinglist>`_.
 
 .. raw:: html
 
