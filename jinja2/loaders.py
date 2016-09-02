@@ -351,7 +351,7 @@ class PrefixLoader(BaseLoader):
         try:
             return loader.get_source(environment, name)
         except TemplateNotFound:
-            # re-raise the exception with the correct fileame here.
+            # re-raise the exception with the correct filename here.
             # (the one that includes the prefix)
             raise TemplateNotFound(template)
 
@@ -361,7 +361,7 @@ class PrefixLoader(BaseLoader):
         try:
             return loader.load(environment, local_name, globals)
         except TemplateNotFound:
-            # re-raise the exception with the correct fileame here.
+            # re-raise the exception with the correct filename here.
             # (the one that includes the prefix)
             raise TemplateNotFound(name)
 
