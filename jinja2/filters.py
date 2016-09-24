@@ -455,31 +455,35 @@ def do_indent(s, width=4, indentfirst=False):
     return rv
 
 
-def do_truncate(s, length=255, killwords=False, end='...'):
+def do_truncate(s, length=255, killwords=False, end='...', leeway=5):
     """Return a truncated copy of the string. The length is specified
     with the first parameter which defaults to ``255``. If the second
     parameter is ``true`` the filter will cut the text at length. Otherwise
     it will discard the last word. If the text was in fact
     truncated it will append an ellipsis sign (``"..."``). If you want a
     different ellipsis sign than ``"..."`` you can specify it using the
-    third parameter.
+    third parameter. Strings that only exceed the length by the tolerance
+    margin given in the fourth parameter will not be truncated.
 
     .. sourcecode:: jinja
 
-        {{ "foo bar baz"|truncate(9) }}
-            -> "foo ..."
-        {{ "foo bar baz"|truncate(9, True) }}
+        {{ "foo bar baz qux"|truncate(9) }}
+            -> "foo..."
+        {{ "foo bar baz qux"|truncate(9, True) }}
             -> "foo ba..."
+        {{ "foo bar baz qux"|truncate(11) }}
+            -> "foo bar baz qux"
+        {{ "foo bar baz qux"|truncate(11, False, '...', 0) }}
+            -> "foo bar..."
 
     """
-    if len(s) <= length:
+    assert length >= len(end), 'expected length >= %s, got %s' % (len(end), length)
+    assert leeway >= 0, 'expected leeway >= 0, got %s' % leeway
+    if len(s) <= length + leeway:
         return s
-    elif killwords:
+    if killwords:
         return s[:length - len(end)] + end
-
     result = s[:length - len(end)].rsplit(' ', 1)[0]
-    if len(result) < length:
-        result += ' '
     return result + end
 
 

@@ -239,7 +239,7 @@ class TestFilter():
         out = tmpl.render(data='foobar baz bar' * 1000,
                           smalldata='foobar baz bar')
         msg = 'Current output: %s' % out
-        assert out == 'foobar baz b>>>|foobar baz >>>|foobar baz bar', msg
+        assert out == 'foobar baz b>>>|foobar baz>>>|foobar baz bar', msg
 
     def test_truncate_very_short(self, env):
         tmpl = env.from_string(
@@ -247,12 +247,12 @@ class TestFilter():
             '{{ "foo bar baz"|truncate(9, true) }}'
         )
         out = tmpl.render()
-        assert out == 'foo ...|foo ba...', out
+        assert out == 'foo bar baz|foo bar baz', out
 
     def test_truncate_end_length(self, env):
-        tmpl = env.from_string('{{ "Joel is a slug"|truncate(9, true) }}')
+        tmpl = env.from_string('{{ "Joel is a slug"|truncate(7, true) }}')
         out = tmpl.render()
-        assert out == 'Joel i...', 'Current output: %s' % out
+        assert out == 'Joel...', 'Current output: %s' % out
 
     def test_upper(self, env):
         tmpl = env.from_string('{{ "foo"|upper }}')
