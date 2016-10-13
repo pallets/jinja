@@ -1,8 +1,8 @@
 Welcome to Jinja2
 =================
 
-Jinja2 is a modern and designer-friendly templating language for Python,
-modelled after Django's templates.  It is fast, widely used and secure
+Jinja2 is a modern and designer-friendly template language for Python,
+modeled after Django's templates.  It is fast, widely used and secure
 with the optional sandboxed template execution environment:
 
 .. sourcecode:: html+jinja
@@ -32,3 +32,4 @@ index or try to find it using the search function:
 
 * :ref:`genindex`
 * :ref:`search`
+

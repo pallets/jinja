@@ -18,7 +18,7 @@ How fast is it?
 We really hate benchmarks especially since they don't reflect much.  The
 performance of a template depends on many factors and you would have to
 benchmark different engines in different situations.  The benchmarks from the
-testsuite show that Jinja2 has a similar performance to `Mako`_ and is between
+test suite show that Jinja2 has a similar performance to `Mako`_ and is between
 10 and 20 times faster than Django's template engine or Genshi.  These numbers
 should be taken with tons of salt as the benchmarks that took these numbers
 only test a few performance related situations such as looping.  Generally
@@ -86,8 +86,8 @@ most common ones and more advanced expressions such as list comprehensions
 and generator expressions are not supported.  This keeps the template engine
 easier to maintain and templates more readable.
 
-Why is Autoescaping not the Default?
-------------------------------------
+Why is Auto escaping not the Default?
+-------------------------------------
 
 There are multiple reasons why automatic escaping is not the default mode
 and also not the recommended one.  While automatic escaping of variables
@@ -125,18 +125,18 @@ instead that one can assign to a variable by using set::
 
     {% set comments = get_latest_comments() %}
 
-My tracebacks look weird.  What's happening?
---------------------------------------------
+My trace-backs look weird.  What's happening?
+---------------------------------------------
 
 If the debugsupport module is not compiled and you are using a Python
 installation without ctypes (Python 2.4 without ctypes, Jython or Google's
 AppEngine) Jinja2 is unable to provide correct debugging information and
-the traceback may be incomplete.  There is currently no good workaround
+the trace-back may be incomplete.  There is currently no good workaround
 for Jython or the AppEngine as ctypes is unavailable there and it's not
 possible to use the debugsupport extension.
 
 If you are working in the Google AppEngine development server you can
-whitelist the ctypes module to restore the tracebacks.  This however won't
+whitelist the ctypes module to restore the trace-backs.  This however won't
 work in production environments::
 
     import os
@@ -153,12 +153,12 @@ Why is there no Python 2.3/2.4/2.5/3.1/3.2 support?
 Python 2.3 is missing a lot of features that are used heavily in Jinja2.  This
 decision was made as with the upcoming Python 2.6 and 3.0 versions it becomes
 harder to maintain the code for older Python versions.  If you really need
-Python 2.3 support you either have to use `Jinja 1`_ or other templating
+Python 2.3 support you either have to use `Jinja 1`_ or other template
 engines that still support 2.3.
 
 Python 2.4/2.5/3.1/3.2 support was removed when we switched to supporting
-Python 2 and 3 by the same sourcecode (without using 2to3). It was required to
-drop support because only Python 2.6/2.7 and >=3.3 support byte and unicode
+Python 2 and 3 by the same source code (without using 2to3). It was required to
+drop support because only Python 2.6/2.7 and >=3.3 support byte and Unicode
 literals in a way compatible to each other version. If you really need support
 for older Python 2 (or 3) versions, you can just use Jinja2 2.6.
 
@@ -169,14 +169,14 @@ In some situations the Jinja scoping appears arbitrary:
 
 layout.tmpl:
 
-.. sourcecode:: jinja
+.. sourcecode:: html+jinja
 
     {% macro foo() %}LAYOUT{% endmacro %}
     {% block body %}{% endblock %}
 
 child.tmpl:
 
-.. sourcecode:: jinja
+.. sourcecode:: html+jinja
 
     {% extends 'layout.tmpl' %}
     {% macro foo() %}CHILD{% endmacro %}

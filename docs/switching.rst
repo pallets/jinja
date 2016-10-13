@@ -32,10 +32,10 @@ Loading templates from strings
     with optional additional configuration.
 
 Automatic unicode conversion
-    Jinja1 performed automatic conversion of bytestrings in a given encoding
+    Jinja1 performed automatic conversion of byte-strings in a given encoding
     into unicode objects.  This conversion is no longer implemented as it
     was inconsistent as most libraries are using the regular Python ASCII
-    bytestring to Unicode conversion.  An application powered by Jinja2
+    byte-string to Unicode conversion.  An application powered by Jinja2
     *has to* use unicode internally everywhere or make sure that Jinja2 only
     gets unicode strings passed.
 

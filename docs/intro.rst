@@ -1,13 +1,13 @@
 Introduction
 ============
 
-This is the documentation for the Jinja2 general purpose templating language.
+This is the documentation for the Jinja2 general purpose template language.
 Jinja2 is a library for Python that is designed to be flexible, fast and secure.
 
 If you have any exposure to other text-based template languages, such as Smarty or
 Django, you should feel right at home with Jinja2.  It's both designer and
 developer friendly by sticking to Python's principles and adding functionality
-useful for templating environments.
+useful for template environments.
 
 Prerequisites
 -------------
@@ -17,7 +17,7 @@ Jinja2 works with Python 2.6.x, 2.7.x and >= 3.3.  If you are using Python
 was dropped in Jinja2 version 2.7.
 
 If you wish to use the :class:`~jinja2.PackageLoader` class, you will also
-need `setuptools`_ or `distribute`_ installed at runtime.
+need `setuptools`_ or `distribute`_ installed at run-time.
 
 Installation
 ------------
@@ -53,10 +53,10 @@ Installing the development version
 
 1.  Install `git`_
 2.  ``git clone git://github.com/pallets/jinja.git``
-3.  ``cd jinja2``
+3.  ``cd jinja``
 4.  ``ln -s jinja2 /usr/lib/python2.X/site-packages``
 
-As an alternative to steps 4 you can also do ``python setup.py develop``
+As an alternative to step 4 you can also do ``python setup.py develop``
 which will install the package via `distribute` in development mode.  This also
 has the advantage that the C extensions are compiled.
 

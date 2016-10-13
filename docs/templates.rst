@@ -1,7 +1,7 @@
 Template Designer Documentation
 ===============================
 
-.. highlight:: html+jinja
+.. sourcecode:: html+jinja
 
 This document describes the syntax and semantics of the template engine and
 will be most useful as reference to those creating Jinja templates.  As the
@@ -392,9 +392,9 @@ first tag in the template.  Everything before it is printed out normally and
 may cause confusion.  For details about this behavior and how to take
 advantage of it, see :ref:`null-master-fallback`.
 
-The filename of the template depends on the template loader.  For example, the
+The forename of the template depends on the template loader.  For example, the
 :class:`FileSystemLoader` allows you to access other templates by giving the
-filename.  You can access templates in subdirectories with a slash::
+file name.  You can access templates in directories with a slash::
 
     {% extends "layout/default.html" %}
 
@@ -484,7 +484,7 @@ code works::
     {% extends layout_template %}
 
 Previously, the `layout_template` variable had to be a string with
-the layout template's filename for this to work.
+the layout template's file name for this to work.
 
 
 HTML Escaping
@@ -653,12 +653,12 @@ loop **did not** `break`.  Since Jinja loops cannot `break` anyway,
 a slightly different behavior of the `else` keyword was chosen.
 
 It is also possible to use loops recursively.  This is useful if you are
-dealing with recursive data such as sitemaps or RDFa.
+dealing with recursive data such as site-maps or RDFa.
 To use loops recursively, you basically have to add the `recursive` modifier
 to the loop definition and call the `loop` variable with the new iterable
-where you want to recurse.
+where you want to re-curse.
 
-The following example implements a sitemap with recursive loops::
+The following example implements a site-map with recursive loops::
 
     <ul class="sitemap">
     {%- for item in sitemap recursive %}
@@ -721,7 +721,7 @@ Here's a small example of a macro that renders a form element::
             value|e }}" size="{{ size }}">
     {%- endmacro %}
 
-The macro can then be called like a function in the namespace::
+The macro can then be called like a function in the name space::
 
     <p>{{ input('username') }}</p>
     <p>{{ input('password', type='password') }}</p>
@@ -892,7 +892,7 @@ Include
 ~~~~~~~
 
 The `include` statement is useful to include a template and return the
-rendered contents of that file into the current namespace::
+rendered contents of that file into the current name-space::
 
     {% include 'header.html' %}
         Body
@@ -902,7 +902,7 @@ Included templates have access to the variables of the active context by
 default.  For more details about context behavior of imports and includes,
 see :ref:`import-visibility`.
 
-From Jinja 2.2 onwards, you can mark an include with ``ignore missing``; in
+From Jinja 2.2 onward, you can mark an include with ``ignore missing``; in
 which case Jinja will ignore the statement if the template to be included
 does not exist.  When combined with ``with`` or ``without context``, it must
 be placed *before* the context visibility statement.  Here are some valid
@@ -969,7 +969,7 @@ That way, you can access the attributes::
 
 
 Alternatively, you can import specific names from a template into the current
-namespace::
+name-space::
 
     {% from 'forms.html' import input as input_field, textarea %}
     <dl>
@@ -1407,7 +1407,7 @@ as other languages may not use the words in the same order.
 
 .. versionchanged:: 2.5
 
-If newstyle gettext calls are activated (:ref:`newstyle-gettext`), using
+If new-style gettext calls are activated (:ref:`newstyle-gettext`), using
 placeholders is a lot easier:
 
 .. sourcecode:: html+jinja
@@ -1494,16 +1494,16 @@ Autoescape Extension
 .. versionadded:: 2.4
 
 If the application enables the :ref:`autoescape-extension`, one can
-activate and deactivate the autoescaping from within the templates.
+activate and deactivate the auto escaping from within the templates.
 
 Example::
 
     {% autoescape true %}
-        Autoescaping is active within this block
+        Auto escaping is active within this block
     {% endautoescape %}
 
     {% autoescape false %}
-        Autoescaping is inactive within this block
+        Auto escaping is inactive within this block
     {% endautoescape %}
 
 After an `endautoescape` the behavior is reverted to what it was before.

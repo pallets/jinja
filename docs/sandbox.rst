@@ -46,7 +46,7 @@ API
     recommend only passing non-shared resources to the template and use
     some sort of whitelisting for attributes.
 
-    Also keep in mind that templates may raise runtime or compile time errors,
+    Also keep in mind that templates may raise run-time or compile time errors,
     so make sure to catch them.
 
 Operator Intercepting
@@ -66,7 +66,7 @@ This can be used to customize specific operators as necessary.  In order
 to intercept an operator one has to override the
 :attr:`SandboxedEnvironment.intercepted_binops` attribute.  Once the
 operator that needs to be intercepted is added to that set Jinja2 will
-generate bytecode that calls the :meth:`SandboxedEnvironment.call_binop`
+generate byte-code that calls the :meth:`SandboxedEnvironment.call_binop`
 function.  For unary operators the `unary` attributes and methods have to
 be used instead.
 

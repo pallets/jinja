@@ -2,7 +2,7 @@ Integration
 ===========
 
 Jinja2 provides some code for integration into other tools such as frameworks,
-the `Babel`_ library or your favourite editor for fancy code highlighting.
+the `Babel`_ library or your favorite editor for fancy code highlighting.
 This is a brief description of whats included.
 
 Files to help integration are available
@@ -46,7 +46,7 @@ automatically.
    Until 2.7 template syntax errors were always ignored.  This was done
    since many people are dropping non template html files into the
    templates folder and it would randomly fail.  The assumption was that
-   testsuites will catch syntax errors in templates anyways.  If you don't
+   test-suites will catch syntax errors in templates anyways.  If you don't
    want that behavior you can add ``silent=false`` to the settings and
    exceptions are propagated.
 
@@ -55,7 +55,7 @@ automatically.
 Pylons
 ------
 
-With `Pylons`_ 0.9.7 onwards it's incredible easy to integrate Jinja into a
+With `Pylons`_ 0.9.7 onward it's incredible easy to integrate Jinja into a
 Pylons powered application.
 
 The template engine is configured in `config/environment.py`.  The configuration
