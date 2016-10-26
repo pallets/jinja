@@ -147,20 +147,21 @@ work in production environments::
 Credit for this snippet goes to `Thomas Johansson
 <http://stackoverflow.com/questions/3086091/debug-jinja2-in-google-app-engine/3694434#3694434>`_
 
-Why is there no Python 2.3/2.4/2.5/3.1/3.2 support?
+Why is there no Python 2.3/2.4/2.5/2.6/3.1/3.2 support?
 ---------------------------------------------------
 
 Python 2.3 is missing a lot of features that are used heavily in Jinja2.  This
-decision was made as with the upcoming Python 2.6 and 3.0 versions it becomes
-harder to maintain the code for older Python versions.  If you really need
-Python 2.3 support you either have to use `Jinja 1`_ or other templating
-engines that still support 2.3.
+decision was made because it becomes harder to maintain the code for older
+Python versions.  If you really need Python 2.3 support you either have to use
+`Jinja 1`_ or other templating engines that still support 2.3.
 
 Python 2.4/2.5/3.1/3.2 support was removed when we switched to supporting
 Python 2 and 3 by the same sourcecode (without using 2to3). It was required to
 drop support because only Python 2.6/2.7 and >=3.3 support byte and unicode
 literals in a way compatible to each other version. If you really need support
 for older Python 2 (or 3) versions, you can just use Jinja2 2.6.
+
+Python 2.6 support was removed once it was 3 years past end-of-life.
 
 My Macros are overridden by something
 -------------------------------------

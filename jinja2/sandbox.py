@@ -24,8 +24,8 @@ MAX_RANGE = 100000
 
 #: attributes of function objects that are considered unsafe.
 if PY2:
-    UNSAFE_FUNCTION_ATTRIBUTES = set(['func_closure', 'func_code', 'func_dict',
-                                      'func_defaults', 'func_globals'])
+    UNSAFE_FUNCTION_ATTRIBUTES = {'func_closure', 'func_code', 'func_dict',
+                                  'func_defaults', 'func_globals'}
 else:
     # On versions > python 2 the special attributes on functions are gone,
     # but they remain on methods and generators for whatever reason.
@@ -33,16 +33,10 @@ else:
 
 
 #: unsafe method attributes.  function attributes are unsafe for methods too
-UNSAFE_METHOD_ATTRIBUTES = set(['im_class', 'im_func', 'im_self'])
+UNSAFE_METHOD_ATTRIBUTES = {'im_class', 'im_func', 'im_self'}
 
 #: unsafe generator attirbutes.
-UNSAFE_GENERATOR_ATTRIBUTES = set(['gi_frame', 'gi_code'])
-
-import warnings
-
-# make sure we don't warn in python 2.6 about stuff we don't care about
-warnings.filterwarnings('ignore', 'the sets module', DeprecationWarning,
-                        module='jinja2.sandbox')
+UNSAFE_GENERATOR_ATTRIBUTES = {'gi_frame', 'gi_code'}
 
 from collections import deque
 

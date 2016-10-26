@@ -100,7 +100,7 @@ newstyle_i18n_env.install_gettext_callables(gettext, ngettext, newstyle=True)
 
 
 class ExampleExtension(Extension):
-    tags = set(['test'])
+    tags = {'test'}
     ext_attr = 42
 
     def parse(self, parser):
