@@ -1001,10 +1001,21 @@ This behavior can be changed explicitly: by adding `with context`
 or `without context` to the import/include directive, the current context
 can be passed to the template and caching is disabled automatically.
 
-Here are two examples::
+Internally the *parent* context is passed to the imported / included template.
+This is usually the same as passing the context itself, except in the situation
+of variables defined in the template.  Normally, variables defined in the
+template are perfectly accessible inside the imported / included template.
+The main difference is noticeable when importing / including inside a block —
+the variables defined in the template are no longer accessible!  This can be
+fixed by telling the template engine to pass the current context instead of the
+parent context by using `keep context`.
+
+Here are a few examples::
 
     {% from 'forms.html' import input with context %}
     {% include 'header.html' without context %}
+    {% from 'forms.html' import input keep context %}
+    {% include 'header.html' keep context %}
 
 .. admonition:: Note
 

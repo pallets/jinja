@@ -953,9 +953,10 @@ class CodeGenerator(NodeVisitor):
             self.indent()
 
         if node.with_context:
+            context_value = node.keep_context and 'context' or 'context.parent'
             self.writeline('for event in template.root_render_func('
-                           'template.new_context(context.parent, True, '
-                           'locals())):')
+                           'template.new_context(%s, True, '
+                           'locals())):' % context_value)
         else:
             self.writeline('for event in template.module._body_stream:')
 
@@ -977,7 +978,8 @@ class CodeGenerator(NodeVisitor):
         self.visit(node.template, frame)
         self.write(', %r).' % self.name)
         if node.with_context:
-            self.write('make_module(context.parent, True, locals())')
+            context_value = node.keep_context and 'context' or 'context.parent'
+            self.write('make_module(%s, True, locals())' % context_value)
         else:
             self.write('module')
         if frame.toplevel and not node.target.startswith('_'):
@@ -990,8 +992,9 @@ class CodeGenerator(NodeVisitor):
         self.write('included_template = environment.get_template(')
         self.visit(node.template, frame)
         self.write(', %r).' % self.name)
-        if node.with_context:
-            self.write('make_module(context.parent, True)')
+        if node.with_context or node.keep_context:
+            context_value = node.keep_context and 'context' or 'context.parent'
+            self.write('make_module(%s, True)' % context_value)
         else:
             self.write('module')
 

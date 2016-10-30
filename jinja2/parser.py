@@ -238,12 +238,16 @@ class Parser(object):
         return node
 
     def parse_import_context(self, node, default):
-        if self.stream.current.test_any('name:with', 'name:without') and \
+        if self.stream.current.test_any('name:with', 'name:without',
+                                        'name:keep') and \
            self.stream.look().test('name:context'):
-            node.with_context = next(self.stream).value == 'with'
+            token_value = next(self.stream).value
+            node.with_context = token_value in ('with', 'keep')
+            node.keep_context = token_value == 'keep'
             self.stream.skip()
         else:
             node.with_context = default
+            node.keep_context = False
         return node
 
     def parse_include(self):
@@ -271,9 +275,11 @@ class Parser(object):
         node.names = []
 
         def parse_context():
-            if self.stream.current.value in ('with', 'without') and \
+            if self.stream.current.value in ('with', 'without', 'keep') and \
                self.stream.look().test('name:context'):
-                node.with_context = next(self.stream).value == 'with'
+                token_value = next(self.stream).value
+                node.with_context = token_value in ('with', 'keep')
+                node.keep_context = token_value == 'keep'
                 self.stream.skip()
                 return True
             return False
@@ -301,6 +307,8 @@ class Parser(object):
         if not hasattr(node, 'with_context'):
             node.with_context = False
             self.stream.skip_if('comma')
+        if not hasattr(node, 'keep_context'):
+            node.keep_context = False
         return node
 
     def parse_signature(self, node):
