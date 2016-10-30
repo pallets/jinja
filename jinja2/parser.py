@@ -334,7 +334,7 @@ class Parser(object):
                 if parse_context() or self.stream.current.type != 'comma':
                     break
             else:
-                break
+                self.stream.expect('name')
         if not hasattr(node, 'with_context'):
             node.with_context = False
             self.stream.skip_if('comma')
