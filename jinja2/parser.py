@@ -337,7 +337,6 @@ class Parser(object):
                 self.stream.expect('name')
         if not hasattr(node, 'with_context'):
             node.with_context = False
-            self.stream.skip_if('comma')
         return node
 
     def parse_signature(self, node):
