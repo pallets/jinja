@@ -15,14 +15,14 @@ from random import choice
 from itertools import groupby
 from collections import namedtuple
 from jinja2.utils import Markup, escape, pformat, urlize, soft_unicode, \
-     unicode_urlencode
+    unicode_urlencode
 from jinja2.runtime import Undefined
 from jinja2.exceptions import FilterArgumentError
 from jinja2._compat import imap, string_types, text_type, iteritems
 
-
 _word_re = re.compile(r'\w+(?u)')
 _word_beginning_split_re = re.compile(r'([-\s\(\{\[\<]+)(?u)')
+_word_split_snake_for_camelize = re.compile(r'(?:^|_|-|\s)([a-z])')
 
 
 def contextfilter(f):
@@ -59,15 +59,17 @@ def make_attrgetter(environment, attribute):
     looked up as integers.
     """
     if not isinstance(attribute, string_types) \
-       or ('.' not in attribute and not attribute.isdigit()):
+            or ('.' not in attribute and not attribute.isdigit()):
         return lambda x: environment.getitem(x, attribute)
     attribute = attribute.split('.')
+
     def attrgetter(item):
         for part in attribute:
             if part.isdigit():
                 part = int(part)
             item = environment.getitem(item, part)
         return item
+
     return attrgetter
 
 
@@ -120,7 +122,7 @@ def do_replace(eval_ctx, s, old, new, count=None):
     if not eval_ctx.autoescape:
         return text_type(s).replace(text_type(old), text_type(new), count)
     if hasattr(old, '__html__') or hasattr(new, '__html__') and \
-       not hasattr(s, '__html__'):
+            not hasattr(s, '__html__'):
         s = escape(s)
     else:
         s = soft_unicode(s)
@@ -190,6 +192,17 @@ def do_title(s):
          if item])
 
 
+def do_camelize(s):
+    """Return a camel case version of the value. I.e. words will start with
+    uppercase letters, all remaining characters remain the same
+    """
+    return _word_split_snake_for_camelize.sub(lambda x: x.group(1).upper(), s)
+
+
+def inner_camelize_match(m):
+    return m.group(0).capitalize()
+
+
 def do_dictsort(value, case_sensitive=False, by='key'):
     """Sort a dict and yield (key, value) pairs. Because python dicts are
     unsorted you may want to use this function to order them by either
@@ -213,6 +226,7 @@ def do_dictsort(value, case_sensitive=False, by='key'):
     else:
         raise FilterArgumentError('You can only sort by either '
                                   '"key" or "value"')
+
     def sort_func(item):
         value = item[pos]
         if isinstance(value, string_types) and not case_sensitive:
@@ -259,6 +273,7 @@ def do_sort(environment, value, reverse=False, case_sensitive=False,
         sort_func = None
     if attribute is not None:
         getter = make_attrgetter(environment, attribute)
+
         def sort_func(item, processor=sort_func or (lambda x: x)):
             return processor(getter(item))
     return sorted(value, key=sort_func, reverse=reverse)
@@ -501,8 +516,8 @@ def do_wordwrap(environment, s, width=79, break_long_words=True,
         wrapstring = environment.newline_sequence
     import textwrap
     return wrapstring.join(textwrap.wrap(s, width=width, expand_tabs=False,
-                                   replace_whitespace=False,
-                                   break_long_words=break_long_words))
+                                         replace_whitespace=False,
+                                         break_long_words=break_long_words))
 
 
 def do_wordcount(s):
@@ -673,6 +688,7 @@ def do_round(value, precision=0, method='common'):
 
 _GroupTuple = namedtuple('_GroupTuple', ['grouper', 'list'])
 
+
 @environmentfilter
 def do_groupby(environment, value, attribute):
     """Group a sequence of objects by a common attribute.
@@ -792,7 +808,7 @@ def do_attr(environment, obj, name):
             pass
         else:
             if environment.sandboxed and not \
-               environment.is_safe_attribute(obj, name, value):
+                    environment.is_safe_attribute(obj, name, value):
                 return environment.unsafe_undefined(obj, name)
             return value
     return environment.undefined(obj=obj, name=name)
@@ -828,7 +844,7 @@ def do_map(*args, **kwargs):
         attribute = kwargs.pop('attribute')
         if kwargs:
             raise FilterArgumentError('Unexpected keyword argument %r' %
-                next(iter(kwargs)))
+                                      next(iter(kwargs)))
         func = make_attrgetter(context.environment, attribute)
     else:
         try:
@@ -950,53 +966,54 @@ def _select_or_reject(args, kwargs, modfunc, lookup_attr):
 
 
 FILTERS = {
-    'abs':                  abs,
-    'attr':                 do_attr,
-    'batch':                do_batch,
-    'capitalize':           do_capitalize,
-    'center':               do_center,
-    'count':                len,
-    'd':                    do_default,
-    'default':              do_default,
-    'dictsort':             do_dictsort,
-    'e':                    escape,
-    'escape':               escape,
-    'filesizeformat':       do_filesizeformat,
-    'first':                do_first,
-    'float':                do_float,
-    'forceescape':          do_forceescape,
-    'format':               do_format,
-    'groupby':              do_groupby,
-    'indent':               do_indent,
-    'int':                  do_int,
-    'join':                 do_join,
-    'last':                 do_last,
-    'length':               len,
-    'list':                 do_list,
-    'lower':                do_lower,
-    'map':                  do_map,
-    'pprint':               do_pprint,
-    'random':               do_random,
-    'reject':               do_reject,
-    'rejectattr':           do_rejectattr,
-    'replace':              do_replace,
-    'reverse':              do_reverse,
-    'round':                do_round,
-    'safe':                 do_mark_safe,
-    'select':               do_select,
-    'selectattr':           do_selectattr,
-    'slice':                do_slice,
-    'sort':                 do_sort,
-    'string':               soft_unicode,
-    'striptags':            do_striptags,
-    'sum':                  do_sum,
-    'title':                do_title,
-    'trim':                 do_trim,
-    'truncate':             do_truncate,
-    'upper':                do_upper,
-    'urlencode':            do_urlencode,
-    'urlize':               do_urlize,
-    'wordcount':            do_wordcount,
-    'wordwrap':             do_wordwrap,
-    'xmlattr':              do_xmlattr,
+    'abs': abs,
+    'attr': do_attr,
+    'batch': do_batch,
+    'capitalize': do_capitalize,
+    'center': do_center,
+    'count': len,
+    'd': do_default,
+    'default': do_default,
+    'dictsort': do_dictsort,
+    'e': escape,
+    'escape': escape,
+    'filesizeformat': do_filesizeformat,
+    'first': do_first,
+    'float': do_float,
+    'forceescape': do_forceescape,
+    'format': do_format,
+    'groupby': do_groupby,
+    'indent': do_indent,
+    'int': do_int,
+    'join': do_join,
+    'last': do_last,
+    'length': len,
+    'list': do_list,
+    'lower': do_lower,
+    'map': do_map,
+    'pprint': do_pprint,
+    'random': do_random,
+    'reject': do_reject,
+    'rejectattr': do_rejectattr,
+    'replace': do_replace,
+    'reverse': do_reverse,
+    'round': do_round,
+    'safe': do_mark_safe,
+    'select': do_select,
+    'selectattr': do_selectattr,
+    'slice': do_slice,
+    'sort': do_sort,
+    'string': soft_unicode,
+    'striptags': do_striptags,
+    'sum': do_sum,
+    'title': do_title,
+    'trim': do_trim,
+    'truncate': do_truncate,
+    'upper': do_upper,
+    'urlencode': do_urlencode,
+    'urlize': do_urlize,
+    'wordcount': do_wordcount,
+    'wordwrap': do_wordwrap,
+    'xmlattr': do_xmlattr,
+    'camelize': do_camelize
 }
