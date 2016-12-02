@@ -569,3 +569,9 @@ class TestFilter():
         tmpl = env.from_string('{{ users|rejectattr("id", "odd")|'
                                'map(attribute="name")|join("|") }}')
         assert tmpl.render(users=users) == 'jane'
+
+    def test_json(self, env):
+        env = Environment()
+        obj = ['foo', {'bar': ('baz', None, 1.0, 2)}]
+        tmpl = env.from_string('{{ obj|tojson }}')
+        assert tmpl.render(obj=obj) == '["foo", {"bar": ["baz", null, 1.0, 2]}]'

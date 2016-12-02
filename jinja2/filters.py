@@ -637,6 +637,12 @@ def do_batch(value, linecount, fill_with=None):
         yield tmp
 
 
+def do_json(value):
+    """A filter that outputs Python objects as JSON"""
+    import json
+    return json.dumps(value)
+
+
 def do_round(value, precision=0, method='common'):
     """Round the number to a given precision. The first
     parameter specifies the precision (default is ``0``), the
@@ -999,4 +1005,5 @@ FILTERS = {
     'wordcount':            do_wordcount,
     'wordwrap':             do_wordwrap,
     'xmlattr':              do_xmlattr,
+    'tojson':              do_json,
 }
