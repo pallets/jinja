@@ -102,3 +102,13 @@ class TestTestsCase():
         env = Environment(autoescape=True)
         tmpl = env.from_string('{{ x is escaped }}|{{ y is escaped }}')
         assert tmpl.render(x='foo', y=Markup('foo')) == 'False|True'
+
+    def test_greaterthan(self, env):
+        tmpl = env.from_string('{{ 1 is greaterthan 0 }}|'
+                               '{{ 0 is greaterthan 1 }}')
+        assert tmpl.render() == 'True|False'
+
+    def test_lessthan(self, env):
+        tmpl = env.from_string('{{ 0 is lessthan 1 }}|'
+                               '{{ 1 is lessthan 0 }}')
+        assert tmpl.render() == 'True|False'
