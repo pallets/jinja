@@ -569,3 +569,23 @@ class TestFilter():
         tmpl = env.from_string('{{ users|rejectattr("id", "odd")|'
                                'map(attribute="name")|join("|") }}')
         assert tmpl.render(users=users) == 'jane'
+
+    def test_camelize_with_underscore(self, env):
+        tmpl = env.from_string('''{{ "abstract_factory"|camelize }}''')
+        out = tmpl.render()
+        assert out == 'AbstractFactory'
+
+    def test_camelize_with_hyphen(self, env):
+        tmpl = env.from_string('''{{ "abstract-factory"|camelize }}''')
+        out = tmpl.render()
+        assert out == 'AbstractFactory'
+
+    def test_camelize_with_space(self, env):
+        tmpl = env.from_string('''{{ "abstract factory"|camelize }}''')
+        out = tmpl.render()
+        assert out == 'AbstractFactory'
+
+    def test_camelize_with_mix(self, env):
+        tmpl = env.from_string('''{{ "AbstractGeneric-factory"|camelize }}''')
+        out = tmpl.render()
+        assert out == 'AbstractGenericFactory'
