@@ -35,7 +35,7 @@ Version 2.8
 - If unmarshalling of cached data fails the template will be
   reloaded now.
 - Implemented a block ``set`` tag.
-- Default cache size was incrased to 400 from a low 50.
+- Default cache size was increased to 400 from a low 50.
 - Fixed ``is number`` test to accept long integers in all Python versions.
 - Changed ``is number`` to accept Decimal as a number.
 - Added a check for default arguments followed by non-default arguments. This
@@ -141,7 +141,7 @@ Version 2.6
   makes this necessary, Jinja2 will automatically detect these cases now.
 - the sum filter can now sum up values by attribute.  This is a backwards
   incompatible change.  The argument to the filter previously was the
-  optional starting index which defaultes to zero.  This now became the
+  optional starting index which defaults to zero.  This now became the
   second argument to the function because it's rarely used.
 - like sum, sort now also makes it possible to order items by attribute.
 - like sum and sort, join now also is able to join attributes of objects
@@ -199,11 +199,11 @@ Version 2.5.1
   pulled from markupsafe by the Jinja2 developers.  The debug support
   went into a separate feature called "debugsupport" and is disabled
   by default because it is only relevant for Python 2.4
-- fixed an issue with unary operators having the wrong precendence.
+- fixed an issue with unary operators having the wrong precedence.
 
 Version 2.5
 -----------
-(codename Incoherence, relased on May 29th 2010)
+(codename Incoherence, released on May 29th 2010)
 
 - improved the sort filter (should have worked like this for a
   long time) by adding support for case insensitive searches.
