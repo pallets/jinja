@@ -21,8 +21,8 @@ from jinja2.exceptions import FilterArgumentError
 from jinja2._compat import imap, string_types, text_type, iteritems
 
 
-_word_re = re.compile(r'\w+(?u)')
-_word_beginning_split_re = re.compile(r'([-\s\(\{\[\<]+)(?u)')
+_word_re = re.compile(r'\w+', re.UNICODE)
+_word_beginning_split_re = re.compile(r'([-\s\(\{\[\<]+)', re.UNICODE)
 
 
 def contextfilter(f):
