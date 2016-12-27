@@ -38,6 +38,15 @@ if hasattr(dict, 'iteritems'):
 else:
     dict_item_iter = 'items'
 
+code_features = ['division']
+
+# does this python version support generator stops? (PEP 0479)
+try:
+    exec('from __future__ import generator_stop')
+    code_features.append('generator_stop')
+except SyntaxError:
+    pass
+
 
 # does if 0: dummy(x) get us x into the scope?
 def unoptimize_before_dead_code():
@@ -763,7 +772,7 @@ class CodeGenerator(NodeVisitor):
         eval_ctx = EvalContext(self.environment, self.name)
 
         from jinja2.runtime import __all__ as exported
-        self.writeline('from __future__ import division')
+        self.writeline('from __future__ import %s' % ', '.join(code_features))
         self.writeline('from jinja2.runtime import ' + ', '.join(exported))
         if not unoptimize_before_dead_code:
             self.writeline('dummy = lambda *x: None')

@@ -1,6 +1,12 @@
 Jinja2 Changelog
 ================
 
+Version 2.9
+-----------
+
+- Added support for `generator_stop` on supported Python versions
+  (Python 3.5 and later)
+
 Version 2.8.1
 -------------
 
