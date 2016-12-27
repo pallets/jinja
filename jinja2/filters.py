@@ -12,8 +12,8 @@ import re
 import math
 
 from random import choice
-from operator import itemgetter
 from itertools import groupby
+from collections import namedtuple
 from jinja2.utils import Markup, escape, pformat, urlize, soft_unicode, \
      unicode_urlencode
 from jinja2.runtime import Undefined
@@ -21,7 +21,8 @@ from jinja2.exceptions import FilterArgumentError
 from jinja2._compat import imap, string_types, text_type, iteritems
 
 
-_word_re = re.compile(r'\w+(?u)')
+_word_re = re.compile(r'\w+', re.UNICODE)
+_word_beginning_split_re = re.compile(r'([-\s\(\{\[\<]+)', re.UNICODE)
 
 
 def contextfilter(f):
@@ -44,7 +45,7 @@ def evalcontextfilter(f):
 
 
 def environmentfilter(f):
-    """Decorator for marking evironment dependent filters.  The current
+    """Decorator for marking environment dependent filters.  The current
     :class:`Environment` is passed to the filter as first argument.
     """
     f.environmentfilter = True
@@ -183,12 +184,10 @@ def do_title(s):
     """Return a titlecased version of the value. I.e. words will start with
     uppercase letters, all remaining characters are lowercase.
     """
-    rv = []
-    for item in re.compile(r'([-\s]+)(?u)').split(soft_unicode(s)):
-        if not item:
-            continue
-        rv.append(item[0].upper() + item[1:].lower())
-    return ''.join(rv)
+    return ''.join(
+        [item[0].upper() + item[1:].lower()
+         for item in _word_beginning_split_re.split(soft_unicode(s))
+         if item])
 
 
 def do_dictsort(value, case_sensitive=False, by='key'):
@@ -518,9 +517,12 @@ def do_int(value, default=0, base=10):
     can also override the default base (10) in the second
     parameter, which handles input with prefixes such as
     0b, 0o and 0x for bases 2, 8 and 16 respectively.
+    The base is ignored for decimal numbers and non-string values.
     """
     try:
-        return int(value, base)
+        if isinstance(value, string_types):
+            return int(value, base)
+        return int(value)
     except (TypeError, ValueError):
         # this quirk is necessary so that "42.23"|int gives 42.
         try:
@@ -669,6 +671,8 @@ def do_round(value, precision=0, method='common'):
     return func(value * (10 ** precision)) / (10 ** precision)
 
 
+_GroupTuple = namedtuple('_GroupTuple', ['grouper', 'list'])
+
 @environmentfilter
 def do_groupby(environment, value, attribute):
     """Group a sequence of objects by a common attribute.
@@ -709,17 +713,7 @@ def do_groupby(environment, value, attribute):
        attribute of another attribute.
     """
     expr = make_attrgetter(environment, attribute)
-    return sorted(map(_GroupTuple, groupby(sorted(value, key=expr), expr)))
-
-
-class _GroupTuple(tuple):
-    __slots__ = ()
-    grouper = property(itemgetter(0))
-    list = property(itemgetter(1))
-
-    def __new__(cls, xxx_todo_changeme):
-        (key, value) = xxx_todo_changeme
-        return tuple.__new__(cls, (key, list(value)))
+    return [_GroupTuple(key, list(values)) for key, values in groupby(sorted(value, key=expr), expr)]
 
 
 @environmentfilter
@@ -852,8 +846,10 @@ def do_map(*args, **kwargs):
 
 @contextfilter
 def do_select(*args, **kwargs):
-    """Filters a sequence of objects by applying a test to the object and only
-    selecting the ones with the test succeeding.
+    """Filters a sequence of objects by applying a test to each object,
+    and only selecting the objects with the test succeeding.
+
+    If no test is specified, each object will be evaluated as a boolean.
 
     Example usage:
 
@@ -869,8 +865,10 @@ def do_select(*args, **kwargs):
 
 @contextfilter
 def do_reject(*args, **kwargs):
-    """Filters a sequence of objects by applying a test to the object and
-    rejecting the ones with the test succeeding.
+    """Filters a sequence of objects by applying a test to each object,
+    and rejecting the objects with the test succeeding.
+
+    If no test is specified, each object will be evaluated as a boolean.
 
     Example usage:
 
@@ -885,8 +883,12 @@ def do_reject(*args, **kwargs):
 
 @contextfilter
 def do_selectattr(*args, **kwargs):
-    """Filters a sequence of objects by applying a test to an attribute of an
-    object and only selecting the ones with the test succeeding.
+    """Filters a sequence of objects by applying a test to the specified
+    attribute of each object, and only selecting the objects with the
+    test succeeding.
+
+    If no test is specified, the attribute's value will be evaluated as
+    a boolean.
 
     Example usage:
 
@@ -902,8 +904,12 @@ def do_selectattr(*args, **kwargs):
 
 @contextfilter
 def do_rejectattr(*args, **kwargs):
-    """Filters a sequence of objects by applying a test to an attribute of an
-    object or the attribute and rejecting the ones with the test succeeding.
+    """Filters a sequence of objects by applying a test to the specified
+    attribute of each object, and rejecting the objects with the test
+    succeeding.
+
+    If no test is specified, the attribute's value will be evaluated as
+    a boolean.
 
     .. sourcecode:: jinja
 

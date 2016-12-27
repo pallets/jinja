@@ -133,11 +133,16 @@ class TestFilter():
                        'foo bar foo bar\n  foo bar foo bar')
 
     def test_int(self, env):
+        class IntIsh(object):
+            def __int__(self):
+                return 42
+
         tmpl = env.from_string('{{ "42"|int }}|{{ "ajsghasjgd"|int }}|'
                                '{{ "32.32"|int }}|{{ "0x4d32"|int(0, 16) }}|'
-                               '{{ "011"|int(0, 8)}}|{{ "0x33FU"|int(0, 16) }}')
-        out = tmpl.render()
-        assert out == '42|0|32|19762|9|0'
+                               '{{ "011"|int(0, 8)}}|{{ "0x33FU"|int(0, 16) }}|'
+                               '{{ obj|int }}')
+        out = tmpl.render(obj=IntIsh())
+        assert out == '42|0|32|19762|9|0|42'
 
     def test_join(self, env):
         tmpl = env.from_string('{{ [1, 2, 3]|join("|") }}')
@@ -208,6 +213,14 @@ class TestFilter():
         assert tmpl.render() == "Foo\tBar"
         tmpl = env.from_string('''{{ "FOO\tBAR"|title }}''')
         assert tmpl.render() == "Foo\tBar"
+        tmpl = env.from_string('''{{ "foo (bar)"|title }}''')
+        assert tmpl.render() == "Foo (Bar)"
+        tmpl = env.from_string('''{{ "foo {bar}"|title }}''')
+        assert tmpl.render() == "Foo {Bar}"
+        tmpl = env.from_string('''{{ "foo [bar]"|title }}''')
+        assert tmpl.render() == "Foo [Bar]"
+        tmpl = env.from_string('''{{ "foo <bar>"|title }}''')
+        assert tmpl.render() == "Foo <Bar>"
 
         class Foo:
             def __str__(self):

@@ -19,7 +19,7 @@ Even if you are creating templates from strings by using the constructor of
 albeit a shared one.
 
 Most applications will create one :class:`Environment` object on application
-initialization and use that to load templates.  In some cases it's however
+initialization and use that to load templates.  In some cases however, it's 
 useful to have multiple environments side by side, if different configurations
 are in use.
 
@@ -581,7 +581,7 @@ Custom Filters
 --------------
 
 Custom filters are just regular Python functions that take the left side of
-the filter as first argument and the the arguments passed to the filter as
+the filter as first argument and the arguments passed to the filter as
 extra arguments or keyword arguments.
 
 For example in the filter ``{{ 42|myfilter(23) }}`` the function would be

@@ -10,6 +10,8 @@
 """
 import os
 import sys
+import weakref
+from functools import reduce, partial
 from jinja2 import nodes
 from jinja2.defaults import BLOCK_START_STRING, \
      BLOCK_END_STRING, VARIABLE_START_STRING, VARIABLE_END_STRING, \
@@ -29,8 +31,7 @@ from jinja2.utils import import_string, LRUCache, Markup, missing, \
      concat, consume, internalcode
 from jinja2._compat import imap, ifilter, string_types, iteritems, \
      text_type, reraise, implements_iterator, implements_to_string, \
-     get_next, encode_filename, PY2, PYPY
-from functools import reduce
+     encode_filename, PY2, PYPY
 
 
 # for direct template usage we have up to ten living environments
@@ -167,7 +168,7 @@ class Environment(object):
             look at :ref:`the extensions documentation <jinja-extensions>`.
 
         `optimized`
-            should the optimizer be enabled?  Default is `True`.
+            should the optimizer be enabled?  Default is ``True``.
 
         `undefined`
             :class:`Undefined` or a subclass of it that is used to represent
@@ -176,14 +177,14 @@ class Environment(object):
         `finalize`
             A callable that can be used to process the result of a variable
             expression before it is output.  For example one can convert
-            `None` implicitly into an empty string here.
+            ``None`` implicitly into an empty string here.
 
         `autoescape`
-            If set to true the XML/HTML autoescaping feature is enabled by
+            If set to ``True`` the XML/HTML autoescaping feature is enabled by
             default.  For more details about autoescaping see
             :class:`~jinja2.utils.Markup`.  As of Jinja 2.4 this can also
             be a callable that is passed the template name and has to
-            return `True` or `False` depending on autoescape should be
+            return ``True`` or ``False`` depending on autoescape should be
             enabled by default.
 
             .. versionchanged:: 2.4
@@ -205,7 +206,7 @@ class Environment(object):
         `auto_reload`
             Some loaders load templates from locations where the template
             sources may change (ie: file system or database).  If
-            `auto_reload` is set to `True` (default) every time a template is
+            ``auto_reload`` is set to ``True`` (default) every time a template is
             requested the loader checks if the source changed and if yes, it
             will reload the template.  For higher performance it's possible to
             disable that.
@@ -769,15 +770,7 @@ class Environment(object):
     def _load_template(self, name, globals):
         if self.loader is None:
             raise TypeError('no loader for this environment specified')
-        try:
-            # use abs path for cache key
-            cache_key = self.loader.get_source(self, name)[1]
-        except RuntimeError:
-            # if loader does not implement get_source()
-            cache_key = None
-        # if template is not file, use name for cache key
-        if cache_key is None:
-            cache_key = name
+        cache_key = (weakref.ref(self.loader), name)
         if self.cache is not None:
             template = self.cache.get(cache_key)
             if template is not None and (not self.auto_reload or
@@ -1171,35 +1164,35 @@ class TemplateStream(object):
 
     def disable_buffering(self):
         """Disable the output buffering."""
-        self._next = get_next(self._gen)
+        self._next = partial(next, self._gen)
         self.buffered = False
+
+    def _buffered_generator(self, size):
+        buf = []
+        c_size = 0
+        push = buf.append
+
+        while 1:
+            try:
+                while c_size < size:
+                    c = next(self._gen)
+                    push(c)
+                    if c:
+                        c_size += 1
+            except StopIteration:
+                if not c_size:
+                    return
+            yield concat(buf)
+            del buf[:]
+            c_size = 0
 
     def enable_buffering(self, size=5):
         """Enable buffering.  Buffer `size` items before yielding them."""
         if size <= 1:
             raise ValueError('buffer size too small')
 
-        def generator(next):
-            buf = []
-            c_size = 0
-            push = buf.append
-
-            while 1:
-                try:
-                    while c_size < size:
-                        c = next()
-                        push(c)
-                        if c:
-                            c_size += 1
-                except StopIteration:
-                    if not c_size:
-                        return
-                yield concat(buf)
-                del buf[:]
-                c_size = 0
-
         self.buffered = True
-        self._next = get_next(generator(get_next(self._gen)))
+        self._next = partial(next, self._buffered_generator(size))
 
     def __iter__(self):
         return self

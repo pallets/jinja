@@ -8,7 +8,9 @@ an optional `sandboxed`_ environment.
 Nutshell
 --------
 
-Here a small example of a Jinja template::
+Here a small example of a Jinja template:
+
+.. code-block:: jinja
 
     {% extends 'base.html' %}
     {% block title %}Memberlist{% endblock %}
@@ -28,8 +30,8 @@ life difficult by restricting functionality too much.
 
 For more information visit the new `Jinja2 webpage`_ and `documentation`_.
 
-The `Jinja2 tip`_ is installable via `easy_install` with ``easy_install
-Jinja2==dev``.
+The `Jinja2 tip`_ is installable via ``pip`` with ``pip install
+https://github.com/pallets/jinja/zipball/master``.
 
 .. _sandboxed: http://en.wikipedia.org/wiki/Sandbox_(computer_security)
 .. _Django: http://www.djangoproject.com/
@@ -41,9 +43,9 @@ Builds
 ------
 
 +---------------------+------------------------------------------------------------------------------+
-| ``master``          | .. image:: https://travis-ci.org/mitsuhiko/jinja2.svg?branch=master          |
-|                     |     :target: https://travis-ci.org/mitsuhiko/jinja2                          |
+| ``master``          | .. image:: https://travis-ci.org/pallets/jinja.svg?branch=master             |
+|                     |     :target: https://travis-ci.org/pallets/jinja                             |
 +---------------------+------------------------------------------------------------------------------+
-| ``2.7-maintenance`` | .. image:: https://travis-ci.org/mitsuhiko/jinja2.svg?branch=2.7-maintenance |
-|                     |     :target: https://travis-ci.org/mitsuhiko/jinja2                          |
+| ``2.7-maintenance`` | .. image:: https://travis-ci.org/pallets/jinja.svg?branch=2.7-maintenance    |
+|                     |     :target: https://travis-ci.org/pallets/jinja                             |
 +---------------------+------------------------------------------------------------------------------+
