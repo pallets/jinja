@@ -1615,6 +1615,8 @@ class CodeGenerator(NodeVisitor):
             self.visit(node.step, frame)
 
     def visit_Filter(self, node, frame):
+        if self.environment.is_async:
+            self.write('await auto_await(')
         self.write(self.filters[node.name] + '(')
         func = self.environment.filters.get(node.name)
         if func is None:
@@ -1640,6 +1642,8 @@ class CodeGenerator(NodeVisitor):
             self.write('concat(%s)' % frame.buffer)
         self.signature(node, frame)
         self.write(')')
+        if self.environment.is_async:
+            self.write(')')
 
     def visit_Test(self, node, frame):
         self.write(self.tests[node.name] + '(')

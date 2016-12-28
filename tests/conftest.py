@@ -21,7 +21,7 @@ from jinja2 import Environment
 
 
 def pytest_ignore_collect(path, config):
-    if path.basename == 'test_async.py' and not have_async_gen:
+    if 'async' in path.basename and not have_async_gen:
         return True
     return False
 

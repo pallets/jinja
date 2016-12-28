@@ -14,7 +14,7 @@ from jinja2._compat import text_type, implements_to_string
 
 
 @pytest.mark.filter
-class TestFilter():
+class TestFilter(object):
 
     def test_filter_calling(self, env):
         rv = env.call_filter('sum', [1, 2, 3])

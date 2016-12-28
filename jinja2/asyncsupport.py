@@ -139,12 +139,20 @@ def patch_template():
 
 def patch_runtime():
     from jinja2.runtime import BlockReference
-    BlockReference.__call__ = wrap_block_reference_call(BlockReference.__call__)
+    BlockReference.__call__ = wrap_block_reference_call(
+        BlockReference.__call__)
+
+
+def patch_filters():
+    from jinja2.filters import FILTERS
+    from jinja2.asyncfilters import ASYNC_FILTERS
+    FILTERS.update(ASYNC_FILTERS)
 
 
 def patch_all():
     patch_template()
     patch_runtime()
+    patch_filters()
 
 
 async def auto_await(value):
