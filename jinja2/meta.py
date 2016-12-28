@@ -39,7 +39,7 @@ def find_undeclared_variables(ast):
     >>> from jinja2 import Environment, meta
     >>> env = Environment()
     >>> ast = env.parse('{% set foo = 42 %}{{ bar + foo }}')
-    >>> meta.find_undeclared_variables(ast) == set(['bar'])
+    >>> meta.find_undeclared_variables(ast) == {'bar'}
     True
 
     .. admonition:: Implementation

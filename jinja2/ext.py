@@ -155,7 +155,7 @@ def _make_new_ngettext(func):
 
 class InternationalizationExtension(Extension):
     """This extension adds gettext support to Jinja2."""
-    tags = set(['trans'])
+    tags = {'trans'}
 
     # TODO: the i18n extension is currently reevaluating values in a few
     # situations.  Take this example:
@@ -391,7 +391,7 @@ class ExprStmtExtension(Extension):
     """Adds a `do` tag to Jinja2 that works like the print statement just
     that it doesn't print the return value.
     """
-    tags = set(['do'])
+    tags = {'do'}
 
     def parse(self, parser):
         node = nodes.ExprStmt(lineno=next(parser.stream).lineno)
@@ -401,7 +401,7 @@ class ExprStmtExtension(Extension):
 
 class LoopControlExtension(Extension):
     """Adds break and continue to the template engine."""
-    tags = set(['break', 'continue'])
+    tags = {'break', 'continue'}
 
     def parse(self, parser):
         token = next(parser.stream)
@@ -412,7 +412,7 @@ class LoopControlExtension(Extension):
 
 class WithExtension(Extension):
     """Adds support for a django-like with block."""
-    tags = set(['with'])
+    tags = {'with'}
 
     def parse(self, parser):
         node = nodes.Scope(lineno=next(parser.stream).lineno)
@@ -433,7 +433,7 @@ class WithExtension(Extension):
 
 class AutoEscapeExtension(Extension):
     """Changes auto escape rules for a scope."""
-    tags = set(['autoescape'])
+    tags = {'autoescape'}
 
     def parse(self, parser):
         node = nodes.ScopedEvalContextModifier(lineno=next(parser.stream).lineno)
