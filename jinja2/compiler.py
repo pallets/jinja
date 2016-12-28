@@ -1145,7 +1145,7 @@ class CodeGenerator(NodeVisitor):
         # "outer frame".
         if extended_loop and node.test is not None:
             if self.environment._async:
-                self.fail('loop filters in async mode are currently if the '
+                self.fail('loop filters in async mode are unavailable if the '
                           'loop uses the special "loop" variable or is '
                           'recursive.', node.lineno)
             self.write('(')
