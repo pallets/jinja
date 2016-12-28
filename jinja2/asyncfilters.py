@@ -17,11 +17,11 @@ async def auto_to_seq(value):
 
 def dualfilter(normal_filter, async_filter):
     wrap_evalctx = False
-    if getattr(normal_filter, 'environmentfilter'):
+    if getattr(normal_filter, 'environmentfilter', False):
         is_async = lambda args: args[0].is_async
         wrap_evalctx = False
     else:
-        if not getattr(normal_filter, 'evalcontextfilter'):
+        if not getattr(normal_filter, 'evalcontextfilter', False):
             wrap_evalctx = True
         is_async = lambda args: args[0].environment.is_async
 
@@ -62,7 +62,13 @@ async def do_groupby(environment, value, attribute):
                 await auto_to_seq(value), key=expr), expr)]
 
 
+@asyncfiltervariant(filters.do_join)
+async def do_join(eval_ctx, value, d=u'', attribute=None):
+    return filters.do_join(eval_ctx, await auto_to_seq(value), d, attribute)
+
+
 ASYNC_FILTERS = {
     'first':        do_first,
     'groupby':      do_groupby,
+    'join':         do_join,
 }

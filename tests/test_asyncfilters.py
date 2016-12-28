@@ -1,5 +1,6 @@
 import pytest
 from jinja2 import Environment
+from jinja2.utils import Markup
 
 
 async def make_aiter(iter):
@@ -87,3 +88,31 @@ def test_groupby_multidot(env_async, articles):
         '1971[totally not]',
         ''
     ]
+
+
+@mark_dualiter('int_items', lambda: [1, 2, 3])
+def test_join(env_async, int_items):
+    tmpl = env_async.from_string('{{ items()|join("|") }}')
+    out = tmpl.render(items=int_items)
+    assert out == '1|2|3'
+
+
+@mark_dualiter('string_items', lambda: ["<foo>", Markup("<span>foo</span>")])
+def test_join(string_items):
+    env2 = Environment(autoescape=True, enable_async=True)
+    tmpl = env2.from_string(
+        '{{ ["<foo>", "<span>foo</span>"|safe]|join }}')
+    assert tmpl.render(items=string_items) == '&lt;foo&gt;<span>foo</span>'
+
+
+def make_users():
+    class User(object):
+        def __init__(self, username):
+            self.username = username
+    return map(User, ['foo', 'bar'])
+
+
+@mark_dualiter('users', make_users)
+def test_join_attribute(env_async, users):
+    tmpl = env_async.from_string('''{{ users()|join(', ', 'username') }}''')
+    assert tmpl.render(users=users) == 'foo, bar'
