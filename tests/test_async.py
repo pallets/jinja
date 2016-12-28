@@ -44,11 +44,14 @@ def test_await_on_calls():
 
 @pytest.mark.skipif(not have_async_gen, reason='No async generators')
 def test_await_and_macros():
-    t = Template('{% macro foo(x) %}[{{ x }}]{% endmacro %}{{ foo(42) }}',
-                 enable_async=True)
+    t = Template('{% macro foo(x) %}[{{ x }}][{{ async_func() }}]'
+                 '{% endmacro %}{{ foo(42) }}', enable_async=True)
+
+    async def async_func():
+        return 42
 
     async def func():
-        return await t.render_async()
+        return await t.render_async(async_func=async_func)
 
     rv = run(func)
-    assert rv == '[42]'
+    assert rv == '[42][42]'
