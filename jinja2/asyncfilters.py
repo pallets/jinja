@@ -14,21 +14,45 @@ async def auto_to_seq(value):
     return seq
 
 
-async def async_do_first(environment, seq):
+def dualfilter(normal_filter, async_filter):
+    wrap_evalctx = False
+    if getattr(normal_filter, 'environmentfilter'):
+        is_async = lambda args: args[0].is_async
+        wrap_evalctx = False
+    else:
+        if not getattr(normal_filter, 'evalcontextfilter'):
+            wrap_evalctx = True
+        is_async = lambda args: args[0].environment.is_async
+
+    @wraps(normal_filter)
+    def wrapper(*args, **kwargs):
+        b = is_async(args)
+        if wrap_evalctx:
+            args = args[1:]
+        if b:
+            return async_filter(*args, **kwargs)
+        return normal_filter(*args, **kwargs)
+
+    if wrap_evalctx:
+        wrapper.evalcontextfilter = True
+
+    return wrapper
+
+
+def asyncfiltervariant(original):
+    def decorator(f):
+        return dualfilter(original, f)
+    return decorator
+
+
+@asyncfiltervariant(filters.do_first)
+async def do_first(environment, seq):
     try:
         return await auto_aiter(seq).__anext__()
     except StopAsyncIteration:
         return environment.undefined('No first item, sequence was empty.')
 
 
-@wraps(filters.do_first)
-@filters.environmentfilter
-def do_first(environment, seq):
-    if environment.is_async:
-        return async_do_first(environment, seq)
-    return filters.do_first(environment, seq)
-
-
 ASYNC_FILTERS = {
-    'first': do_first,
+    'first':        do_first,
 }
