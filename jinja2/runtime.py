@@ -286,19 +286,10 @@ class LoopContextBase(object):
     _after = _last_iteration
     _length = None
 
-    def __init__(self, iterable, recurse=None, depth0=0):
+    def __init__(self, recurse=None, depth0=0):
         self._recurse = recurse
         self.index0 = -1
         self.depth0 = depth0
-
-        # try to get the length of the iterable early.  This must be done
-        # here because there are some broken iterators around where there
-        # __len__ is the number of iterations left (i'm looking at your
-        # listreverseiterator!).
-        try:
-            self._length = len(iterable)
-        except (TypeError, AttributeError):
-            self._length = None
 
     def cycle(self, *args):
         """Cycles among the arguments with the current loop index."""
@@ -328,6 +319,30 @@ class LoopContextBase(object):
     __call__ = loop
     del loop
 
+    def __repr__(self):
+        return '<%s %r/%r>' % (
+            self.__class__.__name__,
+            self.index,
+            self.length
+        )
+
+
+class LoopContext(LoopContextBase):
+
+    def __init__(self, iterable, recurse=None, depth0=0):
+        LoopContextBase.__init__(self, recurse, depth0)
+        self._iterator = iter(iterable)
+
+        # try to get the length of the iterable early.  This must be done
+        # here because there are some broken iterators around where there
+        # __len__ is the number of iterations left (i'm looking at your
+        # listreverseiterator!).
+        try:
+            self._length = len(iterable)
+        except (TypeError, AttributeError):
+            self._length = None
+        self._after = self._safe_next()
+
     @property
     def length(self):
         if self._length is None:
@@ -340,21 +355,6 @@ class LoopContextBase(object):
             iterations_done = self.index0 + 2
             self._length = len(iterable) + iterations_done
         return self._length
-
-    def __repr__(self):
-        return '<%s %r/%r>' % (
-            self.__class__.__name__,
-            self.index,
-            self.length
-        )
-
-
-class LoopContext(LoopContextBase):
-
-    def __init__(self, iterable, recurse=None, depth0=0):
-        self._iterator = iter(iterable)
-        LoopContextBase.__init__(self, iterable, recurse, depth0)
-        self._after = self._safe_next()
 
     def __iter__(self):
         return LoopContextIterator(self)

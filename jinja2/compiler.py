@@ -784,7 +784,7 @@ class CodeGenerator(NodeVisitor):
 
         if self.environment._async:
             self.writeline('from jinja2.asyncsupport import auto_await, '
-                           'auto_iter, make_async_loop_context')
+                           'auto_aiter, make_async_loop_context')
 
         # if we want a deferred initialization we cannot move the
         # environment into a local name
@@ -1144,19 +1144,19 @@ class CodeGenerator(NodeVisitor):
         # if we have an extened loop and a node test, we filter in the
         # "outer frame".
         if extended_loop and node.test is not None:
-            if self.environment._async:
-                self.fail('loop filters in async mode are unavailable if the '
-                          'loop uses the special "loop" variable or is '
-                          'recursive.', node.lineno)
             self.write('(')
             self.visit(node.target, loop_frame)
-            self.write(' for ')
+            self.write(self.environment._async and ' async for ' or ' for ')
             self.visit(node.target, loop_frame)
             self.write(' in ')
             if node.recursive:
                 self.write('reciter')
             else:
+                if self.environment._async:
+                    self.write('auto_aiter(')
                 self.visit(node.iter, loop_frame)
+                if self.environment._async:
+                    self.write(')')
             self.write(' if (')
             test_frame = loop_frame.copy()
             self.visit(node.test, test_frame)
@@ -1166,7 +1166,7 @@ class CodeGenerator(NodeVisitor):
             self.write('reciter')
         else:
             if self.environment._async and not extended_loop:
-                self.write('auto_iter(')
+                self.write('auto_aiter(')
             self.visit(node.iter, loop_frame)
             if self.environment._async and not extended_loop:
                 self.write(')')
@@ -1208,9 +1208,11 @@ class CodeGenerator(NodeVisitor):
             self.return_buffer_contents(loop_frame)
             self.outdent()
             self.start_write(frame, node)
+            if self.environment._async:
+                self.write('await ')
             self.write('loop(')
             if self.environment._async:
-                self.write('auto_iter(')
+                self.write('auto_aiter(')
             self.visit(node.iter, frame)
             if self.environment._async:
                 self.write(')')

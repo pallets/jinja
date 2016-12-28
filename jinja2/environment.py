@@ -992,6 +992,14 @@ class Template(object):
         return self.environment.handle_exception(exc_info, True)
 
     def render_async(self, *args, **kwargs):
+        """This works similar to :meth:`render` but returns a coroutine
+        that when awaited returns the entire rendered template string.  This
+        requires the async feature to be enabled.
+
+        Example usage::
+
+            await template.render_async(knights='that say nih; asynchronously')
+        """
         # see asyncsupport for the actual implementation
         raise NotImplementedError('This feature is not available for this '
                                   'version of Python')
@@ -1021,6 +1029,9 @@ class Template(object):
         yield self.environment.handle_exception(exc_info, True)
 
     def generate_async(self, *args, **kwargs):
+        """An async version of :meth:`generate`.  Works very similarly but
+        returns an async iterator instead.
+        """
         # see asyncsupport for the actual implementation
         raise NotImplementedError('This feature is not available for this '
                                   'version of Python')
@@ -1046,6 +1057,11 @@ class Template(object):
         return TemplateModule(self, self.new_context(vars, shared, locals))
 
     def make_module_async(self, vars=None, shared=False, locals=None):
+        """As template module creation can invoke template code for
+        asynchronous exections this method must be used instead of the
+        normal :meth:`make_module` one.  Likewise the module attribute
+        becomes unavailable in async mode.
+        """
         # see asyncsupport for the actual implementation
         raise NotImplementedError('This feature is not available for this '
                                   'version of Python')
@@ -1068,6 +1084,8 @@ class Template(object):
         '23'
         >>> t.module.foo() == u'42'
         True
+
+        This attribute is not available if async mode is enabled.
         """
         return self._get_default_module()
 

@@ -153,7 +153,7 @@ async def auto_await(value):
     return value
 
 
-async def auto_iter(iterable):
+async def auto_aiter(iterable):
     if hasattr(iterable, '__aiter__'):
         async for item in iterable:
             yield item
@@ -164,10 +164,19 @@ async def auto_iter(iterable):
 
 class AsyncLoopContext(LoopContextBase):
 
-    def __init__(self, async_iterator, iterable, after, recurse=None, depth0=0):
+    def __init__(self, async_iterator, after, length, recurse=None,
+                 depth0=0):
+        LoopContextBase.__init__(self, recurse, depth0)
         self._async_iterator = async_iterator
-        LoopContextBase.__init__(self, iterable, recurse, depth0)
         self._after = after
+        self._length = length
+
+    @property
+    def length(self):
+        if self._length is None:
+            raise TypeError('Loop length for some iterators cannot be '
+                            'lazily calculated in async mode')
+        return self._length
 
     def __aiter__(self):
         return AsyncLoopContextIterator(self)
@@ -196,9 +205,25 @@ class AsyncLoopContextIterator(object):
 
 
 async def make_async_loop_context(iterable, recurse=None, depth0=0):
-    async_iterator = auto_iter(iterable)
+    # Length is more complicated and less efficient in async mode.  The
+    # reason for this is that we cannot know if length will be used
+    # upfront but because length is a property we cannot lazily execute it
+    # later.  This means that we need to buffer it up and measure :(
+    #
+    # We however only do this for actual iterators, not for async
+    # iterators as blocking here does not seem like the best idea in the
+    # world.
+    try:
+        length = len(iterable)
+    except (TypeError, AttributeError):
+        if not hasattr(iterable, '__aiter__'):
+            iterable = tuple(iterable)
+            length = len(iterable)
+        else:
+            length = None
+    async_iterator = auto_aiter(iterable)
     try:
         after = await async_iterator.__anext__()
     except StopAsyncIteration:
         after = _last_iteration
-    return AsyncLoopContext(async_iterator, iterable, after, recurse, depth0)
+    return AsyncLoopContext(async_iterator, after, length, recurse, depth0)
