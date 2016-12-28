@@ -64,13 +64,6 @@ async def get_default_module_async(self):
     return rv
 
 
-@internalcode
-def get_default_module_impl(self):
-    if self.environment._async:
-        return self._get_default_module_async()
-    return self._get_default_module()
-
-
 def wrap_default_module(original_default_module):
     @internalcode
     def _get_default_module(self):
@@ -84,7 +77,7 @@ def wrap_default_module(original_default_module):
 async def make_module_async(self, vars=None, shared=False, locals=None):
     context = self.new_context(vars, shared, locals)
     body_stream = []
-    async for item in template.root_render_func(context):
+    async for item in self.root_render_func(context):
         body_stream.append(item)
     return TemplateModule(self, context, body_stream)
 
@@ -96,7 +89,6 @@ def patch_template():
     Template._get_default_module = wrap_default_module(
         Template._get_default_module)
     Template._get_default_module_async = get_default_module_async
-    Template._get_default_module_impl = get_default_module_impl
     Template.make_module_async = make_module_async
 
 

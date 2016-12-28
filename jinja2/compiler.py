@@ -971,14 +971,18 @@ class CodeGenerator(NodeVisitor):
             self.writeline('else:')
             self.indent()
 
-        loop = self.environment._async and 'async for' or 'for'
         if node.with_context:
+            loop = self.environment._async and 'async for' or 'for'
             self.writeline('%s event in template.root_render_func('
                            'template.new_context(context.parent, True, '
                            'locals())):' % loop)
+        elif self.environment._async:
+            self.writeline('for event in (await '
+                           'template._get_default_module_async())'
+                           '._body_stream:')
         else:
-            self.writeline('%s event in template._get_default_module_impl()'
-                           '._body_stream:' % loop)
+            self.writeline('for event in template._get_default_module()'
+                           '._body_stream:')
 
         self.indent()
         self.simple_write('event', frame)
@@ -1002,8 +1006,10 @@ class CodeGenerator(NodeVisitor):
         if node.with_context:
             self.write('make_module%s(context.parent, True, locals())'
                        % (self.environment._async and '_async' or ''))
+        elif self.environment._async:
+            self.write('_get_default_module_async()')
         else:
-            self.write('_get_default_module_impl()')
+            self.write('_get_default_module()')
         if frame.toplevel and not node.target.startswith('_'):
             self.writeline('context.exported_vars.discard(%r)' % node.target)
         frame.assigned_names.add(node.target)
@@ -1018,8 +1024,10 @@ class CodeGenerator(NodeVisitor):
         if node.with_context:
             self.write('make_module%s(context.parent, True)'
                        % (self.environment._async and '_async' or ''))
+        elif self.environment._async:
+            self.write('_get_default_module_async()')
         else:
-            self.write('_get_default_module_impl()')
+            self.write('_get_default_module()')
 
         var_names = []
         discarded_names = []
