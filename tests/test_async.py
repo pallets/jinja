@@ -12,7 +12,6 @@ def run(coro):
     return loop.run_until_complete(coro)
 
 
-@pytest.mark.skipif(not have_async_gen, reason='No async generators')
 def test_basic_async():
     t = Template('{% for item in [1, 2, 3] %}[{{ item }}]{% endfor %}',
                  enable_async=True)
@@ -23,7 +22,6 @@ def test_basic_async():
     assert rv == '[1][2][3]'
 
 
-@pytest.mark.skipif(not have_async_gen, reason='No async generators')
 def test_await_on_calls():
     t = Template('{{ async_func() + normal_func() }}',
                  enable_async=True)
@@ -44,7 +42,6 @@ def test_await_on_calls():
     assert rv == '65'
 
 
-@pytest.mark.skipif(not have_async_gen, reason='No async generators')
 def test_await_on_calls_normal_render():
     t = Template('{{ async_func() + normal_func() }}',
                  enable_async=True)
@@ -63,7 +60,6 @@ def test_await_on_calls_normal_render():
     assert rv == '65'
 
 
-@pytest.mark.skipif(not have_async_gen, reason='No async generators')
 def test_await_and_macros():
     t = Template('{% macro foo(x) %}[{{ x }}][{{ async_func() }}]'
                  '{% endmacro %}{{ foo(42) }}', enable_async=True)
@@ -78,7 +74,6 @@ def test_await_and_macros():
     assert rv == '[42][42]'
 
 
-@pytest.mark.skipif(not have_async_gen, reason='No async generators')
 def test_async_blocks():
     t = Template('{% block foo %}<Test>{% endblock %}{{ self.foo() }}',
                  enable_async=True, autoescape=True)
@@ -89,7 +84,6 @@ def test_async_blocks():
     assert rv == '<Test><Test>'
 
 
-@pytest.mark.skipif(not have_async_gen, reason='No async generators')
 def test_async_generate():
     t = Template('{% for x in [1, 2, 3] %}{{ x }}{% endfor %}',
                  enable_async=True)
@@ -97,7 +91,6 @@ def test_async_generate():
     assert rv == ['1', '2', '3']
 
 
-@pytest.mark.skipif(not have_async_gen, reason='No async generators')
 def test_async_iteration_in_templates():
     t = Template('{% for x in rng %}{{ x }}{% endfor %}',
                  enable_async=True)
@@ -108,7 +101,6 @@ def test_async_iteration_in_templates():
     assert rv == ['1', '2', '3']
 
 
-@pytest.mark.skipif(not have_async_gen, reason='No async generators')
 def test_async_iteration_in_templates_extended():
     t = Template('{% for x in rng %}{{ loop.index0 }}/{{ x }}{% endfor %}',
                  enable_async=True)
@@ -130,7 +122,6 @@ def test_env_async():
     return env
 
 
-@pytest.mark.skipif(not have_async_gen, reason='No async generators')
 @pytest.mark.imports
 class TestAsyncImports(object):
 
@@ -178,7 +169,6 @@ class TestAsyncImports(object):
         assert not hasattr(m, 'notthere')
 
 
-@pytest.mark.skipif(not have_async_gen, reason='No async generators')
 @pytest.mark.imports
 @pytest.mark.includes
 class TestAsyncIncludes(object):
@@ -255,7 +245,6 @@ class TestAsyncIncludes(object):
         assert t.render().strip() == '(FOO)'
 
 
-@pytest.mark.skipif(not have_async_gen, reason='No async generators')
 @pytest.mark.core_tags
 @pytest.mark.for_loop
 class TestAsyncForLoop(object):

@@ -16,7 +16,14 @@ import sys
 from traceback import format_exception
 from jinja2 import loaders
 from jinja2._compat import PY2
+from jinja2.utils import have_async_gen
 from jinja2 import Environment
+
+
+def pytest_ignore_collect(path, config):
+    if path.basename == 'test_async.py' and not have_async_gen:
+        return True
+    return False
 
 
 @pytest.fixture
