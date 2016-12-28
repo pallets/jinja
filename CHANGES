@@ -10,6 +10,7 @@ Version 2.9
   (Python 3.5 and later)
 - Corrected a long standing issue with operator precedence of math operations
   not being what was expected.
+- Added support for Python 3.6 async iterators through a new async mode.
 
 Version 2.8.1
 -------------
