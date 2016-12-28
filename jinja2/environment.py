@@ -217,6 +217,11 @@ class Environment(object):
             have to be parsed if they were not changed.
 
             See :ref:`bytecode-cache` for more information.
+
+        `enable_async`
+            If set to true this enables async template execution which allows
+            you to take advantage of newer Python features.  This requires
+            Python 3.6 or later.
     """
 
     #: if this environment is sandboxed.  Modifying this variable won't make
@@ -268,7 +273,8 @@ class Environment(object):
                  loader=None,
                  cache_size=400,
                  auto_reload=True,
-                 bytecode_cache=None):
+                 bytecode_cache=None,
+                 enable_async=False):
         # !!Important notice!!
         #   The constructor accepts quite a few arguments that should be
         #   passed by keyword rather than position.  However it's important to
@@ -313,6 +319,8 @@ class Environment(object):
 
         # load extensions
         self.extensions = load_extensions(self, extensions)
+
+        self.enable_async = enable_async
 
         _environment_sanity_check(self)
 
@@ -908,14 +916,15 @@ class Template(object):
                 optimized=True,
                 undefined=Undefined,
                 finalize=None,
-                autoescape=False):
+                autoescape=False,
+                enable_async=False):
         env = get_spontaneous_environment(
             block_start_string, block_end_string, variable_start_string,
             variable_end_string, comment_start_string, comment_end_string,
             line_statement_prefix, line_comment_prefix, trim_blocks,
             lstrip_blocks, newline_sequence, keep_trailing_newline,
             frozenset(extensions), optimized, undefined, finalize, autoescape,
-            None, 0, False, None)
+            None, 0, False, None, enable_async)
         return env.from_string(source, template_class=cls)
 
     @classmethod

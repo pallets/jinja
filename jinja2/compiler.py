@@ -47,6 +47,13 @@ try:
 except SyntaxError:
     pass
 
+# does this python version support async for in and async generators?
+try:
+    exec('async def _():\n async for _ in ():\n  yield _')
+    have_async_gen = True
+except SyntaxError:
+    have_async_gen = False
+
 
 # does if 0: dummy(x) get us x into the scope?
 def unoptimize_before_dead_code():
