@@ -133,7 +133,7 @@ class TestFilter():
                        'foo bar foo bar\n  foo bar foo bar')
 
     def test_int(self, env):
-        class IntIsh(object):
+        class IntIsh:
             def __int__(self):
                 return 42
 
@@ -141,7 +141,7 @@ class TestFilter():
                                '{{ "32.32"|int }}|{{ "0x4d32"|int(0, 16) }}|'
                                '{{ "011"|int(0, 8)}}|{{ "0x33FU"|int(0, 16) }}|'
                                '{{ obj|int }}')
-        out = tmpl.render(obj=IntIsh())
+        out = tmpl.render(obj=int(IntIsh()))
         assert out == '42|0|32|19762|9|0|42'
 
     def test_join(self, env):
