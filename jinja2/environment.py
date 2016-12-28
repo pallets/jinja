@@ -991,6 +991,11 @@ class Template(object):
             exc_info = sys.exc_info()
         return self.environment.handle_exception(exc_info, True)
 
+    def render_async(self, *args, **kwargs):
+        # see asyncsupport for the actual implementation
+        raise NotImplementedError('This feature is not available for this '
+                                  'version of Python')
+
     def stream(self, *args, **kwargs):
         """Works exactly like :meth:`generate` but returns a
         :class:`TemplateStream`.
@@ -1015,6 +1020,11 @@ class Template(object):
             return
         yield self.environment.handle_exception(exc_info, True)
 
+    def generate_async(self, *args, **kwargs):
+        # see asyncsupport for the actual implementation
+        raise NotImplementedError('This feature is not available for this '
+                                  'version of Python')
+
     def new_context(self, vars=None, shared=False, locals=None):
         """Create a new :class:`Context` for this template.  The vars
         provided will be passed to the template.  Per default the globals
@@ -1034,6 +1044,11 @@ class Template(object):
         as for the :meth:`new_context` method.
         """
         return TemplateModule(self, self.new_context(vars, shared, locals))
+
+    def make_module_async(self, vars=None, shared=False, locals=None):
+        # see asyncsupport for the actual implementation
+        raise NotImplementedError('This feature is not available for this '
+                                  'version of Python')
 
     @internalcode
     def _get_default_module(self):
