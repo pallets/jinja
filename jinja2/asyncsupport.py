@@ -34,7 +34,7 @@ def wrap_render_func(original_render):
         if not self.environment._async:
             return original_render(self, *args, **kwargs)
         loop = asyncio.get_event_loop()
-        return loop.run_until_complete(self.render_async(self, *args, **kwargs))
+        return loop.run_until_complete(self.render_async(*args, **kwargs))
     return render
 
 
