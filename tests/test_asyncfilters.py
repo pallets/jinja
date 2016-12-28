@@ -132,30 +132,36 @@ def test_bool_reject(env_async, items):
     assert tmpl.render(items=items) == 'None|False|0'
 
 
-def test_simple_select(env_async):
-    tmpl = env_async.from_string('{{ [1, 2, 3, 4, 5]|select("odd")|join("|") }}')
-    assert tmpl.render() == '1|3|5'
+@mark_dualiter('items', lambda: [1, 2, 3, 4, 5])
+def test_simple_select(env_async, items):
+    tmpl = env_async.from_string('{{ items()|select("odd")|join("|") }}')
+    assert tmpl.render(items=items) == '1|3|5'
 
 
-def test_bool_select(env_async):
+@mark_dualiter('items', lambda: [None, False, 0, 1, 2, 3, 4, 5])
+def test_bool_select(env_async, items):
     tmpl = env_async.from_string(
-        '{{ [none, false, 0, 1, 2, 3, 4, 5]|select|join("|") }}'
+        '{{ items()|select|join("|") }}'
     )
-    assert tmpl.render() == '1|2|3|4|5'
+    assert tmpl.render(items=items) == '1|2|3|4|5'
 
 
-def test_simple_select_attr(env_async):
+def make_users():
     class User(object):
         def __init__(self, name, is_active):
             self.name = name
             self.is_active = is_active
-    users = [
+    return [
         User('john', True),
         User('jane', True),
         User('mike', False),
     ]
+
+
+@mark_dualiter('users', make_users)
+def test_simple_select_attr(env_async, users):
     tmpl = env_async.from_string(
-        '{{ users|selectattr("is_active")|'
+        '{{ users()|selectattr("is_active")|'
         'map(attribute="name")|join("|") }}'
     )
     assert tmpl.render(users=users) == 'john|jane'
