@@ -10,3 +10,5 @@ dist/
 .tox/
 .cache/
 .idea/
+venv/
+venv-*/
