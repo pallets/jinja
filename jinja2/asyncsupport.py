@@ -1,5 +1,6 @@
 import sys
 import asyncio
+import inspect
 
 from jinja2.utils import concat
 
@@ -41,3 +42,9 @@ def patch_template():
 
 def patch_all():
     patch_template()
+
+
+async def auto_await(value):
+    if inspect.isawaitable(value):
+        return await value
+    return value

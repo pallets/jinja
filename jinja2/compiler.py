@@ -782,6 +782,9 @@ class CodeGenerator(NodeVisitor):
         if not unoptimize_before_dead_code:
             self.writeline('dummy = lambda *x: None')
 
+        if self.environment._async:
+            self.writeline('from jinja2.asyncsupport import auto_await')
+
         # if we want a deferred initialization we cannot move the
         # environment into a local name
         envenv = not self.defer_init and ', environment=environment' or ''
@@ -1625,6 +1628,8 @@ class CodeGenerator(NodeVisitor):
         self.write(')')
 
     def visit_Call(self, node, frame, forward_caller=False):
+        if self.environment._async:
+            self.write('await auto_await(')
         if self.environment.sandboxed:
             self.write('environment.call(context, ')
         else:
@@ -1633,6 +1638,8 @@ class CodeGenerator(NodeVisitor):
         extra_kwargs = forward_caller and {'caller': 'caller'} or None
         self.signature(node, frame, extra_kwargs)
         self.write(')')
+        if self.environment._async:
+            self.write(')')
 
     def visit_Keyword(self, node, frame):
         self.write(node.key + '=')

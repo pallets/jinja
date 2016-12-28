@@ -19,3 +19,24 @@ def test_basic_async():
 
     rv = run(func)
     assert rv == '[1][2][3]'
+
+
+@pytest.mark.skipif(not have_async_gen, reason='No async generators')
+def test_await_on_calls():
+    t = Template('{{ async_func() + normal_func() }}',
+                 enable_async=True)
+
+    async def async_func():
+        return 42
+
+    def normal_func():
+        return 23
+
+    async def func():
+        return await t.render_async(
+            async_func=async_func,
+            normal_func=normal_func
+        )
+
+    rv = run(func)
+    assert rv == '65'
