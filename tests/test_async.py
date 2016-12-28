@@ -55,3 +55,14 @@ def test_await_and_macros():
 
     rv = run(func)
     assert rv == '[42][42]'
+
+
+@pytest.mark.skipif(not have_async_gen, reason='No async generators')
+def test_async_blocks():
+    t = Template('{% block foo %}<Test>{% endblock %}{{ self.foo() }}',
+                 enable_async=True, autoescape=True)
+    async def func():
+        return await t.render_async()
+
+    rv = run(func)
+    assert rv == '<Test><Test>'

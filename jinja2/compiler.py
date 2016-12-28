@@ -887,8 +887,10 @@ class CodeGenerator(NodeVisitor):
                 self.indent()
                 level += 1
         context = node.scoped and 'context.derived(locals())' or 'context'
-        self.writeline('for event in context.blocks[%r][0](%s):' % (
-                       node.name, context), node)
+
+        loop = self.environment._async and 'async for' or 'for'
+        self.writeline('%s event in context.blocks[%r][0](%s):' % (
+                       loop, node.name, context), node)
         self.indent()
         self.simple_write('event', frame)
         self.outdent(level)
