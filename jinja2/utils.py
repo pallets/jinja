@@ -527,5 +527,13 @@ class Joiner(object):
         return self.sep
 
 
+# does this python version support async for in and async generators?
+try:
+    exec('async def _():\n async for _ in ():\n  yield _')
+    have_async_gen = True
+except SyntaxError:
+    have_async_gen = False
+
+
 # Imported here because that's where it was in the past
 from markupsafe import Markup, escape, soft_unicode

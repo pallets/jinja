@@ -28,7 +28,7 @@ from jinja2.runtime import Undefined, new_context, Context
 from jinja2.exceptions import TemplateSyntaxError, TemplateNotFound, \
      TemplatesNotFound, TemplateRuntimeError
 from jinja2.utils import import_string, LRUCache, Markup, missing, \
-     concat, consume, internalcode
+     concat, consume, internalcode, have_async_gen
 from jinja2._compat import imap, ifilter, string_types, iteritems, \
      text_type, reraise, implements_iterator, implements_to_string, \
      encode_filename, PY2, PYPY
@@ -321,6 +321,7 @@ class Environment(object):
         self.extensions = load_extensions(self, extensions)
 
         self.enable_async = enable_async
+        self._async = self.enable_async and have_async_gen
 
         _environment_sanity_check(self)
 

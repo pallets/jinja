@@ -68,3 +68,14 @@ __all__ = [
     'environmentfunction', 'contextfunction', 'clear_caches', 'is_undefined',
     'evalcontextfilter', 'evalcontextfunction', 'make_logging_undefined',
 ]
+
+
+def _patch_async():
+    from jinja2.utils import have_async_gen
+    if have_async_gen:
+        from jinja2.asyncsupport import patch_all
+        patch_all()
+
+
+_patch_async()
+del _patch_async

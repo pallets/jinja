@@ -47,13 +47,6 @@ try:
 except SyntaxError:
     pass
 
-# does this python version support async for in and async generators?
-try:
-    exec('async def _():\n async for _ in ():\n  yield _')
-    have_async_gen = True
-except SyntaxError:
-    have_async_gen = False
-
 
 # does if 0: dummy(x) get us x into the scope?
 def unoptimize_before_dead_code():
@@ -655,6 +648,11 @@ class CodeGenerator(NodeVisitor):
             #   a = 42; b = lambda: a; del a
             self.writeline(' = '.join(to_delete) + ' = missing')
 
+    def func(self, name):
+        if self.environment._async:
+            return 'async def %s' % name
+        return 'def %s' % name
+
     def function_scoping(self, node, frame, children=None,
                          find_special=True):
         """In Jinja a few statements require the help of anonymous
@@ -739,7 +737,7 @@ class CodeGenerator(NodeVisitor):
         # and assigned.
         if 'loop' in frame.identifiers.declared:
             args = args + ['l_loop=l_loop']
-        self.writeline('def macro(%s):' % ', '.join(args), node)
+        self.writeline('%s(%s):' % (self.func('macro'), ', '.join(args)), node)
         self.indent()
         self.buffer(frame)
         self.pull_locals(frame)
@@ -814,7 +812,7 @@ class CodeGenerator(NodeVisitor):
         self.writeline('name = %r' % self.name)
 
         # generate the root render function.
-        self.writeline('def root(context%s):' % envenv, extra=1)
+        self.writeline('%s(context%s):' % (self.func('root'), envenv), extra=1)
 
         # process the root
         frame = Frame(eval_ctx)
@@ -849,7 +847,7 @@ class CodeGenerator(NodeVisitor):
             block_frame = Frame(eval_ctx)
             block_frame.inspect(block.body)
             block_frame.block = name
-            self.writeline('def block_%s(context%s):' % (name, envenv),
+            self.writeline('%s(context%s):' % (self.func('block_' + name), envenv),
                            block, 1)
             self.indent()
             undeclared = find_undeclared(block.body, ('self', 'super'))
@@ -1079,7 +1077,8 @@ class CodeGenerator(NodeVisitor):
 
         # otherwise we set up a buffer and add a function def
         else:
-            self.writeline('def loop(reciter, loop_render_func, depth=0):', node)
+            self.writeline('%s(reciter, loop_render_func, depth=0):' %
+                           self.func('loop'), node)
             self.indent()
             self.buffer(loop_frame)
             aliases = {}
