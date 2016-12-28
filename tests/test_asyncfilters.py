@@ -130,3 +130,32 @@ def test_bool_reject(env_async, items):
         '{{ items()|reject|join("|") }}'
     )
     assert tmpl.render(items=items) == 'None|False|0'
+
+
+def test_simple_select(env_async):
+    tmpl = env_async.from_string('{{ [1, 2, 3, 4, 5]|select("odd")|join("|") }}')
+    assert tmpl.render() == '1|3|5'
+
+
+def test_bool_select(env_async):
+    tmpl = env_async.from_string(
+        '{{ [none, false, 0, 1, 2, 3, 4, 5]|select|join("|") }}'
+    )
+    assert tmpl.render() == '1|2|3|4|5'
+
+
+def test_simple_select_attr(env_async):
+    class User(object):
+        def __init__(self, name, is_active):
+            self.name = name
+            self.is_active = is_active
+    users = [
+        User('john', True),
+        User('jane', True),
+        User('mike', False),
+    ]
+    tmpl = env_async.from_string(
+        '{{ users|selectattr("is_active")|'
+        'map(attribute="name")|join("|") }}'
+    )
+    assert tmpl.render(users=users) == 'john|jane'

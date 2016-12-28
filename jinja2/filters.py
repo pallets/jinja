@@ -821,24 +821,7 @@ def do_map(*args, **kwargs):
 
     .. versionadded:: 2.7
     """
-    context = args[0]
-    seq = args[1]
-
-    if len(args) == 2 and 'attribute' in kwargs:
-        attribute = kwargs.pop('attribute')
-        if kwargs:
-            raise FilterArgumentError('Unexpected keyword argument %r' %
-                next(iter(kwargs)))
-        func = make_attrgetter(context.environment, attribute)
-    else:
-        try:
-            name = args[2]
-            args = args[3:]
-        except LookupError:
-            raise FilterArgumentError('map requires a filter argument')
-        func = lambda item: context.environment.call_filter(
-            name, item, args, kwargs, context=context)
-
+    seq, func = prepare_map(args, kwargs)
     if seq:
         for item in seq:
             yield func(item)
@@ -919,6 +902,28 @@ def do_rejectattr(*args, **kwargs):
     .. versionadded:: 2.7
     """
     return select_or_reject(args, kwargs, lambda x: not x, True)
+
+
+def prepare_map(args, kwargs):
+    context = args[0]
+    seq = args[1]
+
+    if len(args) == 2 and 'attribute' in kwargs:
+        attribute = kwargs.pop('attribute')
+        if kwargs:
+            raise FilterArgumentError('Unexpected keyword argument %r' %
+                next(iter(kwargs)))
+        func = make_attrgetter(context.environment, attribute)
+    else:
+        try:
+            name = args[2]
+            args = args[3:]
+        except LookupError:
+            raise FilterArgumentError('map requires a filter argument')
+        func = lambda item: context.environment.call_filter(
+            name, item, args, kwargs, context=context)
+
+    return seq, func
 
 
 def prepare_select_or_reject(args, kwargs, modfunc, lookup_attr):

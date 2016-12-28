@@ -87,12 +87,33 @@ async def do_rejectattr(*args, **kwargs):
     return async_select_or_reject(args, kwargs, lambda x: not x, True)
 
 
+@asyncfiltervariant(filters.do_select)
+async def do_select(*args, **kwargs):
+    return async_select_or_reject(args, kwargs, lambda x: x, False)
+
+
+@asyncfiltervariant(filters.do_selectattr)
+async def do_selectattr(*args, **kwargs):
+    return async_select_or_reject(args, kwargs, lambda x: x, True)
+
+
+@asyncfiltervariant(filters.do_map)
+async def do_map(*args, **kwargs):
+    seq, func = filters.prepare_map(args, kwargs)
+    if seq:
+        async for item in seq:
+            yield func(item)
+
+
 ASYNC_FILTERS = {
     'first':        do_first,
     'groupby':      do_groupby,
     'join':         do_join,
     # we intentionally do not support do_last because that would be
     # ridiculous
-    'reject':               do_reject,
-    'rejectattr':           do_rejectattr,
+    'reject':       do_reject,
+    'rejectattr':   do_rejectattr,
+    'map':          do_map,
+    'select':       do_select,
+    'selectattr':   do_selectattr,
 }
