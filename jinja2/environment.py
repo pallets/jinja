@@ -1035,6 +1035,12 @@ class Template(object):
         """
         return TemplateModule(self, self.new_context(vars, shared, locals))
 
+    def _get_default_module(self):
+        if self._module is not None:
+            return self._module
+        self._module = rv = self.make_module()
+        return rv
+
     @property
     def module(self):
         """The template as module.  This is used for imports in the
@@ -1047,10 +1053,7 @@ class Template(object):
         >>> t.module.foo() == u'42'
         True
         """
-        if self._module is not None:
-            return self._module
-        self._module = rv = self.make_module()
-        return rv
+        return self._get_default_module()
 
     def get_corresponding_lineno(self, lineno):
         """Return the source line number of a line number in the
