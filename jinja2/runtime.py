@@ -280,13 +280,14 @@ class BlockReference(object):
         return rv
 
 
-class LoopContext(object):
+class LoopContextBase(object):
     """A loop context for dynamic iteration."""
 
+    _after = _last_iteration
+    _length = None
+
     def __init__(self, iterable, recurse=None, depth0=0):
-        self._iterator = iter(iterable)
         self._recurse = recurse
-        self._after = self._safe_next()
         self.index0 = -1
         self.depth0 = depth0
 
@@ -314,15 +315,6 @@ class LoopContext(object):
 
     def __len__(self):
         return self.length
-
-    def __iter__(self):
-        return LoopContextIterator(self)
-
-    def _safe_next(self):
-        try:
-            return next(self._iterator)
-        except StopIteration:
-            return _last_iteration
 
     @internalcode
     def loop(self, iterable):
@@ -355,6 +347,23 @@ class LoopContext(object):
             self.index,
             self.length
         )
+
+
+class LoopContext(LoopContextBase):
+
+    def __init__(self, iterable, recurse=None, depth0=0):
+        self._iterator = iter(iterable)
+        LoopContextBase.__init__(self, iterable, recurse, depth0)
+        self._after = self._safe_next()
+
+    def __iter__(self):
+        return LoopContextIterator(self)
+
+    def _safe_next(self):
+        try:
+            return next(self._iterator)
+        except StopIteration:
+            return _last_iteration
 
 
 @implements_iterator

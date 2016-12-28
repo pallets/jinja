@@ -97,7 +97,7 @@ def test_async_generate():
 
 
 @pytest.mark.skipif(not have_async_gen, reason='No async generators')
-def test_async_iteration_in_tmeplates():
+def test_async_iteration_in_templates():
     t = Template('{% for x in rng %}{{ x }}{% endfor %}',
                  enable_async=True)
     async def async_iterator():
@@ -105,6 +105,17 @@ def test_async_iteration_in_tmeplates():
             yield item
     rv = list(t.generate(rng=async_iterator()))
     assert rv == ['1', '2', '3']
+
+
+@pytest.mark.skipif(not have_async_gen, reason='No async generators')
+def test_async_iteration_in_templates_extended():
+    t = Template('{% for x in rng %}{{ loop.index0 }}/{{ x }}{% endfor %}',
+                 enable_async=True)
+    async def async_iterator():
+        for item in [1, 2, 3]:
+            yield item
+    rv = list(t.generate(rng=async_iterator()))
+    assert rv == ['0/1', '1/2', '2/3']
 
 
 @pytest.fixture

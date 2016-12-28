@@ -4,6 +4,7 @@ import inspect
 
 from jinja2.utils import concat, internalcode, concat, Markup
 from jinja2.environment import TemplateModule
+from jinja2.runtime import LoopContextBase, _last_iteration
 
 
 async def concat_async(async_gen):
@@ -144,3 +145,45 @@ async def auto_iter(iterable):
         return
     for item in iterable:
         yield item
+
+
+class AsyncLoopContext(LoopContextBase):
+
+    def __init__(self, async_iterator, iterable, after, recurse=None, depth0=0):
+        self._async_iterator = async_iterator
+        LoopContextBase.__init__(self, iterable, recurse, depth0)
+        self._after = after
+
+    def __aiter__(self):
+        return AsyncLoopContextIterator(self)
+
+
+class AsyncLoopContextIterator(object):
+    __slots__ = ('context',)
+
+    def __init__(self, context):
+        self.context = context
+
+    def __aiter__(self):
+        return self
+
+    async def __anext__(self):
+        ctx = self.context
+        ctx.index0 += 1
+        if ctx._after is _last_iteration:
+            raise StopAsyncIteration()
+        next_elem = ctx._after
+        try:
+            ctx._after = await ctx._async_iterator.__anext__()
+        except StopAsyncIteration:
+            ctx._after = _last_iteration
+        return next_elem, ctx
+
+
+async def make_async_loop_context(iterable, recurse=None, depth0=0):
+    async_iterator = auto_iter(iterable)
+    try:
+        after = await async_iterator.__anext__()
+    except StopAsyncIteration:
+        after = _last_iteration
+    return AsyncLoopContext(async_iterator, iterable, after, recurse, depth0)

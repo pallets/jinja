@@ -783,7 +783,8 @@ class CodeGenerator(NodeVisitor):
             self.writeline('dummy = lambda *x: None')
 
         if self.environment._async:
-            self.writeline('from jinja2.asyncsupport import auto_await, auto_iter')
+            self.writeline('from jinja2.asyncsupport import auto_await, '
+                           'auto_iter, make_async_loop_context')
 
         # if we want a deferred initialization we cannot move the
         # environment into a local name
@@ -1132,7 +1133,13 @@ class CodeGenerator(NodeVisitor):
 
         self.writeline(self.environment._async and 'async for ' or 'for ', node)
         self.visit(node.target, loop_frame)
-        self.write(extended_loop and ', l_loop in LoopContext(' or ' in ')
+        if extended_loop:
+            if self.environment._async:
+                self.write(', l_loop in await make_async_loop_context(')
+            else:
+                self.write(', l_loop in LoopContext(')
+        else:
+            self.write(' in ')
 
         # if we have an extened loop and a node test, we filter in the
         # "outer frame".
@@ -1158,10 +1165,10 @@ class CodeGenerator(NodeVisitor):
         elif node.recursive:
             self.write('reciter')
         else:
-            if self.environment._async:
+            if self.environment._async and not extended_loop:
                 self.write('auto_iter(')
             self.visit(node.iter, loop_frame)
-            if self.environment._async:
+            if self.environment._async and not extended_loop:
                 self.write(')')
 
         if node.recursive:
