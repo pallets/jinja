@@ -99,6 +99,7 @@ def test_env_async():
     return env
 
 
+@pytest.mark.skipif(not have_async_gen, reason='No async generators')
 @pytest.mark.imports
 class TestAsyncImports(object):
 
@@ -146,6 +147,7 @@ class TestAsyncImports(object):
         assert not hasattr(m, 'notthere')
 
 
+@pytest.mark.skipif(not have_async_gen, reason='No async generators')
 @pytest.mark.imports
 @pytest.mark.includes
 class TestAsyncIncludes(object):
