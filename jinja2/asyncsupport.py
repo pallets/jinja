@@ -64,6 +64,13 @@ async def get_default_module_async(self):
     return rv
 
 
+@internalcode
+def get_default_module_impl(self):
+    if self.environment._async:
+        return self._get_default_module_async()
+    return self._get_default_module()
+
+
 def wrap_default_module(original_default_module):
     @internalcode
     def _get_default_module(self):
@@ -89,6 +96,7 @@ def patch_template():
     Template._get_default_module = wrap_default_module(
         Template._get_default_module)
     Template._get_default_module_async = get_default_module_async
+    Template._get_default_module_impl = get_default_module_impl
     Template.make_module_async = make_module_async
 
 

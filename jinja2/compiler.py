@@ -977,8 +977,8 @@ class CodeGenerator(NodeVisitor):
                            'template.new_context(context.parent, True, '
                            'locals())):' % loop)
         else:
-            self.writeline('for event in template._get_default_module()'
-                           '._body_stream:')
+            self.writeline('%s event in template._get_default_module_impl()'
+                           '._body_stream:' % loop)
 
         self.indent()
         self.simple_write('event', frame)
@@ -994,13 +994,16 @@ class CodeGenerator(NodeVisitor):
         self.writeline('l_%s = ' % node.target, node)
         if frame.toplevel:
             self.write('context.vars[%r] = ' % node.target)
+        if self.environment._async:
+            self.write('await ')
         self.write('environment.get_template(')
         self.visit(node.template, frame)
         self.write(', %r).' % self.name)
         if node.with_context:
-            self.write('make_module(context.parent, True, locals())')
+            self.write('make_module%s(context.parent, True, locals())'
+                       % (self.environment._async and '_async' or ''))
         else:
-            self.write('_get_default_module()')
+            self.write('_get_default_module_impl()')
         if frame.toplevel and not node.target.startswith('_'):
             self.writeline('context.exported_vars.discard(%r)' % node.target)
         frame.assigned_names.add(node.target)
@@ -1008,13 +1011,15 @@ class CodeGenerator(NodeVisitor):
     def visit_FromImport(self, node, frame):
         """Visit named imports."""
         self.newline(node)
-        self.write('included_template = environment.get_template(')
+        self.write('included_template = %senvironment.get_template('
+                   % (self.environment._async and 'await ' or ''))
         self.visit(node.template, frame)
         self.write(', %r).' % self.name)
         if node.with_context:
-            self.write('make_module(context.parent, True)')
+            self.write('make_module%s(context.parent, True)'
+                       % (self.environment._async and '_async' or ''))
         else:
-            self.write('_get_default_module()')
+            self.write('_get_default_module_impl()')
 
         var_names = []
         discarded_names = []

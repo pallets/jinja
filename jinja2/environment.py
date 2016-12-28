@@ -1042,6 +1042,10 @@ class Template(object):
         self._module = rv = self.make_module()
         return rv
 
+    # This is what the compiler dispatches to from generated code.  It
+    # might get swapped out by the async support
+    _get_default_module_impl = _get_default_module
+
     @property
     def module(self):
         """The template as module.  This is used for imports in the
