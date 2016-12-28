@@ -19,6 +19,15 @@ _statement_keywords = frozenset(['for', 'if', 'block', 'extends', 'print',
                                  'set'])
 _compare_operators = frozenset(['eq', 'ne', 'lt', 'lteq', 'gt', 'gteq'])
 
+_math_nodes = {
+    'add': nodes.Add,
+    'sub': nodes.Sub,
+    'mul': nodes.Mul,
+    'div': nodes.Div,
+    'floordiv': nodes.FloorDiv,
+    'mod': nodes.Mod,
+}
+
 
 class Parser(object):
     """This is the central parsing class Jinja2 uses.  It's passed to
@@ -429,19 +438,19 @@ class Parser(object):
 
     def parse_compare(self):
         lineno = self.stream.current.lineno
-        expr = self.parse_add()
+        expr = self.parse_math1()
         ops = []
         while 1:
             token_type = self.stream.current.type
             if token_type in _compare_operators:
                 next(self.stream)
-                ops.append(nodes.Operand(token_type, self.parse_add()))
+                ops.append(nodes.Operand(token_type, self.parse_math1()))
             elif self.stream.skip_if('name:in'):
-                ops.append(nodes.Operand('in', self.parse_add()))
+                ops.append(nodes.Operand('in', self.parse_math1()))
             elif (self.stream.current.test('name:not') and
                   self.stream.look().test('name:in')):
                 self.stream.skip(2)
-                ops.append(nodes.Operand('notin', self.parse_add()))
+                ops.append(nodes.Operand('notin', self.parse_math1()))
             else:
                 break
             lineno = self.stream.current.lineno
@@ -449,73 +458,35 @@ class Parser(object):
             return expr
         return nodes.Compare(expr, ops, lineno=lineno)
 
-    def parse_add(self):
-        lineno = self.stream.current.lineno
-        left = self.parse_sub()
-        while self.stream.current.type == 'add':
-            next(self.stream)
-            right = self.parse_sub()
-            left = nodes.Add(left, right, lineno=lineno)
-            lineno = self.stream.current.lineno
-        return left
-
-    def parse_sub(self):
+    def parse_math1(self):
         lineno = self.stream.current.lineno
         left = self.parse_concat()
-        while self.stream.current.type == 'sub':
+        while self.stream.current.type in ('add', 'sub'):
+            cls = _math_nodes[self.stream.current.type]
             next(self.stream)
             right = self.parse_concat()
-            left = nodes.Sub(left, right, lineno=lineno)
+            left = cls(left, right, lineno=lineno)
             lineno = self.stream.current.lineno
         return left
 
     def parse_concat(self):
         lineno = self.stream.current.lineno
-        args = [self.parse_mul()]
+        args = [self.parse_math2()]
         while self.stream.current.type == 'tilde':
             next(self.stream)
-            args.append(self.parse_mul())
+            args.append(self.parse_math2())
         if len(args) == 1:
             return args[0]
         return nodes.Concat(args, lineno=lineno)
 
-    def parse_mul(self):
-        lineno = self.stream.current.lineno
-        left = self.parse_div()
-        while self.stream.current.type == 'mul':
-            next(self.stream)
-            right = self.parse_div()
-            left = nodes.Mul(left, right, lineno=lineno)
-            lineno = self.stream.current.lineno
-        return left
-
-    def parse_div(self):
-        lineno = self.stream.current.lineno
-        left = self.parse_floordiv()
-        while self.stream.current.type == 'div':
-            next(self.stream)
-            right = self.parse_floordiv()
-            left = nodes.Div(left, right, lineno=lineno)
-            lineno = self.stream.current.lineno
-        return left
-
-    def parse_floordiv(self):
-        lineno = self.stream.current.lineno
-        left = self.parse_mod()
-        while self.stream.current.type == 'floordiv':
-            next(self.stream)
-            right = self.parse_mod()
-            left = nodes.FloorDiv(left, right, lineno=lineno)
-            lineno = self.stream.current.lineno
-        return left
-
-    def parse_mod(self):
+    def parse_math2(self):
         lineno = self.stream.current.lineno
         left = self.parse_pow()
-        while self.stream.current.type == 'mod':
+        while self.stream.current.type in ('mul', 'div', 'floordiv', 'mod'):
+            cls = _math_nodes[self.stream.current.type]
             next(self.stream)
             right = self.parse_pow()
-            left = nodes.Mod(left, right, lineno=lineno)
+            left = cls(left, right, lineno=lineno)
             lineno = self.stream.current.lineno
         return left
 

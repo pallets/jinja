@@ -395,6 +395,10 @@ class TestSyntax():
         tmpl = env.from_string('''{{ not 42 in bar }}''')
         assert tmpl.render(bar=bar) == text_type(not 42 in bar)
 
+    def test_operator_precedence(self, env):
+        tmpl = env.from_string('''{{ 2 * 3 + 4 % 2 + 1 - 2 }}''')
+        assert tmpl.render() == text_type(2 * 3 + 4 % 2 + 1 - 2)
+
     def test_implicit_subscribed_tuple(self, env):
         class Foo(object):
             def __getitem__(self, x):

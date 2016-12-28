@@ -8,6 +8,8 @@ Version 2.9
   regression introduced in 2.8.
 - Added support for `generator_stop` on supported Python versions
   (Python 3.5 and later)
+- Corrected a long standing issue with operator precedence of math operations
+  not being what was expected.
 
 Version 2.8.1
 -------------
