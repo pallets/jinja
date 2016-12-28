@@ -3,6 +3,7 @@ import asyncio
 import inspect
 
 from jinja2.utils import concat, internalcode, concat, Markup
+from jinja2.environment import TemplateModule
 
 
 async def concat_async(async_gen):
@@ -55,10 +56,40 @@ def wrap_block_reference_call(original_call):
     return __call__
 
 
+@internalcode
+async def get_default_module_async(self):
+    if self._module is not None:
+        return self._module
+    self._module = rv = await self.make_module_async()
+    return rv
+
+
+def wrap_default_module(original_default_module):
+    @internalcode
+    def _get_default_module(self):
+        if self.environment._async:
+            raise RuntimeError('Template module attribute is unavailable '
+                               'in async mode')
+        return original_default_module(self)
+    return _get_default_module
+
+
+async def make_module_async(self, vars=None, shared=False, locals=None):
+    context = self.new_context(vars, shared, locals)
+    body_stream = []
+    async for item in template.root_render_func(context):
+        body_stream.append(item)
+    return TemplateModule(self, context, body_stream)
+
+
 def patch_template():
     from jinja2 import Template
     Template.render_async = render_async
     Template.render = wrap_render_func(Template.render)
+    Template._get_default_module = wrap_default_module(
+        Template._get_default_module)
+    Template._get_default_module_async = get_default_module_async
+    Template.make_module_async = make_module_async
 
 
 def patch_runtime():

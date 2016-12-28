@@ -1035,6 +1035,7 @@ class Template(object):
         """
         return TemplateModule(self, self.new_context(vars, shared, locals))
 
+    @internalcode
     def _get_default_module(self):
         if self._module is not None:
             return self._module
@@ -1092,8 +1093,13 @@ class TemplateModule(object):
     converting it into an unicode- or bytestrings renders the contents.
     """
 
-    def __init__(self, template, context):
-        self._body_stream = list(template.root_render_func(context))
+    def __init__(self, template, context, body_stream=None):
+        if body_stream is None:
+            if context.environment._async:
+                raise RuntimeError('Async mode requires a body stream '
+                                   'to be passed in.')
+            body_stream = list(template.root_render_func(context))
+        self._body_stream = body_stream
         self.__dict__.update(context.get_exported())
         self.__name__ = template.name
 
