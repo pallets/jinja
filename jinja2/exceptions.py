@@ -144,3 +144,8 @@ class FilterArgumentError(TemplateRuntimeError):
     """This error is raised if a filter was called with inappropriate
     arguments
     """
+
+
+class FilterDefaultAttributeError(TemplateRuntimeError):
+    """This error is raised if a filter was called with an inappropriate
+     default attribute value"""

@@ -17,7 +17,7 @@ from collections import namedtuple
 from jinja2.utils import Markup, escape, pformat, urlize, soft_unicode, \
      unicode_urlencode
 from jinja2.runtime import Undefined
-from jinja2.exceptions import FilterArgumentError
+from jinja2.exceptions import FilterArgumentError, FilterDefaultAttributeError
 from jinja2._compat import imap, string_types, text_type, iteritems
 
 
@@ -52,7 +52,7 @@ def environmentfilter(f):
     return f
 
 
-def make_attrgetter(environment, attribute):
+def make_attrgetter(environment, attribute, default_value=None):
     """Returns a callable that looks up the given attribute from a
     passed object with the rules of the environment.  Dots are allowed
     to access attributes of attributes.  Integer parts in paths are
@@ -60,7 +60,8 @@ def make_attrgetter(environment, attribute):
     """
     if not isinstance(attribute, string_types) \
        or ('.' not in attribute and not attribute.isdigit()):
-        return lambda x: environment.getitem(x, attribute)
+        return lambda x: environment.getitem(x, attribute) or default_value
+
     attribute = attribute.split('.')
     def attrgetter(item):
         for part in attribute:
@@ -501,8 +502,8 @@ def do_wordwrap(environment, s, width=79, break_long_words=True,
         wrapstring = environment.newline_sequence
     import textwrap
     return wrapstring.join(textwrap.wrap(s, width=width, expand_tabs=False,
-                                   replace_whitespace=False,
-                                   break_long_words=break_long_words))
+                                         replace_whitespace=False,
+                                         break_long_words=break_long_words))
 
 
 def do_wordcount(s):
@@ -673,6 +674,7 @@ def do_round(value, precision=0, method='common'):
 
 _GroupTuple = namedtuple('_GroupTuple', ['grouper', 'list'])
 
+
 @environmentfilter
 def do_groupby(environment, value, attribute):
     """Group a sequence of objects by a common attribute.
@@ -826,10 +828,15 @@ def do_map(*args, **kwargs):
 
     if len(args) == 2 and 'attribute' in kwargs:
         attribute = kwargs.pop('attribute')
-        if kwargs:
+        default_value = kwargs.get('default', None)
+        if default_value is not None:
+            default_value = kwargs.pop('default')
+        elif 'default' in kwargs:
+            raise FilterDefaultAttributeError('None is not valid default argument')
+        elif kwargs:
             raise FilterArgumentError('Unexpected keyword argument %r' %
-                next(iter(kwargs)))
-        func = make_attrgetter(context.environment, attribute)
+                                      next(iter(kwargs)))
+        func = make_attrgetter(context.environment, attribute, default_value)
     else:
         try:
             name = args[2]
