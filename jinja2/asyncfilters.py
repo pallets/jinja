@@ -1,4 +1,5 @@
 from functools import wraps
+
 from jinja2.asyncsupport import auto_aiter
 from jinja2 import filters
 
@@ -53,6 +54,15 @@ async def do_first(environment, seq):
         return environment.undefined('No first item, sequence was empty.')
 
 
+@asyncfiltervariant(filters.do_groupby)
+async def do_groupby(environment, value, attribute):
+    expr = filters.make_attrgetter(environment, attribute)
+    return [filters._GroupTuple(key, await auto_to_seq(values))
+            for key, values in filters.groupby(sorted(
+                await auto_to_seq(value), key=expr), expr)]
+
+
 ASYNC_FILTERS = {
     'first':        do_first,
+    'groupby':      do_groupby,
 }
