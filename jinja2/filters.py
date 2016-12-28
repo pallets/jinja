@@ -860,7 +860,7 @@ def do_select(*args, **kwargs):
 
     .. versionadded:: 2.7
     """
-    return _select_or_reject(args, kwargs, lambda x: x, False)
+    return select_or_reject(args, kwargs, lambda x: x, False)
 
 
 @contextfilter
@@ -878,7 +878,7 @@ def do_reject(*args, **kwargs):
 
     .. versionadded:: 2.7
     """
-    return _select_or_reject(args, kwargs, lambda x: not x, False)
+    return select_or_reject(args, kwargs, lambda x: not x, False)
 
 
 @contextfilter
@@ -899,7 +899,7 @@ def do_selectattr(*args, **kwargs):
 
     .. versionadded:: 2.7
     """
-    return _select_or_reject(args, kwargs, lambda x: x, True)
+    return select_or_reject(args, kwargs, lambda x: x, True)
 
 
 @contextfilter
@@ -918,10 +918,10 @@ def do_rejectattr(*args, **kwargs):
 
     .. versionadded:: 2.7
     """
-    return _select_or_reject(args, kwargs, lambda x: not x, True)
+    return select_or_reject(args, kwargs, lambda x: not x, True)
 
 
-def _select_or_reject(args, kwargs, modfunc, lookup_attr):
+def prepare_select_or_reject(args, kwargs, modfunc, lookup_attr):
     context = args[0]
     seq = args[1]
     if lookup_attr:
@@ -943,9 +943,14 @@ def _select_or_reject(args, kwargs, modfunc, lookup_attr):
     except LookupError:
         func = bool
 
+    return seq, lambda item: modfunc(func(transfunc(item)))
+
+
+def select_or_reject(args, kwargs, modfunc, lookup_attr):
+    seq, func = prepare_select_or_reject(args, kwargs, modfunc, lookup_attr)
     if seq:
         for item in seq:
-            if modfunc(func(transfunc(item))):
+            if func(item):
                 yield item
 
 

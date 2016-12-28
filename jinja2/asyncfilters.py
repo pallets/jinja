@@ -15,13 +15,23 @@ async def auto_to_seq(value):
     return seq
 
 
+async def async_select_or_reject(args, kwargs, modfunc, lookup_attr):
+    seq, func = filters.prepare_select_or_reject(
+        args, kwargs, modfunc, lookup_attr)
+    if seq:
+        async for item in auto_aiter(seq):
+            if func(item):
+                yield item
+
+
 def dualfilter(normal_filter, async_filter):
     wrap_evalctx = False
     if getattr(normal_filter, 'environmentfilter', False):
         is_async = lambda args: args[0].is_async
         wrap_evalctx = False
     else:
-        if not getattr(normal_filter, 'evalcontextfilter', False):
+        if not getattr(normal_filter, 'evalcontextfilter', False) and \
+           not getattr(normal_filter, 'contextfilter', False):
             wrap_evalctx = True
         is_async = lambda args: args[0].environment.is_async
 
@@ -67,8 +77,22 @@ async def do_join(eval_ctx, value, d=u'', attribute=None):
     return filters.do_join(eval_ctx, await auto_to_seq(value), d, attribute)
 
 
+@asyncfiltervariant(filters.do_reject)
+async def do_reject(*args, **kwargs):
+    return async_select_or_reject(args, kwargs, lambda x: not x, False)
+
+
+@asyncfiltervariant(filters.do_rejectattr)
+async def do_rejectattr(*args, **kwargs):
+    return async_select_or_reject(args, kwargs, lambda x: not x, True)
+
+
 ASYNC_FILTERS = {
     'first':        do_first,
     'groupby':      do_groupby,
     'join':         do_join,
+    # we intentionally do not support do_last because that would be
+    # ridiculous
+    'reject':               do_reject,
+    'rejectattr':           do_rejectattr,
 }
