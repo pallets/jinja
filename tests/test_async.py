@@ -96,6 +96,17 @@ def test_async_generate():
     assert rv == ['1', '2', '3']
 
 
+@pytest.mark.skipif(not have_async_gen, reason='No async generators')
+def test_async_iteration_in_tmeplates():
+    t = Template('{% for x in rng %}{{ x }}{% endfor %}',
+                 enable_async=True)
+    async def async_iterator():
+        for item in [1, 2, 3]:
+            yield item
+    rv = list(t.generate(rng=async_iterator()))
+    assert rv == ['1', '2', '3']
+
+
 @pytest.fixture
 def test_env_async():
     env = Environment(loader=DictLoader(dict(

@@ -135,3 +135,12 @@ async def auto_await(value):
     if inspect.isawaitable(value):
         return await value
     return value
+
+
+async def auto_iter(iterable):
+    if hasattr(iterable, '__aiter__'):
+        async for item in iterable:
+            yield item
+        return
+    for item in iterable:
+        yield item

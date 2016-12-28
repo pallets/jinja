@@ -783,7 +783,7 @@ class CodeGenerator(NodeVisitor):
             self.writeline('dummy = lambda *x: None')
 
         if self.environment._async:
-            self.writeline('from jinja2.asyncsupport import auto_await')
+            self.writeline('from jinja2.asyncsupport import auto_await, auto_iter')
 
         # if we want a deferred initialization we cannot move the
         # environment into a local name
@@ -1130,13 +1130,17 @@ class CodeGenerator(NodeVisitor):
                  "loop it's undefined.  Happened in loop on %s" %
                  self.position(node)))
 
-        self.writeline('for ', node)
+        self.writeline(self.environment._async and 'async for ' or 'for ', node)
         self.visit(node.target, loop_frame)
         self.write(extended_loop and ', l_loop in LoopContext(' or ' in ')
 
         # if we have an extened loop and a node test, we filter in the
         # "outer frame".
         if extended_loop and node.test is not None:
+            if self.environment._async:
+                self.fail('loop filters in async mode are currently if the '
+                          'loop uses the special "loop" variable or is '
+                          'recursive.', node.lineno)
             self.write('(')
             self.visit(node.target, loop_frame)
             self.write(' for ')
@@ -1154,7 +1158,11 @@ class CodeGenerator(NodeVisitor):
         elif node.recursive:
             self.write('reciter')
         else:
+            if self.environment._async:
+                self.write('auto_iter(')
             self.visit(node.iter, loop_frame)
+            if self.environment._async:
+                self.write(')')
 
         if node.recursive:
             self.write(', loop_render_func, depth):')
@@ -1194,7 +1202,11 @@ class CodeGenerator(NodeVisitor):
             self.outdent()
             self.start_write(frame, node)
             self.write('loop(')
+            if self.environment._async:
+                self.write('auto_iter(')
             self.visit(node.iter, frame)
+            if self.environment._async:
+                self.write(')')
             self.write(', loop)')
             self.end_write(frame)
 
