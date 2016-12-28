@@ -529,7 +529,10 @@ class Undefined(object):
 
 
 def make_logging_undefined(logger=None, base=None):
-    """Given a logger object this returns a new undefined class that will
+    """
+    .. versionadded:: 2.8
+
+    Given a logger object this returns a new undefined class that will
     log certain failures.  It will log iterations and printing.  If no
     logger is given a default logger is created.
 
@@ -540,8 +543,6 @@ def make_logging_undefined(logger=None, base=None):
             logger=logger,
             base=Undefined
         )
-
-    .. versionadded:: 2.8
 
     :param logger: the logger to use.  If not provided, a default logger
                    is created.

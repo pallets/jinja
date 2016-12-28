@@ -79,9 +79,10 @@ def test_string(value):
 
 
 def test_mapping(value):
-    """Return true if the object is a mapping (dict etc.).
-
+    """
     .. versionadded:: 2.6
+
+    Return true if the object is a mapping (dict etc.).
     """
     return isinstance(value, Mapping)
 
@@ -104,7 +105,10 @@ def test_sequence(value):
 
 
 def test_equalto(value, other):
-    """Check if an object has the same value as another object:
+    """
+    .. versionadded:: 2.8
+
+    Check if an object has the same value as another object:
 
     .. sourcecode:: jinja
 
@@ -119,8 +123,6 @@ def test_equalto(value, other):
     .. sourcecode:: jinja
 
         {{ users|selectattr("email", "equalto", "foo@bar.invalid") }}
-
-    .. versionadded:: 2.8
     """
     return value == other
 

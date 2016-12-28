@@ -357,15 +357,16 @@ class Expr(Node):
     abstract = True
 
     def as_const(self, eval_ctx=None):
-        """Return the value of the expression as constant or raise
+        """
+        .. versionchanged:: 2.4
+           the `eval_ctx` parameter was added.
+
+        Return the value of the expression as constant or raise
         :exc:`Impossible` if this was not possible.
 
         An :class:`EvalContext` can be provided, if none is given
         a default context is created which requires the nodes to have
         an attached environment.
-
-        .. versionchanged:: 2.4
-           the `eval_ctx` parameter was added.
         """
         raise Impossible()
 
@@ -851,10 +852,11 @@ class MarkSafe(Expr):
 
 
 class MarkSafeIfAutoescape(Expr):
-    """Mark the wrapped expression as safe (wrap it as `Markup`) but
-    only if autoescaping is active.
-
+    """
     .. versionadded:: 2.5
+
+    Mark the wrapped expression as safe (wrap it as `Markup`) but
+    only if autoescaping is active.
     """
     fields = ('expr',)
 

@@ -209,6 +209,8 @@ class SandboxedEnvironment(Environment):
         '-':        operator.neg
     }
 
+    #: .. versionadded:: 2.6
+    #:
     #: a set of binary operators that should be intercepted.  Each operator
     #: that is added to this set (empty by default) is delegated to the
     #: :meth:`call_binop` method that will perform the operator.  The default
@@ -222,9 +224,10 @@ class SandboxedEnvironment(Environment):
     #: operator call, so make sure only to intercept the ones you are
     #: interested in.
     #:
-    #: .. versionadded:: 2.6
     intercepted_binops = frozenset()
 
+    #: .. versionadded:: 2.6
+    #:
     #: a set of unary operators that should be intercepted.  Each operator
     #: that is added to this set (empty by default) is delegated to the
     #: :meth:`call_unop` method that will perform the operator.  The default
@@ -236,12 +239,13 @@ class SandboxedEnvironment(Environment):
     #: builtin function.  Intercepted calls are always slower than the native
     #: operator call, so make sure only to intercept the ones you are
     #: interested in.
-    #:
-    #: .. versionadded:: 2.6
     intercepted_unops = frozenset()
 
     def intercept_unop(self, operator):
-        """Called during template compilation with the name of a unary
+        """
+        .. versionadded:: 2.6
+
+        Called during template compilation with the name of a unary
         operator to check if it should be intercepted at runtime.  If this
         method returns `True`, :meth:`call_unop` is excuted for this unary
         operator.  The default implementation of :meth:`call_unop` will use
@@ -252,8 +256,6 @@ class SandboxedEnvironment(Environment):
 
         Intercepted calls are always slower than the native operator call,
         so make sure only to intercept the ones you are interested in.
-
-        .. versionadded:: 2.6
         """
         return False
 
@@ -283,20 +285,22 @@ class SandboxedEnvironment(Environment):
                     getattr(obj, 'alters_data', False))
 
     def call_binop(self, context, operator, left, right):
-        """For intercepted binary operator calls (:meth:`intercepted_binops`)
+        """
+        .. versionadded:: 2.6
+
+        For intercepted binary operator calls (:meth:`intercepted_binops`)
         this function is executed instead of the builtin operator.  This can
         be used to fine tune the behavior of certain operators.
-
-        .. versionadded:: 2.6
         """
         return self.binop_table[operator](left, right)
 
     def call_unop(self, context, operator, arg):
-        """For intercepted unary operator calls (:meth:`intercepted_unops`)
+        """
+        .. versionadded:: 2.6
+
+        For intercepted unary operator calls (:meth:`intercepted_unops`)
         this function is executed instead of the builtin operator.  This can
         be used to fine tune the behavior of certain operators.
-
-        .. versionadded:: 2.6
         """
         return self.unop_table[operator](arg)
 

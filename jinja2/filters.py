@@ -34,11 +34,12 @@ def contextfilter(f):
 
 
 def evalcontextfilter(f):
-    """Decorator for marking eval-context dependent filters.  An eval
+    """
+    .. versionadded:: 2.4
+
+    Decorator for marking eval-context dependent filters.  An eval
     context object is passed as first argument.  For more information
     about the eval context, see :ref:`eval-context`.
-
-    .. versionadded:: 2.4
     """
     f.evalcontextfilter = True
     return f
@@ -79,10 +80,11 @@ def do_forceescape(value):
 
 
 def do_urlencode(value):
-    """Escape strings for use in URLs (uses UTF-8 encoding).  It accepts both
-    dictionaries and regular strings as well as pairwise iterables.
-
+    """
     .. versionadded:: 2.7
+
+    Escape strings for use in URLs (uses UTF-8 encoding).  It accepts both
+    dictionaries and regular strings as well as pairwise iterables.
     """
     itemiter = None
     if isinstance(value, dict):
@@ -225,7 +227,11 @@ def do_dictsort(value, case_sensitive=False, by='key'):
 @environmentfilter
 def do_sort(environment, value, reverse=False, case_sensitive=False,
             attribute=None):
-    """Sort an iterable.  Per default it sorts ascending, if you pass it
+    """
+    .. versionchanged:: 2.6
+       The `attribute` parameter was added.
+
+    Sort an iterable.  Per default it sorts ascending, if you pass it
     true as first argument it will reverse the sorting.
 
     If the iterable is made of strings the third parameter can be used to
@@ -246,9 +252,6 @@ def do_sort(environment, value, reverse=False, case_sensitive=False,
         {% for item in iterable|sort(attribute='date') %}
             ...
         {% endfor %}
-
-    .. versionchanged:: 2.6
-       The `attribute` parameter was added.
     """
     if not case_sensitive:
         def sort_func(item):
@@ -288,7 +291,11 @@ def do_default(value, default_value=u'', boolean=False):
 
 @evalcontextfilter
 def do_join(eval_ctx, value, d=u'', attribute=None):
-    """Return a string which is the concatenation of the strings in the
+    """
+    .. versionadded:: 2.6
+       The `attribute` parameter was added.
+
+    Return a string which is the concatenation of the strings in the
     sequence. The separator between elements is an empty string per
     default, you can define it with the optional parameter:
 
@@ -305,9 +312,6 @@ def do_join(eval_ctx, value, d=u'', attribute=None):
     .. sourcecode:: jinja
 
         {{ users|join(', ', attribute='username') }}
-
-    .. versionadded:: 2.6
-       The `attribute` parameter was added.
     """
     if attribute is not None:
         value = imap(make_attrgetter(eval_ctx.environment, attribute), value)
@@ -410,7 +414,11 @@ def do_pprint(value, verbose=False):
 @evalcontextfilter
 def do_urlize(eval_ctx, value, trim_url_limit=None, nofollow=False,
               target=None):
-    """Converts URLs in plain text into clickable links.
+    """
+    .. versionchanged:: 2.8+
+       The *target* parameter was added.
+
+    Converts URLs in plain text into clickable links.
 
     If you pass the filter an additional integer it will shorten the urls
     to that number. Also a third argument exists that makes the urls
@@ -427,9 +435,6 @@ def do_urlize(eval_ctx, value, trim_url_limit=None, nofollow=False,
     .. sourcecode:: jinja
 
        {{ mytext|urlize(40, target='_blank') }}
-
-    .. versionchanged:: 2.8+
-       The *target* parameter was added.
     """
     rv = urlize(value, trim_url_limit, nofollow, target)
     if eval_ctx.autoescape:
@@ -487,15 +492,15 @@ def do_truncate(s, length=255, killwords=False, end='...'):
 def do_wordwrap(environment, s, width=79, break_long_words=True,
                 wrapstring=None):
     """
+    .. versionadded:: 2.7
+       Added support for the `wrapstring` parameter.
+
     Return a copy of the string passed to the filter wrapped after
     ``79`` characters.  You can override this default using the first
     parameter.  If you set the second parameter to `false` Jinja will not
     split words apart if they are longer than `width`. By default, the newlines
     will be the default newlines for the environment, but this can be changed
     using the wrapstring keyword argument.
-
-    .. versionadded:: 2.7
-       Added support for the `wrapstring` parameter.
     """
     if not wrapstring:
         wrapstring = environment.newline_sequence
@@ -675,7 +680,12 @@ _GroupTuple = namedtuple('_GroupTuple', ['grouper', 'list'])
 
 @environmentfilter
 def do_groupby(environment, value, attribute):
-    """Group a sequence of objects by a common attribute.
+    """
+    .. versionchanged:: 2.6
+       It's now possible to use dotted notation to group by the child
+       attribute of another attribute.
+
+    Group a sequence of objects by a common attribute.
 
     If you for example have a list of dicts or objects that represent persons
     with `gender`, `first_name` and `last_name` attributes and you want to
@@ -707,10 +717,6 @@ def do_groupby(environment, value, attribute):
     As you can see the item we're grouping by is stored in the `grouper`
     attribute and the `list` contains all the objects that have this grouper
     in common.
-
-    .. versionchanged:: 2.6
-       It's now possible to use dotted notation to group by the child
-       attribute of another attribute.
     """
     expr = make_attrgetter(environment, attribute)
     return [_GroupTuple(key, list(values)) for key, values in groupby(sorted(value, key=expr), expr)]
@@ -718,7 +724,12 @@ def do_groupby(environment, value, attribute):
 
 @environmentfilter
 def do_sum(environment, iterable, attribute=None, start=0):
-    """Returns the sum of a sequence of numbers plus the value of parameter
+    """
+    .. versionchanged:: 2.6
+       The `attribute` parameter was added to allow suming up over
+       attributes.  Also the `start` parameter was moved on to the right.
+
+    Returns the sum of a sequence of numbers plus the value of parameter
     'start' (which defaults to 0).  When the sequence is empty it returns
     start.
 
@@ -727,10 +738,6 @@ def do_sum(environment, iterable, attribute=None, start=0):
     .. sourcecode:: jinja
 
         Total: {{ items|sum(attribute='price') }}
-
-    .. versionchanged:: 2.6
-       The `attribute` parameter was added to allow suming up over
-       attributes.  Also the `start` parameter was moved on to the right.
     """
     if attribute is not None:
         iterable = imap(make_attrgetter(environment, attribute), iterable)
@@ -800,7 +807,10 @@ def do_attr(environment, obj, name):
 
 @contextfilter
 def do_map(*args, **kwargs):
-    """Applies a filter on a sequence of objects or looks up an attribute.
+    """
+    .. versionadded:: 2.7
+
+    Applies a filter on a sequence of objects or looks up an attribute.
     This is useful when dealing with lists of objects but you are really
     only interested in a certain value of it.
 
@@ -818,8 +828,6 @@ def do_map(*args, **kwargs):
     .. sourcecode:: jinja
 
         Users on this page: {{ titles|map('lower')|join(', ') }}
-
-    .. versionadded:: 2.7
     """
     context = args[0]
     seq = args[1]
@@ -846,7 +854,10 @@ def do_map(*args, **kwargs):
 
 @contextfilter
 def do_select(*args, **kwargs):
-    """Filters a sequence of objects by applying a test to each object,
+    """
+    .. versionadded:: 2.7
+
+    Filters a sequence of objects by applying a test to each object,
     and only selecting the objects with the test succeeding.
 
     If no test is specified, each object will be evaluated as a boolean.
@@ -857,15 +868,16 @@ def do_select(*args, **kwargs):
 
         {{ numbers|select("odd") }}
         {{ numbers|select("odd") }}
-
-    .. versionadded:: 2.7
     """
     return _select_or_reject(args, kwargs, lambda x: x, False)
 
 
 @contextfilter
 def do_reject(*args, **kwargs):
-    """Filters a sequence of objects by applying a test to each object,
+    """
+    .. versionadded:: 2.7
+
+    Filters a sequence of objects by applying a test to each object,
     and rejecting the objects with the test succeeding.
 
     If no test is specified, each object will be evaluated as a boolean.
@@ -875,15 +887,16 @@ def do_reject(*args, **kwargs):
     .. sourcecode:: jinja
 
         {{ numbers|reject("odd") }}
-
-    .. versionadded:: 2.7
     """
     return _select_or_reject(args, kwargs, lambda x: not x, False)
 
 
 @contextfilter
 def do_selectattr(*args, **kwargs):
-    """Filters a sequence of objects by applying a test to the specified
+    """
+    .. versionadded:: 2.7
+
+    Filters a sequence of objects by applying a test to the specified
     attribute of each object, and only selecting the objects with the
     test succeeding.
 
@@ -896,15 +909,16 @@ def do_selectattr(*args, **kwargs):
 
         {{ users|selectattr("is_active") }}
         {{ users|selectattr("email", "none") }}
-
-    .. versionadded:: 2.7
     """
     return _select_or_reject(args, kwargs, lambda x: x, True)
 
 
 @contextfilter
 def do_rejectattr(*args, **kwargs):
-    """Filters a sequence of objects by applying a test to the specified
+    """
+    .. versionadded:: 2.7
+
+    Filters a sequence of objects by applying a test to the specified
     attribute of each object, and rejecting the objects with the test
     succeeding.
 
@@ -915,8 +929,6 @@ def do_rejectattr(*args, **kwargs):
 
         {{ users|rejectattr("is_active") }}
         {{ users|rejectattr("email", "none") }}
-
-    .. versionadded:: 2.7
     """
     return _select_or_reject(args, kwargs, lambda x: not x, True)
 

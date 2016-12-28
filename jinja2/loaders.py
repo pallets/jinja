@@ -136,7 +136,11 @@ class BaseLoader(object):
 
 
 class FileSystemLoader(BaseLoader):
-    """Loads templates from the file system.  This loader can find templates
+    """
+    .. versionchanged:: 2.8+
+       The *followlinks* parameter was added.
+
+    Loads templates from the file system.  This loader can find templates
     in folders on the file system and is the preferred way to load them.
 
     The loader takes the path to the templates as string, or if multiple
@@ -152,9 +156,6 @@ class FileSystemLoader(BaseLoader):
     To follow symbolic links, set the *followlinks* parameter to ``True``::
 
     >>> loader = FileSystemLoader('/path/to/templates', followlinks=True)
-
-    .. versionchanged:: 2.8+
-       The *followlinks* parameter was added.
     """
 
     def __init__(self, searchpath, encoding='utf-8', followlinks=False):
