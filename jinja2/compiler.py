@@ -971,10 +971,11 @@ class CodeGenerator(NodeVisitor):
             self.writeline('else:')
             self.indent()
 
+        loop = self.environment._async and 'async for' or 'for'
         if node.with_context:
-            self.writeline('for event in template.root_render_func('
+            self.writeline('%s event in template.root_render_func('
                            'template.new_context(context.parent, True, '
-                           'locals())):')
+                           'locals())):' % loop)
         else:
             self.writeline('for event in template._get_default_module()'
                            '._body_stream:')
@@ -999,7 +1000,7 @@ class CodeGenerator(NodeVisitor):
         if node.with_context:
             self.write('make_module(context.parent, True, locals())')
         else:
-            self.write('module')
+            self.write('_get_default_module()')
         if frame.toplevel and not node.target.startswith('_'):
             self.writeline('context.exported_vars.discard(%r)' % node.target)
         frame.assigned_names.add(node.target)
@@ -1013,7 +1014,7 @@ class CodeGenerator(NodeVisitor):
         if node.with_context:
             self.write('make_module(context.parent, True)')
         else:
-            self.write('module')
+            self.write('_get_default_module()')
 
         var_names = []
         discarded_names = []

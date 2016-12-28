@@ -1097,7 +1097,9 @@ class TemplateModule(object):
         if body_stream is None:
             if context.environment._async:
                 raise RuntimeError('Async mode requires a body stream '
-                                   'to be passed in.')
+                                   'to be passed to a template module.  Use '
+                                   'the async methods of the API you are '
+                                   'using.')
             body_stream = list(template.root_render_func(context))
         self._body_stream = body_stream
         self.__dict__.update(context.get_exported())
