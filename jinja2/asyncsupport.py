@@ -15,6 +15,33 @@ async def concat_async(async_gen):
     return concat(rv)
 
 
+async def generate_async(self, *args, **kwargs):
+    vars = dict(*args, **kwargs)
+    try:
+        async for event in self.root_render_func(self.new_context(vars)):
+            yield event
+    except Exception:
+        exc_info = sys.exc_info()
+    else:
+        return
+    yield self.environment.handle_exception(exc_info, True)
+
+
+def wrap_generate_func(original_generate):
+    def _convert_generator(self, loop, args, kwargs):
+        async_gen = self.generate_async(*args, **kwargs)
+        try:
+            while 1:
+                yield loop.run_until_complete(async_gen.__anext__())
+        except StopAsyncIteration:
+            pass
+    def generate(self, *args, **kwargs):
+        if not self.environment._async:
+            return original_generate(self, *args, **kwargs)
+        return _convert_generator(self, asyncio.get_event_loop(), args, kwargs)
+    return generate
+
+
 async def render_async(self, *args, **kwargs):
     if not self.environment._async:
         raise RuntimeError('The environment was not created with async mode '
@@ -84,6 +111,8 @@ async def make_module_async(self, vars=None, shared=False, locals=None):
 
 def patch_template():
     from jinja2 import Template
+    Template.generate_async = generate_async
+    Template.generate = wrap_generate_func(Template.generate)
     Template.render_async = render_async
     Template.render = wrap_render_func(Template.render)
     Template._get_default_module = wrap_default_module(

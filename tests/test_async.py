@@ -88,6 +88,14 @@ def test_async_blocks():
     assert rv == '<Test><Test>'
 
 
+@pytest.mark.skipif(not have_async_gen, reason='No async generators')
+def test_async_generate():
+    t = Template('{% for x in [1, 2, 3] %}{{ x }}{% endfor %}',
+                 enable_async=True)
+    rv = list(t.generate())
+    assert rv == ['1', '2', '3']
+
+
 @pytest.fixture
 def test_env_async():
     env = Environment(loader=DictLoader(dict(
