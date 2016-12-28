@@ -427,6 +427,11 @@ class Environment(object):
                     context=None, eval_ctx=None):
         """Invokes a filter on a value the same way the compiler does it.
 
+        Note that on Python 3 this might return a coroutine in case the
+        filter is running from an environment in async mode and the filter
+        supports async execution.  It's your responsibility to await this
+        if needed.
+
         .. versionadded:: 2.7
         """
         func = self.filters.get(name)
