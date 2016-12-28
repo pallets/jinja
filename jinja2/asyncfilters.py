@@ -77,6 +77,11 @@ async def do_join(eval_ctx, value, d=u'', attribute=None):
     return filters.do_join(eval_ctx, await auto_to_seq(value), d, attribute)
 
 
+@asyncfiltervariant(filters.do_list)
+async def do_list(value):
+    return await auto_to_seq(value)
+
+
 @asyncfiltervariant(filters.do_reject)
 async def do_reject(*args, **kwargs):
     return async_select_or_reject(args, kwargs, lambda x: not x, False)
@@ -101,14 +106,27 @@ async def do_selectattr(*args, **kwargs):
 async def do_map(*args, **kwargs):
     seq, func = filters.prepare_map(args, kwargs)
     if seq:
-        async for item in seq:
+        async for item in auto_aiter(seq):
             yield func(item)
+
+
+@asyncfiltervariant(filters.do_sum)
+async def do_sum(environment, iterable, attribute=None, start=0):
+    rv = start
+    if attribute is not None:
+        func = filters.make_attrgetter(environment, attribute)
+    else:
+        func = lambda x: x
+    async for item in auto_aiter(iterable):
+        rv += func(item)
+    return rv
 
 
 ASYNC_FILTERS = {
     'first':        do_first,
     'groupby':      do_groupby,
     'join':         do_join,
+    'list':         do_list,
     # we intentionally do not support do_last because that would be
     # ridiculous
     'reject':       do_reject,
@@ -116,4 +134,5 @@ ASYNC_FILTERS = {
     'map':          do_map,
     'select':       do_select,
     'selectattr':   do_selectattr,
+    'sum':          do_sum,
 }
