@@ -49,14 +49,14 @@ def wrap_generate_func(original_generate):
         except StopAsyncIteration:
             pass
     def generate(self, *args, **kwargs):
-        if not self.environment._async:
+        if not self.environment.is_async:
             return original_generate(self, *args, **kwargs)
         return _convert_generator(self, asyncio.get_event_loop(), args, kwargs)
     return update_wrapper(generate, original_generate)
 
 
 async def render_async(self, *args, **kwargs):
-    if not self.environment._async:
+    if not self.environment.is_async:
         raise RuntimeError('The environment was not created with async mode '
                            'enabled.')
 
@@ -72,7 +72,7 @@ async def render_async(self, *args, **kwargs):
 
 def wrap_render_func(original_render):
     def render(self, *args, **kwargs):
-        if not self.environment._async:
+        if not self.environment.is_async:
             return original_render(self, *args, **kwargs)
         loop = asyncio.get_event_loop()
         return loop.run_until_complete(self.render_async(*args, **kwargs))
@@ -89,7 +89,7 @@ def wrap_block_reference_call(original_call):
 
     @internalcode
     def __call__(self):
-        if not self._context.environment._async:
+        if not self._context.environment.is_async:
             return original_call(self)
         return async_call(self)
 
@@ -107,7 +107,7 @@ async def get_default_module_async(self):
 def wrap_default_module(original_default_module):
     @internalcode
     def _get_default_module(self):
-        if self.environment._async:
+        if self.environment.is_async:
             raise RuntimeError('Template module attribute is unavailable '
                                'in async mode')
         return original_default_module(self)

@@ -649,7 +649,7 @@ class CodeGenerator(NodeVisitor):
             self.writeline(' = '.join(to_delete) + ' = missing')
 
     def func(self, name):
-        if self.environment._async:
+        if self.environment.is_async:
             return 'async def %s' % name
         return 'def %s' % name
 
@@ -782,7 +782,7 @@ class CodeGenerator(NodeVisitor):
         if not unoptimize_before_dead_code:
             self.writeline('dummy = lambda *x: None')
 
-        if self.environment._async:
+        if self.environment.is_async:
             self.writeline('from jinja2.asyncsupport import auto_await, '
                            'auto_aiter, make_async_loop_context')
 
@@ -889,7 +889,7 @@ class CodeGenerator(NodeVisitor):
                 level += 1
         context = node.scoped and 'context.derived(locals())' or 'context'
 
-        loop = self.environment._async and 'async for' or 'for'
+        loop = self.environment.is_async and 'async for' or 'for'
         self.writeline('%s event in context.blocks[%r][0](%s):' % (
                        loop, node.name, context), node)
         self.indent()
@@ -973,11 +973,11 @@ class CodeGenerator(NodeVisitor):
             self.indent()
 
         if node.with_context:
-            loop = self.environment._async and 'async for' or 'for'
+            loop = self.environment.is_async and 'async for' or 'for'
             self.writeline('%s event in template.root_render_func('
                            'template.new_context(context.parent, True, '
                            'locals())):' % loop)
-        elif self.environment._async:
+        elif self.environment.is_async:
             self.writeline('for event in (await '
                            'template._get_default_module_async())'
                            '._body_stream:')
@@ -999,15 +999,15 @@ class CodeGenerator(NodeVisitor):
         self.writeline('l_%s = ' % node.target, node)
         if frame.toplevel:
             self.write('context.vars[%r] = ' % node.target)
-        if self.environment._async:
+        if self.environment.is_async:
             self.write('await ')
         self.write('environment.get_template(')
         self.visit(node.template, frame)
         self.write(', %r).' % self.name)
         if node.with_context:
             self.write('make_module%s(context.parent, True, locals())'
-                       % (self.environment._async and '_async' or ''))
-        elif self.environment._async:
+                       % (self.environment.is_async and '_async' or ''))
+        elif self.environment.is_async:
             self.write('_get_default_module_async()')
         else:
             self.write('_get_default_module()')
@@ -1019,13 +1019,13 @@ class CodeGenerator(NodeVisitor):
         """Visit named imports."""
         self.newline(node)
         self.write('included_template = %senvironment.get_template('
-                   % (self.environment._async and 'await ' or ''))
+                   % (self.environment.is_async and 'await ' or ''))
         self.visit(node.template, frame)
         self.write(', %r).' % self.name)
         if node.with_context:
             self.write('make_module%s(context.parent, True)'
-                       % (self.environment._async and '_async' or ''))
-        elif self.environment._async:
+                       % (self.environment.is_async and '_async' or ''))
+        elif self.environment.is_async:
             self.write('_get_default_module_async()')
         else:
             self.write('_get_default_module()')
@@ -1131,10 +1131,10 @@ class CodeGenerator(NodeVisitor):
                  "loop it's undefined.  Happened in loop on %s" %
                  self.position(node)))
 
-        self.writeline(self.environment._async and 'async for ' or 'for ', node)
+        self.writeline(self.environment.is_async and 'async for ' or 'for ', node)
         self.visit(node.target, loop_frame)
         if extended_loop:
-            if self.environment._async:
+            if self.environment.is_async:
                 self.write(', l_loop in await make_async_loop_context(')
             else:
                 self.write(', l_loop in LoopContext(')
@@ -1146,16 +1146,16 @@ class CodeGenerator(NodeVisitor):
         if extended_loop and node.test is not None:
             self.write('(')
             self.visit(node.target, loop_frame)
-            self.write(self.environment._async and ' async for ' or ' for ')
+            self.write(self.environment.is_async and ' async for ' or ' for ')
             self.visit(node.target, loop_frame)
             self.write(' in ')
             if node.recursive:
                 self.write('reciter')
             else:
-                if self.environment._async:
+                if self.environment.is_async:
                     self.write('auto_aiter(')
                 self.visit(node.iter, loop_frame)
-                if self.environment._async:
+                if self.environment.is_async:
                     self.write(')')
             self.write(' if (')
             test_frame = loop_frame.copy()
@@ -1165,10 +1165,10 @@ class CodeGenerator(NodeVisitor):
         elif node.recursive:
             self.write('reciter')
         else:
-            if self.environment._async and not extended_loop:
+            if self.environment.is_async and not extended_loop:
                 self.write('auto_aiter(')
             self.visit(node.iter, loop_frame)
-            if self.environment._async and not extended_loop:
+            if self.environment.is_async and not extended_loop:
                 self.write(')')
 
         if node.recursive:
@@ -1208,13 +1208,13 @@ class CodeGenerator(NodeVisitor):
             self.return_buffer_contents(loop_frame)
             self.outdent()
             self.start_write(frame, node)
-            if self.environment._async:
+            if self.environment.is_async:
                 self.write('await ')
             self.write('loop(')
-            if self.environment._async:
+            if self.environment.is_async:
                 self.write('auto_aiter(')
             self.visit(node.iter, frame)
-            if self.environment._async:
+            if self.environment.is_async:
                 self.write(')')
             self.write(', loop)')
             self.end_write(frame)
@@ -1666,7 +1666,7 @@ class CodeGenerator(NodeVisitor):
         self.write(')')
 
     def visit_Call(self, node, frame, forward_caller=False):
-        if self.environment._async:
+        if self.environment.is_async:
             self.write('await auto_await(')
         if self.environment.sandboxed:
             self.write('environment.call(context, ')
@@ -1676,7 +1676,7 @@ class CodeGenerator(NodeVisitor):
         extra_kwargs = forward_caller and {'caller': 'caller'} or None
         self.signature(node, frame, extra_kwargs)
         self.write(')')
-        if self.environment._async:
+        if self.environment.is_async:
             self.write(')')
 
     def visit_Keyword(self, node, frame):

@@ -321,7 +321,7 @@ class Environment(object):
         self.extensions = load_extensions(self, extensions)
 
         self.enable_async = enable_async
-        self._async = self.enable_async and have_async_gen
+        self.is_async = self.enable_async and have_async_gen
 
         _environment_sanity_check(self)
 
@@ -1128,7 +1128,7 @@ class TemplateModule(object):
 
     def __init__(self, template, context, body_stream=None):
         if body_stream is None:
-            if context.environment._async:
+            if context.environment.is_async:
                 raise RuntimeError('Async mode requires a body stream '
                                    'to be passed to a template module.  Use '
                                    'the async methods of the API you are '
