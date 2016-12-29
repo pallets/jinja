@@ -604,7 +604,7 @@ class Call(Expr):
 
     def as_const(self, eval_ctx=None):
         eval_ctx = get_eval_context(self, eval_ctx)
-        if eval_ctx.volatile:
+        if eval_ctx.volatile or eval_ctx.environment.sandboxed:
             raise Impossible()
         obj = self.node.as_const(eval_ctx)
 

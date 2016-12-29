@@ -11,6 +11,8 @@ Version 2.9
 - Corrected a long standing issue with operator precedence of math operations
   not being what was expected.
 - Added support for Python 3.6 async iterators through a new async mode.
+- Intercept string format calls through the sandbox if the sandbox is enabled.
+  The sandbox now also prevents access to some newer Python features.
 
 Version 2.8.1
 -------------
