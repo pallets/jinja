@@ -12,7 +12,7 @@ import pytest
 
 from jinja2 import Environment
 from jinja2.sandbox import SandboxedEnvironment, \
-     ImmutableSandboxedEnvironment, unsafe
+     ImmutableSandboxedEnvironment, unsafe, has_format
 from jinja2 import Markup, escape
 from jinja2.exceptions import SecurityError, TemplateSyntaxError, \
      TemplateRuntimeError
@@ -41,7 +41,7 @@ class PublicStuff(object):
 
 
 @pytest.mark.sandbox
-class TestSandbox():
+class TestSandbox(object):
 
     def test_unsafe(self, env):
         env = SandboxedEnvironment()
@@ -159,3 +159,18 @@ class TestSandbox():
                 pass
             else:
                 assert False, 'expected runtime error'
+
+
+@pytest.mark.sandbox
+@pytest.mark.skipif(not has_format, reason='No format support')
+class TestStringFormat(object):
+
+    def test_basic_format_safety(self):
+        env = SandboxedEnvironment()
+        t = env.from_string('{{ "a{0.__class__}b".format(int) }}')
+        assert t.render() == 'ab'
+
+    def test_basic_format_all_okay(self):
+        env = SandboxedEnvironment()
+        t = env.from_string('{{ "a{0.foo}b".format({"foo": 42}) }}')
+        assert t.render() == 'a42b'
