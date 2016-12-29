@@ -1,6 +1,14 @@
 Jinja2 Changelog
 ================
 
+Version 2.8.2
+-------------
+
+(bugfix release, unreleased)
+
+- Fixed a runtime error in the sandbox when attributes of async generators
+  were accessed.
+
 Version 2.8.1
 -------------
 
