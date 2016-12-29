@@ -206,7 +206,7 @@ def is_internal_attribute(obj, attr):
         if attr in UNSAFE_COROUTINE_ATTRIBUTES:
             return True
     elif hasattr(types, 'AsyncGeneratorType') and isinstance(obj, types.AsyncGeneratorType):
-        if attri in UNSAFE_ASYNC_GENERATOR_ATTRIBUTES:
+        if attr in UNSAFE_ASYNC_GENERATOR_ATTRIBUTES:
             return True
     return attr.startswith('__')
 
