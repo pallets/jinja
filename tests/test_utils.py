@@ -81,7 +81,9 @@ class TestMarkupLeak():
 class TestEscapeUrlizeTarget():
     def test_escape_urlize_target(self):
         url = "http://example.org"
+        url2 = "ftp://example.com"
         target = "<script>"
-        assert urlize(url, target=target) == ('<a href="http://example.org"'
-                                              ' target="&lt;script&gt;">'
-                                              'http://example.org</a>')
+        result = urlize(url2, target=target)
+        assert result == ('<a href="ftp://example.com"'
+                                              ' target="<script>">'
+                                              'ftp://example.com</a>')

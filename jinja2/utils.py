@@ -185,7 +185,7 @@ def pformat(obj, verbose=False):
 
 def urlize(text, trim_url_limit=None, nofollow=False, target=None):
     """Converts any URLs in text into clickable links. Works on http://,
-    https:// and www. links. Links can have trailing punctuation (periods,
+    https://, ftp:// and www. links. Links can have trailing punctuation (periods,
     commas, close-parens) and leading punctuation (opening parens) and
     it'll still do the right thing.
 
@@ -197,6 +197,8 @@ def urlize(text, trim_url_limit=None, nofollow=False, target=None):
 
     If target is not None, a target attribute will be added to the link.
     """
+    scheme = ['http://','https://','ftp://']
+    domain = ['.com','.org','.net']
     trim_url = lambda x, limit=trim_url_limit: limit is not None \
                          and (x[:limit] + (len(x) >=limit and '...'
                          or '')) or x
@@ -212,18 +214,14 @@ def urlize(text, trim_url_limit=None, nofollow=False, target=None):
             lead, middle, trail = match.groups()
             if middle.startswith('www.') or (
                 '@' not in middle and
-                not middle.startswith('http://') and
-                not middle.startswith('https://') and
+                not middle.startswith(tuple(scheme)) and
                 len(middle) > 0 and
                 middle[0] in _letters + _digits and (
-                    middle.endswith('.org') or
-                    middle.endswith('.net') or
-                    middle.endswith('.com')
+                    middle.endswith(tuple(domain))
                 )):
                 middle = '<a href="http://%s"%s%s>%s</a>' % (middle,
                     nofollow_attr, target_attr, trim_url(middle))
-            if middle.startswith('http://') or \
-               middle.startswith('https://'):
+            if middle.startswith(tuple(scheme)):
                 middle = '<a href="%s"%s%s>%s</a>' % (middle,
                     nofollow_attr, target_attr, trim_url(middle))
             if '@' in middle and not middle.startswith('www.') and \
