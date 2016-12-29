@@ -4,9 +4,12 @@ Jinja2 Changelog
 Version 2.8.1
 -------------
 
-(unreleased bugfix release)
+(bugfix release, released on December 29th 2016)
 
 - Fixed the `for_qs` flag for `urlencode`.
+- SECURITY: if the sandbox mode is used format expressions are now sandboxed
+  with the same rules as in Jinja.  This solves various information leakage
+  problems that can occur with format strings.
 
 Version 2.8
 -----------
