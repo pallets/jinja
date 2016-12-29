@@ -139,7 +139,7 @@ class _MagicFormatMapping(Mapping):
         return len(self._kwargs)
 
 
-def is_format_method(callable):
+def inspect_format_method(callable):
     if not has_format:
         return None
     if not isinstance(callable, (types.MethodType,
@@ -423,7 +423,7 @@ class SandboxedEnvironment(Environment):
 
     def call(__self, __context, __obj, *args, **kwargs):
         """Call an object from sandboxed code."""
-        fmt = is_format_method(__obj)
+        fmt = inspect_format_method(__obj)
         if fmt is not None:
             return __self.format_string(fmt, args, kwargs)
 
