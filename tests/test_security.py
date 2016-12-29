@@ -175,12 +175,12 @@ class TestStringFormat(object):
         t = env.from_string('{{ "a{0.foo}b".format({"foo": 42}) }}')
         assert t.render() == 'a42b'
 
-    def test_basic_format_safety(self):
+    def test_safe_format_safety(self):
         env = SandboxedEnvironment()
         t = env.from_string('{{ ("a{0.__class__}b{1}"|safe).format(42, "<foo>") }}')
         assert t.render() == 'ab&lt;foo&gt;'
 
-    def test_basic_format_all_okay(self):
+    def test_safe_format_all_okay(self):
         env = SandboxedEnvironment()
         t = env.from_string('{{ ("a{0.foo}b{1}"|safe).format({"foo": 42}, "<foo>") }}')
         assert t.render() == 'a42b&lt;foo&gt;'
