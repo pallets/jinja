@@ -41,7 +41,7 @@ class PublicStuff(object):
 
 
 @pytest.mark.sandbox
-class TestSandbox():
+class TestSandbox(object):
 
     def test_unsafe(self, env):
         env = SandboxedEnvironment()
