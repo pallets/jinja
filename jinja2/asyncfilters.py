@@ -122,6 +122,11 @@ async def do_sum(environment, iterable, attribute=None, start=0):
     return rv
 
 
+@asyncfiltervariant(filters.do_slice)
+async def do_slice(value, slices, fill_with=None):
+    return filters.do_slice(await auto_to_seq(value), slices, fill_with)
+
+
 ASYNC_FILTERS = {
     'first':        do_first,
     'groupby':      do_groupby,
@@ -135,4 +140,5 @@ ASYNC_FILTERS = {
     'select':       do_select,
     'selectattr':   do_selectattr,
     'sum':          do_sum,
+    'slice':        do_slice,
 }
