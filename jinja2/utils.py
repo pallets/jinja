@@ -183,7 +183,7 @@ def pformat(obj, verbose=False):
         return pformat(obj)
 
 
-def urlize(text, trim_url_limit=None, nofollow=False, target=None):
+def urlize(text, trim_url_limit=None, rel=None, target=None):
     """Converts any URLs in text into clickable links. Works on http://,
     https:// and www. links. Links can have trailing punctuation (periods,
     commas, close-parens) and leading punctuation (opening parens) and
@@ -201,11 +201,9 @@ def urlize(text, trim_url_limit=None, nofollow=False, target=None):
                          and (x[:limit] + (len(x) >=limit and '...'
                          or '')) or x
     words = _word_split_re.split(text_type(escape(text)))
-    nofollow_attr = nofollow and ' rel="nofollow"' or ''
-    if target is not None and isinstance(target, string_types):
-        target_attr = ' target="%s"' % escape(target)
-    else:
-        target_attr = ''
+    rel_attr = rel and ' rel="%s"' % text_type(escape(rel)) or ''
+    target_attr = target and ' target="%s"' % escape(target) or ''
+
     for i, word in enumerate(words):
         match = _punctuation_re.match(word)
         if match:
@@ -221,11 +219,11 @@ def urlize(text, trim_url_limit=None, nofollow=False, target=None):
                     middle.endswith('.com')
                 )):
                 middle = '<a href="http://%s"%s%s>%s</a>' % (middle,
-                    nofollow_attr, target_attr, trim_url(middle))
+                    rel_attr, target_attr, trim_url(middle))
             if middle.startswith('http://') or \
                middle.startswith('https://'):
                 middle = '<a href="%s"%s%s>%s</a>' % (middle,
-                    nofollow_attr, target_attr, trim_url(middle))
+                    rel_attr, target_attr, trim_url(middle))
             if '@' in middle and not middle.startswith('www.') and \
                not ':' in middle and _simple_email_re.match(middle):
                 middle = '<a href="mailto:%s">%s</a>' % (middle, middle)

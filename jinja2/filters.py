@@ -409,7 +409,7 @@ def do_pprint(value, verbose=False):
 
 @evalcontextfilter
 def do_urlize(eval_ctx, value, trim_url_limit=None, nofollow=False,
-              target=None):
+              target=None, rel=None):
     """Converts URLs in plain text into clickable links.
 
     If you pass the filter an additional integer it will shorten the urls
@@ -431,7 +431,15 @@ def do_urlize(eval_ctx, value, trim_url_limit=None, nofollow=False,
     .. versionchanged:: 2.8+
        The *target* parameter was added.
     """
-    rv = urlize(value, trim_url_limit, nofollow, target)
+    policies = eval_ctx.environment.policies
+    rel = set((rel or '').split() or [])
+    if nofollow:
+        rel.add('nofollow')
+    rel.update((policies['urlize.rel'] or '').split())
+    if target is None:
+        target = policies['urlize.target']
+    rel = ' '.join(sorted(rel)) or None
+    rv = urlize(value, trim_url_limit, rel=rel, target=target)
     if eval_ctx.autoescape:
         rv = Markup(rv)
     return rv

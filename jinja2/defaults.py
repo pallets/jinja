@@ -39,5 +39,12 @@ DEFAULT_NAMESPACE = {
 }
 
 
+# default policies
+DEFAULT_POLICIES = {
+    'urlize.rel':       'noopener',
+    'urlize.target':    None,
+}
+
+
 # export all constants
 __all__ = tuple(x for x in locals().keys() if x.isupper())

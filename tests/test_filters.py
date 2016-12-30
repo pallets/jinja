@@ -261,21 +261,28 @@ class TestFilter(object):
     def test_urlize(self, env):
         tmpl = env.from_string(
             '{{ "foo http://www.example.com/ bar"|urlize }}')
-        assert tmpl.render() == 'foo <a href="http://www.example.com/">'\
-                                'http://www.example.com/</a> bar'
+        assert tmpl.render() == (
+            'foo <a href="http://www.example.com/" rel="noopener">'
+            'http://www.example.com/</a> bar'
+        )
+
+    def test_urlize_rel_policy(self):
+        env = Environment()
+        env.policies['urlize.rel'] = None
+        tmpl = env.from_string(
+            '{{ "foo http://www.example.com/ bar"|urlize }}')
+        assert tmpl.render() == (
+            'foo <a href="http://www.example.com/">'
+            'http://www.example.com/</a> bar'
+        )
 
     def test_urlize_target_parameter(self, env):
         tmpl = env.from_string(
             '{{ "foo http://www.example.com/ bar"|urlize(target="_blank") }}'
         )
         assert tmpl.render() \
-            == 'foo <a href="http://www.example.com/" target="_blank">'\
+            == 'foo <a href="http://www.example.com/" rel="noopener" target="_blank">'\
             'http://www.example.com/</a> bar'
-        tmpl = env.from_string(
-            '{{ "foo http://www.example.com/ bar"|urlize(target=42) }}'
-        )
-        assert tmpl.render() == 'foo <a href="http://www.example.com/">'\
-                                'http://www.example.com/</a> bar'
 
     def test_wordcount(self, env):
         tmpl = env.from_string('{{ "foo bar baz"|wordcount }}')

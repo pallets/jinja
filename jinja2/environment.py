@@ -18,7 +18,7 @@ from jinja2.defaults import BLOCK_START_STRING, \
      COMMENT_START_STRING, COMMENT_END_STRING, LINE_STATEMENT_PREFIX, \
      LINE_COMMENT_PREFIX, TRIM_BLOCKS, NEWLINE_SEQUENCE, \
      DEFAULT_FILTERS, DEFAULT_TESTS, DEFAULT_NAMESPACE, \
-     KEEP_TRAILING_NEWLINE, LSTRIP_BLOCKS
+     DEFAULT_POLICIES, KEEP_TRAILING_NEWLINE, LSTRIP_BLOCKS
 from jinja2.lexer import get_lexer, TokenStream
 from jinja2.parser import Parser
 from jinja2.nodes import EvalContext
@@ -316,6 +316,9 @@ class Environment(object):
         self.cache = create_cache(cache_size)
         self.bytecode_cache = bytecode_cache
         self.auto_reload = auto_reload
+
+        # configurable policies
+        self.policies = DEFAULT_POLICIES.copy()
 
         # load extensions
         self.extensions = load_extensions(self, extensions)

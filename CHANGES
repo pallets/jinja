@@ -11,6 +11,8 @@ Version 2.9
 - Corrected a long standing issue with operator precedence of math operations
   not being what was expected.
 - Added support for Python 3.6 async iterators through a new async mode.
+- Added policies for filter defaults and similar things.
+- urlize now sets "rel noopener" by default.
 
 Version 2.8.2
 -------------

@@ -100,7 +100,7 @@ class TestBug():
 
     def test_urlize_filter_escaping(self, env):
         tmpl = env.from_string('{{ "http://www.example.org/<foo"|urlize }}')
-        assert tmpl.render() == '<a href="http://www.example.org/&lt;foo">'\
+        assert tmpl.render() == '<a href="http://www.example.org/&lt;foo" rel="noopener">'\
             'http://www.example.org/&lt;foo</a>'
 
     def test_loop_call_loop(self, env):
