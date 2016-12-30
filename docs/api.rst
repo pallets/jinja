@@ -154,6 +154,12 @@ useful if you want to dig deeper into Jinja2 or :ref:`develop extensions
         to modify this dict.  For more details see :ref:`global-namespace`.
         For valid object names have a look at :ref:`identifier-naming`.
 
+    .. attribute:: policies
+
+        A dictionary with :ref:`policies`.  These can be reconfigured to
+        change the runtime behavior or certain template features.  Usually
+        these are security related.
+
     .. attribute:: code_generator_class
 
        The class used for code generation.  This should not be changed
@@ -535,6 +541,29 @@ only applies to function calls.  If an attribute for instance would be an
 avaitable object then this would not result in the expected behavior.
 
 Likewise iterations with a `for` loop support async iterators.
+
+.. _policies:
+
+Policies
+--------
+
+Starting with Jinja 2.9 policies can be configured on the environment
+which can slightly influence how filters and other template constructs
+behave.  They can be configured with the
+:attr:`~jinja2.Environment.policies` attribute.
+
+Example::
+
+    env.policies['urlize.rel'] = 'nofollow noopener'
+
+``urlize.rel``:
+    A string that defines the items for the `rel` attribute of generated
+    links with the `urlize` filter.  These items are always added.  The
+    default is `noopener`.
+
+``urlize.target``:
+    The default target that is issued for links from the `urlize` filter
+    if no other target is defined by the call explicitly.
 
 
 Utilities
