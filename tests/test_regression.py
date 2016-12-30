@@ -8,6 +8,7 @@
     :copyright: (c) 2010 by the Jinja Team.
     :license: BSD, see LICENSE for more details.
 """
+import sys
 import pytest
 
 from jinja2 import Template, Environment, DictLoader, TemplateSyntaxError, \
@@ -276,3 +277,10 @@ class TestBug():
         expected = 'TEST'
 
         assert output == expected
+
+    @pytest.mark.skipif(sys.version_info[0] > 2,
+                        reason='This only works on 2.x')
+    def test_old_style_attribute(self, env):
+        class Foo:
+            x = 42
+        assert env.getitem(Foo(), 'x') == 42

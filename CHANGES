@@ -13,6 +13,7 @@ Version 2.9
 - Added support for Python 3.6 async iterators through a new async mode.
 - Added policies for filter defaults and similar things.
 - urlize now sets "rel noopener" by default.
+- Support attribute fallback for old-style classes in 2.x.
 
 Version 2.8.2
 -------------

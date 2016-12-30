@@ -400,7 +400,7 @@ class Environment(object):
         """Get an item or attribute of an object but prefer the item."""
         try:
             return obj[argument]
-        except (TypeError, LookupError):
+        except (AttributeError, TypeError, LookupError):
             if isinstance(argument, string_types):
                 try:
                     attr = str(argument)
