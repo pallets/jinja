@@ -284,3 +284,10 @@ class TestBug():
         class Foo:
             x = 42
         assert env.getitem(Foo(), 'x') == 42
+
+    def test_block_set_with_extends(self):
+        env = Environment(loader=DictLoader({
+            'main': '{% block body %}[{{ x }}]{% endblock %}',
+        }))
+        t = env.from_string('{% extends "main" %}{% set x %}42{% endset %}')
+        assert t.render() == '[42]'

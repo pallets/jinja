@@ -1458,6 +1458,10 @@ class CodeGenerator(NodeVisitor):
 
     def visit_AssignBlock(self, node, frame):
         block_frame = frame.inner()
+        # This is a special case.  Since a set block always captures we
+        # will disable output checks.  This way one can use set blocks
+        # toplevel even in extended templates.
+        block_frame.require_output_check = False
         block_frame.inspect(node.body)
         aliases = self.push_scope(block_frame)
         self.pull_locals(block_frame)

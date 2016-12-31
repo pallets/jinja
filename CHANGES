@@ -14,6 +14,7 @@ Version 2.9
 - Added policies for filter defaults and similar things.
 - urlize now sets "rel noopener" by default.
 - Support attribute fallback for old-style classes in 2.x.
+- Support toplevel set statements in extend situations.
 
 Version 2.8.2
 -------------
