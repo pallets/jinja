@@ -485,7 +485,6 @@ except ImportError:
     pass
 
 
-@implements_iterator
 class Cycler(object):
     """A cycle helper for templates."""
 
@@ -509,6 +508,8 @@ class Cycler(object):
         rv = self.current
         self.pos = (self.pos + 1) % len(self.items)
         return rv
+
+    next = __next__
 
 
 class Joiner(object):
