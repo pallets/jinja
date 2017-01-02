@@ -51,6 +51,13 @@ class Symbols(object):
         if self.parent is not None:
             return self.parent.find_ref(name)
 
+    def ref(self, name):
+        rv = self.find_ref(name)
+        if rv is None:
+            raise AssertionError('Tried to resolve a name to a reference that '
+                                 'was unknown to the frame (%r)' % name)
+        return rv
+
     def copy(self):
         rv = object.__new__(self.__class__)
         rv.__dict__.update(self.__dict__)
