@@ -216,7 +216,7 @@ def get_jinja_locals(real_locals):
         if cur_depth < depth:
             local_overrides[name] = (depth, value)
 
-    for name, (_, value) in local_overrides.iteritems():
+    for name, (_, value) in iteritems(local_overrides):
         if value is missing:
             locals.pop(name, None)
         else:
