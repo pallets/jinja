@@ -841,7 +841,7 @@ class CodeGenerator(NodeVisitor):
                                'update((%s))' % ', '.join(imap(repr, discarded_names)))
 
     def visit_For(self, node, frame):
-        # TODO: this shoudl really use two frames: one for the loop body
+        # TODO: this should really use two frames: one for the loop body
         # and a separate one for the loop else block.
         loop_frame = frame.inner()
 
