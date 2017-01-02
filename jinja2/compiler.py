@@ -1167,17 +1167,6 @@ class CodeGenerator(NodeVisitor):
         if outdent_later:
             self.outdent()
 
-    def make_assignment_frame(self, frame):
-        # toplevel assignments however go into the local namespace and
-        # the current template's context.  We create a copy of the frame
-        # here and add a set so that the Name visitor can add the assigned
-        # names here.
-        if not frame.toplevel:
-            return frame
-        assignment_frame = frame.copy()
-        assignment_frame.toplevel_assignments = set()
-        return assignment_frame
-
     def export_assigned_vars(self, frame):
         if not frame.toplevel:
             return
