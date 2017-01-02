@@ -132,7 +132,7 @@ class RootVisitor(NodeVisitor):
         _simple_visit
 
     def visit_AssignBlock(self, node):
-        for child in self.body:
+        for child in node.body:
             self.sym_visitor.visit(child)
 
     def visit_CallBlock(self, node):
@@ -215,6 +215,7 @@ class FrameSymbolVisitor(NodeVisitor):
 
     def visit_AssignBlock(self, node, **kwargs):
         """Stop visiting at block assigns."""
+        self.visit(node.target, **kwargs)
 
     def visit_Scope(self, node, **kwargs):
         """Stop visiting at scopes."""

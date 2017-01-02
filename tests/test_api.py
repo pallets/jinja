@@ -329,7 +329,7 @@ class TestLowLevel():
 
     def test_custom_context(self):
         class CustomContext(Context):
-            def resolve(self, key):
+            def resolve_or_missing(self, key):
                 return 'resolve-' + key
 
         class CustomEnvironment(Environment):

@@ -11,7 +11,7 @@
 """
 from jinja2 import nodes
 from jinja2.compiler import CodeGenerator
-from jinja2._compat import string_types
+from jinja2._compat import string_types, iteritems
 
 
 class TrackingCodeGenerator(CodeGenerator):
@@ -25,9 +25,12 @@ class TrackingCodeGenerator(CodeGenerator):
     def write(self, x):
         """Don't write."""
 
-    def pull_locals(self, frame):
+    def enter_frame(self, frame):
         """Remember all undeclared identifiers."""
-        self.undeclared_identifiers.update(frame.identifiers.undeclared)
+        CodeGenerator.enter_frame(self, frame)
+        for _, (action, param) in iteritems(frame.symbols.loads):
+            if action == 'resolve':
+                self.undeclared_identifiers.add(param)
 
 
 def find_undeclared_variables(ast):
