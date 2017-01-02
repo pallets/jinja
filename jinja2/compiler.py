@@ -595,7 +595,7 @@ class CodeGenerator(NodeVisitor):
         self.enter_frame(frame)
         self.pull_dependencies(node.body)
         self.blockvisit(node.body, frame)
-        self.leave_frame(frame)
+        self.leave_frame(frame, with_python_scope=True)
         self.outdent()
 
         # make sure that the parent root is called.
