@@ -205,7 +205,7 @@ def get_jinja_locals(real_locals):
     local_overrides = {}
 
     for name, value in iteritems(real_locals):
-        if not name.startswith('l_'):
+        if not name.startswith('l_') or value is missing:
             continue
         _, depth, name = name.split('_', 2)
         depth = int(depth)

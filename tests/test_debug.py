@@ -80,6 +80,7 @@ ZeroDivisionError: (int(eger)? )?division (or modulo )?by zero
             'l_1_foo': 23,
             'l_2_foo': 13,
             'l_0_bar': 99,
-            'l_1_bar': missing
+            'l_1_bar': missing,
+            'l_0_baz': missing,
         })
-        assert locals == {'foo': 13}
+        assert locals == {'foo': 13, 'bar': 99}
