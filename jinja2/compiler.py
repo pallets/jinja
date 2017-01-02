@@ -581,7 +581,8 @@ class CodeGenerator(NodeVisitor):
         self.writeline('name = %r' % self.name)
 
         # generate the root render function.
-        self.writeline('%s(context%s):' % (self.func('root'), envenv), extra=1)
+        self.writeline('%s(context, missing=missing%s):' %
+                       (self.func('root'), envenv), extra=1)
         self.indent()
 
         # process the root
@@ -614,7 +615,8 @@ class CodeGenerator(NodeVisitor):
 
         # at this point we now have the blocks collected and can visit them too.
         for name, block in iteritems(self.blocks):
-            self.writeline('%s(context%s):' % (self.func('block_' + name), envenv),
+            self.writeline('%s(context, missing=missing%s):' %
+                           (self.func('block_' + name), envenv),
                            block, 1)
             self.indent()
             # It's important that we do not make this frame a child of the
