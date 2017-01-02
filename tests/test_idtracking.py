@@ -33,7 +33,7 @@ def test_basics():
         'foo': 'l_1_foo',
     }
     assert sym.loads == {
-        'l_1_foo': ('undefined', None),
+        'l_1_foo': ('param', None),
     }
 
 
@@ -145,7 +145,7 @@ def test_complex():
         'item': 'l_1_item',
     }
     assert for_sym.loads == {
-        'l_1_item': ('undefined', None),
+        'l_1_item': ('param', None),
     }
     assert for_sym.stores == set(['item'])
     assert for_sym.dump_stores() == {
@@ -213,6 +213,6 @@ def test_if_branching_multi_scope():
     assert for_sym.stores == set(['item', 'x'])
     assert for_sym.loads == {
         'l_1_x': ('alias', 'l_0_x'),
-        'l_1_item': ('undefined', None),
+        'l_1_item': ('param', None),
         'l_1_expression': ('resolve', 'expression'),
     }
