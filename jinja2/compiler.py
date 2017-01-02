@@ -134,9 +134,6 @@ class Frame(object):
         # the name of the block we're in, otherwise None.
         self.block = parent and parent.block or None
 
-        # a set of actually assigned names
-        self.toplevel_assignments = set()
-
         # the parent of this frame
         self.parent = parent
 
@@ -276,6 +273,9 @@ class CodeGenerator(NodeVisitor):
 
         # the current indentation
         self._indentation = 0
+
+        # Tracks toplevel assignments
+        self._assign_stack = []
 
     # -- Various compilation helpers
 
@@ -1163,18 +1163,21 @@ class CodeGenerator(NodeVisitor):
         if outdent_later:
             self.outdent()
 
-    def export_assigned_vars(self, frame):
-        if not frame.toplevel:
+    def push_assign_tracking(self):
+        self._assign_stack.append(set())
+
+    def pop_assign_tracking(self, frame):
+        vars = self._assign_stack.pop()
+        if not frame.toplevel or not vars:
             return
-        public_names = [x for x in frame.toplevel_assignments
-                        if not x.startswith('_')]
-        if len(frame.toplevel_assignments) == 1:
-            name = next(iter(frame.toplevel_assignments))
+        public_names = [x for x in vars if x[:1] != '_']
+        if len(vars) == 1:
+            name = next(iter(vars))
             ref = frame.symbols.ref(name)
             self.writeline('context.vars[%r] = %s' % (name, ref))
         else:
             self.writeline('context.vars.update({')
-            for idx, name in enumerate(assignment_frame.toplevel_assignments):
+            for idx, name in enumerate(vars):
                 if idx:
                     self.write(', ')
                 ref = frame.symbols.ref(name)
@@ -1189,13 +1192,15 @@ class CodeGenerator(NodeVisitor):
                                ', '.join(imap(repr, public_names)))
 
     def visit_Assign(self, node, frame):
+        self.push_assign_tracking()
         self.newline(node)
         self.visit(node.target, frame)
         self.write(' = ')
         self.visit(node.node, frame)
-        self.export_assigned_vars(frame)
+        self.pop_assign_tracking(frame)
 
     def visit_AssignBlock(self, node, frame):
+        self.push_assign_tracking()
         block_frame = frame.inner()
         # This is a special case.  Since a set block always captures we
         # will disable output checks.  This way one can use set blocks
@@ -1208,14 +1213,15 @@ class CodeGenerator(NodeVisitor):
         self.newline(node)
         self.visit(node.target, frame)
         self.write(' = concat(%s)' % block_frame.buffer)
-        self.export_assigned_vars(frame)
+        self.pop_assign_tracking(frame)
         self.leave_frame(block_frame)
 
     # -- Expression Visitors
 
     def visit_Name(self, node, frame):
         if node.ctx == 'store' and frame.toplevel:
-            frame.toplevel_assignments.add(node.name)
+            if self._assign_stack and node.name[:1] != '_':
+                self._assign_stack[-1].add(node.name)
         ref = frame.symbols.ref(node.name)
         if node.ctx == 'load':
             self.write('(environment.undefined(name=%r) if %s is missing else %s)' %
