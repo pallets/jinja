@@ -135,7 +135,6 @@ class Frame(object):
         self.block = parent and parent.block or None
 
         # a set of actually assigned names
-        self.assigned_names = set()
         self.toplevel_assignments = set()
 
         # the parent of this frame
@@ -783,7 +782,6 @@ class CodeGenerator(NodeVisitor):
             self.write('_get_default_module()')
         if frame.toplevel and not node.target.startswith('_'):
             self.writeline('context.exported_vars.discard(%r)' % node.target)
-        frame.assigned_names.add(node.target)
 
     def visit_FromImport(self, node, frame):
         """Visit named imports."""
@@ -826,7 +824,6 @@ class CodeGenerator(NodeVisitor):
                 var_names.append(alias)
                 if not alias.startswith('_'):
                     discarded_names.append(alias)
-            frame.assigned_names.add(alias)
 
         if var_names:
             if len(var_names) == 1:
@@ -997,7 +994,6 @@ class CodeGenerator(NodeVisitor):
             self.writeline('context.vars[%r] = ' % node.name)
         self.write('%s = ' % frame.symbols.ref(node.name))
         self.macro_def(macro_ref, macro_frame)
-        frame.assigned_names.add(node.name)
 
     def visit_CallBlock(self, node, frame):
         call_frame, macro_ref = self.macro_body(node, frame)
@@ -1226,7 +1222,6 @@ class CodeGenerator(NodeVisitor):
                        (node.name, ref, ref))
         else:
             self.write(ref)
-        frame.assigned_names.add(node.name)
 
     def visit_Const(self, node, frame):
         val = node.value
