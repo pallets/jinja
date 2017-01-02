@@ -147,10 +147,6 @@ class Frame(object):
         rv.symbols = self.symbols.copy()
         return rv
 
-    def inspect(self, nodes):
-        # XXX: remove me
-        pass
-
     def inner(self):
         """Return an inner frame."""
         return Frame(self.eval_ctx, self)
@@ -159,6 +155,8 @@ class Frame(object):
         """Return a soft frame.  A soft frame may not be modified as
         standalone thing as it shares the resources with the frame it
         was created of, but it's not a rootlevel frame any longer.
+
+        This is only used to implement if-statements.
         """
         rv = self.copy()
         rv.rootlevel = False
@@ -909,8 +907,7 @@ class CodeGenerator(NodeVisitor):
                 if self.environment.is_async:
                     self.write(')')
             self.write(' if (')
-            test_frame = loop_frame.copy()
-            self.visit(node.test, test_frame)
+            self.visit(node.test, loop_frame)
             self.write('))')
 
         elif node.recursive:
