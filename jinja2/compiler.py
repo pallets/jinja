@@ -582,6 +582,7 @@ class CodeGenerator(NodeVisitor):
 
         # generate the root render function.
         self.writeline('%s(context%s):' % (self.func('root'), envenv), extra=1)
+        self.indent()
 
         # process the root
         frame = Frame(eval_ctx)
@@ -591,7 +592,6 @@ class CodeGenerator(NodeVisitor):
         frame.symbols.analyze_node(node)
         frame.toplevel = frame.rootlevel = True
         frame.require_output_check = have_extends and not self.has_known_extends
-        self.indent()
         if have_extends:
             self.writeline('parent_template = None')
         self.enter_frame(frame)
@@ -614,6 +614,9 @@ class CodeGenerator(NodeVisitor):
 
         # at this point we now have the blocks collected and can visit them too.
         for name, block in iteritems(self.blocks):
+            self.writeline('%s(context%s):' % (self.func('block_' + name), envenv),
+                           block, 1)
+            self.indent()
             # It's important that we do not make this frame a child of the
             # toplevel template.  This would cause a variety of
             # interesting issues with identifier tracking.
@@ -628,9 +631,6 @@ class CodeGenerator(NodeVisitor):
                                'block_%s)' % (ref, name, name))
             block_frame.symbols.analyze_node(block)
             block_frame.block = name
-            self.writeline('%s(context%s):' % (self.func('block_' + name), envenv),
-                           block, 1)
-            self.indent()
             self.enter_frame(block_frame)
             self.pull_dependencies(block.body)
             self.blockvisit(block.body, block_frame)
