@@ -242,6 +242,35 @@ class Node(with_metaclass(NodeType, object)):
                       arg in self.fields)
         )
 
+    def dump(self):
+        def _dump(node):
+            if not isinstance(node, Node):
+                buf.append(repr(node))
+                return
+
+            buf.append('nodes.%s(' % node.__class__.__name__)
+            if not node.fields:
+                buf.append(')')
+                return
+            for idx, field in enumerate(node.fields):
+                if idx:
+                    buf.append(', ')
+                value = getattr(node, field)
+                if isinstance(value, list):
+                    buf.append('[')
+                    for idx, item in enumerate(value):
+                        if idx:
+                            buf.append(', ')
+                        _dump(item)
+                    buf.append(']')
+                else:
+                    _dump(value)
+            buf.append(')')
+        buf = []
+        _dump(self)
+        return ''.join(buf)
+
+
 
 class Stmt(Node):
     """Base node for all statements."""

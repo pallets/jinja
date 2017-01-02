@@ -66,9 +66,7 @@ def new_context(environment, template_name, blocks, vars=None,
         # we don't want to modify the dict passed
         if shared:
             parent = dict(parent)
-        for key, value in iteritems(locals):
-            if key[:2] == 'l_' and value is not missing:
-                parent[key[2:]] = value
+        parent.update(locals or ())
     return environment.context_class(environment, parent, template_name,
                                      blocks)
 
@@ -150,11 +148,20 @@ class Context(object):
         """Looks up a variable like `__getitem__` or `get` but returns an
         :class:`Undefined` object with the name of the name looked up.
         """
+        rv = self.resolve_or_missing(key)
+        if rv is missing:
+            return self.environment.undefined(name=key)
+        return rv
+
+    def resolve_or_missing(self, key):
+        """Resolves a variable like :meth:`resolve` but returns the
+        special `missing` value if it cannot be found.
+        """
         if key in self.vars:
             return self.vars[key]
         if key in self.parent:
             return self.parent[key]
-        return self.environment.undefined(name=key)
+        return missing
 
     def get_exported(self):
         """Get a new dict with the exported variables."""
@@ -232,8 +239,8 @@ class Context(object):
         """Lookup a variable or raise `KeyError` if the variable is
         undefined.
         """
-        item = self.resolve(key)
-        if isinstance(item, Undefined):
+        item = self.resolve_or_missing(key)
+        if item is missing:
             raise KeyError(key)
         return item
 
