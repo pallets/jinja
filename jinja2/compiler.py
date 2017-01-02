@@ -791,8 +791,9 @@ class CodeGenerator(NodeVisitor):
         self.visit(node.template, frame)
         self.write(', %r).' % self.name)
         if node.with_context:
-            self.write('make_module%s(context.parent, True)'
-                       % (self.environment.is_async and '_async' or ''))
+            self.write('make_module%s(context.parent, True, %s)'
+                       % (self.environment.is_async and '_async' or '',
+                          self.dump_local_context(frame)))
         elif self.environment.is_async:
             self.write('_get_default_module_async()')
         else:
