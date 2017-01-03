@@ -842,7 +842,8 @@ class CodeGenerator(NodeVisitor):
 
     def visit_For(self, node, frame):
         # TODO: this should really use two frames: one for the loop body
-        # and a separate one for the loop else block.
+        # and a separate one for the loop else block.  This also is needed
+        # because the loop variable must not be visible in the else block
         loop_frame = frame.inner()
 
         # try to figure out if we have an extended loop.  An extended loop
