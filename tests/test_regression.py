@@ -306,3 +306,14 @@ class TestBug():
         {% endmacro %}{{ test() }}
         ''')
         assert tmpl.render().strip() == '0123456789'
+
+    def test_macro_var_bug_advanced(self, env):
+        tmpl = env.from_string('''
+        {% macro outer() %}
+            {% set i = 1 %}
+            {% macro test() %}
+                {% for i in range(0, 10) %}{{ i }}{% endfor %}
+            {% endmacro %}{{ test() }}
+        {% endmacro %}{{ outer() }}
+        ''')
+        assert tmpl.render().strip() == '0123456789'
