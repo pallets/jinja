@@ -16,6 +16,8 @@ Version 2.9
 - Support attribute fallback for old-style classes in 2.x.
 - Support toplevel set statements in extend situations.
 - Restored behavior of Cycler for Python 3 users.
+- Subtraction now follows the same behavior as other operators on undefined
+  values.
 
 Version 2.8.2
 -------------

@@ -508,7 +508,7 @@ class Undefined(object):
         __mod__ = __rmod__ = __pos__ = __neg__ = __call__ = \
         __getitem__ = __lt__ = __le__ = __gt__ = __ge__ = __int__ = \
         __float__ = __complex__ = __pow__ = __rpow__ = __sub__ = \
-        _fail_with_undefined_error
+        __rsub__ = _fail_with_undefined_error
 
     def __eq__(self, other):
         return type(self) is type(other)
