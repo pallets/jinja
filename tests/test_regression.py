@@ -297,3 +297,12 @@ class TestBug():
                                '{% for i in range(3) %}{{ i }}{% endfor %}'
                                '{% endfor %}')
         assert tmpl.render() == '012'
+
+    def test_macro_var_bug(self, env):
+        tmpl = env.from_string('''
+        {% set i = 1 %}
+        {% macro test() %}
+            {% for i in range(0, 10) %}{{ i }}{% endfor %}
+        {% endmacro %}{{ test() }}
+        ''')
+        assert tmpl.render().strip() == '0123456789'
