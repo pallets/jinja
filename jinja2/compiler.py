@@ -446,7 +446,7 @@ class CodeGenerator(NodeVisitor):
             if action == VAR_LOAD_PARAMETER:
                 pass
             elif action == VAR_LOAD_RESOLVE:
-                self.writeline('%s = context.resolve_or_missing(%r)' %
+                self.writeline('%s = resolve(%r)' %
                                (target, param))
             elif action == VAR_LOAD_ALIAS:
                 self.writeline('%s = %s' % (target, param))
@@ -534,6 +534,10 @@ class CodeGenerator(NodeVisitor):
             '%r: %s' % (name, target) for name, target
             in iteritems(frame.symbols.dump_stores()))
 
+    def write_commons(self):
+        self.writeline('resolve = context.resolve_or_missing')
+        self.writeline('undefined = environment.undefined')
+
     # -- Statement Visitors
 
     def visit_Template(self, node, frame=None):
@@ -581,6 +585,7 @@ class CodeGenerator(NodeVisitor):
         self.writeline('%s(context, missing=missing%s):' %
                        (self.func('root'), envenv), extra=1)
         self.indent()
+        self.write_commons()
 
         # process the root
         frame = Frame(eval_ctx)
@@ -616,6 +621,7 @@ class CodeGenerator(NodeVisitor):
                            (self.func('block_' + name), envenv),
                            block, 1)
             self.indent()
+            self.write_commons()
             # It's important that we do not make this frame a child of the
             # toplevel template.  This would cause a variety of
             # interesting issues with identifier tracking.
@@ -808,7 +814,7 @@ class CodeGenerator(NodeVisitor):
                            '%r, missing)' % (frame.symbols.ref(alias), name))
             self.writeline('if %s is missing:' % frame.symbols.ref(alias))
             self.indent()
-            self.writeline('%s = environment.undefined(%r %% '
+            self.writeline('%s = undefined(%r %% '
                            'included_template.__name__, '
                            'name=%r)' %
                            (frame.symbols.ref(alias),
@@ -1224,7 +1230,7 @@ class CodeGenerator(NodeVisitor):
                 self._assign_stack[-1].add(node.name)
         ref = frame.symbols.ref(node.name)
         if node.ctx == 'load':
-            self.write('(environment.undefined(name=%r) if %s is missing else %s)' %
+            self.write('(undefined(name=%r) if %s is missing else %s)' %
                        (node.name, ref, ref))
         else:
             self.write(ref)
@@ -1407,7 +1413,7 @@ class CodeGenerator(NodeVisitor):
         def write_expr2():
             if node.expr2 is not None:
                 return self.visit(node.expr2, frame)
-            self.write('environment.undefined(%r)' % ('the inline if-'
+            self.write('undefined(%r)' % ('the inline if-'
                        'expression on %s evaluated to false and '
                        'no else section was defined.' % self.position(node)))
 
