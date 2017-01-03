@@ -397,14 +397,13 @@ class LoopContextIterator(object):
 class Macro(object):
     """Wraps a macro function."""
 
-    def __init__(self, environment, func, name, arguments, defaults,
+    def __init__(self, environment, func, name, arguments,
                  catch_kwargs, catch_varargs, caller):
         self._environment = environment
         self._func = func
         self._argument_count = len(arguments)
         self.name = name
         self.arguments = arguments
-        self.defaults = defaults
         self.catch_kwargs = catch_kwargs
         self.catch_varargs = catch_varargs
         self.caller = caller
@@ -423,11 +422,7 @@ class Macro(object):
                 try:
                     value = kwargs.pop(name)
                 except KeyError:
-                    try:
-                        value = self.defaults[idx - self._argument_count + off]
-                    except IndexError:
-                        value = self._environment.undefined(
-                            'parameter %r was not provided' % name, name=name)
+                    value = missing
                 arguments.append(value)
 
         # it's important that the order of these arguments does not change

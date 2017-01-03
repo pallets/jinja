@@ -496,8 +496,25 @@ class CodeGenerator(NodeVisitor):
         frame.symbols.analyze_node(node)
         self.writeline('%s(%s):' % (self.func('macro'), ', '.join(args)), node)
         self.indent()
+
         self.buffer(frame)
         self.enter_frame(frame)
+
+        for idx, arg in enumerate(node.args):
+            self.writeline('if %s is missing:' % frame.symbols.ref(arg.name))
+            self.indent()
+            try:
+                default = node.defaults[idx - len(node.args)]
+            except IndexError:
+                self.writeline('%s = undefined(%r, name=%r)' % (
+                    frame.symbols.ref(arg.name),
+                    'parameter %r was not provided' % arg.name,
+                    arg.name))
+            else:
+                self.writeline('%s = ' % frame.symbols.ref(arg.name))
+                self.visit(default, frame)
+            self.outdent()
+
         self.blockvisit(node.body, frame)
         self.return_buffer_contents(frame)
         self.leave_frame(frame, with_python_scope=True)
@@ -511,16 +528,9 @@ class CodeGenerator(NodeVisitor):
         name = getattr(macro_ref.node, 'name', None)
         if len(macro_ref.node.args) == 1:
             arg_tuple += ','
-        self.write('Macro(environment, macro, %r, (%s), (' %
-                   (name, arg_tuple))
-        for arg in macro_ref.node.defaults:
-            self.visit(arg, frame)
-            self.write(', ')
-        self.write('), %r, %r, %r)' % (
-            bool(macro_ref.accesses_kwargs),
-            bool(macro_ref.accesses_varargs),
-            bool(macro_ref.accesses_caller)
-        ))
+        self.write('Macro(environment, macro, %r, (%s), %r, %r, %r)' %
+                   (name, arg_tuple, macro_ref.accesses_kwargs,
+                    macro_ref.accesses_varargs, macro_ref.accesses_caller))
 
     def position(self, node):
         """Return a human readable position for the node."""

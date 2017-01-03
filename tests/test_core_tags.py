@@ -308,13 +308,11 @@ class TestMacros():
             '{% macro bar() %}{{ varargs }}{{ kwargs }}{% endmacro %}'
             '{% macro baz() %}{{ caller() }}{% endmacro %}')
         assert tmpl.module.foo.arguments == ('a', 'b')
-        assert tmpl.module.foo.defaults == ()
         assert tmpl.module.foo.name == 'foo'
         assert not tmpl.module.foo.caller
         assert not tmpl.module.foo.catch_kwargs
         assert not tmpl.module.foo.catch_varargs
         assert tmpl.module.bar.arguments == ()
-        assert tmpl.module.bar.defaults == ()
         assert not tmpl.module.bar.caller
         assert tmpl.module.bar.catch_kwargs
         assert tmpl.module.bar.catch_varargs
