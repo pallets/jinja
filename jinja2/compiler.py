@@ -1100,8 +1100,8 @@ class CodeGenerator(NodeVisitor):
                         self.newline(item)
                     close = 1
                     if frame.eval_ctx.volatile:
-                        self.write('(context.eval_ctx.autoescape and'
-                                   ' escape or to_string)(')
+                        self.write('(escape if context.eval_ctx.autoescape'
+                                   ' else to_string)(')
                     elif frame.eval_ctx.autoescape:
                         self.write('escape(')
                     else:
@@ -1138,8 +1138,8 @@ class CodeGenerator(NodeVisitor):
                 self.newline(argument)
                 close = 0
                 if frame.eval_ctx.volatile:
-                    self.write('(context.eval_ctx.autoescape and'
-                               ' escape or to_string)(')
+                    self.write('(escape if context.eval_ctx.autoescape else'
+                               ' to_string)(')
                     close += 1
                 elif frame.eval_ctx.autoescape:
                     self.write('escape(')
@@ -1241,7 +1241,7 @@ class CodeGenerator(NodeVisitor):
         try:
             self.write(repr(node.as_const(frame.eval_ctx)))
         except nodes.Impossible:
-            self.write('(context.eval_ctx.autoescape and Markup or identity)(%r)'
+            self.write('(Markup if context.eval_ctx.autoescape else identity)(%r)'
                        % node.data)
 
     def visit_Tuple(self, node, frame):
