@@ -942,7 +942,8 @@ class CodeGenerator(NodeVisitor):
         if node.else_:
             self.writeline('%s = 0' % iteration_indicator)
         self.outdent()
-        self.leave_frame(loop_frame)
+        self.leave_frame(loop_frame, with_python_scope=node.recursive
+                         and not node.else_)
 
         if node.else_:
             self.writeline('if %s:' % iteration_indicator)
