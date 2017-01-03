@@ -948,7 +948,6 @@ class CodeGenerator(NodeVisitor):
         if node.else_:
             self.writeline('if %s:' % iteration_indicator)
             self.indent()
-            print(else_frame.symbols.__dict__)
             self.enter_frame(else_frame)
             self.blockvisit(node.else_, else_frame)
             self.leave_frame(else_frame)
