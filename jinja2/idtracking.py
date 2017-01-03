@@ -34,9 +34,9 @@ class Symbols(object):
         self.loads = {}
         self.stores = set()
 
-    def analyze_node(self, node):
+    def analyze_node(self, node, **kwargs):
         visitor = RootVisitor(self)
-        visitor.visit(node)
+        visitor.visit(node, **kwargs)
 
     def _define_ref(self, name, load=None):
         ident = 'l_%d_%s' % (self.level, name)
@@ -123,7 +123,7 @@ class RootVisitor(NodeVisitor):
     def __init__(self, symbols):
         self.sym_visitor = FrameSymbolVisitor(symbols)
 
-    def _simple_visit(self, node):
+    def _simple_visit(self, node, **kwargs):
         for child in node.iter_child_nodes():
             self.sym_visitor.visit(child)
 
@@ -131,18 +131,26 @@ class RootVisitor(NodeVisitor):
         visit_Scope = visit_If = visit_ScopedEvalContextModifier = \
         _simple_visit
 
-    def visit_AssignBlock(self, node):
+    def visit_AssignBlock(self, node, **kwargs):
         for child in node.body:
             self.sym_visitor.visit(child)
 
-    def visit_CallBlock(self, node):
+    def visit_CallBlock(self, node, **kwargs):
         for child in node.iter_child_nodes(exclude=('call',)):
             self.sym_visitor.visit(child)
 
-    def visit_For(self, node):
-        self.sym_visitor.visit(node.target, store_as_param=True)
-        for child in node.iter_child_nodes(exclude=('iter', 'target')):
-            self.sym_visitor.visit(child)
+    def visit_For(self, node, for_branch='body', **kwargs):
+        if node.test is not None:
+            self.sym_visitor.visit(node.test)
+        if for_branch == 'body':
+            self.sym_visitor.visit(node.target, store_as_param=True)
+            branch = node.body
+        elif for_branch == 'else':
+            branch = node.else_
+        else:
+            raise RuntimeError('Unknown for branch')
+        for item in branch or ():
+            self.sym_visitor.visit(item)
 
     def generic_visit(self, node, *args, **kwargs):
         raise NotImplementedError('Cannot find symbols for %r' %

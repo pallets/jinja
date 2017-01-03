@@ -20,7 +20,7 @@ def env_trim():
 
 @pytest.mark.core_tags
 @pytest.mark.for_loop
-class TestForLoop():
+class TestForLoop(object):
 
     def test_simple(self, env):
         tmpl = env.from_string('{% for item in seq %}{{ item }}{% endfor %}')
@@ -30,6 +30,11 @@ class TestForLoop():
         tmpl = env.from_string(
             '{% for item in seq %}XXX{% else %}...{% endfor %}')
         assert tmpl.render() == '...'
+
+    def test_else_scoping_item(self, env):
+        tmpl = env.from_string(
+            '{% for item in [] %}{% else %}{{ item }}{% endfor %}')
+        assert tmpl.render(item=42) == '42'
 
     def test_empty_blocks(self, env):
         tmpl = env.from_string('<{% for item in seq %}{% else %}{% endfor %}>')

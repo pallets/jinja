@@ -841,10 +841,8 @@ class CodeGenerator(NodeVisitor):
                                'update((%s))' % ', '.join(imap(repr, discarded_names)))
 
     def visit_For(self, node, frame):
-        # TODO: this should really use two frames: one for the loop body
-        # and a separate one for the loop else block.  This also is needed
-        # because the loop variable must not be visible in the else block
         loop_frame = frame.inner()
+        else_frame = frame.inner()
 
         # try to figure out if we have an extended loop.  An extended loop
         # is necessary if the loop is in recursive mode if the special loop
@@ -857,6 +855,9 @@ class CodeGenerator(NodeVisitor):
         if extended_loop:
             loop_ref = loop_frame.symbols.declare_parameter('loop')
         loop_frame.symbols.analyze_node(node)
+
+        if node.else_:
+            else_frame.symbols.analyze_node(node, for_branch='else')
 
         # if we don't have an recursive loop we have to find the shadowed
         # variables at that point.  Because loops can be nested but the loop
@@ -946,9 +947,10 @@ class CodeGenerator(NodeVisitor):
         if node.else_:
             self.writeline('if %s:' % iteration_indicator)
             self.indent()
-            self.enter_frame(loop_frame)
-            self.blockvisit(node.else_, loop_frame)
-            self.leave_frame(loop_frame)
+            print(else_frame.symbols.__dict__)
+            self.enter_frame(else_frame)
+            self.blockvisit(node.else_, else_frame)
+            self.leave_frame(else_frame)
             self.outdent()
 
         # if the node was recursive we have to return the buffer contents
