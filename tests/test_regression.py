@@ -317,3 +317,14 @@ class TestBug():
         {% endmacro %}{{ outer() }}
         ''')
         assert tmpl.render().strip() == '0123456789'
+
+    def test_callable_defaults(self):
+        env = Environment()
+        env.globals['get_int'] = lambda: 42
+        t = env.from_string('''
+         {% macro test(arg1=get_int()) %}
+             {{ arg1 }}
+        {% endmacro %}
+        {{ test(1) }}|{{ test() }}
+        ''')
+        assert t.render().strip() == '1|42'
