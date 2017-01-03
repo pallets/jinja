@@ -291,3 +291,9 @@ class TestBug():
         }))
         t = env.from_string('{% extends "main" %}{% set x %}42{% endset %}')
         assert t.render() == '[42]'
+
+    def test_nested_for_else(self, env):
+        tmpl = env.from_string('{% for x in y %}{{ loop.index0 }}{% else %}'
+                               '{% for i in range(3) %}{{ i }}{% endfor %}'
+                               '{% endfor %}')
+        assert tmpl.render() == '012'
