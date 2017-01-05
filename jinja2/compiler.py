@@ -345,11 +345,9 @@ class CodeGenerator(NodeVisitor):
         """Visit a list of nodes as block in a frame.  If the current frame
         is no buffer a dummy ``if 0: yield None`` is written automatically.
         """
-        if frame.buffer is None:
-            self.writeline('if 0: yield None')
-        else:
-            self.writeline('pass')
         try:
+            if not nodes:
+                self.writeline('pass')
             for node in nodes:
                 self.visit(node, frame)
         except CompilerExit:
@@ -555,6 +553,7 @@ class CodeGenerator(NodeVisitor):
     def write_commons(self):
         self.writeline('resolve = context.resolve_or_missing')
         self.writeline('undefined = environment.undefined')
+        self.writeline('if 0: yield None')
 
     # -- Statement Visitors
 
