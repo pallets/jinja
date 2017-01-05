@@ -49,6 +49,14 @@ try:
 except SyntaxError:
     pass
 
+# does this python version support yield from?
+try:
+    exec('def f(): yield from x()')
+except SyntaxError:
+    supports_yield_from = False
+else:
+    supports_yield_from = True
+
 
 def generate(node, environment, name, filename, stream=None,
              defer_init=False):
@@ -619,11 +627,16 @@ class CodeGenerator(NodeVisitor):
                 self.indent()
                 self.writeline('if parent_template is not None:')
             self.indent()
-            self.writeline('for event in parent_template.'
-                           'root_render_func(context):')
-            self.indent()
-            self.writeline('yield event')
-            self.outdent(2 + (not self.has_known_extends))
+            if supports_yield_from:
+                self.writeline('yield from parent_template.'
+                               'root_render_func(context)')
+            else:
+                self.writeline('for event in parent_template.'
+                               'root_render_func(context):')
+                self.indent()
+                self.writeline('yield event')
+                self.outdent()
+            self.outdent(1 + (not self.has_known_extends))
 
         # at this point we now have the blocks collected and can visit them too.
         for name, block in iteritems(self.blocks):
@@ -662,7 +675,7 @@ class CodeGenerator(NodeVisitor):
 
     def visit_Block(self, node, frame):
         """Call a block and register it for the template."""
-        level = 1
+        level = 0
         if frame.toplevel:
             # if we know that we are a child template, there is no need to
             # check if we are one
@@ -675,11 +688,17 @@ class CodeGenerator(NodeVisitor):
         context = node.scoped and (
             'context.derived(%s)' % self.dump_local_context(frame)) or 'context'
 
-        loop = self.environment.is_async and 'async for' or 'for'
-        self.writeline('%s event in context.blocks[%r][0](%s):' % (
-                       loop, node.name, context), node)
-        self.indent()
-        self.simple_write('event', frame)
+        if supports_yield_from and not self.environment.is_async:
+            self.writeline('yield from context.blocks[%r][0](%s)' % (
+                           node.name, context), node)
+        else:
+            loop = self.environment.is_async and 'async for' or 'for'
+            self.writeline('%s event in context.blocks[%r][0](%s):' % (
+                           loop, node.name, context), node)
+            self.indent()
+            self.simple_write('event', frame)
+            self.outdent()
+
         self.outdent(level)
 
     def visit_Extends(self, node, frame):
@@ -756,6 +775,7 @@ class CodeGenerator(NodeVisitor):
             self.writeline('else:')
             self.indent()
 
+        skip_event_yield = False
         if node.with_context:
             loop = self.environment.is_async and 'async for' or 'for'
             self.writeline('%s event in template.root_render_func('
@@ -766,12 +786,18 @@ class CodeGenerator(NodeVisitor):
                            'template._get_default_module_async())'
                            '._body_stream:')
         else:
-            self.writeline('for event in template._get_default_module()'
-                           '._body_stream:')
+            if supports_yield_from:
+                self.writeline('yield from template._get_default_module()'
+                               '._body_stream')
+                skip_event_yield = True
+            else:
+                self.writeline('for event in template._get_default_module()'
+                               '._body_stream:')
 
-        self.indent()
-        self.simple_write('event', frame)
-        self.outdent()
+        if not skip_event_yield:
+            self.indent()
+            self.simple_write('event', frame)
+            self.outdent()
 
         if node.ignore_missing:
             self.outdent()
