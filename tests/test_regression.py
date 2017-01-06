@@ -335,3 +335,20 @@ class TestBug(object):
         template = "{% macro m() %}<html>{% endmacro %}"
         template += "{% autoescape true %}{{ m() }}{% endautoescape %}"
         assert env.from_string(template).render()
+
+    def test_macro_scoping(self, env):
+        tmpl = env.from_string('''
+        {% set n=[1,2,3,4,5] %}
+        {% for n in [[1,2,3], [3,4,5], [5,6,7]] %}
+
+        {% macro x(l) %}
+          {{ l.pop() }}
+          {% if l %}{{ x(l) }}{% endif %}
+        {% endmacro %}
+
+        {{ x(n) }}
+
+        {% endfor %}
+        ''')
+        assert list(map(int, tmpl.render().split())) == \
+            [3, 2, 1, 5, 4, 3, 7, 6, 5]
