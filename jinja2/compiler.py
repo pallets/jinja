@@ -1264,7 +1264,7 @@ class CodeGenerator(NodeVisitor):
 
     def visit_Name(self, node, frame):
         if node.ctx == 'store' and frame.toplevel:
-            if self._assign_stack and node.name[:1] != '_':
+            if self._assign_stack:
                 self._assign_stack[-1].add(node.name)
         ref = frame.symbols.ref(node.name)
 

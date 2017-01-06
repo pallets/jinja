@@ -1,3 +1,4 @@
+from collections import OrderedDict
 from jinja2.visitor import NodeVisitor
 from jinja2._compat import iteritems
 
@@ -31,7 +32,7 @@ class Symbols(object):
             self.level = parent.level + 1
         self.parent = parent
         self.refs = {}
-        self.loads = {}
+        self.loads = OrderedDict()
         self.stores = set()
 
     def analyze_node(self, node, **kwargs):
