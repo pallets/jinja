@@ -1267,11 +1267,18 @@ class CodeGenerator(NodeVisitor):
             if self._assign_stack and node.name[:1] != '_':
                 self._assign_stack[-1].add(node.name)
         ref = frame.symbols.ref(node.name)
+
+        # If we are looking up a variable we might have to deal with the
+        # case where it's undefined.  We can skip that case if the load
+        # instruction indicates a parameter which are always defined.
         if node.ctx == 'load':
-            self.write('(undefined(name=%r) if %s is missing else %s)' %
-                       (node.name, ref, ref))
-        else:
-            self.write(ref)
+            load = frame.symbols.find_load(ref)
+            if load is None or load[0] != VAR_LOAD_PARAMETER:
+                self.write('(undefined(name=%r) if %s is missing else %s)' %
+                           (node.name, ref, ref))
+                return
+
+        self.write(ref)
 
     def visit_Const(self, node, frame):
         val = node.value

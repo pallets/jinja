@@ -45,6 +45,12 @@ class Symbols(object):
             self.loads[ident] = load
         return ident
 
+    def find_load(self, target):
+        if target in self.loads:
+            return self.loads[target]
+        if self.parent is not None:
+            return self.parent.find_load(target)
+
     def find_ref(self, name):
         if name in self.refs:
             return self.refs[name]
