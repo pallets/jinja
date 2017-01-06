@@ -27,6 +27,7 @@ Version 2.9
   autoescaping information at call time instead of macro define time.
 - Ported a modified version of the `tojson` filter from Flask to Jinja2
   and hooked it up with the new policy framework.
+- Block sets are now marked `safe` by default.
 
 Version 2.8.2
 -------------

@@ -1297,7 +1297,8 @@ class CodeGenerator(NodeVisitor):
         self.blockvisit(node.body, block_frame)
         self.newline(node)
         self.visit(node.target, frame)
-        self.write(' = concat(%s)' % block_frame.buffer)
+        self.write(' = (Markup if context.eval_ctx.autoescape '
+                   'else identity)(concat(%s))' % block_frame.buffer)
         self.pop_assign_tracking(frame)
         self.leave_frame(block_frame)
 

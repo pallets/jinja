@@ -348,3 +348,9 @@ class TestSet(object):
         tmpl = env_trim.from_string('{% set foo %}42{% endset %}{{ foo }}')
         assert tmpl.render() == '42'
         assert tmpl.module.foo == u'42'
+
+    def test_block_escaping(self):
+        env = Environment(autoescape=True)
+        tmpl = env.from_string('{% set foo %}<em>{{ test }}</em>'
+                               '{% endset %}foo: {{ foo }}')
+        assert tmpl.render(test='<unsafe>') == 'foo: <em>&lt;unsafe&gt;</em>'
