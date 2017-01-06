@@ -24,7 +24,7 @@ from jinja2._compat import imap, text_type, iteritems, \
 __all__ = ['LoopContext', 'TemplateReference', 'Macro', 'Markup',
            'TemplateRuntimeError', 'missing', 'concat', 'escape',
            'markup_join', 'unicode_join', 'to_string', 'identity',
-           'TemplateNotFound', 'make_logging_undefined']
+           'TemplateNotFound']
 
 #: the name of the function that is used to convert something into
 #: a string.  We can just use the text type here.
@@ -66,9 +66,7 @@ def new_context(environment, template_name, blocks, vars=None,
         # we don't want to modify the dict passed
         if shared:
             parent = dict(parent)
-        for key, value in iteritems(locals):
-            if key[:2] == 'l_' and value is not missing:
-                parent[key[2:]] = value
+        parent.update(locals or ())
     return environment.context_class(environment, parent, template_name,
                                      blocks)
 
@@ -150,11 +148,20 @@ class Context(object):
         """Looks up a variable like `__getitem__` or `get` but returns an
         :class:`Undefined` object with the name of the name looked up.
         """
+        rv = self.resolve_or_missing(key)
+        if rv is missing:
+            return self.environment.undefined(name=key)
+        return rv
+
+    def resolve_or_missing(self, key):
+        """Resolves a variable like :meth:`resolve` but returns the
+        special `missing` value if it cannot be found.
+        """
         if key in self.vars:
             return self.vars[key]
         if key in self.parent:
             return self.parent[key]
-        return self.environment.undefined(name=key)
+        return missing
 
     def get_exported(self):
         """Get a new dict with the exported variables."""
@@ -232,8 +239,8 @@ class Context(object):
         """Lookup a variable or raise `KeyError` if the variable is
         undefined.
         """
-        item = self.resolve(key)
-        if isinstance(item, Undefined):
+        item = self.resolve_or_missing(key)
+        if item is missing:
             raise KeyError(key)
         return item
 
@@ -390,14 +397,13 @@ class LoopContextIterator(object):
 class Macro(object):
     """Wraps a macro function."""
 
-    def __init__(self, environment, func, name, arguments, defaults,
+    def __init__(self, environment, func, name, arguments,
                  catch_kwargs, catch_varargs, caller):
         self._environment = environment
         self._func = func
         self._argument_count = len(arguments)
         self.name = name
         self.arguments = arguments
-        self.defaults = defaults
         self.catch_kwargs = catch_kwargs
         self.catch_varargs = catch_varargs
         self.caller = caller
@@ -416,11 +422,7 @@ class Macro(object):
                 try:
                     value = kwargs.pop(name)
                 except KeyError:
-                    try:
-                        value = self.defaults[idx - self._argument_count + off]
-                    except IndexError:
-                        value = self._environment.undefined(
-                            'parameter %r was not provided' % name, name=name)
+                    value = missing
                 arguments.append(value)
 
         # it's important that the order of these arguments does not change

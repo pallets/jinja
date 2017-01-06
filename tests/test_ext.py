@@ -368,7 +368,7 @@ class TestNewstyleInternationalization():
         # that the generated code does not pass num twice (although that
         # would work) for better performance.  This only works on the
         # newstyle gettext of course
-        assert re.search(r"l_ngettext, u?'\%\(num\)s apple', u?'\%\(num\)s "
+        assert re.search(r"u?'\%\(num\)s apple', u?'\%\(num\)s "
                          r"apples', 3", source) is not None
 
     def test_trans_vars(self):

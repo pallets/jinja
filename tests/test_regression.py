@@ -291,3 +291,40 @@ class TestBug():
         }))
         t = env.from_string('{% extends "main" %}{% set x %}42{% endset %}')
         assert t.render() == '[42]'
+
+    def test_nested_for_else(self, env):
+        tmpl = env.from_string('{% for x in y %}{{ loop.index0 }}{% else %}'
+                               '{% for i in range(3) %}{{ i }}{% endfor %}'
+                               '{% endfor %}')
+        assert tmpl.render() == '012'
+
+    def test_macro_var_bug(self, env):
+        tmpl = env.from_string('''
+        {% set i = 1 %}
+        {% macro test() %}
+            {% for i in range(0, 10) %}{{ i }}{% endfor %}
+        {% endmacro %}{{ test() }}
+        ''')
+        assert tmpl.render().strip() == '0123456789'
+
+    def test_macro_var_bug_advanced(self, env):
+        tmpl = env.from_string('''
+        {% macro outer() %}
+            {% set i = 1 %}
+            {% macro test() %}
+                {% for i in range(0, 10) %}{{ i }}{% endfor %}
+            {% endmacro %}{{ test() }}
+        {% endmacro %}{{ outer() }}
+        ''')
+        assert tmpl.render().strip() == '0123456789'
+
+    def test_callable_defaults(self):
+        env = Environment()
+        env.globals['get_int'] = lambda: 42
+        t = env.from_string('''
+        {% macro test(a, b, c=get_int()) -%}
+             {{ a + b + c }}
+        {%- endmacro %}
+        {{ test(1, 2) }}|{{ test(1, 2, 3) }}
+        ''')
+        assert t.render().strip() == '45|6'

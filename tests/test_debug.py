@@ -27,7 +27,7 @@ def fs_env(filesystem_loader):
 
 
 @pytest.mark.debug
-class TestDebug():
+class TestDebug(object):
 
     def assert_traceback_matches(self, callback, expected_tb):
         try:
@@ -71,3 +71,16 @@ ZeroDivisionError: (int(eger)? )?division (or modulo )?by zero
     raise TemplateSyntaxError\('wtf', 42\)
 (jinja2\.exceptions\.)?TemplateSyntaxError: wtf
   line 42''')
+
+    def test_local_extraction(self):
+        from jinja2.debug import get_jinja_locals
+        from jinja2.runtime import missing
+        locals = get_jinja_locals({
+            'l_0_foo': 42,
+            'l_1_foo': 23,
+            'l_2_foo': 13,
+            'l_0_bar': 99,
+            'l_1_bar': missing,
+            'l_0_baz': missing,
+        })
+        assert locals == {'foo': 13, 'bar': 99}

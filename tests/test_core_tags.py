@@ -20,7 +20,7 @@ def env_trim():
 
 @pytest.mark.core_tags
 @pytest.mark.for_loop
-class TestForLoop():
+class TestForLoop(object):
 
     def test_simple(self, env):
         tmpl = env.from_string('{% for item in seq %}{{ item }}{% endfor %}')
@@ -30,6 +30,11 @@ class TestForLoop():
         tmpl = env.from_string(
             '{% for item in seq %}XXX{% else %}...{% endfor %}')
         assert tmpl.render() == '...'
+
+    def test_else_scoping_item(self, env):
+        tmpl = env.from_string(
+            '{% for item in [] %}{% else %}{{ item }}{% endfor %}')
+        assert tmpl.render(item=42) == '42'
 
     def test_empty_blocks(self, env):
         tmpl = env.from_string('<{% for item in seq %}{% else %}{% endfor %}>')
@@ -303,13 +308,11 @@ class TestMacros():
             '{% macro bar() %}{{ varargs }}{{ kwargs }}{% endmacro %}'
             '{% macro baz() %}{{ caller() }}{% endmacro %}')
         assert tmpl.module.foo.arguments == ('a', 'b')
-        assert tmpl.module.foo.defaults == ()
         assert tmpl.module.foo.name == 'foo'
         assert not tmpl.module.foo.caller
         assert not tmpl.module.foo.catch_kwargs
         assert not tmpl.module.foo.catch_varargs
         assert tmpl.module.bar.arguments == ()
-        assert tmpl.module.bar.defaults == ()
         assert not tmpl.module.bar.caller
         assert tmpl.module.bar.catch_kwargs
         assert tmpl.module.bar.catch_varargs

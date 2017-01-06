@@ -88,6 +88,16 @@ def load_extensions(environment, extensions):
     return result
 
 
+def fail_for_missing_callable(string, name):
+    msg = string % name
+    if isinstance(name, Undefined):
+        try:
+            name._fail_with_undefined_error()
+        except Exception as e:
+            msg = '%s (%s; did you forget to quote the callable name?)' % (msg, e)
+    raise TemplateRuntimeError(msg)
+
+
 def _environment_sanity_check(environment):
     """Perform a sanity check on the environment."""
     assert issubclass(environment.undefined, Undefined), 'undefined must ' \
@@ -439,7 +449,7 @@ class Environment(object):
         """
         func = self.filters.get(name)
         if func is None:
-            raise TemplateRuntimeError('no filter named %r' % name)
+            fail_for_missing_callable('no filter named %r', name)
         args = [value] + list(args or ())
         if getattr(func, 'contextfilter', False):
             if context is None:
@@ -464,7 +474,7 @@ class Environment(object):
         """
         func = self.tests.get(name)
         if func is None:
-            raise TemplateRuntimeError('no test named %r' % name)
+            fail_for_missing_callable('no test named %r', name)
         return func(value, *(args or ()), **(kwargs or {}))
 
     @internalcode
