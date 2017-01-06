@@ -18,6 +18,8 @@ Version 2.9
 - Restored behavior of Cycler for Python 3 users.
 - Subtraction now follows the same behavior as other operators on undefined
   values.
+- `map` and friends will now give better error messages if you forgot to
+  quote the parameter.
 
 Version 2.8.2
 -------------
