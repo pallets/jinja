@@ -328,3 +328,10 @@ class TestBug():
         {{ test(1, 2) }}|{{ test(1, 2, 3) }}
         ''')
         assert t.render().strip() == '45|6'
+
+    def test_macro_escaping(self):
+        env = Environment(
+            autoescape=lambda x: False, extensions=['jinja2.ext.autoescape'])
+        template = "{% macro m() %}<html>{% endmacro %}"
+        template += "{% autoescape true %}{{ m() }}{% endautoescape %}"
+        assert env.from_string(template).render()
