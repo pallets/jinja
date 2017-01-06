@@ -21,6 +21,8 @@ Version 2.9
 - `map` and friends will now give better error messages if you forgot to
   quote the parameter.
 - Depend on MarkupSafe 0.23 or higher.
+- Improved the `truncate` filter to support better truncation in case
+  the string is barely truncated at all.
 
 Version 2.8.2
 -------------
