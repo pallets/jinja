@@ -355,6 +355,14 @@ class TestNewstyleInternationalization():
         assert t.render(ae=True) == '<strong>Wert: &lt;test&gt;</strong>'
         assert t.render(ae=False) == '<strong>Wert: <test></strong>'
 
+    def test_autoescape_macros(self):
+        env = Environment(autoescape=False, extensions=['jinja2.ext.autoescape'])
+        template = (
+            '{% macro m() %}<html>{% endmacro %}'
+            '{% autoescape true %}{{ m() }}{% endautoescape %}'
+        )
+        assert env.from_string(template).render() == '<html>'
+
     def test_num_used_twice(self):
         tmpl = newstyle_i18n_env.get_template('ngettext_long.html')
         assert tmpl.render(apples=5, LANGUAGE='de') == u'5 Äpfel'

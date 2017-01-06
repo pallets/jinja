@@ -16,6 +16,7 @@ from jinja2.sandbox import SandboxedEnvironment, \
 from jinja2 import Markup, escape
 from jinja2.exceptions import SecurityError, TemplateSyntaxError, \
      TemplateRuntimeError
+from jinja2.nodes import EvalContext
 from jinja2._compat import text_type
 
 
@@ -119,7 +120,10 @@ class TestSandbox():
         assert text_type(t.module) == escaped_out
         assert escape(t.module) == escaped_out
         assert t.module.say_hello('<blink>foo</blink>') == escaped_out
-        assert escape(t.module.say_hello('<blink>foo</blink>')) == escaped_out
+        assert escape(t.module.say_hello(
+            EvalContext(env), '<blink>foo</blink>')) == escaped_out
+        assert escape(t.module.say_hello(
+            '<blink>foo</blink>')) == escaped_out
 
     def test_attr_filter(self, env):
         env = SandboxedEnvironment()

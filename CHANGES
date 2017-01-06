@@ -23,6 +23,8 @@ Version 2.9
 - Depend on MarkupSafe 0.23 or higher.
 - Improved the `truncate` filter to support better truncation in case
   the string is barely truncated at all.
+- Change the logic for macro autoescaping to be based on the runtime
+  autoescaping information at call time instead of macro define time.
 
 Version 2.8.2
 -------------

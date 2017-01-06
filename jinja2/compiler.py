@@ -299,21 +299,23 @@ class CodeGenerator(NodeVisitor):
         frame.buffer = self.temporary_identifier()
         self.writeline('%s = []' % frame.buffer)
 
-    def return_buffer_contents(self, frame):
+    def return_buffer_contents(self, frame, force_unescaped=False):
         """Return the buffer contents of the frame."""
-        if frame.eval_ctx.volatile:
-            self.writeline('if context.eval_ctx.autoescape:')
-            self.indent()
-            self.writeline('return Markup(concat(%s))' % frame.buffer)
-            self.outdent()
-            self.writeline('else:')
-            self.indent()
-            self.writeline('return concat(%s)' % frame.buffer)
-            self.outdent()
-        elif frame.eval_ctx.autoescape:
-            self.writeline('return Markup(concat(%s))' % frame.buffer)
-        else:
-            self.writeline('return concat(%s)' % frame.buffer)
+        if not force_unescaped:
+            if frame.eval_ctx.volatile:
+                self.writeline('if context.eval_ctx.autoescape:')
+                self.indent()
+                self.writeline('return Markup(concat(%s))' % frame.buffer)
+                self.outdent()
+                self.writeline('else:')
+                self.indent()
+                self.writeline('return concat(%s)' % frame.buffer)
+                self.outdent()
+                return
+            elif frame.eval_ctx.autoescape:
+                self.writeline('return Markup(concat(%s))' % frame.buffer)
+                return
+        self.writeline('return concat(%s)' % frame.buffer)
 
     def indent(self):
         """Indent by one."""
@@ -522,7 +524,7 @@ class CodeGenerator(NodeVisitor):
             self.outdent()
 
         self.blockvisit(node.body, frame)
-        self.return_buffer_contents(frame)
+        self.return_buffer_contents(frame, force_unescaped=True)
         self.leave_frame(frame, with_python_scope=True)
         self.outdent()
 
@@ -534,7 +536,8 @@ class CodeGenerator(NodeVisitor):
         name = getattr(macro_ref.node, 'name', None)
         if len(macro_ref.node.args) == 1:
             arg_tuple += ','
-        self.write('Macro(environment, macro, %r, (%s), %r, %r, %r)' %
+        self.write('Macro(environment, macro, %r, (%s), %r, %r, %r, '
+                   'context.eval_ctx.autoescape)' %
                    (name, arg_tuple, macro_ref.accesses_kwargs,
                     macro_ref.accesses_varargs, macro_ref.accesses_caller))
 

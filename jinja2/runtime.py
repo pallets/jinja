@@ -13,7 +13,7 @@ import sys
 from itertools import chain
 from jinja2.nodes import EvalContext, _context_function_types
 from jinja2.utils import Markup, soft_unicode, escape, missing, concat, \
-     internalcode, object_type_repr
+     internalcode, object_type_repr, evalcontextfunction
 from jinja2.exceptions import UndefinedError, TemplateRuntimeError, \
      TemplateNotFound
 from jinja2._compat import imap, text_type, iteritems, \
@@ -398,7 +398,8 @@ class Macro(object):
     """Wraps a macro function."""
 
     def __init__(self, environment, func, name, arguments,
-                 catch_kwargs, catch_varargs, caller):
+                 catch_kwargs, catch_varargs, caller,
+                 default_autoescape=None):
         self._environment = environment
         self._func = func
         self._argument_count = len(arguments)
@@ -407,9 +408,36 @@ class Macro(object):
         self.catch_kwargs = catch_kwargs
         self.catch_varargs = catch_varargs
         self.caller = caller
+        if default_autoescape is None:
+            default_autoescape = environment.autoescape
+        self._default_autoescape = default_autoescape
 
     @internalcode
+    @evalcontextfunction
     def __call__(self, *args, **kwargs):
+        # This requires a bit of explanation,  In the past we used to
+        # decide largely based on compile-time information if a macro is
+        # safe or unsafe.  While there was a volatile mode it was largely
+        # unused for deciding on escaping.  This turns out to be
+        # problemtic for macros because if a macro is safe or not not so
+        # much depends on the escape mode when it was defined but when it
+        # was used.
+        #
+        # Because however we export macros from the module system and
+        # there are historic callers that do not pass an eval context (and
+        # will continue to not pass one), we need to perform an instance
+        # check here.
+        #
+        # This is considered safe because an eval context is not a valid
+        # argument to callables otherwise anwyays.  Worst case here is
+        # that if no eval context is passed we fall back to the compile
+        # time autoescape flag.
+        if args and isinstance(args[0], EvalContext):
+            autoescape = args[0].autoescape
+            args = args[1:]
+        else:
+            autoescape = self._default_autoescape
+
         # try to consume the positional arguments
         arguments = list(args[:self._argument_count])
         off = len(arguments)
@@ -444,7 +472,11 @@ class Macro(object):
         elif len(args) > self._argument_count:
             raise TypeError('macro %r takes not more than %d argument(s)' %
                             (self.name, len(self.arguments)))
-        return self._func(*arguments)
+
+        rv = self._func(*arguments)
+        if autoescape:
+            rv = Markup(rv)
+        return rv
 
     def __repr__(self):
         return '<%s %s>' % (
