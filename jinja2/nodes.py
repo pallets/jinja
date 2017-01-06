@@ -631,38 +631,6 @@ class Call(Expr):
     """
     fields = ('node', 'args', 'kwargs', 'dyn_args', 'dyn_kwargs')
 
-    def as_const(self, eval_ctx=None):
-        eval_ctx = get_eval_context(self, eval_ctx)
-        if eval_ctx.volatile or eval_ctx.environment.sandboxed:
-            raise Impossible()
-        obj = self.node.as_const(eval_ctx)
-
-        # don't evaluate context functions
-        args = [x.as_const(eval_ctx) for x in self.args]
-        if isinstance(obj, _context_function_types):
-            if getattr(obj, 'contextfunction', False):
-                raise Impossible()
-            elif getattr(obj, 'evalcontextfunction', False):
-                args.insert(0, eval_ctx)
-            elif getattr(obj, 'environmentfunction', False):
-                args.insert(0, self.environment)
-
-        kwargs = dict(x.as_const(eval_ctx) for x in self.kwargs)
-        if self.dyn_args is not None:
-            try:
-                args.extend(self.dyn_args.as_const(eval_ctx))
-            except Exception:
-                raise Impossible()
-        if self.dyn_kwargs is not None:
-            try:
-                kwargs.update(self.dyn_kwargs.as_const(eval_ctx))
-            except Exception:
-                raise Impossible()
-        try:
-            return obj(*args, **kwargs)
-        except Exception:
-            raise Impossible()
-
 
 class Getitem(Expr):
     """Get an attribute or item from an expression and prefer the item."""
