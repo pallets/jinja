@@ -1135,7 +1135,7 @@ class CodeGenerator(NodeVisitor):
                     if frame.buffer is None:
                         self.writeline('yield ' + val)
                     else:
-                        self.writeline(val + ', ')
+                        self.writeline(val + ',')
                 else:
                     if frame.buffer is None:
                         self.writeline('yield ', item)
@@ -1158,7 +1158,7 @@ class CodeGenerator(NodeVisitor):
                     self.visit(item, frame)
                     self.write(')' * close)
                     if frame.buffer is not None:
-                        self.write(', ')
+                        self.write(',')
             if frame.buffer is not None:
                 # close the open parentheses
                 self.outdent()
