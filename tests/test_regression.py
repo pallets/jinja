@@ -17,7 +17,7 @@ from jinja2._compat import text_type
 
 
 @pytest.mark.regression
-class TestCorner():
+class TestCorner(object):
 
     def test_assigned_scoping(self, env):
         t = env.from_string('''
@@ -78,7 +78,7 @@ class TestCorner():
 
 
 @pytest.mark.regression
-class TestBug():
+class TestBug(object):
 
     def test_keyword_folding(self, env):
         env = Environment()

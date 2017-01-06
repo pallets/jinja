@@ -23,7 +23,7 @@ from jinja2.utils import Cycler
 
 @pytest.mark.api
 @pytest.mark.extended
-class TestExtendedAPI():
+class TestExtendedAPI(object):
 
     def test_item_and_attribute(self, env):
         from jinja2.sandbox import SandboxedEnvironment
@@ -107,7 +107,7 @@ class TestExtendedAPI():
 
 @pytest.mark.api
 @pytest.mark.meta
-class TestMeta():
+class TestMeta(object):
 
     def test_find_undeclared_variables(self, env):
         ast = env.parse('{% set foo = 42 %}{{ bar + foo }}')
@@ -155,7 +155,7 @@ class TestMeta():
 
 @pytest.mark.api
 @pytest.mark.streaming
-class TestStreaming():
+class TestStreaming(object):
 
     def test_basic_streaming(self, env):
         tmpl = env.from_string("<ul>{% for item in seq %}<li>{{ loop.index "
@@ -199,7 +199,7 @@ class TestStreaming():
 
 @pytest.mark.api
 @pytest.mark.undefined
-class TestUndefined():
+class TestUndefined(object):
 
     def test_stopiteration_is_undefined(self):
         def test():
@@ -309,7 +309,7 @@ class TestUndefined():
 
 @pytest.mark.api
 @pytest.mark.lowlevel
-class TestLowLevel():
+class TestLowLevel(object):
 
     def test_custom_code_generator(self):
         class CustomCodeGenerator(CodeGenerator):

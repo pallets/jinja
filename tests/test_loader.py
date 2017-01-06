@@ -22,7 +22,7 @@ from jinja2.exceptions import TemplateNotFound
 
 
 @pytest.mark.loaders
-class TestLoaders():
+class TestLoaders(object):
 
     def test_dict_loader(self, dict_loader):
         env = Environment(loader=dict_loader)
@@ -121,7 +121,7 @@ class TestLoaders():
 
 @pytest.mark.loaders
 @pytest.mark.moduleloader
-class TestModuleLoader():
+class TestModuleLoader(object):
     archive = None
 
     def compile_down(self, prefix_loader, zip='deflated', py_compile=False):

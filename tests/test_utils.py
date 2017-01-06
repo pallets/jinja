@@ -19,7 +19,7 @@ from jinja2.utils import LRUCache, escape, object_type_repr, urlize
 
 @pytest.mark.utils
 @pytest.mark.lrucache
-class TestLRUCache():
+class TestLRUCache(object):
 
     def test_simple(self):
         d = LRUCache(3)
@@ -46,7 +46,7 @@ class TestLRUCache():
 
 @pytest.mark.utils
 @pytest.mark.helpers
-class TestHelpers():
+class TestHelpers(object):
 
     def test_object_type_repr(self):
         class X(object):
@@ -62,7 +62,7 @@ class TestHelpers():
 @pytest.mark.markupleak
 @pytest.mark.skipif(hasattr(escape, 'func_code'),
                     reason='this test only tests the c extension')
-class TestMarkupLeak():
+class TestMarkupLeak(object):
 
     def test_markup_leaks(self):
         counts = set()
@@ -78,7 +78,7 @@ class TestMarkupLeak():
 
 @pytest.mark.utils
 @pytest.mark.escapeUrlizeTarget
-class TestEscapeUrlizeTarget():
+class TestEscapeUrlizeTarget(object):
     def test_escape_urlize_target(self):
         url = "http://example.org"
         target = "<script>"

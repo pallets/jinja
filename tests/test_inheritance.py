@@ -78,7 +78,7 @@ def env():
 
 
 @pytest.mark.inheritance
-class TestInheritance():
+class TestInheritance(object):
 
     def test_layout(self, env):
         tmpl = env.get_template('layout')
@@ -201,7 +201,7 @@ class TestInheritance():
 
 
 @pytest.mark.inheritance
-class TestBugFix():
+class TestBugFix(object):
 
     def test_fixed_macro_scoping_bug(self, env):
         assert Environment(loader=DictLoader({

@@ -14,7 +14,7 @@ from jinja2 import Markup, Environment
 
 
 @pytest.mark.test_tests
-class TestTestsCase():
+class TestTestsCase(object):
 
     def test_defined(self, env):
         tmpl = env.from_string('{{ missing is defined }}|'

@@ -27,7 +27,7 @@ else:
 
 @pytest.mark.lexnparse
 @pytest.mark.tokenstream
-class TestTokenStream():
+class TestTokenStream(object):
     test_tokens = [Token(1, TOKEN_BLOCK_BEGIN, ''),
                    Token(2, TOKEN_BLOCK_END, ''),
                    ]
@@ -55,7 +55,7 @@ class TestTokenStream():
 
 @pytest.mark.lexnparse
 @pytest.mark.lexer
-class TestLexer():
+class TestLexer(object):
 
     def test_raw1(self, env):
         tmpl = env.from_string(
@@ -129,7 +129,7 @@ class TestLexer():
 
 @pytest.mark.lexnparse
 @pytest.mark.parser
-class TestParser():
+class TestParser(object):
 
     def test_php_syntax(self, env):
         env = Environment('<?', '?>', '<?=', '?>', '<!--', '-->')
@@ -246,7 +246,7 @@ and bar comment #}
 
 @pytest.mark.lexnparse
 @pytest.mark.syntax
-class TestSyntax():
+class TestSyntax(object):
 
     def test_call(self, env):
         env = Environment()
@@ -442,7 +442,7 @@ class TestSyntax():
 
 @pytest.mark.lexnparse
 @pytest.mark.lstripblocks
-class TestLstripBlocks():
+class TestLstripBlocks(object):
 
     def test_lstrip(self, env):
         env = Environment(lstrip_blocks=True, trim_blocks=False)

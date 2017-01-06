@@ -160,7 +160,7 @@ class StreamFilterExtension(Extension):
 
 
 @pytest.mark.ext
-class TestExtensions():
+class TestExtensions(object):
 
     def test_extend_late(self):
         env = Environment()
@@ -246,7 +246,7 @@ class TestExtensions():
 
 
 @pytest.mark.ext
-class TestInternationalization():
+class TestInternationalization(object):
 
     def test_trans(self):
         tmpl = i18n_env.get_template('child.html')
@@ -315,7 +315,7 @@ class TestInternationalization():
 
 
 @pytest.mark.ext
-class TestNewstyleInternationalization():
+class TestNewstyleInternationalization(object):
 
     def test_trans(self):
         tmpl = newstyle_i18n_env.get_template('child.html')
@@ -397,7 +397,7 @@ class TestNewstyleInternationalization():
 
 
 @pytest.mark.ext
-class TestAutoEscape():
+class TestAutoEscape(object):
 
     def test_scoped_setting(self):
         env = Environment(extensions=['jinja2.ext.autoescape'],
