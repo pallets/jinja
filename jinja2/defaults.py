@@ -41,8 +41,10 @@ DEFAULT_NAMESPACE = {
 
 # default policies
 DEFAULT_POLICIES = {
-    'urlize.rel':       'noopener',
-    'urlize.target':    None,
+    'urlize.rel':           'noopener',
+    'urlize.target':        None,
+    'json.dumps_function':  None,
+    'json.dumps_kwargs':    {'sort_keys': True},
 }
 
 

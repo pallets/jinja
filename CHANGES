@@ -25,6 +25,8 @@ Version 2.9
   the string is barely truncated at all.
 - Change the logic for macro autoescaping to be based on the runtime
   autoescaping information at call time instead of macro define time.
+- Ported a modified version of the `tojson` filter from Flask to Jinja2
+  and hooked it up with the new policy framework.
 
 Version 2.8.2
 -------------

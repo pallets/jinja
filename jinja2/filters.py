@@ -15,7 +15,7 @@ from random import choice
 from itertools import groupby
 from collections import namedtuple
 from jinja2.utils import Markup, escape, pformat, urlize, soft_unicode, \
-     unicode_urlencode
+     unicode_urlencode, htmlsafe_json_dumps
 from jinja2.runtime import Undefined
 from jinja2.exceptions import FilterArgumentError
 from jinja2._compat import imap, string_types, text_type, iteritems
@@ -916,6 +916,39 @@ def do_rejectattr(*args, **kwargs):
     return select_or_reject(args, kwargs, lambda x: not x, True)
 
 
+@evalcontextfilter
+def do_tojson(eval_ctx, value, indent=None):
+    """Dumps a structure to JSON so that it's safe to use in ``<script>``
+    tags.  It accepts the same arguments and returns a JSON string.  Note that
+    this is available in templates through the ``|tojson`` filter which will
+    also mark the result as safe.  Due to how this function escapes certain
+    characters this is safe even if used outside of ``<script>`` tags.
+
+    The following characters are escaped in strings:
+
+    -   ``<``
+    -   ``>``
+    -   ``&``
+    -   ``'``
+
+    This makes it safe to embed such strings in any place in HTML with the
+    notable exception of double quoted attributes.  In that case single
+    quote your attributes or HTML escape it in addition.
+
+    The indent parameter can be used to enable pretty printing.  Set it to
+    the number of spaces that the structures should be indented with.
+
+    .. versionadded:: 2.9
+    """
+    policies = eval_ctx.environment.policies
+    dumper = policies['json.dumps_function']
+    options = policies['json.dumps_kwargs']
+    if indent is not None:
+        options = dict(options)
+        options['indent'] = indent
+    return htmlsafe_json_dumps(value, dumper=dumper, **options)
+
+
 def prepare_map(args, kwargs):
     context = args[0]
     seq = args[1]
@@ -1021,4 +1054,5 @@ FILTERS = {
     'wordcount':            do_wordcount,
     'wordwrap':             do_wordwrap,
     'xmlattr':              do_xmlattr,
+    'tojson':               do_tojson,
 }

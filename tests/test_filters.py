@@ -576,3 +576,16 @@ class TestFilter(object):
         tmpl = env.from_string('{{ users|rejectattr("id", "odd")|'
                                'map(attribute="name")|join("|") }}')
         assert tmpl.render(users=users) == 'jane'
+
+    def test_json_dump(self):
+        env = Environment(autoescape=True)
+        t = env.from_string('{{ x|tojson }}')
+        assert t.render(x={'foo': 'bar'}) == '{&#34;foo&#34;: &#34;bar&#34;}'
+        assert t.render(x='"bar\'') == '&#34;\&#34;bar\u0027&#34;'
+
+        def my_dumps(value, **options):
+            assert options == {'foo': 'bar'}
+            return '42'
+        env.policies['json.dumps_function'] = my_dumps
+        env.policies['json.dumps_kwargs'] = {'foo': 'bar'}
+        assert t.render(x=23) == '42'
