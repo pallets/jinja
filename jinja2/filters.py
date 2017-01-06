@@ -938,6 +938,8 @@ def do_tojson(eval_ctx, value, indent=None):
     The indent parameter can be used to enable pretty printing.  Set it to
     the number of spaces that the structures should be indented with.
 
+    Note that this filter is for use in HTML contexts only.
+
     .. versionadded:: 2.9
     """
     policies = eval_ctx.environment.policies
