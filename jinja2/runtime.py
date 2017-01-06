@@ -66,7 +66,9 @@ def new_context(environment, template_name, blocks, vars=None,
         # we don't want to modify the dict passed
         if shared:
             parent = dict(parent)
-        parent.update(locals or ())
+        for key, value in iteritems(locals):
+            if value is not missing:
+                parent[key] = value
     return environment.context_class(environment, parent, template_name,
                                      blocks)
 

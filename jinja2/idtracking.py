@@ -123,6 +123,16 @@ class Symbols(object):
             node = node.parent
         return rv
 
+    def dump_param_targets(self):
+        rv = set()
+        node = self
+        while node is not None:
+            for target, (instr, _) in iteritems(self.loads):
+                if instr == VAR_LOAD_PARAMETER:
+                    rv.add(target)
+            node = node.parent
+        return rv
+
 
 class RootVisitor(NodeVisitor):
 

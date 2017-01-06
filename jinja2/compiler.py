@@ -283,6 +283,9 @@ class CodeGenerator(NodeVisitor):
         # Tracks toplevel assignments
         self._assign_stack = []
 
+        # Tracks parameter definition blocks
+        self._param_def_block = []
+
     # -- Various compilation helpers
 
     def fail(self, msg, lineno):
@@ -508,20 +511,24 @@ class CodeGenerator(NodeVisitor):
         self.buffer(frame)
         self.enter_frame(frame)
 
+        self.push_parameter_definitions(frame)
         for idx, arg in enumerate(node.args):
-            self.writeline('if %s is missing:' % frame.symbols.ref(arg.name))
+            ref = frame.symbols.ref(arg.name)
+            self.writeline('if %s is missing:' % ref)
             self.indent()
             try:
                 default = node.defaults[idx - len(node.args)]
             except IndexError:
                 self.writeline('%s = undefined(%r, name=%r)' % (
-                    frame.symbols.ref(arg.name),
+                    ref,
                     'parameter %r was not provided' % arg.name,
                     arg.name))
             else:
-                self.writeline('%s = ' % frame.symbols.ref(arg.name))
+                self.writeline('%s = ' % ref)
                 self.visit(default, frame)
+            self.mark_parameter_stored(ref)
             self.outdent()
+        self.pop_parameter_definitions()
 
         self.blockvisit(node.body, frame)
         self.return_buffer_contents(frame, force_unescaped=True)
@@ -554,9 +561,71 @@ class CodeGenerator(NodeVisitor):
             in iteritems(frame.symbols.dump_stores()))
 
     def write_commons(self):
+        """Writes a common preamble that is used by root and block functions.
+        Primarily this sets up common local helpers and enforces a generator
+        through a dead branch.
+        """
         self.writeline('resolve = context.resolve_or_missing')
         self.writeline('undefined = environment.undefined')
         self.writeline('if 0: yield None')
+
+    def push_parameter_definitions(self, frame):
+        """Pushes all parameter targets from the given frame into a local
+        stack that permits tracking of yet to be assigned parameters.  In
+        particular this enables the optimization from `visit_Name` to skip
+        undefined expressions for parameters in macros as macros can reference
+        otherwise unbound parameters.
+        """
+        self._param_def_block.append(frame.symbols.dump_param_targets())
+
+    def pop_parameter_definitions(self):
+        """Pops the current parameter definitions set."""
+        self._param_def_block.pop()
+
+    def mark_parameter_stored(self, target):
+        """Marks a parameter in the current parameter definitions as stored.
+        This will skip the enforced undefined checks.
+        """
+        if self._param_def_block:
+            self._param_def_block[-1].discard(target)
+
+    def parameter_is_undeclared(self, target):
+        """Checks if a given target is an undeclared parameter."""
+        if not self._param_def_block:
+            return True
+        return target in self._param_def_block[-1]
+
+    def push_assign_tracking(self):
+        """Pushes a new layer for assignment tracking."""
+        self._assign_stack.append(set())
+
+    def pop_assign_tracking(self, frame):
+        """Pops the topmost level for assignment tracking and updates the
+        context variables if necessary.
+        """
+        vars = self._assign_stack.pop()
+        if not frame.toplevel or not vars:
+            return
+        public_names = [x for x in vars if x[:1] != '_']
+        if len(vars) == 1:
+            name = next(iter(vars))
+            ref = frame.symbols.ref(name)
+            self.writeline('context.vars[%r] = %s' % (name, ref))
+        else:
+            self.writeline('context.vars.update({')
+            for idx, name in enumerate(vars):
+                if idx:
+                    self.write(', ')
+                ref = frame.symbols.ref(name)
+                self.write('%r: %s' % (name, ref))
+            self.write('})')
+        if public_names:
+            if len(public_names) == 1:
+                self.writeline('context.exported_vars.add(%r)' %
+                               public_names[0])
+            else:
+                self.writeline('context.exported_vars.update((%s))' %
+                               ', '.join(imap(repr, public_names)))
 
     # -- Statement Visitors
 
@@ -1207,34 +1276,6 @@ class CodeGenerator(NodeVisitor):
         if outdent_later:
             self.outdent()
 
-    def push_assign_tracking(self):
-        self._assign_stack.append(set())
-
-    def pop_assign_tracking(self, frame):
-        vars = self._assign_stack.pop()
-        if not frame.toplevel or not vars:
-            return
-        public_names = [x for x in vars if x[:1] != '_']
-        if len(vars) == 1:
-            name = next(iter(vars))
-            ref = frame.symbols.ref(name)
-            self.writeline('context.vars[%r] = %s' % (name, ref))
-        else:
-            self.writeline('context.vars.update({')
-            for idx, name in enumerate(vars):
-                if idx:
-                    self.write(', ')
-                ref = frame.symbols.ref(name)
-                self.write('%r: %s' % (name, ref))
-            self.write('})')
-        if public_names:
-            if len(public_names) == 1:
-                self.writeline('context.exported_vars.add(%r)' %
-                               public_names[0])
-            else:
-                self.writeline('context.exported_vars.update((%s))' %
-                               ', '.join(imap(repr, public_names)))
-
     def visit_Assign(self, node, frame):
         self.push_assign_tracking()
         self.newline(node)
@@ -1273,7 +1314,8 @@ class CodeGenerator(NodeVisitor):
         # instruction indicates a parameter which are always defined.
         if node.ctx == 'load':
             load = frame.symbols.find_load(ref)
-            if load is None or load[0] != VAR_LOAD_PARAMETER:
+            if not (load is not None and load[0] == VAR_LOAD_PARAMETER and \
+                    not self.parameter_is_undeclared(ref)):
                 self.write('(undefined(name=%r) if %s is missing else %s)' %
                            (node.name, ref, ref))
                 return

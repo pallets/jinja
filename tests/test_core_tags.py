@@ -202,7 +202,7 @@ class TestForLoop(object):
 
 @pytest.mark.core_tags
 @pytest.mark.if_condition
-class TestIfCondition():
+class TestIfCondition(object):
 
     def test_simple(self, env):
         tmpl = env.from_string('''{% if true %}...{% endif %}''')
@@ -237,7 +237,7 @@ class TestIfCondition():
 
 @pytest.mark.core_tags
 @pytest.mark.macros
-class TestMacros():
+class TestMacros(object):
     def test_simple(self, env_trim):
         tmpl = env_trim.from_string('''\
 {% macro say_hello(name) %}Hello {{ name }}!{% endmacro %}
@@ -324,10 +324,20 @@ class TestMacros():
                                     '{{ foo(5) }}')
         assert tmpl.render() == '5|4|3|2|1'
 
+    def test_macro_defaults_self_ref(self, env):
+        tmpl = env.from_string('''
+            {%- set x = 42 %}
+            {%- macro m(a, b=x, x=23) %}{{ a }}|{{ b }}|{{ x }}{% endmacro -%}
+        ''')
+        assert tmpl.module.m(1) == '1||23'
+        assert tmpl.module.m(1, 2) == '1|2|23'
+        assert tmpl.module.m(1, 2, 3) == '1|2|3'
+        assert tmpl.module.m(1, x=7) == '1|7|7'
+
 
 @pytest.mark.core_tags
 @pytest.mark.set
-class TestSet():
+class TestSet(object):
 
     def test_normal(self, env_trim):
         tmpl = env_trim.from_string('{% set foo = 1 %}{{ foo }}')
