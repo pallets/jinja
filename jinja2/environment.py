@@ -22,7 +22,6 @@ from jinja2.defaults import BLOCK_START_STRING, \
 from jinja2.lexer import get_lexer, TokenStream
 from jinja2.parser import Parser
 from jinja2.nodes import EvalContext
-from jinja2.optimizer import optimize
 from jinja2.compiler import generate, CodeGenerator
 from jinja2.runtime import Undefined, new_context, Context
 from jinja2.exceptions import TemplateSyntaxError, TemplateNotFound, \
@@ -540,7 +539,8 @@ class Environment(object):
 
         .. versionadded:: 2.5
         """
-        return generate(source, self, name, filename, defer_init=defer_init)
+        return generate(source, self, name, filename, defer_init=defer_init,
+                        optimized=self.optimized)
 
     def _compile(self, source, filename):
         """Internal hook that can be overridden to hook a different compile
@@ -577,8 +577,6 @@ class Environment(object):
             if isinstance(source, string_types):
                 source_hint = source
                 source = self._parse(source, name, filename)
-            if self.optimized:
-                source = optimize(source, self)
             source = self._generate(source, name, filename,
                                     defer_init=defer_init)
             if raw:

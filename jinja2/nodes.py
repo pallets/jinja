@@ -593,7 +593,7 @@ class Filter(Expr):
         if filter_ is None or getattr(filter_, 'contextfilter', False):
             raise Impossible()
         obj = self.node.as_const(eval_ctx)
-        args = [x.as_const(eval_ctx) for x in self.args]
+        args = [obj] + [x.as_const(eval_ctx) for x in self.args]
         if getattr(filter_, 'evalcontextfilter', False):
             args.insert(0, eval_ctx)
         elif getattr(filter_, 'environmentfilter', False):
@@ -610,7 +610,7 @@ class Filter(Expr):
             except Exception:
                 raise Impossible()
         try:
-            return filter_(obj, *args, **kwargs)
+            return filter_(*args, **kwargs)
         except Exception:
             raise Impossible()
 

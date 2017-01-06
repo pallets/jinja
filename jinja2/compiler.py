@@ -11,9 +11,11 @@
 from itertools import chain
 from copy import deepcopy
 from keyword import iskeyword as is_python_keyword
+from functools import update_wrapper
 from jinja2 import nodes
 from jinja2.nodes import EvalContext
 from jinja2.visitor import NodeVisitor
+from jinja2.optimizer import Optimizer
 from jinja2.exceptions import TemplateAssertionError
 from jinja2.utils import Markup, concat, escape
 from jinja2._compat import range_type, text_type, string_types, \
@@ -58,13 +60,25 @@ else:
     supports_yield_from = True
 
 
+def optimizeconst(f):
+    def new_func(self, node, frame, **kwargs):
+        # Only optimize if the frame is not volatile
+        if self.optimized and not frame.eval_ctx.volatile:
+            new_node = self.optimizer.visit(node, frame.eval_ctx)
+            if new_node != node:
+                return self.visit(new_node, frame)
+        return f(self, node, frame, **kwargs)
+    return update_wrapper(new_func, f)
+
+
 def generate(node, environment, name, filename, stream=None,
-             defer_init=False):
+             defer_init=False, optimized=True):
     """Generate the python source for a node tree."""
     if not isinstance(node, nodes.Template):
         raise TypeError('Can\'t compile non template nodes')
     generator = environment.code_generator_class(environment, name, filename,
-                                                 stream, defer_init)
+                                                 stream, defer_init,
+                                                 optimized)
     generator.visit(node)
     if stream is None:
         return generator.stream.getvalue()
@@ -74,15 +88,14 @@ def has_safe_repr(value):
     """Does the node have a safe representation?"""
     if value is None or value is NotImplemented or value is Ellipsis:
         return True
-    if isinstance(value, (bool, int, float, complex, range_type,
-            Markup) + string_types):
+    if type(value) in (bool, int, float, complex, range_type, Markup) + string_types:
         return True
-    if isinstance(value, (tuple, list, set, frozenset)):
+    if type(value) in (tuple, list, set, frozenset):
         for item in value:
             if not has_safe_repr(item):
                 return False
         return True
-    elif isinstance(value, dict):
+    elif type(value) is dict:
         for key, value in iteritems(value):
             if not has_safe_repr(key):
                 return False
@@ -228,7 +241,7 @@ class CompilerExit(Exception):
 class CodeGenerator(NodeVisitor):
 
     def __init__(self, environment, name, filename, stream=None,
-                 defer_init=False):
+                 defer_init=False, optimized=True):
         if stream is None:
             stream = NativeStringIO()
         self.environment = environment
@@ -237,6 +250,9 @@ class CodeGenerator(NodeVisitor):
         self.stream = stream
         self.created_block_context = False
         self.defer_init = defer_init
+        self.optimized = optimized
+        if optimized:
+            self.optimizer = Optimizer(environment)
 
         # aliases for imports
         self.import_aliases = {}
@@ -1365,6 +1381,7 @@ class CodeGenerator(NodeVisitor):
         self.write('}')
 
     def binop(operator, interceptable=True):
+        @optimizeconst
         def visitor(self, node, frame):
             if self.environment.sandboxed and \
                operator in self.environment.intercepted_binops:
@@ -1381,6 +1398,7 @@ class CodeGenerator(NodeVisitor):
         return visitor
 
     def uaop(operator, interceptable=True):
+        @optimizeconst
         def visitor(self, node, frame):
             if self.environment.sandboxed and \
                operator in self.environment.intercepted_unops:
@@ -1406,6 +1424,7 @@ class CodeGenerator(NodeVisitor):
     visit_Not = uaop('not ', interceptable=False)
     del binop, uaop
 
+    @optimizeconst
     def visit_Concat(self, node, frame):
         if frame.eval_ctx.volatile:
             func_name = '(context.eval_ctx.volatile and' \
@@ -1420,6 +1439,7 @@ class CodeGenerator(NodeVisitor):
             self.write(', ')
         self.write('))')
 
+    @optimizeconst
     def visit_Compare(self, node, frame):
         self.visit(node.expr, frame)
         for op in node.ops:
@@ -1429,11 +1449,13 @@ class CodeGenerator(NodeVisitor):
         self.write(' %s ' % operators[node.op])
         self.visit(node.expr, frame)
 
+    @optimizeconst
     def visit_Getattr(self, node, frame):
         self.write('environment.getattr(')
         self.visit(node.node, frame)
         self.write(', %r)' % node.attr)
 
+    @optimizeconst
     def visit_Getitem(self, node, frame):
         # slices bypass the environment getitem method.
         if isinstance(node.arg, nodes.Slice):
@@ -1458,6 +1480,7 @@ class CodeGenerator(NodeVisitor):
             self.write(':')
             self.visit(node.step, frame)
 
+    @optimizeconst
     def visit_Filter(self, node, frame):
         if self.environment.is_async:
             self.write('await auto_await(')
@@ -1489,6 +1512,7 @@ class CodeGenerator(NodeVisitor):
         if self.environment.is_async:
             self.write(')')
 
+    @optimizeconst
     def visit_Test(self, node, frame):
         self.write(self.tests[node.name] + '(')
         if node.name not in self.environment.tests:
@@ -1497,6 +1521,7 @@ class CodeGenerator(NodeVisitor):
         self.signature(node, frame)
         self.write(')')
 
+    @optimizeconst
     def visit_CondExpr(self, node, frame):
         def write_expr2():
             if node.expr2 is not None:
@@ -1513,6 +1538,7 @@ class CodeGenerator(NodeVisitor):
         write_expr2()
         self.write(')')
 
+    @optimizeconst
     def visit_Call(self, node, frame, forward_caller=False):
         if self.environment.is_async:
             self.write('await auto_await(')
@@ -1584,10 +1610,10 @@ class CodeGenerator(NodeVisitor):
 
     def visit_ScopedEvalContextModifier(self, node, frame):
         old_ctx_name = self.temporary_identifier()
-        safed_ctx = frame.eval_ctx.save()
+        saved_ctx = frame.eval_ctx.save()
         self.writeline('%s = context.eval_ctx.save()' % old_ctx_name)
         self.visit_EvalContextModifier(node, frame)
         for child in node.body:
             self.visit(child, frame)
-        frame.eval_ctx.revert(safed_ctx)
+        frame.eval_ctx.revert(saved_ctx)
         self.writeline('context.eval_ctx.revert(%s)' % old_ctx_name)

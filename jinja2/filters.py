@@ -725,7 +725,8 @@ def do_groupby(environment, value, attribute):
        attribute of another attribute.
     """
     expr = make_attrgetter(environment, attribute)
-    return [_GroupTuple(key, list(values)) for key, values in groupby(sorted(value, key=expr), expr)]
+    return [_GroupTuple(key, list(values)) for key, values
+            in groupby(sorted(value, key=expr), expr)]
 
 
 @environmentfilter
