@@ -12,7 +12,7 @@ import pytest
 
 from jinja2 import Environment
 from jinja2.sandbox import SandboxedEnvironment, \
-     ImmutableSandboxedEnvironment, unsafe, has_format
+     ImmutableSandboxedEnvironment, unsafe
 from jinja2 import Markup, escape
 from jinja2.exceptions import SecurityError, TemplateSyntaxError, \
      TemplateRuntimeError
@@ -166,7 +166,6 @@ class TestSandbox(object):
 
 
 @pytest.mark.sandbox
-@pytest.mark.skipif(not has_format, reason='No format support')
 class TestStringFormat(object):
 
     def test_basic_format_safety(self):
