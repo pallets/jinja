@@ -30,6 +30,11 @@ Version 2.9
 - Block sets are now marked `safe` by default.
 - On Python 2 the asciification of ASCII strings can now be disabled with
   the `compiler.ascii_str` policy.
+- Tests now no longer accept an arbitrary expression as first argument but
+  a restricted one.  This means that you can now properly use multiple
+  tests in one expression without extra parentheses.  In particular you can
+  now write ``foo is divisibleby 2 or foo is divisibleby 3``
+  as you would expect.
 
 Version 2.8.2
 -------------

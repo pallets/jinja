@@ -112,3 +112,17 @@ class TestTestsCase(object):
         tmpl = env.from_string('{{ 0 is lessthan 1 }}|'
                                '{{ 1 is lessthan 0 }}')
         assert tmpl.render() == 'True|False'
+
+    def test_multiple_tests(self):
+        items = []
+        def matching(x, y):
+            items.append((x, y))
+            return False
+        env = Environment()
+        env.tests['matching'] = matching
+        tmpl = env.from_string("{{ 'us-west-1' is matching "
+                               "'(us-east-1|ap-northeast-1)' "
+                               "or 'stage' is matching '(dev|stage)' }}")
+        assert tmpl.render() == 'False'
+        assert items == [('us-west-1', '(us-east-1|ap-northeast-1)'),
+                         ('stage', '(dev|stage)')]
