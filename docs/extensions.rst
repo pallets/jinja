@@ -34,7 +34,7 @@ the wrapped string as translatable and calls `gettext`.
 After enabling, dummy `_` function that forwards calls to `gettext` is added
 to the environment globals.  An internationalized application then has to
 provide a `gettext` function and optionally an `ngettext` function into the
-namespace, either globally or for each rendering.
+name-space, either globally or for each rendering.
 
 Environment Methods
 ~~~~~~~~~~~~~~~~~~~
@@ -123,7 +123,7 @@ extraction tools in case you are not using Babel's.
 
 What's the big difference between standard and newstyle gettext calls?  In
 general they are less to type and less error prone.  Also if they are used
-in an autoescaping environment they better support automatic escaping.
+in an auto-escaping environment they better support automatic escaping.
 Here are some common differences between old and new calls:
 
 standard gettext:
@@ -153,8 +153,8 @@ newstyle gettext, all format strings look the same.
 Furthermore with newstyle gettext, string formatting is also used if no
 placeholders are used which makes all strings behave exactly the same.
 Last but not least are newstyle gettext calls able to properly mark
-strings for autoescaping which solves lots of escaping related issues many
-templates are experiencing over time when using autoescaping.
+strings for auto-escaping which solves lots of escaping related issues many
+templates are experiencing over time when using auto-escaping.
 
 Expression Statement
 --------------------
@@ -219,7 +219,7 @@ useful. Another one would be fragment caching.
 
 When writing extensions you have to keep in mind that you are working with the
 Jinja2 template compiler which does not validate the node tree you are passing
-to it.  If the AST is malformed you will get all kinds of compiler or runtime
+to it.  If the AST is malformed you will get all kinds of compiler or run-time
 errors that are horrible to debug.  Always make sure you are using the nodes
 you create correctly.  The API documentation below shows which nodes exist and
 how to use them.
@@ -299,7 +299,7 @@ extensions:
         The current :class:`~jinja2.lexer.TokenStream`
 
 .. autoclass:: jinja2.lexer.TokenStream
-   :members: push, look, eos, skip, next, next_if, skip_if, expect
+   :members: push, look, eos, skip, next_if, skip_if, expect
 
    .. attribute:: current
 

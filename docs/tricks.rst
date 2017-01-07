@@ -1,7 +1,7 @@
 Tips and Tricks
 ===============
 
-.. highlight:: html+jinja
+.. sourcecode:: html+jinja
 
 This part of the documentation shows some tips and tricks for Jinja2
 templates.
