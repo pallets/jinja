@@ -1,6 +1,14 @@
 Jinja2 Changelog
 ================
 
+Version 2.9.1
+-------------
+(bugfix release, released on January 7th 2017)
+
+- Resolved a regression with call block scoping for macros.  Nested caller
+  blocks that used the same identifiers as outer macros could refer to the
+  wrong variable incorrectly.
+
 Version 2.9
 -----------
 (codename Derivation, released on January 7th 2017)

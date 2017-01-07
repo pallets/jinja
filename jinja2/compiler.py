@@ -1129,7 +1129,7 @@ class CodeGenerator(NodeVisitor):
         self.writeline('caller = ')
         self.macro_def(macro_ref, call_frame)
         self.start_write(frame, node)
-        self.visit_Call(node.call, call_frame, forward_caller=True)
+        self.visit_Call(node.call, frame, forward_caller=True)
         self.end_write(frame)
 
     def visit_FilterBlock(self, node, frame):
