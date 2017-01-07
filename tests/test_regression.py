@@ -412,3 +412,13 @@ class TestBug(object):
         assert t.module.link_detail('circle', 'Index', '/') == (
             '<p><span class="fa fa-fw fa-circle">'
             '</span><a href="/">Index</a></p>')
+
+    def test_variable_reuse(self, env):
+        t = env.from_string('{% for x in x.y %}{{ x }}{% endfor %}')
+        assert t.render(x={'y': [0, 1, 2]}) == '012'
+
+        t = env.from_string('{% for x in x.y %}{{ loop.index0 }}|{{ x }}{% endfor %}')
+        assert t.render(x={'y': [0, 1, 2]}) == '0|01|12|2'
+
+        t = env.from_string('{% for x in x.y recursive %}{{ x }}{% endfor %}')
+        assert t.render(x={'y': [0, 1, 2]}) == '012'

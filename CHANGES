@@ -3,6 +3,13 @@ Jinja2 Changelog
 
 Version 2.9.1
 -------------
+(bugfix release, release date undecided)
+
+- Fixed a regression that caused for loops to not be able to use the same
+  variable for the target as well as source iterator.  (#640)
+
+Version 2.9.1
+-------------
 (bugfix release, released on January 7th 2017)
 
 - Resolved a regression with call block scoping for macros.  Nested caller

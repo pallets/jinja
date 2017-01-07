@@ -1034,7 +1034,7 @@ class CodeGenerator(NodeVisitor):
             else:
                 if self.environment.is_async:
                     self.write('auto_aiter(')
-                self.visit(node.iter, loop_frame)
+                self.visit(node.iter, frame)
                 if self.environment.is_async:
                     self.write(')')
             self.write(' if (')
@@ -1046,7 +1046,7 @@ class CodeGenerator(NodeVisitor):
         else:
             if self.environment.is_async and not extended_loop:
                 self.write('auto_aiter(')
-            self.visit(node.iter, loop_frame)
+            self.visit(node.iter, frame)
             if self.environment.is_async and not extended_loop:
                 self.write(')')
 
