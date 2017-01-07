@@ -608,7 +608,7 @@ class CodeGenerator(NodeVisitor):
     def parameter_is_undeclared(self, target):
         """Checks if a given target is an undeclared parameter."""
         if not self._param_def_block:
-            return True
+            return False
         return target in self._param_def_block[-1]
 
     def push_assign_tracking(self):
