@@ -26,14 +26,18 @@ are in use.
 The simplest way to configure Jinja2 to load templates for your application
 looks roughly like this::
 
-    from jinja2 import Environment, PackageLoader
-    env = Environment(loader=PackageLoader('yourapplication', 'templates'))
+    from jinja2 import Environment, PackageLoader, select_autoescape
+    env = Environment(
+        loader=PackageLoader('yourapplication', 'templates'),
+        autoescape=select_autoescape(['html', 'xml'])
+    )
 
 This will create a template environment with the default settings and a
 loader that looks up the templates in the `templates` folder inside the
 `yourapplication` python package.  Different loaders are available
 and you can also write your own if you want to load templates from a
-database or other resources.
+database or other resources.  This also enables autoescaping for HTML and
+XML files.
 
 To load a template from this environment you just have to call the
 :meth:`get_template` method which then returns the loaded :class:`Template`::
@@ -47,6 +51,12 @@ To render it with some variables, just call the :meth:`render` method::
 Using a template loader rather than passing strings to :class:`Template`
 or :meth:`Environment.from_string` has multiple advantages.  Besides being
 a lot easier to use it also enables template inheritance.
+
+.. admonition:: Notes on Autoescaping
+
+   In future versions of Jinja2 we might enable autoescaping by default
+   for security reasons.  As such you are encouraged to explicitly
+   configure autoescaping now instead of relying on the default.
 
 
 Unicode
@@ -251,27 +261,34 @@ Autoescaping
 
 Jinja2 now comes with autoescaping support.  As of Jinja 2.9 the
 autoescape extension is removed and built-in.  However autoescaping is
-not yet enabled by default though this might change in the future.
-It's recommended to configure a sensible default for autoescaping.  This
-makes it possible to enable and disable autoescaping on a per-template
-basis (HTML versus text for instance).
+not yet enabled by default though this will most likely change in the
+future.  It's recommended to configure a sensible default for
+autoescaping.  This makes it possible to enable and disable autoescaping
+on a per-template basis (HTML versus text for instance).
+
+.. autofunction:: jinja2.select_autoescape
 
 Here a recommended setup that enables autoescaping for templates ending
 in ``'.html'``, ``'.htm'`` and ``'.xml'`` and disabling it by default
-for all other extensions::
+for all other extensions.  You can use the :func:`~jinja2.select_autoescape`
+function for this::
 
-    def guess_autoescape(template_name):
-        if template_name is None or '.' not in template_name:
-            return False
-        ext = template_name.rsplit('.', 1)[1]
-        return ext in ('html', 'htm', 'xml')
-
-    env = Environment(autoescape=guess_autoescape,
+    from jinja2 import Environment, select_autoescape
+    env = Environment(autoescape=select_autoescape(['html', 'htm', 'xml']),
                       loader=PackageLoader('mypackage'))
+
+The :func:`~jinja.select_autoescape` function returns a function that
+works rougly like this::
+
+    def autoescape(template_name):
+        if template_name is None:
+            return False
+        if template_name.endswith(('.html', '.htm', '.xml'))
 
 When implementing a guessing autoescape function, make sure you also
 accept `None` as valid template name.  This will be passed when generating
-templates from strings.
+templates from strings.  You should always configure autoescaping as
+defaults in the future might change.
 
 Inside the templates the behaviour can be temporarily changed by using
 the `autoescape` block (see :ref:`autoescape-overrides`).

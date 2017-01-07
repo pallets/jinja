@@ -71,6 +71,8 @@ class TestHelpers(object):
         assert func('foo.html') == True
         assert func('foo.htm') == True
         assert func('foo.txt') == False
+        assert func('FOO.HTML') == True
+        assert func('FOO.TXT') == False
 
 
 @pytest.mark.utils

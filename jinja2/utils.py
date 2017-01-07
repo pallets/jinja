@@ -522,13 +522,18 @@ def select_autoescape(enabled_extensions=('html', 'htm', 'xml'),
     If nothing matches then the initial value of autoescaping is set to the
     value of `default`.
 
+    For security reasons this function operates case insensitive.
+
     .. versionadded:: 2.9
     """
-    enabled_patterns = tuple('.' + x.lstrip('.') for x in enabled_extensions)
-    disabled_patterns = tuple('.' + x.lstrip('.') for x in disabled_extensions)
+    enabled_patterns = tuple('.' + x.lstrip('.').lower()
+                             for x in enabled_extensions)
+    disabled_patterns = tuple('.' + x.lstrip('.').lower()
+                              for x in disabled_extensions)
     def autoescape(template_name):
         if template_name is None:
             return default_for_string
+        template_name = template_name.lower()
         if template_name.endswith(enabled_patterns):
             return True
         if template_name.endswith(disabled_patterns):
