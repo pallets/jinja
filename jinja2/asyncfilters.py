@@ -47,6 +47,8 @@ def dualfilter(normal_filter, async_filter):
     if wrap_evalctx:
         wrapper.evalcontextfilter = True
 
+    wrapper.asyncfiltervariant = True
+
     return wrapper
 
 

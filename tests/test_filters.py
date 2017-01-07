@@ -581,7 +581,7 @@ class TestFilter(object):
         env = Environment(autoescape=True)
         t = env.from_string('{{ x|tojson }}')
         assert t.render(x={'foo': 'bar'}) == '{&#34;foo&#34;: &#34;bar&#34;}'
-        assert t.render(x='"bar\'') == '&#34;\&#34;bar\u0027&#34;'
+        assert t.render(x='"bar\'') == r'&#34;\&#34;bar\u0027&#34;'
 
         def my_dumps(value, **options):
             assert options == {'foo': 'bar'}

@@ -592,6 +592,13 @@ class Filter(Expr):
         filter_ = self.environment.filters.get(self.name)
         if filter_ is None or getattr(filter_, 'contextfilter', False):
             raise Impossible()
+
+        # We cannot constant handle async filters, so we need to make sure
+        # to not go down this path.
+        if eval_ctx.environment.is_async and \
+           getattr(filter_, 'asyncfiltervariant', False):
+            raise Impossible()
+
         obj = self.node.as_const(eval_ctx)
         args = [obj] + [x.as_const(eval_ctx) for x in self.args]
         if getattr(filter_, 'evalcontextfilter', False):
