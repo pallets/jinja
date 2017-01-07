@@ -352,3 +352,38 @@ class TestBug(object):
         ''')
         assert list(map(int, tmpl.render().split())) == \
             [3, 2, 1, 5, 4, 3, 7, 6, 5]
+
+    def test_scopes_and_blocks(self):
+        env = Environment(loader=DictLoader({
+            'a.html': '''
+                {%- set foo = 'bar' -%}
+                {% include 'x.html' -%}
+            ''',
+            'b.html': '''
+                {%- set foo = 'bar' -%}
+                {% block test %}{% include 'x.html' %}{% endblock -%}
+                ''',
+            'c.html': '''
+                {%- set foo = 'bar' -%}
+                {% block test %}{% set foo = foo
+                    %}{% include 'x.html' %}{% endblock -%}
+            ''',
+            'x.html': '''{{ foo }}|{{ test }}'''
+        }))
+
+        a = env.get_template('a.html')
+        b = env.get_template('b.html')
+        c = env.get_template('c.html')
+
+        assert a.render(test='x').strip() == 'bar|x'
+        assert b.render(test='x').strip() == 'bar|x'
+        assert c.render(test='x').strip() == 'bar|x'
+
+    def test_scopes_and_include(self):
+        env = Environment(loader=DictLoader({
+            'include.html': '{{ var }}',
+            'base.html': '{% include "include.html" %}',
+            'child.html': '{% extends "base.html" %}{% set var = 42 %}',
+        }))
+        t = env.get_template('child.html')
+        assert t.render() == '42'

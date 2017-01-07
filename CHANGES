@@ -35,6 +35,11 @@ Version 2.9
   tests in one expression without extra parentheses.  In particular you can
   now write ``foo is divisibleby 2 or foo is divisibleby 3``
   as you would expect.
+- Greatly changed the scoping system to be more consistent with what template
+  designers and developers expect.  There is now no more magic difference
+  between the different include and import constructs.  Context is now always
+  propagated the same way.  The only remaining differences is the defaults
+  for `with context` and `without context`.
 
 Version 2.8.2
 -------------

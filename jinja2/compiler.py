@@ -866,7 +866,7 @@ class CodeGenerator(NodeVisitor):
         if node.with_context:
             loop = self.environment.is_async and 'async for' or 'for'
             self.writeline('%s event in template.root_render_func('
-                           'template.new_context(context.parent, True, '
+                           'template.new_context(context.get_all(), True, '
                            '%s)):' % (loop, self.dump_local_context(frame)))
         elif self.environment.is_async:
             self.writeline('for event in (await '
@@ -900,7 +900,7 @@ class CodeGenerator(NodeVisitor):
         self.visit(node.template, frame)
         self.write(', %r).' % self.name)
         if node.with_context:
-            self.write('make_module%s(context.parent, True, %s)'
+            self.write('make_module%s(context.get_all(), True, %s)'
                        % (self.environment.is_async and '_async' or '',
                           self.dump_local_context(frame)))
         elif self.environment.is_async:
@@ -918,7 +918,7 @@ class CodeGenerator(NodeVisitor):
         self.visit(node.template, frame)
         self.write(', %r).' % self.name)
         if node.with_context:
-            self.write('make_module%s(context.parent, True, %s)'
+            self.write('make_module%s(context.get_all(), True, %s)'
                        % (self.environment.is_async and '_async' or '',
                           self.dump_local_context(frame)))
         elif self.environment.is_async:

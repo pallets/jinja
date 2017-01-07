@@ -170,9 +170,14 @@ class Context(object):
         return dict((k, self.vars[k]) for k in self.exported_vars)
 
     def get_all(self):
-        """Return a copy of the complete context as dict including the
-        exported variables.
+        """Return the complete context as dict including the exported
+        variables.  For optimizations reasons this might not return an
+        actual copy so be careful with using it.
         """
+        if not self.vars:
+            return self.parent
+        if not self.parent:
+            return self.vars
         return dict(self.parent, **self.vars)
 
     @internalcode
