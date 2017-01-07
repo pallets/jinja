@@ -41,6 +41,8 @@ Version 2.9
   propagated the same way.  The only remaining differences is the defaults
   for `with context` and `without context`.
 - The `with` and `autoescape` tags are now built-in.
+- Added the new `select_autoescape` function which helps configuring better
+  autoescaping easier.
 
 Version 2.8.2
 -------------

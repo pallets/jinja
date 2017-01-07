@@ -55,7 +55,7 @@ from jinja2.filters import environmentfilter, contextfilter, \
      evalcontextfilter
 from jinja2.utils import Markup, escape, clear_caches, \
      environmentfunction, evalcontextfunction, contextfunction, \
-     is_undefined
+     is_undefined, select_autoescape
 
 __all__ = [
     'Environment', 'Template', 'BaseLoader', 'FileSystemLoader',
@@ -67,6 +67,7 @@ __all__ = [
     'ModuleLoader', 'environmentfilter', 'contextfilter', 'Markup', 'escape',
     'environmentfunction', 'contextfunction', 'clear_caches', 'is_undefined',
     'evalcontextfilter', 'evalcontextfunction', 'make_logging_undefined',
+    'select_autoescape',
 ]
 
 
