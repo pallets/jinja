@@ -387,3 +387,28 @@ class TestBug(object):
         }))
         t = env.get_template('child.html')
         assert t.render() == '42'
+
+    def test_caller_scoping(self, env):
+        t = env.from_string('''
+        {% macro detail(icon, value) -%}
+          {% if value -%}
+            <p><span class="fa fa-fw fa-{{ icon }}"></span>
+                {%- if caller is undefined -%}
+                    {{ value }}
+                {%- else -%}
+                    {{ caller(value, *varargs) }}
+                {%- endif -%}</p>
+          {%- endif %}
+        {%- endmacro %}
+
+
+        {% macro link_detail(icon, value, href) -%}
+          {% call(value, href) detail(icon, value, href) -%}
+            <a href="{{ href }}">{{ value }}</a>
+          {%- endcall %}
+        {%- endmacro %}
+        ''')
+
+        assert t.module.link_detail('circle', 'Index', '/') == (
+            '<p><span class="fa fa-fw fa-circle">'
+            '</span><a href="/">Index</a></p>')
