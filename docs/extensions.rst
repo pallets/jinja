@@ -183,12 +183,9 @@ With Statement
 
 **Import name:** `jinja2.ext.with_`
 
-.. versionadded:: 2.3
+.. versionchanged:: 2.9
 
-This extension adds support for the with keyword.  Using this keyword it
-is possible to enforce a nested scope in a template.  Variables can be
-declared directly in the opening block of the with statement or using a
-standard `set` statement directly within.
+This extension is now built-in and no longer does anything.
 
 .. _autoescape-extension:
 
@@ -197,12 +194,10 @@ Autoescape Extension
 
 **Import name:** `jinja2.ext.autoescape`
 
-.. versionadded:: 2.4
+.. versionchanged:: 2.9
 
-The autoescape extension allows you to toggle the autoescape feature from
-within the template.  If the environment's :attr:`~Environment.autoescape`
-setting is set to `False` it can be activated, if it's `True` it can be
-deactivated.  The setting overriding is scoped.
+This extension was removed and is now built-in.  Enabling the extension
+no longer does anything.
 
 
 .. _writing-extensions:

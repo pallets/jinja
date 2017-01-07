@@ -411,38 +411,11 @@ class LoopControlExtension(Extension):
 
 
 class WithExtension(Extension):
-    """Adds support for a django-like with block."""
-    tags = set(['with'])
-
-    def parse(self, parser):
-        node = nodes.Scope(lineno=next(parser.stream).lineno)
-        assignments = []
-        while parser.stream.current.type != 'block_end':
-            lineno = parser.stream.current.lineno
-            if assignments:
-                parser.stream.expect('comma')
-            target = parser.parse_assign_target()
-            parser.stream.expect('assign')
-            expr = parser.parse_expression()
-            assignments.append(nodes.Assign(target, expr, lineno=lineno))
-        node.body = assignments + \
-            list(parser.parse_statements(('name:endwith',),
-                                         drop_needle=True))
-        return node
+    pass
 
 
 class AutoEscapeExtension(Extension):
-    """Changes auto escape rules for a scope."""
-    tags = set(['autoescape'])
-
-    def parse(self, parser):
-        node = nodes.ScopedEvalContextModifier(lineno=next(parser.stream).lineno)
-        node.options = [
-            nodes.Keyword('autoescape', parser.parse_expression())
-        ]
-        node.body = parser.parse_statements(('name:endautoescape',),
-                                            drop_needle=True)
-        return nodes.Scope([node])
+    pass
 
 
 def extract_from_ast(node, gettext_functions=GETTEXT_FUNCTIONS,

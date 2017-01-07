@@ -40,6 +40,7 @@ Version 2.9
   between the different include and import constructs.  Context is now always
   propagated the same way.  The only remaining differences is the defaults
   for `with context` and `without context`.
+- The `with` and `autoescape` tags are now built-in.
 
 Version 2.8.2
 -------------

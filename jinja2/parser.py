@@ -16,7 +16,7 @@ from jinja2._compat import imap
 
 _statement_keywords = frozenset(['for', 'if', 'block', 'extends', 'print',
                                  'macro', 'include', 'from', 'import',
-                                 'set'])
+                                 'set', 'with', 'autoescape'])
 _compare_operators = frozenset(['eq', 'ne', 'lt', 'lteq', 'gt', 'gteq'])
 
 _math_nodes = {
@@ -223,6 +223,31 @@ class Parser(object):
                 node.else_ = []
             break
         return result
+
+    def parse_with(self):
+        node = nodes.Scope(lineno=next(self.stream).lineno)
+        assignments = []
+        while self.stream.current.type != 'block_end':
+            lineno = self.stream.current.lineno
+            if assignments:
+                self.stream.expect('comma')
+            target = self.parse_assign_target()
+            self.stream.expect('assign')
+            expr = self.parse_expression()
+            assignments.append(nodes.Assign(target, expr, lineno=lineno))
+        node.body = assignments + \
+            list(self.parse_statements(('name:endwith',),
+                                         drop_needle=True))
+        return node
+
+    def parse_autoescape(self):
+        node = nodes.ScopedEvalContextModifier(lineno=next(self.stream).lineno)
+        node.options = [
+            nodes.Keyword('autoescape', self.parse_expression())
+        ]
+        node.body = self.parse_statements(('name:endautoescape',),
+                                            drop_needle=True)
+        return nodes.Scope([node])
 
     def parse_block(self):
         node = nodes.Block(lineno=next(self.stream).lineno)

@@ -247,12 +247,14 @@ useful if you want to dig deeper into Jinja2 or :ref:`develop extensions
 Autoescaping
 ------------
 
-.. versionadded:: 2.4
+.. versionchanged:: 2.4
 
-As of Jinja 2.4 the preferred way to do autoescaping is to enable the
-:ref:`autoescape-extension` and to configure a sensible default for
-autoescaping.  This makes it possible to enable and disable autoescaping
-on a per-template basis (HTML versus text for instance).
+Jinja2 now comes with autoescaping support.  As of Jinja 2.9 the
+autoescape extension is removed and built-in.  However autoescaping is
+not yet enabled by default though this might change in the future.
+It's recommended to configure a sensible default for autoescaping.  This
+makes it possible to enable and disable autoescaping on a per-template
+basis (HTML versus text for instance).
 
 Here a recommended setup that enables autoescaping for templates ending
 in ``'.html'``, ``'.htm'`` and ``'.xml'`` and disabling it by default
@@ -265,8 +267,7 @@ for all other extensions::
         return ext in ('html', 'htm', 'xml')
 
     env = Environment(autoescape=guess_autoescape,
-                      loader=PackageLoader('mypackage'),
-                      extensions=['jinja2.ext.autoescape'])
+                      loader=PackageLoader('mypackage'))
 
 When implementing a guessing autoescape function, make sure you also
 accept `None` as valid template name.  This will be passed when generating
