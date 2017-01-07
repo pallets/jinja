@@ -7,7 +7,7 @@
     tags work.  By default two example extensions exist: an i18n and a cache
     extension.
 
-    :copyright: (c) 2010 by the Jinja Team.
+    :copyright: (c) 2017 by the Jinja Team.
     :license: BSD.
 """
 from jinja2 import nodes
