@@ -556,6 +556,16 @@ Example::
 
     env.policies['urlize.rel'] = 'nofollow noopener'
 
+``compiler.ascii_str``:
+    This boolean controls on Python 2 if Jinja2 should store ASCII only
+    literals as bytestring instead of unicode strings.  This used to be
+    always enabled for Jinja versions below 2.9 and now can be changed.
+    Traditionally it was done this way since some APIs in Python 2 failed
+    badly for unicode strings (for instance the datetime strftime API).
+    Now however sometimes the inverse is true (for instance str.format).
+    If this is set to False then all strings are stored as unicode
+    internally.
+
 ``urlize.rel``:
     A string that defines the items for the `rel` attribute of generated
     links with the `urlize` filter.  These items are always added.  The

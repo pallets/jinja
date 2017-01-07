@@ -28,6 +28,8 @@ Version 2.9
 - Ported a modified version of the `tojson` filter from Flask to Jinja2
   and hooked it up with the new policy framework.
 - Block sets are now marked `safe` by default.
+- On Python 2 the asciification of ASCII strings can now be disabled with
+  the `compiler.ascii_str` policy.
 
 Version 2.8.2
 -------------

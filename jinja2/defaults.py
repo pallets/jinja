@@ -41,6 +41,7 @@ DEFAULT_NAMESPACE = {
 
 # default policies
 DEFAULT_POLICIES = {
+    'compiler.ascii_str':   True,
     'urlize.rel':           'noopener',
     'urlize.target':        None,
     'json.dumps_function':  None,

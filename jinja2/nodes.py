@@ -17,7 +17,7 @@ import operator
 
 from collections import deque
 from jinja2.utils import Markup
-from jinja2._compat import izip, with_metaclass, text_type
+from jinja2._compat import izip, with_metaclass, text_type, PY2
 
 
 #: the types we support for context functions
@@ -470,7 +470,14 @@ class Const(Literal):
     fields = ('value',)
 
     def as_const(self, eval_ctx=None):
-        return self.value
+        rv = self.value
+        if PY2 and type(rv) is text_type and \
+           self.environment.policies['compiler.ascii_str']:
+            try:
+                rv = rv.encode('ascii')
+            except UnicodeError:
+                pass
+        return rv
 
     @classmethod
     def from_untrusted(cls, value, lineno=None, environment=None):

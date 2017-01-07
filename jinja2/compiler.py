@@ -1340,7 +1340,7 @@ class CodeGenerator(NodeVisitor):
         self.write(ref)
 
     def visit_Const(self, node, frame):
-        val = node.value
+        val = node.as_const(frame.eval_ctx)
         if isinstance(val, float):
             self.write(str(val))
         else:
