@@ -415,6 +415,7 @@ class Macro(object):
         self.catch_kwargs = catch_kwargs
         self.catch_varargs = catch_varargs
         self.caller = caller
+        self.explicit_caller = 'caller' in arguments
         if default_autoescape is None:
             default_autoescape = environment.autoescape
         self._default_autoescape = default_autoescape
@@ -449,6 +450,10 @@ class Macro(object):
         arguments = list(args[:self._argument_count])
         off = len(arguments)
 
+        # For information why this is necessary refer to the handling
+        # of caller in the `macro_body` handler in the compiler.
+        found_caller = False
+
         # if the number of arguments consumed is not the number of
         # arguments expected we start filling in keyword arguments
         # and defaults.
@@ -458,20 +463,29 @@ class Macro(object):
                     value = kwargs.pop(name)
                 except KeyError:
                     value = missing
+                if name == 'caller':
+                    found_caller = True
                 arguments.append(value)
+        else:
+            found_caller = self.explicit_caller
 
         # it's important that the order of these arguments does not change
         # if not also changed in the compiler's `function_scoping` method.
         # the order is caller, keyword arguments, positional arguments!
-        if self.caller:
+        if self.caller and not found_caller:
             caller = kwargs.pop('caller', None)
             if caller is None:
                 caller = self._environment.undefined('No caller defined',
                                                      name='caller')
             arguments.append(caller)
+
         if self.catch_kwargs:
             arguments.append(kwargs)
         elif kwargs:
+            if 'caller' in kwargs:
+                raise TypeError('macro %r was invoked with two values for '
+                                'the special caller argument.  This is '
+                                'most likely a bug.' % self.name)
             raise TypeError('macro %r takes no keyword argument %r' %
                             (self.name, next(iter(kwargs))))
         if self.catch_varargs:
