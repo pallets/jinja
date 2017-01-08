@@ -1,12 +1,18 @@
 Jinja2 Changelog
 ================
 
-Version 2.9.1
+Version 2.9.2
 -------------
 (bugfix release, release date undecided)
 
 - Fixed a regression that caused for loops to not be able to use the same
   variable for the target as well as source iterator.  (#640)
+- Add support for a previously unknown behavior of macros.  It used to be
+  possible in some circumstances to explicitly provide a caller argument
+  to macros.  While badly buggy and unintended it turns out that this is a
+  common case that gets copy pasted around.  To not completely break backwards
+  compatibility with the most common cases it's now possible to provide an
+  explicit keyword argument for caller if it's given an explicit default.
 
 Version 2.9.1
 -------------

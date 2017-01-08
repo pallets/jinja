@@ -503,18 +503,39 @@ class CodeGenerator(NodeVisitor):
         frame.symbols.analyze_node(node)
         macro_ref = MacroRef(node)
 
+        explicit_caller = None
+        skip_special_params = set()
         args = []
-        for arg in node.args:
+        for idx, arg in enumerate(node.args):
+            if arg.name == 'caller':
+                explicit_caller = idx
+            if arg.name in ('kwargs', 'varargs'):
+                skip_special_params.add(arg.name)
             args.append(frame.symbols.ref(arg.name))
 
         undeclared = find_undeclared(node.body, ('caller', 'kwargs', 'varargs'))
+
         if 'caller' in undeclared:
-            args.append(frame.symbols.declare_parameter('caller'))
+            # In older Jinja2 versions there was a bug that allowed caller
+            # to retain the special behavior even if it was mentioned in
+            # the argument list.  However thankfully this was only really
+            # working if it was the last argument.  So we are explicitly
+            # checking this now and error out if it is anywhere else in
+            # the argument list.
+            if explicit_caller is not None:
+                try:
+                    node.defaults[explicit_caller - len(node.args)]
+                except IndexError:
+                    self.fail('When defining macros or call blocks the '
+                              'special "caller" argument must be omitted '
+                              'or be given a default.', node.lineno)
+            else:
+                args.append(frame.symbols.declare_parameter('caller'))
             macro_ref.accesses_caller = True
-        if 'kwargs' in undeclared:
+        if 'kwargs' in undeclared and not 'kwargs' in skip_special_params:
             args.append(frame.symbols.declare_parameter('kwargs'))
             macro_ref.accesses_kwargs = True
-        if 'varargs' in undeclared:
+        if 'varargs' in undeclared and not 'varargs' in skip_special_params:
             args.append(frame.symbols.declare_parameter('varargs'))
             macro_ref.accesses_varargs = True
 

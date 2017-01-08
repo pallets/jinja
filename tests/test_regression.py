@@ -12,7 +12,7 @@ import sys
 import pytest
 
 from jinja2 import Template, Environment, DictLoader, TemplateSyntaxError, \
-     TemplateNotFound, PrefixLoader
+     TemplateAssertionError, TemplateNotFound, PrefixLoader
 from jinja2._compat import text_type
 
 
@@ -422,3 +422,23 @@ class TestBug(object):
 
         t = env.from_string('{% for x in x.y recursive %}{{ x }}{% endfor %}')
         assert t.render(x={'y': [0, 1, 2]}) == '012'
+
+    def test_double_caller(self, env):
+        t = env.from_string('{% macro x(caller=none) %}[{% if caller %}'
+                            '{{ caller() }}{% endif %}]{% endmacro %}'
+                            '{{ x() }}{% call x() %}aha!{% endcall %}')
+        assert t.render() == '[][aha!]'
+
+    def test_double_caller_no_default(self, env):
+        with pytest.raises(TemplateAssertionError) as exc_info:
+            env.from_string('{% macro x(caller) %}[{% if caller %}'
+                            '{{ caller() }}{% endif %}]{% endmacro %}')
+        assert exc_info.match(r'"caller" argument must be omitted or '
+                              r'be given a default')
+
+        t = env.from_string('{% macro x(caller=none) %}[{% if caller %}'
+                            '{{ caller() }}{% endif %}]{% endmacro %}')
+        with pytest.raises(TypeError) as exc_info:
+            t.module.x(None, caller=lambda: 42)
+        assert exc_info.match(r'\'x\' was invoked with two values for the '
+                              r'special caller argument')
