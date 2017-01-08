@@ -73,10 +73,22 @@ class Symbols(object):
         return rv
 
     def store(self, name):
-        # We already have that name locally, so we can just bail
-        if name not in self.refs:
-            self._define_ref(name, load=(VAR_LOAD_UNDEFINED, None))
         self.stores.add(name)
+
+        # If we have not see the name referenced yet, we need to figure
+        # out what to set it to.
+        if name not in self.refs:
+            # If there is a parent scope we check if the name has a
+            # reference there.  If it does it means we might have to alias
+            # to a variable there.
+            if self.parent is not None:
+                outer_ref = self.parent.find_ref(name)
+                if outer_ref is not None:
+                    self._define_ref(name, load=(VAR_LOAD_ALIAS, outer_ref))
+                    return
+
+            # Otherwise we can just set it to undefined.
+            self._define_ref(name, load=(VAR_LOAD_UNDEFINED, None))
 
     def declare_parameter(self, name):
         self.stores.add(name)
