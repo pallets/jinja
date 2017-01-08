@@ -1,6 +1,19 @@
 Jinja2 Changelog
 ================
 
+Version 2.9.3
+-------------
+(bugfix release, release date to be decided)
+
+- Restored the use of blocks in macros to the extend that was possible
+  before.  On Python 3 it would render a generator repr instead of
+  the block contents. (#645)
+- Set a consistent behavior for assigning of variables in inner scopes
+  when the variable is also read from an outer scope.  This now sets the
+  intended behavior in all situations however it does not restore the
+  old behavior where limited assignments to outer scopes was possible.
+  For more information and a discussion see #641
+
 Version 2.9.2
 -------------
 (bugfix release, released on January 8th 2017)
@@ -14,9 +27,6 @@ Version 2.9.2
   compatibility with the most common cases it's now possible to provide an
   explicit keyword argument for caller if it's given an explicit default.
   (#642)
-- Restored the use of blocks in macros to the extend that was possible
-  before.  On Python 3 it would render a generator repr instead of
-  the block contents. (#645)
 
 Version 2.9.1
 -------------
