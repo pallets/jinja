@@ -473,3 +473,26 @@ class TestAutoEscape(object):
                           autoescape=True)
         pysource = env.compile(tmplsource, raw=True)
         assert '&lt;testing&gt;\\n' in pysource
+
+    def test_overlay_scopes(self):
+        class MagicScopeExtension(Extension):
+            tags = set(['overlay'])
+            def parse(self, parser):
+                node = nodes.OverlayScope(lineno=next(parser.stream).lineno)
+                node.body = list(parser.parse_statements(('name:endoverlay',),
+                                                         drop_needle=True))
+                node.context = self.call_method('get_scope')
+                return node
+            def get_scope(self):
+                return {'x': [1, 2, 3]}
+
+        env = Environment(extensions=[MagicScopeExtension])
+
+        tmpl = env.from_string('''
+            {{- x }}|{% set z = 99 %}
+            {%- overlay %}
+                {{- y }}|{{ z }}|{% for item in x %}[{{ item }}]{% endfor %}
+            {%- endoverlay %}|
+            {{- x -}}
+        ''')
+        assert tmpl.render(x=42, y=23) == '42|23|99|[1][2][3]|42'

@@ -1,6 +1,14 @@
 Jinja2 Changelog
 ================
 
+Version 2.10
+------------
+(feature release, release date to be decided)
+
+- Added a new extension node called `OverlayScope` which can be used to
+  create an unoptimized scope that will look up all variables from a
+  derived context.
+
 Version 2.9.3
 -------------
 (bugfix release, release date to be decided)

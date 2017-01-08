@@ -130,9 +130,10 @@ class MacroRef(object):
 class Frame(object):
     """Holds compile time information for us."""
 
-    def __init__(self, eval_ctx, parent=None):
+    def __init__(self, eval_ctx, parent=None, level=None):
         self.eval_ctx = eval_ctx
-        self.symbols = Symbols(parent and parent.symbols or None)
+        self.symbols = Symbols(parent and parent.symbols or None,
+                               level=level)
 
         # a toplevel frame is the root + soft frames such as if conditions.
         self.toplevel = False
@@ -168,8 +169,10 @@ class Frame(object):
         rv.symbols = self.symbols.copy()
         return rv
 
-    def inner(self):
+    def inner(self, isolated=False):
         """Return an inner frame."""
+        if isolated:
+            return Frame(self.eval_ctx, level=self.symbols.level + 1)
         return Frame(self.eval_ctx, self)
 
     def soft(self):
@@ -1653,7 +1656,7 @@ class CodeGenerator(NodeVisitor):
         self.visit(node.context, frame)
         self.push_context_reference(ctx)
 
-        scope_frame = Frame(frame.eval_ctx)
+        scope_frame = frame.inner(isolated=True)
         scope_frame.symbols.analyze_node(node)
         self.enter_frame(scope_frame)
         self.blockvisit(node.body, scope_frame)

@@ -24,11 +24,13 @@ def symbols_for_node(node, parent_symbols=None):
 
 class Symbols(object):
 
-    def __init__(self, parent=None):
-        if parent is None:
-            self.level = 0
-        else:
-            self.level = parent.level + 1
+    def __init__(self, parent=None, level=None):
+        if level is None:
+            if parent is None:
+                level = 0
+            else:
+                level = parent.level + 1
+        self.level = level
         self.parent = parent
         self.refs = {}
         self.loads = {}
