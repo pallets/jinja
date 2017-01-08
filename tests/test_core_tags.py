@@ -369,8 +369,7 @@ class TestSet(object):
 @pytest.mark.with_
 class TestWith(object):
 
-    def test_with(self):
-        env = Environment(extensions=['jinja2.ext.with_'])
+    def test_with(self, env):
         tmpl = env.from_string('''\
         {% with a=42, b=23 -%}
             {{ a }} = {{ b }}
