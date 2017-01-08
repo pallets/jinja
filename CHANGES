@@ -1,6 +1,12 @@
 Jinja2 Changelog
 ================
 
+Version 2.9.4
+-------------
+(unreleased bugfix release)
+
+- Solved some warnings for string literals.  (#646)
+
 Version 2.9.3
 -------------
 (bugfix release, released on January 8th 2017)
