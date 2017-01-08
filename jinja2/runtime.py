@@ -214,10 +214,12 @@ class Context(object):
                                                 'StopIteration exception')
 
     def derived(self, locals=None):
-        """Internal helper function to create a derived context."""
+        """Internal helper function to create a derived context.  This is
+        used in situations where the system needs a new context in the same
+        template that is independent.
+        """
         context = new_context(self.environment, self.name, {},
-                              self.parent, True, None, locals)
-        context.vars.update(self.vars)
+                              self.get_all(), True, None, locals)
         context.eval_ctx = self.eval_ctx
         context.blocks.update((k, list(v)) for k, v in iteritems(self.blocks))
         return context

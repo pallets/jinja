@@ -447,3 +447,8 @@ class TestBug(object):
         t = env.from_string('{% macro x() %}{% block foo %}x{% '
                             'endblock %}{% endmacro %}{{ x() }}')
         assert t.render() == 'x'
+
+    def test_scoped_block(self, env):
+        t = env.from_string('{% set x = 1 %}{% with x = 2 %}{% block y scoped %}'
+                            '{{ x }}{% endblock %}{% endwith %}')
+        assert t.render() == '2'
