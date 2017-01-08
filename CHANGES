@@ -3,7 +3,7 @@ Jinja2 Changelog
 
 Version 2.9.2
 -------------
-(bugfix release, release date undecided)
+(bugfix release, released on January 8th 2017)
 
 - Fixed a regression that caused for loops to not be able to use the same
   variable for the target as well as source iterator.  (#640)
