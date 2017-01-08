@@ -195,17 +195,6 @@ class TestExtensions(object):
             {%- endfor %}{{ items|join(', ') }}''')
         assert tmpl.render() == '0f, 1o, 2o'
 
-    def test_with(self):
-        env = Environment(extensions=['jinja2.ext.with_'])
-        tmpl = env.from_string('''\
-        {% with a=42, b=23 -%}
-            {{ a }} = {{ b }}
-        {% endwith -%}
-            {{ a }} = {{ b }}\
-        ''')
-        assert [x.strip() for x in tmpl.render(a=1, b=2).splitlines()] \
-            == ['42 = 23', '1 = 2']
-
     def test_extension_nodes(self):
         env = Environment(extensions=[ExampleExtension])
         tmpl = env.from_string('{% test %}')
