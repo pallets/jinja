@@ -11,7 +11,7 @@ Version 2.10
 
 Version 2.9.3
 -------------
-(bugfix release, release date to be decided)
+(bugfix release, released on January 8th 2017)
 
 - Restored the use of blocks in macros to the extend that was possible
   before.  On Python 3 it would render a generator repr instead of
