@@ -24,7 +24,7 @@ from jinja2._compat import imap, text_type, iteritems, \
 __all__ = ['LoopContext', 'TemplateReference', 'Macro', 'Markup',
            'TemplateRuntimeError', 'missing', 'concat', 'escape',
            'markup_join', 'unicode_join', 'to_string', 'identity',
-           'TemplateNotFound']
+           'make_overlay_resolve', 'TemplateNotFound']
 
 #: the name of the function that is used to convert something into
 #: a string.  We can just use the text type here.

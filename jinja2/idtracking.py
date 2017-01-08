@@ -167,6 +167,10 @@ class RootVisitor(NodeVisitor):
         for child in node.iter_child_nodes(exclude=('call',)):
             self.sym_visitor.visit(child)
 
+    def visit_OverlayScope(self, node, **kwargs):
+        for child in node.body:
+            self.sym_visitor.visit(child)
+
     def visit_For(self, node, for_branch='body', **kwargs):
         if node.test is not None:
             self.sym_visitor.visit(node.test)
@@ -258,3 +262,6 @@ class FrameSymbolVisitor(NodeVisitor):
 
     def visit_Block(self, node, **kwargs):
         """Stop visiting at blocks."""
+
+    def visit_OverlayScope(self, node, **kwargs):
+        """Do not visit into overlay scopes."""

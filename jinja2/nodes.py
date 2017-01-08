@@ -905,6 +905,14 @@ class Scope(Stmt):
     fields = ('body',)
 
 
+class OverlayScope(Stmt):
+    """An overlay scope for extensions.  This is a largely unoptimized scope
+    that however can be used to introduce completely arbitrar variables into
+    a sub scope from a dictionary or dictionary like object.
+    """
+    fields = ('context', 'body')
+
+
 class EvalContextModifier(Stmt):
     """Modifies the eval context.  For each option that should be modified,
     a :class:`Keyword` has to be added to the :attr:`options` list.
