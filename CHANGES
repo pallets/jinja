@@ -13,6 +13,9 @@ Version 2.9.2
   common case that gets copy pasted around.  To not completely break backwards
   compatibility with the most common cases it's now possible to provide an
   explicit keyword argument for caller if it's given an explicit default.
+- Restored the use of blocks in macros to the extend that was possible
+  before.  On Python 3 it would render a generator repr instead of
+  the block contents. (#645)
 
 Version 2.9.1
 -------------

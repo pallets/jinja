@@ -796,7 +796,8 @@ class CodeGenerator(NodeVisitor):
         context = node.scoped and (
             'context.derived(%s)' % self.dump_local_context(frame)) or 'context'
 
-        if supports_yield_from and not self.environment.is_async:
+        if supports_yield_from and not self.environment.is_async and \
+           frame.buffer is None:
             self.writeline('yield from context.blocks[%r][0](%s)' % (
                            node.name, context), node)
         else:
