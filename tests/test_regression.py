@@ -442,3 +442,8 @@ class TestBug(object):
             t.module.x(None, caller=lambda: 42)
         assert exc_info.match(r'\'x\' was invoked with two values for the '
                               r'special caller argument')
+
+    def test_macro_blocks(self, env):
+        t = env.from_string('{% macro x() %}{% block foo %}x{% '
+                            'endblock %}{% endmacro %}{{ x() }}')
+        assert t.render() == 'x'
