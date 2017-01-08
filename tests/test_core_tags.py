@@ -363,3 +363,26 @@ class TestSet(object):
         tmpl = env.from_string('{% set foo %}<em>{{ test }}</em>'
                                '{% endset %}foo: {{ foo }}')
         assert tmpl.render(test='<unsafe>') == 'foo: <em>&lt;unsafe&gt;</em>'
+
+
+@pytest.mark.core_tags
+@pytest.mark.with_
+class TestWith(object):
+
+    def test_with(self, env):
+        tmpl = env.from_string('''\
+        {% with a=42, b=23 -%}
+            {{ a }} = {{ b }}
+        {% endwith -%}
+            {{ a }} = {{ b }}\
+        ''')
+        assert [x.strip() for x in tmpl.render(a=1, b=2).splitlines()] \
+            == ['42 = 23', '1 = 2']
+
+    def test_with_argument_scoping(self, env):
+        tmpl = env.from_string('''\
+        {%- with a=1, b=2, c=b, d=e, e=5 -%}
+            {{ a }}|{{ b }}|{{ c }}|{{ d }}|{{ e }}
+        {%- endwith -%}
+        ''')
+        assert tmpl.render(b=3, e=4) == '1|2|3|4|5'

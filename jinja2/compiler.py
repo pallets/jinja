@@ -19,7 +19,7 @@ from jinja2.optimizer import Optimizer
 from jinja2.exceptions import TemplateAssertionError
 from jinja2.utils import Markup, concat, escape
 from jinja2._compat import range_type, text_type, string_types, \
-     iteritems, NativeStringIO, imap
+     iteritems, NativeStringIO, imap, izip
 from jinja2.idtracking import Symbols, VAR_LOAD_PARAMETER, \
      VAR_LOAD_RESOLVE, VAR_LOAD_ALIAS, VAR_LOAD_UNDEFINED
 
@@ -1194,6 +1194,18 @@ class CodeGenerator(NodeVisitor):
         self.visit_Filter(node.filter, filter_frame)
         self.end_write(frame)
         self.leave_frame(filter_frame)
+
+    def visit_With(self, node, frame):
+        with_frame = frame.inner()
+        with_frame.symbols.analyze_node(node)
+        self.enter_frame(with_frame)
+        for idx, (target, expr) in enumerate(izip(node.targets, node.values)):
+            self.newline()
+            self.visit(target, with_frame)
+            self.write(' = ')
+            self.visit(expr, frame)
+        self.blockvisit(node.body, with_frame)
+        self.leave_frame(with_frame)
 
     def visit_ExprStmt(self, node, frame):
         self.newline(node)
