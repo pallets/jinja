@@ -199,6 +199,15 @@ class TestForLoop(object):
                                '{{ a }}|{{ b }}|{{ c }}{% endfor %}')
         assert tmpl.render() == '1|2|3'
 
+    def test_intended_scoping_with_set(self, env):
+        tmpl = env.from_string('{% for item in seq %}{{ x }}'
+                               '{% set x = item %}{{ x }}{% endfor %}')
+        assert tmpl.render(x=0, seq=[1, 2, 3]) == '010203'
+
+        tmpl = env.from_string('{% set x = 9 %}{% for item in seq %}{{ x }}'
+                               '{% set x = item %}{{ x }}{% endfor %}')
+        assert tmpl.render(x=0, seq=[1, 2, 3]) == '919293'
+
 
 @pytest.mark.core_tags
 @pytest.mark.if_condition
