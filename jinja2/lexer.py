@@ -288,7 +288,7 @@ class TokenStreamIterator(object):
 
 @implements_iterator
 class TokenStream(object):
-    """A token stream is an iterable that yields :class:`Token`\s.  The
+    """A token stream is an iterable that yields :class:`Token`\\s.  The
     parser however does not iterate over it but calls :meth:`next` to go
     one token ahead.  The current active token is stored as :attr:`current`.
     """
@@ -500,7 +500,7 @@ class Lexer(object):
             ],
             # blocks
             TOKEN_BLOCK_BEGIN: [
-                (c('(?:\-%s\s*|%s)%s' % (
+                (c(r'(?:\-%s\s*|%s)%s' % (
                     e(environment.block_end_string),
                     e(environment.block_end_string),
                     block_suffix_re
@@ -508,14 +508,14 @@ class Lexer(object):
             ] + tag_rules,
             # variables
             TOKEN_VARIABLE_BEGIN: [
-                (c('\-%s\s*|%s' % (
+                (c(r'\-%s\s*|%s' % (
                     e(environment.variable_end_string),
                     e(environment.variable_end_string)
                 )), TOKEN_VARIABLE_END, '#pop')
             ] + tag_rules,
             # raw block
             TOKEN_RAW_BEGIN: [
-                (c('(.*?)((?:\s*%s\-|%s)\s*endraw\s*(?:\-%s\s*|%s%s))' % (
+                (c(r'(.*?)((?:\s*%s\-|%s)\s*endraw\s*(?:\-%s\s*|%s%s))' % (
                     e(environment.block_start_string),
                     block_prefix_re,
                     e(environment.block_end_string),

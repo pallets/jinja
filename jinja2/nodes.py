@@ -721,7 +721,7 @@ class Concat(Expr):
 
 class Compare(Expr):
     """Compares an expression with some other expressions.  `ops` must be a
-    list of :class:`Operand`\s.
+    list of :class:`Operand`\\s.
     """
     fields = ('expr', 'ops')
 
