@@ -40,7 +40,7 @@ from setuptools import setup
 
 setup(
     name='Jinja2',
-    version='2.9.3.dev',
+    version='2.9.3',
     url='http://jinja.pocoo.org/',
     license='BSD',
     author='Armin Ronacher',
