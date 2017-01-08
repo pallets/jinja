@@ -10,17 +10,13 @@
 """
 import pytest
 import os
-import re
-import sys
 
-from traceback import format_exception
-from jinja2 import loaders
-from jinja2._compat import PY2
-from jinja2.utils import have_async_gen
-from jinja2 import Environment
+import warnings
+warnings.simplefilter('error', DeprecationWarning)
 
 
 def pytest_ignore_collect(path, config):
+    from jinja2.utils import have_async_gen
     if 'async' in path.basename and not have_async_gen:
         return True
     return False
@@ -30,6 +26,7 @@ def pytest_ignore_collect(path, config):
 def env():
     '''returns a new environment.
     '''
+    from jinja2 import Environment
     return Environment()
 
 
@@ -37,7 +34,8 @@ def env():
 def dict_loader():
     '''returns DictLoader
     '''
-    return loaders.DictLoader({
+    from jinja2.loaders import DictLoader
+    return DictLoader({
         'justdict.html':        'FOO'
     })
 
@@ -46,36 +44,41 @@ def dict_loader():
 def package_loader():
     '''returns PackageLoader initialized from templates
     '''
-    return loaders.PackageLoader('res', 'templates')
+    from jinja2.loaders import PackageLoader
+    return PackageLoader('res', 'templates')
 
 
 @pytest.fixture
 def filesystem_loader():
     '''returns FileSystemLoader initialized to res/templates directory
     '''
+    from jinja2.loaders import FileSystemLoader
     here = os.path.dirname(os.path.abspath(__file__))
-    return loaders.FileSystemLoader(here + '/res/templates')
+    return FileSystemLoader(here + '/res/templates')
 
 
 @pytest.fixture
 def function_loader():
     '''returns a FunctionLoader
     '''
-    return loaders.FunctionLoader({'justfunction.html': 'FOO'}.get)
+    from jinja2.loaders import FunctionLoader
+    return FunctionLoader({'justfunction.html': 'FOO'}.get)
 
 
 @pytest.fixture
 def choice_loader(dict_loader, package_loader):
     '''returns a ChoiceLoader
     '''
-    return loaders.ChoiceLoader([dict_loader, package_loader])
+    from jinja2.loaders import ChoiceLoader
+    return ChoiceLoader([dict_loader, package_loader])
 
 
 @pytest.fixture
 def prefix_loader(filesystem_loader, dict_loader):
     '''returns a PrefixLoader
     '''
-    return loaders.PrefixLoader({
+    from jinja2.loaders import PrefixLoader
+    return PrefixLoader({
         'a':        filesystem_loader,
         'b':        dict_loader
     })
