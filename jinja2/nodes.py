@@ -337,6 +337,15 @@ class FilterBlock(Stmt):
     fields = ('body', 'filter')
 
 
+class With(Stmt):
+    """Specific node for with statements.  In older versions of Jinja the
+    with statement was implemented on the base of the `Scope` node instead.
+
+    .. versionadded:: 2.9.3
+    """
+    fields = ('targets', 'values', 'body')
+
+
 class Block(Stmt):
     """A node that represents a block."""
     fields = ('name', 'body', 'scoped')

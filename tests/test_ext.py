@@ -329,9 +329,9 @@ class TestScope(object):
 
         env = Environment(extensions=[ScopeExt])
         tmpl = env.from_string('''\
-        {%- with a=1, b=2, c=b, d=e, e=5 -%}
+        {%- scope a=1, b=2, c=b, d=e, e=5 -%}
             {{ a }}|{{ b }}|{{ c }}|{{ d }}|{{ e }}
-        {%- endwith -%}
+        {%- endscope -%}
         ''')
         assert tmpl.render(b=3, e=4) == '1|2|2|4|5'
 

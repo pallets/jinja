@@ -225,19 +225,22 @@ class Parser(object):
         return result
 
     def parse_with(self):
-        node = nodes.Scope(lineno=next(self.stream).lineno)
-        assignments = []
+        node = nodes.With(lineno=next(self.stream).lineno)
+        targets = []
+        values = []
         while self.stream.current.type != 'block_end':
             lineno = self.stream.current.lineno
-            if assignments:
+            if targets:
                 self.stream.expect('comma')
             target = self.parse_assign_target()
+            target.set_ctx('param')
+            targets.append(target)
             self.stream.expect('assign')
-            expr = self.parse_expression()
-            assignments.append(nodes.Assign(target, expr, lineno=lineno))
-        node.body = assignments + \
-            list(self.parse_statements(('name:endwith',),
-                                         drop_needle=True))
+            values.append(self.parse_expression())
+        node.targets = targets
+        node.values = values
+        node.body = self.parse_statements(('name:endwith',),
+                                          drop_needle=True)
         return node
 
     def parse_autoescape(self):

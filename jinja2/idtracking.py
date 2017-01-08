@@ -180,6 +180,12 @@ class RootVisitor(NodeVisitor):
         for item in branch or ():
             self.sym_visitor.visit(item)
 
+    def visit_With(self, node, **kwargs):
+        for target in node.targets:
+            self.sym_visitor.visit(target)
+        for child in node.body:
+            self.sym_visitor.visit(child)
+
     def generic_visit(self, node, *args, **kwargs):
         raise NotImplementedError('Cannot find symbols for %r' %
                                   node.__class__.__name__)
@@ -248,6 +254,10 @@ class FrameSymbolVisitor(NodeVisitor):
 
     def visit_FilterBlock(self, node, **kwargs):
         self.visit(node.filter, **kwargs)
+
+    def visit_With(self, node, **kwargs):
+        for target in node.values:
+            self.visit(target)
 
     def visit_AssignBlock(self, node, **kwargs):
         """Stop visiting at block assigns."""
