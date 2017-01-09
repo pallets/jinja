@@ -17,7 +17,7 @@ import operator
 from collections import Mapping
 from jinja2.environment import Environment
 from jinja2.exceptions import SecurityError
-from jinja2._compat import string_types, text_type, PY2
+from jinja2._compat import string_types, PY2
 from jinja2.utils import Markup
 
 from markupsafe import EscapeFormatter

@@ -19,7 +19,7 @@ from jinja2._compat import BytesIO, itervalues, text_type
 
 importable_object = 23
 
-_gettext_re = re.compile(r'_\((.*?)\)(?s)')
+_gettext_re = re.compile(r'_\((.*?)\)', re.DOTALL)
 
 
 i18n_templates = {

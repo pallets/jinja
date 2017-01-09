@@ -46,6 +46,6 @@ Builds
 | ``master``          | .. image:: https://travis-ci.org/pallets/jinja.svg?branch=master             |
 |                     |     :target: https://travis-ci.org/pallets/jinja                             |
 +---------------------+------------------------------------------------------------------------------+
-| ``2.7-maintenance`` | .. image:: https://travis-ci.org/pallets/jinja.svg?branch=2.7-maintenance    |
+| ``2.9-maintenance`` | .. image:: https://travis-ci.org/pallets/jinja.svg?branch=2.9-maintenance    |
 |                     |     :target: https://travis-ci.org/pallets/jinja                             |
 +---------------------+------------------------------------------------------------------------------+

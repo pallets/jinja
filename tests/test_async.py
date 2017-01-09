@@ -2,7 +2,6 @@ import pytest
 import asyncio
 
 from jinja2 import Template, Environment, DictLoader
-from jinja2.utils import have_async_gen
 from jinja2.exceptions import TemplateNotFound, TemplatesNotFound, \
      UndefinedError
 
