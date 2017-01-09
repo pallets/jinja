@@ -367,8 +367,7 @@ class CodeGenerator(NodeVisitor):
         is no buffer a dummy ``if 0: yield None`` is written automatically.
         """
         try:
-            if not nodes:
-                self.writeline('pass')
+            self.writeline('pass')
             for node in nodes:
                 self.visit(node, frame)
         except CompilerExit:

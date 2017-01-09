@@ -9,6 +9,9 @@ Version 2.9.4
 - Increment the bytecode cache version which was not done due to an
   oversight before.
 - Corrected bad code generation and scoping for filtered loops.  (#649)
+- Resolved an issue where top-level output silencing after known extend
+  blocks could generate invalid code when blocks where contained in if
+  statements.  (#651)
 
 Version 2.9.3
 -------------
