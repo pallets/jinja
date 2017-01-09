@@ -1023,6 +1023,7 @@ class CodeGenerator(NodeVisitor):
 
     def visit_For(self, node, frame):
         loop_frame = frame.inner()
+        test_frame = frame.inner()
         else_frame = frame.inner()
 
         # try to figure out if we have an extended loop.  An extended loop
@@ -1035,10 +1036,31 @@ class CodeGenerator(NodeVisitor):
         loop_ref = None
         if extended_loop:
             loop_ref = loop_frame.symbols.declare_parameter('loop')
-        loop_frame.symbols.analyze_node(node)
 
+        loop_frame.symbols.analyze_node(node, for_branch='body')
         if node.else_:
             else_frame.symbols.analyze_node(node, for_branch='else')
+
+        if node.test:
+            loop_filter_func = self.temporary_identifier()
+            test_frame.symbols.analyze_node(node, for_branch='test')
+            self.writeline('%s(fiter):' % self.func(loop_filter_func), node.test)
+            self.indent()
+            self.enter_frame(test_frame)
+            self.writeline(self.environment.is_async and 'async for ' or 'for ')
+            self.visit(node.target, loop_frame)
+            self.write(' in ')
+            self.write(self.environment.is_async and 'auto_aiter(fiter)' or 'fiter')
+            self.write(':')
+            self.indent()
+            self.writeline('if ', node.test)
+            self.visit(node.test, test_frame)
+            self.write(':')
+            self.indent()
+            self.writeline('yield ')
+            self.visit(node.target, loop_frame)
+            self.outdent(3)
+            self.leave_frame(test_frame, with_python_scope=True)
 
         # if we don't have an recursive loop we have to find the shadowed
         # variables at that point.  Because loops can be nested but the loop
@@ -1073,27 +1095,9 @@ class CodeGenerator(NodeVisitor):
         else:
             self.write(' in ')
 
-        # if we have an extened loop and a node test, we filter in the
-        # "outer frame".
-        if extended_loop and node.test is not None:
-            self.write('(')
-            self.visit(node.target, loop_frame)
-            self.write(self.environment.is_async and ' async for ' or ' for ')
-            self.visit(node.target, loop_frame)
-            self.write(' in ')
-            if node.recursive:
-                self.write('reciter')
-            else:
-                if self.environment.is_async:
-                    self.write('auto_aiter(')
-                self.visit(node.iter, frame)
-                if self.environment.is_async:
-                    self.write(')')
-            self.write(' if (')
-            self.visit(node.test, loop_frame)
-            self.write('))')
-
-        elif node.recursive:
+        if node.test:
+            self.write('%s(' % loop_filter_func)
+        if node.recursive:
             self.write('reciter')
         else:
             if self.environment.is_async and not extended_loop:
@@ -1101,6 +1105,8 @@ class CodeGenerator(NodeVisitor):
             self.visit(node.iter, frame)
             if self.environment.is_async and not extended_loop:
                 self.write(')')
+        if node.test:
+            self.write(')')
 
         if node.recursive:
             self.write(', loop_render_func, depth):')
@@ -1109,15 +1115,6 @@ class CodeGenerator(NodeVisitor):
 
         self.indent()
         self.enter_frame(loop_frame)
-
-        # tests in not extended loops become a continue
-        if not extended_loop and node.test is not None:
-            self.writeline('if not ')
-            self.visit(node.test, loop_frame)
-            self.write(':')
-            self.indent()
-            self.writeline('continue')
-            self.outdent()
 
         self.blockvisit(node.body, loop_frame)
         if node.else_:
