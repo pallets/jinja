@@ -45,7 +45,7 @@ else:
         return marshal.loads(f.read())
 
 
-bc_version = 2
+bc_version = 3
 
 # magic version used to only change with new jinja versions.  With 2.6
 # we change this to also take Python version changes into account.  The

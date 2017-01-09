@@ -6,6 +6,8 @@ Version 2.9.4
 (unreleased bugfix release)
 
 - Solved some warnings for string literals.  (#646)
+- Increment the bytecode cache version which was not done due to an
+  oversight before.
 
 Version 2.9.3
 -------------
