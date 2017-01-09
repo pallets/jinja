@@ -11,12 +11,10 @@
 import pytest
 
 import re
-
 import sys
 from traceback import format_exception
 
 from jinja2 import Environment, TemplateSyntaxError
-from traceback import format_exception
 
 
 @pytest.fixture

@@ -10,12 +10,8 @@
 """
 import pytest
 import os
-import re
-import sys
 
-from traceback import format_exception
 from jinja2 import loaders
-from jinja2._compat import PY2
 from jinja2.utils import have_async_gen
 from jinja2 import Environment
 
