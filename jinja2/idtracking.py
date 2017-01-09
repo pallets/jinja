@@ -168,13 +168,16 @@ class RootVisitor(NodeVisitor):
             self.sym_visitor.visit(child)
 
     def visit_For(self, node, for_branch='body', **kwargs):
-        if node.test is not None:
-            self.sym_visitor.visit(node.test)
         if for_branch == 'body':
             self.sym_visitor.visit(node.target, store_as_param=True)
             branch = node.body
         elif for_branch == 'else':
             branch = node.else_
+        elif for_branch == 'test':
+            self.sym_visitor.visit(node.target, store_as_param=True)
+            if node.test is not None:
+                self.sym_visitor.visit(node.test)
+            return
         else:
             raise RuntimeError('Unknown for branch')
         for item in branch or ():

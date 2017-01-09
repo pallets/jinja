@@ -415,3 +415,52 @@ class TestAsyncForLoop(object):
         tmpl = test_env_async.from_string('{% for a, b, c in [[1, 2, 3]] %}'
                                '{{ a }}|{{ b }}|{{ c }}{% endfor %}')
         assert tmpl.render() == '1|2|3'
+
+    def test_recursive_loop_filter(self, test_env_async):
+        t = test_env_async.from_string('''
+        <?xml version="1.0" encoding="UTF-8"?>
+        <urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">
+          {%- for page in [site.root] if page.url != this recursive %}
+          <url><loc>{{ page.url }}</loc></url>
+          {{- loop(page.children) }}
+          {%- endfor %}
+        </urlset>
+        ''')
+        sm  =t.render(this='/foo', site={'root': {
+            'url': '/',
+            'children': [
+                {'url': '/foo'},
+                {'url': '/bar'},
+            ]
+        }})
+        lines = [x.strip() for x in sm.splitlines() if x.strip()]
+        assert lines == [
+            '<?xml version="1.0" encoding="UTF-8"?>',
+            '<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">',
+            '<url><loc>/</loc></url>',
+            '<url><loc>/bar</loc></url>',
+            '</urlset>',
+        ]
+
+    def test_nonrecursive_loop_filter(self, test_env_async):
+        t = test_env_async.from_string('''
+        <?xml version="1.0" encoding="UTF-8"?>
+        <urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">
+          {%- for page in items if page.url != this %}
+          <url><loc>{{ page.url }}</loc></url>
+          {%- endfor %}
+        </urlset>
+        ''')
+        sm  =t.render(this='/foo', items=[
+            {'url': '/'},
+            {'url': '/foo'},
+            {'url': '/bar'},
+        ])
+        lines = [x.strip() for x in sm.splitlines() if x.strip()]
+        assert lines == [
+            '<?xml version="1.0" encoding="UTF-8"?>',
+            '<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">',
+            '<url><loc>/</loc></url>',
+            '<url><loc>/bar</loc></url>',
+            '</urlset>',
+        ]
