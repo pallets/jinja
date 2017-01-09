@@ -479,3 +479,7 @@ class TestBug(object):
             '<url><loc>/bar</loc></url>',
             '</urlset>',
         ]
+
+    def test_empty_if(self, env):
+        t = env.from_string('{% if foo %}{% else %}42{% endif %}')
+        assert t.render(foo=False) == '42'
