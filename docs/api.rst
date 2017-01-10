@@ -584,6 +584,12 @@ Example::
     If this is set to False then all strings are stored as unicode
     internally.
 
+``truncate.leeway``:
+    Configures the leeway default for the `truncate` filter.  Leeway as
+    introduced in 2.9 but to restore compatibility with older templates
+    it can be configured to `0` to get the old behavior back.  The default
+    is `5`.
+
 ``urlize.rel``:
     A string that defines the items for the `rel` attribute of generated
     links with the `urlize` filter.  These items are always added.  The

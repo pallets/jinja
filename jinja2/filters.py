@@ -463,7 +463,8 @@ def do_indent(s, width=4, indentfirst=False):
     return rv
 
 
-def do_truncate(s, length=255, killwords=False, end='...', leeway=5):
+@environmentfilter
+def do_truncate(env, s, length=255, killwords=False, end='...', leeway=None):
     """Return a truncated copy of the string. The length is specified
     with the first parameter which defaults to ``255``. If the second
     parameter is ``true`` the filter will cut the text at length. Otherwise
@@ -484,7 +485,11 @@ def do_truncate(s, length=255, killwords=False, end='...', leeway=5):
         {{ "foo bar baz qux"|truncate(11, False, '...', 0) }}
             -> "foo bar..."
 
+    The default leeway on newer Jinja2 versions is 5 and was 0 before but
+    can be reconfigured globally.
     """
+    if leeway is None:
+        leeway = env.policies['truncate.leeway']
     assert length >= len(end), 'expected length >= %s, got %s' % (len(end), length)
     assert leeway >= 0, 'expected leeway >= 0, got %s' % leeway
     if len(s) <= length + leeway:
