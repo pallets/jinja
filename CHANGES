@@ -11,7 +11,7 @@ Version 2.10
 
 Version 2.9.4
 -------------
-(unreleased bugfix release)
+(bugfix release, released on January 10th 2017)
 
 - Solved some warnings for string literals.  (#646)
 - Increment the bytecode cache version which was not done due to an
