@@ -12,6 +12,8 @@ Version 2.9.4
 - Resolved an issue where top-level output silencing after known extend
   blocks could generate invalid code when blocks where contained in if
   statements.  (#651)
+- Made the `truncate.leeway` default configurable to improve compatibility
+  with older templates.
 
 Version 2.9.3
 -------------
