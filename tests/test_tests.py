@@ -126,3 +126,16 @@ class TestTestsCase(object):
         assert tmpl.render() == 'False'
         assert items == [('us-west-1', '(us-east-1|ap-northeast-1)'),
                          ('stage', '(dev|stage)')]
+
+    def test_in(self, env):
+        tmpl = env.from_string('{{ "o" is in "foo" }}|'
+                               '{{ "foo" is in "foo" }}|'
+                               '{{ "b" is in "foo" }}|'
+                               '{{ 1 is in ((1, 2)) }}|'
+                               '{{ 3 is in ((1, 2)) }}|'
+                               '{{ 1 is in [1, 2] }}|'
+                               '{{ 3 is in [1, 2] }}|'
+                               '{{ "foo" is in {"foo": 1}}}|'
+                               '{{ "baz" is in {"bar": 1}}}')
+        assert tmpl.render() \
+            == 'True|True|False|True|False|True|False|True|False'
