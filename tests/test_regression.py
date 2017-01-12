@@ -490,3 +490,10 @@ class TestBug(object):
             'main': '{% set foo = "foo" %}{{ foo }}{% include "inc" %}'
         }))
         assert env.get_template('main').render() == 'foobar'
+
+    def test_loop_include(self):
+        env = Environment(loader=DictLoader({
+            'inc': '{{ item }}',
+            'main': '{% for item in [1, 2, 3] %}{% include "inc" %}{% endfor %}',
+        }))
+        assert env.get_template('main').render() == '123'
