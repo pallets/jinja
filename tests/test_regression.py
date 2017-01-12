@@ -497,3 +497,10 @@ class TestBug(object):
             'main': '{% for item in [1, 2, 3] %}{% include "inc" %}{% endfor %}',
         }))
         assert env.get_template('main').render() == '123'
+
+    def test_grouper_repr(self):
+        from jinja2.filters import _GroupTuple
+        t = _GroupTuple('foo', [1, 2])
+        assert t.grouper == 'foo'
+        assert t.list == [1, 2]
+        assert repr(t) == "('foo', [1, 2])"
