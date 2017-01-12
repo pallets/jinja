@@ -1515,6 +1515,24 @@ are equivalent::
         {{ foo }}
     {% endwith %}
 
+An important note on scoping here.  In Jinja versions before 2.9 the
+behavior of referencing one variable to another had some unintended
+consequences.  In particular one variable could refer to another defined
+in the same with block's opening statement.  This caused issues with the
+cleaned up scoping behavior and has since been improved.  In particular
+in newer Jinja2 versions the following code always refers to the variable
+`a` from outside the `with` block::
+
+    {% with a={}, b=a.attribute %}...{% endwith %}
+
+In earlier Jinja versions the `b` attribute would refer to the results of
+the first attribute.  If you depend on this behavior you can rewrite it to
+use the ``set`` tag::
+
+    {% with a={} %}
+        {% set b = a.attribute %}
+    {% endwith %}
+
 .. admonition:: Extension
 
    In older versions of Jinja (before 2.9) it was required to enable this
