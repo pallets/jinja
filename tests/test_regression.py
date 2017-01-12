@@ -483,3 +483,10 @@ class TestBug(object):
     def test_empty_if(self, env):
         t = env.from_string('{% if foo %}{% else %}42{% endif %}')
         assert t.render(foo=False) == '42'
+
+    def test_set_and_include(self):
+        env = Environment(loader=DictLoader({
+            'inc': 'bar',
+            'main': '{% set foo = "foo" %}{{ foo }}{% include "inc" %}'
+        }))
+        assert env.get_template('main').render() == 'foobar'
