@@ -18,7 +18,7 @@ from jinja2.utils import Markup, escape, pformat, urlize, soft_unicode, \
      unicode_urlencode, htmlsafe_json_dumps
 from jinja2.runtime import Undefined
 from jinja2.exceptions import FilterArgumentError
-from jinja2._compat import imap, string_types, text_type, iteritems
+from jinja2._compat import imap, string_types, text_type, iteritems, PY2
 
 
 _word_re = re.compile(r'\w+', re.UNICODE)
@@ -695,6 +695,9 @@ def do_round(value, precision=0, method='common'):
 # debugging.
 _GroupTuple = namedtuple('_GroupTuple', ['grouper', 'list'])
 _GroupTuple.__repr__ = tuple.__repr__
+_GroupTuple.__str__ = tuple.__str__
+if not PY2:
+    _GroupTuple.__unicode__ = tuple.__unicode__
 
 @environmentfilter
 def do_groupby(environment, value, attribute):
