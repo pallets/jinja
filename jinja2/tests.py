@@ -163,7 +163,10 @@ def test_lessthan(value, other):
 
 
 def test_in(value, seq):
-    """Check if value is in seq."""
+    """Check if value is in seq.
+
+    .. versionadded:: 2.10
+    """
     return value in seq
 
 

@@ -8,6 +8,8 @@ Version 2.10
 - Added a new extension node called `OverlayScope` which can be used to
   create an unoptimized scope that will look up all variables from a
   derived context.
+- Added an `in` test that works like the in operator.  This can be used
+  in combination with `reject` and `select`.
 
 Version 2.9.5
 -------------
