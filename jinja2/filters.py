@@ -696,8 +696,6 @@ def do_round(value, precision=0, method='common'):
 _GroupTuple = namedtuple('_GroupTuple', ['grouper', 'list'])
 _GroupTuple.__repr__ = tuple.__repr__
 _GroupTuple.__str__ = tuple.__str__
-if not PY2:
-    _GroupTuple.__unicode__ = tuple.__unicode__
 
 @environmentfilter
 def do_groupby(environment, value, attribute):
