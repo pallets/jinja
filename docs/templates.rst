@@ -674,6 +674,12 @@ have more than one level of loops, we can rebind the variable `loop` by
 writing `{% set outer_loop = loop %}` after the loop that we want to
 use recursively. Then, we can call it using `{{ outer_loop(...) }}`
 
+Please note that assignments in loops will be cleared at the end of the
+iteration and cannot outlive the loop scope.  Older versions of Jinja2 had
+a bug where in some circumstances it appeared that assignments would work.
+This is not supported.  See :ref:`assignments` for more information about
+how to deal with this.
+
 .. _if:
 
 If
@@ -843,6 +849,31 @@ Assignments use the `set` tag and can have multiple targets::
 
     {% set navigation = [('index.html', 'Index'), ('about.html', 'About')] %}
     {% set key, value = call_something() %}
+
+.. admonition:: Scoping Behavior
+
+    Please keep in mind that it is not possible to set variables inside a
+    block and have them show up outside of it.  This also applies to
+    loops.  The only exception to that rule are if statements which do not
+    introduce a scope.  As a result the following template is not going
+    to do what you might expect::
+
+        {% set iterated = false %}
+        {% for item in seq %}
+            {{ item }}
+            {% set iterated = true %}
+        {% endfor %}
+        {% if not iterated %} did not iterate {% endif %}
+
+    It is not possible with Jinja syntax to do this.  Instead use
+    alternative constructs like the loop else block or the special `loop`
+    variable::
+
+        {% for item in seq %}
+            {{ item }}
+        {% else %}
+            did not iterate
+        {% endfor %}
 
 
 Block Assignments
