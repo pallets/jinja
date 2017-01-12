@@ -17,7 +17,8 @@ from jinja2.utils import Markup, soft_unicode, escape, missing, concat, \
 from jinja2.exceptions import UndefinedError, TemplateRuntimeError, \
      TemplateNotFound
 from jinja2._compat import imap, text_type, iteritems, \
-     implements_iterator, implements_to_string, string_types, PY2
+     implements_iterator, implements_to_string, string_types, PY2, \
+     with_metaclass
 
 
 # these variables are exported to the template runtime
@@ -90,7 +91,43 @@ class TemplateReference(object):
         )
 
 
-class Context(object):
+def _get_func(x):
+    return getattr(x, '__func__', x)
+
+
+class ContextMeta(type):
+
+    def __new__(cls, name, bases, d):
+        rv = type.__new__(cls, name, bases, d)
+        if bases == ():
+            return rv
+
+        resolve = _get_func(rv.resolve)
+        default_resolve = _get_func(Context.resolve)
+        resolve_or_missing = _get_func(rv.resolve_or_missing)
+        default_resolve_or_missing = _get_func(Context.resolve_or_missing)
+
+        # If we have a changed resolve but no changed default or missing
+        # resolve we invert the call logic.
+        if resolve is not default_resolve and \
+           resolve_or_missing is default_resolve_or_missing:
+            rv._legacy_resolve_mode = True
+        elif resolve is default_resolve and \
+             resolve_or_missing is default_resolve_or_missing:
+            rv._fast_resolve_mode = True
+
+        return rv
+
+
+def resolve_or_missing(context, key, missing=missing):
+    if key in context.vars:
+        return context.vars[key]
+    if key in context.parent:
+        return context.parent[key]
+    return missing
+
+
+class Context(with_metaclass(ContextMeta)):
     """The template context holds the variables of a template.  It stores the
     values passed to the template and also the names the template exports.
     Creating instances is neither supported nor useful as it's created
@@ -109,8 +146,10 @@ class Context(object):
     method that doesn't fail with a `KeyError` but returns an
     :class:`Undefined` object for missing variables.
     """
-    __slots__ = ('parent', 'vars', 'environment', 'eval_ctx', 'exported_vars',
-                 'name', 'blocks', '__weakref__')
+    # XXX: we want to eventually make this be a deprecation warning and
+    # remove it.
+    _legacy_resolve_mode = False
+    _fast_resolve_mode = False
 
     def __init__(self, environment, parent, name, blocks):
         self.parent = parent
@@ -124,6 +163,11 @@ class Context(object):
         # takes place the runtime will update this mapping with the new blocks
         # from the template.
         self.blocks = dict((k, [v]) for k, v in iteritems(blocks))
+
+        # In case we detect the fast resolve mode we can set up an alias
+        # here that bypasses the legacy code logic.
+        if self._fast_resolve_mode:
+            self.resolve_or_missing = resolve_or_missing
 
     def super(self, name, current):
         """Render a parent block."""
@@ -150,7 +194,10 @@ class Context(object):
         """Looks up a variable like `__getitem__` or `get` but returns an
         :class:`Undefined` object with the name of the name looked up.
         """
-        rv = self.resolve_or_missing(key)
+        if self._legacy_resolve_mode:
+            rv = resolve_or_missing(self, key)
+        else:
+            rv = self.resolve_or_missing(key)
         if rv is missing:
             return self.environment.undefined(name=key)
         return rv
@@ -159,11 +206,12 @@ class Context(object):
         """Resolves a variable like :meth:`resolve` but returns the
         special `missing` value if it cannot be found.
         """
-        if key in self.vars:
-            return self.vars[key]
-        if key in self.parent:
-            return self.parent[key]
-        return missing
+        if self._legacy_resolve_mode:
+            rv = self.resolve(key)
+            if isinstance(rv, Undefined):
+                rv = missing
+            return rv
+        return resolve_or_missing(self, key)
 
     def get_exported(self):
         """Get a new dict with the exported variables."""
