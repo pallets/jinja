@@ -504,3 +504,4 @@ class TestBug(object):
         assert t.grouper == 'foo'
         assert t.list == [1, 2]
         assert repr(t) == "('foo', [1, 2])"
+        assert str(t) == "('foo', [1, 2])"
