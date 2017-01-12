@@ -688,7 +688,13 @@ def do_round(value, precision=0, method='common'):
     return func(value * (10 ** precision)) / (10 ** precision)
 
 
+# Use a regular tuple repr here.  This is what we did in the past and we
+# really want to hide this custom type as much as possible.  In particular
+# we do not want to accidentally expose an auto generated repr in case
+# people start to print this out in comments or something similar for
+# debugging.
 _GroupTuple = namedtuple('_GroupTuple', ['grouper', 'list'])
+_GroupTuple.__repr__ = tuple.__repr__
 
 @environmentfilter
 def do_groupby(environment, value, attribute):

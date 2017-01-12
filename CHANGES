@@ -1,6 +1,13 @@
 Jinja2 Changelog
 ================
 
+Version 2.9.5
+-------------
+(bugfix release, no release date yet)
+
+- Restored the original repr of the internal `_GroupTuple` because this
+  caused issues with ansible and it was an unintended change.  (#654)
+
 Version 2.9.4
 -------------
 (bugfix release, released on January 10th 2017)
