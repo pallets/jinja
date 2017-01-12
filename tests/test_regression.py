@@ -505,3 +505,18 @@ class TestBug(object):
         assert t.list == [1, 2]
         assert repr(t) == "('foo', [1, 2])"
         assert str(t) == "('foo', [1, 2])"
+
+    def test_legacy_custom_context(self, env):
+        from jinja2.runtime import Context, Undefined, missing
+
+        class MyContext(Context):
+            def resolve(self, name):
+                if name == 'foo':
+                    return 42
+                return super(MyContext, self).resolve(name)
+
+        x = MyContext(env, parent={'bar': 23}, name='foo', blocks={})
+        assert x._legacy_resolve_mode
+        assert x.resolve_or_missing('foo') == 42
+        assert x.resolve_or_missing('bar') == 23
+        assert x.resolve_or_missing('baz') is missing

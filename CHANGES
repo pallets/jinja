@@ -15,6 +15,9 @@ Version 2.9.5
 
 - Restored the original repr of the internal `_GroupTuple` because this
   caused issues with ansible and it was an unintended change.  (#654)
+- Added back support for custom contexts that override the old `resolve`
+  method since it was hard for people to spot that this could cause a
+  regression.
 
 Version 2.9.4
 -------------
