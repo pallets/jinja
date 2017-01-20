@@ -12,6 +12,9 @@ import collections
 import os
 import re
 import inspect
+
+import logging
+
 import jinja2
 from itertools import islice
 from types import BuiltinFunctionType
@@ -108,19 +111,27 @@ def format_function(name, aliases, func):
 
 
 def dump_functions(mapping):
-    def directive(dirname, arguments, options, content, lineno,
-                      content_offset, block_text, state, state_machine):
+    def directive(
+        dirname, arguments, options, content, lineno, content_offset,
+        block_text, state, state_machine
+    ):
         reverse_mapping = {}
+
         for name, func in mapping.items():
             reverse_mapping.setdefault(func, []).append(name)
+
         filters = []
+        compare_ops = set(('lt', 'le', 'eq', 'ne', 'ge', 'gt'))
+
         for func, names in reverse_mapping.items():
-            aliases = sorted(names, key=lambda x: len(x))
+            aliases = sorted(names, key=len)
+            aliases = sorted(aliases, key=lambda x: x in compare_ops)
             name = aliases.pop()
             filters.append((name, aliases, func))
-        filters.sort()
 
+        filters.sort()
         result = ViewList()
+
         for name, aliases, func in filters:
             for item in format_function(name, aliases, func):
                 result.append(item, '<jinjaext>')
@@ -128,6 +139,7 @@ def dump_functions(mapping):
         node = nodes.paragraph()
         state.nested_parse(result, content_offset, node)
         return node.children
+
     return directive
 
 
