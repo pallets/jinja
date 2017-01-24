@@ -10,6 +10,9 @@ Version 2.9.5
 - Added back support for custom contexts that override the old `resolve`
   method since it was hard for people to spot that this could cause a
   regression.
+- Correctly use the buffer for the else block of for loops.  This caused
+  invalid syntax errors to be caused on 2.x and completely wrong behavior
+  on Python 3 (#669)
 
 Version 2.9.4
 -------------

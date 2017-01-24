@@ -520,3 +520,9 @@ class TestBug(object):
         assert x.resolve_or_missing('foo') == 42
         assert x.resolve_or_missing('bar') == 23
         assert x.resolve_or_missing('baz') is missing
+
+    def test_recursive_loop_bug(self, env):
+        tmpl = env.from_string('''
+            {%- for value in values recursive %}1{% else %}0{% endfor -%}
+        ''')
+        assert tmpl.render(values=[]) == '0'

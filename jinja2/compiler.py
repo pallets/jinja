@@ -1040,6 +1040,9 @@ class CodeGenerator(NodeVisitor):
             self.indent()
             self.buffer(loop_frame)
 
+            # Use the same buffer for the else frame
+            else_frame.buffer = loop_frame.buffer
+
         # make sure the loop variable is a special one and raise a template
         # assertion error if a loop tries to write to loop
         if extended_loop:
