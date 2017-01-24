@@ -464,3 +464,7 @@ class TestAsyncForLoop(object):
             '<url><loc>/bar</loc></url>',
             '</urlset>',
         ]
+
+    def test_bare_async(self, test_env_async):
+        t = test_env_async.from_string('{% extends "header" %}')
+        assert t.render(foo=42) == '[42|23]'
