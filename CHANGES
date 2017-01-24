@@ -13,6 +13,8 @@ Version 2.9.5
 - Correctly use the buffer for the else block of for loops.  This caused
   invalid syntax errors to be caused on 2.x and completely wrong behavior
   on Python 3 (#669)
+- Resolve an issue where the `{% extends %}` tag could not be used with
+  async environments. (#668)
 
 Version 2.9.4
 -------------
