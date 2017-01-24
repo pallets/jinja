@@ -25,6 +25,8 @@ Version 2.9.5
   on Python 3 (#669)
 - Resolve an issue where the `{% extends %}` tag could not be used with
   async environments. (#668)
+- Reduce memory footprint slightly by reducing our unicode database dump
+  we use for identifier matching on Python 3 (#666)
 
 Version 2.9.4
 -------------
