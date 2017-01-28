@@ -13,7 +13,7 @@ Version 2.10
 
 Version 2.9.5
 -------------
-(bugfix release, no release date yet)
+(bugfix release, released on January 28th 2017)
 
 - Restored the original repr of the internal `_GroupTuple` because this
   caused issues with ansible and it was an unintended change.  (#654)
