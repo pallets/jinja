@@ -96,6 +96,22 @@ def wrap_block_reference_call(original_call):
     return update_wrapper(__call__, original_call)
 
 
+def wrap_macro_invoke(original_invoke):
+    @internalcode
+    async def async_invoke(self, arguments, autoescape):
+        rv = await self._func(*arguments)
+        if autoescape:
+            rv = Markup(rv)
+        return rv
+
+    @internalcode
+    def _invoke(self, arguments, autoescape):
+        if not self._environment.is_async:
+            return original_invoke(self, arguments, autoescape)
+        return async_invoke(self, arguments, autoescape)
+    return update_wrapper(_invoke, original_invoke)
+
+
 @internalcode
 async def get_default_module_async(self):
     if self._module is not None:
@@ -138,9 +154,10 @@ def patch_template():
 
 
 def patch_runtime():
-    from jinja2.runtime import BlockReference
+    from jinja2.runtime import BlockReference, Macro
     BlockReference.__call__ = wrap_block_reference_call(
         BlockReference.__call__)
+    Macro._invoke = wrap_macro_invoke(Macro._invoke)
 
 
 def patch_filters():

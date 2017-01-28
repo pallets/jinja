@@ -243,6 +243,21 @@ class TestAsyncIncludes(object):
         """)
         assert t.render().strip() == '(FOO)'
 
+    def test_unoptimized_scopes_autoescape(self):
+        env = Environment(loader=DictLoader(dict(
+            o_printer='({{ o }})',
+        )), autoescape=True, enable_async=True)
+        t = env.from_string("""
+            {% macro outer(o) %}
+            {% macro inner() %}
+            {% include "o_printer" %}
+            {% endmacro %}
+            {{ inner() }}
+            {% endmacro %}
+            {{ outer("FOO") }}
+        """)
+        assert t.render().strip() == '(FOO)'
+
 
 @pytest.mark.core_tags
 @pytest.mark.for_loop

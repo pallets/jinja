@@ -544,6 +544,10 @@ class Macro(object):
             raise TypeError('macro %r takes not more than %d argument(s)' %
                             (self.name, len(self.arguments)))
 
+        return self._invoke(arguments, autoescape)
+
+    def _invoke(self, arguments, autoescape):
+        """This method is being swapped out by the async implementation."""
         rv = self._func(*arguments)
         if autoescape:
             rv = Markup(rv)
