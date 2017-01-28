@@ -17,6 +17,7 @@ Version 2.9.5
   async environments. (#668)
 - Reduce memory footprint slightly by reducing our unicode database dump
   we use for identifier matching on Python 3 (#666)
+- Fixed autoescaping not working for macros in async compilation mode. (#671)
 
 Version 2.9.4
 -------------
