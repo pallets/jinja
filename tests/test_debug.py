@@ -87,3 +87,21 @@ ZeroDivisionError: (int(eger)? )?division (or modulo )?by zero
         tmpl = fs_env.get_template('loop.html')
         di = tmpl.debug_info
         assert len(di) == 6
+        # {% block %}
+        assert tmpl.get_corresponding_lineno(10) == 1
+        # <ul>
+        assert tmpl.get_corresponding_lineno(18) == 2
+        # {% for .... %}
+        assert tmpl.get_corresponding_lineno(19) == 3
+        # <li>...
+        assert tmpl.get_corresponding_lineno(21) == 4
+        assert tmpl.get_corresponding_lineno(22) == 4
+        # {% endfor %} tag is not represented,
+        # however L24 is `l_1_user = missing` and when the loop
+        # had not been executed this is wrongly mapped to template
+        # line 4 instead of 5
+        assert tmpl.get_corresponding_lineno(24) == 5
+        # </ul>
+        assert tmpl.get_corresponding_lineno(25) == 6
+        # {% endblock %} tag is not represented
+        # assert tmpl.get_corresponding_lineno(18) == 7
