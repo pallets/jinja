@@ -82,3 +82,8 @@ ZeroDivisionError: (int(eger)? )?division (or modulo )?by zero
             'l_0_baz': missing,
         })
         assert locals == {'foo': 13, 'bar': 99}
+
+    def test_debug_info_contains_all_debuginfo(self, fs_env):
+        tmpl = fs_env.get_template('loop.html')
+        di = tmpl.debug_info
+        assert len(di) == 6
