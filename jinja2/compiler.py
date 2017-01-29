@@ -1241,8 +1241,10 @@ class CodeGenerator(NodeVisitor):
         # try to evaluate as many chunks as possible into a static
         # string at compile time.
         body = []
+        child_lineno = 0
         for child in node.nodes:
             try:
+                child_lineno = child.lineno
                 if not allow_constant_finalize:
                     raise nodes.Impossible()
                 const = child.as_const(frame.eval_ctx)
@@ -1278,6 +1280,7 @@ class CodeGenerator(NodeVisitor):
                 else:
                     self.writeline('%s.extend((' % frame.buffer)
                 self.indent()
+            self._write_debug_info = child_lineno
             for item in body:
                 if isinstance(item, list):
                     val = repr(concat(item))
@@ -1317,6 +1320,7 @@ class CodeGenerator(NodeVisitor):
         else:
             format = []
             arguments = []
+            self._write_debug_info = child_lineno
             for item in body:
                 if isinstance(item, list):
                     format.append(concat(item).replace('%', '%%'))
