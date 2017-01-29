@@ -660,7 +660,7 @@ class Lexer(object):
                         else:
                             data = m.group(idx + 1)
                             if data or token not in ignore_if_empty:
-                                yield lineno, token, data
+                                yield lineno+1, token, data
                             lineno += data.count('\n')
 
                 # strings as token just are yielded as it.

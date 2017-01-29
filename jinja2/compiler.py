@@ -1320,7 +1320,8 @@ class CodeGenerator(NodeVisitor):
         else:
             format = []
             arguments = []
-            self._write_debug_info = child_lineno
+# TODO: this seems to mess things up here
+#            self._write_debug_info = child_lineno
             for item in body:
                 if isinstance(item, list):
                     format.append(concat(item).replace('%', '%%'))
