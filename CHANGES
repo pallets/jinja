@@ -13,6 +13,9 @@ Version 2.10
 - Added `previtem` and `nextitem` to loop contexts, providing access to the
   previous/next item in the loop. If such an item does not exist, the value is
   undefined.
+- Added `changed(*values)` to loop contexts, providing an easy way of checking
+  whether a value has changed since the last iteration (or rather since the
+  last call of the method)
 
 Version 2.9.6
 -------------

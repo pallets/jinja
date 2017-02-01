@@ -360,12 +360,20 @@ class LoopContextBase(object):
         self._recurse = recurse
         self.index0 = -1
         self.depth0 = depth0
+        self._last_checked_value = missing
 
     def cycle(self, *args):
         """Cycles among the arguments with the current loop index."""
         if not args:
             raise TypeError('no items for cycling given')
         return args[self.index0 % len(args)]
+
+    def changed(self, *value):
+        """Checks whether the value has changed since the last call."""
+        if self._last_checked_value != value:
+            self._last_checked_value = value
+            return True
+        return False
 
     first = property(lambda x: x.index0 == 0)
     last = property(lambda x: x._after is _last_iteration)

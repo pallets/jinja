@@ -312,6 +312,13 @@ class TestAsyncForLoop(object):
         output = tmpl.render(seq=list(range(4)))
         assert output == 'x-0-1|0-1-2|1-2-3|2-3-x|'
 
+    def test_changed(self, test_env_async):
+        tmpl = test_env_async.from_string('''{% for item in seq -%}
+            {{ loop.changed(item) }},
+        {%- endfor %}''')
+        output = tmpl.render(seq=[None, None, 1, 2, 2, 3, 4, 4, 4])
+        assert output == 'True,False,True,True,False,True,True,False,False,'
+
     def test_scope(self, test_env_async):
         tmpl = test_env_async.from_string('{% for item in seq %}{% endfor %}{{ item }}')
         output = tmpl.render(seq=list(range(10)))

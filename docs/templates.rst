@@ -618,6 +618,9 @@ Inside of a for-loop block, you can access some special variables:
 | `loop.nextitem`       | The item from the following iteration of the loop.|
 |                       | Undefined during the last iteration.              |
 +-----------------------+---------------------------------------------------+
+| `loop.changed(*val)`  | True if previously called with a different value  |
+|                       | (or not called at all).                           |
++-----------------------+---------------------------------------------------+
 
 Within a for-loop, it's possible to cycle among a list of strings/variables
 each time through the loop by using the special `loop.cycle` helper::
@@ -698,6 +701,16 @@ and `nextitem`::
         {% if loop.nextitem is defined and loop.nextitem > value %}
             The value will increase even more!
         {% endif %}
+    {% endfor %}
+
+If you only care whether the value changed at all, using `changed` is even
+easier::
+
+    {% for entry in entries %}
+        {% if loop.changed(entry.category) %}
+            <h2>{{ entry.category }}</h2>
+        {% endif %}
+        <p>{{ entry.message }}</p>
     {% endfor %}
 
 .. _if:
