@@ -612,6 +612,12 @@ Inside of a for-loop block, you can access some special variables:
 | `loop.depth0`         | Indicates how deep in a recursive loop            |
 |                       | the rendering currently is.  Starts at level 0    |
 +-----------------------+---------------------------------------------------+
+| `loop.previtem`       | The item from the previous iteration of the loop. |
+|                       | Undefined during the first iteration.             |
++-----------------------+---------------------------------------------------+
+| `loop.nextitem`       | The item from the following iteration of the loop.|
+|                       | Undefined during the last iteration.              |
++-----------------------+---------------------------------------------------+
 
 Within a for-loop, it's possible to cycle among a list of strings/variables
 each time through the loop by using the special `loop.cycle` helper::
@@ -679,6 +685,20 @@ iteration and cannot outlive the loop scope.  Older versions of Jinja2 had
 a bug where in some circumstances it appeared that assignments would work.
 This is not supported.  See :ref:`assignments` for more information about
 how to deal with this.
+
+If all you want to do is check whether some value has changed since the
+last iteration or will change in the next iteration, you can use `previtem`
+and `nextitem`::
+
+    {% for value in values %}
+        {% if loop.previtem is defined and value > loop.previtem %}
+            The value just increased!
+        {% endif %}
+        {{ value }}
+        {% if loop.nextitem is defined and loop.nextitem > value %}
+            The value will increase even more!
+        {% endif %}
+    {% endfor %}
 
 .. _if:
 

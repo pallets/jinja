@@ -36,6 +36,7 @@ to_string = text_type
 #: the identity function.  Useful for certain things in the environment
 identity = lambda x: x
 
+_first_iteration = object()
 _last_iteration = object()
 
 
@@ -349,10 +350,13 @@ class BlockReference(object):
 class LoopContextBase(object):
     """A loop context for dynamic iteration."""
 
+    _before = _first_iteration
+    _current = _first_iteration
     _after = _last_iteration
     _length = None
 
-    def __init__(self, recurse=None, depth0=0):
+    def __init__(self, undefined, recurse=None, depth0=0):
+        self._undefined = undefined
         self._recurse = recurse
         self.index0 = -1
         self.depth0 = depth0
@@ -369,6 +373,18 @@ class LoopContextBase(object):
     revindex = property(lambda x: x.length - x.index0)
     revindex0 = property(lambda x: x.length - x.index)
     depth = property(lambda x: x.depth0 + 1)
+
+    @property
+    def previtem(self):
+        if self._before is _first_iteration:
+            return self._undefined('there is no previous item')
+        return self._before
+
+    @property
+    def nextitem(self):
+        if self._after is _last_iteration:
+            return self._undefined('there is no next item')
+        return self._after
 
     def __len__(self):
         return self.length
@@ -395,8 +411,8 @@ class LoopContextBase(object):
 
 class LoopContext(LoopContextBase):
 
-    def __init__(self, iterable, recurse=None, depth0=0):
-        LoopContextBase.__init__(self, recurse, depth0)
+    def __init__(self, iterable, undefined, recurse=None, depth0=0):
+        LoopContextBase.__init__(self, undefined, recurse, depth0)
         self._iterator = iter(iterable)
 
         # try to get the length of the iterable early.  This must be done
@@ -448,9 +464,10 @@ class LoopContextIterator(object):
         ctx.index0 += 1
         if ctx._after is _last_iteration:
             raise StopIteration()
-        next_elem = ctx._after
+        ctx._before = ctx._current
+        ctx._current = ctx._after
         ctx._after = ctx._safe_next()
-        return next_elem, ctx
+        return ctx._current, ctx
 
 
 class Macro(object):
