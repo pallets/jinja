@@ -19,6 +19,9 @@ Version 2.10
 - Added a `namespace` function that creates a special object which allows
   attribute assignment using the `set` tag.  This can be used to carry data
   across scopes, e.g. from a loop body to code that comes after the loop.
+- Added a `trimmed` modifier to `{% trans %}` to strip linebreaks and
+  surrounding whitespace. Also added a new policy to enable this for all
+  `trans` blocks.
 
 Version 2.9.6
 -------------

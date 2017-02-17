@@ -1492,6 +1492,22 @@ which should be used for pluralizing by adding it as parameter to `pluralize`::
     {% trans ..., user_count=users|length %}...
     {% pluralize user_count %}...{% endtrans %}
 
+When translating longer blocks of text, whitespace and linebreaks result in
+rather ugly and error-prone translation strings.  To avoid this, a trans block
+can be marked as trimmed which will replace all linebreaks and the whitespace
+surrounding them with a single space and remove leading/trailing whitespace::
+
+    {% trans trimmed book_title=book.title %}
+        This is {{ book_title }}.
+        You should read it!
+    {% endtrans %}
+
+If trimming is enabled globally, the `notrimmed` modifier can be used to
+disable it for a `trans` block.
+
+.. versionadded:: 2.10
+   The `trimmed` and `notrimmed` modifiers have been added.
+
 It's also possible to translate strings in expressions.  For that purpose,
 three functions exist:
 

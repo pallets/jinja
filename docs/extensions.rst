@@ -111,6 +111,15 @@ The usage of the `i18n` extension for template designers is covered as part
 
 .. _newstyle-gettext:
 
+Whitespace Trimming
+~~~~~~~~~~~~~~~~~~~
+
+.. versionadded:: 2.10
+
+Linebreaks and surrounding whitespace can be automatically trimmed by enabling
+the ``ext.i18n.trimmed`` :ref:`policy <ext-i18n-trimmed>`.
+
+
 Newstyle Gettext
 ~~~~~~~~~~~~~~~~
 
