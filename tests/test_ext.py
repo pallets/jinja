@@ -91,6 +91,13 @@ i18n_env.globals.update({
     'gettext':      gettext,
     'ngettext':     ngettext
 })
+i18n_env_trimmed = Environment(extensions=['jinja2.ext.i18n'])
+i18n_env_trimmed.policies['ext.i18n.trimmed'] = True
+i18n_env_trimmed.globals.update({
+    '_':            gettext,
+    'gettext':      gettext,
+    'ngettext':     ngettext
+})
 
 newstyle_i18n_env = Environment(
     loader=DictLoader(newstyle_i18n_templates),
@@ -270,6 +277,36 @@ class TestInternationalization(object):
         tmpl = i18n_env.get_template('stringformat.html')
         assert tmpl.render(LANGUAGE='de', user_count=5) == 'Benutzer: 5'
 
+    def test_trimmed(self):
+        tmpl = i18n_env.from_string(
+            '{%- trans trimmed %}  hello\n  world  {% endtrans -%}')
+        assert tmpl.render() == 'hello world'
+
+    def test_trimmed_policy(self):
+        s = '{%- trans %}  hello\n  world  {% endtrans -%}'
+        tmpl = i18n_env.from_string(s)
+        trimmed_tmpl = i18n_env_trimmed.from_string(s)
+        assert tmpl.render() == '  hello\n  world  '
+        assert trimmed_tmpl.render() == 'hello world'
+
+    def test_trimmed_policy_override(self):
+        tmpl = i18n_env_trimmed.from_string(
+            '{%- trans notrimmed %}  hello\n  world  {% endtrans -%}')
+        assert tmpl.render() == '  hello\n  world  '
+
+    def test_trimmed_vars(self):
+        tmpl = i18n_env.from_string(
+            '{%- trans trimmed x="world" %}  hello\n  {{ x }} {% endtrans -%}')
+        assert tmpl.render() == 'hello world'
+
+    def test_trimmed_varname_trimmed(self):
+        # unlikely variable name, but when used as a variable
+        # it should not enable trimming
+        tmpl = i18n_env.from_string(
+            '{%- trans trimmed = "world" %}  hello\n  {{ trimmed }}  '
+            '{% endtrans -%}')
+        assert tmpl.render() == '  hello\n  world  '
+
     def test_extract(self):
         from jinja2.ext import babel_extract
         source = BytesIO('''
@@ -282,6 +319,37 @@ class TestInternationalization(object):
             (2, 'gettext', u'Hello World', []),
             (3, 'gettext', u'Hello World', []),
             (4, 'ngettext', (u'%(users)s user', u'%(users)s users', None), [])
+        ]
+
+    def test_extract_trimmed(self):
+        from jinja2.ext import babel_extract
+        source = BytesIO('''
+        {{ gettext(' Hello  \n  World') }}
+        {% trans trimmed %} Hello  \n  World{% endtrans %}
+        {% trans trimmed %}{{ users }} \n user
+        {%- pluralize %}{{ users }} \n users{% endtrans %}
+        '''.encode('ascii'))  # make python 3 happy
+        assert list(babel_extract(source,
+                                  ('gettext', 'ngettext', '_'), [], {})) == [
+            (2, 'gettext', u' Hello  \n  World', []),
+            (4, 'gettext', u'Hello World', []),
+            (6, 'ngettext', (u'%(users)s user', u'%(users)s users', None), [])
+        ]
+
+    def test_extract_trimmed_option(self):
+        from jinja2.ext import babel_extract
+        source = BytesIO('''
+        {{ gettext(' Hello  \n  World') }}
+        {% trans %} Hello  \n  World{% endtrans %}
+        {% trans %}{{ users }} \n user
+        {%- pluralize %}{{ users }} \n users{% endtrans %}
+        '''.encode('ascii'))  # make python 3 happy
+        opts = {'trimmed': 'true'}
+        assert list(babel_extract(source,
+                                  ('gettext', 'ngettext', '_'), [], opts)) == [
+            (2, 'gettext', u' Hello  \n  World', []),
+            (4, 'gettext', u'Hello World', []),
+            (6, 'ngettext', (u'%(users)s user', u'%(users)s users', None), [])
         ]
 
     def test_comment_extract(self):

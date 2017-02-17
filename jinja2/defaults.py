@@ -48,6 +48,7 @@ DEFAULT_POLICIES = {
     'truncate.leeway':      5,
     'json.dumps_function':  None,
     'json.dumps_kwargs':    {'sort_keys': True},
+    'ext.i18n.trimmed':     False,
 }
 
 

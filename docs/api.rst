@@ -611,6 +611,13 @@ Example::
     Keyword arguments to be passed to the dump function.  The default is
     ``{'sort_keys': True}``.
 
+.. _ext-i18n-trimmed:
+
+``ext.i18n.trimmed``:
+    If this is set to `True`, ``{% trans %}`` blocks of the
+    :ref:`i18n-extension` will always unify linebreaks and surrounding
+    whitespace as if the `trimmed` modifier was used.
+
 
 Utilities
 ---------
