@@ -908,6 +908,24 @@ Assignments use the `set` tag and can have multiple targets::
             did not iterate
         {% endfor %}
 
+    As of version 2.10 more complex use cases can be handled using namespace
+    objects which allow propagating of changes across scopes::
+
+        {% set ns = namespace(found=false) %}
+        {% for item in items %}
+            {% if item.check_something() %}
+                {% set ns.found = true %}
+            {% endif %}
+            * {{ item.title }}
+        {% endfor %}
+        Found item having something: {{ ns.found }}
+
+    Note hat the ``obj.attr`` notation in the `set` tag is only allowed for
+    namespace objects; attempting to assign an attribute on any other object
+    will raise an exception.
+
+    .. versionadded:: 2.10 Added support for namespace objects
+
 
 Block Assignments
 ~~~~~~~~~~~~~~~~~
@@ -1399,6 +1417,29 @@ The following functions are available in the global scope by default:
         {% endif %}
 
     .. versionadded:: 2.1
+
+.. class:: namespace(...)
+
+    Creates a new container that allows attribute assignment using the
+    ``{% set %}`` tag::
+
+        {% set ns = namespace() %}
+        {% set ns.foo = 'bar' %}
+
+    The main purpose of this is to allow carrying a value from within a loop
+    body to an outer scope.  Initial values can be provided as a dict, as
+    keyword arguments, or both (same behavior as Python's `dict` constructor)::
+
+        {% set ns = namespace(found=false) %}
+        {% for item in items %}
+            {% if item.check_something() %}
+                {% set ns.found = true %}
+            {% endif %}
+            * {{ item.title }}
+        {% endfor %}
+        Found item having something: {{ ns.found }}
+
+    .. versionadded:: 2.10
 
 
 Extensions

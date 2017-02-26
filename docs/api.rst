@@ -687,6 +687,8 @@ Exceptions
     unicode strings is that Python 2.x is not using unicode for exceptions
     and tracebacks as well as the compiler.  This will change with Python 3.
 
+.. autoexception:: jinja2.TemplateRuntimeError
+
 .. autoexception:: jinja2.TemplateAssertionError
 
 
