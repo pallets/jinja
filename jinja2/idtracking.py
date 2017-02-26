@@ -215,6 +215,9 @@ class FrameSymbolVisitor(NodeVisitor):
         elif node.ctx == 'load':
             self.symbols.load(node.name)
 
+    def visit_NSRef(self, node, **kwargs):
+        self.symbols.load(node.name)
+
     def visit_If(self, node, **kwargs):
         self.visit(node.test, **kwargs)
 

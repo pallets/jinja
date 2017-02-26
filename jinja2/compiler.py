@@ -1403,6 +1403,18 @@ class CodeGenerator(NodeVisitor):
 
         self.write(ref)
 
+    def visit_NSRef(self, node, frame):
+        # NSRefs can only be used to store values; since they use the normal
+        # `foo.bar` notation they will be parsed as a normal attribute access
+        # when used anywhere but in a `set` context
+        ref = frame.symbols.ref(node.name)
+        self.writeline('if not isinstance(%s, Namespace):' % ref)
+        self.indent()
+        self.writeline('raise TemplateRuntimeError(%r)' %
+                       'cannot assign attribute on non-namespace object')
+        self.outdent()
+        self.writeline('%s.%s' % (ref, node.attr))
+
     def visit_Const(self, node, frame):
         val = node.as_const(frame.eval_ctx)
         if isinstance(val, float):

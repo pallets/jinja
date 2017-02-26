@@ -176,7 +176,7 @@ class Parser(object):
     def parse_set(self):
         """Parse an assign statement."""
         lineno = next(self.stream).lineno
-        target = self.parse_assign_target()
+        target = self.parse_assign_target(with_namespace=True)
         if self.stream.skip_if('assign'):
             expr = self.parse_tuple()
             return nodes.Assign(target, expr, lineno=lineno)
@@ -395,15 +395,21 @@ class Parser(object):
         return node
 
     def parse_assign_target(self, with_tuple=True, name_only=False,
-                            extra_end_rules=None):
+                            extra_end_rules=None, with_namespace=False):
         """Parse an assignment target.  As Jinja2 allows assignments to
         tuples, this function can parse all allowed assignment targets.  Per
         default assignments to tuples are parsed, that can be disable however
         by setting `with_tuple` to `False`.  If only assignments to names are
         wanted `name_only` can be set to `True`.  The `extra_end_rules`
-        parameter is forwarded to the tuple parsing function.
+        parameter is forwarded to the tuple parsing function.  If
+        `with_namespace` is enabled, a namespace assignment may be parsed.
         """
-        if name_only:
+        if with_namespace and self.stream.look().type == 'dot':
+            token = self.stream.expect('name')
+            next(self.stream)  # dot
+            attr = self.stream.expect('name')
+            target = nodes.NSRef(token.value, attr.value, lineno=token.lineno)
+        elif name_only:
             token = self.stream.expect('name')
             target = nodes.Name(token.value, 'store', lineno=token.lineno)
         else:

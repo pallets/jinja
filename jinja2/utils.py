@@ -612,6 +612,18 @@ class Joiner(object):
         return self.sep
 
 
+class Namespace(object):
+    """A namespace object that can hold arbitrary attributes.  It may be
+    initialized from a dictionary or with keyword argments."""
+
+    def __init__(*args, **kwargs):
+        self, args = args[0], args[1:]
+        self.__dict__.update(dict(*args, **kwargs))
+
+    def __repr__(self):
+        return '<Namespace %r>' % self.__dict__
+
+
 # does this python version support async for in and async generators?
 try:
     exec('async def _():\n async for _ in ():\n  yield _')
