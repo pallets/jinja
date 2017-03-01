@@ -11,6 +11,7 @@
 import re
 import math
 import random
+import warnings
 
 from itertools import groupby, chain
 from collections import namedtuple
@@ -525,7 +526,7 @@ def do_urlize(eval_ctx, value, trim_url_limit=None, nofollow=False,
     return rv
 
 
-def do_indent(s, width=4, indentfirst=False):
+def do_indent(s, width=4, indent_first=False, indent_blank_lines=False, indentfirst=None):
     """Return a copy of the passed string, each line indented by
     4 spaces. The first line is not indented. If you want to
     change the number of spaces or indent the first line too
@@ -536,9 +537,20 @@ def do_indent(s, width=4, indentfirst=False):
         {{ mytext|indent(2, true) }}
             indent by two spaces and indent the first line too.
     """
+    if indentfirst is not None:
+        warnings.warn('The use of indentfirst is obsolete. '
+            'You should use indent_first instead.', DeprecationWarning)
+        indent_first = indentfirst
+    s += '\n'  # this quirk is necessary for splitlines method
     indention = u' ' * width
-    rv = (u'\n' + indention).join(s.splitlines())
-    if indentfirst:
+    if indent_blank_lines:
+        rv = (u'\n' + indention).join(s.splitlines())
+    else:
+        lines = s.splitlines()
+        rv = lines.pop(0)
+        if lines:
+            rv += u'\n' + u'\n'.join(indention + line if line else line for line in lines)
+    if indent_first:
         rv = indention + rv
     return rv
 

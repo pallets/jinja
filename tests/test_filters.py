@@ -136,11 +136,15 @@ class TestFilter(object):
         assert out == 'a|b'
 
     def test_indent(self, env):
-        tmpl = env.from_string('{{ foo|indent(2) }}|{{ foo|indent(2, true) }}')
-        text = '\n'.join([' '.join(['foo', 'bar'] * 2)] * 2)
-        out = tmpl.render(foo=text)
-        assert out == ('foo bar foo bar\n  foo bar foo bar|  '
-                       'foo bar foo bar\n  foo bar foo bar')
+        text = '\n'.join(['', 'foo bar', ''])
+        tmpl = env.from_string('{{ foo|indent(2, false, false) }}')
+        assert tmpl.render(foo=text) == '\n  foo bar\n'
+        tmpl = env.from_string('{{ foo|indent(1, false, true) }}')
+        assert tmpl.render(foo=text) == '\n foo bar\n '
+        tmpl = env.from_string('{{ foo|indent(1, true, false) }}')
+        assert tmpl.render(foo=text) == ' \n foo bar\n'
+        tmpl = env.from_string('{{ foo|indent(1, true, true) }}')
+        assert tmpl.render(foo=text) == ' \n foo bar\n '
 
     def test_int(self, env):
         class IntIsh(object):
