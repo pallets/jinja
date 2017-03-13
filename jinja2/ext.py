@@ -140,7 +140,7 @@ def _make_new_gettext(func):
             rv = Markup(rv)
         try:
             return rv % variables
-        except:
+        except TypeError:
             return rv
     return gettext
 
@@ -154,7 +154,7 @@ def _make_new_ngettext(func):
             rv = Markup(rv)
         try:
             return rv % variables
-        except:
+        except TypeError:
             return rv
     return ngettext
 
