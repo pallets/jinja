@@ -506,6 +506,20 @@ class TestBug(object):
         assert repr(t) == "('foo', [1, 2])"
         assert str(t) == "('foo', [1, 2])"
 
+    def test_custom_context(self, env):
+        from jinja2.runtime import Context
+
+        class MyContext(Context):
+            pass
+
+        class MyEnvironment(Environment):
+            context_class = MyContext
+
+        loader = DictLoader({'base': '{{ foobar }}',
+                             'test': '{% extends "base" %}'})
+        env = MyEnvironment(loader=loader)
+        assert env.get_template('test').render(foobar='test') == 'test'
+
     def test_legacy_custom_context(self, env):
         from jinja2.runtime import Context, Undefined, missing
 
