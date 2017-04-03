@@ -1345,7 +1345,7 @@ The following functions are available in the global scope by default:
 
         Returns the current item.
 
-    **new in Jinja 2.1**
+    .. versionadded:: 2.1
 
 .. class:: joiner(sep=', ')
 
@@ -1365,7 +1365,7 @@ The following functions are available in the global scope by default:
             <a href="?action=edit">Edit</a>
         {% endif %}
 
-    **new in Jinja 2.1**
+    .. versionadded:: 2.1
 
 
 Extensions

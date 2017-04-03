@@ -865,6 +865,9 @@ def do_select(*args, **kwargs):
 
         {{ numbers|select("odd") }}
         {{ numbers|select("odd") }}
+        {{ numbers|select("divisibleby", 3) }}
+        {{ numbers|select("lessthan", 42) }}
+        {{ strings|select("equalto", "mystring") }}
 
     .. versionadded:: 2.7
     """
