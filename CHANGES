@@ -11,6 +11,12 @@ Version 2.10
 - Added an `in` test that works like the in operator.  This can be used
   in combination with `reject` and `select`.
 
+Version 2.9.6
+-------------
+(bugfix release, released on April 3rd 2017)
+
+- Fixed custom context behavior in fast resolve mode (#675)
+
 Version 2.9.5
 -------------
 (bugfix release, released on January 28th 2017)

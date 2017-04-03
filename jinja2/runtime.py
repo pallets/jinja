@@ -11,6 +11,8 @@
 import sys
 
 from itertools import chain
+from types import MethodType
+
 from jinja2.nodes import EvalContext, _context_function_types
 from jinja2.utils import Markup, soft_unicode, escape, missing, concat, \
      internalcode, object_type_repr, evalcontextfunction
@@ -167,7 +169,7 @@ class Context(with_metaclass(ContextMeta)):
         # In case we detect the fast resolve mode we can set up an alias
         # here that bypasses the legacy code logic.
         if self._fast_resolve_mode:
-            self.resolve_or_missing = resolve_or_missing
+            self.resolve_or_missing = MethodType(resolve_or_missing, self)
 
     def super(self, name, current):
         """Render a parent block."""

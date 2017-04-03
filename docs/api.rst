@@ -742,7 +742,7 @@ enabled::
         return result
 
 Context filters work the same just that the first argument is the current
-active :class:`Context` rather then the environment.
+active :class:`Context` rather than the environment.
 
 
 .. _eval-context:
