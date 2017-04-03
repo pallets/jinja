@@ -92,7 +92,7 @@ def set_setup_version(version):
 
 
 def build_and_upload():
-    cmd = [sys.executable, 'setup.py', 'release', 'sdist', 'bdist_wheel', 'upload']
+    cmd = [sys.executable, 'setup.py', 'sdist', 'bdist_wheel', 'upload']
     if wheel is not None:
         cmd.insert(4, 'bdist_wheel')
     Popen(cmd).wait()
