@@ -3,7 +3,7 @@ Jinja2 Changelog
 
 Version 2.9.6
 -------------
-(bugfix release, release date to be decided)
+(bugfix release, released on April 3rd 2017)
 
 - Fixed custom context behavior in fast resolve mode (#675)
 
