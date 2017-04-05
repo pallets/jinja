@@ -1413,7 +1413,7 @@ class CodeGenerator(NodeVisitor):
         self.writeline('raise TemplateRuntimeError(%r)' %
                        'cannot assign attribute on non-namespace object')
         self.outdent()
-        self.writeline('%s.%s' % (ref, node.attr))
+        self.writeline('%s[%r]' % (ref, node.attr))
 
     def visit_Const(self, node, frame):
         val = node.as_const(frame.eval_ctx)

@@ -618,10 +618,21 @@ class Namespace(object):
 
     def __init__(*args, **kwargs):
         self, args = args[0], args[1:]
-        self.__dict__.update(dict(*args, **kwargs))
+        self.__attrs = dict(*args, **kwargs)
+
+    def __getattribute__(self, name):
+        if name == '_Namespace__attrs':
+            return object.__getattribute__(self, name)
+        try:
+            return self.__attrs[name]
+        except KeyError:
+            raise AttributeError(name)
+
+    def __setitem__(self, name, value):
+        self.__attrs[name] = value
 
     def __repr__(self):
-        return '<Namespace %r>' % self.__dict__
+        return '<Namespace %r>' % self.__attrs
 
 
 # does this python version support async for in and async generators?
