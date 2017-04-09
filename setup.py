@@ -30,8 +30,8 @@ for the template designer too hard by giving him too few functionality.
 
 For more informations visit the new `Jinja2 webpage`_ and `documentation`_.
 
-.. _sandboxed: http://en.wikipedia.org/wiki/Sandbox_(computer_security)
-.. _Django: http://www.djangoproject.com/
+.. _sandboxed: https://en.wikipedia.org/wiki/Sandbox_(computer_security)
+.. _Django: https://www.djangoproject.com/
 .. _Jinja2 webpage: http://jinja.pocoo.org/
 .. _documentation: http://jinja.pocoo.org/2/documentation/
 """

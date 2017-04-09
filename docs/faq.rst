@@ -145,7 +145,7 @@ work in production environments::
         sandbox._WHITE_LIST_C_MODULES += ['_ctypes', 'gestalt']
 
 Credit for this snippet goes to `Thomas Johansson
-<http://stackoverflow.com/questions/3086091/debug-jinja2-in-google-app-engine/3694434#3694434>`_
+<https://stackoverflow.com/questions/3086091/debug-jinja2-in-google-app-engine/3694434#3694434>`_
 
 Why is there no Python 2.3/2.4/2.5/3.1/3.2 support?
 ---------------------------------------------------
