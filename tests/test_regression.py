@@ -471,7 +471,6 @@ class TestBug(object):
             ]
         }})
         lines = [x.strip() for x in sm.splitlines() if x.strip()]
-        print(lines)
         assert lines == [
             '<?xml version="1.0" encoding="UTF-8"?>',
             '<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">',
