@@ -33,8 +33,8 @@ For more information visit the new `Jinja2 webpage`_ and `documentation`_.
 The `Jinja2 tip`_ is installable via ``pip`` with ``pip install
 https://github.com/pallets/jinja/zipball/master``.
 
-.. _sandboxed: http://en.wikipedia.org/wiki/Sandbox_(computer_security)
-.. _Django: http://www.djangoproject.com/
+.. _sandboxed: https://en.wikipedia.org/wiki/Sandbox_(computer_security)
+.. _Django: https://www.djangoproject.com/
 .. _Jinja2 webpage: http://jinja.pocoo.org/
 .. _documentation: http://jinja.pocoo.org/docs/
 .. _Jinja2 tip: http://jinja.pocoo.org/docs/intro/#as-a-python-egg-via-easy-install
