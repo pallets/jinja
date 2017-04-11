@@ -36,6 +36,11 @@ class TestLoaders(object):
         assert tmpl.render().strip() == 'BAR'
         pytest.raises(TemplateNotFound, env.get_template, 'missing.html')
 
+    def test_unknown_tag_in_for_loop(self, package_loader):
+        env = Environment(loader=package_loader)
+        tmpl = env.get_template('unknown_tag_in_for_loop.html')
+        assert tmpl.render().strip() == 'assets is disabled'
+
     def test_filesystem_loader(self, filesystem_loader):
         env = Environment(loader=filesystem_loader)
         tmpl = env.get_template('test.html')
