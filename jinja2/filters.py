@@ -224,7 +224,7 @@ def do_dictsort(value, case_sensitive=False, by='key'):
 
 @environmentfilter
 def do_sort(environment, value, reverse=False, case_sensitive=False,
-            attribute=None):
+            attribute=None, uniq=False):
     """Sort an iterable.  Per default it sorts ascending, if you pass it
     true as first argument it will reverse the sorting.
 
@@ -247,9 +247,18 @@ def do_sort(environment, value, reverse=False, case_sensitive=False,
             ...
         {% endfor %}
 
+    When the `uniq` parameter is set to `true` duplicates will be removed
+    from the returned list.
+
     .. versionchanged:: 2.6
        The `attribute` parameter was added.
+
+    .. versionchanged:: 2.7.4
+       The `uniq` parameter was added.
     """
+    if uniq:
+        value_type = type(value)
+        value = set(value)
     if not case_sensitive:
         def sort_func(item):
             if isinstance(item, string_types):
@@ -261,7 +270,10 @@ def do_sort(environment, value, reverse=False, case_sensitive=False,
         getter = make_attrgetter(environment, attribute)
         def sort_func(item, processor=sort_func or (lambda x: x)):
             return processor(getter(item))
-    return sorted(value, key=sort_func, reverse=reverse)
+    if uniq:
+        return value_type(sorted(value, key=sort_func, reverse=reverse))
+    else:
+        return sorted(value, key=sort_func, reverse=reverse)
 
 
 def do_default(value, default_value=u'', boolean=False):
