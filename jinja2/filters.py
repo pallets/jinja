@@ -80,7 +80,8 @@ def do_forceescape(value):
 
 def do_urlencode(value):
     """Escape strings for use in URLs (uses UTF-8 encoding).  It accepts both
-    dictionaries and regular strings as well as pairwise iterables.
+    dictionaries and regular strings as well as pairwise iterables. This does
+    not escape slashes ('/').
 
     .. versionadded:: 2.7
     """
