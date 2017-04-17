@@ -1506,7 +1506,7 @@ Because it is common to set variables at the beginning of the scope,
 you can do that within the `with` statement.  The following two examples
 are equivalent::
 
-    {% with foo = 42 %}
+    {% with foo=42 %}
         {{ foo }}
     {% endwith %}
 
