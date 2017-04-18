@@ -359,6 +359,18 @@ def do_last(environment, seq):
         return environment.undefined('No last item, sequence was empty.')
 
 
+def do_length(seq):
+    """Return the length of a sequence, or iterable."""
+    try:
+        return len(seq)
+    except TypeError:
+        if isinstance(seq, collections.Iterable):
+            # len(list(seq)) would read the entire seq into RAM
+            return sum(1 for _ in seq)
+        else:
+            raise
+
+
 @environmentfilter
 def do_random(environment, seq):
     """Return a random item from the sequence."""
@@ -1028,7 +1040,7 @@ FILTERS = {
     'batch':                do_batch,
     'capitalize':           do_capitalize,
     'center':               do_center,
-    'count':                len,
+    'count':                do_length,
     'd':                    do_default,
     'default':              do_default,
     'dictsort':             do_dictsort,
@@ -1044,7 +1056,7 @@ FILTERS = {
     'int':                  do_int,
     'join':                 do_join,
     'last':                 do_last,
-    'length':               len,
+    'length':               do_length,
     'list':                 do_list,
     'lower':                do_lower,
     'map':                  do_map,
