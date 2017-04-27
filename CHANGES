@@ -28,11 +28,14 @@ Version 2.10
 - Add ``min`` and ``max`` filters. (`#475`_)
 - Add tests for all comparison operators: ``eq``, ``ne``, ``lt``, ``le``,
   ``gt``, ``ge``. (`#665`_)
+- Add a ``NativeEnvironment`` that renders templates to native Python types
+  instead of strings. (`#708`_)
 
 .. _#469: https://github.com/pallets/jinja/pull/469
 .. _#475: https://github.com/pallets/jinja/pull/475
 .. _#478: https://github.com/pallets/jinja/pull/478
 .. _#665: https://github.com/pallets/jinja/pull/665
+.. _#708: https://github.com/pallets/jinja/pull/708
 
 Version 2.9.6
 -------------
