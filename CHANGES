@@ -1,6 +1,16 @@
 Jinja2 Changelog
 ================
 
+Version 2.9.7
+-------------
+
+(bugfix release, in development)
+
+- ``tojson`` filter marks output as safe to match documented behavior.
+  (`#718`_)
+
+.. _#718: https://github.com/pallets/jinja/pull/718
+
 Version 2.9.6
 -------------
 (bugfix release, released on April 3rd 2017)
