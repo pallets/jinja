@@ -580,8 +580,9 @@ class TestFilter(object):
     def test_json_dump(self):
         env = Environment(autoescape=True)
         t = env.from_string('{{ x|tojson }}')
-        assert t.render(x={'foo': 'bar'}) == '{&#34;foo&#34;: &#34;bar&#34;}'
-        assert t.render(x='"bar\'') == r'&#34;\&#34;bar\u0027&#34;'
+        assert t.render(x={'foo': 'bar'}) == '{"foo": "bar"}'
+        assert t.render(x='"ba&r\'') == r'"\"ba\u0026r\u0027"'
+        assert t.render(x='<bar>') == r'"\u003cbar\u003e"'
 
         def my_dumps(value, **options):
             assert options == {'foo': 'bar'}
