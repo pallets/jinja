@@ -31,7 +31,14 @@ _lexer_cache = LRUCache(50)
 # static regular expressions
 whitespace_re = re.compile(r'\s+', re.U)
 string_re = re.compile(r"('([^'\\]*(?:\\.[^'\\]*)*)'"
-                       r'|"([^"\\]*(?:\\.[^"\\]*)*)")', re.S)
+                       r'|"([^"\\]*(?:\\.[^"\\]*)*)"'
+                       r'|&quot;(.*?)(?:\\&quot;(?:.*))*&quot;'
+                       r'|&#34;(.*?)(?:\\&#34;(?:.*))*&#34;'
+                       r'|&#x22;(.*?)(?:\\&#x22;(?:.*))*&#x22;'
+                       r'|&apos;(.*?)(?:\\&apos;(?:.*))*&apos;'
+                       r'|&#39;(.*?)(?:\\&#39;(?:.*))*&#39;'
+                       r'|&#x27;(.*?)(?:\\&#x27;(?:.*))*&#x27;'
+                       r')', re.S)
 integer_re = re.compile(r'\d+')
 
 def _make_name_re():
@@ -143,6 +150,30 @@ operators = {
 
 reverse_operators = dict([(v, k) for k, v in iteritems(operators)])
 assert len(operators) == len(reverse_operators), 'operators dropped'
+
+# add XML-entity-escaped versions of operators this is done
+# intenionally after creating reverse_operators, since those
+# escapings are only necessary for lexing, not for reverse
+# interpretation
+operators.update ({
+    '&gt;':         operators['>'],
+    '&#62;':        operators['>'],
+    '&#x3e;':       operators['>'],
+    '&#x3E;':       operators['>'],
+    '&gt;=':        operators['>='],
+    '&#62;=':       operators['>='],
+    '&#x3e;=':      operators['>='],
+    '&#x3E;=':      operators['>='],
+    '&lt;':         operators['<'],
+    '&#60;':        operators['<'],
+    '&#x3c;':       operators['<'],
+    '&#x3C;':       operators['<'],
+    '&lt;=':        operators['<='],
+    '&#60;=':       operators['<='],
+    '&#x3c;=':      operators['<='],
+    '&#x3C;=':      operators['<='],
+})
+
 operator_re = re.compile('(%s)' % '|'.join(re.escape(x) for x in
                          sorted(operators, key=lambda x: -len(x))))
 
@@ -580,6 +611,12 @@ class Lexer(object):
             elif token == 'string':
                 # try to unescape string
                 try:
+                    value = value.replace('&quot;', '"') \
+                        .replace('&#34;', '"') \
+                        .replace('&#x22;', '"') \
+                        .replace('&apos;', "'") \
+                        .replace('&#39;', "'") \
+                        .replace('&#x27;', "'")
                     value = self._normalize_newlines(value[1:-1]) \
                         .encode('ascii', 'backslashreplace') \
                         .decode('unicode-escape')
