@@ -190,7 +190,7 @@ def do_title(s):
          if item])
 
 
-def do_dictsort(value, case_sensitive=False, by='key'):
+def do_dictsort(value, case_sensitive=False, by='key', reverse=False):
     """Sort a dict and yield (key, value) pairs. Because python dicts are
     unsorted you may want to use this function to order them by either
     key or value:
@@ -199,6 +199,9 @@ def do_dictsort(value, case_sensitive=False, by='key'):
 
         {% for item in mydict|dictsort %}
             sort the dict by key, case insensitive
+
+        {% for item in mydict|dictsort(reverse=True) %}
+            sort the dict by key, case insensitive, reverse order
 
         {% for item in mydict|dictsort(true) %}
             sort the dict by key, case sensitive
@@ -219,7 +222,7 @@ def do_dictsort(value, case_sensitive=False, by='key'):
             value = value.lower()
         return value
 
-    return sorted(value.items(), key=sort_func)
+    return sorted(value.items(), key=sort_func, reverse=reverse)
 
 
 @environmentfilter
