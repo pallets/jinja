@@ -823,8 +823,6 @@ class Environment(object):
            If `name` is a :class:`Template` object it is returned from the
            function unchanged.
         """
-        if isinstance(name, Template):
-            return name
         if parent is not None:
             name = self.join_path(name, parent)
         return self._load_template(name, self.make_globals(globals))
