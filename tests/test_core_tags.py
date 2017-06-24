@@ -9,8 +9,8 @@
     :license: BSD, see LICENSE for more details.
 """
 import pytest
-from jinja2 import Environment, TemplateSyntaxError, UndefinedError, \
-     DictLoader
+from jinja2 import Environment, TemplateSyntaxError, TemplateRuntimeError, \
+     UndefinedError, DictLoader
 
 
 @pytest.fixture
@@ -390,6 +390,59 @@ class TestSet(object):
         tmpl = env.from_string('{% set foo %}<em>{{ test }}</em>'
                                '{% endset %}foo: {{ foo }}')
         assert tmpl.render(test='<unsafe>') == 'foo: <em>&lt;unsafe&gt;</em>'
+
+    def test_set_invalid(self, env_trim):
+        pytest.raises(TemplateSyntaxError, env_trim.from_string,
+                      "{% set foo['bar'] = 1 %}")
+        tmpl = env_trim.from_string('{% set foo.bar = 1 %}')
+        exc_info = pytest.raises(TemplateRuntimeError, tmpl.render, foo={})
+        assert 'non-namespace object' in exc_info.value.message
+
+    def test_namespace_redefined(self, env_trim):
+        tmpl = env_trim.from_string('{% set ns = namespace() %}'
+                                    '{% set ns.bar = "hi" %}')
+        exc_info = pytest.raises(TemplateRuntimeError, tmpl.render,
+                                 namespace=dict)
+        assert 'non-namespace object' in exc_info.value.message
+
+    def test_namespace(self, env_trim):
+        tmpl = env_trim.from_string('{% set ns = namespace() %}'
+                                    '{% set ns.bar = "42" %}'
+                                    '{{ ns.bar }}')
+        assert tmpl.render() == '42'
+
+    def test_namespace_block(self, env_trim):
+        tmpl = env_trim.from_string('{% set ns = namespace() %}'
+                                    '{% set ns.bar %}42{% endset %}'
+                                    '{{ ns.bar }}')
+        assert tmpl.render() == '42'
+
+    def test_init_namespace(self, env_trim):
+        tmpl = env_trim.from_string('{% set ns = namespace(d, self=37) %}'
+                                    '{% set ns.b = 42 %}'
+                                    '{{ ns.a }}|{{ ns.self }}|{{ ns.b }}')
+        assert tmpl.render(d={'a': 13}) == '13|37|42'
+
+    def test_namespace_loop(self, env_trim):
+        tmpl = env_trim.from_string('{% set ns = namespace(found=false) %}'
+                                    '{% for x in range(4) %}'
+                                    '{% if x == v %}'
+                                    '{% set ns.found = true %}'
+                                    '{% endif %}'
+                                    '{% endfor %}'
+                                    '{{ ns.found }}')
+        assert tmpl.render(v=3) == 'True'
+        assert tmpl.render(v=4) == 'False'
+
+    def test_namespace_macro(self, env_trim):
+        tmpl = env_trim.from_string('{% set ns = namespace() %}'
+                                    '{% set ns.a = 13 %}'
+                                    '{% macro magic(x) %}'
+                                    '{% set x.b = 37 %}'
+                                    '{% endmacro %}'
+                                    '{{ magic(ns) }}'
+                                    '{{ ns.a }}|{{ ns.b }}')
+        assert tmpl.render() == '13|37'
 
 
 @pytest.mark.core_tags

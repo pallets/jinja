@@ -465,6 +465,18 @@ class Name(Expr):
                                  'True', 'False', 'None')
 
 
+class NSRef(Expr):
+    """Reference to a namespace value assignment"""
+    fields = ('name', 'attr')
+
+    def can_assign(self):
+        # We don't need any special checks here; NSRef assignments have a
+        # runtime check to ensure the target is a namespace object which will
+        # have been checked already as it is created using a normal assignment
+        # which goes through a `Name` node.
+        return True
+
+
 class Literal(Expr):
     """Baseclass for literals."""
     abstract = True

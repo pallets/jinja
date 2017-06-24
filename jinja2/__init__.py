@@ -48,7 +48,7 @@ from jinja2.runtime import Undefined, DebugUndefined, StrictUndefined, \
 # exceptions
 from jinja2.exceptions import TemplateError, UndefinedError, \
      TemplateNotFound, TemplatesNotFound, TemplateSyntaxError, \
-     TemplateAssertionError
+     TemplateAssertionError, TemplateRuntimeError
 
 # decorators and public utilities
 from jinja2.filters import environmentfilter, contextfilter, \
@@ -64,6 +64,7 @@ __all__ = [
     'MemcachedBytecodeCache', 'Undefined', 'DebugUndefined',
     'StrictUndefined', 'TemplateError', 'UndefinedError', 'TemplateNotFound',
     'TemplatesNotFound', 'TemplateSyntaxError', 'TemplateAssertionError',
+    'TemplateRuntimeError',
     'ModuleLoader', 'environmentfilter', 'contextfilter', 'Markup', 'escape',
     'environmentfunction', 'contextfunction', 'clear_caches', 'is_undefined',
     'evalcontextfilter', 'evalcontextfunction', 'make_logging_undefined',

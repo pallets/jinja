@@ -9,7 +9,7 @@
     :license: BSD, see LICENSE for more details.
 """
 from jinja2._compat import range_type
-from jinja2.utils import generate_lorem_ipsum, Cycler, Joiner
+from jinja2.utils import generate_lorem_ipsum, Cycler, Joiner, Namespace
 
 
 # defaults for the parser / lexer
@@ -35,7 +35,8 @@ DEFAULT_NAMESPACE = {
     'dict':         dict,
     'lipsum':       generate_lorem_ipsum,
     'cycler':       Cycler,
-    'joiner':       Joiner
+    'joiner':       Joiner,
+    'namespace':    Namespace
 }
 
 
