@@ -68,6 +68,21 @@ class TestForLoop(object):
         output = tmpl.render(seq=list(range(4)), through=('<1>', '<2>'))
         assert output == '<1><2>' * 4
 
+    def test_lookaround(self, env):
+        tmpl = env.from_string('''{% for item in seq -%}
+            {{ loop.previtem|default('x') }}-{{ item }}-{{
+            loop.nextitem|default('x') }}|
+        {%- endfor %}''')
+        output = tmpl.render(seq=list(range(4)))
+        assert output == 'x-0-1|0-1-2|1-2-3|2-3-x|'
+
+    def test_changed(self, env):
+        tmpl = env.from_string('''{% for item in seq -%}
+            {{ loop.changed(item) }},
+        {%- endfor %}''')
+        output = tmpl.render(seq=[None, None, 1, 2, 2, 3, 4, 4, 4])
+        assert output == 'True,False,True,True,False,True,True,False,False,'
+
     def test_scope(self, env):
         tmpl = env.from_string('{% for item in seq %}{% endfor %}{{ item }}')
         output = tmpl.render(seq=list(range(10)))
@@ -94,6 +109,18 @@ class TestForLoop(object):
             dict(a=2, b=[dict(a=1), dict(a=2)]),
             dict(a=3, b=[dict(a='a')])
         ]) == '[1<[1][2]>][2<[1][2]>][3<[a]>]'
+
+    def test_recursive_lookaround(self, env):
+        tmpl = env.from_string('''{% for item in seq recursive -%}
+            [{{ loop.previtem.a if loop.previtem is defined else 'x' }}.{{
+            item.a }}.{{ loop.nextitem.a if loop.nextitem is defined else 'x'
+            }}{% if item.b %}<{{ loop(item.b) }}>{% endif %}]
+        {%- endfor %}''')
+        assert tmpl.render(seq=[
+            dict(a=1, b=[dict(a=1), dict(a=2)]),
+            dict(a=2, b=[dict(a=1), dict(a=2)]),
+            dict(a=3, b=[dict(a='a')])
+        ]) == '[x.1.2<[x.1.2][1.2.x]>][1.2.3<[x.1.2][1.2.x]>][2.3.x<[x.a.x]>]'
 
     def test_recursive_depth0(self, env):
         tmpl = env.from_string('''{% for item in seq recursive -%}

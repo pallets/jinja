@@ -1112,9 +1112,9 @@ class CodeGenerator(NodeVisitor):
             self.write(')')
 
         if node.recursive:
-            self.write(', loop_render_func, depth):')
+            self.write(', undefined, loop_render_func, depth):')
         else:
-            self.write(extended_loop and '):' or ':')
+            self.write(extended_loop and ', undefined):' or ':')
 
         self.indent()
         self.enter_frame(loop_frame)
