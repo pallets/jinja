@@ -39,11 +39,11 @@ integer_re = re.compile(r'\d+')
 try:
     compile('föö', '<unknown>', 'eval')
 except SyntaxError:
-    name_re = re.compile(r'\b\w+\b')
-    check_ident = True
-else:
     name_re = re.compile(r'\b[a-zA-Z_][a-zA-Z0-9_]*\b')
     check_ident = False
+else:
+    name_re = re.compile(r'\b\w+\b')
+    check_ident = True
 
 float_re = re.compile(r'(?<!\.)\d+\.\d+')
 newline_re = re.compile(r'(\r\n|\r|\n)')
