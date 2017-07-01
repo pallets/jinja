@@ -8,6 +8,8 @@
     :copyright: (c) 2017 by the Jinja Team.
     :license: BSD, see LICENSE for more details.
 """
+import sys
+
 import pytest
 
 from jinja2 import Environment, Template, TemplateSyntaxError, \
@@ -611,3 +613,16 @@ ${item} ## the rest of the stuff
     ${item}
 <!--- endfor -->''')
         assert tmpl.render(seq=range(5)) == '01234'
+
+
+@pytest.mark.skipif(sys.version_info <= (3, 0), reason='unicode identifiers '
+                    'fail in python2')
+def test_name_validity():
+    env = Environment()
+    with pytest.raises((SyntaxError, TemplateSyntaxError)):
+        # invalid identifier
+        tmpl = env.from_string(u'{{ a\u2e2f }}')
+
+    # legit identifiers
+    assert env.from_string(u'{{ \xe0\u010d }}')
+    assert env.from_string(u'{{ \ua71a\u02ba\u1d35\u1d78\u1dbc\ua4fd\uff9f\u1dac\u1db5 }}')
