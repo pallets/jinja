@@ -42,7 +42,13 @@ except SyntaxError:
     name_re = re.compile(r'\b[a-zA-Z_][a-zA-Z0-9_]*\b')
     check_ident = False
 else:
-    name_re = re.compile(r'\b\w+\b')
+    # for whatever reason these do not exist in 'some' verisons of
+    # python 3 within \w so we just add them.  These are
+    #   0x1885 MONGOLIAN LETTER ALI GALI BALUDA
+    #   0x1886 MONGOLIAN LETTER ALI GALI THREE BALUDA
+    #   0x2118 SCRIPT CAPITAL P
+    #   0x212e ESTIMATED SYMBOL
+    name_re = re.compile(r'\b[\w\u1885\u1886\u2118\u212e]+\b')
     check_ident = True
 
 float_re = re.compile(r'(?<!\.)\d+\.\d+')
