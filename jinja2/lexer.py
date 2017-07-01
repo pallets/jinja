@@ -34,28 +34,8 @@ string_re = re.compile(r"('([^'\\]*(?:\\.[^'\\]*)*)'"
                        r'|"([^"\\]*(?:\\.[^"\\]*)*)")', re.S)
 integer_re = re.compile(r'\d+')
 
-def _make_name_re():
-    try:
-        compile('föö', '<unknown>', 'eval')
-    except SyntaxError:
-        return re.compile(r'\b[a-zA-Z_][a-zA-Z0-9_]*\b')
-
-    import jinja2
-    from jinja2 import _stringdefs
-    name_re = re.compile(r'[%s][%s]*' % (_stringdefs.xid_start,
-                                         _stringdefs.xid_continue))
-
-    # Save some memory here
-    sys.modules.pop('jinja2._stringdefs')
-    del _stringdefs
-    del jinja2._stringdefs
-
-    return name_re
-
-# we use the unicode identifier rule if this python version is able
-# to handle unicode identifiers, otherwise the standard ASCII one.
-name_re = _make_name_re()
-del _make_name_re
+# don't check identifiers since they will SyntaxError later
+name_re = re.compile('\w+')
 
 float_re = re.compile(r'(?<!\.)\d+\.\d+')
 newline_re = re.compile(r'(\r\n|\r|\n)')
