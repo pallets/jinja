@@ -574,7 +574,7 @@ class Lexer(object):
                 if check_ident and not value.isidentifier():
                     raise TemplateSyntaxError(
                         'Invalid character in identifier',
-                        line, name, filename)
+                        lineno, name, filename)
             elif token == 'string':
                 # try to unescape string
                 try:

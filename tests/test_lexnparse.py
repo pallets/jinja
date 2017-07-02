@@ -126,6 +126,27 @@ class TestLexer(object):
                 result = tmpl.render()
                 assert result == expect, (keep, template, result, expect)
 
+    @pytest.mark.parametrize('name,valid', (
+        ('foo', True),
+        ('föö', True),
+        ('き', True),
+        ('_', True),
+        ('1a', False),
+        # special cases in addition to \w
+        ('\u1885', True),
+        ('\u1886', True),
+        ('\u2118', True),
+        ('\u212e', True),
+    ))
+    def test_name(self, env, name, valid):
+        t = '{{ ' + name + ' }}'
+
+        if valid:
+            # shouldn't raise
+            env.from_string(t)
+        else:
+            pytest.raises(TemplateSyntaxError, env.from_string, t)
+
 
 @pytest.mark.lexnparse
 @pytest.mark.parser
