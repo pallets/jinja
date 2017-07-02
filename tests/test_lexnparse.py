@@ -126,22 +126,22 @@ class TestLexer(object):
                 result = tmpl.render()
                 assert result == expect, (keep, template, result, expect)
 
-    @pytest.mark.parametrize('name,valid', (
-        ('foo', True),
-        ('föö', True),
-        ('き', True),
-        ('_', True),
-        ('1a', False),
+    @pytest.mark.parametrize('name,valid2,valid3', (
+        (u'foo', True, True),
+        (u'föö', False, True),
+        (u'き', False, True),
+        (u'_', True, True),
+        (u'1a', False, False),
         # special cases in addition to \w
-        ('\u1885', True),
-        ('\u1886', True),
-        ('\u2118', True),
-        ('\u212e', True),
+        (u'ᢅ', False, True),  # 1885
+        (u'ᢆ', False, True),  # 1886
+        (u'℘', False, True),  # 2118
+        (u'℮', False, True),  # 212e
     ))
-    def test_name(self, env, name, valid):
-        t = '{{ ' + name + ' }}'
+    def test_name(self, env, name, valid2, valid3):
+        t = u'{{ ' + name + u' }}'
 
-        if valid:
+        if (valid2 and PY2) or (valid3 and not PY2):
             # shouldn't raise
             env.from_string(t)
         else:
