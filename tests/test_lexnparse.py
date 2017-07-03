@@ -133,10 +133,10 @@ class TestLexer(object):
         (u'_', True, True),
         (u'1a', False, False),
         # special cases in addition to \w
-        ('\u1885', False, True),
-        ('\u1886', False, True),
-        ('\u2118', False, True),
-        ('\u212e', False, True),
+        (u'\u1885', False, True),
+        (u'\u1886', False, True),
+        (u'\u2118', False, True),
+        (u'\u212e', False, True),
     ))
     def test_name(self, env, name, valid2, valid3):
         t = u'{{ ' + name + u' }}'
