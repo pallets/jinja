@@ -32,22 +32,25 @@ string_re = re.compile(r"('([^'\\]*(?:\\.[^'\\]*)*)'"
                        r'|"([^"\\]*(?:\\.[^"\\]*)*)")', re.S)
 integer_re = re.compile(r'\d+')
 
-# we use the unicode identifier rule if this python version is able
-# to handle unicode identifiers, otherwise the standard ASCII one.
 try:
+    # check if this Python supports Unicode identifiers
     compile('föö', '<unknown>', 'eval')
 except SyntaxError:
+    # no Unicode support, use ASCII identifiers
     name_re = re.compile(r'[a-zA-Z_][a-zA-Z0-9_]*')
     check_ident = False
 else:
-    # for whatever reason these do not exist in 'some' verisons of
-    # python 3 within \w so we just add them.  These are
-    #   0x1885 MONGOLIAN LETTER ALI GALI BALUDA
-    #   0x1886 MONGOLIAN LETTER ALI GALI THREE BALUDA
-    #   0x2118 SCRIPT CAPITAL P
-    #   0x212e ESTIMATED SYMBOL
-    name_re = re.compile(r'[\w\u1885\u1886\u2118\u212e]+')
+    # Unicode support, build a pattern to match valid characters, and set flag
+    # to use str.isidentifier to validate during lexing
+    from jinja2 import _identifier
+    name_re = re.compile(r'[\w{0}]+'.format(_identifier.pattern))
     check_ident = True
+    # remove the pattern from memory after building the regex
+    import sys
+    del sys.modules['jinja2._identifier']
+    import jinja2
+    del jinja2._identifier
+    del _identifier
 
 float_re = re.compile(r'(?<!\.)\d+\.\d+')
 newline_re = re.compile(r'(\r\n|\r|\n)')

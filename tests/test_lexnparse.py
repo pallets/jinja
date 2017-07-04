@@ -131,18 +131,24 @@ class TestLexer(object):
         (u'föö', False, True),
         (u'き', False, True),
         (u'_', True, True),
-        (u'1a', False, False),
-        # special cases in addition to \w
+        (u'1a', False, False),  # invalid ascii start
+        (u'a-', False, False),  # invalid ascii continue
+        (u'🐍', False, False),  # invalid unicode start
+        (u'a🐍', False, False),  # invalid unicode continue
+        # start characters not matched by \w
         (u'\u1885', False, True),
         (u'\u1886', False, True),
         (u'\u2118', False, True),
         (u'\u212e', False, True),
+        # continue character not matched by \w
+        (u'\xb7', False, False),
+        (u'a\xb7', False, True),
     ))
     def test_name(self, env, name, valid2, valid3):
         t = u'{{ ' + name + u' }}'
 
         if (valid2 and PY2) or (valid3 and not PY2):
-            # shouldn't raise
+            # valid for version being tested, shouldn't raise
             env.from_string(t)
         else:
             pytest.raises(TemplateSyntaxError, env.from_string, t)
