@@ -5,7 +5,7 @@
 
     Who tests the tests?
 
-    :copyright: (c) 2010 by the Jinja Team.
+    :copyright: (c) 2017 by the Jinja Team.
     :license: BSD, see LICENSE for more details.
 """
 import pytest
@@ -14,7 +14,7 @@ from jinja2 import Markup, Environment
 
 
 @pytest.mark.test_tests
-class TestTestsCase():
+class TestTestsCase(object):
 
     def test_defined(self, env):
         tmpl = env.from_string('{{ missing is defined }}|'
@@ -102,3 +102,40 @@ class TestTestsCase():
         env = Environment(autoescape=True)
         tmpl = env.from_string('{{ x is escaped }}|{{ y is escaped }}')
         assert tmpl.render(x='foo', y=Markup('foo')) == 'False|True'
+
+    def test_greaterthan(self, env):
+        tmpl = env.from_string('{{ 1 is greaterthan 0 }}|'
+                               '{{ 0 is greaterthan 1 }}')
+        assert tmpl.render() == 'True|False'
+
+    def test_lessthan(self, env):
+        tmpl = env.from_string('{{ 0 is lessthan 1 }}|'
+                               '{{ 1 is lessthan 0 }}')
+        assert tmpl.render() == 'True|False'
+
+    def test_multiple_tests(self):
+        items = []
+        def matching(x, y):
+            items.append((x, y))
+            return False
+        env = Environment()
+        env.tests['matching'] = matching
+        tmpl = env.from_string("{{ 'us-west-1' is matching "
+                               "'(us-east-1|ap-northeast-1)' "
+                               "or 'stage' is matching '(dev|stage)' }}")
+        assert tmpl.render() == 'False'
+        assert items == [('us-west-1', '(us-east-1|ap-northeast-1)'),
+                         ('stage', '(dev|stage)')]
+
+    def test_in(self, env):
+        tmpl = env.from_string('{{ "o" is in "foo" }}|'
+                               '{{ "foo" is in "foo" }}|'
+                               '{{ "b" is in "foo" }}|'
+                               '{{ 1 is in ((1, 2)) }}|'
+                               '{{ 3 is in ((1, 2)) }}|'
+                               '{{ 1 is in [1, 2] }}|'
+                               '{{ 3 is in [1, 2] }}|'
+                               '{{ "foo" is in {"foo": 1}}}|'
+                               '{{ "baz" is in {"bar": 1}}}')
+        assert tmpl.render() \
+            == 'True|True|False|True|False|True|False|True|False'

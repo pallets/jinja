@@ -5,18 +5,21 @@
 
     Configuration and Fixtures for the tests
 
-    :copyright: (c) 2010 by the Jinja Team.
+    :copyright: (c) 2017 by the Jinja Team.
     :license: BSD, see LICENSE for more details.
 """
 import pytest
 import os
-import re
-import sys
 
-from traceback import format_exception
 from jinja2 import loaders
-from jinja2._compat import PY2
+from jinja2.utils import have_async_gen
 from jinja2 import Environment
+
+
+def pytest_ignore_collect(path, config):
+    if 'async' in path.basename and not have_async_gen:
+        return True
+    return False
 
 
 @pytest.fixture

@@ -19,21 +19,25 @@ Even if you are creating templates from strings by using the constructor of
 albeit a shared one.
 
 Most applications will create one :class:`Environment` object on application
-initialization and use that to load templates.  In some cases it's however
+initialization and use that to load templates.  In some cases however, it's 
 useful to have multiple environments side by side, if different configurations
 are in use.
 
 The simplest way to configure Jinja2 to load templates for your application
 looks roughly like this::
 
-    from jinja2 import Environment, PackageLoader
-    env = Environment(loader=PackageLoader('yourapplication', 'templates'))
+    from jinja2 import Environment, PackageLoader, select_autoescape
+    env = Environment(
+        loader=PackageLoader('yourapplication', 'templates'),
+        autoescape=select_autoescape(['html', 'xml'])
+    )
 
 This will create a template environment with the default settings and a
 loader that looks up the templates in the `templates` folder inside the
 `yourapplication` python package.  Different loaders are available
 and you can also write your own if you want to load templates from a
-database or other resources.
+database or other resources.  This also enables autoescaping for HTML and
+XML files.
 
 To load a template from this environment you just have to call the
 :meth:`get_template` method which then returns the loaded :class:`Template`::
@@ -47,6 +51,12 @@ To render it with some variables, just call the :meth:`render` method::
 Using a template loader rather than passing strings to :class:`Template`
 or :meth:`Environment.from_string` has multiple advantages.  Besides being
 a lot easier to use it also enables template inheritance.
+
+.. admonition:: Notes on Autoescaping
+
+   In future versions of Jinja2 we might enable autoescaping by default
+   for security reasons.  As such you are encouraged to explicitly
+   configure autoescaping now instead of relying on the default.
 
 
 Unicode
@@ -104,7 +114,7 @@ for everything else `unicode`:
 u'f\xf6\xf6'
 
 
-.. _Unicode documentation: http://docs.python.org/dev/howto/unicode.html
+.. _Unicode documentation: https://docs.python.org/dev/howto/unicode.html
 
 High Level API
 --------------
@@ -153,6 +163,12 @@ useful if you want to dig deeper into Jinja2 or :ref:`develop extensions
         in a template.  As long as no template was loaded it's safe
         to modify this dict.  For more details see :ref:`global-namespace`.
         For valid object names have a look at :ref:`identifier-naming`.
+
+    .. attribute:: policies
+
+        A dictionary with :ref:`policies`.  These can be reconfigured to
+        change the runtime behavior or certain template features.  Usually
+        these are security related.
 
     .. attribute:: code_generator_class
 
@@ -229,6 +245,10 @@ useful if you want to dig deeper into Jinja2 or :ref:`develop extensions
 
     .. automethod:: stream([context])
 
+    .. automethod:: render_async([context])
+
+    .. automethod:: generate_async([context])
+
 
 .. autoclass:: jinja2.environment.TemplateStream()
     :members: disable_buffering, enable_buffering, dump
@@ -237,30 +257,38 @@ useful if you want to dig deeper into Jinja2 or :ref:`develop extensions
 Autoescaping
 ------------
 
-.. versionadded:: 2.4
+.. versionchanged:: 2.4
 
-As of Jinja 2.4 the preferred way to do autoescaping is to enable the
-:ref:`autoescape-extension` and to configure a sensible default for
+Jinja2 now comes with autoescaping support.  As of Jinja 2.9 the
+autoescape extension is removed and built-in.  However autoescaping is
+not yet enabled by default though this will most likely change in the
+future.  It's recommended to configure a sensible default for
 autoescaping.  This makes it possible to enable and disable autoescaping
 on a per-template basis (HTML versus text for instance).
 
+.. autofunction:: jinja2.select_autoescape
+
 Here a recommended setup that enables autoescaping for templates ending
 in ``'.html'``, ``'.htm'`` and ``'.xml'`` and disabling it by default
-for all other extensions::
+for all other extensions.  You can use the :func:`~jinja2.select_autoescape`
+function for this::
 
-    def guess_autoescape(template_name):
-        if template_name is None or '.' not in template_name:
+    from jinja2 import Environment, select_autoescape
+    env = Environment(autoescape=select_autoescape(['html', 'htm', 'xml']),
+                      loader=PackageLoader('mypackage'))
+
+The :func:`~jinja.select_autoescape` function returns a function that
+works rougly like this::
+
+    def autoescape(template_name):
+        if template_name is None:
             return False
-        ext = template_name.rsplit('.', 1)[1]
-        return ext in ('html', 'htm', 'xml')
-
-    env = Environment(autoescape=guess_autoescape,
-                      loader=PackageLoader('mypackage'),
-                      extensions=['jinja2.ext.autoescape'])
+        if template_name.endswith(('.html', '.htm', '.xml'))
 
 When implementing a guessing autoescape function, make sure you also
 accept `None` as valid template name.  This will be passed when generating
-templates from strings.
+templates from strings.  You should always configure autoescaping as
+defaults in the future might change.
 
 Inside the templates the behaviour can be temporarily changed by using
 the `autoescape` block (see :ref:`autoescape-overrides`).
@@ -497,6 +525,100 @@ Builtin bytecode caches:
 .. autoclass:: jinja2.MemcachedBytecodeCache
 
 
+Async Support
+-------------
+
+Starting with version 2.9, Jinja2 also supports the Python `async` and
+`await` constructs.  As far as template designers go this feature is
+entirely opaque to them however as a developer you should be aware of how
+it's implemented as it influences what type of APIs you can safely expose
+to the template environment.
+
+First you need to be aware that by default async support is disabled as
+enabling it will generate different template code behind the scenes which
+passes everything through the asyncio event loop.  This is important to
+understand because it has some impact to what you are doing:
+
+*   template rendering will require an event loop to be set for the
+    current thread (``asyncio.get_event_loop`` needs to return one)
+*   all template generation code internally runs async generators which
+    means that you will pay a performance penalty even if the non sync
+    methods are used!
+*   The sync methods are based on async methods if the async mode is
+    enabled which means that `render` for instance will internally invoke
+    `render_async` and run it as part of the current event loop until the
+    execution finished.
+
+Awaitable objects can be returned from functions in templates and any
+function call in a template will automatically await the result.  This
+means that you can let provide a method that asynchronously loads data
+from a database if you so desire and from the template designer's point of
+view this is just another function they can call.  This means that the
+``await`` you would normally issue in Python is implied.  However this
+only applies to function calls.  If an attribute for instance would be an
+avaitable object then this would not result in the expected behavior.
+
+Likewise iterations with a `for` loop support async iterators.
+
+.. _policies:
+
+Policies
+--------
+
+Starting with Jinja 2.9 policies can be configured on the environment
+which can slightly influence how filters and other template constructs
+behave.  They can be configured with the
+:attr:`~jinja2.Environment.policies` attribute.
+
+Example::
+
+    env.policies['urlize.rel'] = 'nofollow noopener'
+
+``compiler.ascii_str``:
+    This boolean controls on Python 2 if Jinja2 should store ASCII only
+    literals as bytestring instead of unicode strings.  This used to be
+    always enabled for Jinja versions below 2.9 and now can be changed.
+    Traditionally it was done this way since some APIs in Python 2 failed
+    badly for unicode strings (for instance the datetime strftime API).
+    Now however sometimes the inverse is true (for instance str.format).
+    If this is set to False then all strings are stored as unicode
+    internally.
+
+``truncate.leeway``:
+    Configures the leeway default for the `truncate` filter.  Leeway as
+    introduced in 2.9 but to restore compatibility with older templates
+    it can be configured to `0` to get the old behavior back.  The default
+    is `5`.
+
+``urlize.rel``:
+    A string that defines the items for the `rel` attribute of generated
+    links with the `urlize` filter.  These items are always added.  The
+    default is `noopener`.
+
+``urlize.target``:
+    The default target that is issued for links from the `urlize` filter
+    if no other target is defined by the call explicitly.
+
+``json.dumps_function``:
+    If this is set to a value other than `None` then the `tojson` filter
+    will dump with this function instead of the default one.  Note that
+    this function should accept arbitrary extra arguments which might be
+    passed in the future from the filter.  Currently the only argument
+    that might be passed is `indent`.  The default dump function is
+    ``json.dumps``.
+
+``json.dumps_kwargs``:
+    Keyword arguments to be passed to the dump function.  The default is
+    ``{'sort_keys': True}``.
+
+.. _ext-i18n-trimmed:
+
+``ext.i18n.trimmed``:
+    If this is set to `True`, ``{% trans %}`` blocks of the
+    :ref:`i18n-extension` will always unify linebreaks and surrounding
+    whitespace as if the `trimmed` modifier was used.
+
+
 Utilities
 ---------
 
@@ -572,6 +694,8 @@ Exceptions
     unicode strings is that Python 2.x is not using unicode for exceptions
     and tracebacks as well as the compiler.  This will change with Python 3.
 
+.. autoexception:: jinja2.TemplateRuntimeError
+
 .. autoexception:: jinja2.TemplateAssertionError
 
 
@@ -581,7 +705,7 @@ Custom Filters
 --------------
 
 Custom filters are just regular Python functions that take the left side of
-the filter as first argument and the the arguments passed to the filter as
+the filter as first argument and the arguments passed to the filter as
 extra arguments or keyword arguments.
 
 For example in the filter ``{{ 42|myfilter(23) }}`` the function would be
@@ -627,7 +751,7 @@ enabled::
         return result
 
 Context filters work the same just that the first argument is the current
-active :class:`Context` rather then the environment.
+active :class:`Context` rather than the environment.
 
 
 .. _eval-context:

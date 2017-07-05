@@ -5,7 +5,7 @@
 
     All the unittests regarding lexing, parsing and syntax.
 
-    :copyright: (c) 2010 by the Jinja Team.
+    :copyright: (c) 2017 by the Jinja Team.
     :license: BSD, see LICENSE for more details.
 """
 import pytest
@@ -27,7 +27,7 @@ else:
 
 @pytest.mark.lexnparse
 @pytest.mark.tokenstream
-class TestTokenStream():
+class TestTokenStream(object):
     test_tokens = [Token(1, TOKEN_BLOCK_BEGIN, ''),
                    Token(2, TOKEN_BLOCK_END, ''),
                    ]
@@ -55,7 +55,7 @@ class TestTokenStream():
 
 @pytest.mark.lexnparse
 @pytest.mark.lexer
-class TestLexer():
+class TestLexer(object):
 
     def test_raw1(self, env):
         tmpl = env.from_string(
@@ -126,10 +126,37 @@ class TestLexer():
                 result = tmpl.render()
                 assert result == expect, (keep, template, result, expect)
 
+    @pytest.mark.parametrize('name,valid2,valid3', (
+        (u'foo', True, True),
+        (u'föö', False, True),
+        (u'き', False, True),
+        (u'_', True, True),
+        (u'1a', False, False),  # invalid ascii start
+        (u'a-', False, False),  # invalid ascii continue
+        (u'🐍', False, False),  # invalid unicode start
+        (u'a🐍', False, False),  # invalid unicode continue
+        # start characters not matched by \w
+        (u'\u1885', False, True),
+        (u'\u1886', False, True),
+        (u'\u2118', False, True),
+        (u'\u212e', False, True),
+        # continue character not matched by \w
+        (u'\xb7', False, False),
+        (u'a\xb7', False, True),
+    ))
+    def test_name(self, env, name, valid2, valid3):
+        t = u'{{ ' + name + u' }}'
+
+        if (valid2 and PY2) or (valid3 and not PY2):
+            # valid for version being tested, shouldn't raise
+            env.from_string(t)
+        else:
+            pytest.raises(TemplateSyntaxError, env.from_string, t)
+
 
 @pytest.mark.lexnparse
 @pytest.mark.parser
-class TestParser():
+class TestParser(object):
 
     def test_php_syntax(self, env):
         env = Environment('<?', '?>', '<?=', '?>', '<!--', '-->')
@@ -246,7 +273,7 @@ and bar comment #}
 
 @pytest.mark.lexnparse
 @pytest.mark.syntax
-class TestSyntax():
+class TestSyntax(object):
 
     def test_call(self, env):
         env = Environment()
@@ -395,6 +422,10 @@ class TestSyntax():
         tmpl = env.from_string('''{{ not 42 in bar }}''')
         assert tmpl.render(bar=bar) == text_type(not 42 in bar)
 
+    def test_operator_precedence(self, env):
+        tmpl = env.from_string('''{{ 2 * 3 + 4 % 2 + 1 - 2 }}''')
+        assert tmpl.render() == text_type(2 * 3 + 4 % 2 + 1 - 2)
+
     def test_implicit_subscribed_tuple(self, env):
         class Foo(object):
             def __getitem__(self, x):
@@ -438,7 +469,7 @@ class TestSyntax():
 
 @pytest.mark.lexnparse
 @pytest.mark.lstripblocks
-class TestLstripBlocks():
+class TestLstripBlocks(object):
 
     def test_lstrip(self, env):
         env = Environment(lstrip_blocks=True, trim_blocks=False)

@@ -106,10 +106,19 @@ current configuration.  (For example by using `gettext.find`)
 The usage of the `i18n` extension for template designers is covered as part
 :ref:`of the template documentation <i18n-in-templates>`.
 
-.. _gettext: http://docs.python.org/dev/library/gettext
-.. _Babel: http://babel.edgewall.org/
+.. _gettext: https://docs.python.org/dev/library/gettext
+.. _Babel: http://babel.pocoo.org/
 
 .. _newstyle-gettext:
+
+Whitespace Trimming
+~~~~~~~~~~~~~~~~~~~
+
+.. versionadded:: 2.10
+
+Linebreaks and surrounding whitespace can be automatically trimmed by enabling
+the ``ext.i18n.trimmed`` :ref:`policy <ext-i18n-trimmed>`.
+
 
 Newstyle Gettext
 ~~~~~~~~~~~~~~~~
@@ -183,12 +192,9 @@ With Statement
 
 **Import name:** `jinja2.ext.with_`
 
-.. versionadded:: 2.3
+.. versionchanged:: 2.9
 
-This extension adds support for the with keyword.  Using this keyword it
-is possible to enforce a nested scope in a template.  Variables can be
-declared directly in the opening block of the with statement or using a
-standard `set` statement directly within.
+This extension is now built-in and no longer does anything.
 
 .. _autoescape-extension:
 
@@ -197,12 +203,10 @@ Autoescape Extension
 
 **Import name:** `jinja2.ext.autoescape`
 
-.. versionadded:: 2.4
+.. versionchanged:: 2.9
 
-The autoescape extension allows you to toggle the autoescape feature from
-within the template.  If the environment's :attr:`~Environment.autoescape`
-setting is set to `False` it can be activated, if it's `True` it can be
-deactivated.  The setting overriding is scoped.
+This extension was removed and is now built-in.  Enabling the extension
+no longer does anything.
 
 
 .. _writing-extensions:

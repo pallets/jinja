@@ -5,7 +5,7 @@
 
     Test bytecode caching
 
-    :copyright: (c) 2010 by the Jinja Team.
+    :copyright: (c) 2017 by the Jinja Team.
     :license: BSD, see LICENSE for more details.
 """
 import pytest
@@ -24,7 +24,7 @@ def env(package_loader):
 
 
 @pytest.mark.byte_code_cache
-class TestByteCodeCache():
+class TestByteCodeCache(object):
 
     def test_simple(self, env):
         tmpl = env.get_template('test.html')

@@ -1,6 +1,170 @@
 Jinja2 Changelog
 ================
 
+Version 2.10
+------------
+(feature release, release date to be decided)
+
+- Added a new extension node called `OverlayScope` which can be used to
+  create an unoptimized scope that will look up all variables from a
+  derived context.
+- Added an `in` test that works like the in operator.  This can be used
+  in combination with `reject` and `select`.
+- Added `previtem` and `nextitem` to loop contexts, providing access to the
+  previous/next item in the loop. If such an item does not exist, the value is
+  undefined.
+- Added `changed(*values)` to loop contexts, providing an easy way of checking
+  whether a value has changed since the last iteration (or rather since the
+  last call of the method)
+- Added a `namespace` function that creates a special object which allows
+  attribute assignment using the `set` tag.  This can be used to carry data
+  across scopes, e.g. from a loop body to code that comes after the loop.
+- Added a `trimmed` modifier to `{% trans %}` to strip linebreaks and
+  surrounding whitespace. Also added a new policy to enable this for all
+  `trans` blocks.
+
+Version 2.9.6
+-------------
+(bugfix release, released on April 3rd 2017)
+
+- Fixed custom context behavior in fast resolve mode (#675)
+
+Version 2.9.5
+-------------
+(bugfix release, released on January 28th 2017)
+
+- Restored the original repr of the internal `_GroupTuple` because this
+  caused issues with ansible and it was an unintended change.  (#654)
+- Added back support for custom contexts that override the old `resolve`
+  method since it was hard for people to spot that this could cause a
+  regression.
+- Correctly use the buffer for the else block of for loops.  This caused
+  invalid syntax errors to be caused on 2.x and completely wrong behavior
+  on Python 3 (#669)
+- Resolve an issue where the `{% extends %}` tag could not be used with
+  async environments. (#668)
+- Reduce memory footprint slightly by reducing our unicode database dump
+  we use for identifier matching on Python 3 (#666)
+- Fixed autoescaping not working for macros in async compilation mode. (#671)
+
+Version 2.9.4
+-------------
+(bugfix release, released on January 10th 2017)
+
+- Solved some warnings for string literals.  (#646)
+- Increment the bytecode cache version which was not done due to an
+  oversight before.
+- Corrected bad code generation and scoping for filtered loops.  (#649)
+- Resolved an issue where top-level output silencing after known extend
+  blocks could generate invalid code when blocks where contained in if
+  statements.  (#651)
+- Made the `truncate.leeway` default configurable to improve compatibility
+  with older templates.
+
+Version 2.9.3
+-------------
+(bugfix release, released on January 8th 2017)
+
+- Restored the use of blocks in macros to the extend that was possible
+  before.  On Python 3 it would render a generator repr instead of
+  the block contents. (#645)
+- Set a consistent behavior for assigning of variables in inner scopes
+  when the variable is also read from an outer scope.  This now sets the
+  intended behavior in all situations however it does not restore the
+  old behavior where limited assignments to outer scopes was possible.
+  For more information and a discussion see #641
+- Resolved an issue where `block scoped` would not take advantage of the
+  new scoping rules.  In some more exotic cases a variable overriden in a
+  local scope would not make it into a block.
+- Change the code generation of the `with` statement to be in line with the
+  new scoping rules.  This resolves some unlikely bugs in edge cases.  This
+  also introduces a new internal `With` node that can be used by extensions.
+
+Version 2.9.2
+-------------
+(bugfix release, released on January 8th 2017)
+
+- Fixed a regression that caused for loops to not be able to use the same
+  variable for the target as well as source iterator.  (#640)
+- Add support for a previously unknown behavior of macros.  It used to be
+  possible in some circumstances to explicitly provide a caller argument
+  to macros.  While badly buggy and unintended it turns out that this is a
+  common case that gets copy pasted around.  To not completely break backwards
+  compatibility with the most common cases it's now possible to provide an
+  explicit keyword argument for caller if it's given an explicit default.
+  (#642)
+
+Version 2.9.1
+-------------
+(bugfix release, released on January 7th 2017)
+
+- Resolved a regression with call block scoping for macros.  Nested caller
+  blocks that used the same identifiers as outer macros could refer to the
+  wrong variable incorrectly.
+
+Version 2.9
+-----------
+(codename Derivation, released on January 7th 2017)
+
+- Change cache key definition in environment. This fixes a performance
+  regression introduced in 2.8.
+- Added support for `generator_stop` on supported Python versions
+  (Python 3.5 and later)
+- Corrected a long standing issue with operator precedence of math operations
+  not being what was expected.
+- Added support for Python 3.6 async iterators through a new async mode.
+- Added policies for filter defaults and similar things.
+- urlize now sets "rel noopener" by default.
+- Support attribute fallback for old-style classes in 2.x.
+- Support toplevel set statements in extend situations.
+- Restored behavior of Cycler for Python 3 users.
+- Subtraction now follows the same behavior as other operators on undefined
+  values.
+- `map` and friends will now give better error messages if you forgot to
+  quote the parameter.
+- Depend on MarkupSafe 0.23 or higher.
+- Improved the `truncate` filter to support better truncation in case
+  the string is barely truncated at all.
+- Change the logic for macro autoescaping to be based on the runtime
+  autoescaping information at call time instead of macro define time.
+- Ported a modified version of the `tojson` filter from Flask to Jinja2
+  and hooked it up with the new policy framework.
+- Block sets are now marked `safe` by default.
+- On Python 2 the asciification of ASCII strings can now be disabled with
+  the `compiler.ascii_str` policy.
+- Tests now no longer accept an arbitrary expression as first argument but
+  a restricted one.  This means that you can now properly use multiple
+  tests in one expression without extra parentheses.  In particular you can
+  now write ``foo is divisibleby 2 or foo is divisibleby 3``
+  as you would expect.
+- Greatly changed the scoping system to be more consistent with what template
+  designers and developers expect.  There is now no more magic difference
+  between the different include and import constructs.  Context is now always
+  propagated the same way.  The only remaining differences is the defaults
+  for `with context` and `without context`.
+- The `with` and `autoescape` tags are now built-in.
+- Added the new `select_autoescape` function which helps configuring better
+  autoescaping easier.
+
+Version 2.8.2
+-------------
+
+(bugfix release, unreleased)
+
+- Fixed a runtime error in the sandbox when attributes of async generators
+  were accessed.
+
+Version 2.8.1
+-------------
+
+(bugfix release, released on December 29th 2016)
+
+- Fixed the `for_qs` flag for `urlencode`.
+- Fixed regression when applying `int` to non-string values.
+- SECURITY: if the sandbox mode is used format expressions are now sandboxed
+  with the same rules as in Jinja.  This solves various information leakage
+  problems that can occur with format strings.
+
 Version 2.8
 -----------
 (codename Replacement, released on July 26th 2015)
@@ -19,7 +183,7 @@ Version 2.8
 - If unmarshalling of cached data fails the template will be
   reloaded now.
 - Implemented a block ``set`` tag.
-- Default cache size was incrased to 400 from a low 50.
+- Default cache size was increased to 400 from a low 50.
 - Fixed ``is number`` test to accept long integers in all Python versions.
 - Changed ``is number`` to accept Decimal as a number.
 - Added a check for default arguments followed by non-default arguments. This
@@ -125,7 +289,7 @@ Version 2.6
   makes this necessary, Jinja2 will automatically detect these cases now.
 - the sum filter can now sum up values by attribute.  This is a backwards
   incompatible change.  The argument to the filter previously was the
-  optional starting index which defaultes to zero.  This now became the
+  optional starting index which defaults to zero.  This now became the
   second argument to the function because it's rarely used.
 - like sum, sort now also makes it possible to order items by attribute.
 - like sum and sort, join now also is able to join attributes of objects
@@ -183,11 +347,11 @@ Version 2.5.1
   pulled from markupsafe by the Jinja2 developers.  The debug support
   went into a separate feature called "debugsupport" and is disabled
   by default because it is only relevant for Python 2.4
-- fixed an issue with unary operators having the wrong precendence.
+- fixed an issue with unary operators having the wrong precedence.
 
 Version 2.5
 -----------
-(codename Incoherence, relased on May 29th 2010)
+(codename Incoherence, released on May 29th 2010)
 
 - improved the sort filter (should have worked like this for a
   long time) by adding support for case insensitive searches.

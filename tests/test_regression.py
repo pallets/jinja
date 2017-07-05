@@ -5,18 +5,19 @@
 
     Tests corner cases and bugs.
 
-    :copyright: (c) 2010 by the Jinja Team.
+    :copyright: (c) 2017 by the Jinja Team.
     :license: BSD, see LICENSE for more details.
 """
+import sys
 import pytest
 
 from jinja2 import Template, Environment, DictLoader, TemplateSyntaxError, \
-     TemplateNotFound, PrefixLoader
+     TemplateAssertionError, TemplateNotFound, PrefixLoader
 from jinja2._compat import text_type
 
 
 @pytest.mark.regression
-class TestCorner():
+class TestCorner(object):
 
     def test_assigned_scoping(self, env):
         t = env.from_string('''
@@ -77,7 +78,7 @@ class TestCorner():
 
 
 @pytest.mark.regression
-class TestBug():
+class TestBug(object):
 
     def test_keyword_folding(self, env):
         env = Environment()
@@ -100,7 +101,7 @@ class TestBug():
 
     def test_urlize_filter_escaping(self, env):
         tmpl = env.from_string('{{ "http://www.example.org/<foo"|urlize }}')
-        assert tmpl.render() == '<a href="http://www.example.org/&lt;foo">'\
+        assert tmpl.render() == '<a href="http://www.example.org/&lt;foo" rel="noopener">'\
             'http://www.example.org/&lt;foo</a>'
 
     def test_loop_call_loop(self, env):
@@ -276,3 +277,265 @@ class TestBug():
         expected = 'TEST'
 
         assert output == expected
+
+    @pytest.mark.skipif(sys.version_info[0] > 2,
+                        reason='This only works on 2.x')
+    def test_old_style_attribute(self, env):
+        class Foo:
+            x = 42
+        assert env.getitem(Foo(), 'x') == 42
+
+    def test_block_set_with_extends(self):
+        env = Environment(loader=DictLoader({
+            'main': '{% block body %}[{{ x }}]{% endblock %}',
+        }))
+        t = env.from_string('{% extends "main" %}{% set x %}42{% endset %}')
+        assert t.render() == '[42]'
+
+    def test_nested_for_else(self, env):
+        tmpl = env.from_string('{% for x in y %}{{ loop.index0 }}{% else %}'
+                               '{% for i in range(3) %}{{ i }}{% endfor %}'
+                               '{% endfor %}')
+        assert tmpl.render() == '012'
+
+    def test_macro_var_bug(self, env):
+        tmpl = env.from_string('''
+        {% set i = 1 %}
+        {% macro test() %}
+            {% for i in range(0, 10) %}{{ i }}{% endfor %}
+        {% endmacro %}{{ test() }}
+        ''')
+        assert tmpl.render().strip() == '0123456789'
+
+    def test_macro_var_bug_advanced(self, env):
+        tmpl = env.from_string('''
+        {% macro outer() %}
+            {% set i = 1 %}
+            {% macro test() %}
+                {% for i in range(0, 10) %}{{ i }}{% endfor %}
+            {% endmacro %}{{ test() }}
+        {% endmacro %}{{ outer() }}
+        ''')
+        assert tmpl.render().strip() == '0123456789'
+
+    def test_callable_defaults(self):
+        env = Environment()
+        env.globals['get_int'] = lambda: 42
+        t = env.from_string('''
+        {% macro test(a, b, c=get_int()) -%}
+             {{ a + b + c }}
+        {%- endmacro %}
+        {{ test(1, 2) }}|{{ test(1, 2, 3) }}
+        ''')
+        assert t.render().strip() == '45|6'
+
+    def test_macro_escaping(self):
+        env = Environment(
+            autoescape=lambda x: False, extensions=['jinja2.ext.autoescape'])
+        template = "{% macro m() %}<html>{% endmacro %}"
+        template += "{% autoescape true %}{{ m() }}{% endautoescape %}"
+        assert env.from_string(template).render()
+
+    def test_macro_scoping(self, env):
+        tmpl = env.from_string('''
+        {% set n=[1,2,3,4,5] %}
+        {% for n in [[1,2,3], [3,4,5], [5,6,7]] %}
+
+        {% macro x(l) %}
+          {{ l.pop() }}
+          {% if l %}{{ x(l) }}{% endif %}
+        {% endmacro %}
+
+        {{ x(n) }}
+
+        {% endfor %}
+        ''')
+        assert list(map(int, tmpl.render().split())) == \
+            [3, 2, 1, 5, 4, 3, 7, 6, 5]
+
+    def test_scopes_and_blocks(self):
+        env = Environment(loader=DictLoader({
+            'a.html': '''
+                {%- set foo = 'bar' -%}
+                {% include 'x.html' -%}
+            ''',
+            'b.html': '''
+                {%- set foo = 'bar' -%}
+                {% block test %}{% include 'x.html' %}{% endblock -%}
+                ''',
+            'c.html': '''
+                {%- set foo = 'bar' -%}
+                {% block test %}{% set foo = foo
+                    %}{% include 'x.html' %}{% endblock -%}
+            ''',
+            'x.html': '''{{ foo }}|{{ test }}'''
+        }))
+
+        a = env.get_template('a.html')
+        b = env.get_template('b.html')
+        c = env.get_template('c.html')
+
+        assert a.render(test='x').strip() == 'bar|x'
+        assert b.render(test='x').strip() == 'bar|x'
+        assert c.render(test='x').strip() == 'bar|x'
+
+    def test_scopes_and_include(self):
+        env = Environment(loader=DictLoader({
+            'include.html': '{{ var }}',
+            'base.html': '{% include "include.html" %}',
+            'child.html': '{% extends "base.html" %}{% set var = 42 %}',
+        }))
+        t = env.get_template('child.html')
+        assert t.render() == '42'
+
+    def test_caller_scoping(self, env):
+        t = env.from_string('''
+        {% macro detail(icon, value) -%}
+          {% if value -%}
+            <p><span class="fa fa-fw fa-{{ icon }}"></span>
+                {%- if caller is undefined -%}
+                    {{ value }}
+                {%- else -%}
+                    {{ caller(value, *varargs) }}
+                {%- endif -%}</p>
+          {%- endif %}
+        {%- endmacro %}
+
+
+        {% macro link_detail(icon, value, href) -%}
+          {% call(value, href) detail(icon, value, href) -%}
+            <a href="{{ href }}">{{ value }}</a>
+          {%- endcall %}
+        {%- endmacro %}
+        ''')
+
+        assert t.module.link_detail('circle', 'Index', '/') == (
+            '<p><span class="fa fa-fw fa-circle">'
+            '</span><a href="/">Index</a></p>')
+
+    def test_variable_reuse(self, env):
+        t = env.from_string('{% for x in x.y %}{{ x }}{% endfor %}')
+        assert t.render(x={'y': [0, 1, 2]}) == '012'
+
+        t = env.from_string('{% for x in x.y %}{{ loop.index0 }}|{{ x }}{% endfor %}')
+        assert t.render(x={'y': [0, 1, 2]}) == '0|01|12|2'
+
+        t = env.from_string('{% for x in x.y recursive %}{{ x }}{% endfor %}')
+        assert t.render(x={'y': [0, 1, 2]}) == '012'
+
+    def test_double_caller(self, env):
+        t = env.from_string('{% macro x(caller=none) %}[{% if caller %}'
+                            '{{ caller() }}{% endif %}]{% endmacro %}'
+                            '{{ x() }}{% call x() %}aha!{% endcall %}')
+        assert t.render() == '[][aha!]'
+
+    def test_double_caller_no_default(self, env):
+        with pytest.raises(TemplateAssertionError) as exc_info:
+            env.from_string('{% macro x(caller) %}[{% if caller %}'
+                            '{{ caller() }}{% endif %}]{% endmacro %}')
+        assert exc_info.match(r'"caller" argument must be omitted or '
+                              r'be given a default')
+
+        t = env.from_string('{% macro x(caller=none) %}[{% if caller %}'
+                            '{{ caller() }}{% endif %}]{% endmacro %}')
+        with pytest.raises(TypeError) as exc_info:
+            t.module.x(None, caller=lambda: 42)
+        assert exc_info.match(r'\'x\' was invoked with two values for the '
+                              r'special caller argument')
+
+    def test_macro_blocks(self, env):
+        t = env.from_string('{% macro x() %}{% block foo %}x{% '
+                            'endblock %}{% endmacro %}{{ x() }}')
+        assert t.render() == 'x'
+
+    def test_scoped_block(self, env):
+        t = env.from_string('{% set x = 1 %}{% with x = 2 %}{% block y scoped %}'
+                            '{{ x }}{% endblock %}{% endwith %}')
+        assert t.render() == '2'
+
+    def test_recursive_loop_filter(self, env):
+        t = env.from_string('''
+        <?xml version="1.0" encoding="UTF-8"?>
+        <urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">
+          {%- for page in [site.root] if page.url != this recursive %}
+          <url><loc>{{ page.url }}</loc></url>
+          {{- loop(page.children) }}
+          {%- endfor %}
+        </urlset>
+        ''')
+        sm  =t.render(this='/foo', site={'root': {
+            'url': '/',
+            'children': [
+                {'url': '/foo'},
+                {'url': '/bar'},
+            ]
+        }})
+        lines = [x.strip() for x in sm.splitlines() if x.strip()]
+        assert lines == [
+            '<?xml version="1.0" encoding="UTF-8"?>',
+            '<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">',
+            '<url><loc>/</loc></url>',
+            '<url><loc>/bar</loc></url>',
+            '</urlset>',
+        ]
+
+    def test_empty_if(self, env):
+        t = env.from_string('{% if foo %}{% else %}42{% endif %}')
+        assert t.render(foo=False) == '42'
+
+    def test_set_and_include(self):
+        env = Environment(loader=DictLoader({
+            'inc': 'bar',
+            'main': '{% set foo = "foo" %}{{ foo }}{% include "inc" %}'
+        }))
+        assert env.get_template('main').render() == 'foobar'
+
+    def test_loop_include(self):
+        env = Environment(loader=DictLoader({
+            'inc': '{{ item }}',
+            'main': '{% for item in [1, 2, 3] %}{% include "inc" %}{% endfor %}',
+        }))
+        assert env.get_template('main').render() == '123'
+
+    def test_grouper_repr(self):
+        from jinja2.filters import _GroupTuple
+        t = _GroupTuple('foo', [1, 2])
+        assert t.grouper == 'foo'
+        assert t.list == [1, 2]
+        assert repr(t) == "('foo', [1, 2])"
+        assert str(t) == "('foo', [1, 2])"
+
+    def test_custom_context(self, env):
+        from jinja2.runtime import Context
+
+        class MyContext(Context):
+            pass
+
+        class MyEnvironment(Environment):
+            context_class = MyContext
+
+        loader = DictLoader({'base': '{{ foobar }}',
+                             'test': '{% extends "base" %}'})
+        env = MyEnvironment(loader=loader)
+        assert env.get_template('test').render(foobar='test') == 'test'
+
+    def test_legacy_custom_context(self, env):
+        from jinja2.runtime import Context, Undefined, missing
+
+        class MyContext(Context):
+            def resolve(self, name):
+                if name == 'foo':
+                    return 42
+                return super(MyContext, self).resolve(name)
+
+        x = MyContext(env, parent={'bar': 23}, name='foo', blocks={})
+        assert x._legacy_resolve_mode
+        assert x.resolve_or_missing('foo') == 42
+        assert x.resolve_or_missing('bar') == 23
+        assert x.resolve_or_missing('baz') is missing
+
+    def test_recursive_loop_bug(self, env):
+        tmpl = env.from_string('''
+            {%- for value in values recursive %}1{% else %}0{% endfor -%}
+        ''')
+        assert tmpl.render(values=[]) == '0'

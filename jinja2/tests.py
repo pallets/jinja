@@ -5,7 +5,7 @@
 
     Jinja test functions. Used with the "is" operator.
 
-    :copyright: (c) 2010 by the Jinja Team.
+    :copyright: (c) 2017 by the Jinja Team.
     :license: BSD, see LICENSE for more details.
 """
 import re
@@ -152,6 +152,24 @@ def test_escaped(value):
     return hasattr(value, '__html__')
 
 
+def test_greaterthan(value, other):
+    """Check if value is greater than other."""
+    return value > other
+
+
+def test_lessthan(value, other):
+    """Check if value is less than other."""
+    return value < other
+
+
+def test_in(value, seq):
+    """Check if value is in seq.
+
+    .. versionadded:: 2.10
+    """
+    return value in seq
+
+
 TESTS = {
     'odd':              test_odd,
     'even':             test_even,
@@ -169,5 +187,8 @@ TESTS = {
     'callable':         test_callable,
     'sameas':           test_sameas,
     'equalto':          test_equalto,
-    'escaped':          test_escaped
+    'escaped':          test_escaped,
+    'greaterthan':      test_greaterthan,
+    'lessthan':         test_lessthan,
+    'in':               test_in
 }
