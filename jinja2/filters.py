@@ -52,7 +52,13 @@ def environmentfilter(f):
     return f
 
 
-def make_attrgetter(environment, attribute, lowercase=False):
+def ignore_case(value):
+    """For use as a postprocessor for :func:`make_attrgetter`. Converts strings
+    to lowercase and returns other types as-is."""
+    return value.lower() if isinstance(value, string_types) else value
+
+
+def make_attrgetter(environment, attribute, postprocess=None):
     """Returns a callable that looks up the given attribute from a
     passed object with the rules of the environment.  Dots are allowed
     to access attributes of attributes.  Integer parts in paths are
@@ -68,9 +74,12 @@ def make_attrgetter(environment, attribute, lowercase=False):
     def attrgetter(item):
         for part in attribute:
             item = environment.getitem(item, part)
-        if lowercase and isinstance(item, string_types):
-            item = item.lower()
+
+        if postprocess is not None:
+            item = postprocess(item)
+
         return item
+
     return attrgetter
 
 
@@ -226,8 +235,9 @@ def do_dictsort(value, case_sensitive=False, by='key'):
 
 
 @environmentfilter
-def do_sort(environment, value, reverse=False, case_sensitive=False,
-            attribute=None):
+def do_sort(
+    environment, value, reverse=False, case_sensitive=False, attribute=None
+):
     """Sort an iterable.  Per default it sorts ascending, if you pass it
     true as first argument it will reverse the sorting.
 
@@ -253,7 +263,10 @@ def do_sort(environment, value, reverse=False, case_sensitive=False,
     .. versionchanged:: 2.6
        The `attribute` parameter was added.
     """
-    key_func = make_attrgetter(environment, attribute, not case_sensitive)
+    key_func = make_attrgetter(
+        environment, attribute,
+        postprocess=ignore_case if not case_sensitive else None
+    )
     return sorted(value, key=key_func, reverse=reverse)
 
 
@@ -268,8 +281,8 @@ def do_unique(environment, value, case_sensitive=False, attribute=None):
 
     This filter complements the `groupby` filter, which sorts and groups an
     iterable by a certain attribute. The `unique` filter groups the items
-    from the iterable by themself instead and always returns a flat list of
-    unique items. That can be useuful for example when you need to concatenate
+    from the iterable by themselves instead and always returns a flat list of
+    unique items. That can be useful for example when you need to concatenate
     that items:
 
     .. sourcecode:: jinja
@@ -278,7 +291,7 @@ def do_unique(environment, value, case_sensitive=False, attribute=None):
             -> foo,bar,foobar
 
     Also note that the resulting list contains the items in the same order
-    as their first occurence in the iterable passed to the filter. If sorting
+    as their first occurrence in the iterable passed to the filter. If sorting
     is needed you can still chain the `unique` and `sort` filter:
 
     .. sourcecode:: jinja
@@ -286,18 +299,18 @@ def do_unique(environment, value, case_sensitive=False, attribute=None):
         {{ ['foo', 'bar', 'foobar', 'FooBar']|unique|sort }}
             -> ['bar', 'foo', 'foobar']
     """
-    getter = make_attrgetter(environment, attribute, not case_sensitive)
-
+    getter = make_attrgetter(
+        environment, attribute,
+        postprocess=ignore_case if not case_sensitive else None
+    )
     seen = set()
-    rv = []
 
     for item in value:
         key = getter(item)
+
         if key not in seen:
             seen.add(key)
-            rv.append(item)
-
-    return rv
+            yield item
 
 
 def do_default(value, default_value=u'', boolean=False):

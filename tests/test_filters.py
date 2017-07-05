@@ -391,17 +391,17 @@ class TestFilter(object):
         tmpl = env.from_string('''{{ items|sort(attribute='value')|join }}''')
         assert tmpl.render(items=map(Magic, [3, 2, 4, 1])) == '1234'
 
-    def test_unique1(self, env):
-        tmpl = env.from_string('{{ "".join(["b", "A", "a", "b"]|unique) }}')
-        assert tmpl.render() == "bA"
+    def test_unique(self, env):
+        t = env.from_string('{{ "".join(["b", "A", "a", "b"]|unique) }}')
+        assert t.render() == "bA"
 
-    def test_unique2(self, env):
-        tmpl = env.from_string('{{ "".join(["b", "A", "a", "b"]|unique(true)) }}')
-        assert tmpl.render() == "bAa"
+    def test_unique_case_sensitive(self, env):
+        t = env.from_string('{{ "".join(["b", "A", "a", "b"]|unique(true)) }}')
+        assert t.render() == "bAa"
 
-    def test_unique3(self, env):
-        tmpl = env.from_string("{{ items|unique(attribute='value')|join }}")
-        assert tmpl.render(items=map(Magic, [3, 2, 4, 1, 2])) == '3241'
+    def test_unique_attribute(self, env):
+        t = env.from_string("{{ items|unique(attribute='value')|join }}")
+        assert t.render(items=map(Magic, [3, 2, 4, 1, 2])) == '3241'
 
     def test_groupby(self, env):
         tmpl = env.from_string('''
