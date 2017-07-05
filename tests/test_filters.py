@@ -188,12 +188,12 @@ class TestFilter(object):
         state = random.getstate()
         request.addfinalizer(lambda: random.setstate(state))
         # generate the random values from a known seed
-        random.seed('jinja', version=2)
+        random.seed('jinja')
         expected = [random.choice('1234567890') for _ in range(10)]
 
         # check that the random sequence is generated again by a template
         # ensures that filter result is not constant folded
-        random.seed('jinja', version=2)
+        random.seed('jinja')
         t = env.from_string('{{ "1234567890"|random }}')
 
         for value in expected:
