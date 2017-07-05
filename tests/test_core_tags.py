@@ -5,12 +5,12 @@
 
     Test the core tags like for and if.
 
-    :copyright: (c) 2010 by the Jinja Team.
+    :copyright: (c) 2017 by the Jinja Team.
     :license: BSD, see LICENSE for more details.
 """
 import pytest
-from jinja2 import Environment, TemplateSyntaxError, UndefinedError, \
-     DictLoader
+from jinja2 import Environment, TemplateSyntaxError, TemplateRuntimeError, \
+     UndefinedError, DictLoader
 
 
 @pytest.fixture
@@ -20,7 +20,7 @@ def env_trim():
 
 @pytest.mark.core_tags
 @pytest.mark.for_loop
-class TestForLoop():
+class TestForLoop(object):
 
     def test_simple(self, env):
         tmpl = env.from_string('{% for item in seq %}{{ item }}{% endfor %}')
@@ -30,6 +30,11 @@ class TestForLoop():
         tmpl = env.from_string(
             '{% for item in seq %}XXX{% else %}...{% endfor %}')
         assert tmpl.render() == '...'
+
+    def test_else_scoping_item(self, env):
+        tmpl = env.from_string(
+            '{% for item in [] %}{% else %}{{ item }}{% endfor %}')
+        assert tmpl.render(item=42) == '42'
 
     def test_empty_blocks(self, env):
         tmpl = env.from_string('<{% for item in seq %}{% else %}{% endfor %}>')
@@ -63,6 +68,21 @@ class TestForLoop():
         output = tmpl.render(seq=list(range(4)), through=('<1>', '<2>'))
         assert output == '<1><2>' * 4
 
+    def test_lookaround(self, env):
+        tmpl = env.from_string('''{% for item in seq -%}
+            {{ loop.previtem|default('x') }}-{{ item }}-{{
+            loop.nextitem|default('x') }}|
+        {%- endfor %}''')
+        output = tmpl.render(seq=list(range(4)))
+        assert output == 'x-0-1|0-1-2|1-2-3|2-3-x|'
+
+    def test_changed(self, env):
+        tmpl = env.from_string('''{% for item in seq -%}
+            {{ loop.changed(item) }},
+        {%- endfor %}''')
+        output = tmpl.render(seq=[None, None, 1, 2, 2, 3, 4, 4, 4])
+        assert output == 'True,False,True,True,False,True,True,False,False,'
+
     def test_scope(self, env):
         tmpl = env.from_string('{% for item in seq %}{% endfor %}{{ item }}')
         output = tmpl.render(seq=list(range(10)))
@@ -89,6 +109,18 @@ class TestForLoop():
             dict(a=2, b=[dict(a=1), dict(a=2)]),
             dict(a=3, b=[dict(a='a')])
         ]) == '[1<[1][2]>][2<[1][2]>][3<[a]>]'
+
+    def test_recursive_lookaround(self, env):
+        tmpl = env.from_string('''{% for item in seq recursive -%}
+            [{{ loop.previtem.a if loop.previtem is defined else 'x' }}.{{
+            item.a }}.{{ loop.nextitem.a if loop.nextitem is defined else 'x'
+            }}{% if item.b %}<{{ loop(item.b) }}>{% endif %}]
+        {%- endfor %}''')
+        assert tmpl.render(seq=[
+            dict(a=1, b=[dict(a=1), dict(a=2)]),
+            dict(a=2, b=[dict(a=1), dict(a=2)]),
+            dict(a=3, b=[dict(a='a')])
+        ]) == '[x.1.2<[x.1.2][1.2.x]>][1.2.3<[x.1.2][1.2.x]>][2.3.x<[x.a.x]>]'
 
     def test_recursive_depth0(self, env):
         tmpl = env.from_string('''{% for item in seq recursive -%}
@@ -194,10 +226,19 @@ class TestForLoop():
                                '{{ a }}|{{ b }}|{{ c }}{% endfor %}')
         assert tmpl.render() == '1|2|3'
 
+    def test_intended_scoping_with_set(self, env):
+        tmpl = env.from_string('{% for item in seq %}{{ x }}'
+                               '{% set x = item %}{{ x }}{% endfor %}')
+        assert tmpl.render(x=0, seq=[1, 2, 3]) == '010203'
+
+        tmpl = env.from_string('{% set x = 9 %}{% for item in seq %}{{ x }}'
+                               '{% set x = item %}{{ x }}{% endfor %}')
+        assert tmpl.render(x=0, seq=[1, 2, 3]) == '919293'
+
 
 @pytest.mark.core_tags
 @pytest.mark.if_condition
-class TestIfCondition():
+class TestIfCondition(object):
 
     def test_simple(self, env):
         tmpl = env.from_string('''{% if true %}...{% endif %}''')
@@ -232,7 +273,7 @@ class TestIfCondition():
 
 @pytest.mark.core_tags
 @pytest.mark.macros
-class TestMacros():
+class TestMacros(object):
     def test_simple(self, env_trim):
         tmpl = env_trim.from_string('''\
 {% macro say_hello(name) %}Hello {{ name }}!{% endmacro %}
@@ -303,13 +344,11 @@ class TestMacros():
             '{% macro bar() %}{{ varargs }}{{ kwargs }}{% endmacro %}'
             '{% macro baz() %}{{ caller() }}{% endmacro %}')
         assert tmpl.module.foo.arguments == ('a', 'b')
-        assert tmpl.module.foo.defaults == ()
         assert tmpl.module.foo.name == 'foo'
         assert not tmpl.module.foo.caller
         assert not tmpl.module.foo.catch_kwargs
         assert not tmpl.module.foo.catch_varargs
         assert tmpl.module.bar.arguments == ()
-        assert tmpl.module.bar.defaults == ()
         assert not tmpl.module.bar.caller
         assert tmpl.module.bar.catch_kwargs
         assert tmpl.module.bar.catch_varargs
@@ -321,10 +360,20 @@ class TestMacros():
                                     '{{ foo(5) }}')
         assert tmpl.render() == '5|4|3|2|1'
 
+    def test_macro_defaults_self_ref(self, env):
+        tmpl = env.from_string('''
+            {%- set x = 42 %}
+            {%- macro m(a, b=x, x=23) %}{{ a }}|{{ b }}|{{ x }}{% endmacro -%}
+        ''')
+        assert tmpl.module.m(1) == '1||23'
+        assert tmpl.module.m(1, 2) == '1|2|23'
+        assert tmpl.module.m(1, 2, 3) == '1|2|3'
+        assert tmpl.module.m(1, x=7) == '1|7|7'
+
 
 @pytest.mark.core_tags
 @pytest.mark.set
-class TestSet():
+class TestSet(object):
 
     def test_normal(self, env_trim):
         tmpl = env_trim.from_string('{% set foo = 1 %}{{ foo }}')
@@ -335,3 +384,85 @@ class TestSet():
         tmpl = env_trim.from_string('{% set foo %}42{% endset %}{{ foo }}')
         assert tmpl.render() == '42'
         assert tmpl.module.foo == u'42'
+
+    def test_block_escaping(self):
+        env = Environment(autoescape=True)
+        tmpl = env.from_string('{% set foo %}<em>{{ test }}</em>'
+                               '{% endset %}foo: {{ foo }}')
+        assert tmpl.render(test='<unsafe>') == 'foo: <em>&lt;unsafe&gt;</em>'
+
+    def test_set_invalid(self, env_trim):
+        pytest.raises(TemplateSyntaxError, env_trim.from_string,
+                      "{% set foo['bar'] = 1 %}")
+        tmpl = env_trim.from_string('{% set foo.bar = 1 %}')
+        exc_info = pytest.raises(TemplateRuntimeError, tmpl.render, foo={})
+        assert 'non-namespace object' in exc_info.value.message
+
+    def test_namespace_redefined(self, env_trim):
+        tmpl = env_trim.from_string('{% set ns = namespace() %}'
+                                    '{% set ns.bar = "hi" %}')
+        exc_info = pytest.raises(TemplateRuntimeError, tmpl.render,
+                                 namespace=dict)
+        assert 'non-namespace object' in exc_info.value.message
+
+    def test_namespace(self, env_trim):
+        tmpl = env_trim.from_string('{% set ns = namespace() %}'
+                                    '{% set ns.bar = "42" %}'
+                                    '{{ ns.bar }}')
+        assert tmpl.render() == '42'
+
+    def test_namespace_block(self, env_trim):
+        tmpl = env_trim.from_string('{% set ns = namespace() %}'
+                                    '{% set ns.bar %}42{% endset %}'
+                                    '{{ ns.bar }}')
+        assert tmpl.render() == '42'
+
+    def test_init_namespace(self, env_trim):
+        tmpl = env_trim.from_string('{% set ns = namespace(d, self=37) %}'
+                                    '{% set ns.b = 42 %}'
+                                    '{{ ns.a }}|{{ ns.self }}|{{ ns.b }}')
+        assert tmpl.render(d={'a': 13}) == '13|37|42'
+
+    def test_namespace_loop(self, env_trim):
+        tmpl = env_trim.from_string('{% set ns = namespace(found=false) %}'
+                                    '{% for x in range(4) %}'
+                                    '{% if x == v %}'
+                                    '{% set ns.found = true %}'
+                                    '{% endif %}'
+                                    '{% endfor %}'
+                                    '{{ ns.found }}')
+        assert tmpl.render(v=3) == 'True'
+        assert tmpl.render(v=4) == 'False'
+
+    def test_namespace_macro(self, env_trim):
+        tmpl = env_trim.from_string('{% set ns = namespace() %}'
+                                    '{% set ns.a = 13 %}'
+                                    '{% macro magic(x) %}'
+                                    '{% set x.b = 37 %}'
+                                    '{% endmacro %}'
+                                    '{{ magic(ns) }}'
+                                    '{{ ns.a }}|{{ ns.b }}')
+        assert tmpl.render() == '13|37'
+
+
+@pytest.mark.core_tags
+@pytest.mark.with_
+class TestWith(object):
+
+    def test_with(self, env):
+        tmpl = env.from_string('''\
+        {% with a=42, b=23 -%}
+            {{ a }} = {{ b }}
+        {% endwith -%}
+            {{ a }} = {{ b }}\
+        ''')
+        assert [x.strip() for x in tmpl.render(a=1, b=2).splitlines()] \
+            == ['42 = 23', '1 = 2']
+
+    def test_with_argument_scoping(self, env):
+        tmpl = env.from_string('''\
+        {%- with a=1, b=2, c=b, d=e, e=5 -%}
+            {{ a }}|{{ b }}|{{ c }}|{{ d }}|{{ e }}
+        {%- endwith -%}
+        ''')
+        assert tmpl.render(b=3, e=4) == '1|2|3|4|5'

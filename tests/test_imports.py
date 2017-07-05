@@ -5,7 +5,7 @@
 
     Tests the import features (with includes).
 
-    :copyright: (c) 2010 by the Jinja Team.
+    :copyright: (c) 2017 by the Jinja Team.
     :license: BSD, see LICENSE for more details.
 """
 import pytest
@@ -26,7 +26,7 @@ def test_env():
 
 
 @pytest.mark.imports
-class TestImports():
+class TestImports(object):
 
     def test_context_imports(self, test_env):
         t = test_env.from_string('{% import "module" as m %}{{ m.test() }}')
@@ -74,7 +74,7 @@ class TestImports():
 
 @pytest.mark.imports
 @pytest.mark.includes
-class TestIncludes():
+class TestIncludes(object):
 
     def test_context_include(self, test_env):
         t = test_env.from_string('{% include "header" %}')
@@ -146,3 +146,11 @@ class TestIncludes():
             {{ outer("FOO") }}
         """)
         assert t.render().strip() == '(FOO)'
+
+    def test_import_from_with_context(self):
+        env = Environment(loader=DictLoader({
+            'a': '{% macro x() %}{{ foobar }}{% endmacro %}',
+        }))
+        t = env.from_string('{% set foobar = 42 %}{% from "a" '
+                            'import x with context %}{{ x() }}')
+        assert t.render() == '42'

@@ -9,7 +9,7 @@
     `get_nodes` used by the parser and translator in order to normalize
     python and jinja nodes.
 
-    :copyright: (c) 2010 by the Jinja Team.
+    :copyright: (c) 2017 by the Jinja Team.
     :license: BSD, see LICENSE for more details.
 """
 import types
@@ -17,7 +17,7 @@ import operator
 
 from collections import deque
 from jinja2.utils import Markup
-from jinja2._compat import izip, with_metaclass, text_type
+from jinja2._compat import izip, with_metaclass, text_type, PY2
 
 
 #: the types we support for context functions
@@ -242,6 +242,35 @@ class Node(with_metaclass(NodeType, object)):
                       arg in self.fields)
         )
 
+    def dump(self):
+        def _dump(node):
+            if not isinstance(node, Node):
+                buf.append(repr(node))
+                return
+
+            buf.append('nodes.%s(' % node.__class__.__name__)
+            if not node.fields:
+                buf.append(')')
+                return
+            for idx, field in enumerate(node.fields):
+                if idx:
+                    buf.append(', ')
+                value = getattr(node, field)
+                if isinstance(value, list):
+                    buf.append('[')
+                    for idx, item in enumerate(value):
+                        if idx:
+                            buf.append(', ')
+                        _dump(item)
+                    buf.append(']')
+                else:
+                    _dump(value)
+            buf.append(')')
+        buf = []
+        _dump(self)
+        return ''.join(buf)
+
+
 
 class Stmt(Node):
     """Base node for all statements."""
@@ -306,6 +335,15 @@ class CallBlock(Stmt):
 class FilterBlock(Stmt):
     """Node for filter sections."""
     fields = ('body', 'filter')
+
+
+class With(Stmt):
+    """Specific node for with statements.  In older versions of Jinja the
+    with statement was implemented on the base of the `Scope` node instead.
+
+    .. versionadded:: 2.9.3
+    """
+    fields = ('targets', 'values', 'body')
 
 
 class Block(Stmt):
@@ -427,6 +465,18 @@ class Name(Expr):
                                  'True', 'False', 'None')
 
 
+class NSRef(Expr):
+    """Reference to a namespace value assignment"""
+    fields = ('name', 'attr')
+
+    def can_assign(self):
+        # We don't need any special checks here; NSRef assignments have a
+        # runtime check to ensure the target is a namespace object which will
+        # have been checked already as it is created using a normal assignment
+        # which goes through a `Name` node.
+        return True
+
+
 class Literal(Expr):
     """Baseclass for literals."""
     abstract = True
@@ -441,7 +491,14 @@ class Const(Literal):
     fields = ('value',)
 
     def as_const(self, eval_ctx=None):
-        return self.value
+        rv = self.value
+        if PY2 and type(rv) is text_type and \
+           self.environment.policies['compiler.ascii_str']:
+            try:
+                rv = rv.encode('ascii')
+            except UnicodeError:
+                pass
+        return rv
 
     @classmethod
     def from_untrusted(cls, value, lineno=None, environment=None):
@@ -563,8 +620,15 @@ class Filter(Expr):
         filter_ = self.environment.filters.get(self.name)
         if filter_ is None or getattr(filter_, 'contextfilter', False):
             raise Impossible()
+
+        # We cannot constant handle async filters, so we need to make sure
+        # to not go down this path.
+        if eval_ctx.environment.is_async and \
+           getattr(filter_, 'asyncfiltervariant', False):
+            raise Impossible()
+
         obj = self.node.as_const(eval_ctx)
-        args = [x.as_const(eval_ctx) for x in self.args]
+        args = [obj] + [x.as_const(eval_ctx) for x in self.args]
         if getattr(filter_, 'evalcontextfilter', False):
             args.insert(0, eval_ctx)
         elif getattr(filter_, 'environmentfilter', False):
@@ -581,7 +645,7 @@ class Filter(Expr):
             except Exception:
                 raise Impossible()
         try:
-            return filter_(obj, *args, **kwargs)
+            return filter_(*args, **kwargs)
         except Exception:
             raise Impossible()
 
@@ -601,38 +665,6 @@ class Call(Expr):
     arguments.
     """
     fields = ('node', 'args', 'kwargs', 'dyn_args', 'dyn_kwargs')
-
-    def as_const(self, eval_ctx=None):
-        eval_ctx = get_eval_context(self, eval_ctx)
-        if eval_ctx.volatile:
-            raise Impossible()
-        obj = self.node.as_const(eval_ctx)
-
-        # don't evaluate context functions
-        args = [x.as_const(eval_ctx) for x in self.args]
-        if isinstance(obj, _context_function_types):
-            if getattr(obj, 'contextfunction', False):
-                raise Impossible()
-            elif getattr(obj, 'evalcontextfunction', False):
-                args.insert(0, eval_ctx)
-            elif getattr(obj, 'environmentfunction', False):
-                args.insert(0, self.environment)
-
-        kwargs = dict(x.as_const(eval_ctx) for x in self.kwargs)
-        if self.dyn_args is not None:
-            try:
-                args.extend(self.dyn_args.as_const(eval_ctx))
-            except Exception:
-                raise Impossible()
-        if self.dyn_kwargs is not None:
-            try:
-                kwargs.update(self.dyn_kwargs.as_const(eval_ctx))
-            except Exception:
-                raise Impossible()
-        try:
-            return obj(*args, **kwargs)
-        except Exception:
-            raise Impossible()
 
 
 class Getitem(Expr):
@@ -701,7 +733,7 @@ class Concat(Expr):
 
 class Compare(Expr):
     """Compares an expression with some other expressions.  `ops` must be a
-    list of :class:`Operand`\s.
+    list of :class:`Operand`\\s.
     """
     fields = ('expr', 'ops')
 
@@ -892,6 +924,22 @@ class Break(Stmt):
 class Scope(Stmt):
     """An artificial scope."""
     fields = ('body',)
+
+
+class OverlayScope(Stmt):
+    """An overlay scope for extensions.  This is a largely unoptimized scope
+    that however can be used to introduce completely arbitrary variables into
+    a sub scope from a dictionary or dictionary like object.  The `context`
+    field has to evaluate to a dictionary object.
+
+    Example usage::
+
+        OverlayScope(context=self.call_method('get_context'),
+                     body=[...])
+
+    .. versionadded:: 2.10
+    """
+    fields = ('context', 'body')
 
 
 class EvalContextModifier(Stmt):

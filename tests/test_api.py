@@ -5,7 +5,7 @@
 
     Tests the public API and related stuff.
 
-    :copyright: (c) 2010 by the Jinja Team.
+    :copyright: (c) 2017 by the Jinja Team.
     :license: BSD, see LICENSE for more details.
 """
 import os
@@ -23,7 +23,7 @@ from jinja2.utils import Cycler
 
 @pytest.mark.api
 @pytest.mark.extended
-class TestExtendedAPI():
+class TestExtendedAPI(object):
 
     def test_item_and_attribute(self, env):
         from jinja2.sandbox import SandboxedEnvironment
@@ -58,6 +58,17 @@ class TestExtendedAPI():
         assert c.current == 2
         c.reset()
         assert c.current == 1
+
+    def test_cycler_nextmethod(self, env):
+        items = 1, 2, 3
+        c = Cycler(*items)
+        for item in items + items:
+            assert c.current == item
+            assert c.next() == item
+        c.next()
+        assert c.current == 2
+        c.reset()
+        assert c.current == 1        
 
     def test_expressions(self, env):
         expr = env.compile_expression("foo")
@@ -96,7 +107,7 @@ class TestExtendedAPI():
 
 @pytest.mark.api
 @pytest.mark.meta
-class TestMeta():
+class TestMeta(object):
 
     def test_find_undeclared_variables(self, env):
         ast = env.parse('{% set foo = 42 %}{{ bar + foo }}')
@@ -144,7 +155,7 @@ class TestMeta():
 
 @pytest.mark.api
 @pytest.mark.streaming
-class TestStreaming():
+class TestStreaming(object):
 
     def test_basic_streaming(self, env):
         tmpl = env.from_string("<ul>{% for item in seq %}<li>{{ loop.index "
@@ -188,7 +199,7 @@ class TestStreaming():
 
 @pytest.mark.api
 @pytest.mark.undefined
-class TestUndefined():
+class TestUndefined(object):
 
     def test_stopiteration_is_undefined(self):
         def test():
@@ -244,6 +255,8 @@ class TestUndefined():
             == 'True'
         assert env.from_string('{{ foo.missing }}').render(foo=42) == ''
         assert env.from_string('{{ not missing }}').render() == 'True'
+        pytest.raises(UndefinedError,
+                      env.from_string('{{ missing - 1}}').render)
 
     def test_debug_undefined(self):
         env = Environment(undefined=DebugUndefined)
@@ -296,7 +309,7 @@ class TestUndefined():
 
 @pytest.mark.api
 @pytest.mark.lowlevel
-class TestLowLevel():
+class TestLowLevel(object):
 
     def test_custom_code_generator(self):
         class CustomCodeGenerator(CodeGenerator):
@@ -316,7 +329,7 @@ class TestLowLevel():
 
     def test_custom_context(self):
         class CustomContext(Context):
-            def resolve(self, key):
+            def resolve_or_missing(self, key):
                 return 'resolve-' + key
 
         class CustomEnvironment(Environment):

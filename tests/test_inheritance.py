@@ -5,7 +5,7 @@
 
     Tests the template inheritance feature.
 
-    :copyright: (c) 2010 by the Jinja Team.
+    :copyright: (c) 2017 by the Jinja Team.
     :license: BSD, see LICENSE for more details.
 """
 import pytest
@@ -78,7 +78,7 @@ def env():
 
 
 @pytest.mark.inheritance
-class TestInheritance():
+class TestInheritance(object):
 
     def test_layout(self, env):
         tmpl = env.get_template('layout')
@@ -201,7 +201,7 @@ class TestInheritance():
 
 
 @pytest.mark.inheritance
-class TestBugFix():
+class TestBugFix(object):
 
     def test_fixed_macro_scoping_bug(self, env):
         assert Environment(loader=DictLoader({
