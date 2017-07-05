@@ -22,6 +22,10 @@ Version 2.10
 - Added a `trimmed` modifier to `{% trans %}` to strip linebreaks and
   surrounding whitespace. Also added a new policy to enable this for all
   `trans` blocks.
+- The ``random`` filter is no longer incorrectly constant folded and will
+  produce a new random choice each time the template is rendered. (`#478`_)
+
+.. _#478: https://github.com/pallets/jinja/pull/478
 
 Version 2.9.6
 -------------

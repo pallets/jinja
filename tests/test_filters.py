@@ -8,6 +8,7 @@
     :copyright: (c) 2017 by the Jinja Team.
     :license: BSD, see LICENSE for more details.
 """
+import random
 import pytest
 from jinja2 import Markup, Environment
 from jinja2._compat import text_type, implements_to_string
@@ -182,11 +183,21 @@ class TestFilter(object):
         data = list(range(1000))
         assert tmpl.render(data=data) == pformat(data)
 
-    def test_random(self, env):
-        tmpl = env.from_string('''{{ seq|random }}''')
-        seq = list(range(100))
-        for _ in range(10):
-            assert int(tmpl.render(seq=seq)) in seq
+    def test_random(self, env, request):
+        # restore the random state when the test ends
+        state = random.getstate()
+        request.addfinalizer(lambda: random.setstate(state))
+        # generate the random values from a known seed
+        random.seed('jinja')
+        expected = [random.choice('1234567890') for _ in range(10)]
+
+        # check that the random sequence is generated again by a template
+        # ensures that filter result is not constant folded
+        random.seed('jinja')
+        t = env.from_string('{{ "1234567890"|random }}')
+
+        for value in expected:
+            assert t.render() == value
 
     def test_reverse(self, env):
         tmpl = env.from_string('{{ "foobar"|reverse|join }}|'
