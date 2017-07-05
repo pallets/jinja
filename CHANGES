@@ -24,7 +24,9 @@ Version 2.10
   `trans` blocks.
 - The ``random`` filter is no longer incorrectly constant folded and will
   produce a new random choice each time the template is rendered. (`#478`_)
+- Add a ``unique`` filter. (`#469`_)
 
+.. _#469: https://github.com/pallets/jinja/pull/469
 .. _#478: https://github.com/pallets/jinja/pull/478
 
 Version 2.9.6

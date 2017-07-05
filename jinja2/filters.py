@@ -52,22 +52,34 @@ def environmentfilter(f):
     return f
 
 
-def make_attrgetter(environment, attribute):
+def ignore_case(value):
+    """For use as a postprocessor for :func:`make_attrgetter`. Converts strings
+    to lowercase and returns other types as-is."""
+    return value.lower() if isinstance(value, string_types) else value
+
+
+def make_attrgetter(environment, attribute, postprocess=None):
     """Returns a callable that looks up the given attribute from a
     passed object with the rules of the environment.  Dots are allowed
     to access attributes of attributes.  Integer parts in paths are
     looked up as integers.
     """
-    if not isinstance(attribute, string_types) \
-       or ('.' not in attribute and not attribute.isdigit()):
-        return lambda x: environment.getitem(x, attribute)
-    attribute = attribute.split('.')
+    if attribute is None:
+        attribute = []
+    elif isinstance(attribute, string_types):
+        attribute = [int(x) if x.isdigit() else x for x in attribute.split('.')]
+    else:
+        attribute = [attribute]
+
     def attrgetter(item):
         for part in attribute:
-            if part.isdigit():
-                part = int(part)
             item = environment.getitem(item, part)
+
+        if postprocess is not None:
+            item = postprocess(item)
+
         return item
+
     return attrgetter
 
 
@@ -223,8 +235,9 @@ def do_dictsort(value, case_sensitive=False, by='key'):
 
 
 @environmentfilter
-def do_sort(environment, value, reverse=False, case_sensitive=False,
-            attribute=None):
+def do_sort(
+    environment, value, reverse=False, case_sensitive=False, attribute=None
+):
     """Sort an iterable.  Per default it sorts ascending, if you pass it
     true as first argument it will reverse the sorting.
 
@@ -250,18 +263,54 @@ def do_sort(environment, value, reverse=False, case_sensitive=False,
     .. versionchanged:: 2.6
        The `attribute` parameter was added.
     """
-    if not case_sensitive:
-        def sort_func(item):
-            if isinstance(item, string_types):
-                item = item.lower()
-            return item
-    else:
-        sort_func = None
-    if attribute is not None:
-        getter = make_attrgetter(environment, attribute)
-        def sort_func(item, processor=sort_func or (lambda x: x)):
-            return processor(getter(item))
-    return sorted(value, key=sort_func, reverse=reverse)
+    key_func = make_attrgetter(
+        environment, attribute,
+        postprocess=ignore_case if not case_sensitive else None
+    )
+    return sorted(value, key=key_func, reverse=reverse)
+
+
+@environmentfilter
+def do_unique(environment, value, case_sensitive=False, attribute=None):
+    """Returns a list of unique items from the the given iterable.
+
+    .. sourcecode:: jinja
+
+        {{ ['foo', 'bar', 'foobar', 'FooBar']|unique }}
+            -> ['foo', 'bar', 'foobar']
+
+    This filter complements the `groupby` filter, which sorts and groups an
+    iterable by a certain attribute. The `unique` filter groups the items
+    from the iterable by themselves instead and always returns a flat list of
+    unique items. That can be useful for example when you need to concatenate
+    that items:
+
+    .. sourcecode:: jinja
+
+        {{ ['foo', 'bar', 'foobar', 'FooBar']|unique|join(',') }}
+            -> foo,bar,foobar
+
+    Also note that the resulting list contains the items in the same order
+    as their first occurrence in the iterable passed to the filter. If sorting
+    is needed you can still chain the `unique` and `sort` filter:
+
+    .. sourcecode:: jinja
+
+        {{ ['foo', 'bar', 'foobar', 'FooBar']|unique|sort }}
+            -> ['bar', 'foo', 'foobar']
+    """
+    getter = make_attrgetter(
+        environment, attribute,
+        postprocess=ignore_case if not case_sensitive else None
+    )
+    seen = set()
+
+    for item in value:
+        key = getter(item)
+
+        if key not in seen:
+            seen.add(key)
+            yield item
 
 
 def do_default(value, default_value=u'', boolean=False):
@@ -1066,6 +1115,7 @@ FILTERS = {
     'title':                do_title,
     'trim':                 do_trim,
     'truncate':             do_truncate,
+    'unique':               do_unique,
     'upper':                do_upper,
     'urlencode':            do_urlencode,
     'urlize':               do_urlize,
