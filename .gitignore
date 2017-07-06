@@ -12,3 +12,6 @@ dist/
 .idea/
 venv/
 venv-*/
+.coverage
+.coverage.*
+htmlcov

@@ -1,0 +1,11 @@
+[run]
+branch = True
+source =
+    jinja2
+    tests
+
+[paths]
+source =
+    jinja2
+    .tox/*/lib/python*/site-packages/jinja2
+    .tox/pypy/site-packages/jinja2
