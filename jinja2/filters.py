@@ -279,25 +279,11 @@ def do_unique(environment, value, case_sensitive=False, attribute=None):
         {{ ['foo', 'bar', 'foobar', 'FooBar']|unique }}
             -> ['foo', 'bar', 'foobar']
 
-    This filter complements the `groupby` filter, which sorts and groups an
-    iterable by a certain attribute. The `unique` filter groups the items
-    from the iterable by themselves instead and always returns a flat list of
-    unique items. That can be useful for example when you need to concatenate
-    that items:
+    The unique items are yielded in the same order as their first occurrence in
+    the iterable passed to the filter.
 
-    .. sourcecode:: jinja
-
-        {{ ['foo', 'bar', 'foobar', 'FooBar']|unique|join(',') }}
-            -> foo,bar,foobar
-
-    Also note that the resulting list contains the items in the same order
-    as their first occurrence in the iterable passed to the filter. If sorting
-    is needed you can still chain the `unique` and `sort` filter:
-
-    .. sourcecode:: jinja
-
-        {{ ['foo', 'bar', 'foobar', 'FooBar']|unique|sort }}
-            -> ['bar', 'foo', 'foobar']
+    :param case_sensitive: Treat upper and lower case strings as distinct.
+    :param attribute: Filter objects with unique values for this attribute.
     """
     getter = make_attrgetter(
         environment, attribute,
@@ -313,19 +299,23 @@ def do_unique(environment, value, case_sensitive=False, attribute=None):
             yield item
 
 
-def _min_or_max(func, value, environment, attribute, case_sensitive):
+def _min_or_max(environment, value, func, case_sensitive, attribute):
     it = iter(value)
+
     try:
         first = next(it)
     except StopIteration:
-        return environment.undefined('No aggregated item, sequence was empty')
+        return environment.undefined('No aggregated item, sequence was empty.')
 
-    key_func = make_attrgetter(environment, attribute, not case_sensitive)
+    key_func = make_attrgetter(
+        environment, attribute,
+        ignore_case if not case_sensitive else None
+    )
     return func(chain([first], it), key=key_func)
 
 
 @environmentfilter
-def do_min(environment, value, attribute=None, case_sensitive=False):
+def do_min(environment, value, case_sensitive=False, attribute=None):
     """Return the smallest item from the sequence.
 
     .. sourcecode:: jinja
@@ -333,33 +323,25 @@ def do_min(environment, value, attribute=None, case_sensitive=False):
         {{ [1, 2, 3]|min }}
             -> 1
 
-    It is also possible to get the item providing the smallest value for a
-    certain attribute:
-
-    .. sourcecode:: jinja
-
-        {{ users|min('last_login') }}
+    :param case_sensitive: Treat upper and lower case strings as distinct.
+    :param attribute: Get the object with the max value of this attribute.
     """
-    return _min_or_max(min, value, environment, attribute, case_sensitive)
+    return _min_or_max(environment, value, min, case_sensitive, attribute)
 
 
 @environmentfilter
-def do_max(environment, value, attribute=None, case_sensitive=False):
-    """Return the largest item from the sequence.
+def do_max(environment, value, case_sensitive=False, attribute=None):
+    """Return the smallest item from the sequence.
 
     .. sourcecode:: jinja
 
         {{ [1, 2, 3]|max }}
             -> 3
 
-    It is also possible to get the item providing the largest value for a
-    certain attribute:
-
-    .. sourcecode:: jinja
-
-        {{ users|max('last_login') }}
+    :param case_sensitive: Treat upper and lower case strings as distinct.
+    :param attribute: Get the object with the max value of this attribute.
     """
-    return _min_or_max(max, value, environment, attribute, case_sensitive)
+    return _min_or_max(environment, value, max, case_sensitive, attribute)
 
 
 def do_default(value, default_value=u'', boolean=False):
