@@ -2,19 +2,32 @@ sudo: false
 language: python
 
 python:
-  - "2.6"
-  - "2.7"
+  - 3.6
+  - 3.5
+  - 3.4
+  - 3.3
+  - 2.7
+  - 2.6
   - pypy
-  - "3.3"
-  - "3.4"
-  - "3.5"
-  - "3.6"
+
+env:
+  - TOXENV=py,codecov
+
+matrix:
+  include:
+    - python: nightly
+      env: TOXENV=py
+    - python: 3.6
+      env: TOXENV=docs-html
 
 install:
   - pip install tox
 
 script:
-  - tox -e py
+  - tox
+
+cache:
+  - pip
 
 branches:
   only:
@@ -25,7 +38,7 @@ notifications:
   email: false
   irc:
     channels:
-      - chat.freenode.net#pocoo
+      - "chat.freenode.net#pocoo"
     on_success: change
     on_failure: always
     use_notice: true
