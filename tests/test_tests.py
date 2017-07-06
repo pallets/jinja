@@ -78,16 +78,36 @@ class TestTestsCase(object):
         assert tmpl.render() == 'True|False'
 
     def test_equalto(self, env):
-        tmpl = env.from_string('{{ foo is equalto 12 }}|'
-                               '{{ foo is equalto 0 }}|'
-                               '{{ foo is equalto (3 * 4) }}|'
-                               '{{ bar is equalto "baz" }}|'
-                               '{{ bar is equalto "zab" }}|'
-                               '{{ bar is equalto ("ba" + "z") }}|'
-                               '{{ bar is equalto bar }}|'
-                               '{{ bar is equalto foo }}')
+        tmpl = env.from_string(
+            '{{ foo is eq 12 }}|'
+            '{{ foo is eq 0 }}|'
+            '{{ foo is eq (3 * 4) }}|'
+            '{{ bar is eq "baz" }}|'
+            '{{ bar is eq "zab" }}|'
+            '{{ bar is eq ("ba" + "z") }}|'
+            '{{ bar is eq bar }}|'
+            '{{ bar is eq foo }}'
+        )
         assert tmpl.render(foo=12, bar="baz") \
             == 'True|False|True|True|False|True|True|False'
+
+    @pytest.mark.parametrize('op,expect', (
+        ('eq 2', True),
+        ('eq 3', False),
+        ('ne 3', True),
+        ('ne 2', False),
+        ('lt 3', True),
+        ('lt 2', False),
+        ('le 2', True),
+        ('le 1', False),
+        ('gt 1', True),
+        ('gt 2', False),
+        ('ge 2', True),
+        ('ge 3', False),
+    ))
+    def test_compare_aliases(self, env, op, expect):
+        t = env.from_string('{{{{ 2 is {op} }}}}'.format(op=op))
+        assert t.render() == str(expect)
 
     def test_sameas(self, env):
         tmpl = env.from_string('{{ foo is sameas false }}|'
