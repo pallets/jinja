@@ -129,6 +129,7 @@ class TestModuleLoader(object):
         self.reg_env = Environment(loader=prefix_loader)
         if zip is not None:
             fd, self.archive = tempfile.mkstemp(suffix='.zip')
+            # the returned os fd must be closed for win32 file removal to work later.
             os.close(fd)
         else:
             self.archive = tempfile.mkdtemp()
@@ -140,6 +141,8 @@ class TestModuleLoader(object):
 
     def teardown(self):
         if hasattr(self, 'mod_env'):
+            self.reg_env = None
+            self.mod_env = None
             if os.path.isfile(self.archive):
                 os.remove(self.archive)
             else:
@@ -185,7 +188,7 @@ class TestModuleLoader(object):
         assert name in sys.modules
 
         # unset all, ensure the module is gone from sys.modules
-        self.mod_env = tmpl = None
+        self.mod_env = self.reg_env = tmpl = None
 
         try:
             import gc
