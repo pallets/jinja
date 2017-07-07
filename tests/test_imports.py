@@ -75,6 +75,12 @@ class TestImports(object):
         test_env.from_string('{% from "foo" import bar, with, context %}')
         test_env.from_string('{% from "foo" import bar, with with context %}')
 
+        with pytest.raises(TemplateSyntaxError):
+            test_env.from_string('{% from "foo" import bar,, with context %}')
+
+        with pytest.raises(TemplateSyntaxError):
+            test_env.from_string('{% from "foo" import bar with context, %}')
+
     def test_exports(self, test_env):
         m = test_env.from_string('''
             {% macro toplevel() %}...{% endmacro %}
