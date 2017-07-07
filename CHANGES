@@ -28,10 +28,12 @@ Version 2.10
 - Add ``min`` and ``max`` filters. (`#475`_)
 - Add tests for all comparison operators: ``eq``, ``ne``, ``lt``, ``le``,
   ``gt``, ``ge``. (`#665`_)
+- ``import`` statement cannot end with a trailing comma. (`#618`_)
 
 .. _#469: https://github.com/pallets/jinja/pull/469
 .. _#475: https://github.com/pallets/jinja/pull/475
 .. _#478: https://github.com/pallets/jinja/pull/478
+.. _#618: https://github.com/pallets/jinja/pull/618
 .. _#665: https://github.com/pallets/jinja/pull/665
 
 Version 2.9.6
