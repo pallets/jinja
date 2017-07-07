@@ -526,32 +526,44 @@ def do_urlize(eval_ctx, value, trim_url_limit=None, nofollow=False,
     return rv
 
 
-def do_indent(s, width=4, indent_first=False, indent_blank_lines=False, indentfirst=None):
-    """Return a copy of the passed string, each line indented by
-    4 spaces. The first line is not indented. If you want to
-    change the number of spaces or indent the first line too
-    you can pass additional parameters to the filter:
+def do_indent(
+    s, width=4, first=False, blank=False, indentfirst=None
+):
+    """Return a copy of the string with each line indented by 4 spaces. The
+    first line and blank lines are not indented by default.
 
-    .. sourcecode:: jinja
+    :param width: Number of spaces to indent by.
+    :param first: Don't skip indenting the first line.
+    :param blank: Don't skip indenting empty lines.
 
-        {{ mytext|indent(2, true) }}
-            indent by two spaces and indent the first line too.
+    .. versionchanged:: 2.10
+        Blank lines are not indented by default.
+
+        Rename the ``indentfirst`` argument to ``first``.
     """
     if indentfirst is not None:
-        warnings.warn('The use of indentfirst is obsolete. '
-            'You should use indent_first instead.', DeprecationWarning)
-        indent_first = indentfirst
-    s += '\n'  # this quirk is necessary for splitlines method
+        warnings.warn(DeprecationWarning(
+            'The "indentfirst" argument is renamed to "first".'
+        ), stacklevel=2)
+        first = indentfirst
+
+    s += u'\n'  # this quirk is necessary for splitlines method
     indention = u' ' * width
-    if indent_blank_lines:
+
+    if blank:
         rv = (u'\n' + indention).join(s.splitlines())
     else:
         lines = s.splitlines()
         rv = lines.pop(0)
+
         if lines:
-            rv += u'\n' + u'\n'.join(indention + line if line else line for line in lines)
-    if indent_first:
+            rv += u'\n' + u'\n'.join(
+                indention + line if line else line for line in lines
+            )
+
+    if first:
         rv = indention + rv
+
     return rv
 
 

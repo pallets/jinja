@@ -137,14 +137,25 @@ class TestFilter(object):
 
     def test_indent(self, env):
         text = '\n'.join(['', 'foo bar', ''])
-        tmpl = env.from_string('{{ foo|indent(2, false, false) }}')
-        assert tmpl.render(foo=text) == '\n  foo bar\n'
-        tmpl = env.from_string('{{ foo|indent(1, false, true) }}')
-        assert tmpl.render(foo=text) == '\n foo bar\n '
-        tmpl = env.from_string('{{ foo|indent(1, true, false) }}')
-        assert tmpl.render(foo=text) == ' \n foo bar\n'
-        tmpl = env.from_string('{{ foo|indent(1, true, true) }}')
-        assert tmpl.render(foo=text) == ' \n foo bar\n '
+        t = env.from_string('{{ foo|indent(2, false, false) }}')
+        assert t.render(foo=text) == '\n  foo bar\n'
+        t = env.from_string('{{ foo|indent(2, false, true) }}')
+        assert t.render(foo=text) == '\n  foo bar\n  '
+        t = env.from_string('{{ foo|indent(2, true, false) }}')
+        assert t.render(foo=text) == '  \n  foo bar\n'
+        t = env.from_string('{{ foo|indent(2, true, true) }}')
+        assert t.render(foo=text) == '  \n  foo bar\n  '
+
+        t = env.from_string('{{ "jinja"|indent }}')
+        assert t.render() == 'jinja'
+        t = env.from_string('{{ "jinja"|indent(first=true) }}')
+        assert t.render() == '    jinja'
+        t = env.from_string('{{ "jinja"|indent(blank=true) }}')
+        assert t.render() == 'jinja'
+
+    def test_indentfirst_deprecated(self, env):
+        with pytest.warns(DeprecationWarning):
+            env.from_string('{{ "jinja"|indent(indentfirst=true) }}').render()
 
     def test_int(self, env):
         class IntIsh(object):
