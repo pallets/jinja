@@ -45,16 +45,16 @@ class TestFilter(object):
         )
         assert tmpl.render(given='yes') == 'no|False|no|yes'
 
-    def test_dictsort(self, env):
-        tmpl = env.from_string(
-            '{{ foo|dictsort }}|'
-            '{{ foo|dictsort(true) }}|'
-            '{{ foo|dictsort(false, "value") }}'
-        )
-        out = tmpl.render(foo={"aa": 0, "b": 1, "c": 2, "AB": 3})
-        assert out == ("[('aa', 0), ('AB', 3), ('b', 1), ('c', 2)]|"
-                       "[('AB', 3), ('aa', 0), ('b', 1), ('c', 2)]|"
-                       "[('aa', 0), ('b', 1), ('c', 2), ('AB', 3)]")
+    @pytest.mark.parametrize('args,expect', (
+        ('', "[('aa', 0), ('AB', 3), ('b', 1), ('c', 2)]"),
+        ('true',  "[('AB', 3), ('aa', 0), ('b', 1), ('c', 2)]"),
+        ('by="value"',  "[('aa', 0), ('b', 1), ('c', 2), ('AB', 3)]"),
+        ('reverse=true', "[('c', 2), ('b', 1), ('AB', 3), ('aa', 0)]")
+    ))
+    def test_dictsort(self, env, args, expect):
+        t = env.from_string('{{{{ foo|dictsort({args}) }}}}'.format(args=args))
+        out = t.render(foo={"aa": 0, "b": 1, "c": 2, "AB": 3})
+        assert out == expect
 
     def test_batch(self, env):
         tmpl = env.from_string("{{ foo|batch(3)|list }}|"
