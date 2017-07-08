@@ -227,12 +227,16 @@ def do_dictsort(value, case_sensitive=False, by='key', reverse=False):
     elif by == 'value':
         pos = 1
     else:
-        raise FilterArgumentError('You can only sort by either '
-                                  '"key" or "value"')
+        raise FilterArgumentError(
+            'You can only sort by either "key" or "value"'
+        )
+
     def sort_func(item):
         value = item[pos]
-        if isinstance(value, string_types) and not case_sensitive:
-            value = value.lower()
+
+        if not case_sensitive:
+            value = ignore_case(value)
+
         return value
 
     return sorted(value.items(), key=sort_func, reverse=reverse)
