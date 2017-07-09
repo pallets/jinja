@@ -8,10 +8,12 @@
     :copyright: (c) 2017 by the Jinja Team.
     :license: BSD, see LICENSE for more details.
 """
+
 import pytest
+
 from jinja2 import Environment
-from jinja2.bccache import FileSystemBytecodeCache, MemcachedBytecodeCache,\
-    Bucket
+from jinja2.bccache import Bucket, FileSystemBytecodeCache, \
+    MemcachedBytecodeCache
 from jinja2.exceptions import TemplateNotFound
 
 
@@ -34,62 +36,57 @@ class TestByteCodeCache(object):
 
 
 class MockMemcached(object):
-
-    def get(self, key):
-        return "value"
-
-    def set(self, *args):
+    class Error(Exception):
         pass
 
+    key = None
+    value = None
+    timeout = None
+
+    def get(self, key):
+        return self.value
+
+    def set(self, key, value, timeout=None):
+        self.key = key
+        self.value = value
+        self.timeout = timeout
+
     def get_side_effect(self, key):
-        raise Exception()
+        raise self.Error()
 
     def set_side_effect(self, *args):
-        raise Exception()
+        raise self.Error()
 
 
 class TestMemcachedBytecodeCache(object):
-
-    def test_load_bytecode(self):
-
-        # Python 2.X does not have explicit bytes type and Python 3.X's
-        # str type does not support Buffer interface
-        try:
-            key = bytes("key", "utf-8")  # PY 3.X
-        except:
-            key = "key"  # PY 2.X
-
-        m = MemcachedBytecodeCache(MockMemcached())
-        b = Bucket("", key, "")
-        m.load_bytecode(b)
-
-    def test_load_bytecode_exception(self):
+    def test_dump_load(self):
         memcached = MockMemcached()
-        memcached.get = memcached.get_side_effect
         m = MemcachedBytecodeCache(memcached)
-        b = Bucket("", "key", "")
-        m.load_bytecode(b)
 
-    def test_load_bytecode_exception_raise(self):
+        b = Bucket(None, 'key', '')
+        b.code = 'code'
+        m.dump_bytecode(b)
+        assert memcached.key == 'jinja2/bytecode/key'
+
+        b = Bucket(None, 'key', '')
+        m.load_bytecode(b)
+        assert b.code == 'code'
+
+    def test_exception(self):
         memcached = MockMemcached()
         memcached.get = memcached.get_side_effect
-        m = MemcachedBytecodeCache(memcached, ignore_memcache_errors=False)
-        b = Bucket("", "key", "")
-        with pytest.raises(Exception):
-            m.load_bytecode(b)
-
-    def test_dump_bytecode(self):
-        memcached = MockMemcached()
-        m = MemcachedBytecodeCache(memcached, timeout=10)
-        b = Bucket("", "key", "")
-        b.code = "code"
-        m.dump_bytecode(b)
-
-    def test_dump_bytecode_exception_raise(self):
-        memcached = MockMemcached()
         memcached.set = memcached.set_side_effect
-        m = MemcachedBytecodeCache(memcached, ignore_memcache_errors=False)
-        b = Bucket("", "key", "")
-        b.code = "code"
-        with pytest.raises(Exception):
+        m = MemcachedBytecodeCache(memcached)
+        b = Bucket(None, 'key', '')
+        b.code = 'code'
+
+        m.dump_bytecode(b)
+        m.load_bytecode(b)
+
+        m.ignore_memcache_errors = False
+
+        with pytest.raises(MockMemcached.Error):
             m.dump_bytecode(b)
+
+        with pytest.raises(MockMemcached.Error):
+            m.load_bytecode(b)
