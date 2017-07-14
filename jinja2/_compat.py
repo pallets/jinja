@@ -14,19 +14,35 @@ import sys
 
 PY2 = sys.version_info[0] == 2
 PYPY = hasattr(sys, 'pypy_translation_info')
-_identity = lambda x: x
+_identity = lambda x: x  # noqa: E731
 
+
+# avoid flake8 F821 undefined name 'long'
+try:
+    integer_types = (int, long)  # Python 2
+except NameError:
+    integer_types = (int, )      # Python 3
+
+# avoid flake8 F821 undefined name 'unicode'
+try:
+    text_type = unicode  # Python 2
+    string_types = (str, unicode)
+except NameError:
+    text_type = str      # Python 3
+    string_types = (str, )
+
+# avoid flake8 F821 undefined name 'xrange'
+try:
+    range_type = xrange  # Python 2
+except NameError:
+    range_type = range   # Python 3
 
 if not PY2:
     unichr = chr
-    range_type = range
-    text_type = str
-    string_types = (str,)
-    integer_types = (int,)
 
-    iterkeys = lambda d: iter(d.keys())
-    itervalues = lambda d: iter(d.values())
-    iteritems = lambda d: iter(d.items())
+    iterkeys = lambda d: iter(d.keys())  # noqa: E731
+    itervalues = lambda d: iter(d.values())  # noqa: E731
+    iteritems = lambda d: iter(d.items())  # noqa: E731
 
     import pickle
     from io import BytesIO, StringIO
@@ -44,26 +60,21 @@ if not PY2:
 
     implements_iterator = _identity
     implements_to_string = _identity
-    encode_filename = _identity
 
 else:
     unichr = unichr
-    text_type = unicode
-    range_type = xrange
-    string_types = (str, unicode)
-    integer_types = (int, long)
 
-    iterkeys = lambda d: d.iterkeys()
-    itervalues = lambda d: d.itervalues()
-    iteritems = lambda d: d.iteritems()
+    iterkeys = lambda d: d.iterkeys()  # noqa: E731
+    itervalues = lambda d: d.itervalues()  # noqa: E731
+    iteritems = lambda d: d.iteritems()  # noqa: E731
 
-    import cPickle as pickle
+    import cPickle as pickle  # noqa :F401
     from cStringIO import StringIO as BytesIO, StringIO
     NativeStringIO = BytesIO
 
     exec('def reraise(tp, value, tb=None):\n raise tp, value, tb')
 
-    from itertools import imap, izip, ifilter
+    from itertools import imap, izip, ifilter  # noqa :F401
     intern = intern
 
     def implements_iterator(cls):
@@ -76,10 +87,15 @@ else:
         cls.__str__ = lambda x: x.__unicode__().encode('utf-8')
         return cls
 
-    def encode_filename(filename):
+
+def encode_filename(filename):
+    # avoid flake8 F821 undefined name 'unicode'
+    try:               # Python 2
         if isinstance(filename, unicode):
             return filename.encode('utf-8')
-        return filename
+    except NameError:  # Python 3
+        pass
+    return filename
 
 
 def with_metaclass(meta, *bases):
@@ -94,6 +110,6 @@ def with_metaclass(meta, *bases):
 
 
 try:
-    from urllib.parse import quote_from_bytes as url_quote
+    from urllib.parse import quote_from_bytes as url_quote  # noqa :F401
 except ImportError:
-    from urllib import quote as url_quote
+    from urllib import quote as url_quote  # noqa :F401
