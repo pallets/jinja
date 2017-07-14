@@ -11,7 +11,8 @@
 import pytest
 
 from jinja2 import Environment, DictLoader
-from jinja2.exceptions import TemplateNotFound, TemplatesNotFound
+from jinja2.exceptions import TemplateNotFound, TemplatesNotFound, \
+    TemplateSyntaxError
 
 
 @pytest.fixture
@@ -50,12 +51,35 @@ class TestImports(object):
         )
         assert t.render(foo=42) == '[42|23]'
 
-    def test_trailing_comma(self, test_env):
+    def test_import_needs_name(self, test_env):
+        test_env.from_string('{% from "foo" import bar %}')
+        test_env.from_string('{% from "foo" import bar, baz %}')
+
+        with pytest.raises(TemplateSyntaxError):
+            test_env.from_string('{% from "foo" import %}')
+
+    def test_no_trailing_comma(self, test_env):
+        with pytest.raises(TemplateSyntaxError):
+            test_env.from_string('{% from "foo" import bar, %}')
+
+        with pytest.raises(TemplateSyntaxError):
+            test_env.from_string('{% from "foo" import bar,, %}')
+
+        with pytest.raises(TemplateSyntaxError):
+            test_env.from_string('{% from "foo" import, %}')
+
+    def test_trailing_comma_with_context(self, test_env):
         test_env.from_string('{% from "foo" import bar, baz with context %}')
         test_env.from_string('{% from "foo" import bar, baz, with context %}')
         test_env.from_string('{% from "foo" import bar, with context %}')
         test_env.from_string('{% from "foo" import bar, with, context %}')
         test_env.from_string('{% from "foo" import bar, with with context %}')
+
+        with pytest.raises(TemplateSyntaxError):
+            test_env.from_string('{% from "foo" import bar,, with context %}')
+
+        with pytest.raises(TemplateSyntaxError):
+            test_env.from_string('{% from "foo" import bar with context, %}')
 
     def test_exports(self, test_env):
         m = test_env.from_string('''

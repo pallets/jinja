@@ -242,13 +242,14 @@ class Context(with_metaclass(ContextMeta)):
             __traceback_hide__ = True  # noqa
 
         # Allow callable classes to take a context
-        fn = __obj.__call__
-        for fn_type in ('contextfunction',
-                        'evalcontextfunction',
-                        'environmentfunction'):
-            if hasattr(fn, fn_type):
-                __obj = fn
-                break
+        if hasattr(__obj, '__call__'):
+            fn = __obj.__call__
+            for fn_type in ('contextfunction',
+                            'evalcontextfunction',
+                            'environmentfunction'):
+                if hasattr(fn, fn_type):
+                    __obj = fn
+                    break
 
         if isinstance(__obj, _context_function_types):
             if getattr(__obj, 'contextfunction', 0):

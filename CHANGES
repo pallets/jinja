@@ -28,13 +28,20 @@ Version 2.10
 - Add ``min`` and ``max`` filters. (`#475`_)
 - Add tests for all comparison operators: ``eq``, ``ne``, ``lt``, ``le``,
   ``gt``, ``ge``. (`#665`_)
+- ``import`` statement cannot end with a trailing comma. (`#617`_, `#618`_)
+- ``indent`` filter will not indent blank lines by default. (`#685`_)
+- Add ``reverse`` argument for ``dictsort`` filter. (`#692`_)
 - Add a ``NativeEnvironment`` that renders templates to native Python types
   instead of strings. (`#708`_)
 
 .. _#469: https://github.com/pallets/jinja/pull/469
 .. _#475: https://github.com/pallets/jinja/pull/475
 .. _#478: https://github.com/pallets/jinja/pull/478
+.. _#617: https://github.com/pallets/jinja/pull/617
+.. _#618: https://github.com/pallets/jinja/pull/618
 .. _#665: https://github.com/pallets/jinja/pull/665
+.. _#685: https://github.com/pallets/jinja/pull/685
+.. _#692: https://github.com/pallets/jinja/pull/692
 .. _#708: https://github.com/pallets/jinja/pull/708
 
 Version 2.9.6

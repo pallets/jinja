@@ -11,6 +11,7 @@
 import re
 import math
 import random
+import warnings
 
 from itertools import groupby, chain
 from collections import namedtuple
@@ -202,7 +203,7 @@ def do_title(s):
          if item])
 
 
-def do_dictsort(value, case_sensitive=False, by='key'):
+def do_dictsort(value, case_sensitive=False, by='key', reverse=False):
     """Sort a dict and yield (key, value) pairs. Because python dicts are
     unsorted you may want to use this function to order them by either
     key or value:
@@ -211,6 +212,9 @@ def do_dictsort(value, case_sensitive=False, by='key'):
 
         {% for item in mydict|dictsort %}
             sort the dict by key, case insensitive
+
+        {% for item in mydict|dictsort(reverse=true) %}
+            sort the dict by key, case insensitive, reverse order
 
         {% for item in mydict|dictsort(true) %}
             sort the dict by key, case sensitive
@@ -223,15 +227,19 @@ def do_dictsort(value, case_sensitive=False, by='key'):
     elif by == 'value':
         pos = 1
     else:
-        raise FilterArgumentError('You can only sort by either '
-                                  '"key" or "value"')
+        raise FilterArgumentError(
+            'You can only sort by either "key" or "value"'
+        )
+
     def sort_func(item):
         value = item[pos]
-        if isinstance(value, string_types) and not case_sensitive:
-            value = value.lower()
+
+        if not case_sensitive:
+            value = ignore_case(value)
+
         return value
 
-    return sorted(value.items(), key=sort_func)
+    return sorted(value.items(), key=sort_func, reverse=reverse)
 
 
 @environmentfilter
@@ -525,21 +533,44 @@ def do_urlize(eval_ctx, value, trim_url_limit=None, nofollow=False,
     return rv
 
 
-def do_indent(s, width=4, indentfirst=False):
-    """Return a copy of the passed string, each line indented by
-    4 spaces. The first line is not indented. If you want to
-    change the number of spaces or indent the first line too
-    you can pass additional parameters to the filter:
+def do_indent(
+    s, width=4, first=False, blank=False, indentfirst=None
+):
+    """Return a copy of the string with each line indented by 4 spaces. The
+    first line and blank lines are not indented by default.
 
-    .. sourcecode:: jinja
+    :param width: Number of spaces to indent by.
+    :param first: Don't skip indenting the first line.
+    :param blank: Don't skip indenting empty lines.
 
-        {{ mytext|indent(2, true) }}
-            indent by two spaces and indent the first line too.
+    .. versionchanged:: 2.10
+        Blank lines are not indented by default.
+
+        Rename the ``indentfirst`` argument to ``first``.
     """
+    if indentfirst is not None:
+        warnings.warn(DeprecationWarning(
+            'The "indentfirst" argument is renamed to "first".'
+        ), stacklevel=2)
+        first = indentfirst
+
+    s += u'\n'  # this quirk is necessary for splitlines method
     indention = u' ' * width
-    rv = (u'\n' + indention).join(s.splitlines())
-    if indentfirst:
+
+    if blank:
+        rv = (u'\n' + indention).join(s.splitlines())
+    else:
+        lines = s.splitlines()
+        rv = lines.pop(0)
+
+        if lines:
+            rv += u'\n' + u'\n'.join(
+                indention + line if line else line for line in lines
+            )
+
+    if first:
         rv = indention + rv
+
     return rv
 
 

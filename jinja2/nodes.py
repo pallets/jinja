@@ -599,6 +599,25 @@ class CondExpr(Expr):
         return self.expr2.as_const(eval_ctx)
 
 
+def args_as_const(node, eval_ctx):
+    args = [x.as_const(eval_ctx) for x in node.args]
+    kwargs = dict(x.as_const(eval_ctx) for x in node.kwargs)
+
+    if node.dyn_args is not None:
+        try:
+            args.extend(node.dyn_args.as_const(eval_ctx))
+        except Exception:
+            raise Impossible()
+
+    if node.dyn_kwargs is not None:
+        try:
+            kwargs.update(node.dyn_kwargs.as_const(eval_ctx))
+        except Exception:
+            raise Impossible()
+
+    return args, kwargs
+
+
 class Filter(Expr):
     """This node applies a filter on an expression.  `name` is the name of
     the filter, the rest of the fields are the same as for :class:`Call`.
@@ -606,44 +625,41 @@ class Filter(Expr):
     If the `node` of a filter is `None` the contents of the last buffer are
     filtered.  Buffers are created by macros and filter blocks.
     """
+
     fields = ('node', 'name', 'args', 'kwargs', 'dyn_args', 'dyn_kwargs')
 
     def as_const(self, eval_ctx=None):
         eval_ctx = get_eval_context(self, eval_ctx)
+
         if eval_ctx.volatile or self.node is None:
             raise Impossible()
+
         # we have to be careful here because we call filter_ below.
         # if this variable would be called filter, 2to3 would wrap the
         # call in a list beause it is assuming we are talking about the
         # builtin filter function here which no longer returns a list in
         # python 3.  because of that, do not rename filter_ to filter!
         filter_ = self.environment.filters.get(self.name)
+
         if filter_ is None or getattr(filter_, 'contextfilter', False):
             raise Impossible()
 
         # We cannot constant handle async filters, so we need to make sure
         # to not go down this path.
-        if eval_ctx.environment.is_async and \
-           getattr(filter_, 'asyncfiltervariant', False):
+        if (
+            eval_ctx.environment.is_async
+            and getattr(filter_, 'asyncfiltervariant', False)
+        ):
             raise Impossible()
 
-        obj = self.node.as_const(eval_ctx)
-        args = [obj] + [x.as_const(eval_ctx) for x in self.args]
+        args, kwargs = args_as_const(self, eval_ctx)
+        args.insert(0, self.node.as_const(eval_ctx))
+
         if getattr(filter_, 'evalcontextfilter', False):
             args.insert(0, eval_ctx)
         elif getattr(filter_, 'environmentfilter', False):
             args.insert(0, self.environment)
-        kwargs = dict(x.as_const(eval_ctx) for x in self.kwargs)
-        if self.dyn_args is not None:
-            try:
-                args.extend(self.dyn_args.as_const(eval_ctx))
-            except Exception:
-                raise Impossible()
-        if self.dyn_kwargs is not None:
-            try:
-                kwargs.update(self.dyn_kwargs.as_const(eval_ctx))
-            except Exception:
-                raise Impossible()
+
         try:
             return filter_(*args, **kwargs)
         except Exception:
@@ -654,7 +670,23 @@ class Test(Expr):
     """Applies a test on an expression.  `name` is the name of the test, the
     rest of the fields are the same as for :class:`Call`.
     """
+
     fields = ('node', 'name', 'args', 'kwargs', 'dyn_args', 'dyn_kwargs')
+
+    def as_const(self, eval_ctx=None):
+        test = self.environment.tests.get(self.name)
+
+        if test is None:
+            raise Impossible()
+
+        eval_ctx = get_eval_context(self, eval_ctx)
+        args, kwargs = args_as_const(self, eval_ctx)
+        args.insert(0, self.node.as_const(eval_ctx))
+
+        try:
+            return test(*args, **kwargs)
+        except Exception:
+            raise Impossible()
 
 
 class Call(Expr):
