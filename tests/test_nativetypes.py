@@ -92,3 +92,19 @@ class TestNativeEnvironment(object):
         result = t.render()
         assert isinstance(result, bool)
         assert result is False
+
+    def test_variable_dunder(self, env):
+        t = env.from_string("{{ x.__class__ }}")
+        result = t.render(x=True)
+        assert isinstance(result, type)
+
+    def test_constant_dunder(self, env):
+        t = env.from_string("{{ true.__class__ }}")
+        result = t.render()
+        assert isinstance(result, type)
+
+    def test_constant_dunder_to_string(self, env):
+        t = env.from_string("{{ true.__class__|string }}")
+        result = t.render()
+        assert not isinstance(result, type)
+        assert result == "<type 'bool'>"

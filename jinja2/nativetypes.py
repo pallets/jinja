@@ -3,7 +3,7 @@ from ast import literal_eval
 from itertools import islice, chain
 from jinja2 import nodes
 from jinja2._compat import text_type
-from jinja2.compiler import CodeGenerator
+from jinja2.compiler import CodeGenerator, has_safe_repr
 from jinja2.environment import Environment, Template
 from jinja2.utils import concat, escape
 
@@ -78,6 +78,8 @@ class NativeCodeGenerator(CodeGenerator):
                     raise nodes.Impossible()
 
                 const = child.as_const(frame.eval_ctx)
+                if not has_safe_repr(const):
+                    raise nodes.Impossible()
             except nodes.Impossible:
                 body.append(child)
                 continue
