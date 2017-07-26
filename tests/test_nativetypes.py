@@ -107,4 +107,4 @@ class TestNativeEnvironment(object):
         t = env.from_string("{{ true.__class__|string }}")
         result = t.render()
         assert not isinstance(result, type)
-        assert result == "<type 'bool'>"
+        assert result in ["<type 'bool'>", "<class 'bool'>"]
