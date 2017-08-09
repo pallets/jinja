@@ -41,6 +41,18 @@ Version 2.10
 .. _#685: https://github.com/pallets/jinja/pull/685
 .. _#692: https://github.com/pallets/jinja/pull/692
 
+Version 2.9.7
+-------------
+
+(bugfix release, in development)
+
+- ``tojson`` filter marks output as safe to match documented behavior.
+  (`#718`_)
+- Resolved a bug where getting debug locals for tracebacks could
+  modify template context.
+
+.. _#718: https://github.com/pallets/jinja/pull/718
+
 Version 2.9.6
 -------------
 (bugfix release, released on April 3rd 2017)
