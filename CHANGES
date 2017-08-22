@@ -24,13 +24,13 @@ Version 2.10
   `trans` blocks.
 - The ``random`` filter is no longer incorrectly constant folded and will
   produce a new random choice each time the template is rendered. (`#478`_)
-- Add a ``unique`` filter. (`#469`_)
-- Add ``min`` and ``max`` filters. (`#475`_)
-- Add tests for all comparison operators: ``eq``, ``ne``, ``lt``, ``le``,
+- Added a ``unique`` filter. (`#469`_)
+- Added ``min`` and ``max`` filters. (`#475`_)
+- Added tests for all comparison operators: ``eq``, ``ne``, ``lt``, ``le``,
   ``gt``, ``ge``. (`#665`_)
 - ``import`` statement cannot end with a trailing comma. (`#617`_, `#618`_)
 - ``indent`` filter will not indent blank lines by default. (`#685`_)
-- Add ``reverse`` argument for ``dictsort`` filter. (`#692`_)
+- Added ``reverse`` argument for ``dictsort`` filter. (`#692`_)
 
 .. _#469: https://github.com/pallets/jinja/pull/469
 .. _#475: https://github.com/pallets/jinja/pull/475
