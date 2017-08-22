@@ -61,7 +61,7 @@ def test_complex():
                     nodes.Output([
                         nodes.Name('title_upper', 'load'),
                         nodes.Call(nodes.Name('render_title', 'load'), [
-                            nodes.Const('Aha')], [], None, None)])], [])])])
+                            nodes.Const('Aha')], [], None, None)])], [], [])])])
 
     for_loop = nodes.For(
         nodes.Name('item', 'store'),
@@ -155,7 +155,7 @@ def test_if_branching_stores():
     tmpl = nodes.Template([
         nodes.If(nodes.Name('expression', 'load'), [
             nodes.Assign(nodes.Name('variable', 'store'),
-                         nodes.Const(42))], [])])
+                         nodes.Const(42))], [], [])])
 
     sym = symbols_for_node(tmpl)
     assert sym.refs == {
@@ -177,7 +177,7 @@ def test_if_branching_stores_undefined():
         nodes.Assign(nodes.Name('variable', 'store'), nodes.Const(23)),
         nodes.If(nodes.Name('expression', 'load'), [
             nodes.Assign(nodes.Name('variable', 'store'),
-                         nodes.Const(42))], [])])
+                         nodes.Const(42))], [], [])])
 
     sym = symbols_for_node(tmpl)
     assert sym.refs == {
@@ -197,7 +197,7 @@ def test_if_branching_stores_undefined():
 def test_if_branching_multi_scope():
     for_loop = nodes.For(nodes.Name('item', 'store'), nodes.Name('seq', 'load'), [
         nodes.If(nodes.Name('expression', 'load'), [
-            nodes.Assign(nodes.Name('x', 'store'), nodes.Const(42))], []),
+            nodes.Assign(nodes.Name('x', 'store'), nodes.Const(42))], [], []),
         nodes.Include(nodes.Const('helper.html'), True, False)
     ], [], None, False)
 
