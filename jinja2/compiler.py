@@ -1129,6 +1129,13 @@ class CodeGenerator(NodeVisitor):
         self.indent()
         self.blockvisit(node.body, if_frame)
         self.outdent()
+        for elif_ in node.elif_:
+            self.writeline('elif ', elif_)
+            self.visit(elif_.test, if_frame)
+            self.write(':')
+            self.indent()
+            self.blockvisit(elif_.body, if_frame)
+            self.outdent()
         if node.else_:
             self.writeline('else:')
             self.indent()

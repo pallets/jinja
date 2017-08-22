@@ -314,7 +314,7 @@ class For(Stmt):
 
 class If(Stmt):
     """If `test` is true, `body` is rendered, else `else_`."""
-    fields = ('test', 'body', 'else_')
+    fields = ('test', 'body', 'elif_', 'else_')
 
 
 class Macro(Stmt):

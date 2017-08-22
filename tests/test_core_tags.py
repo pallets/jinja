@@ -222,6 +222,15 @@ class TestIfCondition(object):
             %}...{% else %}XXX{% endif %}''')
         assert tmpl.render() == '...'
 
+    def test_elif_deep(self, env):
+        elifs = '\n'.join('{{% elif a == {0} %}}{0}'.format(i)
+                          for i in range(1, 1000))
+        tmpl = env.from_string('{{% if a == 0 %}}0{0}{{% else %}}x{{% endif %}}'
+                               .format(elifs))
+        for x in (0, 10, 999):
+            assert tmpl.render(a=x).strip() == str(x)
+        assert tmpl.render(a=1000).strip() == 'x'
+
     def test_else(self, env):
         tmpl = env.from_string('{% if false %}XXX{% else %}...{% endif %}')
         assert tmpl.render() == '...'

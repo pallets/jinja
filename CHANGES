@@ -10,6 +10,9 @@ Version 2.9.7
   (`#718`_)
 - Resolved a bug where getting debug locals for tracebacks could
   modify template context.
+- Fixed a bug where having many `{% elif ... %}` blocks resulted in a
+  "too many levels of indentation" error.  These blocks now compile to
+  native `elif ..:` instead of `else: if ..:`  (#759)
 
 .. _#718: https://github.com/pallets/jinja/pull/718
 
