@@ -700,9 +700,23 @@ def do_wordwrap(environment, s, width=79, break_long_words=True,
     if not wrapstring:
         wrapstring = environment.newline_sequence
     import textwrap
-    return wrapstring.join(textwrap.wrap(s, width=width, expand_tabs=False,
-                                   replace_whitespace=False,
-                                   break_long_words=break_long_words))
+    # Work around textwrap.wrap()'s unexpected behaviour when wrapping multiple
+    # paragraphs. I.e. if your first paragraph ends on col 75, the next
+    # next paragraph would be wrapped on col 5 already, so we're going to wrap
+    # each paragraph individually.
+    paragraphs = str.splitlines(s)
+    paragraphs_wrapped = []
+    for paragraph in paragraphs:
+        paragraph_wrapped = wrapstring.join(
+            textwrap.wrap(paragraph,
+                          width=width,
+                          expand_tabs=False,
+                          replace_whitespace=False,
+                          break_long_words=break_long_words
+                          )
+            )
+        paragraphs_wrapped.append(paragraph_wrapped)
+    return wrapstring.join(paragraphs_wrapped)
 
 
 def do_wordcount(s):
