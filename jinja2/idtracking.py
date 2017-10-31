@@ -231,9 +231,10 @@ class FrameSymbolVisitor(NodeVisitor):
             return rv
 
         body_symbols = inner_visit(node.body)
+        elif_symbols = inner_visit(node.elif_)
         else_symbols = inner_visit(node.else_ or ())
 
-        self.symbols.branch_update([body_symbols, else_symbols])
+        self.symbols.branch_update([body_symbols, elif_symbols, else_symbols])
 
     def visit_Macro(self, node, **kwargs):
         self.symbols.store(node.name)

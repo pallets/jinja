@@ -567,7 +567,7 @@ def htmlsafe_json_dumps(obj, dumper=None, **kwargs):
         .replace(u'>', u'\\u003e') \
         .replace(u'&', u'\\u0026') \
         .replace(u"'", u'\\u0027')
-    return rv
+    return Markup(rv)
 
 
 @implements_iterator

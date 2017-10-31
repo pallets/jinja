@@ -339,7 +339,7 @@ def do_min(environment, value, case_sensitive=False, attribute=None):
 
 @environmentfilter
 def do_max(environment, value, case_sensitive=False, attribute=None):
-    """Return the smallest item from the sequence.
+    """Return the largest item from the sequence.
 
     .. sourcecode:: jinja
 

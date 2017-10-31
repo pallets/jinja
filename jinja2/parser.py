@@ -210,17 +210,16 @@ class Parser(object):
             node.test = self.parse_tuple(with_condexpr=False)
             node.body = self.parse_statements(('name:elif', 'name:else',
                                                'name:endif'))
+            node.elif_ = []
+            node.else_ = []
             token = next(self.stream)
             if token.test('name:elif'):
-                new_node = nodes.If(lineno=self.stream.current.lineno)
-                node.else_ = [new_node]
-                node = new_node
+                node = nodes.If(lineno=self.stream.current.lineno)
+                result.elif_.append(node)
                 continue
             elif token.test('name:else'):
-                node.else_ = self.parse_statements(('name:endif',),
-                                                   drop_needle=True)
-            else:
-                node.else_ = []
+                result.else_ = self.parse_statements(('name:endif',),
+                                                     drop_needle=True)
             break
         return result
 
