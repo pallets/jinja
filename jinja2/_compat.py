@@ -36,6 +36,7 @@ if not PY2:
         if value.__traceback__ is not tb:
             raise value.with_traceback(tb)
         raise value
+    NotADirectoryError = NotADirectoryError
 
     ifilter = filter
     imap = map
@@ -62,6 +63,8 @@ else:
     NativeStringIO = BytesIO
 
     exec('def reraise(tp, value, tb=None):\n raise tp, value, tb')
+    class NotADirectoryError(Exception):
+        pass
 
     from itertools import imap, izip, ifilter
     intern = intern
