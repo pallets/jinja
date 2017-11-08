@@ -2,6 +2,12 @@ Jinja Changelog
 ===============
 
 
+Version 2.11
+------------
+
+unreleased
+
+
 Version 2.10
 ------------
 
