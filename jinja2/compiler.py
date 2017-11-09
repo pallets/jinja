@@ -410,7 +410,7 @@ class CodeGenerator(NodeVisitor):
         """Writes a function call to the stream for the current node.
         A leading comma is added automatically.  The extra keyword
         arguments may not include python keywords otherwise a syntax
-        error could occour.  The extra keyword arguments should be given
+        error could occur.  The extra keyword arguments should be given
         as python dict.
         """
         # if any of the given keyword arguments is a python keyword

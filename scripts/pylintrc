@@ -1,6 +1,6 @@
 # lint Python modules using external checkers.
 # 
-# This is the main checker controling the other ones and the reports
+# This is the main checker controlling the other ones and the reports
 # generation. It is itself both a raw checker and an astng checker in order
 # to:
 # * handle message activation / deactivation at the module level
@@ -66,12 +66,12 @@ include-ids=yes
 # written in a file name "pylint_global.[txt|html]".
 files-output=no
 
-# Tells wether to display a full report or only the messages
+# Tells whether to display a full report or only the messages
 reports=yes
 
 # Python expression which should return a note less than 10 (10 is the highest
 # note).You have access to the variables errors warning, statement which
-# respectivly contain the number of errors / warnings messages and the total
+# respectively contain the number of errors / warnings messages and the total
 # number of statements analyzed. This is used by the global evaluation report
 # (R0004).
 evaluation=10.0 - ((float(5 * error + warning + refactor + convention) / statement) * 10)
@@ -95,7 +95,7 @@ comment=no
 # 
 [VARIABLES]
 
-# Tells wether we should check for unused import in __init__ files.
+# Tells whether we should check for unused import in __init__ files.
 init-import=no
 
 # A regular expression matching names used for dummy variables (i.e. not used).
@@ -110,7 +110,7 @@ additional-builtins=
 # 
 [TYPECHECK]
 
-# Tells wether missing members accessed in mixin class should be ignored. A
+# Tells whether missing members accessed in mixin class should be ignored. A
 # mixin class is detected if its name ends with "mixin" (case insensitive).
 ignore-mixin-members=yes
 
@@ -241,7 +241,7 @@ int-import-graph=
 # checks for :
 # * methods without self as first argument
 # * overridden methods signature
-# * access only to existant members via self
+# * access only to existent members via self
 # * attributes not defined in the __init__ method
 # * supported interfaces implementation
 # * unreachable code
