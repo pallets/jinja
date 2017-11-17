@@ -479,3 +479,48 @@ class ModuleLoader(BaseLoader):
 
         return environment.template_class.from_module_dict(
             environment, mod.__dict__, globals)
+
+
+class PyModuleLoader(BaseLoader):
+    """Loads Python modules as Jinja2 templates.
+
+        >>> loader = PyModuleLoader()
+
+    This loader returns an empty template exporting Python module's namespace.
+    It piggybacks on the Jinja2 import mechanism to provide a convienient way
+    to access functionality from any Python module in ``sys.path``.
+    """
+
+    # no source access for this loader
+    has_source_access = False
+
+    def __init__(self, prefix='__python__'):
+        self._templates = {}
+        # prefix that can be used to avoid name collisions with template files
+        self._python_namespace_prefix = prefix + '.'
+
+    @internalcode
+    def load(self, environment, name, globals=None):
+        if name.startswith(self._python_namespace_prefix):
+            name = name[len(self._python_namespace_prefix):]
+        try:
+            return self._templates[name]
+        except KeyError:
+            pass
+        try:
+            mdict = __import__(name, fromlist=['*']).__dict__
+        except ImportError:
+            raise TemplateNotFound(name)
+
+        def root_render_func(context, *args, **kwargs):
+            # inject module dict into the context of an empty template
+            if False:
+                yield None  # to make it a generator
+            context.vars.update(mdict)
+            context.exported_vars.update(mdict)
+
+        templ = environment.from_string('')
+        templ.name = name
+        templ.root_render_func = root_render_func
+        self._templates[name] = templ
+        return templ
