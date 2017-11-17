@@ -75,3 +75,9 @@ def prefix_loader(filesystem_loader, dict_loader):
         'a':        filesystem_loader,
         'b':        dict_loader
     })
+
+@pytest.fixture
+def pymodule_loader():
+    '''returns a PyModuleLoader
+    '''
+    return loaders.PyModuleLoader()

@@ -66,6 +66,14 @@ class TestLoaders(object):
         assert tmpl.render().strip() == 'FOO'
         pytest.raises(TemplateNotFound, env.get_template, 'missing')
 
+    def test_pymodule_loader(self, pymodule_loader):
+        env = Environment(loader=pymodule_loader)
+        tmpl = env.get_template('__python__.__builtin__')
+        tdict = tmpl.module.__dict__
+        mdict = __builtin__.__dict__
+        assert all(mdict[k] == tdict[k] for k in mdict)
+        pytest.raises(TemplateNotFound, env.get_template, 'missing')
+
     def test_caching(self):
         changed = False
 
