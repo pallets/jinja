@@ -161,7 +161,7 @@ class TestBug(object):
 #   print 'D'
 # endif
     ''')
-        assert t.render(a=0, b=False, c=42, d=42.0) == '1111C'
+        assert t.render(a=0, b=False, c=42, d=42.0) == '1111C    '
 
     def test_stacked_locals_scoping_bug_twoframe(self, env):
         t = Template('''
