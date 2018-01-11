@@ -68,6 +68,7 @@ setup(
         'Topic :: Text Processing :: Markup :: HTML'
     ],
     packages=['jinja2'],
+    python_requires=">=2.7, !=3.0.*, !=3.1.*, !=3.2.*, !=3.3.*",
     install_requires=['MarkupSafe>=0.23'],
     extras_require={'i18n': ['Babel>=0.8']},
     include_package_data=True,
