@@ -108,3 +108,9 @@ class TestNativeEnvironment(object):
         result = t.render()
         assert not isinstance(result, type)
         assert result in ["<type 'bool'>", "<class 'bool'>"]
+
+    def test_string(self, env):
+        t = env.from_string("[{{ 'all' }}]")
+        result = t.render()
+        assert isinstance(result, text_type)
+        assert result == "[all]"
