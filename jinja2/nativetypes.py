@@ -21,12 +21,11 @@ def native_concat(nodes):
     if not head:
         return None
 
-    if isinstance(nodes, types.GeneratorType):
-        nodes = chain(head, nodes)
-
     if len(head) == 1:
         out = head[0]
     else:
+        if isinstance(nodes, types.GeneratorType):
+            nodes = chain(head, nodes)
         out = u''.join([text_type(v) for v in nodes])
 
     try:
