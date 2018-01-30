@@ -102,19 +102,3 @@ of the template.
 What you can see here is that Jinja2 is using unicode internally and the
 return value is an unicode string.  So make sure that your application is
 indeed using unicode internally.
-
-
-Experimental Python 3 Support
------------------------------
-
-Jinja 2.7 brings experimental support for Python >=3.3.  It means that all
-unittests pass on the new version, but there might still be small bugs in
-there and behavior might be inconsistent.  If you notice any bugs, please
-provide feedback in the `Jinja bug tracker`_.
-
-Also please keep in mind that the documentation is written with Python 2
-in mind, so you will have to adapt the shown code examples to Python 3 syntax
-for yourself.
-
-
-.. _Jinja bug tracker: https://github.com/pallets/jinja/issues
