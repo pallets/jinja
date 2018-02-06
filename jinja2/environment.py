@@ -334,6 +334,8 @@ class Environment(object):
 
         self.enable_async = enable_async
         self.is_async = self.enable_async and have_async_gen
+        if self.is_async:
+            import jinja2.asyncsupport  # runs patch_all() once
 
         _environment_sanity_check(self)
 
