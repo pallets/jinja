@@ -1,3 +1,5 @@
+.. currentmodule:: jinja2
+
 Jinja Changelog
 ===============
 
@@ -6,6 +8,12 @@ Version 2.11
 ------------
 
 unreleased
+
+- Async support is only loaded the first time an
+  :class:`~environment.Environment` enables it, in order to avoid a
+  slow initial import. (`#765`_)
+
+.. _#765: https://github.com/pallets/jinja/issues/765
 
 
 Version 2.10
