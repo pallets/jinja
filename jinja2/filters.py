@@ -362,8 +362,8 @@ def do_default(value, default_value=u'', boolean=False):
 
     This will output the value of ``my_variable`` if the variable was
     defined, otherwise ``'my_variable is not defined'``. If you want
-    default to consider undefined variables that evaluate to false
-    you have to set the second parameter to `true`:
+    default to return the default_value for variables that evaluate to
+    `false`, you have to set the second parameter to `true`:
 
     .. sourcecode:: jinja
 
