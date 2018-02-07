@@ -362,12 +362,13 @@ def do_default(value, default_value=u'', boolean=False):
 
     This will output the value of ``my_variable`` if the variable was
     defined, otherwise ``'my_variable is not defined'``. If you want
-    to use default with variables that evaluate to false you have to
-    set the second parameter to `true`:
+    default to consider undefined variables that evaluate to false
+    you have to set the second parameter to `true`:
 
     .. sourcecode:: jinja
 
         {{ ''|default('the string was empty', true) }}
+            -> 'the string was empty'
     """
     if isinstance(value, Undefined) or (boolean and not value):
         return default_value
