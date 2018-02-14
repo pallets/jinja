@@ -254,3 +254,6 @@ async def make_async_loop_context(iterable, undefined, recurse=None, depth0=0):
         after = _last_iteration
     return AsyncLoopContext(async_iterator, undefined, after, length, recurse,
                             depth0)
+
+
+patch_all()

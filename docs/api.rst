@@ -278,7 +278,7 @@ function for this::
                       loader=PackageLoader('mypackage'))
 
 The :func:`~jinja.select_autoescape` function returns a function that
-works rougly like this::
+works roughly like this::
 
     def autoescape(template_name):
         if template_name is None:

@@ -126,7 +126,7 @@ class Node(with_metaclass(NodeType, object)):
 
     def __init__(self, *fields, **attributes):
         if self.abstract:
-            raise TypeError('abstract nodes are not instanciable')
+            raise TypeError('abstract nodes are not instantiable')
         if fields:
             if len(fields) != len(self.fields):
                 if not self.fields:

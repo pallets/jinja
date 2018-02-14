@@ -1,5 +1,19 @@
+.. currentmodule:: jinja2
+
 Jinja Changelog
 ===============
+
+
+Version 2.11
+------------
+
+unreleased
+
+- Async support is only loaded the first time an
+  :class:`~environment.Environment` enables it, in order to avoid a
+  slow initial import. (`#765`_)
+
+.. _#765: https://github.com/pallets/jinja/issues/765
 
 
 Version 2.10
@@ -116,7 +130,7 @@ Version 2.9.3
   old behavior where limited assignments to outer scopes was possible.
   For more information and a discussion see #641
 - Resolved an issue where ``block scoped`` would not take advantage of the
-  new scoping rules.  In some more exotic cases a variable overriden in a
+  new scoping rules.  In some more exotic cases a variable overridden in a
   local scope would not make it into a block.
 - Change the code generation of the ``with`` statement to be in line with the
   new scoping rules.  This resolves some unlikely bugs in edge cases.  This

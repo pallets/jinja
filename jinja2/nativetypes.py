@@ -1,4 +1,5 @@
 import sys
+import types
 from ast import literal_eval
 from itertools import islice, chain
 from jinja2 import nodes
@@ -23,7 +24,9 @@ def native_concat(nodes):
     if len(head) == 1:
         out = head[0]
     else:
-        out = u''.join([text_type(v) for v in chain(head, nodes)])
+        if isinstance(nodes, types.GeneratorType):
+            nodes = chain(head, nodes)
+        out = u''.join([text_type(v) for v in nodes])
 
     try:
         return literal_eval(out)

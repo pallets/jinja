@@ -227,6 +227,23 @@ class TestFilter(object):
         tmpl = env.from_string('{{ "foobar"|reverse|join }}|'
                                '{{ [1, 2, 3]|reverse|list }}')
         assert tmpl.render() == 'raboof|[3, 2, 1]'
+    
+    def test_reverse_non_iterable(self, env):
+        from jinja2.filters import do_reverse
+        from jinja2.exceptions import FilterArgumentError
+        
+        non_iterable = 42
+        with pytest.raises(FilterArgumentError):
+            do_reverse(value=non_iterable)
+
+    def test_reverse_iterable(self, env):
+        from jinja2.filters import do_reverse
+        
+        lst = [1, 66, 55]
+        assert list(do_reverse(value=lst)) == lst[::-1]
+        
+        string_value = 'abc'
+        assert list(do_reverse(value=string_value)) == list(string_value[::-1])
 
     def test_string(self, env):
         x = [1, 2, 3, 4, 5]
