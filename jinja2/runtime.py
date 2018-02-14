@@ -380,10 +380,6 @@ class LoopContextBase(object):
     last = property(lambda x: x._after is _last_iteration)
     index = property(lambda x: x.index0 + 1)
     revindex = property(lambda x: x.length - x.index0)
-    #@property
-    #def revidnex(self):
-    #    print('Okay')
-    #    return len(self) - self.index0
     revindex0 = property(lambda x: x.length - x.index)
     depth = property(lambda x: x.depth0 + 1)
 
@@ -400,8 +396,6 @@ class LoopContextBase(object):
         return self._after
 
     def __len__(self):
-        #print('Is I am here?')
-        #print("{} :: {}".format(self.length, len(self)))
         return self.length
 
     @internalcode
