@@ -539,3 +539,51 @@ class TestBug(object):
             {%- for value in values recursive %}1{% else %}0{% endfor -%}
         ''')
         assert tmpl.render(values=[]) == '0'
+    
+    def test_revindex_one_lenght_list(self, env):
+        lst = [5]
+        tmpl = env.from_string('''
+            {%- for value in values|reverse %}{{loop.revindex}}|{{ value }}{% endfor -%}
+        ''')
+        result = tmpl.render(values=lst).split("|")
+        assert result[0] == '1'
+        assert result[1] == '5'
+
+    def test_revindex(self, env):
+        lst = [1,5,10]
+        tmpl = env.from_string('''
+            {%- for value in values|reverse %}{{loop.revindex}}|{{ value }}###{% endfor -%}
+        ''')
+        rows = tmpl.render(values=lst).split("###")[:-1]
+        assert len(lst) == len(rows)
+        
+        item_row1 = rows[0].split("|")
+        assert item_row1[0] == '3'
+        assert item_row1[1] == '10'
+        
+        item_row2 = rows[1].split("|")
+        assert item_row2[0] == '2'
+        assert item_row2[1] == '5'
+        
+        item_row3 = rows[2].split("|")
+        assert item_row3[0] == '1'
+        assert item_row3[1] == '1'
+
+    def test_revindex_filter_exception(self, env):
+        from jinja2.exceptions import FilterArgumentError
+        lst = 42
+        tmpl = env.from_string('''
+            {%- for value in values|reverse %}{{loop.revindex}}|{{ value }}{% endfor -%}
+        ''')
+        with pytest.raises(FilterArgumentError):
+            tmpl.render(values=lst)
+
+    def test_revindex_revindex0_one_lenght_list(self, env):
+        lst = [5]
+        tmpl = env.from_string('''
+            {%- for value in values|reverse %}{{loop.revindex}}|{{loop.revindex0}}|{{ value }}{% endfor -%}
+        ''')
+        result = tmpl.render(values=lst).split("|")
+        assert result[0] == '1'
+        assert result[1] == '0'
+        assert result[2] == '5'
