@@ -587,3 +587,12 @@ class TestBug(object):
         assert result[0] == '1'
         assert result[1] == '0'
         assert result[2] == '5'
+
+    def test_loop_length_odd(self, env):
+        """ This test covers https://github.com/pallets/jinja/issues/751#issuecomment-359105157 """
+        lst = [0, 1, 2]
+        tmpl = env.from_string('''
+            {%- for value in values | select("odd") %}{{loop.length}}{% endfor -%}
+        ''')
+        result = tmpl.render(values=lst)
+        assert '1' == result
