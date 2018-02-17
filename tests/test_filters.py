@@ -135,6 +135,12 @@ class TestFilter(object):
         out = tmpl.render()
         assert out == 'a|b'
 
+    def test_to_format_exception(self):
+        from jinja2.filters import do_format
+        from jinja2.exceptions import FilterArgumentError
+        with pytest.raises(FilterArgumentError):
+            do_format('value', 'values', key='key', keys='keys')
+
     def test_indent(self, env):
         text = '\n'.join(['', 'foo bar', ''])
         t = env.from_string('{{ foo|indent(2, false, false) }}')
