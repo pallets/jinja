@@ -588,7 +588,7 @@ class TestBug(object):
         assert result[1] == '0'
         assert result[2] == '5'
 
-    def test_loop_length_odd(self, env):
+    def test_loop_select_length_odd(self, env):
         """ This test covers https://github.com/pallets/jinja/issues/751#issuecomment-359105157 """
         lst = [0, 1, 2]
         tmpl = env.from_string('''
