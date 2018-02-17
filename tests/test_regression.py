@@ -540,7 +540,7 @@ class TestBug(object):
         ''')
         assert tmpl.render(values=[]) == '0'
 
-    def test_revindex_one_lenght_list(self, env):
+    def test_revindex_one_length_list(self, env):
         lst = [5]
         tmpl = env.from_string('''
                 {%- for value in values|reverse %}{{loop.revindex}}|{{ value }}{% endfor -%}
@@ -578,7 +578,7 @@ class TestBug(object):
         with pytest.raises(FilterArgumentError):
             tmpl.render(values=lst)
 
-    def test_revindex_revindex0_one_lenght_list(self, env):
+    def test_revindex_revindex0_one_length_list(self, env):
         lst = [5]
         tmpl = env.from_string('''
                 {%- for value in values|reverse %}{{loop.revindex}}|{{loop.revindex0}}|{{ value }}{% endfor -%}
