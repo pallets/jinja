@@ -267,7 +267,7 @@ class TestFilter(object):
         assert isinstance(do_reverse(value=no_sequence_data), list)
 
         string_data = '42'
-        assert isinstance(do_reverse(value=string_data), text_type)
+        assert type(do_reverse(value=string_data)) is type(string_data)
 
         list_data = [1,2,3,4]
         assert hasattr(do_reverse(value=list_data), '__next__')
