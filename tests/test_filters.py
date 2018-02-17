@@ -234,7 +234,7 @@ class TestFilter(object):
                                '{{ [1, 2, 3]|reverse|list }}')
         assert tmpl.render() == 'raboof|[3, 2, 1]'
 
-    def test_reverse_non_iterable(self, env):
+    def test_reverse_non_iterable(self):
         from jinja2.filters import do_reverse
         from jinja2.exceptions import FilterArgumentError
 
@@ -266,11 +266,11 @@ class TestFilter(object):
         # but will be caught by list construct
         assert isinstance(do_reverse(value=no_sequence_data), list)
 
-        string_data = '42'
+        string_data = 'this is a string 42'
         assert type(do_reverse(value=string_data)) is type(string_data)
 
-        list_data = [1,2,3,4]
-        assert hasattr(do_reverse(value=list_data), '__next__')
+        list_data = [1, 2, 3, 4]
+        assert type(do_reverse(value=list_data)) is type(reversed(list_data))
 
     def test_string(self, env):
         x = [1, 2, 3, 4, 5]
