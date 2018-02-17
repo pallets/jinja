@@ -251,6 +251,27 @@ class TestFilter(object):
         string_value = 'abc'
         assert list(do_reverse(value=string_value)) == list(string_value[::-1])
 
+    def test_reverse_types(self):
+        from jinja2.filters import do_reverse
+
+        class Data(object):
+            def __init__(self):
+                self.__item = 1
+
+            def __iter__(self):
+                yield self.__item
+
+        no_sequence_data = Data()
+        # Test that will fail on reverse list iterator
+        # but will be caught by list construct
+        assert isinstance(do_reverse(value=no_sequence_data), list)
+
+        string_data = '42'
+        assert isinstance(do_reverse(value=string_data), text_type)
+
+        list_data = [1,2,3,4]
+        assert hasattr(do_reverse(value=list_data), '__next__')
+
     def test_string(self, env):
         x = [1, 2, 3, 4, 5]
         tmpl = env.from_string('''{{ obj|string }}''')
