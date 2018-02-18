@@ -91,7 +91,7 @@ comment=no
 # * unused variables / imports
 # * undefined variables
 # * redefinition of variable from builtins or from an outer scope
-# * use of variable before assigment
+# * use of variable before assignment
 # 
 [VARIABLES]
 
@@ -118,8 +118,8 @@ ignore-mixin-members=yes
 # access to some undefined attributes.
 zope=no
 
-# List of members which are usually get through zope's acquisition mecanism and
-# so shouldn't trigger E0201 when accessed (need zope=yes to be considered).
+# List of members which are usually gotten through zope's acquisition mechanism
+# and so shouldn't trigger E0201 when accessed (need zope=yes to be considered)
 acquired-members=REQUEST,acl_users,aq_parent
 
 

@@ -1076,7 +1076,7 @@ class Template(object):
 
     def make_module_async(self, vars=None, shared=False, locals=None):
         """As template module creation can invoke template code for
-        asynchronous exections this method must be used instead of the
+        asynchronous executions this method must be used instead of the
         normal :meth:`make_module` one.  Likewise the module attribute
         becomes unavailable in async mode.
         """
