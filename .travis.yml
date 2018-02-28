@@ -20,18 +20,33 @@ matrix:
     - python: 3.6
       env: TOXENV=docs-html
 
+before_install:
+  - mkdir -p $HOME/bin
+  - curl -fsSL https://testspace-client.s3.amazonaws.com/testspace-linux.tgz | tar -zxvf- -C $HOME/bin
+  - testspace config url $TS_ORG.testspace.com
+
 install:
   - pip install tox
 
 script:
-  - tox
+  - if [[ "${TOXENV}" =~ ^py ]] ; then
+      tox -- --junit-xml=testresults.xml;
+    else
+      tox;
+    fi
 
+after_script:
+  - if [[ "${TOXENV}" =~ ^py ]] ; then
+      testspace [python_${TRAVIS_PYTHON_VERSION}]testresults.xml{tests};
+    fi
+ 
 cache:
   - pip
 
 branches:
   only:
     - master
+    - add-test-reporting
     - /^.*-maintenance$/
 
 notifications:
