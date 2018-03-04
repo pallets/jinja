@@ -439,7 +439,7 @@ class ImmutableSandboxedEnvironment(SandboxedEnvironment):
         return not modifies_known_mutable(obj, attr)
 
 
-# This really is not a public API apparenlty.
+# This really is not a public API apparently.
 try:
     from _string import formatter_field_name_split
 except ImportError:
