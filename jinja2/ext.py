@@ -605,9 +605,11 @@ def babel_extract(fileobj, keywords, comment_tags, options):
         environment.newstyle_gettext = True
 
     source = fileobj.read().decode(options.get('encoding', 'utf-8'))
+    filename = getattr(fileobj, 'name', None)
     try:
-        node = environment.parse(source)
-        tokens = list(environment.lex(environment.preprocess(source)))
+        node = environment.parse(source, name=filename, filename=filename)
+        processed_source = environment.preprocess(source, name=filename, filename=filename)
+        tokens = list(environment.lex(processed_source, name=filename, filename=filename))
     except TemplateSyntaxError as e:
         if not silent:
             raise
