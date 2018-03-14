@@ -14,8 +14,12 @@ unreleased
   slow initial import. (`#765`_)
 - Python 2.6 and 3.3 are not supported anymore.
 - The `map` filter in async mode now automatically awaits
+- Fixed FileSystemLoader bug that prematurely stopped searching (with trace) the
+  'searchpath' if the searched file did not exist in sub-directory of
+  any 'searchpath' element (`#822`_)
 
 .. _#765: https://github.com/pallets/jinja/issues/765
+.. _#822: https://github.com/pallets/jinja/pull/822
 
 
 Version 2.10
