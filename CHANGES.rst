@@ -10,6 +10,11 @@ Released 2019-04-06
 -   ``SandboxedEnvironment`` securely handles ``str.format_map`` in
     order to prevent code execution through untrusted format strings.
     The sandbox already handled ``str.format``.
+-   Fixed FileSystemLoader bug that prematurely stopped searching (with trace)
+    the 'searchpath' if the searched file did not exist in sub-directory of any
+    'searchpath' element (`#822`_)
+
+.. _#822: https://github.com/pallets/jinja/pull/822
 
 
 Version 2.10

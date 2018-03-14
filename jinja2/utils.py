@@ -153,7 +153,8 @@ def open_if_exists(filename, mode='rb'):
     try:
         return open(filename, mode)
     except IOError as e:
-        if e.errno not in (errno.ENOENT, errno.EISDIR, errno.EINVAL):
+        if e.errno not in (errno.ENOENT, errno.EISDIR, errno.EINVAL,
+                           errno.ENOTDIR):
             raise
 
 
