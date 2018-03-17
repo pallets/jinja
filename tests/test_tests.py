@@ -12,6 +12,8 @@ import pytest
 
 from jinja2 import Markup, Environment
 
+class MyDict(dict):
+    pass
 
 @pytest.mark.test_tests
 class TestTestsCase(object):
@@ -33,45 +35,101 @@ class TestTestsCase(object):
         tmpl = env.from_string('''{{ "foo" is lower }}|{{ "FOO" is lower }}''')
         assert tmpl.render() == 'True|False'
 
-    def test_typechecks(self, env):
-        tmpl = env.from_string('''
-            {{ 42 is undefined }}
-            {{ 42 is defined }}
-            {{ 42 is none }}
-            {{ none is none }}
-            {{ 42 is number }}
-            {{ 42 is string }}
-            {{ "foo" is string }}
-            {{ "foo" is sequence }}
-            {{ [1] is sequence }}
-            {{ range is callable }}
-            {{ 42 is callable }}
-            {{ range(5) is iterable }}
-            {{ {} is mapping }}
-            {{ mydict is mapping }}
-            {{ [] is mapping }}
-            {{ 10 is number }}
-            {{ (10 ** 100) is number }}
-            {{ 3.14159 is number }}
-            {{ complex is number }}
-        ''')
+    # Test type checks
+    @pytest.mark.parametrize('op,expect', (
+        ('none is none', True),
+        ('false is none', False),
+        ('true is none', False),
+        ('42 is none', False),
 
-        class MyDict(dict):
-            pass
+        ('none is true', False),
+        ('false is true', False),
+        ('true is true', True),
+        ('0 is true', False),
+        ('1 is true', False),
+        ('42 is true', False),
 
-        assert tmpl.render(mydict=MyDict(), complex=complex(1, 2)).split() == [
-            'False', 'True', 'False', 'True', 'True', 'False',
-            'True', 'True', 'True', 'True', 'False', 'True',
-            'True', 'True', 'False', 'True', 'True', 'True', 'True'
-        ]
+        ('none is false', False),
+        ('false is false', True),
+        ('true is false', False),
+        ('0 is false', False),
+        ('1 is false', False),
+        ('42 is false', False),
 
-    def test_sequence(self, env):
-        tmpl = env.from_string(
-            '{{ [1, 2, 3] is sequence }}|'
-            '{{ "foo" is sequence }}|'
-            '{{ 42 is sequence }}'
-        )
-        assert tmpl.render() == 'True|True|False'
+        ('none is boolean', False),
+        ('false is boolean', True),
+        ('true is boolean', True),
+        ('0 is boolean', False),
+        ('1 is boolean', False),
+        ('42 is boolean', False),
+        ('0.0 is boolean', False),
+        ('1.0 is boolean', False),
+        ('3.14159 is boolean', False),
+
+        ('none is integer', False),
+        ('false is integer', False),
+        ('true is integer', False),
+        ('42 is integer', True),
+        ('3.14159 is integer', False),
+        ('(10 ** 100) is integer', True),
+
+        ('none is float', False),
+        ('false is float', False),
+        ('true is float', False),
+        ('42 is float', False),
+        ('4.2 is float', True),
+        ('(10 ** 100) is float', False),
+
+        ('none is number', False),
+        ('false is number', True),
+        ('true is number', True),
+        ('42 is number', True),
+        ('3.14159 is number', True),
+        ('complex is number', True),
+        ('(10 ** 100) is number', True),
+
+        ('none is string', False),
+        ('false is string', False),
+        ('true is string', False),
+        ('42 is string', False),
+        ('"foo" is string', True),
+
+        ('none is sequence', False),
+        ('false is sequence', False),
+        ('42 is sequence', False),
+        ('"foo" is sequence', True),
+        ('[] is sequence', True),
+        ('[1, 2, 3] is sequence', True),
+        ('{} is sequence', True),
+
+        ('none is mapping', False),
+        ('false is mapping', False),
+        ('42 is mapping', False),
+        ('"foo" is mapping', False),
+        ('[] is mapping', False),
+        ('{} is mapping', True),
+        ('mydict is mapping', True),
+
+        ('none is iterable', False),
+        ('false is iterable', False),
+        ('42 is iterable', False),
+        ('"foo" is iterable', True),
+        ('[] is iterable', True),
+        ('{} is iterable', True),
+        ('range(5) is iterable', True),
+
+        ('none is callable', False),
+        ('false is callable', False),
+        ('42 is callable', False),
+        ('"foo" is callable', False),
+        ('[] is callable', False),
+        ('{} is callable', False),
+        ('range is callable', True),
+    ))
+    def test_types(self, env, op, expect):
+        t = env.from_string('{{{{ {op} }}}}'.format(op=op))
+        assert t.render(mydict=MyDict(), complex=complex(1, 2)) == str(expect)
+
 
     def test_upper(self, env):
         tmpl = env.from_string('{{ "FOO" is upper }}|{{ "foo" is upper }}')
