@@ -567,6 +567,8 @@ def do_indent(
             rv += u'\n' + u'\n'.join(
                 indention + line if line else line for line in lines
             )
+            # Unescape any strings that were escaped due to concatenation
+            rv = Markup(rv.unescape())
 
     if first:
         rv = indention + rv
