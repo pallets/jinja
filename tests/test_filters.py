@@ -160,7 +160,7 @@ class TestFilter(object):
 
     def test_indent_markup_input(self, env):
         '''
-        Tests casses where the filter input is a Markup type
+        Tests cases where the filter input is a Markup type
         '''
         self._test_indent_multiline_template(env, markup=True)
 
