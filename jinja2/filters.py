@@ -332,7 +332,7 @@ def do_min(environment, value, case_sensitive=False, attribute=None):
             -> 1
 
     :param case_sensitive: Treat upper and lower case strings as distinct.
-    :param attribute: Get the object with the max value of this attribute.
+    :param attribute: Get the object with the min value of this attribute.
     """
     return _min_or_max(environment, value, min, case_sensitive, attribute)
 
