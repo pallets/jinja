@@ -557,8 +557,19 @@ def do_indent(
     s += u'\n'  # this quirk is necessary for splitlines method
     indention = u' ' * width
 
+    def _unescape(val):
+        '''
+        Unescape any strings that were escaped due to concatenation. If the
+        value passed is not a Markup instance, return the original value.
+        '''
+        try:
+            return Markup(val.unescape())
+        except AttributeError:
+            # s was not a Markup instance
+            return val
+
     if blank:
-        rv = (u'\n' + indention).join(s.splitlines())
+        rv = _unescape((u'\n' + indention).join(s.splitlines()))
     else:
         lines = s.splitlines()
         rv = lines.pop(0)
@@ -567,12 +578,7 @@ def do_indent(
             rv += u'\n' + u'\n'.join(
                 indention + line if line else line for line in lines
             )
-            try:
-                # Unescape any strings that were escaped due to concatenation
-                rv = Markup(rv.unescape())
-            except AttributeError:
-                # s was not a Markup instance
-                pass
+            rv = _unescape(rv)
 
     if first:
         rv = indention + rv
