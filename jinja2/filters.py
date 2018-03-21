@@ -757,9 +757,9 @@ def do_format(value, *args, **kwargs):
     return soft_unicode(value) % (kwargs or args)
 
 
-def do_trim(value):
-    """Strip leading and trailing whitespace."""
-    return soft_unicode(value).strip()
+def do_trim(value, chars=None):
+    """Strip leading and trailing characters, by default whitespace."""
+    return soft_unicode(value).strip(chars)
 
 
 def do_striptags(value):

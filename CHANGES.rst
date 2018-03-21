@@ -22,6 +22,8 @@ Unreleased
 -   Int and float literals can be written with the '_' separator for
     legibility, like 12_345. :pr:`923`
 -   Fix a bug causing deadlocks in ``LRUCache.setdefault``. :pr:`1000`
+-   The ``trim`` filter takes an optional string of characters to trim.
+    :pr:`828`
 
 
 Version 2.10.2
