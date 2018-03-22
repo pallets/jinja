@@ -554,17 +554,23 @@ def do_indent(
         ), stacklevel=2)
         first = indentfirst
 
-    s += u'\n'  # this quirk is necessary for splitlines method
     indention = u' ' * width
+    newline = u'\n'
+
+    if isinstance(s, Markup):
+        indention = Markup(indention)
+        newline = Markup(newline)
+
+    s += newline  # this quirk is necessary for splitlines method
 
     if blank:
-        rv = (u'\n' + indention).join(s.splitlines())
+        rv = (newline + indention).join(s.splitlines())
     else:
         lines = s.splitlines()
         rv = lines.pop(0)
 
         if lines:
-            rv += u'\n' + u'\n'.join(
+            rv += newline + newline.join(
                 indention + line if line else line for line in lines
             )
 
