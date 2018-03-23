@@ -684,7 +684,14 @@ def do_truncate(env, s, length=255, killwords=False, end='...', leeway=None):
 
 
 @environmentfilter
-def do_wordwrap(environment, s, width=79, break_long_words=True, wrapstring=None):
+def do_wordwrap(
+    environment,
+    s,
+    width=79,
+    break_long_words=True,
+    wrapstring=None,
+    break_on_hyphens=True,
+):
     """Wrap a string to the given width. Existing newlines are treated
     as paragraphs to be wrapped separately.
 
@@ -692,15 +699,21 @@ def do_wordwrap(environment, s, width=79, break_long_words=True, wrapstring=None
     :param width: Maximum length of wrapped lines.
     :param break_long_words: If a word is longer than ``width``, break
         it across lines.
+    :param break_on_hyphens: If a word contains hyphens, it may be split
+        across lines.
     :param wrapstring: String to join each wrapped line. Defaults to
         :attr:`Environment.newline_sequence`.
 
     .. versionchanged:: 2.11
         Existing newlines are treated as paragraphs wrapped separately.
 
+    .. versionchanged:: 2.11
+        Added the ``break_on_hyphens`` parameter.
+
     .. versionchanged:: 2.7
         Added the ``wrapstring`` parameter.
     """
+
     import textwrap
 
     if not wrapstring:
@@ -719,6 +732,7 @@ def do_wordwrap(environment, s, width=79, break_long_words=True, wrapstring=None
                     expand_tabs=False,
                     replace_whitespace=False,
                     break_long_words=break_long_words,
+                    break_on_hyphens=break_on_hyphens,
                 )
             )
             for line in s.splitlines()
