@@ -551,7 +551,7 @@ understand because it has some impact to what you are doing:
 
 Awaitable objects can be returned from functions in templates and any
 function call in a template will automatically await the result.  This
-means that you can let provide a method that asynchronously loads data
+means that you can provide a method that asynchronously loads data
 from a database if you so desire and from the template designer's point of
 view this is just another function they can call.  This means that the
 ``await`` you would normally issue in Python is implied.  However this
