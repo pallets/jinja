@@ -60,11 +60,11 @@ As an alternative to steps 4 you can also do ``python setup.py develop``
 which will install the package via `distribute` in development mode.  This also
 has the advantage that the C extensions are compiled.
 
-.. _download page: https://pypi.python.org/pypi/Jinja2
-.. _distribute: https://pypi.python.org/pypi/distribute 
+.. _download page: https://pypi.org/project/Jinja2/
+.. _distribute: https://pypi.org/project/distribute/ 
 .. _setuptools: http://peak.telecommunity.com/DevCenter/setuptools
 .. _easy_install: http://peak.telecommunity.com/DevCenter/EasyInstall
-.. _pip: https://pypi.python.org/pypi/pip
+.. _pip: https://pypi.org/project/pip/
 .. _git: https://git-scm.org/
 
 
@@ -75,7 +75,7 @@ As of version 2.7 Jinja2 depends on the `MarkupSafe`_ module.  If you
 install Jinja2 via `pip` or `easy_install` it will be installed
 automatically for you.
 
-.. _MarkupSafe: https://pypi.python.org/pypi/MarkupSafe
+.. _MarkupSafe: https://pypi.org/project/MarkupSafe/
 
 Basic API Usage
 ---------------
