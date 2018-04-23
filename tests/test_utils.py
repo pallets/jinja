@@ -10,7 +10,7 @@
 """
 
 from collections import deque
-import gc
+from copy import copy as shallow_copy
 import pickle
 import random
 
@@ -67,6 +67,17 @@ class TestLRUCache(object):
             assert copy.capacity == cache.capacity
             assert copy._mapping == cache._mapping
             assert copy._queue == cache._queue
+
+    @pytest.mark.parametrize("copy_func", [LRUCache.copy, shallow_copy])
+    def test_copy(self, copy_func):
+        cache = LRUCache(2)
+        cache['a'] = 1
+        cache['b'] = 2
+        copy = copy_func(cache)
+        assert copy._queue == cache._queue
+        copy['c'] = 3
+        assert copy._queue != cache._queue
+        assert 'a' not in copy and 'b' in copy and 'c' in copy
 
     def test_clear(self):
         d = LRUCache(3)

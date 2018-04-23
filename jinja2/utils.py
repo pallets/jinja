@@ -341,6 +341,7 @@ class LRUCache(object):
         rv = self.__class__(self.capacity)
         rv._mapping.update(self._mapping)
         rv._queue = deque(self._queue)
+        rv._postinit()
         return rv
 
     def get(self, key, default=None):
