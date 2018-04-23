@@ -13,6 +13,7 @@ import gc
 import pytest
 
 import pickle
+from copy import copy as shallow_copy
 
 from jinja2.utils import LRUCache, escape, object_type_repr, urlize, \
      select_autoescape
@@ -43,6 +44,17 @@ class TestLRUCache(object):
             assert copy.capacity == cache.capacity
             assert copy._mapping == cache._mapping
             assert copy._queue == cache._queue
+
+    def test_copy(self):
+        cache = LRUCache(2)
+        cache['a'] = 1
+        cache['b'] = 2
+        copy = shallow_copy(cache)
+
+        assert copy._queue == cache._queue
+        copy['c'] = 3
+        assert copy._queue != cache._queue
+        assert 'a' not in copy and 'b' in copy and 'c' in copy
 
 
 @pytest.mark.utils
