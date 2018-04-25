@@ -202,6 +202,41 @@ class FileSystemLoader(BaseLoader):
         return sorted(found)
 
 
+class AbsolutePathFileSystemLoader(BaseLoader):
+    """Loads templates from the file system. This loader insists on absolute
+    paths and fails if a relative path is provided.
+
+    >>> loader = AbsolutePathFileSystemLoader()
+
+    Per default the template encoding is ``'utf-8'`` which can be changed
+    by setting the `encoding` parameter to something else.
+    """
+
+    def __init__(self, encoding='utf-8'):
+        self.encoding = encoding
+
+    def get_source(self, environment, template):
+        if not path.isabs(template):
+            raise TemplateNotFound(template)
+
+        f = open_if_exists(template)
+        if f is None:
+            raise TemplateNotFound(template)
+        try:
+            contents = f.read().decode(self.encoding)
+        finally:
+            f.close()
+
+        mtime = path.getmtime(template)
+
+        def uptodate():
+            try:
+                return path.getmtime(template) == mtime
+            except OSError:
+                return False
+        return contents, template, uptodate
+
+
 class PackageLoader(BaseLoader):
     """Load templates from python eggs or packages.  It is constructed with
     the name of the python package and the path to the templates in that
