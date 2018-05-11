@@ -556,7 +556,7 @@ from a database if you so desire and from the template designer's point of
 view this is just another function they can call.  This means that the
 ``await`` you would normally issue in Python is implied.  However this
 only applies to function calls.  If an attribute for instance would be an
-avaitable object then this would not result in the expected behavior.
+awaitable object then this would not result in the expected behavior.
 
 Likewise iterations with a `for` loop support async iterators.
 
