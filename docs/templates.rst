@@ -271,6 +271,11 @@ include example Jinja syntax in a template, you can use this snippet::
         </ul>
     {% endraw %}
 
+.. admonition:: Note
+
+    Minus sign at the end of ``{% raw -%}`` tag cleans all the spaces and newlines
+    preceding the first character of your raw data.
+
 
 .. _line-statements:
 
