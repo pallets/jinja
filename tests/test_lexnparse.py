@@ -373,14 +373,19 @@ class TestSyntax(object):
         tests = [
             (True, '*foo, bar'),
             (True, '*foo, *bar'),
-            (True, '*foo, bar=42'),
             (True, '**foo, *bar'),
             (True, '**foo, bar'),
+            (True, '**foo, **bar'),
+            (True, '**foo, bar=42'),
             (False, 'foo, bar'),
             (False, 'foo, bar=42'),
             (False, 'foo, bar=23, *args'),
+            (False, 'foo, *args, bar=23'),
             (False, 'a, b=c, *d, **e'),
-            (False, '*foo, **bar')
+            (False, '*foo, bar=42'),
+            (False, '*foo, **bar'),
+            (False, '*foo, bar=42, **baz'),
+            (False, 'foo, *args, bar=23, **baz'),
         ]
         for should_fail, sig in tests:
             if should_fail:

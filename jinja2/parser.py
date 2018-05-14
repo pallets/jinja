@@ -777,16 +777,18 @@ class Parser(object):
                 next(self.stream)
                 dyn_kwargs = self.parse_expression()
             else:
-                ensure(dyn_args is None and dyn_kwargs is None)
                 if self.stream.current.type == 'name' and \
                    self.stream.look().type == 'assign':
+                    # Parsing a kwarg
+                    ensure(dyn_kwargs is None)
                     key = self.stream.current.value
                     self.stream.skip(2)
                     value = self.parse_expression()
                     kwargs.append(nodes.Keyword(key, value,
                                                 lineno=value.lineno))
                 else:
-                    ensure(not kwargs)
+                    # Parsing an arg
+                    ensure(dyn_args is None and dyn_kwargs is None and not kwargs)
                     args.append(self.parse_expression())
 
             require_comma = True
