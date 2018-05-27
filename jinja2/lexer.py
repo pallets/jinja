@@ -409,6 +409,11 @@ def get_lexer(environment):
     return lexer
 
 
+class OptionalLStrip(tuple):
+    def __new__(cls, *members, **kwargs):
+        return super(OptionalLStrip, cls).__new__(cls, members)
+
+
 class Lexer(object):
     """Class that implements a lexer for a given environment. Automatically
     created by the environment class, usually you don't have to do that.
@@ -443,41 +448,9 @@ class Lexer(object):
         # block suffix if trimming is enabled
         block_suffix_re = environment.trim_blocks and '\\n?' or ''
 
-        # strip leading spaces if lstrip_blocks is enabled
-        prefix_re = {}
-        if environment.lstrip_blocks:
-            # use '{%+' to manually disable lstrip_blocks behavior
-            no_lstrip_re = e('+')
-            # detect overlap between block and variable or comment strings
-            block_diff = c(r'^%s(.*)' % e(environment.block_start_string))
-            # make sure we don't mistake a block for a variable or a comment
-            m = block_diff.match(environment.comment_start_string)
-            no_lstrip_re += m and r'|%s' % e(m.group(1)) or ''
-            m = block_diff.match(environment.variable_start_string)
-            no_lstrip_re += m and r'|%s' % e(m.group(1)) or ''
-
-            # detect overlap between comment and variable strings
-            comment_diff = c(r'^%s(.*)' % e(environment.comment_start_string))
-            m = comment_diff.match(environment.variable_start_string)
-            no_variable_re = m and r'(?!%s)' % e(m.group(1)) or ''
-
-            lstrip_re = r'^[ \t]*'
-            block_prefix_re = r'%s%s(?!%s)|%s\+?' % (
-                    lstrip_re,
-                    e(environment.block_start_string),
-                    no_lstrip_re,
-                    e(environment.block_start_string),
-                    )
-            comment_prefix_re = r'%s%s%s|%s\+?' % (
-                    lstrip_re,
-                    e(environment.comment_start_string),
-                    no_variable_re,
-                    e(environment.comment_start_string),
-                    )
-            prefix_re['block'] = block_prefix_re
-            prefix_re['comment'] = comment_prefix_re
-        else:
-            block_prefix_re = '%s' % e(environment.block_start_string)
+        # strip leading spaces in blocks/comments if lstrip_blocks is enabled
+        # use for example '{%+' to disable lstrip_blocks behavior
+        self.lstrip_blocks_unless_re = c(r'[^ \t]') if environment.lstrip_blocks else None
 
         self.newline_sequence = environment.newline_sequence
         self.keep_trailing_newline = environment.keep_trailing_newline
@@ -487,15 +460,14 @@ class Lexer(object):
             'root': [
                 # directives
                 (c('(.*?)(?:%s)' % '|'.join(
-                    [r'(?P<raw_begin>(?:\s*%s\-|%s)\s*raw\s*(?:\-%s\s*|%s))' % (
+                    [r'(?P<raw_begin>%s(\-|\+|)\s*raw\s*(?:\-%s\s*|%s))' % (
                         e(environment.block_start_string),
-                        block_prefix_re,
                         e(environment.block_end_string),
                         e(environment.block_end_string)
                     )] + [
-                        r'(?P<%s_begin>\s*%s\-|%s)' % (n, r, prefix_re.get(n,r))
+                        r'(?P<%s_begin>%s(\-|\+|))' % (n, r)
                         for n, r in root_tag_rules
-                    ])), (TOKEN_DATA, '#bygroup'), '#bygroup'),
+                    ])), OptionalLStrip(TOKEN_DATA, '#bygroup'), '#bygroup'),
                 # data
                 (c('.+'), TOKEN_DATA, None)
             ],
@@ -525,13 +497,12 @@ class Lexer(object):
             ] + tag_rules,
             # raw block
             TOKEN_RAW_BEGIN: [
-                (c(r'(.*?)((?:\s*%s\-|%s)\s*endraw\s*(?:\-%s\s*|%s%s))' % (
+                (c(r'(.*?)((?:%s(\-|\+|))\s*endraw\s*(?:\-%s\s*|%s%s))' % (
                     e(environment.block_start_string),
-                    block_prefix_re,
                     e(environment.block_end_string),
                     e(environment.block_end_string),
                     block_suffix_re
-                )), (TOKEN_DATA, TOKEN_RAW_END), '#pop'),
+                )), OptionalLStrip(TOKEN_DATA, TOKEN_RAW_END), '#pop'),
                 (c('(.)'), (Failure('Missing end of raw directive'),), None)
             ],
             # line statements
@@ -600,6 +571,7 @@ class Lexer(object):
         """This method tokenizes the text and returns the tokens in a
         generator.  Use this method if you just want to tokenize a template.
         """
+        neg_lstrip_re = self.lstrip_blocks_unless_re
         source = text_type(source)
         lines = source.splitlines()
         if self.keep_trailing_newline and source:
@@ -640,6 +612,21 @@ class Lexer(object):
 
                 # tuples support more options
                 if isinstance(tokens, tuple):
+                    groups = m.groups()
+
+                    if isinstance(tokens, OptionalLStrip):
+                        # state supports lstrip, determine override (-/+)
+                        strip_sign = next(group for group in groups[2::2]
+                                          if group is not None)
+                        if strip_sign == '-':
+                            groups = (groups[0].rstrip(),) + groups[1:]
+                        elif strip_sign != '+' and neg_lstrip_re is not None \
+                                and not m.groupdict().get('variable_begin'):
+                            # no override, but lstrip_blocks enabled
+                            l_pos = groups[0].rfind('\n') + 1
+                            if not neg_lstrip_re.search(groups[0], l_pos):
+                                groups = (groups[0][:l_pos],) + groups[1:]
+
                     for idx, token in enumerate(tokens):
                         # failure group
                         if token.__class__ is Failure:
@@ -660,7 +647,7 @@ class Lexer(object):
                                                    % regex)
                         # normal group
                         else:
-                            data = m.group(idx + 1)
+                            data = groups[idx]
                             if data or token not in ignore_if_empty:
                                 yield lineno, token, data
                             lineno += data.count('\n')
