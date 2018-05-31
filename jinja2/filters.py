@@ -221,10 +221,17 @@ def do_dictsort(value, case_sensitive=False, by='key', reverse=False):
 
         {% for item in mydict|dictsort(false, 'value') %}
             sort the dict by value, case insensitive
+
+        {% for item in mydict|dictsort(false, 'value.value.value...') %}
+            sort the dict by nest value, case insensitive
     """
+    nest = False
     if by == 'key':
         pos = 0
     elif by == 'value':
+        pos = 1
+    elif by.startswith('value'):
+        nest = by.split(".")[1:]
         pos = 1
     else:
         raise FilterArgumentError(
@@ -237,6 +244,9 @@ def do_dictsort(value, case_sensitive=False, by='key', reverse=False):
         if not case_sensitive:
             value = ignore_case(value)
 
+        if nest:
+            for n in nest:
+                value = value.get(n)
         return value
 
     return sorted(value.items(), key=sort_func, reverse=reverse)
