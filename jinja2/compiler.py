@@ -1720,6 +1720,9 @@ class CodeGenerator(NodeVisitor):
     def visit_ContextReference(self, node, frame):
         self.write('context')
 
+    def visit_DerivedContextReference(self, node, frame):
+        self.write(self.derive_context(frame))
+
     def visit_Continue(self, node, frame):
         self.writeline('continue', node)
 
