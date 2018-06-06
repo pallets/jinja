@@ -112,6 +112,26 @@ def do_urlencode(value):
                      for k, v in itemiter)
 
 
+def do_urlencodecomponent(value):
+    """Escape strings for use in URLs (uses UTF-8 encoding).
+    It accepts regular strings, other types are handled by urlencode().
+    It is like javascripts encodeURIComponent.
+    Where as urlencode is like encodeURI in js.
+
+    .. versionadded:: 2.7
+    """
+    itemiter = None
+    if isinstance(value, dict):
+        itemiter = iteritems(value)
+    elif not isinstance(value, string_types):
+        try:
+            itemiter = iter(value)
+        except TypeError:
+            pass
+    if itemiter is None:
+        return unicode_urlencode(value, for_qs=True)
+    return do_urlencode(value)
+
 @evalcontextfilter
 def do_replace(eval_ctx, s, old, new, count=None):
     """Return a copy of the value with all occurrences of a substring
@@ -1196,6 +1216,7 @@ FILTERS = {
     'unique':               do_unique,
     'upper':                do_upper,
     'urlencode':            do_urlencode,
+    'urlencodecomponent':   do_urlencodecomponent,
     'urlize':               do_urlize,
     'wordcount':            do_wordcount,
     'wordwrap':             do_wordwrap,
