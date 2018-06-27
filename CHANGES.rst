@@ -12,6 +12,7 @@ unreleased
 - Async support is only loaded the first time an
   :class:`~environment.Environment` enables it, in order to avoid a
   slow initial import. (`#765`_)
+- Python 3.3 is not supported anymore.
 
 .. _#765: https://github.com/pallets/jinja/issues/765
 
