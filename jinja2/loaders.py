@@ -158,16 +158,17 @@ class FileSystemLoader(BaseLoader):
     """
 
     def __init__(self, searchpath, encoding='utf-8', followlinks=False):
-        if isinstance(searchpath, string_types):
-            searchpath = [searchpath]
-        self.searchpath = list(searchpath)
+        if isinstance(searchpath, (list, tuple)):
+            searchpath = [str(x) for x in searchpath]
+        else:
+            searchpath = [str(searchpath)]
+        self.searchpath = searchpath
         self.encoding = encoding
         self.followlinks = followlinks
 
     def get_source(self, environment, template):
         pieces = split_template_path(template)
         for searchpath in self.searchpath:
-            searchpath = str(searchpath) # for certain path-like objects
             filename = path.join(searchpath, *pieces)
             f = open_if_exists(filename)
             if f is None:
@@ -190,7 +191,6 @@ class FileSystemLoader(BaseLoader):
     def list_templates(self):
         found = set()
         for searchpath in self.searchpath:
-            searchpath = str(searchpath)
             walk_dir = os.walk(searchpath, followlinks=self.followlinks)
             for dirpath, dirnames, filenames in walk_dir:
                 for filename in filenames:
