@@ -15,6 +15,12 @@ import shutil
 import pytest
 import weakref
 
+try:
+    import pathlib
+    has_pathlib = True
+except ImportError:
+    has_pathlib = False
+
 from jinja2 import Environment, loaders
 from jinja2._compat import PYPY, PY2
 from jinja2.loaders import split_template_path
@@ -42,6 +48,11 @@ class TestLoaders(object):
         assert tmpl.render().strip() == 'BAR'
         tmpl = env.get_template('foo/test.html')
         assert tmpl.render().strip() == 'FOO'
+        if has_pathlib:
+            tmpl = env.get_template(pathlib.Path('test.html'))
+            assert tmpl.render().strip() == 'FOO'
+            tmpl = env.get_template(pathlib.Path('foo/test.html'))
+            assert tmpl.render().strip() == 'FOO'
         pytest.raises(TemplateNotFound, env.get_template, 'missing.html')
 
     def test_choice_loader(self, choice_loader):

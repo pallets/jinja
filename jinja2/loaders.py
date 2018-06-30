@@ -167,6 +167,7 @@ class FileSystemLoader(BaseLoader):
     def get_source(self, environment, template):
         pieces = split_template_path(template)
         for searchpath in self.searchpath:
+            searchpath = str(searchpath) # for certain path-like objects
             filename = path.join(searchpath, *pieces)
             f = open_if_exists(filename)
             if f is None:
@@ -189,6 +190,7 @@ class FileSystemLoader(BaseLoader):
     def list_templates(self):
         found = set()
         for searchpath in self.searchpath:
+            searchpath = str(searchpath)
             walk_dir = os.walk(searchpath, followlinks=self.followlinks)
             for dirpath, dirnames, filenames in walk_dir:
                 for filename in filenames:
