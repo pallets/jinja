@@ -44,6 +44,16 @@ class TestLoaders(object):
         assert tmpl.render().strip() == 'FOO'
         pytest.raises(TemplateNotFound, env.get_template, 'missing.html')
 
+    def test_filesystem_loader_searchpaths(self):
+        pathlib = pytest.importorskip('pathlib')
+        here = os.path.dirname(os.path.abspath(__file__))
+        tmpl_path = os.path.join(here, 'res', 'templates', 'foo')
+        for p in [tmpl_path, pathlib.Path(tmpl_path)]:
+            loader = loaders.FileSystemLoader(p)
+            env = Environment(loader=loader)
+            tmpl = env.get_template('test.html')
+            assert tmpl.render().strip() == 'FOO'
+
     def test_choice_loader(self, choice_loader):
         env = Environment(loader=choice_loader)
         tmpl = env.get_template('justdict.html')
