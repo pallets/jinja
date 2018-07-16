@@ -8,6 +8,7 @@
     :copyright: (c) 2017 by the Jinja Team.
     :license: BSD, see LICENSE for more details.
 """
+import glob
 import os
 import sys
 import weakref
@@ -135,6 +136,17 @@ class BaseLoader(object):
                                                     globals, uptodate)
 
 
+def _load_file_itr(files, encoding):
+    for filename in files:
+        f = open_if_exists(filename)
+        if f is not None:
+            try:
+                yield (f.read().decode(encoding),
+                       path.getmtime(filename))
+            finally:
+                f.close()
+
+
 class FileSystemLoader(BaseLoader):
     """Loads templates from the file system.  This loader can find templates
     in folders on the file system and is the preferred way to load them.
@@ -157,30 +169,34 @@ class FileSystemLoader(BaseLoader):
        The *followlinks* parameter was added.
     """
 
-    def __init__(self, searchpath, encoding='utf-8', followlinks=False):
+    def __init__(self, searchpath, encoding='utf-8', followlinks=False,
+                 enable_glob=False):
         if isinstance(searchpath, string_types):
             searchpath = [searchpath]
         self.searchpath = list(searchpath)
         self.encoding = encoding
         self.followlinks = followlinks
+        self.enable_glob = enable_glob
 
     def get_source(self, environment, template):
         pieces = split_template_path(template)
         for searchpath in self.searchpath:
             filename = path.join(searchpath, *pieces)
-            f = open_if_exists(filename)
-            if f is None:
+            if self.enable_glob:
+                files = sorted(glob.glob(filename))
+            else:
+                files = [filename]
+            contents_mtimes = list(_load_file_itr(files, self.encoding))
+            if not contents_mtimes:
                 continue
-            try:
-                contents = f.read().decode(self.encoding)
-            finally:
-                f.close()
 
-            mtime = path.getmtime(filename)
+            contents = ''.join(cm[0] for cm in contents_mtimes)
+            mtimes = [cm[1] for cm in contents_mtimes]
 
             def uptodate():
                 try:
-                    return path.getmtime(filename) == mtime
+                    return all(path.getmtime(fn) == mt for fn, mt
+                               in zip(files, mtimes))
                 except OSError:
                     return False
             return contents, filename, uptodate
@@ -195,10 +211,16 @@ class FileSystemLoader(BaseLoader):
                     template = os.path.join(dirpath, filename) \
                         [len(searchpath):].strip(os.path.sep) \
                                           .replace(os.path.sep, '/')
-                    if template[:2] == './':
-                        template = template[2:]
-                    if template not in found:
-                        found.add(template)
+                    if self.enable_glob:
+                        templates = glob.glob(template)
+                    else:
+                        templates = [template]
+
+                    for template in templates:
+                        if template[:2] == './':
+                            template = template[2:]
+                        if template not in found:
+                            found.add(template)
         return sorted(found)
 
 

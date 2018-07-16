@@ -3,6 +3,8 @@ branch = True
 source =
     jinja2
     tests
+omit =
+    tests/res/templates/glob*.j2
 
 [paths]
 source =
