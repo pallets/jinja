@@ -44,6 +44,13 @@ class TestLoaders(object):
         assert tmpl.render().strip() == 'FOO'
         pytest.raises(TemplateNotFound, env.get_template, 'missing.html')
 
+    def test_filesystem_loader_glob_include(self, filesystem_loader):
+        filesystem_loader.enable_glob = True  # Hack
+        env = Environment(loader=filesystem_loader)
+        tmpl = env.get_template('glob_*.j2')
+        res = ''.join(tmpl.render().splitlines())
+        assert res == 'FooBarBaz'
+
     def test_choice_loader(self, choice_loader):
         env = Environment(loader=choice_loader)
         tmpl = env.get_template('justdict.html')
