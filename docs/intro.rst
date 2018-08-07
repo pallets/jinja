@@ -12,9 +12,10 @@ useful for templating environments.
 Prerequisites
 -------------
 
-Jinja2 works with Python 2.6.x, 2.7.x and >= 3.3.  If you are using Python
+Jinja2 works with Python 2.7.x and >= 3.4.  If you are using Python
 3.2 you can use an older release of Jinja2 (2.6) as support for Python 3.2
-was dropped in Jinja2 version 2.7.
+was dropped in Jinja2 version 2.7. The last release which supported Python 2.6
+and 3.3 was Jinja2 2.10.
 
 If you wish to use the :class:`~jinja2.PackageLoader` class, you will also
 need `setuptools`_ or `distribute`_ installed at runtime.
