@@ -159,8 +159,8 @@ class FileSystemLoader(BaseLoader):
 
     def __init__(self, searchpath, encoding='utf-8', followlinks=False):
         if isinstance(searchpath, string_types):
-            searchpath = [searchpath]
-        self.searchpath = list(searchpath)
+            searchpath = [str(searchpath)]
+        self.searchpath = map(str, list(searchpath))
         self.encoding = encoding
         self.followlinks = followlinks
 
