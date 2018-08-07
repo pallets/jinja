@@ -158,9 +158,11 @@ class FileSystemLoader(BaseLoader):
     """
 
     def __init__(self, searchpath, encoding='utf-8', followlinks=False):
-        if isinstance(searchpath, string_types):
-            searchpath = [searchpath]
-        self.searchpath = list(searchpath)
+        if isinstance(searchpath, (list, tuple)):
+            searchpath = [str(x) for x in searchpath]
+        else:
+            searchpath = [str(searchpath)]
+        self.searchpath = searchpath
         self.encoding = encoding
         self.followlinks = followlinks
 
