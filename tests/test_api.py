@@ -68,7 +68,7 @@ class TestExtendedAPI(object):
         c.next()
         assert c.current == 2
         c.reset()
-        assert c.current == 1        
+        assert c.current == 1
 
     def test_expressions(self, env):
         expr = env.compile_expression("foo")
