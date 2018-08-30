@@ -19,7 +19,7 @@ Even if you are creating templates from strings by using the constructor of
 albeit a shared one.
 
 Most applications will create one :class:`Environment` object on application
-initialization and use that to load templates.  In some cases however, it's 
+initialization and use that to load templates.  In some cases however, it's
 useful to have multiple environments side by side, if different configurations
 are in use.
 
@@ -213,7 +213,7 @@ useful if you want to dig deeper into Jinja2 or :ref:`develop extensions
         For a more complex example you can provide a hint.  For example
         the :func:`first` filter creates an undefined object that way::
 
-            return environment.undefined('no first item, sequence was empty')            
+            return environment.undefined('no first item, sequence was empty')
 
         If it the `name` or `obj` is known (for example because an attribute
         was accessed) it should be passed to the undefined object, even if
@@ -838,7 +838,7 @@ Here a simple test that checks if a variable is a prime number::
             if n % i == 0:
                 return False
         return True
-        
+
 
 You can register it on the template environment by updating the
 :attr:`~Environment.tests` dict on the environment::
