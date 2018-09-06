@@ -135,23 +135,34 @@ class TestFilter(object):
         out = tmpl.render()
         assert out == 'a|b'
 
-    def test_indent(self, env):
-        text = '\n'.join(['', 'foo bar', ''])
+    @staticmethod
+    def _test_indent_multiline_template(env, markup=False):
+        text = '\n'.join(['', 'foo bar', '"baz"', ''])
+        if markup:
+            text = Markup(text)
         t = env.from_string('{{ foo|indent(2, false, false) }}')
-        assert t.render(foo=text) == '\n  foo bar\n'
+        assert t.render(foo=text) == '\n  foo bar\n  "baz"\n'
         t = env.from_string('{{ foo|indent(2, false, true) }}')
-        assert t.render(foo=text) == '\n  foo bar\n  '
+        assert t.render(foo=text) == '\n  foo bar\n  "baz"\n  '
         t = env.from_string('{{ foo|indent(2, true, false) }}')
-        assert t.render(foo=text) == '  \n  foo bar\n'
+        assert t.render(foo=text) == '  \n  foo bar\n  "baz"\n'
         t = env.from_string('{{ foo|indent(2, true, true) }}')
-        assert t.render(foo=text) == '  \n  foo bar\n  '
+        assert t.render(foo=text) == '  \n  foo bar\n  "baz"\n  '
 
+    def test_indent(self, env):
+        self._test_indent_multiline_template(env)
         t = env.from_string('{{ "jinja"|indent }}')
         assert t.render() == 'jinja'
         t = env.from_string('{{ "jinja"|indent(first=true) }}')
         assert t.render() == '    jinja'
         t = env.from_string('{{ "jinja"|indent(blank=true) }}')
         assert t.render() == 'jinja'
+
+    def test_indent_markup_input(self, env):
+        '''
+        Tests cases where the filter input is a Markup type
+        '''
+        self._test_indent_multiline_template(env, markup=True)
 
     def test_indentfirst_deprecated(self, env):
         with pytest.warns(DeprecationWarning):
@@ -640,8 +651,9 @@ class TestFilter(object):
     def test_json_dump(self):
         env = Environment(autoescape=True)
         t = env.from_string('{{ x|tojson }}')
-        assert t.render(x={'foo': 'bar'}) == '{&#34;foo&#34;: &#34;bar&#34;}'
-        assert t.render(x='"bar\'') == r'&#34;\&#34;bar\u0027&#34;'
+        assert t.render(x={'foo': 'bar'}) == '{"foo": "bar"}'
+        assert t.render(x='"ba&r\'') == r'"\"ba\u0026r\u0027"'
+        assert t.render(x='<bar>') == r'"\u003cbar\u003e"'
 
         def my_dumps(value, **options):
             assert options == {'foo': 'bar'}

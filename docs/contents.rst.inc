@@ -7,6 +7,7 @@ Jinja2 Documentation
    intro
    api
    sandbox
+   nativetypes
    templates
    extensions
    integration

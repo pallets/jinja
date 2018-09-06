@@ -126,7 +126,7 @@ class Node(with_metaclass(NodeType, object)):
 
     def __init__(self, *fields, **attributes):
         if self.abstract:
-            raise TypeError('abstract nodes are not instanciable')
+            raise TypeError('abstract nodes are not instantiable')
         if fields:
             if len(fields) != len(self.fields):
                 if not self.fields:
@@ -314,7 +314,7 @@ class For(Stmt):
 
 class If(Stmt):
     """If `test` is true, `body` is rendered, else `else_`."""
-    fields = ('test', 'body', 'else_')
+    fields = ('test', 'body', 'elif_', 'else_')
 
 
 class Macro(Stmt):
@@ -387,7 +387,7 @@ class Assign(Stmt):
 
 class AssignBlock(Stmt):
     """Assigns a block to a target."""
-    fields = ('target', 'body')
+    fields = ('target', 'filter', 'body')
 
 
 class Expr(Node):
@@ -636,7 +636,7 @@ class Filter(Expr):
 
         # we have to be careful here because we call filter_ below.
         # if this variable would be called filter, 2to3 would wrap the
-        # call in a list beause it is assuming we are talking about the
+        # call in a list because it is assuming we are talking about the
         # builtin filter function here which no longer returns a list in
         # python 3.  because of that, do not rename filter_ to filter!
         filter_ = self.environment.filters.get(self.name)

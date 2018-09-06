@@ -180,9 +180,10 @@ class Parser(object):
         if self.stream.skip_if('assign'):
             expr = self.parse_tuple()
             return nodes.Assign(target, expr, lineno=lineno)
+        filter_node = self.parse_filter(None)
         body = self.parse_statements(('name:endset',),
                                      drop_needle=True)
-        return nodes.AssignBlock(target, body, lineno=lineno)
+        return nodes.AssignBlock(target, filter_node, body, lineno=lineno)
 
     def parse_for(self):
         """Parse a for loop."""
@@ -210,17 +211,16 @@ class Parser(object):
             node.test = self.parse_tuple(with_condexpr=False)
             node.body = self.parse_statements(('name:elif', 'name:else',
                                                'name:endif'))
+            node.elif_ = []
+            node.else_ = []
             token = next(self.stream)
             if token.test('name:elif'):
-                new_node = nodes.If(lineno=self.stream.current.lineno)
-                node.else_ = [new_node]
-                node = new_node
+                node = nodes.If(lineno=self.stream.current.lineno)
+                result.elif_.append(node)
                 continue
             elif token.test('name:else'):
-                node.else_ = self.parse_statements(('name:endif',),
-                                                   drop_needle=True)
-            else:
-                node.else_ = []
+                result.else_ = self.parse_statements(('name:endif',),
+                                                     drop_needle=True)
             break
         return result
 
@@ -777,16 +777,18 @@ class Parser(object):
                 next(self.stream)
                 dyn_kwargs = self.parse_expression()
             else:
-                ensure(dyn_args is None and dyn_kwargs is None)
                 if self.stream.current.type == 'name' and \
                    self.stream.look().type == 'assign':
+                    # Parsing a kwarg
+                    ensure(dyn_kwargs is None)
                     key = self.stream.current.value
                     self.stream.skip(2)
                     value = self.parse_expression()
                     kwargs.append(nodes.Keyword(key, value,
                                                 lineno=value.lineno))
                 else:
-                    ensure(not kwargs)
+                    # Parsing an arg
+                    ensure(dyn_args is None and dyn_kwargs is None and not kwargs)
                     args.append(self.parse_expression())
 
             require_comma = True

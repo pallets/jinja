@@ -1,12 +1,8 @@
-include MANIFEST.in Makefile CHANGES LICENSE AUTHORS run-tests.py
-recursive-include docs *
-recursive-include custom_fixers *
-recursive-include ext *
-recursive-include artwork *
-recursive-include examples *
-recursive-include jinja2/testsuite/res *
-recursive-exclude docs/_build *
-recursive-exclude jinja2 *.pyc
-recursive-exclude docs *.pyc
-recursive-exclude jinja2 *.pyo
-recursive-exclude docs *.pyo
+include AUTHORS CHANGES.rst LICENSE
+global-exclude *.py[co]
+graft artwork
+graft docs
+prune docs/_build
+graft examples
+graft ext
+graft tests

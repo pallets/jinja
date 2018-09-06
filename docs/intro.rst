@@ -12,9 +12,10 @@ useful for templating environments.
 Prerequisites
 -------------
 
-Jinja2 works with Python 2.6.x, 2.7.x and >= 3.3.  If you are using Python
+Jinja2 works with Python 2.7.x and >= 3.4.  If you are using Python
 3.2 you can use an older release of Jinja2 (2.6) as support for Python 3.2
-was dropped in Jinja2 version 2.7.
+was dropped in Jinja2 version 2.7. The last release which supported Python 2.6
+and 3.3 was Jinja2 2.10.
 
 If you wish to use the :class:`~jinja2.PackageLoader` class, you will also
 need `setuptools`_ or `distribute`_ installed at runtime.
@@ -60,11 +61,11 @@ As an alternative to steps 4 you can also do ``python setup.py develop``
 which will install the package via `distribute` in development mode.  This also
 has the advantage that the C extensions are compiled.
 
-.. _download page: https://pypi.python.org/pypi/Jinja2
-.. _distribute: https://pypi.python.org/pypi/distribute 
+.. _download page: https://pypi.org/project/Jinja2/
+.. _distribute: https://pypi.org/project/distribute/
 .. _setuptools: http://peak.telecommunity.com/DevCenter/setuptools
 .. _easy_install: http://peak.telecommunity.com/DevCenter/EasyInstall
-.. _pip: https://pypi.python.org/pypi/pip
+.. _pip: https://pypi.org/project/pip/
 .. _git: https://git-scm.org/
 
 
@@ -75,7 +76,7 @@ As of version 2.7 Jinja2 depends on the `MarkupSafe`_ module.  If you
 install Jinja2 via `pip` or `easy_install` it will be installed
 automatically for you.
 
-.. _MarkupSafe: https://pypi.python.org/pypi/MarkupSafe
+.. _MarkupSafe: https://pypi.org/project/MarkupSafe/
 
 Basic API Usage
 ---------------
@@ -102,19 +103,3 @@ of the template.
 What you can see here is that Jinja2 is using unicode internally and the
 return value is an unicode string.  So make sure that your application is
 indeed using unicode internally.
-
-
-Experimental Python 3 Support
------------------------------
-
-Jinja 2.7 brings experimental support for Python >=3.3.  It means that all
-unittests pass on the new version, but there might still be small bugs in
-there and behavior might be inconsistent.  If you notice any bugs, please
-provide feedback in the `Jinja bug tracker`_.
-
-Also please keep in mind that the documentation is written with Python 2
-in mind, so you will have to adapt the shown code examples to Python 3 syntax
-for yourself.
-
-
-.. _Jinja bug tracker: https://github.com/pallets/jinja/issues

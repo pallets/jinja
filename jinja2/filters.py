@@ -332,14 +332,14 @@ def do_min(environment, value, case_sensitive=False, attribute=None):
             -> 1
 
     :param case_sensitive: Treat upper and lower case strings as distinct.
-    :param attribute: Get the object with the max value of this attribute.
+    :param attribute: Get the object with the min value of this attribute.
     """
     return _min_or_max(environment, value, min, case_sensitive, attribute)
 
 
 @environmentfilter
 def do_max(environment, value, case_sensitive=False, attribute=None):
-    """Return the smallest item from the sequence.
+    """Return the largest item from the sequence.
 
     .. sourcecode:: jinja
 
@@ -400,7 +400,7 @@ def do_join(eval_ctx, value, d=u'', attribute=None):
     if attribute is not None:
         value = imap(make_attrgetter(eval_ctx.environment, attribute), value)
 
-    # no automatic escaping?  joining is a lot eaiser then
+    # no automatic escaping?  joining is a lot easier then
     if not eval_ctx.autoescape:
         return text_type(d).join(imap(text_type, value))
 
@@ -554,17 +554,23 @@ def do_indent(
         ), stacklevel=2)
         first = indentfirst
 
-    s += u'\n'  # this quirk is necessary for splitlines method
     indention = u' ' * width
+    newline = u'\n'
+
+    if isinstance(s, Markup):
+        indention = Markup(indention)
+        newline = Markup(newline)
+
+    s += newline  # this quirk is necessary for splitlines method
 
     if blank:
-        rv = (u'\n' + indention).join(s.splitlines())
+        rv = (newline + indention).join(s.splitlines())
     else:
         lines = s.splitlines()
         rv = lines.pop(0)
 
         if lines:
-            rv += u'\n' + u'\n'.join(
+            rv += newline + newline.join(
                 indention + line if line else line for line in lines
             )
 

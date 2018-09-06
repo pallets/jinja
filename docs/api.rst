@@ -19,7 +19,7 @@ Even if you are creating templates from strings by using the constructor of
 albeit a shared one.
 
 Most applications will create one :class:`Environment` object on application
-initialization and use that to load templates.  In some cases however, it's 
+initialization and use that to load templates.  In some cases however, it's
 useful to have multiple environments side by side, if different configurations
 are in use.
 
@@ -213,7 +213,7 @@ useful if you want to dig deeper into Jinja2 or :ref:`develop extensions
         For a more complex example you can provide a hint.  For example
         the :func:`first` filter creates an undefined object that way::
 
-            return environment.undefined('no first item, sequence was empty')            
+            return environment.undefined('no first item, sequence was empty')
 
         If it the `name` or `obj` is known (for example because an attribute
         was accessed) it should be passed to the undefined object, even if
@@ -278,7 +278,7 @@ function for this::
                       loader=PackageLoader('mypackage'))
 
 The :func:`~jinja.select_autoescape` function returns a function that
-works rougly like this::
+works roughly like this::
 
     def autoescape(template_name):
         if template_name is None:
@@ -551,12 +551,12 @@ understand because it has some impact to what you are doing:
 
 Awaitable objects can be returned from functions in templates and any
 function call in a template will automatically await the result.  This
-means that you can let provide a method that asynchronously loads data
+means that you can provide a method that asynchronously loads data
 from a database if you so desire and from the template designer's point of
 view this is just another function they can call.  This means that the
 ``await`` you would normally issue in Python is implied.  However this
 only applies to function calls.  If an attribute for instance would be an
-avaitable object then this would not result in the expected behavior.
+awaitable object then this would not result in the expected behavior.
 
 Likewise iterations with a `for` loop support async iterators.
 
@@ -838,7 +838,7 @@ Here a simple test that checks if a variable is a prime number::
             if n % i == 0:
                 return False
         return True
-        
+
 
 You can register it on the template environment by updating the
 :attr:`~Environment.tests` dict on the environment::

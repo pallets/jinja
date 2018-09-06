@@ -249,6 +249,15 @@ class TestIfCondition(object):
             %}...{% else %}XXX{% endif %}''')
         assert tmpl.render() == '...'
 
+    def test_elif_deep(self, env):
+        elifs = '\n'.join('{{% elif a == {0} %}}{0}'.format(i)
+                          for i in range(1, 1000))
+        tmpl = env.from_string('{{% if a == 0 %}}0{0}{{% else %}}x{{% endif %}}'
+                               .format(elifs))
+        for x in (0, 10, 999):
+            assert tmpl.render(a=x).strip() == str(x)
+        assert tmpl.render(a=1000).strip() == 'x'
+
     def test_else(self, env):
         tmpl = env.from_string('{% if false %}XXX{% else %}...{% endif %}')
         assert tmpl.render() == '...'
@@ -443,6 +452,33 @@ class TestSet(object):
                                     '{{ magic(ns) }}'
                                     '{{ ns.a }}|{{ ns.b }}')
         assert tmpl.render() == '13|37'
+
+    def test_block_escaping_filtered(self):
+        env = Environment(autoescape=True)
+        tmpl = env.from_string('{% set foo | trim %}<em>{{ test }}</em>    '
+                               '{% endset %}foo: {{ foo }}')
+        assert tmpl.render(test='<unsafe>') == 'foo: <em>&lt;unsafe&gt;</em>'
+
+    def test_block_filtered(self, env_trim):
+        tmpl = env_trim.from_string(
+            '{% set foo | trim | length | string %} 42    {% endset %}'
+            '{{ foo }}')
+        assert tmpl.render() == '2'
+        assert tmpl.module.foo == u'2'
+
+    def test_block_filtered_set(self, env_trim):
+        def _myfilter(val, arg):
+            assert arg == ' xxx '
+            return val
+        env_trim.filters['myfilter'] = _myfilter
+        tmpl = env_trim.from_string(
+            '{% set a = " xxx " %}'
+            '{% set foo | myfilter(a) | trim | length | string %}'
+            ' {% set b = " yy " %} 42 {{ a }}{{ b }}   '
+            '{% endset %}'
+            '{{ foo }}')
+        assert tmpl.render() == '11'
+        assert tmpl.module.foo == u'11'
 
 
 @pytest.mark.core_tags

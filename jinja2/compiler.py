@@ -410,7 +410,7 @@ class CodeGenerator(NodeVisitor):
         """Writes a function call to the stream for the current node.
         A leading comma is added automatically.  The extra keyword
         arguments may not include python keywords otherwise a syntax
-        error could occour.  The extra keyword arguments should be given
+        error could occur.  The extra keyword arguments should be given
         as python dict.
         """
         # if any of the given keyword arguments is a python keyword
@@ -1159,6 +1159,13 @@ class CodeGenerator(NodeVisitor):
         self.indent()
         self.blockvisit(node.body, if_frame)
         self.outdent()
+        for elif_ in node.elif_:
+            self.writeline('elif ', elif_)
+            self.visit(elif_.test, if_frame)
+            self.write(':')
+            self.indent()
+            self.blockvisit(elif_.body, if_frame)
+            self.outdent()
         if node.else_:
             self.writeline('else:')
             self.indent()
@@ -1378,7 +1385,12 @@ class CodeGenerator(NodeVisitor):
         self.newline(node)
         self.visit(node.target, frame)
         self.write(' = (Markup if context.eval_ctx.autoescape '
-                   'else identity)(concat(%s))' % block_frame.buffer)
+                   'else identity)(')
+        if node.filter is not None:
+            self.visit_Filter(node.filter, block_frame)
+        else:
+            self.write('concat(%s)' % block_frame.buffer)
+        self.write(')')
         self.pop_assign_tracking(frame)
         self.leave_frame(block_frame)
 

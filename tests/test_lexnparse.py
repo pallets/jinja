@@ -67,6 +67,18 @@ class TestLexer(object):
         tmpl = env.from_string('1  {%- raw -%}   2   {%- endraw -%}   3')
         assert tmpl.render() == '123'
 
+    def test_raw3(self, env):
+        # The second newline after baz exists because it is AFTER the {% raw %} and is ignored.
+        env = Environment(lstrip_blocks=True, trim_blocks=True)
+        tmpl = env.from_string("bar\n{% raw %}\n  {{baz}}2 spaces\n{% endraw %}\nfoo")
+        assert tmpl.render(baz='test') == "bar\n\n  {{baz}}2 spaces\nfoo"
+
+    def test_raw4(self, env):
+        # The trailing dash of the {% raw -%} cleans both the spaces and newlines up to the first character of data.
+        env = Environment(lstrip_blocks=True, trim_blocks=False)
+        tmpl = env.from_string("bar\n{%- raw -%}\n\n  \n  2 spaces\n space{%- endraw -%}\nfoo")
+        assert tmpl.render() == "bar2 spaces\n spacefoo"
+
     def test_balancing(self, env):
         env = Environment('{%', '%}', '${', '}')
         tmpl = env.from_string('''{% for item in seq
@@ -361,14 +373,19 @@ class TestSyntax(object):
         tests = [
             (True, '*foo, bar'),
             (True, '*foo, *bar'),
-            (True, '*foo, bar=42'),
             (True, '**foo, *bar'),
             (True, '**foo, bar'),
+            (True, '**foo, **bar'),
+            (True, '**foo, bar=42'),
             (False, 'foo, bar'),
             (False, 'foo, bar=42'),
             (False, 'foo, bar=23, *args'),
+            (False, 'foo, *args, bar=23'),
             (False, 'a, b=c, *d, **e'),
-            (False, '*foo, **bar')
+            (False, '*foo, bar=42'),
+            (False, '*foo, **bar'),
+            (False, '*foo, bar=42, **baz'),
+            (False, 'foo, *args, bar=23, **baz'),
         ]
         for should_fail, sig in tests:
             if should_fail:

@@ -14,10 +14,9 @@
 """
 import types
 import operator
-from collections import Mapping
 from jinja2.environment import Environment
 from jinja2.exceptions import SecurityError
-from jinja2._compat import string_types, PY2
+from jinja2._compat import string_types, PY2, abc
 from jinja2.utils import Markup
 
 from markupsafe import EscapeFormatter
@@ -40,7 +39,7 @@ else:
 #: unsafe method attributes.  function attributes are unsafe for methods too
 UNSAFE_METHOD_ATTRIBUTES = set(['im_class', 'im_func', 'im_self'])
 
-#: unsafe generator attirbutes.
+#: unsafe generator attributes.
 UNSAFE_GENERATOR_ATTRIBUTES = set(['gi_frame', 'gi_code'])
 
 #: unsafe attributes on coroutines
@@ -79,10 +78,9 @@ except ImportError:
     pass
 
 #: register Python 2.6 abstract base classes
-from collections import MutableSet, MutableMapping, MutableSequence
-_mutable_set_types += (MutableSet,)
-_mutable_mapping_types += (MutableMapping,)
-_mutable_sequence_types += (MutableSequence,)
+_mutable_set_types += (abc.MutableSet,)
+_mutable_mapping_types += (abc.MutableMapping,)
+_mutable_sequence_types += (abc.MutableSequence,)
 
 
 _mutable_spec = (
@@ -103,7 +101,7 @@ _mutable_spec = (
 )
 
 
-class _MagicFormatMapping(Mapping):
+class _MagicFormatMapping(abc.Mapping):
     """This class implements a dummy wrapper to fix a bug in the Python
     standard library for string formatting.
 
@@ -299,7 +297,7 @@ class SandboxedEnvironment(Environment):
     def intercept_unop(self, operator):
         """Called during template compilation with the name of a unary
         operator to check if it should be intercepted at runtime.  If this
-        method returns `True`, :meth:`call_unop` is excuted for this unary
+        method returns `True`, :meth:`call_unop` is executed for this unary
         operator.  The default implementation of :meth:`call_unop` will use
         the :attr:`unop_table` dictionary to perform the operator with the
         same logic as the builtin one.
@@ -439,7 +437,7 @@ class ImmutableSandboxedEnvironment(SandboxedEnvironment):
         return not modifies_known_mutable(obj, attr)
 
 
-# This really is not a public API apparenlty.
+# This really is not a public API apparently.
 try:
     from _string import formatter_field_name_split
 except ImportError:

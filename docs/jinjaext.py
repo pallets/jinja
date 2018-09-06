@@ -8,7 +8,6 @@
     :copyright: Copyright 2008 by Armin Ronacher.
     :license: BSD.
 """
-import collections
 import os
 import re
 import inspect
@@ -26,6 +25,7 @@ from pygments.style import Style
 from pygments.token import Keyword, Name, Comment, String, Error, \
      Number, Operator, Generic
 from jinja2 import Environment, FileSystemLoader
+from jinja2._compat import abc
 
 
 def parse_rst(state, content_offset, doc):
@@ -160,7 +160,7 @@ def jinja_nodes(dirname, arguments, options, content, lineno,
             members = []
             for key, name in node.__dict__.items():
                 if not key.startswith('_') and \
-                   not hasattr(node.__base__, key) and isinstance(name, collections.Callable):
+                   not hasattr(node.__base__, key) and isinstance(name, abc.Callable):
                     members.append(key)
             if members:
                 members.sort()

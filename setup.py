@@ -28,7 +28,7 @@ Philosophy
 Application logic is for the controller but don't try to make the life
 for the template designer too hard by giving him too few functionality.
 
-For more informations visit the new `Jinja2 webpage`_ and `documentation`_.
+For more information visit the new `Jinja2 webpage`_ and `documentation`_.
 
 .. _sandboxed: https://en.wikipedia.org/wiki/Sandbox_(computer_security)
 .. _Django: https://www.djangoproject.com/
@@ -40,7 +40,7 @@ from setuptools import setup
 
 setup(
     name='Jinja2',
-    version='2.10.dev',
+    version='2.11.dev',
     url='http://jinja.pocoo.org/',
     license='BSD',
     author='Armin Ronacher',
@@ -58,18 +58,19 @@ setup(
         'Operating System :: OS Independent',
         'Programming Language :: Python',
         'Programming Language :: Python :: 2',
-        'Programming Language :: Python :: 2.6',
         'Programming Language :: Python :: 2.7',
         'Programming Language :: Python :: 3',
-        'Programming Language :: Python :: 3.3',
         'Programming Language :: Python :: 3.4',
         'Programming Language :: Python :: 3.5',
         'Programming Language :: Python :: 3.6',
+        'Programming Language :: Python :: Implementation :: CPython',
+        'Programming Language :: Python :: Implementation :: PyPy',
         'Topic :: Internet :: WWW/HTTP :: Dynamic Content',
         'Topic :: Software Development :: Libraries :: Python Modules',
         'Topic :: Text Processing :: Markup :: HTML'
     ],
     packages=['jinja2'],
+    python_requires=">=2.7, !=3.0.*, !=3.1.*, !=3.2.*, !=3.3.*",
     install_requires=['MarkupSafe>=0.23'],
     extras_require={'i18n': ['Babel>=0.8']},
     include_package_data=True,

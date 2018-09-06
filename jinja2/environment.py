@@ -334,6 +334,8 @@ class Environment(object):
 
         self.enable_async = enable_async
         self.is_async = self.enable_async and have_async_gen
+        if self.is_async:
+            import jinja2.asyncsupport  # runs patch_all() once
 
         _environment_sanity_check(self)
 
@@ -809,7 +811,7 @@ class Environment(object):
     @internalcode
     def get_template(self, name, parent=None, globals=None):
         """Load a template from the loader.  If a loader is configured this
-        method ask the loader for the template and returns a :class:`Template`.
+        method asks the loader for the template and returns a :class:`Template`.
         If the `parent` parameter is not `None`, :meth:`join_path` is called
         to get the real template name before loading.
 
@@ -1074,7 +1076,7 @@ class Template(object):
 
     def make_module_async(self, vars=None, shared=False, locals=None):
         """As template module creation can invoke template code for
-        asynchronous exections this method must be used instead of the
+        asynchronous executions this method must be used instead of the
         normal :meth:`make_module` one.  Likewise the module attribute
         becomes unavailable in async mode.
         """

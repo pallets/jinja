@@ -271,6 +271,11 @@ include example Jinja syntax in a template, you can use this snippet::
         </ul>
     {% endraw %}
 
+.. admonition:: Note
+
+    Minus sign at the end of ``{% raw -%}`` tag cleans all the spaces and newlines
+    preceding the first character of your raw data.
+
 
 .. _line-statements:
 
@@ -947,6 +952,17 @@ Example::
 
 The `navigation` variable then contains the navigation HTML source.
 
+.. versionchanged:: 2.10
+
+Starting with Jinja 2.10, the block assignment supports filters.
+
+Example::
+
+    {% set reply | wordwrap %}
+        You wrote:
+        {{ message }}
+    {% endset %}
+
 
 .. _extends:
 
@@ -1298,17 +1314,34 @@ The general syntax is ``<do something> if <something is true> else <do
 something else>``.
 
 The `else` part is optional.  If not provided, the else block implicitly
-evaluates into an undefined object::
+evaluates into an undefined object:
 
-.. sourcecode:: jinja
+.. code-block:: text
 
-    {{ '[%s]' % page.title if page.title }}
+    {{ ('[%s]' % page.title) if page.title }}
 
 
 .. _builtin-filters:
 
 List of Builtin Filters
 -----------------------
+
+===================  ===================  ==================  ======================  ====================
+Built-in Filters Index
+==========================================================================================================
+:func:`abs`          :func:`attr`         :func:`batch`       :func:`capitalize`      :func:`center`
+:func:`default`      :func:`dictsort`     :func:`escape`      :func:`filesizeformat`  :func:`first`
+:func:`float`        :func:`forceescape`  :func:`format`      :func:`groupby`         :func:`indent`
+:func:`int`          :func:`join`         :func:`last`        :func:`length`          :func:`list`
+:func:`lower`        :func:`map`          :func:`max`         :func:`min`             :func:`pprint`
+:func:`random`       :func:`reject`       :func:`rejectattr`  :func:`replace`         :func:`reverse`
+:func:`round`        :func:`safe`         :func:`select`      :func:`selectattr`      :func:`slice`
+:func:`sort`         :func:`string`       :func:`striptags`   :func:`sum`             :func:`title`
+:func:`tojson`       :func:`trim`         :func:`truncate`    :func:`unique`          :func:`upper`
+:func:`urlencode`    :func:`urlize`       :func:`wordcount`   :func:`wordwrap`        :func:`xmlattr`
+===================  ===================  ==================  ======================  ====================
+
+
 
 .. jinjafilters::
 
@@ -1317,6 +1350,16 @@ List of Builtin Filters
 
 List of Builtin Tests
 ---------------------
+
+===================  ==================  ===================  ================  ================
+Built-in Test Index
+================================================================================================
+:func:`callable`     :func:`defined`     :func:`divisibleby`  :func:`eq`        :func:`escaped`
+:func:`even`         :func:`ge`          :func:`gt`           :func:`in`        :func:`iterable`
+:func:`le`           :func:`lower`       :func:`lt`           :func:`mapping`   :func:`ne`
+:func:`none`         :func:`number`      :func:`odd`          :func:`sameas`    :func:`sequence`
+:func:`string`       :func:`undefined`   ..                   ..                ..
+===================  ==================  ===================  ================  ================
 
 .. jinjatests::
 

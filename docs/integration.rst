@@ -81,21 +81,26 @@ snippet and add it into your `config/environment.py`::
 TextMate
 --------
 
-There is a `bundle for TextMate`_ that supports syntax highlighting for Jinja1 and Jinja2 for text based
-templates as well as HTML.  It also contains a few often used snippets.
+There is a `bundle for TextMate`_ that supports syntax highlighting for Jinja1
+and Jinja2 for text based templates as well as HTML. It also contains a few
+often used snippets.
 
 .. _bundle for TextMate: https://github.com/mitsuhiko/jinja2-tmbundle
 
 Vim
 ---
 
-A syntax plugin for `Vim`_ exists in the Vim-scripts directory as well as the
-`ext` folder at the root of the Jinja2 project.  `The script
-<http://www.vim.org/scripts/script.php?script_id=1856>`_ supports Jinja1 and
-Jinja2.  Once installed two file types are available `jinja` and `htmljinja`.
-The first one for text based templates, the latter for HTML templates.
+A syntax plugin for `Vim`_ is available `from the jinja repository
+<https://github.com/pallets/jinja/blob/master/ext/Vim/jinja.vim>`_. The script
+supports Jinja1 and Jinja2. Once installed, two file types are available
+(``jinja`` and ``htmljinja``). The first one is for text-based templates and the
+second is for HTML templates. For HTML documents, the plugin attempts to
+automatically detect Jinja syntax inside of existing HTML documents.
 
-Copy the files into your `syntax` folder.
+If you are using a plugin manager like `Pathogen`_, see the `vim-jinja
+<https://github.com/mitsuhiko/vim-jinja>`_ repository for installing in the
+``bundle/`` directory.
 
 .. _Babel: http://babel.pocoo.org/
 .. _Vim: http://www.vim.org/
+.. _Pathogen: https://github.com/tpope/vim-pathogen

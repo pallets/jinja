@@ -1,3 +1,3 @@
 .. module:: jinja2
 
-.. include:: ../CHANGES
+.. include:: ../CHANGES.rst
