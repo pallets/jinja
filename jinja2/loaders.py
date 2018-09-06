@@ -167,7 +167,10 @@ class FileSystemLoader(BaseLoader):
     def get_source(self, environment, template):
         pieces = split_template_path(template)
         for searchpath in self.searchpath:
-            filename = path.join(searchpath, *pieces)
+            if not os.path.isabs(template):
+                filename = path.join(searchpath, *pieces)
+            else:
+                filename = template
             f = open_if_exists(filename)
             if f is None:
                 continue
