@@ -25,7 +25,8 @@ from pygments.style import Style
 from pygments.token import Keyword, Name, Comment, String, Error, \
      Number, Operator, Generic
 from jinja2 import Environment, FileSystemLoader
-from jinja2._compat import abc
+from collections import abc
+# from jinja2._compat import abc
 
 
 def parse_rst(state, content_offset, doc):
