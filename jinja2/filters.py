@@ -941,6 +941,29 @@ def do_attr(environment, obj, name):
 
 
 @contextfilter
+def do_flip(context, value, name, *args, **kwargs):
+    """Applies a filter with arguments flipped in reverse order.
+    This becomes useful with filters like map where you can't easily re-order
+    the arguments yourself.
+
+    Say you want to find all numbers in a list that divides 10 you'd do it like
+    this_
+
+    .. sourcecode:: jinja
+
+        {{ [1,2,3,4,5,6,7,8,9] | select('flip', 'divisibleby', 10) | list }}
+
+
+    This would give you back `[1, 2, 4, 5]`.
+
+    .. versionadded:: 2.11
+    """
+    args = args[::-1] + (value,)
+    return context.environment.call_filter(
+        name, args[0], args[1:], kwargs=kwargs, context=context)
+
+
+@contextfilter
 def do_map(*args, **kwargs):
     """Applies a filter on a sequence of objects or looks up an attribute.
     This is useful when dealing with lists of objects but you are really
@@ -1153,6 +1176,7 @@ FILTERS = {
     'escape':               escape,
     'filesizeformat':       do_filesizeformat,
     'first':                do_first,
+    'flip':                 do_flip,
     'float':                do_float,
     'forceescape':          do_forceescape,
     'format':               do_format,

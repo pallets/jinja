@@ -562,6 +562,15 @@ class TestFilter(object):
         tmpl = env.from_string('{{ none|map("upper")|list }}')
         assert tmpl.render() == '[]'
 
+    def test_flip_map(self, env):
+        env = Environment()
+        tmpl = env.from_string(
+            '{{ ["Carl", "Sigmund"]'
+            ' | map("flip", "format", "Name: %s")'
+            ' | join("\n")'
+            '}}')
+        assert tmpl.render() == 'Name: Carl\nName: Sigmund'
+
     def test_simple_select(self, env):
         env = Environment()
         tmpl = env.from_string('{{ [1, 2, 3, 4, 5]|select("odd")|join("|") }}')
