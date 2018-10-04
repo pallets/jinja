@@ -946,17 +946,51 @@ def do_flip(context, value, name, *args, **kwargs):
     This becomes useful with filters like map where you can't easily re-order
     the arguments yourself.
 
-    Say you want to find all numbers in a list that divides 10 you'd do it like
-    this_
+    Example 1:
+
+    Say you have a list of names and you want to prefix them all with "Name: "
+    you could do it like this:
 
     .. sourcecode:: jinja
 
-        {{ [1,2,3,4,5,6,7,8,9] | select('flip', 'divisibleby', 10) | list }}
+        {{ ["Carl", "Jane"] | map("flip", "format", "Name: %s") | join(",") }}
 
+    This would give you back:
 
-    This would give you back `[1, 2, 4, 5]`.
+        Name: Carl, Name: Jane
+
+    Example 2:
+
+    Say you have a User object like below:
+
+    .. sourcecode:: python
+
+        class User(object):
+            def __init__(self, name, surname, age):
+                self.name = name
+                self.surname = surname
+                self.age = age
+        user = User('john', 'doe', 31)
+
+    ... and you want to extract a couple of attribute values from it as a list
+    and process that.
+
+    This is one way to do that:
+
+    .. sourcecode:: jinja
+
+        {{ ['surname', 'name']
+         | map("flip", "attr", user)
+         | map("capitalize")
+         | join(", ")
+        }}
+
+    This would give you back
+
+        Doe, John
 
     .. versionadded:: 2.11
+
     """
     args = args[::-1] + (value,)
     return context.environment.call_filter(

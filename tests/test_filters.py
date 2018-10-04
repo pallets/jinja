@@ -562,14 +562,44 @@ class TestFilter(object):
         tmpl = env.from_string('{{ none|map("upper")|list }}')
         assert tmpl.render() == '[]'
 
-    def test_flip_map(self, env):
+    def test_flip_with_map(self, env):
+        class User(object):
+            def __init__(self, name, surname, age):
+                self.name = name
+                self.surname = surname
+                self.age = age
         env = Environment()
-        tmpl = env.from_string(
-            '{{ ["Carl", "Sigmund"]'
-            ' | map("flip", "format", "Name: %s")'
-            ' | join("\n")'
-            '}}')
-        assert tmpl.render() == 'Name: Carl\nName: Sigmund'
+        user = User('john', 'doe', 31)
+        fields = ["surname", "name"]
+
+        tmpl = env.from_string('{{ fields'
+                               ' | map("flip", "attr", user)'
+                               ' | map("capitalize")'
+                               ' | join(", ")'
+                               '}}')
+        assert tmpl.render(user=user, fields=fields) == 'Doe, John'
+
+    def test_flip_with_map_complex(self, env):
+        class User(object):
+            def __init__(self, name, surname, age):
+                self.name = name
+                self.surname = surname
+                self.age = age
+        env = Environment()
+        users = [
+            User('john', 'doe', 31),
+            User('jane', 'dee', 27),
+            User('jill', 'due', 47),
+        ]
+        fields = ["surname", "name"]
+        tmpl = env.from_string('{{ users'
+                               ' | map("flip", "map", "attr", "flip", fields)'
+                               ' | map("map", "capitalize")'
+                               ' | map("join", ", ")'
+                               ' | join(" | ")'
+                               '}}')
+        assert tmpl.render(users=users, fields=fields) == \
+            'Doe, John | Dee, Jane | Due, Jill'
 
     def test_simple_select(self, env):
         env = Environment()
