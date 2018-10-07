@@ -8,8 +8,7 @@ This page answers some of the often asked questions about Jinja.
 Why is it called Jinja?
 -----------------------
 
-The name Jinja was chosen because it's the name of a Japanese temple and
-temple and template share a similar pronunciation.  It is not named after
+The name Jinja was chosen because it's the name of a Japanese temple and template share a similar pronunciation.  It is not named after
 the city in Uganda.
 
 How fast is it?
