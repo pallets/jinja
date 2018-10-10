@@ -1260,7 +1260,7 @@ class TemplateStream(object):
 
     def enable_buffering(self, size=5):
         """Enable buffering.  Buffer `size` items before yielding them."""
-        if size <= 1:
+        if size < 1:
             raise ValueError('buffer size too small')
 
         self.buffered = True
