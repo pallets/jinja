@@ -544,6 +544,10 @@ class TestFilter(object):
         tmpl = env.from_string('{{ ["1", "2", "3"]|map("int")|sum }}')
         assert tmpl.render() == '6'
 
+    def test_map_sum(self, env):
+        tmpl = env.from_string('{{ [[1,2], [3], [4,5,6]]|map("sum")|list }}')
+        assert tmpl.render() == '[3, 3, 15]'
+
     def test_attribute_map(self, env):
         class User(object):
             def __init__(self, name):
