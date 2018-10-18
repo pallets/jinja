@@ -989,7 +989,7 @@ at the same time.  They are documented in detail in the
 Include
 ~~~~~~~
 
-The `include` statement is useful to include a template and return the
+The `include` tag is useful to include a template and return the
 rendered contents of that file into the current namespace::
 
     {% include 'header.html' %}
