@@ -717,7 +717,7 @@ class Parser(object):
             else:
                 arg = nodes.Tuple(args, 'load', lineno=token.lineno)
             return nodes.Getitem(node, arg, 'load', lineno=token.lineno)
-        self.fail('expected subscript expression', self.lineno)
+        self.fail('expected subscript expression', token.lineno)
 
     def parse_subscribed(self):
         lineno = self.stream.current.lineno
