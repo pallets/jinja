@@ -118,7 +118,7 @@ class Parser(object):
         nodes.Node.__init__(rv, 'fi%d' % self._last_identifier, lineno=lineno)
         return rv
 
-    def parse_statement(self):
+    def parse_statement(self, line_prefix=None):
         """Parse a single statement."""
         token = self.stream.current
         if token.type != 'name':
@@ -126,15 +126,25 @@ class Parser(object):
         self._tag_stack.append(token.value)
         pop_tag = True
         try:
+            sub = None
             if token.value in _statement_keywords:
-                return getattr(self, 'parse_' + self.stream.current.value)()
+                sub = getattr(self, 'parse_' + self.stream.current.value)()
             if token.value == 'call':
-                return self.parse_call_block()
+                sub = self.parse_call_block()
             if token.value == 'filter':
-                return self.parse_filter_block()
+                sub = self.parse_filter_block()
             ext = self.extensions.get(token.value)
             if ext is not None:
-                return ext(self)
+                sub = ext(self)
+
+            # If auto-indent feature is on '{%* ... %}', wrap statement in a filter
+            if line_prefix:
+                node = nodes.FilterBlock(lineno=token.lineno)
+                node.filter = nodes.Filter(None, 'lineprefix', [nodes.Const(line_prefix)], [], None, None, lineno=token.lineno)
+                node.body = [sub]
+                return node
+            elif sub:
+                return sub
 
             # did not work out, remove the token we pushed by accident
             # from the stack so that the unknown tag fail function can
@@ -879,12 +889,16 @@ class Parser(object):
                     add_data(self.parse_tuple(with_condexpr=True))
                     self.stream.expect('variable_end')
                 elif token.type == 'block_begin':
+                    # auto-indented block using {%* ... %}
+                    line_prefix = None
+                    if token.value.endswith('*'):
+                        line_prefix = token.value[:-3]
                     flush_data()
                     next(self.stream)
                     if end_tokens is not None and \
                        self.stream.current.test_any(*end_tokens):
                         return body
-                    rv = self.parse_statement()
+                    rv = self.parse_statement(line_prefix)
                     if isinstance(rv, list):
                         body.extend(rv)
                     else:

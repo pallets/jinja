@@ -630,6 +630,26 @@ def do_indent(
     return rv
 
 
+def do_lineprefix(s, prefix):
+    """Return a copy of the string with each line prepended by the given string.
+
+    :param prefix: String to prepend each line with
+
+    .. versionadded:: 2.11
+        Add block auto-indent feature
+    """
+    newline = u'\n'
+
+    if isinstance(s, Markup):
+        prefix = Markup(prefix)
+        newline = Markup(newline)
+
+    lines = s.splitlines()
+    rv = newline.join(prefix + line if line else line for line in lines)
+
+    return rv
+
+
 @environmentfilter
 def do_truncate(env, s, length=255, killwords=False, end='...', leeway=None):
     """Return a truncated copy of the string. The length is specified
@@ -1208,6 +1228,7 @@ FILTERS = {
     'format':               do_format,
     'groupby':              do_groupby,
     'indent':               do_indent,
+    'lineprefix':           do_lineprefix,
     'int':                  do_int,
     'join':                 do_join,
     'last':                 do_last,
