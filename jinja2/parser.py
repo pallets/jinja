@@ -118,7 +118,7 @@ class Parser(object):
         nodes.Node.__init__(rv, 'fi%d' % self._last_identifier, lineno=lineno)
         return rv
 
-    def parse_statement(self, line_prefix=None):
+    def parse_statement(self):
         """Parse a single statement."""
         token = self.stream.current
         if token.type != 'name':
@@ -126,25 +126,15 @@ class Parser(object):
         self._tag_stack.append(token.value)
         pop_tag = True
         try:
-            sub = None
             if token.value in _statement_keywords:
-                sub = getattr(self, 'parse_' + self.stream.current.value)()
+                return getattr(self, 'parse_' + self.stream.current.value)()
             if token.value == 'call':
-                sub = self.parse_call_block()
+                return self.parse_call_block()
             if token.value == 'filter':
-                sub = self.parse_filter_block()
+                return self.parse_filter_block()
             ext = self.extensions.get(token.value)
             if ext is not None:
-                sub = ext(self)
-
-            # If auto-indent feature is on '{%* ... %}', wrap statement in a filter
-            if line_prefix:
-                node = nodes.FilterBlock(lineno=token.lineno)
-                node.filter = nodes.Filter(None, 'lineprefix', [nodes.Const(line_prefix)], [], None, None, lineno=token.lineno)
-                node.body = [sub]
-                return node
-            elif sub:
-                return sub
+                return ext(self)
 
             # did not work out, remove the token we pushed by accident
             # from the stack so that the unknown tag fail function can
@@ -876,6 +866,16 @@ class Parser(object):
                 body.append(nodes.Output(data_buffer[:], lineno=lineno))
                 del data_buffer[:]
 
+        def autoindent(rv, token):
+            prefix = token.value[:-3]
+            if isinstance(rv, list):
+                node = nodes.FilterBlock(lineno=token.lineno)
+                node.filter = nodes.Filter(None, 'lineprefix', [nodes.Const(prefix)], [], None, None, lineno=token.lineno)
+                node.body = rv
+            else:
+                node = nodes.Filter(rv, 'lineprefix', [nodes.Const(prefix)], [], None, None, lineno=token.lineno)
+            return node
+
         try:
             while self.stream:
                 token = self.stream.current
@@ -886,20 +886,23 @@ class Parser(object):
                     next(self.stream)
                 elif token.type == 'variable_begin':
                     next(self.stream)
-                    add_data(self.parse_tuple(with_condexpr=True))
+                    rv = self.parse_tuple(with_condexpr=True)
+                    # auto-indented multi-line variable using {{* ... }}
+                    if token.value and token.value.endswith('*'):
+                        rv = autoindent(rv, token)
+                    add_data(rv)
                     self.stream.expect('variable_end')
                 elif token.type == 'block_begin':
-                    # auto-indented block using {%* ... %}
-                    line_prefix = None
-                    if token.value.endswith('*'):
-                        line_prefix = token.value[:-3]
                     flush_data()
                     next(self.stream)
                     if end_tokens is not None and \
                        self.stream.current.test_any(*end_tokens):
                         return body
-                    rv = self.parse_statement(line_prefix)
-                    if isinstance(rv, list):
+                    rv = self.parse_statement()
+                    # auto-indented block using {%* ... %}
+                    if token.value and token.value.endswith('*'):
+                        body.append(autoindent(rv if isinstance(rv, list) else [rv], token))
+                    elif isinstance(rv, list):
                         body.extend(rv)
                     else:
                         body.append(rv)
