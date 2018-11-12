@@ -22,6 +22,8 @@ from jinja2._compat import implements_iterator, intern, iteritems, text_type
 from jinja2.exceptions import TemplateSyntaxError
 from jinja2.utils import LRUCache
 
+from ast import literal_eval # to support scientific notation
+
 # cache for the lexers. Exists in order to be able to have multiple
 # environments with the same lexer
 _lexer_cache = LRUCache(50)
@@ -52,7 +54,11 @@ else:
     del jinja2._identifier
     del _identifier
 
-float_re = re.compile(r'(?<!\.)\d+\.\d+')
+# Note: Float now supports 0 or 1 dots, and must thus be evaluated in the right 
+# order so that pure integers are caught first. Floats can now be written with 
+# scientific notation.
+float_re = re.compile(r'(?<!\.)\d+\.?\d+(?:e-?\d+)?', re.IGNORECASE)
+
 newline_re = re.compile(r'(\r\n|\r|\n)')
 
 # internal the tokens and keep references to them
@@ -601,7 +607,7 @@ class Lexer(object):
             elif token == 'integer':
                 value = int(value)
             elif token == 'float':
-                value = float(value)
+                value = literal_eval(value)
             elif token == 'operator':
                 token = operators[value]
             yield Token(lineno, token, value)

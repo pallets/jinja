@@ -1177,11 +1177,18 @@ for Python objects such as strings and numbers.  The following literals exist:
     arguments to function calls and filters, or just to extend or include a
     template).
 
-42 / 42.23:
-    Integers and floating point numbers are created by just writing the
-    number down.  If a dot is present, the number is a float, otherwise an
+42:
+    Integers numbers are created by just writing the number down. 
+    If a dot is present, the number will be considered a float, otherwise an
     integer.  Keep in mind that, in Python, ``42`` and ``42.0``
     are different (``int`` and ``float``, respectively).
+
+42.23 / 42e2 / 42E2 / 1e0:
+    Floating point numbers are created by just writing the
+    number down. Floating points can be written using the dot as a decimal mark,
+    or they can be written in scientific notation in which
+    case you can use lower case 'e' or upper case 'E' to indicate the exponent
+    part. 
 
 ['list', 'of', 'objects']:
     Everything between two brackets is a list.  Lists are useful for storing
