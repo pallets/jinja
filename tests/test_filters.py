@@ -10,7 +10,7 @@
 """
 import random
 import pytest
-from jinja2 import Markup, Environment
+from jinja2 import Markup, Environment, Template
 from jinja2._compat import text_type, implements_to_string
 
 
@@ -136,11 +136,15 @@ class TestFilter(object):
     def test_float(self, env):
         tmpl = env.from_string('{{ "42"|float }}|'
                                '{{ "ajsghasjgd"|float }}|'
+                               '{{ "1e2"|float }}|'
                                '{{ "10e1"|float }}|'
                                '{{ "10.5e-10"|float }}|'
                                '{{ "32.32"|float }}')
         out = tmpl.render()
-        assert out == '42.0|0.0|100.0|1.05e-09|32.32'
+        assert out == '42.0|0.0|100.0|100.0|1.05e-09|32.32'
+
+        out = Template("{{12_3_4.5_6}}|{{12_34e0}}").render()
+        assert out == '1234.56|1234.0'
 
     def test_format(self, env):
         tmpl = env.from_string('''{{ "%s|%s"|format("a", "b") }}''')
@@ -187,10 +191,13 @@ class TestFilter(object):
 
         tmpl = env.from_string('{{ "42"|int }}|{{ "ajsghasjgd"|int }}|'
                                '{{ "32.32"|int }}|{{ "0x4d32"|int(0, 16) }}|'
+                               '{{ "1234567890"|int }}|'
                                '{{ "011"|int(0, 8)}}|{{ "0x33FU"|int(0, 16) }}|'
                                '{{ obj|int }}')
         out = tmpl.render(obj=IntIsh())
-        assert out == '42|0|32|19762|9|0|42'
+        assert out == '42|0|32|19762|1234567890|9|0|42'
+        out = Template('{{ 5_555 }}|{{ 123_456_789 }}|{{ 12_34_56_78 }}').render()
+        assert out == '5555|123456789|12345678'
 
     def test_join(self, env):
         tmpl = env.from_string('{{ [1, 2, 3]|join("|") }}')

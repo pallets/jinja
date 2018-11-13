@@ -23,6 +23,8 @@ from jinja2._compat import implements_iterator, intern, iteritems, text_type
 from jinja2.exceptions import TemplateSyntaxError
 from jinja2.utils import LRUCache
 
+from ast import literal_eval # to support scientific notation
+
 # cache for the lexers. Exists in order to be able to have multiple
 # environments with the same lexer
 _lexer_cache = LRUCache(50)
@@ -31,7 +33,7 @@ _lexer_cache = LRUCache(50)
 whitespace_re = re.compile(r'\s+', re.U)
 string_re = re.compile(r"('([^'\\]*(?:\\.[^'\\]*)*)'"
                        r'|"([^"\\]*(?:\\.[^"\\]*)*)")', re.S)
-integer_re = re.compile(r'\d+')
+integer_re = re.compile(r'(\d+_)*(\d+)')
 
 try:
     # check if this Python supports Unicode identifiers
@@ -53,7 +55,7 @@ else:
     del jinja2._identifier
     del _identifier
 
-float_re = re.compile(r'(?<!\.)\d+(?:\.\d+)?(?:e[+\-]?\d+)?', re.IGNORECASE)
+float_re = re.compile(r'(?<!\.)((((\d+_)*)\d+)(((\.\d+)?e-?\d+)|(\.((\d+_)*\d+))+))', re.IGNORECASE)
 newline_re = re.compile(r'(\r\n|\r|\n)')
 
 # internal the tokens and keep references to them
@@ -600,9 +602,10 @@ class Lexer(object):
                     msg = str(e).split(':')[-1].strip()
                     raise TemplateSyntaxError(msg, lineno, name, filename)
             elif token == 'integer':
-                value = int(value)
+                value = int(value.replace("_", ""))
             elif token == 'float':
-                value = literal_eval(value)
+                # remove all "_" first to support more Python versions
+                value = literal_eval(value.replace("_", ""))
             elif token == 'operator':
                 token = operators[value]
             yield Token(lineno, token, value)
