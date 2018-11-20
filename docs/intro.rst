@@ -23,31 +23,11 @@ need `setuptools`_ or `distribute`_ installed at runtime.
 Installation
 ------------
 
-You have multiple ways to install Jinja2.  If you are unsure what to do, go
-with the Python egg or tarball.
+You can install the most recent Jinja2 version using `pip`_::
 
-As a Python egg (via `easy_install`)
-~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-
-You can install the most recent Jinja2 version using `easy_install`_ or `pip`_::
-
-    easy_install Jinja2
     pip install Jinja2
 
-This will install a Jinja2 egg in your Python installation's site-packages
-directory.
-
-From the tarball release
-~~~~~~~~~~~~~~~~~~~~~~~~~
-
-1.  Download the most recent tarball from the `download page`_
-2.  Unpack the tarball
-3.  ``python setup.py install``
-
-Note that you either have to have `setuptools` or `distribute` installed;
-the latter is preferred.
-
-This will install Jinja2 into your Python installation's site-packages directory.
+This will install Jinja2 in your Python installation's site-packages directory.
 
 Installing the development version
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
@@ -61,10 +41,8 @@ As an alternative to steps 4 you can also do ``python setup.py develop``
 which will install the package via `distribute` in development mode.  This also
 has the advantage that the C extensions are compiled.
 
-.. _download page: https://pypi.org/project/Jinja2/
 .. _distribute: https://pypi.org/project/distribute/
 .. _setuptools: http://peak.telecommunity.com/DevCenter/setuptools
-.. _easy_install: http://peak.telecommunity.com/DevCenter/EasyInstall
 .. _pip: https://pypi.org/project/pip/
 .. _git: https://git-scm.org/
 
@@ -72,9 +50,8 @@ has the advantage that the C extensions are compiled.
 MarkupSafe Dependency
 ~~~~~~~~~~~~~~~~~~~~~
 
-As of version 2.7 Jinja2 depends on the `MarkupSafe`_ module.  If you
-install Jinja2 via `pip` or `easy_install` it will be installed
-automatically for you.
+As of version 2.7 Jinja2 depends on the `MarkupSafe`_ module. If you install
+Jinja2 via ``pip`` it will be installed automatically for you.
 
 .. _MarkupSafe: https://pypi.org/project/MarkupSafe/
 
