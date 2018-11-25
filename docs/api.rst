@@ -740,7 +740,7 @@ enabled::
     import re
     from jinja2 import evalcontextfilter, Markup, escape
 
-    _paragraph_re = re.compile(r'(?:\r\n|\r|\n){2,}')
+    _paragraph_re = re.compile(r'(?:\r\n|\r(?!\n)|\n){2,}')
 
     @evalcontextfilter
     def nl2br(eval_ctx, value):
