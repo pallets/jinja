@@ -142,15 +142,18 @@ def inspect_format_method(callable):
         return obj
 
 
-def safe_range(*args):
+def safe_range(start, stop=None, step=1):
     """A range that can't generate ranges with a length of more than
     MAX_RANGE items.
     """
-    rng = range(*args)
-    if len(rng) > MAX_RANGE:
+    if stop is None:
+        stop = start
+        start = 0
+    length = (stop - start) / step + (((stop - start) % step) != 0)
+    if length > MAX_RANGE:
         raise OverflowError('range too big, maximum size for range is %d' %
                             MAX_RANGE)
-    return rng
+    return range(start, stop, step)
 
 
 def unsafe(f):
