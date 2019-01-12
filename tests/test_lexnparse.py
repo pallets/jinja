@@ -332,6 +332,12 @@ class TestSyntax(object):
                                '{{ 2 == 2 }}|{{ 1 <= 1 }}')
         assert tmpl.render() == 'True|True|True|True|True'
 
+    def test_compare_parens(self, env):
+        tmpl = env.from_string(
+            "{{ i*(j<5) }}"
+        )
+        assert tmpl.render(i=2, j=3) == '2'
+
     def test_inop(self, env):
         tmpl = env.from_string('{{ 1 in [1, 2, 3] }}|{{ 1 not in [1, 2, 3] }}')
         assert tmpl.render() == 'True|False'
