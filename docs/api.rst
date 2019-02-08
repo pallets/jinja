@@ -380,7 +380,7 @@ Undefined objects are created by calling :attr:`undefined`.
 
     To disallow a method, just override it and raise
     :attr:`~Undefined._undefined_exception`.  Because this is a very common
-    idom in undefined objects there is the helper method
+    idiom in undefined objects there is the helper method
     :meth:`~Undefined._fail_with_undefined_error` that does the error raising
     automatically.  Here a class that works like the regular :class:`Undefined`
     but chokes on iteration::
