@@ -1,6 +1,6 @@
 from functools import wraps
 
-from jinja2.asyncsupport import auto_aiter
+from jinja2.asyncsupport import auto_aiter, auto_await
 from jinja2 import filters
 
 
@@ -109,7 +109,7 @@ async def do_map(*args, **kwargs):
     seq, func = filters.prepare_map(args, kwargs)
     if seq:
         async for item in auto_aiter(seq):
-            yield func(item)
+            yield await auto_await(func(item))
 
 
 @asyncfiltervariant(filters.do_sum)
