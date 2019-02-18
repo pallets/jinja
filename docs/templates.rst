@@ -1326,20 +1326,22 @@ evaluates into an undefined object:
 List of Builtin Filters
 -----------------------
 
-===================  ===================  ==================  ======================  ====================
+===================  ===================  ===================  ===================  ======================
 Built-in Filters Index
 ==========================================================================================================
-:func:`abs`          :func:`attr`         :func:`batch`       :func:`capitalize`      :func:`center`
-:func:`default`      :func:`dictsort`     :func:`escape`      :func:`filesizeformat`  :func:`first`
-:func:`float`        :func:`forceescape`  :func:`format`      :func:`groupby`         :func:`indent`
-:func:`int`          :func:`join`         :func:`last`        :func:`length`          :func:`list`
-:func:`lower`        :func:`map`          :func:`max`         :func:`min`             :func:`pprint`
-:func:`random`       :func:`reject`       :func:`rejectattr`  :func:`replace`         :func:`reverse`
-:func:`round`        :func:`safe`         :func:`select`      :func:`selectattr`      :func:`slice`
-:func:`sort`         :func:`string`       :func:`striptags`   :func:`sum`             :func:`title`
-:func:`tojson`       :func:`trim`         :func:`truncate`    :func:`unique`          :func:`upper`
-:func:`urlencode`    :func:`urlize`       :func:`wordcount`   :func:`wordwrap`        :func:`xmlattr`
-===================  ===================  ==================  ======================  ====================
+:func:`abs`          :func:`applymacro`   :func:`attr`         :func:`batch`        :func:`capitalize`
+:func:`center`       :func:`default`      :func:`dictsort`     :func:`escape`       :func:`filesizeformat`
+:func:`first`        :func:`float`        :func:`forceescape`  :func:`format`       :func:`groupby`
+:func:`indent`       :func:`int`          :func:`join`         :func:`last`         :func:`length`
+:func:`list`         :func:`lower`        :func:`map`          :func:`max`          :func:`min`
+:func:`pprint`       :func:`random`       :func:`reject`       :func:`rejectattr`   :func:`replace`
+:func:`reverse`      :func:`round`        :func:`safe`         :func:`select`       :func:`selectattr`
+:func:`slice`        :func:`sort`         :func:`string`       :func:`striptags`    :func:`sum`
+:func:`title`        :func:`tojson`       :func:`trim`         :func:`truncate`     :func:`unique`
+:func:`upper`        :func:`urlencode`    :func:`urlize`       :func:`wordcount`    :func:`wordwrap`
+:func:`xmlattr`
+
+===================  ===================  ===================  ===================  ======================
 
 
 

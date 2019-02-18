@@ -230,3 +230,31 @@ def test_slice(env_async, items):
     out = tmpl.render(items=items)
     assert out == ("[[0, 1, 2, 3], [4, 5, 6], [7, 8, 9]]|"
                    "[[0, 1, 2, 3], [4, 5, 6, 'X'], [7, 8, 9, 'X']]")
+
+
+def test_applymacro(env_async):
+    event = dict(name='First', startdt='00:00')
+    tmp1 = env_async.from_string('''
+    {% macro event_detail(event) -%}
+        {{ event.name }} - {{ event.startdt }}
+    {%- endmacro %}
+    
+    {{ event|applymacro(macro=event_detail) }}
+    ''')
+
+    assert tmp1.render(event=event).strip() == 'First - 00:00'
+
+
+def test_map_applymacro(env_async):
+    events = [dict(name='First', startdt='00:00'),
+              dict(name='Second', startdt='01:15')]
+    tmp1 = env_async.from_string('''
+    {% macro event_detail(event) -%}
+        {{ event.name }} - {{ event.startdt }}
+    {%- endmacro %}
+    
+    {{ events|map('applymacro', macro=event_detail)|join(', ') }}
+    ''')
+
+    assert tmp1.render(events=events).strip() == \
+        'First - 00:00, Second - 01:15'

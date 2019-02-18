@@ -112,6 +112,23 @@ async def do_map(*args, **kwargs):
             yield await auto_await(func(item))
 
 
+@asyncfiltervariant(filters.do_applymacro)
+async def do_applymacro(*args, **kwargs):
+    context = args[0]
+    args = args[1:]
+
+    macro = kwargs.pop('macro')
+    if isinstance(macro, str):
+        if '.' in macro:
+            templatemod, _, macroname = macro.partition('.')
+            macro = await getattr(context.resolve(templatemod), macroname)
+
+        else:
+            macro = await context.resolve(macro)
+
+    return await macro(*args, **kwargs)
+
+
 @asyncfiltervariant(filters.do_sum)
 async def do_sum(environment, iterable, attribute=None, start=0):
     rv = start
@@ -130,6 +147,7 @@ async def do_slice(value, slices, fill_with=None):
 
 
 ASYNC_FILTERS = {
+    'applymacro':   do_applymacro,
     'first':        do_first,
     'groupby':      do_groupby,
     'join':         do_join,

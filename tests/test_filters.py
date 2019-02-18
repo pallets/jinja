@@ -239,6 +239,32 @@ class TestFilter(object):
                                '{{ [1, 2, 3]|reverse|list }}')
         assert tmpl.render() == 'raboof|[3, 2, 1]'
 
+    def test_applymacro(self, env):
+        event = dict(name='First', startdt='00:00')
+        tmp1 = env.from_string('''
+        {% macro event_detail(event) -%}
+            {{ event.name }} - {{ event.startdt }}
+        {%- endmacro %}
+        
+        {{ event|applymacro(macro=event_detail) }}
+        ''')
+
+        assert tmp1.render(event=event).strip() == 'First - 00:00'
+
+    def test_map_applymacro(self, env):
+        events = [dict(name='First', startdt='00:00'),
+                  dict(name='Second', startdt='01:15')]
+        tmp1 = env.from_string('''
+        {% macro event_detail(event) -%}
+            {{ event.name }} - {{ event.startdt }}
+        {%- endmacro %}
+        
+        {{ events|map('applymacro', macro=event_detail)|join(', ') }}
+        ''')
+
+        assert tmp1.render(events=events).strip() == \
+            'First - 00:00, Second - 01:15'
+
     def test_string(self, env):
         x = [1, 2, 3, 4, 5]
         tmpl = env.from_string('''{{ obj|string }}''')

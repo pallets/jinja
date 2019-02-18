@@ -949,6 +949,50 @@ def do_attr(environment, obj, name):
 
 
 @contextfilter
+def do_applymacro(*args, **kwargs):
+    """Applies a macro by reference instead of directly.
+
+    Calling a macro directly like,
+
+    .. sourcecode:: html+jinja
+
+        {{ event_detail(event) }}
+
+    Is the equivalent with applymacro,
+
+    .. sourcecode:: html+jinja
+
+        {{ event|applymacro(macro='event_detail') }}
+
+    or
+
+    .. sourcecode:: html+jinja
+
+        {{ event|applymacro(macro=event_detail) }}
+
+    Which then allows you to use the macro in other things like map,
+
+    .. sourcecode:: html+jinja
+
+        {{ events|map('applymacro', macro=event_detail)|join(', ') }}
+
+    """
+    context = args[0]
+    args = args[1:]
+
+    macro = kwargs.pop('macro')
+    if isinstance(macro, str):
+        if '.' in macro:
+            templatemod, _, macroname = macro.partition('.')
+            macro = getattr(context.resolve(templatemod), macroname)
+    
+        else:
+            macro = context.resolve(macro)
+
+    return macro(*args, **kwargs)
+
+
+@contextfilter
 def do_map(*args, **kwargs):
     """Applies a filter on a sequence of objects or looks up an attribute.
     This is useful when dealing with lists of objects but you are really
@@ -1149,6 +1193,7 @@ def select_or_reject(args, kwargs, modfunc, lookup_attr):
 
 FILTERS = {
     'abs':                  abs,
+    'applymacro':           do_applymacro,
     'attr':                 do_attr,
     'batch':                do_batch,
     'capitalize':           do_capitalize,
