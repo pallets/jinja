@@ -13,6 +13,7 @@ unreleased
   :class:`~environment.Environment` enables it, in order to avoid a
   slow initial import. (`#765`_)
 - Python 2.6 and 3.3 are not supported anymore.
+- The `map` filter in async mode now automatically awaits
 
 .. _#765: https://github.com/pallets/jinja/issues/765
 
