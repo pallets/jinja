@@ -888,18 +888,18 @@ def do_groupby(environment, value, attribute):
         {% endfor %}
         </ul>
 
-    Additionally it's possible to use tuple unpacking for the grouper and
-    list:
+    Additionally it's possible to use tuple unpacking for the grouper
+    (`gender` in this example) and `list`:
 
     .. sourcecode:: html+jinja
 
         <ul>
-        {% for grouper, list in persons|groupby('gender') %}
+        {% for gender, list in persons|groupby('gender') %}
             ...
         {% endfor %}
         </ul>
 
-    As you can see the item we're grouping by is stored in the `grouper`
+    As you can see the item we're grouping by is stored in the ``gender``
     attribute and the `list` contains all the objects that have this grouper
     in common.
 
