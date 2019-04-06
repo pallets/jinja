@@ -2,6 +2,16 @@ Jinja Changelog
 ===============
 
 
+Version 2.10.1
+--------------
+
+Released 2019-04-06
+
+-   ``SandboxedEnvironment`` securely handles ``str.format_map`` in
+    order to prevent code execution through untrusted format strings.
+    The sandbox already handled ``str.format``.
+
+
 Version 2.10
 ------------
 
