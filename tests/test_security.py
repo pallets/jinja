@@ -187,3 +187,22 @@ class TestStringFormat(object):
         env = SandboxedEnvironment()
         t = env.from_string('{{ ("a{0.foo}b{1}"|safe).format({"foo": 42}, "<foo>") }}')
         assert t.render() == 'a42b&lt;foo&gt;'
+
+
+@pytest.mark.sandbox
+@pytest.mark.skipif(not hasattr(str, 'format_map'), reason='requires str.format_map method')
+class TestStringFormatMap(object):
+    def test_basic_format_safety(self):
+        env = SandboxedEnvironment()
+        t = env.from_string('{{ "a{x.__class__}b".format_map({"x":42}) }}')
+        assert t.render() == 'ab'
+
+    def test_basic_format_all_okay(self):
+        env = SandboxedEnvironment()
+        t = env.from_string('{{ "a{x.foo}b".format_map({"x":{"foo": 42}}) }}')
+        assert t.render() == 'a42b'
+
+    def test_safe_format_all_okay(self):
+        env = SandboxedEnvironment()
+        t = env.from_string('{{ ("a{x.foo}b{y}"|safe).format_map({"x":{"foo": 42}, "y":"<foo>"}) }}')
+        assert t.render() == 'a42b&lt;foo&gt;'
