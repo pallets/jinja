@@ -11,6 +11,7 @@
 import os
 import sys
 import weakref
+from collections import Sequence
 from types import ModuleType
 from os import path
 from hashlib import sha1
@@ -158,7 +159,10 @@ class FileSystemLoader(BaseLoader):
     """
 
     def __init__(self, searchpath, encoding='utf-8', followlinks=False):
-        if isinstance(searchpath, string_types):
+        if (
+            isinstance(searchpath, string_types) or 
+            not isinstance(searchpath, Sequence)
+        ):
             searchpath = [searchpath]
         self.searchpath = list(searchpath)
         self.encoding = encoding
