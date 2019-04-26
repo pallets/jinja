@@ -11,6 +11,8 @@
 # All configuration values have a default value; values that are commented out
 # serve to show the default value.
 
+from __future__ import print_function
+
 import sys, os
 
 # If your extensions are in another directory, add it here. If the directory
@@ -46,10 +48,10 @@ import pkg_resources
 try:
     release = pkg_resources.get_distribution('Jinja2').version
 except ImportError:
-    print 'To build the documentation, The distribution information of Jinja2'
-    print 'Has to be available.  Either install the package into your'
-    print 'development environment or run "setup.py develop" to setup the'
-    print 'metadata.  A virtualenv is recommended!'
+    print('To build the documentation, The distribution information of Jinja2')
+    print('Has to be available.  Either install the package into your')
+    print('development environment or run "setup.py develop" to setup the')
+    print('metadata.  A virtualenv is recommended!')
     sys.exit(1)
 if 'dev' in release:
     release = release.split('dev')[0] + 'dev'
