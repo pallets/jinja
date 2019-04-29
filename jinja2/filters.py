@@ -284,7 +284,7 @@ def do_unique(environment, value, case_sensitive=False, attribute=None):
 
     .. sourcecode:: jinja
 
-        {{ ['foo', 'bar', 'foobar', 'FooBar']|unique }}
+        {{ ['foo', 'bar', 'foobar', 'FooBar']|unique|list }}
             -> ['foo', 'bar', 'foobar']
 
     The unique items are yielded in the same order as their first occurrence in
