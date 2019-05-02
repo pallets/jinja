@@ -20,6 +20,11 @@ and 3.3 was Jinja2 2.10.
 If you wish to use the :class:`~jinja2.PackageLoader` class, you will also
 need `setuptools`_ or `distribute`_ installed at runtime.
 
+If you wish to use the :class:`~jinja2.ImportLibResourceLoader` class, you will
+also need `importlib_resources`_ installed at runtime
+(no need to install it for Python >=3.7).
+Please note `setuptools` is **not** required for this loader.
+
 Installation
 ------------
 

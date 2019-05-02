@@ -14,8 +14,11 @@ unreleased
   slow initial import. (`#765`_)
 - Python 2.6 and 3.3 are not supported anymore.
 - The `map` filter in async mode now automatically awaits
+- Add :class:`loaders.ImportLibResourceLoader` loader using
+  ``importlib.resource``, that does not require ``setuptools`` or ```` (`#970`_)
 
 .. _#765: https://github.com/pallets/jinja/issues/765
+.. _#970: https://github.com/pallets/jinja/issues/970
 
 
 Version 2.10.1

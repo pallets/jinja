@@ -44,6 +44,12 @@ def package_loader():
     '''
     return loaders.PackageLoader('res', 'templates')
 
+@pytest.fixture
+def importlib_resource_loader():
+    '''returns ImportLibResourceLoader initialized from templates
+    '''
+    return loaders.ImportLibResourceLoader('res.templates')
+
 
 @pytest.fixture
 def filesystem_loader():

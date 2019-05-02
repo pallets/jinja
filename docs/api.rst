@@ -58,6 +58,35 @@ a lot easier to use it also enables template inheritance.
    for security reasons.  As such you are encouraged to explicitly
    configure autoescaping now instead of relying on the default.
 
+.. admonition:: Loading using Importlib
+
+   A complementary option of using :class:`PackageLoader` is provided by
+   :class:`ImportLibResourceLoader`. It allows to package your templates as
+   a Python submodule of your application's module, and thus be agnostic to the
+   packaging format (egg, wheel, source, dist package,...).
+
+   Use like this:
+
+   ::
+
+       from jinja2 import Environment, ImportLibResourceLoader, select_autoescape
+       env = Environment(
+           loader=ImportLibResourceLoader('yourapplication.templates'),
+           autoescape=select_autoescape(['html', 'xml'])
+       )
+
+    Please be aware you **need** to have a ``__init__.py`` file in the
+    ``yourapplication/templates`` directory.
+
+    For Python <3.7, you need to install the ``importlib_resources`` package::
+
+        pip install importlib_resources
+
+    More information about this packaging format in the
+    `Importlib_resource documentation<https://importlib-resources.readthedocs.io/en/latest/>`_.
+
+
+.. _Importlib_resource documentation: https://docs.python.org/dev/howto/unicode.html
 
 Unicode
 -------
