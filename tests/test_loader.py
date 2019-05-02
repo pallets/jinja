@@ -36,6 +36,12 @@ class TestLoaders(object):
         assert tmpl.render().strip() == 'BAR'
         pytest.raises(TemplateNotFound, env.get_template, 'missing.html')
 
+    def test_importlib_resource_loader(self, importlib_resource_loader):
+        env = Environment(loader=importlib_resource_loader)
+        tmpl = env.get_template('test.html')
+        assert tmpl.render().strip() == 'BAR'
+        pytest.raises(TemplateNotFound, env.get_template, 'missing.html')
+
     def test_filesystem_loader(self, filesystem_loader):
         env = Environment(loader=filesystem_loader)
         tmpl = env.get_template('test.html')

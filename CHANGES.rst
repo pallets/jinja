@@ -21,6 +21,8 @@ Unreleased
     2.56e-3. :issue:`912`, :pr:`922`
 -   Int and float literals can be written with the '_' separator for
     legibility, like 12_345. :pr:`923`
+-   Add :class:`loaders.ImportLibResourceLoader` loader using
+    ``importlib.resource``, that does not require ``setuptools`` or ```` (`#970`_)
 
 
 Version 2.10.2

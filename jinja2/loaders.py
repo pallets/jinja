@@ -8,6 +8,7 @@
     :copyright: (c) 2017 by the Jinja Team.
     :license: BSD, see LICENSE for more details.
 """
+import fnmatch
 import os
 import sys
 import weakref
@@ -479,3 +480,79 @@ class ModuleLoader(BaseLoader):
 
         return environment.template_class.from_module_dict(
             environment, mod.__dict__, globals)
+
+
+class ImportLibResourceLoader(BaseLoader):
+    """Load templates from python eggs or packages using importlib_resource.
+    It is constructed with the full name of the python package containing the
+    templates::
+
+        loader = ImportLibResourceLoader('mypackage.templates')
+
+    This directory **must** be a submodule of your main module and have its
+    own ``__init__.py`` file.
+
+    For Python <3.7, you need to install the ``importlib_resources`` package::
+
+        pip install importlib_resources
+
+    Per default the template encoding is ``'utf-8'`` which can be changed
+    by setting the `encoding` parameter to something else.
+    """
+
+    def __init__(self, templates_path, encoding='utf-8'):
+        import importlib_resources
+        self.importlib_resources = importlib_resources
+        self.templates_path = templates_path
+        self.encoding = encoding
+
+    def get_source(self, environment, template):
+        pieces = split_template_path(template)
+        p = '/'.join((self.templates_path, ) + tuple(pieces))
+        if not self._has_resource(p):
+            raise TemplateNotFound(template)
+
+        package_name, _, filename = p.rpartition("/")
+        source = self.importlib_resources.read_binary(package_name, filename)
+
+        def uptodate():
+            return False
+
+        return source.decode(self.encoding), filename, uptodate
+
+    def list_templates(self):
+        p = self.templates_path
+        if p[:2] == './':
+            p = p[2:]
+        elif p == '.':
+            p = ''
+        offset = len(p)
+        results = []
+
+        def _walk(p):
+            try:
+                for filename in self.importlib_resources.contents(p):
+                    if fnmatch.fnmatch(filename, '*.py'):
+                        pass
+                    fullname = p + '/' + filename
+                    if self._is_dir(p, filename):
+                        _walk(fullname)
+                    else:
+                        results.append(fullname[offset:].lstrip('/'))
+            except ModuleNotFoundError:
+                pass
+
+        _walk(p)
+        results.sort()
+        return results
+
+    def _is_dir(self, templates_path, wanted_resource):
+        return (
+            wanted_resource in
+            self.importlib_resources.contents(templates_path) and
+            not self.importlib_resources.is_resource(templates_path,
+                                                     wanted_resource))
+
+    def _has_resource(self, resource_path):
+        dir_name, _, filename = resource_path.rpartition("/")
+        return filename in self.importlib_resources.contents(dir_name)
