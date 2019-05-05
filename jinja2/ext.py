@@ -21,7 +21,7 @@ from jinja2.defaults import BLOCK_START_STRING, \
 from jinja2.environment import Environment
 from jinja2.runtime import concat
 from jinja2.exceptions import TemplateAssertionError, TemplateSyntaxError
-from jinja2.utils import contextfunction, import_string, Markup
+from jinja2.utils import contextfunction, import_string, Markup, escape
 from jinja2._compat import with_metaclass, string_types, iteritems
 
 
