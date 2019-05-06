@@ -44,6 +44,9 @@ Unreleased
     environment's ``undefined`` class. Omitting the ``else`` clause is a
     valid shortcut and should not raise an error when using
     :class:`StrictUndefined`). :issue:`710`, :pr:`1079`
+-   Fix behavior of ``loop`` control variables such as ``length`` and
+    ``revindex0`` when looping over a generator. :issue:`459, 751, 794`,
+    :pr:`993`
 
 
 Version 2.10.3
