@@ -33,6 +33,7 @@ branches:
   only:
     - master
     - /^.*-maintenance$/
+    - /^.*\.x$/
 
 notifications:
   email: false
