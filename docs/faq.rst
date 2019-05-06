@@ -153,7 +153,7 @@ Why is there no Python 2.3/2.4/2.5/3.1/3.2 support?
 Python 2.3 is missing a lot of features that are used heavily in Jinja2.  This
 decision was made as with the upcoming Python 2.6 and 3.0 versions it becomes
 harder to maintain the code for older Python versions.  If you really need
-Python 2.3 support you either have to use `Jinja 1`_ or other templating
+Python 2.3 support you either have to use Jinja 1 or other templating
 engines that still support 2.3.
 
 Python 2.4/2.5/3.1/3.2 support was removed when we switched to supporting
@@ -188,4 +188,3 @@ templates passing information to the parent template.  To avoid this
 issue rename the macro or variable in the parent template to have an
 uncommon prefix.
 
-.. _Jinja 1: http://jinja.pocoo.org/1/
