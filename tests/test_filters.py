@@ -561,6 +561,22 @@ class TestFilter(object):
         tmpl = env.from_string('{{ users|map(attribute="name")|join("|") }}')
         assert tmpl.render(users=users) == 'john|jane|mike'
 
+    def test_attribute_map_default(self, env):
+        class User(object):
+            def __init__(self, name):
+                self.name = name
+        class NotUser(object):
+            def __init__(self, not_name):
+                self.not_name = not_name
+        env = Environment()
+        users = [
+            User('john'),
+            User('jane'),
+            NotUser('plant'),
+        ]
+        tmpl = env.from_string('{{ users|map(attribute="name", default="anonymous")|join("|") }}')
+        assert tmpl.render(users=users) == 'john|jane|anonymous'
+
     def test_empty_map(self, env):
         env = Environment()
         tmpl = env.from_string('{{ none|map("upper")|list }}')

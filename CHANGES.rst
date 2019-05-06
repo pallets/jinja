@@ -14,8 +14,10 @@ unreleased
   slow initial import. (`#765`_)
 - Python 2.6 and 3.3 are not supported anymore.
 - The `map` filter in async mode now automatically awaits
+- Added `default` parameter for the `map` filter. (`#985`_)
 
 .. _#765: https://github.com/pallets/jinja/issues/765
+.. _#985: https://github.com/pallets/jinja/pull/985
 
 
 Version 2.10.1

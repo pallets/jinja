@@ -59,7 +59,7 @@ def ignore_case(value):
     return value.lower() if isinstance(value, string_types) else value
 
 
-def make_attrgetter(environment, attribute, postprocess=None):
+def make_attrgetter(environment, attribute, postprocess=None, default=None):
     """Returns a callable that looks up the given attribute from a
     passed object with the rules of the environment.  Dots are allowed
     to access attributes of attributes.  Integer parts in paths are
@@ -75,6 +75,10 @@ def make_attrgetter(environment, attribute, postprocess=None):
     def attrgetter(item):
         for part in attribute:
             item = environment.getitem(item, part)
+
+            if default and isinstance(item, Undefined):
+                item = default
+                break
 
         if postprocess is not None:
             item = postprocess(item)
@@ -961,6 +965,13 @@ def do_map(*args, **kwargs):
 
         Users on this page: {{ users|map(attribute='username')|join(', ') }}
 
+    If the list of objects may not contain the given attribute, a default
+    value may be provided.
+
+    .. sourcecode:: jinja
+
+        {{ users|map(attribute='username', default='Anonymous')|join(', ') }}
+
     Alternatively you can let it invoke a filter by passing the name of the
     filter and the arguments afterwards.  A good example would be applying a
     text conversion filter on a sequence:
@@ -1098,10 +1109,11 @@ def prepare_map(args, kwargs):
 
     if len(args) == 2 and 'attribute' in kwargs:
         attribute = kwargs.pop('attribute')
+        default = kwargs.pop('default', None)
         if kwargs:
             raise FilterArgumentError('Unexpected keyword argument %r' %
                 next(iter(kwargs)))
-        func = make_attrgetter(context.environment, attribute)
+        func = make_attrgetter(context.environment, attribute, default=default)
     else:
         try:
             name = args[2]
