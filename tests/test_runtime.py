@@ -1,0 +1,48 @@
+from jinja2 import Template
+from jinja2.runtime import LoopContext
+
+
+TEST_IDX_TEMPLATE_STR_1 = (
+    "[{% for i in lst|reverse %}"
+    + "(len={{ loop.length }}, revindex={{ loop.revindex }}, index={{ loop.index }}, val={{ i }})"
+    + "{% endfor %}]"
+)
+
+
+TEST_IDX0_TEMPLATE_STR_1 = (
+    "[{% for i in lst|reverse %}"
+    + "(len={{ loop.length }}, revindex0={{ loop.revindex0 }}, index0={{ loop.index0 }}, val={{ i }})"
+    + "{% endfor %}]"
+)
+
+
+def test_loop_idx():
+    t = Template(TEST_IDX_TEMPLATE_STR_1)
+    lst = [10]
+    excepted_render = "[(len=1, revindex=1, index=1, val=10)]"
+    assert excepted_render == t.render(lst=lst)
+
+
+def test_loop_idx0():
+    t = Template(TEST_IDX0_TEMPLATE_STR_1)
+    lst = [10]
+    excepted_render = "[(len=1, revindex0=0, index0=0, val=10)]"
+    assert excepted_render == t.render(lst=lst)
+
+
+def test_loopcontext0():
+    in_lst = []
+    l = LoopContext(reversed(in_lst), None)
+    assert l.length == len(in_lst)
+
+
+def test_loopcontext1():
+    in_lst = [10]
+    l = LoopContext(reversed(in_lst), None)
+    assert l.length == len(in_lst)
+
+
+def test_loopcontext2():
+    in_lst = [10, 11]
+    l = LoopContext(reversed(in_lst), None)
+    assert l.length == len(in_lst)
