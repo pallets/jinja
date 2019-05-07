@@ -1,14 +1,15 @@
+dist: xenial
 sudo: false
 language: python
 
 python:
+  - 3.7
   - 3.6
   - 3.5
   - 3.4
-  - 3.3
   - 2.7
-  - 2.6
-  - pypy
+  - pypy3.5-6.0
+  - pypy2.7-6.0
 
 env:
   - TOXENV=py,codecov
@@ -32,7 +33,7 @@ cache:
 branches:
   only:
     - master
-    - /^.*-maintenance$/
+    - /^\d+(\.\d+)*(\.x)?$/
 
 notifications:
   email: false
