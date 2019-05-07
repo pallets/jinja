@@ -15,7 +15,7 @@ from types import MethodType
 
 from jinja2.nodes import EvalContext, _context_function_types
 from jinja2.utils import Markup, soft_unicode, escape, missing, concat, \
-     internalcode, object_type_repr, evalcontextfunction, Namespace
+     internalcode, object_type_repr, contextfunction, Namespace
 from jinja2.exceptions import UndefinedError, TemplateRuntimeError, \
      TemplateNotFound
 from jinja2._compat import imap, text_type, iteritems, \
@@ -494,7 +494,7 @@ class Macro(object):
         self._default_autoescape = default_autoescape
 
     @internalcode
-    @evalcontextfunction
+    @contextfunction
     def __call__(self, *args, **kwargs):
         # This requires a bit of explanation,  In the past we used to
         # decide largely based on compile-time information if a macro is
@@ -513,10 +513,12 @@ class Macro(object):
         # argument to callables otherwise anwyays.  Worst case here is
         # that if no eval context is passed we fall back to the compile
         # time autoescape flag.
-        if args and isinstance(args[0], EvalContext):
-            autoescape = args[0].autoescape
+        if args and isinstance(args[0], Context):
+            context = args[0]
+            autoescape = context.eval_ctx.autoescape
             args = args[1:]
         else:
+            context = None
             autoescape = self._default_autoescape
 
         # try to consume the positional arguments
@@ -567,6 +569,7 @@ class Macro(object):
             raise TypeError('macro %r takes not more than %d argument(s)' %
                             (self.name, len(self.arguments)))
 
+        arguments = [context] + arguments
         return self._invoke(arguments, autoescape)
 
     def _invoke(self, arguments, autoescape):

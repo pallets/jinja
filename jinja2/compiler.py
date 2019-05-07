@@ -547,8 +547,14 @@ class CodeGenerator(NodeVisitor):
         # macros are delayed, they never require output checks
         frame.require_output_check = False
         frame.symbols.analyze_node(node)
-        self.writeline('%s(%s):' % (self.func('macro'), ', '.join(args)), node)
+        self.writeline('outer_context = context')
+        self.writeline('%s(%s):' %
+                       (self.func('macro'), ', '.join(['context'] + args)),
+                       node)
         self.indent()
+        self.writeline('nonlocal outer_context')
+        self.writeline('context = context or outer_context')
+        self.writeline('resolve = context.resolve_or_missing')
 
         self.buffer(frame)
         self.enter_frame(frame)

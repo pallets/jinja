@@ -16,7 +16,7 @@ from jinja2.sandbox import SandboxedEnvironment, \
 from jinja2 import Markup, escape
 from jinja2.exceptions import SecurityError, TemplateSyntaxError, \
      TemplateRuntimeError
-from jinja2.nodes import EvalContext
+from jinja2.runtime import new_context
 from jinja2._compat import text_type
 
 
@@ -121,7 +121,7 @@ class TestSandbox(object):
         assert escape(t.module) == escaped_out
         assert t.module.say_hello('<blink>foo</blink>') == escaped_out
         assert escape(t.module.say_hello(
-            EvalContext(env), '<blink>foo</blink>')) == escaped_out
+            new_context(env, 'name', {}), '<blink>foo</blink>')) == escaped_out
         assert escape(t.module.say_hello(
             '<blink>foo</blink>')) == escaped_out
 
