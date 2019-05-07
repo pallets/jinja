@@ -121,6 +121,10 @@ class TestMeta(object):
         x = meta.find_undeclared_variables(ast)
         assert x == set(['bar', 'seq', 'muh'])
 
+        ast = env.parse('{% for x in range(5) %}{{ x }}{% endfor %}{{ foo }}')
+        x = meta.find_undeclared_variables(ast)
+        assert x == set(['foo'])
+
     def test_find_refererenced_templates(self, env):
         ast = env.parse('{% extends "layout.html" %}{% include helper %}')
         i = meta.find_referenced_templates(ast)

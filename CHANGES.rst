@@ -19,6 +19,8 @@ unreleased
 - Allow ``{%+`` syntax (with NOP behavior) when
   ``lstrip_blocks == False`` (`#748`_)
 - Added a ``default`` parameter for the ``map`` filter. (`#557`_)
+-   Exclude environment globals from
+    :func:`meta.find_undeclared_variables`. #931
 
 .. _#557: https://github.com/pallets/jinja/issues/557
 .. _#765: https://github.com/pallets/jinja/issues/765
