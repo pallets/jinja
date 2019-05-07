@@ -13,9 +13,12 @@ unreleased
   :class:`~environment.Environment` enables it, in order to avoid a
   slow initial import. (`#765`_)
 - Python 2.6 and 3.3 are not supported anymore.
-- The `map` filter in async mode now automatically awaits
+- The ``map`` filter in async mode now automatically awaits
+- Added a new ``ChainableUndefined`` class to support getitem
+  and getattr on an undefined object. (`#977`_)
 
 .. _#765: https://github.com/pallets/jinja/issues/765
+.. _#977: https://github.com/pallets/jinja/issues/977
 
 
 Version 2.10.1
