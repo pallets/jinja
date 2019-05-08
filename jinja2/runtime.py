@@ -750,7 +750,9 @@ def make_logging_undefined(logger=None, base=None):
     return LoggingUndefined
 
 
-@implements_to_string
+# No @implements_to_string decorator here because __str__
+# is not overwritten from Undefined in this class.
+# This would cause a recursion error in Python 2.
 class ChainableUndefined(Undefined):
     """An undefined that is chainable, where both
     __getattr__ and __getitem__ return itself rather than
