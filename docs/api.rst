@@ -322,7 +322,7 @@ unable to look up a name or access an attribute one of those objects is
 created and returned.  Some operations on undefined values are then allowed,
 others fail.
 
-The closest to regular Python behavior is the `StrictUndefined` which
+The closest to regular Python behavior is the :class:`StrictUndefined` which
 disallows all operations beside testing if it's an undefined object.
 
 .. autoclass:: jinja2.Undefined()
@@ -352,6 +352,8 @@ disallows all operations beside testing if it's an undefined object.
         When called with any arguments this method raises
         :attr:`_undefined_exception` with an error message generated
         from the undefined hints stored on the undefined object.
+
+.. autoclass:: jinja2.ChainableUndefined()
 
 .. autoclass:: jinja2.DebugUndefined()
 

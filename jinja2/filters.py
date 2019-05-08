@@ -368,6 +368,12 @@ def do_default(value, default_value=u'', boolean=False):
     .. sourcecode:: jinja
 
         {{ ''|default('the string was empty', true) }}
+
+    .. versionchanged:: 2.11
+       It's now possible to configure the :class:`~jinja2.Environment` with
+       :class:`~jinja2.ChainableUndefined` to make the `default` filter work
+       on nested elements and attributes that may contain undefined values
+       in the chain without getting an :exc:`~jinja2.UndefinedError`.
     """
     if isinstance(value, Undefined) or (boolean and not value):
         return default_value
