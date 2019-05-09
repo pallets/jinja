@@ -42,6 +42,7 @@ def pytest_configure(config):
         'lexer',
         'lexnparse',
         'loaders',
+        'loremIpsum',
         'lowlevel',
         'lrucache',
         'lstripblocks',
