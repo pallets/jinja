@@ -725,7 +725,7 @@ def do_slice(value, slices, fill_with=None):
 
     .. sourcecode:: html+jinja
 
-        <div class="columwrapper">
+        <div class="columnwrapper">
           {%- for column in items|slice(3) %}
             <ul class="column-{{ loop.index }}">
             {%- for item in column %}
