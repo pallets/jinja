@@ -435,6 +435,36 @@ This gives back the results of the parent block::
     {% endblock %}
 
 
+Nesting template extends.
+~~~~~~~~~~~~~~~~~~~~~~~~~
+
+In the case of multiple levels of %extends, the childmost {% block %} substitutes into the parent template. For instance,
+
+::
+
+    #a1.tmpl
+    From A1: {% block body %} Want-this-to-be-included. {% endblock %}
+
+    #a2.tmpl
+    {% extends "a1.tmpl" %}
+    {% block body %} Want-this-to-be-skipped. {{super()}} {% endblock %}
+
+    #a3.tmpl
+    {% extends "a2.tmpl" %}
+    {% block body %} Some text {% endblock %}
+
+    #a4.tmpl
+    {% extends "a2.tmpl" %}
+    {% block body %} From A4: {{super.super()}} {% endblock %}
+
+
+Rendering `a2.tmpl` will output `From A1: Want-this-to-be-skipped`. The text `Want-this-to-be-included.` is rendered because the `super()` call render as the text from the parent template into the block, which will then be substitute into topmost template.
+
+Rendering `a3.tmpl` will output `From A1: Some Text`. We substitute the block text into the parent template.
+
+Rendering `a4.tmpl` will output `From A1: From A4: Want-this-to-be-included.` Here, we are accessing the `super` property from the `super` object to get access to the text in grandparent's block. Had we just done `super()`, this would have returned `From A1: From A4: Want-this-to-be-skipped. Want-this-to-be-included.`.
+
+
 Named Block End-Tags
 ~~~~~~~~~~~~~~~~~~~~
 
