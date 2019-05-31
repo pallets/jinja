@@ -16,8 +16,11 @@ unreleased
 - The ``map`` filter in async mode now automatically awaits
 - Added a new ``ChainableUndefined`` class to support getitem
   and getattr on an undefined object. (`#977`_)
+- Allow `'{%+'` syntax (with NOP behavior) when
+  `lstrip_blocks == False` (`#748`_)
 
 .. _#765: https://github.com/pallets/jinja/issues/765
+.. _#748: https://github.com/pallets/jinja/issues/748
 .. _#977: https://github.com/pallets/jinja/issues/977
 
 
@@ -27,6 +30,7 @@ Version 2.10.2
 _Unreleased_
 
 -  Fix Python 3.7 deprecation warnings.
+
 
 Version 2.10.1
 --------------
