@@ -46,7 +46,7 @@ To load a template from this environment you just have to call the
 
 To render it with some variables, just call the :meth:`render` method::
 
-    print template.render(the='variables', go='here')
+    print(template.render(the='variables', go='here'))
 
 Using a template loader rather than passing strings to :class:`Template`
 or :meth:`Environment.from_string` has multiple advantages.  Besides being
@@ -834,7 +834,7 @@ Here a simple test that checks if a variable is a prime number::
     def is_prime(n):
         if n == 2:
             return True
-        for i in xrange(2, int(math.ceil(math.sqrt(n))) + 1):
+        for i in range(2, int(math.ceil(math.sqrt(n))) + 1):
             if n % i == 0:
                 return False
         return True

@@ -572,7 +572,7 @@ As variables in templates retain their object properties, it is possible to
 iterate over containers like `dict`::
 
     <dl>
-    {% for key, value in my_dict.iteritems() %}
+    {% for key, value in my_dict.items() %}
         <dt>{{ key|e }}</dt>
         <dd>{{ value|e }}</dd>
     {% endfor %}
@@ -1196,7 +1196,6 @@ but exists for completeness' sake.  The following operators are supported:
 /
     Divide two numbers.  The return value will be a floating point number.
     ``{{ 1 / 2 }}`` is ``{{ 0.5 }}``.
-    (Just like ``from __future__ import division``.)
 
 //
     Divide two numbers and return the truncated integer result.
