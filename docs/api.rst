@@ -2,6 +2,7 @@ API
 ===
 
 .. module:: jinja2
+    :noindex:
     :synopsis: public Jinja2 API
 
 This document describes the API to Jinja2 and not the template language.  It
