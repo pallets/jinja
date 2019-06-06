@@ -425,7 +425,7 @@ If you want to print a block multiple times, you can, however, use the special
 Super Blocks
 ~~~~~~~~~~~~
 
-It's possible to render the contents of the parent block by calling `super`.
+It's possible to render the contents of the parent block by calling ``super()``.
 This gives back the results of the parent block::
 
     {% block sidebar %}
@@ -435,34 +435,39 @@ This gives back the results of the parent block::
     {% endblock %}
 
 
-Nesting template extends.
-~~~~~~~~~~~~~~~~~~~~~~~~~
+Nesting extends
+~~~~~~~~~~~~~~~
 
-In the case of multiple levels of %extends, the childmost {% block %} substitutes into the parent template. For instance,
+In the case of multiple levels of ``{% extends %}``,
+``super`` references may be chained (as in ``super.super()``)
+to skip levels in the inheritance tree.
 
-::
+For example::
 
-    #a1.tmpl
-    From A1: {% block body %} Want-this-to-be-included. {% endblock %}
+    # parent.tmpl
+    body: {% block body %}Hi from parent.{% endblock %}
 
-    #a2.tmpl
-    {% extends "a1.tmpl" %}
-    {% block body %} Want-this-to-be-skipped. {{super()}} {% endblock %}
+    # child.tmpl
+    {% extends "parent.tmpl" %}
+    {% block body %}Hi from child. {{ super() }}{% endblock %}
 
-    #a3.tmpl
-    {% extends "a2.tmpl" %}
-    {% block body %} Some text {% endblock %}
+    # grandchild1.tmpl
+    {% extends "child.tmpl" %}
+    {% block body %}Hi from grandchild1.{% endblock %}
 
-    #a4.tmpl
-    {% extends "a2.tmpl" %}
-    {% block body %} From A4: {{super.super()}} {% endblock %}
+    # grandchild2.tmpl
+    {% extends "child.tmpl" %}
+    {% block body %}Hi from grandchild2. {{ super.super() }} {% endblock %}
 
 
-Rendering `a2.tmpl` will output `From A1: Want-this-to-be-skipped`. The text `Want-this-to-be-included.` is rendered because the `super()` call render as the text from the parent template into the block, which will then be substitute into topmost template.
+Rendering ``child.tmpl`` will give
+``body: Hi from child. Hi from parent.``
 
-Rendering `a3.tmpl` will output `From A1: Some Text`. We substitute the block text into the parent template.
+Rendering ``grandchild1.tmpl`` will give
+``body: Hi from grandchild1.``
 
-Rendering `a4.tmpl` will output `From A1: From A4: Want-this-to-be-included.` Here, we are accessing the `super` property from the `super` object to get access to the text in grandparent's block. Had we just done `super()`, this would have returned `From A1: From A4: Want-this-to-be-skipped. Want-this-to-be-included.`.
+Rendering ``grandchild2.tmpl`` will give
+``body: Hi from grandchild2. Hi from parent.``
 
 
 Named Block End-Tags
