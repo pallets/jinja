@@ -1310,11 +1310,33 @@ The general syntax is ``<do something> if <something is true> else <do
 something else>``.
 
 The `else` part is optional.  If not provided, the else block implicitly
-evaluates into an undefined object::
+evaluates into an undefined object:
 
 .. sourcecode:: jinja
 
     {{ '[%s]' % page.title if page.title }}
+
+
+.. _python-methods:
+
+Python Methods
+~~~~~~~~~~~~~~
+
+You can also use any of the methods of defined on a variable's type.
+The value returned from the method invocation is used as the value of the expression.
+Here is an example that uses methods defined on strings (where ``page.title`` is a string):
+
+.. code-block:: text
+
+    {{ page.title.capitalize() }}
+
+This also works for methods on user-defined types.
+For example, if variable ``f`` of type ``Foo`` has a method ``bar`` defined on it,
+you can do the following:
+
+.. code-block:: text
+
+    {{ f.bar() }}
 
 
 .. _builtin-filters:
