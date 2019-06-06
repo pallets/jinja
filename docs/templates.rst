@@ -390,7 +390,9 @@ this template "extends" another template.  When the template system evaluates
 this template, it first locates the parent.  The extends tag should be the
 first tag in the template.  Everything before it is printed out normally and
 may cause confusion.  For details about this behavior and how to take
-advantage of it, see :ref:`null-master-fallback`.
+advantage of it, see :ref:`null-master-fallback`. Also a block will always be
+filled in regardless of whether the surrounding condition is evaluated to be true 
+or false.
 
 The filename of the template depends on the template loader.  For example, the
 :class:`FileSystemLoader` allows you to access other templates by giving the
