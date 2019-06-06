@@ -425,7 +425,7 @@ If you want to print a block multiple times, you can, however, use the special
 Super Blocks
 ~~~~~~~~~~~~
 
-It's possible to render the contents of the parent block by calling `super`.
+It's possible to render the contents of the parent block by calling ``super()``.
 This gives back the results of the parent block::
 
     {% block sidebar %}
@@ -433,6 +433,41 @@ This gives back the results of the parent block::
         ...
         {{ super() }}
     {% endblock %}
+
+
+Nesting extends
+~~~~~~~~~~~~~~~
+
+In the case of multiple levels of ``{% extends %}``,
+``super`` references may be chained (as in ``super.super()``)
+to skip levels in the inheritance tree.
+
+For example::
+
+    # parent.tmpl
+    body: {% block body %}Hi from parent.{% endblock %}
+
+    # child.tmpl
+    {% extends "parent.tmpl" %}
+    {% block body %}Hi from child. {{ super() }}{% endblock %}
+
+    # grandchild1.tmpl
+    {% extends "child.tmpl" %}
+    {% block body %}Hi from grandchild1.{% endblock %}
+
+    # grandchild2.tmpl
+    {% extends "child.tmpl" %}
+    {% block body %}Hi from grandchild2. {{ super.super() }} {% endblock %}
+
+
+Rendering ``child.tmpl`` will give
+``body: Hi from child. Hi from parent.``
+
+Rendering ``grandchild1.tmpl`` will give
+``body: Hi from grandchild1.``
+
+Rendering ``grandchild2.tmpl`` will give
+``body: Hi from grandchild2. Hi from parent.``
 
 
 Named Block End-Tags
