@@ -586,7 +586,7 @@ class Cycler(object):
 
     def reset(self):
         """Resets the cycle."""
-        self.pos = 0
+        self.pos = -1
 
     @property
     def current(self):
@@ -595,8 +595,8 @@ class Cycler(object):
 
     def next(self):
         """Goes one item ahead and returns it."""
-        rv = self.current
         self.pos = (self.pos + 1) % len(self.items)
+        rv = self.current
         return rv
 
     __next__ = next
