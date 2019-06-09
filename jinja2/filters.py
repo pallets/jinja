@@ -65,12 +65,7 @@ def make_attrgetter(environment, attribute, postprocess=None):
     to access attributes of attributes.  Integer parts in paths are
     looked up as integers.
     """
-    if attribute is None:
-        attribute = []
-    elif isinstance(attribute, string_types):
-        attribute = [int(x) if x.isdigit() else x for x in attribute.split('.')]
-    else:
-        attribute = [attribute]
+    attribute = _prepare_attribute_parts(attribute)
 
     def attrgetter(item):
         for part in attribute:
@@ -95,14 +90,6 @@ def make_multi_attrgetter(environment, attribute, postprocess=None):
 
     Examples of attribute: "attr1,attr2", "attr1.inner1.0,attr2.inner2.0", etc.
     """
-    def _prepare_attribute_parts(attr):
-        if attr is None:
-            return []
-        elif isinstance(attribute, string_types):
-            return [int(x) if x.isdigit() else x for x in attr.split('.')]
-        else:
-            return [attr]
-
     attribute_parts = attribute.split(',') if isinstance(attribute, string_types) else [attribute]
     attribute = [_prepare_attribute_parts(attribute_part) for attribute_part in attribute_parts]
 
@@ -120,6 +107,15 @@ def make_multi_attrgetter(environment, attribute, postprocess=None):
         return items
 
     return attrgetter
+
+
+def _prepare_attribute_parts(attr):
+    if attr is None:
+        return []
+    elif isinstance(attr, string_types):
+        return [int(x) if x.isdigit() else x for x in attr.split('.')]
+    else:
+        return [attr]
 
 
 def do_forceescape(value):
