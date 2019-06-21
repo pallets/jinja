@@ -280,7 +280,7 @@ def do_sort(
 
 @environmentfilter
 def do_unique(environment, value, case_sensitive=False, attribute=None):
-    """Returns a list of unique items from the the given iterable.
+    """Returns a list of unique items from the given iterable.
 
     .. sourcecode:: jinja
 

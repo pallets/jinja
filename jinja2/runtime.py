@@ -401,7 +401,7 @@ class LoopContextBase(object):
         return self._recurse(iterable, self._recurse, self.depth0 + 1)
 
     # a nifty trick to enhance the error message if someone tried to call
-    # the the loop without or with too many arguments.
+    # the loop without or with too many arguments.
     __call__ = loop
     del loop
 
