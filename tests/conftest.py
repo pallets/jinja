@@ -97,8 +97,12 @@ def importlib_resource_loader():
 def filesystem_loader():
     '''returns FileSystemLoader initialized to res/templates directory
     '''
-    here = os.path.dirname(os.path.abspath(__file__))
-    return loaders.FileSystemLoader(here + '/res/templates')
+    here = os.path.dirname(os.path.abspath(__file__)) + '/res/templates'
+    for dirpath, dirnames, filenames in os.walk(here):
+        for filename in filenames:
+            if filename.endswith('.pyc'):
+                os.remove(os.path.join(dirpath, filename))
+    return loaders.FileSystemLoader(here)
 
 
 @pytest.fixture
