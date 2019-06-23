@@ -77,17 +77,18 @@ a lot easier to use it also enables template inheritance.
        )
 
     Please be aware you **need** to have a ``__init__.py`` file in the
-    ``yourapplication/templates`` directory.
+    ``yourapplication/templates`` directory so that it is seen as a Python
+    submodule.
 
     For Python <3.7, you need to install the ``importlib_resources`` package::
 
         pip install importlib_resources
 
     More information about this packaging format in the
-    `Importlib_resource documentation<https://importlib-resources.readthedocs.io/en/latest/>`_.
+    `Importlib_resource documentation`_.
 
 
-.. _Importlib_resource documentation: https://docs.python.org/dev/howto/unicode.html
+.. _Importlib_resource documentation: https://importlib-resources.readthedocs.io/en/latest/
 
 Unicode
 -------

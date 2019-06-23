@@ -22,7 +22,9 @@ Unreleased
 -   Int and float literals can be written with the '_' separator for
     legibility, like 12_345. :pr:`923`
 -   Add :class:`loaders.ImportLibResourceLoader` loader using
-    ``importlib.resource``, that does not require ``setuptools`` or ```` (`#970`_)
+    ``importlib.resource``, that does not require ``setuptools``.
+    (Python <3.7 needs to install the ``importliab_resource``).
+    :issue:`970`
 
 
 Version 2.10.2
