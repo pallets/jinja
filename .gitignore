@@ -10,6 +10,7 @@ dist/
 .tox/
 .cache/
 .idea/
+env/
 venv/
 venv-*/
 .coverage

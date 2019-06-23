@@ -280,7 +280,7 @@ def do_sort(
 
 @environmentfilter
 def do_unique(environment, value, case_sensitive=False, attribute=None):
-    """Returns a list of unique items from the the given iterable.
+    """Returns a list of unique items from the given iterable.
 
     .. sourcecode:: jinja
 
@@ -368,6 +368,12 @@ def do_default(value, default_value=u'', boolean=False):
     .. sourcecode:: jinja
 
         {{ ''|default('the string was empty', true) }}
+
+    .. versionchanged:: 2.11
+       It's now possible to configure the :class:`~jinja2.Environment` with
+       :class:`~jinja2.ChainableUndefined` to make the `default` filter work
+       on nested elements and attributes that may contain undefined values
+       in the chain without getting an :exc:`~jinja2.UndefinedError`.
     """
     if isinstance(value, Undefined) or (boolean and not value):
         return default_value
@@ -719,7 +725,7 @@ def do_slice(value, slices, fill_with=None):
 
     .. sourcecode:: html+jinja
 
-        <div class="columwrapper">
+        <div class="columnwrapper">
           {%- for column in items|slice(3) %}
             <ul class="column-{{ loop.index }}">
             {%- for item in column %}

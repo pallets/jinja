@@ -11,6 +11,7 @@
 import re
 import json
 import errno
+import warnings
 from collections import deque
 from threading import Lock
 from jinja2._compat import text_type, string_types, implements_iterator, \
@@ -456,6 +457,14 @@ class LRUCache(object):
         return [x[1] for x in self.items()]
 
     def itervalue(self):
+        """Iterate over all values."""
+        warnings.warn(DeprecationWarning(
+            '"itervalue()" is deprecated and will be removed in version 2.12.'
+            + ' Use "itervalues()" instead.'
+        ), stacklevel=2)
+        return self.itervalues()
+
+    def itervalues(self):
         """Iterate over all values."""
         return iter(self.values())
 

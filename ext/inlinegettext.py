@@ -32,7 +32,7 @@ class InlineGettext(Extension):
         paren_stack = 0
 
         for token in stream:
-            if token.type is not 'data':
+            if token.type != 'data':
                 yield token
                 continue
 

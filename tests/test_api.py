@@ -13,8 +13,8 @@ import tempfile
 import shutil
 
 import pytest
-from jinja2 import Environment, Undefined, DebugUndefined, \
-     StrictUndefined, UndefinedError, meta, \
+from jinja2 import Environment, Undefined, ChainableUndefined, \
+     DebugUndefined, StrictUndefined, UndefinedError, meta, \
      is_undefined, Template, DictLoader, make_logging_undefined
 from jinja2.compiler import CodeGenerator
 from jinja2.runtime import Context
@@ -257,6 +257,27 @@ class TestUndefined(object):
         assert env.from_string('{{ not missing }}').render() == 'True'
         pytest.raises(UndefinedError,
                       env.from_string('{{ missing - 1}}').render)
+
+    def test_chainable_undefined(self):
+        env = Environment(undefined=ChainableUndefined)
+        # The following tests are copied from test_default_undefined
+        assert env.from_string('{{ missing }}').render() == u''
+        assert env.from_string('{{ missing|list }}').render() == '[]'
+        assert env.from_string('{{ missing is not defined }}').render() \
+            == 'True'
+        assert env.from_string('{{ foo.missing }}').render(foo=42) == ''
+        assert env.from_string('{{ not missing }}').render() == 'True'
+        pytest.raises(UndefinedError,
+                      env.from_string('{{ missing - 1}}').render)
+
+        # The following tests ensure subclass functionality works as expected
+        assert env.from_string('{{ missing.bar["baz"] }}').render() == u''
+        assert env.from_string('{{ foo.bar["baz"]._undefined_name }}').render() \
+            == u'foo'
+        assert env.from_string('{{ foo.bar["baz"]._undefined_name }}').render(
+            foo=42) == u'bar'
+        assert env.from_string('{{ foo.bar["baz"]._undefined_name }}').render(
+            foo={'bar': 42}) == u'baz'
 
     def test_debug_undefined(self):
         env = Environment(undefined=DebugUndefined)
