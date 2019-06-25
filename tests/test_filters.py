@@ -23,6 +23,16 @@ class Magic(object):
         return text_type(self.value)
 
 
+@implements_to_string
+class Magic2(object):
+    def __init__(self, value1, value2):
+        self.value1 = value1
+        self.value2 = value2
+
+    def __str__(self):
+        return u'(%s,%s)' % (text_type(self.value1), text_type(self.value2))
+
+
 @pytest.mark.filter
 class TestFilter(object):
 
@@ -416,6 +426,29 @@ class TestFilter(object):
     def test_sort4(self, env):
         tmpl = env.from_string('''{{ items|sort(attribute='value')|join }}''')
         assert tmpl.render(items=map(Magic, [3, 2, 4, 1])) == '1234'
+
+    def test_sort5(self, env):
+        tmpl = env.from_string('''{{ items|sort(attribute='value.0')|join }}''')
+        assert tmpl.render(items=map(Magic, [[3], [2], [4], [1]])) == '[1][2][3][4]'
+
+    def test_sort6(self, env):
+        tmpl = env.from_string('''{{ items|sort(attribute='value1,value2')|join }}''')
+        assert (tmpl.render(items=map(
+            lambda x: Magic2(x[0], x[1]), [(3, 1), (2, 2), (2, 1), (2, 5)]))
+            == '(2,1)(2,2)(2,5)(3,1)')
+
+    def test_sort7(self, env):
+        tmpl = env.from_string('''{{ items|sort(attribute='value2,value1')|join }}''')
+        assert (tmpl.render(items=map(lambda x: Magic2(x[0], x[1]), [(3, 1), (2, 2), (2, 1), (2, 5)])) ==
+                '(2,1)(3,1)(2,2)(2,5)')
+
+    def test_sort8(self, env):
+        tmpl = env.from_string(
+            '''{{ items|sort(attribute='value1.0,value2.0')|join }}''')
+        assert (tmpl.render(items=map(
+            lambda x: Magic2(x[0], x[1]),
+            [([3], [1]), ([2], [2]), ([2], [1]), ([2], [5])]))
+            == '([2],[1])([2],[2])([2],[5])([3],[1])')
 
     def test_unique(self, env):
         t = env.from_string('{{ "".join(["b", "A", "a", "b"]|unique) }}')

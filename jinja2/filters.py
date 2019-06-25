@@ -65,12 +65,7 @@ def make_attrgetter(environment, attribute, postprocess=None):
     to access attributes of attributes.  Integer parts in paths are
     looked up as integers.
     """
-    if attribute is None:
-        attribute = []
-    elif isinstance(attribute, string_types):
-        attribute = [int(x) if x.isdigit() else x for x in attribute.split('.')]
-    else:
-        attribute = [attribute]
+    attribute = _prepare_attribute_parts(attribute)
 
     def attrgetter(item):
         for part in attribute:
@@ -82,6 +77,45 @@ def make_attrgetter(environment, attribute, postprocess=None):
         return item
 
     return attrgetter
+
+
+def make_multi_attrgetter(environment, attribute, postprocess=None):
+    """Returns a callable that looks up the given comma separated
+    attributes from a passed object with the rules of the environment.
+    Dots are allowed to access attributes of each attribute.  Integer
+    parts in paths are looked up as integers.
+
+    The value returned by the returned callable is a list of extracted
+    attribute values.
+
+    Examples of attribute: "attr1,attr2", "attr1.inner1.0,attr2.inner2.0", etc.
+    """
+    attribute_parts = attribute.split(',') if isinstance(attribute, string_types) else [attribute]
+    attribute = [_prepare_attribute_parts(attribute_part) for attribute_part in attribute_parts]
+
+    def attrgetter(item):
+        items = [None] * len(attribute)
+        for i, attribute_part in enumerate(attribute):
+            item_i = item
+            for part in attribute_part:
+                item_i = environment.getitem(item_i, part)
+
+            if postprocess is not None:
+                item_i = postprocess(item_i)
+
+            items[i] = item_i
+        return items
+
+    return attrgetter
+
+
+def _prepare_attribute_parts(attr):
+    if attr is None:
+        return []
+    elif isinstance(attr, string_types):
+        return [int(x) if x.isdigit() else x for x in attr.split('.')]
+    else:
+        return [attr]
 
 
 def do_forceescape(value):
@@ -270,8 +304,10 @@ def do_sort(
 
     .. versionchanged:: 2.6
        The `attribute` parameter was added.
+       The attribute parameter can contain multiple comma separated
+       attributes, e.g. attr1,attr2.
     """
-    key_func = make_attrgetter(
+    key_func = make_multi_attrgetter(
         environment, attribute,
         postprocess=ignore_case if not case_sensitive else None
     )
