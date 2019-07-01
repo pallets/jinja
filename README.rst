@@ -29,15 +29,13 @@ Application logic is for the controller, but don't make the template designer's
 life difficult by restricting functionality too much.
 
 For more information visit the new `Jinja2 webpage`_ and `documentation`_.
-
-The `Jinja2 tip`_ is installable via ``pip`` with ``pip install
-https://github.com/pallets/jinja/zipball/master``.
+The source code can be found in Jinja2's `Github repository`_.
 
 .. _sandboxed: https://en.wikipedia.org/wiki/Sandbox_(computer_security)
 .. _Django: https://www.djangoproject.com/
 .. _Jinja2 webpage: http://jinja.pocoo.org/
-.. _documentation: http://jinja.pocoo.org/docs/
-.. _Jinja2 tip: http://jinja.pocoo.org/docs/intro/#as-a-python-egg-via-easy-install
+.. _documentation: http://jinja.pocoo.org/2/documentation/
+.. _Github repository: https://github.com/pallets/jinja/
 
 Builds
 ------

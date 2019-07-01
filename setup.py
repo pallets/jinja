@@ -26,14 +26,17 @@ Philosophy
 ----------
 
 Application logic is for the controller but don't try to make the life
-for the template designer too hard by giving him too few functionality.
+for template designers too hard by giving them too little functionality.
 
 For more information visit the new `Jinja2 webpage`_ and `documentation`_.
+The source code can be found in Jinja2's `Github repository`_.
 
 .. _sandboxed: https://en.wikipedia.org/wiki/Sandbox_(computer_security)
 .. _Django: https://www.djangoproject.com/
 .. _Jinja2 webpage: http://jinja.pocoo.org/
 .. _documentation: http://jinja.pocoo.org/2/documentation/
+.. _Github repository: https://github.com/pallets/jinja/
+
 """
 from setuptools import setup
 

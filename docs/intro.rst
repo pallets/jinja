@@ -32,14 +32,25 @@ This will install Jinja2 in your Python installation's site-packages directory.
 Installing the development version
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
+First, obtain the source.
+
 1.  Install `git`_
 2.  ``git clone git://github.com/pallets/jinja.git``
-3.  ``cd jinja2``
-4.  ``ln -s jinja2 /usr/lib/python2.X/site-packages``
+3.  ``cd jinja``
 
-As an alternative to steps 4 you can also do ``python setup.py develop``
-which will install the package via `distribute` in development mode.  This also
-has the advantage that the C extensions are compiled.
+For development purposes it's best to create a Python virtual
+environment. If you need instructions for this, see the [Python
+Tutorial page](https://docs.python.org/3/tutorial/venv.html).
+
+If you need to compile the necessary C extensions then you
+should use the command ``python setup.py develop``
+which will install the package in development mode.
+
+A slightly faster alternative build for when all
+necessary C libraries are already in place would be to
+place a symbolic link to the project's ``jinja2``
+directory inside one of the directories already on
+your interpreter's ``sys.path``.
 
 .. _distribute: https://pypi.org/project/distribute/
 .. _setuptools: http://peak.telecommunity.com/DevCenter/setuptools
