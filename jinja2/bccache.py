@@ -3,7 +3,8 @@
     jinja2.bccache
     ~~~~~~~~~~~~~~
 
-    This module implements the bytecode cache system that Jinja optionally uses.  This is useful if you have very complex template situations and
+    This module implements the bytecode cache system that Jinja optionally uses.
+    This is useful if you have very complex template situations and
     the compilation of all those templates slows down your application too
     much.
 
