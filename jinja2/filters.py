@@ -284,7 +284,9 @@ def do_sort(
     environment, value, reverse=False, case_sensitive=False, attribute=None
 ):
     """Sort an iterable.  Per default it sorts ascending, if you pass it
-    true as first argument it will reverse the sorting.
+    true as first argument it will reverse the sorting. The sort is stable,
+    i.e. it guarantees not to change the relative order of elements that
+    compare equal.
 
     If the iterable is made of strings the third parameter can be used to
     control the case sensitiveness of the comparison which is disabled by
@@ -305,10 +307,19 @@ def do_sort(
             ...
         {% endfor %}
 
+    Because the sort is stable, it is possible to chain sorts on different
+    attributes and ordering:
+
+    .. sourcecode:: jinja
+
+        {% for item in iterable|sort(attribute='name')|sort(true,attribute='date') %}
+            ...
+        {% endfor %}
+
     .. versionchanged:: 2.6
        The `attribute` parameter was added.
        The attribute parameter can contain multiple comma separated
-       attributes, e.g. attr1,attr2.
+       attributes, e.g. 'attr1,attr2', all subject to the same ordering.
     """
     key_func = make_multi_attrgetter(
         environment, attribute,
