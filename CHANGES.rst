@@ -21,6 +21,13 @@ unreleased
 .. _#977: https://github.com/pallets/jinja/issues/977
 
 
+Version 2.10.2
+--------------
+
+_Unreleased_
+
+-  Fix Python 3.7 deprecation warnings.
+
 Version 2.10.1
 --------------
 
