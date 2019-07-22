@@ -49,3 +49,14 @@ Builds
 | ``2.9-maintenance`` | .. image:: https://travis-ci.org/pallets/jinja.svg?branch=2.9-maintenance    |
 |                     |     :target: https://travis-ci.org/pallets/jinja                             |
 +---------------------+------------------------------------------------------------------------------+
+
+Links
+-----
+
+* Website: http://jinja.pocoo.org/
+* Documentation: http://jinja.pocoo.org/docs/
+* License: `BSD <https://raw.githubusercontent.com/pallets/jinja/master/LICENSE>`_
+* Releases: https://pypi.org/project/Jinja/
+* Code: https://github.com/pallets/jinja
+* Issue tracker: https://github.com/pallets/jinja/issues
+* Official chat: https://discord.gg/t6rrQZH
