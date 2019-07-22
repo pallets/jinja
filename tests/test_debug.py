@@ -14,7 +14,8 @@ import re
 import sys
 from traceback import format_exception
 
-from jinja2 import Environment, TemplateSyntaxError
+from jinja2 import Environment, TemplateSyntaxError, StrictUndefined
+from jinja2.debug import make_traceback
 
 
 @pytest.fixture
@@ -82,3 +83,26 @@ ZeroDivisionError: (int(eger)? )?division (or modulo )?by zero
             'l_0_baz': missing,
         })
         assert locals == {'foo': 13, 'bar': 99}
+
+    def test_traceback_lineno(self, fs_env):
+        '''Test for issue #276 to confirm we get the correct line number.
+
+        The undefined.html template tries to access an undefined variable
+        at line 3, but also accesses another undefined at line five,
+        and an existing variable at line seven.'''
+        # set strict undefined to raise an error if it tries to access an
+        # undefined value
+        fs_env.undefined = StrictUndefined
+        exc_info = None
+        try:
+            fs_env.get_template('undefined.html').render(six='SIX')
+        except:
+            exc_info = sys.exc_info()
+        traceback = make_traceback(exc_info)
+        exc_type, exc_value, tb = traceback.standard_exc_info
+        lineno = -1
+        while tb is not None:
+            if tb.tb_frame.f_code.co_filename.endswith('undefined.html'):
+                lineno = tb.tb_lineno
+            tb = tb.tb_next
+        assert lineno == 3

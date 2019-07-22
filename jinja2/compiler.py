@@ -1409,7 +1409,7 @@ class CodeGenerator(NodeVisitor):
             load = frame.symbols.find_load(ref)
             if not (load is not None and load[0] == VAR_LOAD_PARAMETER and \
                     not self.parameter_is_undeclared(ref)):
-                self.write('(undefined(name=%r) if %s is missing else %s)' %
+                self.write('(str(undefined(name=%r)) if %s is missing else %s)' %
                            (node.name, ref, ref))
                 return
 
