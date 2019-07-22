@@ -29,7 +29,7 @@ class TrackingCodeGenerator(CodeGenerator):
         """Remember all undeclared identifiers."""
         CodeGenerator.enter_frame(self, frame)
         for _, (action, param) in iteritems(frame.symbols.loads):
-            if action == 'resolve':
+            if action == 'resolve' and param not in self.environment.globals:
                 self.undeclared_identifiers.add(param)
 
 
