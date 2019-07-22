@@ -59,7 +59,7 @@ def ignore_case(value):
     return value.lower() if isinstance(value, string_types) else value
 
 
-def make_attrgetter(environment, attribute, default=None, postprocess=None):
+def make_attrgetter(environment, attribute, postprocess=None, default=None):
     """Returns a callable that looks up the given attribute from a
     passed object with the rules of the environment.  Dots are allowed
     to access attributes of attributes.  Integer parts in paths are
@@ -71,7 +71,7 @@ def make_attrgetter(environment, attribute, default=None, postprocess=None):
         for part in attribute:
             item = environment.getitem(item, part)
 
-            if isinstance(item, Undefined) and default:
+            if default and isinstance(item, Undefined):
                 item = default
 
         if postprocess is not None:
@@ -1012,7 +1012,7 @@ def do_map(*args, **kwargs):
 
     .. sourcecode:: jinja
 
-        Users on this page: {{ users|map(attribute="username", default="Anonymous")|join(", ") }}
+        {{ users|map(attribute="username", default="Anonymous")|join(", ") }}
 
     Alternatively you can let it invoke a filter by passing the name of the
     filter and the arguments afterwards.  A good example would be applying a
@@ -1155,8 +1155,7 @@ def prepare_map(args, kwargs):
 
     if len(args) == 2 and 'attribute' in kwargs:
         attribute = kwargs.pop('attribute')
-        if 'default' in kwargs:
-            default = kwargs.pop('default')
+        default = kwargs.pop('default', None)
         if kwargs:
             raise FilterArgumentError('Unexpected keyword argument %r' %
                 next(iter(kwargs)))

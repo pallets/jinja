@@ -18,7 +18,7 @@ unreleased
   and getattr on an undefined object. (`#977`_)
 - Allow ``{%+`` syntax (with NOP behavior) when
   ``lstrip_blocks == False`` (`#748`_)
-- Added ``default`` param for ``map`` filter. (`#557`_)
+- Added a ``default`` parameter for the ``map`` filter. (`#557`_)
 
 .. _#557: https://github.com/pallets/jinja/issues/557
 .. _#765: https://github.com/pallets/jinja/issues/765
