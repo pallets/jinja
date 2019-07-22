@@ -5,9 +5,12 @@ Jinja Changelog
 Version 2.10.2
 --------------
 
-_Unreleased_
+Unreleased
 
--  Fix Python 3.7 deprecation warnings.
+-   Fix Python 3.7 deprecation warnings.
+-   Using ``range`` in the sandboxed environment uses ``xrange`` on
+    Python 2 to avoid memory use. #933
+
 
 Version 2.10.1
 --------------
