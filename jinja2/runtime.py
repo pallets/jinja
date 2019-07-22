@@ -401,7 +401,7 @@ class LoopContextBase(object):
         return self._recurse(iterable, self._recurse, self.depth0 + 1)
 
     # a nifty trick to enhance the error message if someone tried to call
-    # the the loop without or with too many arguments.
+    # the loop without or with too many arguments.
     __call__ = loop
     del loop
 
@@ -510,7 +510,7 @@ class Macro(object):
         # check here.
         #
         # This is considered safe because an eval context is not a valid
-        # argument to callables otherwise anwyays.  Worst case here is
+        # argument to callables otherwise anyway.  Worst case here is
         # that if no eval context is passed we fall back to the compile
         # time autoescape flag.
         if args and isinstance(args[0], EvalContext):
@@ -586,7 +586,7 @@ class Macro(object):
 @implements_to_string
 class Undefined(object):
     """The default undefined type.  This undefined type can be printed and
-    iterated over, but every other access will raise an :exc:`jinja2.exceptions.UndefinedError`:
+    iterated over, but every other access will raise an :exc:`UndefinedError`:
 
     >>> foo = Undefined(name='foo')
     >>> str(foo)
@@ -610,7 +610,7 @@ class Undefined(object):
     @internalcode
     def _fail_with_undefined_error(self, *args, **kwargs):
         """Regular callback function for undefined objects that raises an
-        `jinja2.exceptions.UndefinedError` on call.
+        `UndefinedError` on call.
         """
         if self._undefined_hint is None:
             if self._undefined_obj is missing:
@@ -750,6 +750,32 @@ def make_logging_undefined(logger=None, base=None):
     return LoggingUndefined
 
 
+# No @implements_to_string decorator here because __str__
+# is not overwritten from Undefined in this class.
+# This would cause a recursion error in Python 2.
+class ChainableUndefined(Undefined):
+    """An undefined that is chainable, where both
+    __getattr__ and __getitem__ return itself rather than
+    raising an :exc:`UndefinedError`:
+
+    >>> foo = ChainableUndefined(name='foo')
+    >>> str(foo.bar['baz'])
+    ''
+    >>> foo.bar['baz'] + 42
+    Traceback (most recent call last):
+      ...
+    jinja2.exceptions.UndefinedError: 'foo' is undefined
+
+    .. versionadded:: 2.11
+    """
+    __slots__ = ()
+
+    def __getattr__(self, _):
+        return self
+
+    __getitem__ = __getattr__
+
+
 @implements_to_string
 class DebugUndefined(Undefined):
     """An undefined that returns the debug info when printed.
@@ -805,4 +831,5 @@ class StrictUndefined(Undefined):
 
 # remove remaining slots attributes, after the metaclass did the magic they
 # are unneeded and irritating as they contain wrong data for the subclasses.
-del Undefined.__slots__, DebugUndefined.__slots__, StrictUndefined.__slots__
+del Undefined.__slots__, ChainableUndefined.__slots__, \
+    DebugUndefined.__slots__, StrictUndefined.__slots__

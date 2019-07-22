@@ -503,6 +503,14 @@ class TestLstripBlocks(object):
         tmpl = env.from_string('''    {%+ if True %}\n    {%+ endif %}''')
         assert tmpl.render() == "    \n    "
 
+    def test_lstrip_blocks_false_with_no_lstrip(self, env):
+        # Test that + is a NOP (but does not cause an error) if lstrip_blocks=False
+        env = Environment(lstrip_blocks=False, trim_blocks=False)
+        tmpl = env.from_string('''    {% if True %}\n    {% endif %}''')
+        assert tmpl.render() == "    \n    "
+        tmpl = env.from_string('''    {%+ if True %}\n    {%+ endif %}''')
+        assert tmpl.render() == "    \n    "
+
     def test_lstrip_endline(self, env):
         env = Environment(lstrip_blocks=True, trim_blocks=False)
         tmpl = env.from_string(

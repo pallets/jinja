@@ -2,6 +2,7 @@ API
 ===
 
 .. module:: jinja2
+    :noindex:
     :synopsis: public Jinja2 API
 
 This document describes the API to Jinja2 and not the template language.  It
@@ -46,7 +47,7 @@ To load a template from this environment you just have to call the
 
 To render it with some variables, just call the :meth:`render` method::
 
-    print template.render(the='variables', go='here')
+    print(template.render(the='variables', go='here'))
 
 Using a template loader rather than passing strings to :class:`Template`
 or :meth:`Environment.from_string` has multiple advantages.  Besides being
@@ -322,7 +323,7 @@ unable to look up a name or access an attribute one of those objects is
 created and returned.  Some operations on undefined values are then allowed,
 others fail.
 
-The closest to regular Python behavior is the `StrictUndefined` which
+The closest to regular Python behavior is the :class:`StrictUndefined` which
 disallows all operations beside testing if it's an undefined object.
 
 .. autoclass:: jinja2.Undefined()
@@ -352,6 +353,8 @@ disallows all operations beside testing if it's an undefined object.
         When called with any arguments this method raises
         :attr:`_undefined_exception` with an error message generated
         from the undefined hints stored on the undefined object.
+
+.. autoclass:: jinja2.ChainableUndefined()
 
 .. autoclass:: jinja2.DebugUndefined()
 
@@ -834,7 +837,7 @@ Here a simple test that checks if a variable is a prime number::
     def is_prime(n):
         if n == 2:
             return True
-        for i in xrange(2, int(math.ceil(math.sqrt(n))) + 1):
+        for i in range(2, int(math.ceil(math.sqrt(n))) + 1):
             if n % i == 0:
                 return False
         return True

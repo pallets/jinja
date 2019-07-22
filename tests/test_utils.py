@@ -32,6 +32,27 @@ class TestLRUCache(object):
         assert len(d) == 3
         assert 'a' in d and 'c' in d and 'd' in d and 'b' not in d
 
+    def test_itervalue_deprecated(self):
+        cache = LRUCache(3)
+        cache["a"] = 1
+        cache["b"] = 2
+        with pytest.deprecated_call():
+            cache.itervalue()
+
+    def test_itervalues(self):
+        cache = LRUCache(3)
+        cache["b"] = 1
+        cache["a"] = 2
+        values = [v for v in cache.itervalues()]
+        assert len(values) == 2
+        assert 1 in values
+        assert 2 in values
+
+    def test_itervalues_empty(self):
+        cache = LRUCache(2)
+        values = [v for v in cache.itervalues()]
+        assert len(values) == 0
+
     def test_pickleable(self):
         cache = LRUCache(2)
         cache["foo"] = 42

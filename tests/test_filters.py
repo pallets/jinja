@@ -23,6 +23,16 @@ class Magic(object):
         return text_type(self.value)
 
 
+@implements_to_string
+class Magic2(object):
+    def __init__(self, value1, value2):
+        self.value1 = value1
+        self.value2 = value2
+
+    def __str__(self):
+        return u'(%s,%s)' % (text_type(self.value1), text_type(self.value2))
+
+
 @pytest.mark.filter
 class TestFilter(object):
 
@@ -417,6 +427,29 @@ class TestFilter(object):
         tmpl = env.from_string('''{{ items|sort(attribute='value')|join }}''')
         assert tmpl.render(items=map(Magic, [3, 2, 4, 1])) == '1234'
 
+    def test_sort5(self, env):
+        tmpl = env.from_string('''{{ items|sort(attribute='value.0')|join }}''')
+        assert tmpl.render(items=map(Magic, [[3], [2], [4], [1]])) == '[1][2][3][4]'
+
+    def test_sort6(self, env):
+        tmpl = env.from_string('''{{ items|sort(attribute='value1,value2')|join }}''')
+        assert (tmpl.render(items=map(
+            lambda x: Magic2(x[0], x[1]), [(3, 1), (2, 2), (2, 1), (2, 5)]))
+            == '(2,1)(2,2)(2,5)(3,1)')
+
+    def test_sort7(self, env):
+        tmpl = env.from_string('''{{ items|sort(attribute='value2,value1')|join }}''')
+        assert (tmpl.render(items=map(lambda x: Magic2(x[0], x[1]), [(3, 1), (2, 2), (2, 1), (2, 5)])) ==
+                '(2,1)(3,1)(2,2)(2,5)')
+
+    def test_sort8(self, env):
+        tmpl = env.from_string(
+            '''{{ items|sort(attribute='value1.0,value2.0')|join }}''')
+        assert (tmpl.render(items=map(
+            lambda x: Magic2(x[0], x[1]),
+            [([3], [1]), ([2], [2]), ([2], [1]), ([2], [5])]))
+            == '([2],[1])([2],[2])([2],[5])([3],[1])')
+
     def test_unique(self, env):
         t = env.from_string('{{ "".join(["b", "A", "a", "b"]|unique) }}')
         assert t.render() == "bA"
@@ -561,26 +594,32 @@ class TestFilter(object):
         tmpl = env.from_string('{{ users|map(attribute="name")|join("|") }}')
         assert tmpl.render(users=users) == 'john|jane|mike'
 
-    def test_attribute_map_default(self, env):
-        class User(object):
-            def __init__(self, name):
-                self.name = name
-        class NotUser(object):
-            def __init__(self, not_name):
-                self.not_name = not_name
-        env = Environment()
-        users = [
-            User('john'),
-            User('jane'),
-            NotUser('plant'),
-        ]
-        tmpl = env.from_string('{{ users|map(attribute="name", default="anonymous")|join("|") }}')
-        assert tmpl.render(users=users) == 'john|jane|anonymous'
-
     def test_empty_map(self, env):
         env = Environment()
         tmpl = env.from_string('{{ none|map("upper")|list }}')
         assert tmpl.render() == '[]'
+
+    def test_map_default(self, env):
+        class Fullname(object):
+            def __init__(self, firstname, lastname):
+                self.firstname = firstname
+                self.lastname = lastname
+
+        class Firstname(object):
+            def __init__(self, firstname):
+                self.firstname = firstname
+
+        env = Environment()
+        tmpl = env.from_string(
+            '{{ users|map(attribute="lastname", default="smith")|join(", ") }}'
+        )
+        users = [
+            Fullname("john", "lennon"),
+            Fullname("jane", "edwards"),
+            Fullname("jon", None),
+            Firstname("mike")
+        ]
+        assert tmpl.render(users=users) == "lennon, edwards, None, smith"
 
     def test_simple_select(self, env):
         env = Environment()

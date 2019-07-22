@@ -13,11 +13,25 @@ unreleased
   :class:`~environment.Environment` enables it, in order to avoid a
   slow initial import. (`#765`_)
 - Python 2.6 and 3.3 are not supported anymore.
-- The `map` filter in async mode now automatically awaits
-- Added `default` parameter for the `map` filter. (`#985`_)
+- The ``map`` filter in async mode now automatically awaits
+- Added a new ``ChainableUndefined`` class to support getitem
+  and getattr on an undefined object. (`#977`_)
+- Allow ``{%+`` syntax (with NOP behavior) when
+  ``lstrip_blocks == False`` (`#748`_)
+- Added a ``default`` parameter for the ``map`` filter. (`#557`_)
 
+.. _#557: https://github.com/pallets/jinja/issues/557
 .. _#765: https://github.com/pallets/jinja/issues/765
-.. _#985: https://github.com/pallets/jinja/pull/985
+.. _#748: https://github.com/pallets/jinja/issues/748
+.. _#977: https://github.com/pallets/jinja/issues/977
+
+
+Version 2.10.2
+--------------
+
+_Unreleased_
+
+-  Fix Python 3.7 deprecation warnings.
 
 
 Version 2.10.1

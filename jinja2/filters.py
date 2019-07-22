@@ -65,12 +65,7 @@ def make_attrgetter(environment, attribute, postprocess=None, default=None):
     to access attributes of attributes.  Integer parts in paths are
     looked up as integers.
     """
-    if attribute is None:
-        attribute = []
-    elif isinstance(attribute, string_types):
-        attribute = [int(x) if x.isdigit() else x for x in attribute.split('.')]
-    else:
-        attribute = [attribute]
+    attribute = _prepare_attribute_parts(attribute)
 
     def attrgetter(item):
         for part in attribute:
@@ -78,7 +73,6 @@ def make_attrgetter(environment, attribute, postprocess=None, default=None):
 
             if default and isinstance(item, Undefined):
                 item = default
-                break
 
         if postprocess is not None:
             item = postprocess(item)
@@ -86,6 +80,45 @@ def make_attrgetter(environment, attribute, postprocess=None, default=None):
         return item
 
     return attrgetter
+
+
+def make_multi_attrgetter(environment, attribute, postprocess=None):
+    """Returns a callable that looks up the given comma separated
+    attributes from a passed object with the rules of the environment.
+    Dots are allowed to access attributes of each attribute.  Integer
+    parts in paths are looked up as integers.
+
+    The value returned by the returned callable is a list of extracted
+    attribute values.
+
+    Examples of attribute: "attr1,attr2", "attr1.inner1.0,attr2.inner2.0", etc.
+    """
+    attribute_parts = attribute.split(',') if isinstance(attribute, string_types) else [attribute]
+    attribute = [_prepare_attribute_parts(attribute_part) for attribute_part in attribute_parts]
+
+    def attrgetter(item):
+        items = [None] * len(attribute)
+        for i, attribute_part in enumerate(attribute):
+            item_i = item
+            for part in attribute_part:
+                item_i = environment.getitem(item_i, part)
+
+            if postprocess is not None:
+                item_i = postprocess(item_i)
+
+            items[i] = item_i
+        return items
+
+    return attrgetter
+
+
+def _prepare_attribute_parts(attr):
+    if attr is None:
+        return []
+    elif isinstance(attr, string_types):
+        return [int(x) if x.isdigit() else x for x in attr.split('.')]
+    else:
+        return [attr]
 
 
 def do_forceescape(value):
@@ -274,8 +307,10 @@ def do_sort(
 
     .. versionchanged:: 2.6
        The `attribute` parameter was added.
+       The attribute parameter can contain multiple comma separated
+       attributes, e.g. attr1,attr2.
     """
-    key_func = make_attrgetter(
+    key_func = make_multi_attrgetter(
         environment, attribute,
         postprocess=ignore_case if not case_sensitive else None
     )
@@ -284,11 +319,11 @@ def do_sort(
 
 @environmentfilter
 def do_unique(environment, value, case_sensitive=False, attribute=None):
-    """Returns a list of unique items from the the given iterable.
+    """Returns a list of unique items from the given iterable.
 
     .. sourcecode:: jinja
 
-        {{ ['foo', 'bar', 'foobar', 'FooBar']|unique }}
+        {{ ['foo', 'bar', 'foobar', 'FooBar']|unique|list }}
             -> ['foo', 'bar', 'foobar']
 
     The unique items are yielded in the same order as their first occurrence in
@@ -320,8 +355,9 @@ def _min_or_max(environment, value, func, case_sensitive, attribute):
         return environment.undefined('No aggregated item, sequence was empty.')
 
     key_func = make_attrgetter(
-        environment, attribute,
-        ignore_case if not case_sensitive else None
+        environment,
+        attribute,
+        postprocess=ignore_case if not case_sensitive else None
     )
     return func(chain([first], it), key=key_func)
 
@@ -372,6 +408,12 @@ def do_default(value, default_value=u'', boolean=False):
     .. sourcecode:: jinja
 
         {{ ''|default('the string was empty', true) }}
+
+    .. versionchanged:: 2.11
+       It's now possible to configure the :class:`~jinja2.Environment` with
+       :class:`~jinja2.ChainableUndefined` to make the `default` filter work
+       on nested elements and attributes that may contain undefined values
+       in the chain without getting an :exc:`~jinja2.UndefinedError`.
     """
     if isinstance(value, Undefined) or (boolean and not value):
         return default_value
@@ -723,7 +765,7 @@ def do_slice(value, slices, fill_with=None):
 
     .. sourcecode:: html+jinja
 
-        <div class="columwrapper">
+        <div class="columnwrapper">
           {%- for column in items|slice(3) %}
             <ul class="column-{{ loop.index }}">
             {%- for item in column %}
@@ -965,12 +1007,12 @@ def do_map(*args, **kwargs):
 
         Users on this page: {{ users|map(attribute='username')|join(', ') }}
 
-    If the list of objects may not contain the given attribute, a default
-    value may be provided.
+    You can specify a ``default`` value to use if an object in the list
+    does not have the given attribute.
 
     .. sourcecode:: jinja
 
-        {{ users|map(attribute='username', default='Anonymous')|join(', ') }}
+        {{ users|map(attribute="username", default="Anonymous")|join(", ") }}
 
     Alternatively you can let it invoke a filter by passing the name of the
     filter and the arguments afterwards.  A good example would be applying a
@@ -979,6 +1021,9 @@ def do_map(*args, **kwargs):
     .. sourcecode:: jinja
 
         Users on this page: {{ titles|map('lower')|join(', ') }}
+
+    .. versionchanged:: 2.11.0
+        Added the ``default`` parameter.
 
     .. versionadded:: 2.7
     """
@@ -1106,6 +1151,7 @@ def do_tojson(eval_ctx, value, indent=None):
 def prepare_map(args, kwargs):
     context = args[0]
     seq = args[1]
+    default = None
 
     if len(args) == 2 and 'attribute' in kwargs:
         attribute = kwargs.pop('attribute')

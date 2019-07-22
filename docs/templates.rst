@@ -395,7 +395,9 @@ this template "extends" another template.  When the template system evaluates
 this template, it first locates the parent.  The extends tag should be the
 first tag in the template.  Everything before it is printed out normally and
 may cause confusion.  For details about this behavior and how to take
-advantage of it, see :ref:`null-master-fallback`.
+advantage of it, see :ref:`null-master-fallback`. Also a block will always be
+filled in regardless of whether the surrounding condition is evaluated to be true 
+or false.
 
 The filename of the template depends on the template loader.  For example, the
 :class:`FileSystemLoader` allows you to access other templates by giving the
@@ -425,7 +427,7 @@ If you want to print a block multiple times, you can, however, use the special
 Super Blocks
 ~~~~~~~~~~~~
 
-It's possible to render the contents of the parent block by calling `super`.
+It's possible to render the contents of the parent block by calling ``super()``.
 This gives back the results of the parent block::
 
     {% block sidebar %}
@@ -433,6 +435,41 @@ This gives back the results of the parent block::
         ...
         {{ super() }}
     {% endblock %}
+
+
+Nesting extends
+~~~~~~~~~~~~~~~
+
+In the case of multiple levels of ``{% extends %}``,
+``super`` references may be chained (as in ``super.super()``)
+to skip levels in the inheritance tree.
+
+For example::
+
+    # parent.tmpl
+    body: {% block body %}Hi from parent.{% endblock %}
+
+    # child.tmpl
+    {% extends "parent.tmpl" %}
+    {% block body %}Hi from child. {{ super() }}{% endblock %}
+
+    # grandchild1.tmpl
+    {% extends "child.tmpl" %}
+    {% block body %}Hi from grandchild1.{% endblock %}
+
+    # grandchild2.tmpl
+    {% extends "child.tmpl" %}
+    {% block body %}Hi from grandchild2. {{ super.super() }} {% endblock %}
+
+
+Rendering ``child.tmpl`` will give
+``body: Hi from child. Hi from parent.``
+
+Rendering ``grandchild1.tmpl`` will give
+``body: Hi from grandchild1.``
+
+Rendering ``grandchild2.tmpl`` will give
+``body: Hi from grandchild2. Hi from parent.``
 
 
 Named Block End-Tags
@@ -577,7 +614,7 @@ As variables in templates retain their object properties, it is possible to
 iterate over containers like `dict`::
 
     <dl>
-    {% for key, value in my_dict.iteritems() %}
+    {% for key, value in my_dict.items() %}
         <dt>{{ key|e }}</dt>
         <dd>{{ value|e }}</dd>
     {% endfor %}
@@ -1201,7 +1238,6 @@ but exists for completeness' sake.  The following operators are supported:
 /
     Divide two numbers.  The return value will be a floating point number.
     ``{{ 1 / 2 }}`` is ``{{ 0.5 }}``.
-    (Just like ``from __future__ import division``.)
 
 //
     Divide two numbers and return the truncated integer result.
@@ -1314,11 +1350,31 @@ The general syntax is ``<do something> if <something is true> else <do
 something else>``.
 
 The `else` part is optional.  If not provided, the else block implicitly
-evaluates into an undefined object:
+evaluates into an undefined object::
+
+    {{ ('[%s]' % page.title) if page.title }}
+
+
+.. _python-methods:
+
+Python Methods
+~~~~~~~~~~~~~~
+
+You can also use any of the methods of defined on a variable's type.
+The value returned from the method invocation is used as the value of the expression.
+Here is an example that uses methods defined on strings (where ``page.title`` is a string):
 
 .. code-block:: text
 
-    {{ ('[%s]' % page.title) if page.title }}
+    {{ page.title.capitalize() }}
+
+This also works for methods on user-defined types.
+For example, if variable ``f`` of type ``Foo`` has a method ``bar`` defined on it,
+you can do the following:
+
+.. code-block:: text
+
+    {{ f.bar() }}
 
 
 .. _builtin-filters:

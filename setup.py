@@ -42,7 +42,7 @@ setup(
     name='Jinja2',
     version='2.11.dev',
     url='http://jinja.pocoo.org/',
-    license='BSD',
+    license='BSD-3-Clause',
     author='Armin Ronacher',
     author_email='armin.ronacher@active-4.com',
     description='A small but fast and easy to use stand-alone template '
