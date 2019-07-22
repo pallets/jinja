@@ -599,6 +599,28 @@ class TestFilter(object):
         tmpl = env.from_string('{{ none|map("upper")|list }}')
         assert tmpl.render() == '[]'
 
+    def test_map_default(self, env):
+        class Fullname(object):
+            def __init__(self, firstname, lastname):
+                self.firstname = firstname
+                self.lastname = lastname
+
+        class Firstname(object):
+            def __init__(self, firstname):
+                self.firstname = firstname
+
+        env = Environment()
+        tmpl = env.from_string(
+            '{{ users|map(attribute="lastname", default="smith")|join(", ") }}'
+        )
+        users = [
+            Fullname("john", "lennon"),
+            Fullname("jane", "edwards"),
+            Fullname("jon", None),
+            Firstname("mike")
+        ]
+        assert tmpl.render(users=users) == "lennon, edwards, None, smith"
+
     def test_simple_select(self, env):
         env = Environment()
         tmpl = env.from_string('{{ [1, 2, 3, 4, 5]|select("odd")|join("|") }}')

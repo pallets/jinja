@@ -59,7 +59,7 @@ def ignore_case(value):
     return value.lower() if isinstance(value, string_types) else value
 
 
-def make_attrgetter(environment, attribute, postprocess=None):
+def make_attrgetter(environment, attribute, default=None, postprocess=None):
     """Returns a callable that looks up the given attribute from a
     passed object with the rules of the environment.  Dots are allowed
     to access attributes of attributes.  Integer parts in paths are
@@ -70,6 +70,9 @@ def make_attrgetter(environment, attribute, postprocess=None):
     def attrgetter(item):
         for part in attribute:
             item = environment.getitem(item, part)
+
+            if isinstance(item, Undefined) and default:
+                item = default
 
         if postprocess is not None:
             item = postprocess(item)
@@ -352,8 +355,9 @@ def _min_or_max(environment, value, func, case_sensitive, attribute):
         return environment.undefined('No aggregated item, sequence was empty.')
 
     key_func = make_attrgetter(
-        environment, attribute,
-        ignore_case if not case_sensitive else None
+        environment,
+        attribute,
+        postprocess=ignore_case if not case_sensitive else None
     )
     return func(chain([first], it), key=key_func)
 
@@ -1003,6 +1007,13 @@ def do_map(*args, **kwargs):
 
         Users on this page: {{ users|map(attribute='username')|join(', ') }}
 
+    You can specify a ``default`` value to use if an object in the list
+    does not have the given attribute.
+
+    .. sourcecode:: jinja
+
+        Users on this page: {{ users|map(attribute="username", default="Anonymous")|join(", ") }}
+
     Alternatively you can let it invoke a filter by passing the name of the
     filter and the arguments afterwards.  A good example would be applying a
     text conversion filter on a sequence:
@@ -1010,6 +1021,9 @@ def do_map(*args, **kwargs):
     .. sourcecode:: jinja
 
         Users on this page: {{ titles|map('lower')|join(', ') }}
+
+    .. versionchanged:: 2.11.0
+        Added the ``default`` parameter.
 
     .. versionadded:: 2.7
     """
@@ -1137,13 +1151,16 @@ def do_tojson(eval_ctx, value, indent=None):
 def prepare_map(args, kwargs):
     context = args[0]
     seq = args[1]
+    default = None
 
     if len(args) == 2 and 'attribute' in kwargs:
         attribute = kwargs.pop('attribute')
+        if 'default' in kwargs:
+            default = kwargs.pop('default')
         if kwargs:
             raise FilterArgumentError('Unexpected keyword argument %r' %
                 next(iter(kwargs)))
-        func = make_attrgetter(context.environment, attribute)
+        func = make_attrgetter(context.environment, attribute, default=default)
     else:
         try:
             name = args[2]
