@@ -1177,13 +1177,16 @@ for Python objects such as strings and numbers.  The following literals exist:
     arguments to function calls and filters, or just to extend or include a
     template).
 
-42:
-    Integers are whole numbers without a decimal part.
+42 / 123_456:
+    Integers are whole numbers without a decimal part. The '_' character
+    can be used to separate groups for legibility.
 
-42.23 / 42.1e2:
+42.23 / 42.1e2 / 123_456.789:
     Floating point numbers can be written using a '.' as a decimal mark.
     They can also be written in scientific notation with an upper or
-    lower case 'e' to indicate the exponent part.
+    lower case 'e' to indicate the exponent part. The '_' character can
+    be used to separate groups for legibility, but cannot be used in the
+    exponent part.
 
 ['list', 'of', 'objects']:
     Everything between two brackets is a list.  Lists are useful for storing

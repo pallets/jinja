@@ -133,14 +133,16 @@ class TestFilter(object):
         out = tmpl.render(foo=list(range(10)))
         assert out == '0'
 
-    def test_float(self, env):
-        tmpl = env.from_string('{{ "42"|float }}|'
-                               '{{ "ajsghasjgd"|float }}|'
-                               '{{ "10e1"|float }}|'
-                               '{{ "10.5e-10"|float }}|'
-                               '{{ "32.32"|float }}')
-        out = tmpl.render()
-        assert out == '42.0|0.0|100.0|1.05e-09|32.32'
+    @pytest.mark.parametrize(
+        ("value", "expect"), (("42", "42.0"), ("abc", "0.0"), ("32.32", "32.32"),)
+    )
+    def test_float(self, env, value, expect):
+        t = env.from_string("{{ '%s'|float }}" % value)
+        assert t.render() == expect
+
+    def test_float_default(self, env):
+        t = env.from_string("{{ value|float(default=1.0) }}")
+        assert t.render(value="abc") == "1.0"
 
     def test_format(self, env):
         tmpl = env.from_string('''{{ "%s|%s"|format("a", "b") }}''')
@@ -180,17 +182,42 @@ class TestFilter(object):
         with pytest.warns(DeprecationWarning):
             env.from_string('{{ "jinja"|indent(indentfirst=true) }}').render()
 
-    def test_int(self, env):
+    @pytest.mark.parametrize(
+        ("value", "expect"),
+        (
+            ("42", "42"),
+            ("abc", "0"),
+            ("32.32", "32"),
+            ("12345678901234567890", "12345678901234567890"),
+        )
+    )
+    def test_int(self, env, value, expect):
+        t = env.from_string("{{ '%s'|int }}" % value)
+        assert t.render() == expect
+
+    @pytest.mark.parametrize(
+        ("value", "base", "expect"),
+        (
+            ("0x4d32", 16, "19762"),
+            ("011", 8, "9"),
+            ("0x33Z", 16, "0"),
+        )
+    )
+    def test_int_base(self, env, value, base, expect):
+        t = env.from_string("{{ '%s'|int(base=%d) }}" % (value, base))
+        assert t.render() == expect
+
+    def test_int_default(self, env):
+        t = env.from_string("{{ value|int(default=1) }}")
+        assert t.render(value="abc") == "1"
+
+    def test_int_special_method(self, env):
         class IntIsh(object):
             def __int__(self):
                 return 42
 
-        tmpl = env.from_string('{{ "42"|int }}|{{ "ajsghasjgd"|int }}|'
-                               '{{ "32.32"|int }}|{{ "0x4d32"|int(0, 16) }}|'
-                               '{{ "011"|int(0, 8)}}|{{ "0x33FU"|int(0, 16) }}|'
-                               '{{ obj|int }}')
-        out = tmpl.render(obj=IntIsh())
-        assert out == '42|0|32|19762|9|0|42'
+        t = env.from_string("{{ value|int }}")
+        assert t.render(value=IntIsh()) == "42"
 
     def test_join(self, env):
         tmpl = env.from_string('{{ [1, 2, 3]|join("|") }}')
