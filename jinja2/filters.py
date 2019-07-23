@@ -280,46 +280,47 @@ def do_dictsort(value, case_sensitive=False, by='key', reverse=False):
 
 
 @environmentfilter
-def do_sort(
-    environment, value, reverse=False, case_sensitive=False, attribute=None
-):
-    """Sort an iterable.  Per default it sorts ascending, if you pass it
-    true as first argument it will reverse the sorting. The sort is stable,
-    i.e. it guarantees not to change the relative order of elements that
-    compare equal.
-
-    If the iterable is made of strings the third parameter can be used to
-    control the case sensitiveness of the comparison which is disabled by
-    default.
+def do_sort(environment, value, reverse=False, case_sensitive=False, attribute=None):
+    """Sort an iterable using Python's :func:`sorted`.
 
     .. sourcecode:: jinja
 
-        {% for item in iterable|sort %}
+        {% for city in cities|sort %}
             ...
         {% endfor %}
 
-    It is also possible to sort by an attribute (for example to sort
-    by the date of an object) by specifying the `attribute` parameter:
+    :param reverse: Sort descending instead of ascending.
+    :param case_sensitive: When sorting strings, sort upper and lower
+        case separately.
+    :param attribute: When sorting objects or dicts, an attribute or
+        key to sort by. Can use dot notation like ``"address.city"``.
+        Can be a list of attributes like ``"age,name"``.
+
+    The sort is stable, it does not change the relative order of
+    elements that compare equal. This makes it is possible to chain
+    sorts on different attributes and ordering.
 
     .. sourcecode:: jinja
 
-        {% for item in iterable|sort(attribute='date') %}
+        {% for user in users|sort(attribute="name")|sort(reverse=true, attribute="age") %}
             ...
         {% endfor %}
 
-    Because the sort is stable, it is possible to chain sorts on different
-    attributes and ordering:
+    As a shortcut to chaining when the direction is the same for all
+    attributes, pass a comma separate list of attributes.
 
     .. sourcecode:: jinja
 
-        {% for item in iterable|sort(attribute='name')|sort(true,attribute='date') %}
+        {% for user users|sort(attribute="age,name") %}
             ...
         {% endfor %}
+
+    .. versionchanged:: 2.11.0
+        The ``attribute`` parameter can be a comma separated list of
+        attributes, e.g. ``"age,name"``.
 
     .. versionchanged:: 2.6
-       The `attribute` parameter was added.
-       The attribute parameter can contain multiple comma separated
-       attributes, e.g. 'attr1,attr2', all subject to the same ordering.
+       The ``attribute`` parameter was added.
     """
     key_func = make_multi_attrgetter(
         environment, attribute,
