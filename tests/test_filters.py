@@ -136,9 +136,11 @@ class TestFilter(object):
     def test_float(self, env):
         tmpl = env.from_string('{{ "42"|float }}|'
                                '{{ "ajsghasjgd"|float }}|'
+                               '{{ "10e1"|float }}|'
+                               '{{ "10.5e-10"|float }}|'
                                '{{ "32.32"|float }}')
         out = tmpl.render()
-        assert out == '42.0|0.0|32.32'
+        assert out == '42.0|0.0|100.0|1.05e-09|32.32'
 
     def test_format(self, env):
         tmpl = env.from_string('''{{ "%s|%s"|format("a", "b") }}''')

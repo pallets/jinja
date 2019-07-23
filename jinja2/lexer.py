@@ -15,6 +15,7 @@
     :license: BSD, see LICENSE for more details.
 """
 import re
+from ast import literal_eval
 from collections import deque
 from operator import itemgetter
 
@@ -52,7 +53,7 @@ else:
     del jinja2._identifier
     del _identifier
 
-float_re = re.compile(r'(?<!\.)\d+\.\d+')
+float_re = re.compile(r'(?<!\.)\d+(?:\.\d+)?(?:e[+\-]?\d+)?', re.IGNORECASE)
 newline_re = re.compile(r'(\r\n|\r|\n)')
 
 # internal the tokens and keep references to them
@@ -601,7 +602,7 @@ class Lexer(object):
             elif token == 'integer':
                 value = int(value)
             elif token == 'float':
-                value = float(value)
+                value = literal_eval(value)
             elif token == 'operator':
                 token = operators[value]
             yield Token(lineno, token, value)
