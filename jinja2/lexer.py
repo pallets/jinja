@@ -31,9 +31,23 @@ _lexer_cache = LRUCache(50)
 
 # static regular expressions
 whitespace_re = re.compile(r'\s+', re.U)
+newline_re = re.compile(r'(\r\n|\r|\n)')
 string_re = re.compile(r"('([^'\\]*(?:\\.[^'\\]*)*)'"
                        r'|"([^"\\]*(?:\\.[^"\\]*)*)")', re.S)
-integer_re = re.compile(r'(\d+_)*(\d+)')
+integer_re = re.compile(r'(\d+_)*\d+')
+float_re = re.compile(
+    r"""
+    (?<!\.)  # doesn't start with a .
+    (\d+_)*\d+  # digits, possibly _ separated
+    (
+        (\.(\d+_)*\d+)?  # optional fractional part
+        e[+\-]?(\d+_)*\d+  # exponent part
+    |
+        \.(\d+_)*\d+  # required fractional part
+    )
+    """,
+    re.IGNORECASE | re.VERBOSE,
+)
 
 try:
     # check if this Python supports Unicode identifiers
@@ -54,9 +68,6 @@ else:
     import jinja2
     del jinja2._identifier
     del _identifier
-
-float_re = re.compile(r'(?<!\.)((((\d+_)*)\d+)(((\.\d+)?e-?\d+)|(\.((\d+_)*\d+))+))', re.IGNORECASE)
-newline_re = re.compile(r'(\r\n|\r|\n)')
 
 # internal the tokens and keep references to them
 TOKEN_ADD = intern('add')

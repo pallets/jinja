@@ -341,29 +341,24 @@ class TestSyntax(object):
         t = env.from_string("{{ %s }}" % value)
         assert t.render() == value
 
-    @pytest.mark.parametrize("value", ("1", "123"))
-    def test_int_literal(self, env, value):
-        t = env.from_string("{{ %s }}" % value)
-        assert t.render() == value
-
     @pytest.mark.parametrize(
-        "value",
+        ("value", "expect"),
         (
-            "1.2",
-            "34.56",
+            ("1", "1"),
+            ("123", "123"),
+            ("12_34_56", "123456"),
+            ("1.2", "1.2"),
+            ("34.56", "34.56"),
+            ("3_4.5_6", "34.56"),
             ("1e0", "1.0"),
             ("10e1", "100.0"),
             ("2.5e100", "2.5e+100"),
-            "2.5e+100",
+            ("2.5e+100", "2.5e+100"),
             ("25.6e-10", "2.56e-09"),
-        ),
+            ("1_2.3_4e5_6", "1.234e+57"),
+        )
     )
-    def test_float_literal(self, env, value):
-        if isinstance(value, tuple):
-            value, expect = value
-        else:
-            expect = value
-
+    def test_numeric_literal(self, env, value, expect):
         t = env.from_string("{{ %s }}" % value)
         assert t.render() == expect
 
