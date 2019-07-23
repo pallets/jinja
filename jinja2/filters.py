@@ -868,44 +868,41 @@ _GroupTuple = namedtuple('_GroupTuple', ['grouper', 'list'])
 _GroupTuple.__repr__ = tuple.__repr__
 _GroupTuple.__str__ = tuple.__str__
 
+
 @environmentfilter
 def do_groupby(environment, value, attribute):
-    """Group a sequence of objects by a common attribute.
+    """Group a sequence of objects by an attribute using Python's
+    :func:`itertools.groupby`. The attribute can use dot notation for
+    nested access, like ``"address.city"``. Unlike Python's ``groupby``,
+    the values are sorted first so only one group is returned for each
+    unique value.
 
-    If you for example have a list of dicts or objects that represent persons
-    with `gender`, `first_name` and `last_name` attributes and you want to
-    group all users by genders you can do something like the following
-    snippet:
-
-    .. sourcecode:: html+jinja
-
-        <ul>
-        {% for group in persons|groupby('gender') %}
-            <li>{{ group.grouper }}<ul>
-            {% for person in group.list %}
-                <li>{{ person.first_name }} {{ person.last_name }}</li>
-            {% endfor %}</ul></li>
-        {% endfor %}
-        </ul>
-
-    Additionally it's possible to use tuple unpacking for the grouper
-    (`gender` in this example) and `list`:
+    For example, a list of ``User`` objects with a ``city`` attribute
+    can be rendered in groups. In this example, ``grouper`` refers to
+    the ``city`` value of the group.
 
     .. sourcecode:: html+jinja
 
-        <ul>
-        {% for gender, list in persons|groupby('gender') %}
-            ...
-        {% endfor %}
-        </ul>
+        <ul>{% for city, items in users|groupby("city") %}
+          <li>{{ city }}
+            <ul>{% for user in items %}
+              <li>{{ user.name }}
+            {% endfor %}</ul>
+          </li>
+        {% endfor %}</ul>
 
-    As you can see the item we're grouping by is stored in the ``gender``
-    attribute and the `list` contains all the objects that have this grouper
-    in common.
+    ``groupby`` yields namedtuples of ``(grouper, list)``, which
+    can be used instead of the tuple unpacking above. ``grouper`` is the
+    value of the attribute, and ``list`` is the items with that value.
+
+    .. sourcecode:: html+jinja
+
+        <ul>{% for group in users|groupby("city") %}
+          <li>{{ group.grouper }}: {{ group.list|join(", ") }}
+        {% endfor %}</ul>
 
     .. versionchanged:: 2.6
-       It's now possible to use dotted notation to group by the child
-       attribute of another attribute.
+        The attribute supports dot notation for nested access.
     """
     expr = make_attrgetter(environment, attribute)
     return [_GroupTuple(key, list(values)) for key, values
