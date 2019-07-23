@@ -336,9 +336,36 @@ class TestSyntax(object):
         tmpl = env.from_string('{{ 1 in [1, 2, 3] }}|{{ 1 not in [1, 2, 3] }}')
         assert tmpl.render() == 'True|False'
 
-    def test_literals(self, env):
-        tmpl = env.from_string('{{ [] }}|{{ {} }}|{{ () }}')
-        assert tmpl.render().lower() == '[]|{}|()'
+    @pytest.mark.parametrize("value", ("[]", "{}", "()"))
+    def test_collection_literal(self, env, value):
+        t = env.from_string("{{ %s }}" % value)
+        assert t.render() == value
+
+    @pytest.mark.parametrize("value", ("1", "123"))
+    def test_int_literal(self, env, value):
+        t = env.from_string("{{ %s }}" % value)
+        assert t.render() == value
+
+    @pytest.mark.parametrize(
+        "value",
+        (
+            "1.2",
+            "34.56",
+            ("1e0", "1.0"),
+            ("10e1", "100.0"),
+            ("2.5e100", "2.5e+100"),
+            "2.5e+100",
+            ("25.6e-10", "2.56e-09"),
+        ),
+    )
+    def test_float_literal(self, env, value):
+        if isinstance(value, tuple):
+            value, expect = value
+        else:
+            expect = value
+
+        t = env.from_string("{{ %s }}" % value)
+        assert t.render() == expect
 
     def test_bool(self, env):
         tmpl = env.from_string('{{ true and false }}|{{ false '

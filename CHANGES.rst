@@ -21,6 +21,8 @@ unreleased
 - Added a ``default`` parameter for the ``map`` filter. (`#557`_)
 -   Exclude environment globals from
     :func:`meta.find_undeclared_variables`. #931
+-   Float literals can be written with scientific notation, like
+    ``{{ 2.56e-3 }}``. #912, #922
 
 .. _#557: https://github.com/pallets/jinja/issues/557
 .. _#765: https://github.com/pallets/jinja/issues/765

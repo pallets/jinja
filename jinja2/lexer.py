@@ -15,14 +15,13 @@
     :license: BSD, see LICENSE for more details.
 """
 import re
+from ast import literal_eval
 from collections import deque
 from operator import itemgetter
 
 from jinja2._compat import implements_iterator, intern, iteritems, text_type
 from jinja2.exceptions import TemplateSyntaxError
 from jinja2.utils import LRUCache
-
-from ast import literal_eval # to support scientific notation
 
 # cache for the lexers. Exists in order to be able to have multiple
 # environments with the same lexer
@@ -54,11 +53,7 @@ else:
     del jinja2._identifier
     del _identifier
 
-# Note: Float now supports 0 or 1 dots, and must thus be evaluated in the right 
-# order so that pure integers are caught first. Floats can now be written with 
-# scientific notation.
-float_re = re.compile(r'(?<!\.)\d+\.?\d+(?:e-?\d+)?', re.IGNORECASE)
-
+float_re = re.compile(r'(?<!\.)\d+(?:\.\d+)?(?:e[+\-]?\d+)?', re.IGNORECASE)
 newline_re = re.compile(r'(\r\n|\r|\n)')
 
 # internal the tokens and keep references to them

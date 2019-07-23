@@ -396,7 +396,7 @@ this template, it first locates the parent.  The extends tag should be the
 first tag in the template.  Everything before it is printed out normally and
 may cause confusion.  For details about this behavior and how to take
 advantage of it, see :ref:`null-master-fallback`. Also a block will always be
-filled in regardless of whether the surrounding condition is evaluated to be true 
+filled in regardless of whether the surrounding condition is evaluated to be true
 or false.
 
 The filename of the template depends on the template loader.  For example, the
@@ -1178,17 +1178,12 @@ for Python objects such as strings and numbers.  The following literals exist:
     template).
 
 42:
-    Integers numbers are created by just writing the number down. 
-    If a dot is present, the number will be considered a float, otherwise an
-    integer.  Keep in mind that, in Python, ``42`` and ``42.0``
-    are different (``int`` and ``float``, respectively).
+    Integers are whole numbers without a decimal part.
 
-42.23 / 42e2 / 42E2 / 1e0:
-    Floating point numbers are created by just writing the
-    number down. Floating points can be written using the dot as a decimal mark,
-    or they can be written in scientific notation in which
-    case you can use lower case 'e' or upper case 'E' to indicate the exponent
-    part. 
+42.23 / 42.1e2:
+    Floating point numbers can be written using a '.' as a decimal mark.
+    They can also be written in scientific notation with an upper or
+    lower case 'e' to indicate the exponent part.
 
 ['list', 'of', 'objects']:
     Everything between two brackets is a list.  Lists are useful for storing
