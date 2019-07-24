@@ -1,5 +1,4 @@
-Jinja2 Changelog
-================
+.. currentmodule:: jinja2
 
 Version 2.9.7
 -------------
