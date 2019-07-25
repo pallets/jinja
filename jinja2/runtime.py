@@ -58,7 +58,7 @@ def unicode_join(seq):
 
 def new_context(environment, template_name, blocks, vars=None,
                 shared=None, globals=None, locals=None):
-    """Internal helper to for context creation."""
+    """Internal helper for context creation."""
     if vars is None:
         vars = {}
     if shared:
