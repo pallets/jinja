@@ -26,7 +26,7 @@ speaking the performance of a template engine doesn't matter much as the
 usual bottleneck in a web application is either the database or the application
 code.
 
-.. _Mako: http://www.makotemplates.org/
+.. _Mako: https://www.makotemplates.org/
 
 How Compatible is Jinja2 with Django?
 -------------------------------------
@@ -145,7 +145,7 @@ work in production environments::
         sandbox._WHITE_LIST_C_MODULES += ['_ctypes', 'gestalt']
 
 Credit for this snippet goes to `Thomas Johansson
-<http://stackoverflow.com/questions/3086091/debug-jinja2-in-google-app-engine/3694434#3694434>`_
+<https://stackoverflow.com/questions/3086091/debug-jinja2-in-google-app-engine/3694434#3694434>`_
 
 Why is there no Python 2.3/2.4/2.5/3.1/3.2 support?
 ---------------------------------------------------
@@ -188,4 +188,4 @@ templates passing information to the parent template.  To avoid this
 issue rename the macro or variable in the parent template to have an
 uncommon prefix.
 
-.. _Jinja 1: http://jinja.pocoo.org/1/
+.. _Jinja 1: https://pypi.org/project/Jinja/

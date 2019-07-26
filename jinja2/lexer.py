@@ -352,7 +352,10 @@ class TokenStream(object):
         return self.next_if(expr) is not None
 
     def __next__(self):
-        """Go one token ahead and return the old one"""
+        """Go one token ahead and return the old one.
+
+        Use Python's :func:`next` rather than calling this directly.
+        """
         rv = self.current
         if self._pushed:
             self.current = self._pushed.popleft()

@@ -4,7 +4,7 @@ from jinja2.ext import Extension
 
 class FragmentCacheExtension(Extension):
     # a set of names that trigger the extension.
-    tags = set(['cache'])
+    tags = {'cache'}
 
     def __init__(self, environment):
         super(FragmentCacheExtension, self).__init__(environment)
