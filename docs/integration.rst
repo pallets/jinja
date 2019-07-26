@@ -76,7 +76,7 @@ snippet and add it into your `config/environment.py`::
 
     config['pylons.strict_c'] = True
 
-.. _Pylons: http://www.pylonshq.com/
+.. _Pylons: https://pylonshq.com/
 
 TextMate
 --------
@@ -91,11 +91,11 @@ Vim
 
 A syntax plugin for `Vim`_ exists in the Vim-scripts directory as well as the
 `ext` folder at the root of the Jinja2 project.  `The script
-<http://www.vim.org/scripts/script.php?script_id=1856>`_ supports Jinja1 and
+<https://www.vim.org/scripts/script.php?script_id=1856>`_ supports Jinja1 and
 Jinja2.  Once installed two file types are available `jinja` and `htmljinja`.
 The first one for text based templates, the latter for HTML templates.
 
 Copy the files into your `syntax` folder.
 
 .. _Babel: http://babel.pocoo.org/
-.. _Vim: http://www.vim.org/
+.. _Vim: https://www.vim.org/

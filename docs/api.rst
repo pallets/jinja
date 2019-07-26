@@ -114,7 +114,7 @@ for everything else `unicode`:
 u'f\xf6\xf6'
 
 
-.. _Unicode documentation: http://docs.python.org/dev/howto/unicode.html
+.. _Unicode documentation: https://docs.python.org/3/howto/unicode.html
 
 High Level API
 --------------

@@ -205,10 +205,10 @@ Version 2.7.2
 - Prefix loader was not forwarding the locals properly to
   inner loaders.  This is now fixed.
 - Security issue: Changed the default folder for the filesystem cache to be
-  user specific and read and write protected on UNIX systems.  See `Debian bug
-  734747`_ for more information.
+  user specific and read and write protected on UNIX systems.  See
+  `Debian bug 734747`_ for more information.
 
-.. _Debian bug 734747: http://bugs.debian.org/cgi-bin/bugreport.cgi?bug=734747
+.. _Debian bug 734747: https://bugs.debian.org/cgi-bin/bugreport.cgi?bug=734747
 
 Version 2.7.1
 -------------

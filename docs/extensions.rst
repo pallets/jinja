@@ -106,7 +106,7 @@ current configuration.  (For example by using `gettext.find`)
 The usage of the `i18n` extension for template designers is covered as part
 :ref:`of the template documentation <i18n-in-templates>`.
 
-.. _gettext: http://docs.python.org/dev/library/gettext
+.. _gettext: https://docs.python.org/3/library/gettext.html
 .. _Babel: http://babel.pocoo.org/
 
 .. _newstyle-gettext:
@@ -223,7 +223,7 @@ Example Extension
 ~~~~~~~~~~~~~~~~~
 
 The following example implements a `cache` tag for Jinja2 by using the
-`Werkzeug`_ caching contrib module:
+`cachelib`_ library:
 
 .. literalinclude:: cache_extension.py
     :language: python
@@ -231,7 +231,7 @@ The following example implements a `cache` tag for Jinja2 by using the
 And here is how you use it in an environment::
 
     from jinja2 import Environment
-    from werkzeug.contrib.cache import SimpleCache
+    from cachelib import SimpleCache
 
     env = Environment(extensions=[FragmentCacheExtension])
     env.fragment_cache = SimpleCache()
@@ -247,7 +247,7 @@ following example caches a sidebar for 300 seconds:
     </div>
     {% endcache %}
 
-.. _Werkzeug: http://werkzeug.pocoo.org/
+.. _cachelib: https://github.com/pallets/cachelib
 
 Extension API
 ~~~~~~~~~~~~~
