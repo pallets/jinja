@@ -1,3 +1,4 @@
-.. module:: jinja2
+Changelog
+=========
 
 .. include:: ../CHANGES.rst

@@ -1355,9 +1355,11 @@ The general syntax is ``<do something> if <something is true> else <do
 something else>``.
 
 The `else` part is optional.  If not provided, the else block implicitly
-evaluates into an undefined object::
+evaluates into an undefined object:
 
-    {{ ('[%s]' % page.title) if page.title }}
+.. sourcecode:: jinja
+
+    {{ "[{}]".format(page.title) if page.title }}
 
 
 .. _python-methods:
@@ -1387,24 +1389,7 @@ you can do the following:
 List of Builtin Filters
 -----------------------
 
-===================  ===================  ==================  ======================  ====================
-Built-in Filters Index
-==========================================================================================================
-:func:`abs`          :func:`attr`         :func:`batch`       :func:`capitalize`      :func:`center`
-:func:`default`      :func:`dictsort`     :func:`escape`      :func:`filesizeformat`  :func:`first`
-:func:`float`        :func:`forceescape`  :func:`format`      :func:`groupby`         :func:`indent`
-:func:`int`          :func:`join`         :func:`last`        :func:`length`          :func:`list`
-:func:`lower`        :func:`map`          :func:`max`         :func:`min`             :func:`pprint`
-:func:`random`       :func:`reject`       :func:`rejectattr`  :func:`replace`         :func:`reverse`
-:func:`round`        :func:`safe`         :func:`select`      :func:`selectattr`      :func:`slice`
-:func:`sort`         :func:`string`       :func:`striptags`   :func:`sum`             :func:`title`
-:func:`tojson`       :func:`trim`         :func:`truncate`    :func:`unique`          :func:`upper`
-:func:`urlencode`    :func:`urlize`       :func:`wordcount`   :func:`wordwrap`        :func:`xmlattr`
-===================  ===================  ==================  ======================  ====================
-
-
-
-.. jinjafilters::
+.. jinja:filters:: jinja2.defaults.DEFAULT_FILTERS
 
 
 .. _builtin-tests:
@@ -1412,17 +1397,8 @@ Built-in Filters Index
 List of Builtin Tests
 ---------------------
 
-===================  ==================  ===================  ================  ================
-Built-in Test Index
-================================================================================================
-:func:`callable`     :func:`defined`     :func:`divisibleby`  :func:`eq`        :func:`escaped`
-:func:`even`         :func:`ge`          :func:`gt`           :func:`in`        :func:`iterable`
-:func:`le`           :func:`lower`       :func:`lt`           :func:`mapping`   :func:`ne`
-:func:`none`         :func:`number`      :func:`odd`          :func:`sameas`    :func:`sequence`
-:func:`string`       :func:`undefined`   ..                   ..                ..
-===================  ==================  ===================  ================  ================
+.. jinja:tests:: jinja2.defaults.DEFAULT_TESTS
 
-.. jinjatests::
 
 .. _builtin-globals:
 

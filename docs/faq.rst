@@ -26,7 +26,7 @@ speaking the performance of a template engine doesn't matter much as the
 usual bottleneck in a web application is either the database or the application
 code.
 
-.. _Mako: http://www.makotemplates.org/
+.. _Mako: https://www.makotemplates.org/
 
 How Compatible is Jinja2 with Django?
 -------------------------------------
@@ -192,3 +192,4 @@ templates passing information to the parent template.  To avoid this
 issue rename the macro or variable in the parent template to have an
 uncommon prefix.
 
+.. _Jinja 1: https://pypi.org/project/Jinja/

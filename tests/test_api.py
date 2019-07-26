@@ -104,6 +104,15 @@ class TestExtendedAPI(object):
         t = env.from_string('{{ foo }}')
         assert t.render(foo='<foo>') == '<foo>'
 
+    def test_sandbox_max_range(self, env):
+        from jinja2.sandbox import SandboxedEnvironment, MAX_RANGE
+
+        env = SandboxedEnvironment()
+        t = env.from_string("{% for item in range(total) %}{{ item }}{% endfor %}")
+
+        with pytest.raises(OverflowError):
+            t.render(total=MAX_RANGE + 1)
+
 
 @pytest.mark.api
 @pytest.mark.meta

@@ -42,9 +42,9 @@ which will install the package via `distribute` in development mode.  This also
 has the advantage that the C extensions are compiled.
 
 .. _distribute: https://pypi.org/project/distribute/
-.. _setuptools: http://peak.telecommunity.com/DevCenter/setuptools
+.. _setuptools: https://pypi.org/project/setuptools/
 .. _pip: https://pypi.org/project/pip/
-.. _git: https://git-scm.org/
+.. _git: https://git-scm.com/
 
 
 MarkupSafe Dependency
@@ -53,7 +53,7 @@ MarkupSafe Dependency
 As of version 2.7 Jinja2 depends on the `MarkupSafe`_ module. If you install
 Jinja2 via ``pip`` it will be installed automatically for you.
 
-.. _MarkupSafe: https://pypi.org/project/MarkupSafe/
+.. _MarkupSafe: https://markupsafe.palletsprojects.com/
 
 Basic API Usage
 ---------------
