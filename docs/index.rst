@@ -1,7 +1,13 @@
-Welcome to Jinja2
-=================
+.. rst-class:: hide-header
 
-Jinja2 is a modern and designer-friendly templating language for Python,
+Jinja
+=====
+
+.. image:: _static/jinja-logo.png
+    :align: center
+    :target: https://palletsprojects.com/p/jinja/
+
+Jinja is a modern and designer-friendly templating language for Python,
 modelled after Django's templates.  It is fast, widely used and secure
 with the optional sandboxed template execution environment:
 
@@ -14,7 +20,7 @@ with the optional sandboxed template execution environment:
    {% endfor %}
    </ul>
 
-**Features:**
+Features:
 
 -   sandboxed execution
 -   powerful automatic HTML escaping system for XSS prevention
@@ -25,10 +31,21 @@ with the optional sandboxed template execution environment:
     the correct line in the template.
 -   configurable syntax
 
-.. include:: contents.rst.inc
+.. toctree::
+    :maxdepth: 2
+    :caption: Contents:
 
-If you can't find the information you're looking for, have a look at the
-index or try to find it using the search function:
+    intro
+    api
+    sandbox
+    nativetypes
+    templates
+    extensions
+    integration
+    switching
+    tricks
+    faq
+    changelog
 
 * :ref:`genindex`
 * :ref:`search`

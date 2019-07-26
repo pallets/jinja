@@ -1314,7 +1314,7 @@ evaluates into an undefined object:
 
 .. sourcecode:: jinja
 
-    {{ '[%s]' % page.title if page.title }}
+    {{ "[{}]".format(page.title) if page.title }}
 
 
 .. _python-methods:
@@ -1344,7 +1344,7 @@ you can do the following:
 List of Builtin Filters
 -----------------------
 
-.. jinjafilters::
+.. jinja:filters:: jinja2.defaults.DEFAULT_FILTERS
 
 
 .. _builtin-tests:
@@ -1352,7 +1352,8 @@ List of Builtin Filters
 List of Builtin Tests
 ---------------------
 
-.. jinjatests::
+.. jinja:tests:: jinja2.defaults.DEFAULT_TESTS
+
 
 .. _builtin-globals:
 
