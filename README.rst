@@ -56,7 +56,7 @@ Links
 * Website: http://jinja.pocoo.org/
 * Documentation: http://jinja.pocoo.org/docs/
 * License: `BSD <https://raw.githubusercontent.com/pallets/jinja/master/LICENSE>`_
-* Releases: https://pypi.org/project/Jinja/
+* Releases: https://pypi.org/project/Jinja2/
 * Code: https://github.com/pallets/jinja
 * Issue tracker: https://github.com/pallets/jinja/issues
 * Official chat: https://discord.gg/t6rrQZH
