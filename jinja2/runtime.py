@@ -753,9 +753,9 @@ def make_logging_undefined(logger=None, base=None):
 # is not overwritten from Undefined in this class.
 # This would cause a recursion error in Python 2.
 class ChainableUndefined(Undefined):
-    """An undefined that is chainable, where both
-    __getattr__ and __getitem__ return itself rather than
-    raising an :exc:`UndefinedError`:
+    """An undefined that is chainable, where both ``__getattr__`` and
+    ``__getitem__`` return itself rather than raising an
+    :exc:`UndefinedError`.
 
     >>> foo = ChainableUndefined(name='foo')
     >>> str(foo.bar['baz'])
@@ -765,9 +765,12 @@ class ChainableUndefined(Undefined):
       ...
     jinja2.exceptions.UndefinedError: 'foo' is undefined
 
-    .. versionadded:: 2.11
+    .. versionadded:: 2.11.0
     """
     __slots__ = ()
+
+    def __html__(self):
+        return self.__str__()
 
     def __getattr__(self, _):
         return self
