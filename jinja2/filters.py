@@ -649,7 +649,9 @@ def do_indent(
 @environmentfilter
 def do_truncate(env, s, length=255, killwords=False, end='...', leeway=None):
     """Return a truncated copy of the string. The length is specified
-    with the first parameter which defaults to ``255``. If the second
+    with the first parameter which defaults to ``255``. The negative length
+    will truncate the string on the right side, i.e. chop the specified
+    number of characters from the end of the string. If the second
     parameter is ``true`` the filter will cut the text at length. Otherwise
     it will discard the last word. If the text was in fact
     truncated it will append an ellipsis sign (``"..."``). If you want a
@@ -673,9 +675,9 @@ def do_truncate(env, s, length=255, killwords=False, end='...', leeway=None):
     """
     if leeway is None:
         leeway = env.policies['truncate.leeway']
-    assert length >= len(end), 'expected length >= %s, got %s' % (len(end), length)
+    assert abs(length) >= len(end), 'expected abs(length) >= %s, got %s' % (len(end), abs(length))
     assert leeway >= 0, 'expected leeway >= 0, got %s' % leeway
-    if len(s) <= length + leeway:
+    if len(s) <= abs(length) + leeway:
         return s
     if killwords:
         return s[:length - len(end)] + end
