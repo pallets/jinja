@@ -6,7 +6,7 @@ from jinja2 import nodes
 from jinja2._compat import text_type
 from jinja2.compiler import CodeGenerator, has_safe_repr
 from jinja2.environment import Environment, Template
-from jinja2.utils import concat, escape
+from jinja2.utils import escape, custom_concat
 
 
 def native_concat(nodes):
@@ -169,7 +169,7 @@ class NativeCodeGenerator(CodeGenerator):
                     arguments.append(item)
 
             self.writeline('yield ')
-            self.write(repr(concat(format)) + ' % (')
+            self.write(repr(custom_contact(format)) + ' % (')
             self.indent()
 
             for argument in arguments:
