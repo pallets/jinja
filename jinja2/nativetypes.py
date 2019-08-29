@@ -169,7 +169,7 @@ class NativeCodeGenerator(CodeGenerator):
                     arguments.append(item)
 
             self.writeline('yield ')
-            self.write(repr(custom_contact(format)) + ' % (')
+            self.write(repr(custom_concat(format)) + ' % (')
             self.indent()
 
             for argument in arguments:
