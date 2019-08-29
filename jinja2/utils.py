@@ -46,7 +46,7 @@ def custom_concat(to_concat):
         else:
             return "'" + arg + "'"
 
-    return '\"'.join(list(map(lambda arg: format_args(arg), to_concat)))
+    return '\"'.join(map(format_args, to_concat))
 
 _slash_escape = '\\/' not in json.dumps('/')
 
