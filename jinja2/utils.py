@@ -39,6 +39,15 @@ internal_code = set()
 
 concat = u''.join
 
+def custom_concat(to_concat):
+    def format_args(arg):
+        if "'" in arg:
+            return arg.replace("'", "")
+        else:
+            return "'" + arg + "'"
+
+    return '\"'.join(list(map(lambda arg: format_args(arg), to_concat)))
+
 _slash_escape = '\\/' not in json.dumps('/')
 
 
