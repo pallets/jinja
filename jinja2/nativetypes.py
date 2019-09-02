@@ -209,11 +209,24 @@ class NativeTemplate(Template):
         vars = dict(*args, **kwargs)
 
         try:
-            return native_concat(self.root_render_func(self.new_context(vars)))
+            rendered_result = native_concat(self.root_render_func(self.new_context(vars)))
+            try:
+                splitted_rendered_result = rendered_result.split(', ')
+                if len(splitted_rendered_result) > 1 and\
+                        all(isinstance(value, str) for value in vars.values()) and\
+                        all(isinstance(key, str) for key in vars.keys()):
+                    return "\'" + "\', \'".join(splitted_rendered_result) + "\'"
+                else:
+                    return rendered_result
+            except:
+                return rendered_result
+
         except Exception:
             exc_info = sys.exc_info()
 
         return self.environment.handle_exception(exc_info, True)
+
+
 
 
 class NativeEnvironment(Environment):
