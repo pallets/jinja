@@ -114,3 +114,9 @@ class TestNativeEnvironment(object):
         result = t.render()
         assert isinstance(result, text_type)
         assert result == "[all]"
+        
+    def test_parsing(self, env):
+        t = env.from_string("'{{ foo }}', '{{ bar }}', '{{ baz }}'")
+        rendered = t.render(foo='foobar', bar='barbaz', baz='bazfoo')
+        assert(rendered == u"'foobar', 'barbaz', 'bazfoo'")
+
