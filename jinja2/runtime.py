@@ -500,7 +500,7 @@ class Macro(object):
         # decide largely based on compile-time information if a macro is
         # safe or unsafe.  While there was a volatile mode it was largely
         # unused for deciding on escaping.  This turns out to be
-        # problemtic for macros because if a macro is safe or not not so
+        # problematic for macros because if a macro is safe or not not so
         # much depends on the escape mode when it was defined but when it
         # was used.
         #
