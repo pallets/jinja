@@ -500,9 +500,8 @@ class Macro(object):
         # decide largely based on compile-time information if a macro is
         # safe or unsafe.  While there was a volatile mode it was largely
         # unused for deciding on escaping.  This turns out to be
-        # problemtic for macros because if a macro is safe or not not so
-        # much depends on the escape mode when it was defined but when it
-        # was used.
+        # problematic for macros because whether a macro is safe depends not
+        # on the escape mode when it was defined, but rather when it was used.
         #
         # Because however we export macros from the module system and
         # there are historic callers that do not pass an eval context (and
