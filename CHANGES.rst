@@ -8,6 +8,8 @@ Unreleased
 -   Fix Python 3.7 deprecation warnings.
 -   Using ``range`` in the sandboxed environment uses ``xrange`` on
     Python 2 to avoid memory use. :issue:`933`
+-   Use Python 3.7's better traceback support to avoid a core dump when
+    using debug builds of Python 3.7. :issue:`1050`
 
 
 Version 2.10.1
