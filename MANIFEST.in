@@ -1,4 +1,4 @@
-include AUTHORS CHANGES.rst LICENSE
+include AUTHORS CHANGES.rst LICENSE.rst
 global-exclude *.py[co]
 graft artwork
 graft docs
