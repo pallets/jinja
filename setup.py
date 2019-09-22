@@ -42,6 +42,11 @@ setup(
     name='Jinja2',
     version='2.11.dev',
     url='http://jinja.pocoo.org/',
+    project_urls={
+        'Documentation': 'https://jinja.palletsprojects.com/',
+        'Code': 'https://github.com/pallets/jinja/',
+        'Issue tracker': 'https://github.com/pallets/jinja/issues',
+    },
     license='BSD-3-Clause',
     author='Armin Ronacher',
     author_email='armin.ronacher@active-4.com',
