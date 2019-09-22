@@ -24,6 +24,9 @@ if not PY2:
     string_types = (str,)
     integer_types = (int,)
 
+    import pathlib
+    path_types = (str, pathlib.PurePath)
+
     iterkeys = lambda d: iter(d.keys())
     itervalues = lambda d: iter(d.values())
     iteritems = lambda d: iter(d.items())
@@ -52,6 +55,8 @@ else:
     range_type = xrange
     string_types = (str, unicode)
     integer_types = (int, long)
+
+    path_types = string_types
 
     iterkeys = lambda d: d.iterkeys()
     itervalues = lambda d: d.itervalues()

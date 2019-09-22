@@ -17,7 +17,7 @@ from os import path
 from hashlib import sha1
 from jinja2.exceptions import TemplateNotFound
 from jinja2.utils import open_if_exists, internalcode
-from jinja2._compat import string_types, iteritems
+from jinja2._compat import string_types, path_types, iteritems
 
 
 def split_template_path(template):
@@ -159,9 +159,14 @@ class FileSystemLoader(BaseLoader):
     """
 
     def __init__(self, searchpath, encoding='utf-8', followlinks=False):
-        if isinstance(searchpath, string_types):
+        if isinstance(searchpath, path_types):
             searchpath = [searchpath]
-        self.searchpath = list(searchpath)
+
+        # In Python 3.5, os.path.join only supports strings, not instances
+        # of pathlib.Path.  This line can be simplified to list(searchpath)
+        # when support for Python 3.5 is dropped.
+        self.searchpath = [str(path) for path in searchpath]
+
         self.encoding = encoding
         self.followlinks = followlinks
 
@@ -484,10 +489,10 @@ class ModuleLoader(BaseLoader):
         # create a fake module that looks for the templates in the
         # path given.
         mod = _TemplateModule(package_name)
-        if isinstance(path, string_types):
-            path = [path]
+        if isinstance(path, path_types):
+            path = [str(path)]
         else:
-            path = list(path)
+            path = [str(p) for p in path]
         mod.__path__ = path
 
         sys.modules[package_name] = weakref.proxy(mod,

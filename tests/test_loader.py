@@ -11,6 +11,7 @@
 import os
 import shutil
 import sys
+import time
 import tempfile
 import weakref
 
@@ -37,14 +38,6 @@ class TestLoaders(object):
         env = Environment(loader=package_loader)
         tmpl = env.get_template('test.html')
         assert tmpl.render().strip() == 'BAR'
-        pytest.raises(TemplateNotFound, env.get_template, 'missing.html')
-
-    def test_filesystem_loader(self, filesystem_loader):
-        env = Environment(loader=filesystem_loader)
-        tmpl = env.get_template('test.html')
-        assert tmpl.render().strip() == 'BAR'
-        tmpl = env.get_template('foo/test.html')
-        assert tmpl.render().strip() == 'FOO'
         pytest.raises(TemplateNotFound, env.get_template, 'missing.html')
 
     def test_filesystem_loader_overlapping_names(self, filesystem_loader):
@@ -130,6 +123,71 @@ class TestLoaders(object):
         assert split_template_path('foo/bar') == ['foo', 'bar']
         assert split_template_path('./foo/bar') == ['foo', 'bar']
         pytest.raises(TemplateNotFound, split_template_path, '../foo')
+
+
+@pytest.mark.loaders
+@pytest.mark.filesystemloader
+class TestFileSystemLoader(object):
+    searchpath = os.path.dirname(os.path.abspath(__file__)) + '/res/templates'
+
+    @staticmethod
+    def _test_common(env):
+        tmpl = env.get_template('test.html')
+        assert tmpl.render().strip() == 'BAR'
+        tmpl = env.get_template('foo/test.html')
+        assert tmpl.render().strip() == 'FOO'
+        pytest.raises(TemplateNotFound, env.get_template, 'missing.html')
+
+    def test_searchpath_as_str(self):
+        filesystem_loader = loaders.FileSystemLoader(self.searchpath)
+
+        env = Environment(loader=filesystem_loader)
+        self._test_common(env)
+
+    @pytest.mark.skipif(PY2, reason='pathlib is not available in Python 2')
+    def test_searchpath_as_pathlib(self):
+        import pathlib
+        searchpath = pathlib.Path(self.searchpath)
+
+        filesystem_loader = loaders.FileSystemLoader(searchpath)
+
+        env = Environment(loader=filesystem_loader)
+        self._test_common(env)
+
+    @pytest.mark.skipif(PY2, reason='pathlib is not available in Python 2')
+    def test_searchpath_as_list_including_pathlib(self):
+        import pathlib
+        searchpath = pathlib.Path(self.searchpath)
+
+        filesystem_loader = loaders.FileSystemLoader(['/tmp/templates', searchpath])
+
+        env = Environment(loader=filesystem_loader)
+        self._test_common(env)
+
+    def test_caches_template_based_on_mtime(self):
+        filesystem_loader = loaders.FileSystemLoader(self.searchpath)
+
+        env = Environment(loader=filesystem_loader)
+        tmpl1 = env.get_template('test.html')
+        tmpl2 = env.get_template('test.html')
+        assert tmpl1 is tmpl2
+
+        os.utime(
+            os.path.join(self.searchpath, "test.html"),
+            (time.time(), time.time())
+        )
+        tmpl3 = env.get_template('test.html')
+        assert tmpl1 is not tmpl3
+
+    @pytest.mark.parametrize('encoding, expected_text', [
+        ('utf-8', u'tech'),
+        ('utf-16', u'整档'),
+    ])
+    def test_uses_specified_encoding(self, encoding, expected_text):
+        filesystem_loader = loaders.FileSystemLoader(self.searchpath, encoding=encoding)
+        env = Environment(loader=filesystem_loader)
+        tmpl = env.get_template('variable_encoding.txt')
+        assert tmpl.render().strip() == expected_text
 
 
 @pytest.mark.loaders
@@ -245,6 +303,33 @@ class TestModuleLoader(object):
         assert tmpl1.render() == 'BAR'
         tmpl2 = self.mod_env.get_template('DICT/test.html')
         assert tmpl2.render() == 'DICT_TEMPLATE'
+
+    @pytest.mark.skipif(PY2, reason='pathlib is not available in Python 2')
+    def test_path_as_pathlib(self, prefix_loader):
+        self.compile_down(prefix_loader)
+
+        mod_path = self.mod_env.loader.module.__path__[0]
+
+        import pathlib
+        mod_loader = loaders.ModuleLoader(pathlib.Path(mod_path))
+        self.mod_env = Environment(loader=mod_loader)
+
+        self._test_common()
+
+    @pytest.mark.skipif(PY2, reason='pathlib is not available in Python 2')
+    def test_supports_pathlib_in_list_of_paths(self, prefix_loader):
+        self.compile_down(prefix_loader)
+
+        mod_path = self.mod_env.loader.module.__path__[0]
+
+        import pathlib
+        mod_loader = loaders.ModuleLoader([
+            pathlib.Path(mod_path),
+            '/tmp/templates'
+        ])
+        self.mod_env = Environment(loader=mod_loader)
+
+        self._test_common()
 
 
 @pytest.fixture()
