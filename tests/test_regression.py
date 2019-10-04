@@ -543,3 +543,8 @@ class TestBug(object):
             {%- for value in values recursive %}1{% else %}0{% endfor -%}
         ''')
         assert tmpl.render(values=[]) == '0'
+
+    def test_markup_and_chainable_undefined(self):
+        from jinja2 import Markup
+        from jinja2.runtime import ChainableUndefined
+        assert str(Markup(ChainableUndefined())) == ''
