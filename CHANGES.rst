@@ -1,5 +1,14 @@
 .. currentmodule:: jinja2
 
+Version 2.10.3
+--------------
+
+Released 2019-10-24
+
+-   Fix a typo in Babel entry point in ``setup.py`` that was preventing
+    installation.
+
+
 Version 2.10.2
 --------------
 
