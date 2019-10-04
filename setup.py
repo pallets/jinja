@@ -49,5 +49,5 @@ setup(
     include_package_data=True,
     install_requires=["MarkupSafe>=0.23"],
     extras_require={"i18n": ["Babel>=0.8"]},
-    entry_points={"babel.extractors": ["jinja2 = jinja2.ext:bable_extract[i18n]"]},
+    entry_points={"babel.extractors": ["jinja2 = jinja2.ext:babel_extract[i18n]"]},
 )
