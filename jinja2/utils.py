@@ -136,9 +136,7 @@ def import_string(import_name, silent=False):
         if ':' in import_name:
             module, obj = import_name.split(':', 1)
         elif '.' in import_name:
-            items = import_name.split('.')
-            module = '.'.join(items[:-1])
-            obj = items[-1]
+            module, _, obj = import_name.rpartition('.')
         else:
             return __import__(import_name)
         return getattr(__import__(module, None, None, [obj]), obj)
