@@ -85,6 +85,14 @@ class TestFilter(object):
         out = tmpl.render()
         assert out == '&lt;&#34;&gt;&amp;'
 
+    @pytest.mark.parametrize(
+        ("chars", "expect"), [(None, "..stays.."), (".", "  ..stays"), (" .", "stays")]
+    )
+    def test_trim(self, env, chars, expect):
+        tmpl = env.from_string("{{ foo|trim(chars) }}")
+        out = tmpl.render(foo="  ..stays..", chars=chars)
+        assert out == expect
+
     def test_striptags(self, env):
         tmpl = env.from_string('''{{ foo|striptags }}''')
         out = tmpl.render(foo='  <p>just a small   \n <a href="#">'
