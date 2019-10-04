@@ -270,6 +270,13 @@ class TestUndefined(object):
         assert env.from_string('{{ not missing }}').render() == 'True'
         pytest.raises(UndefinedError,
                       env.from_string('{{ missing - 1}}').render)
+        und1 = Undefined(name='x')
+        und2 = Undefined(name='y')
+        assert und1 == und2
+        assert und1 != 42
+        assert hash(und1) == hash(und2) == hash(Undefined())
+        with pytest.raises(AttributeError):
+            getattr(Undefined, '__slots__')
 
     def test_chainable_undefined(self):
         env = Environment(undefined=ChainableUndefined)
@@ -282,6 +289,8 @@ class TestUndefined(object):
         assert env.from_string('{{ not missing }}').render() == 'True'
         pytest.raises(UndefinedError,
                       env.from_string('{{ missing - 1}}').render)
+        with pytest.raises(AttributeError):
+            getattr(ChainableUndefined, '__slots__')
 
         # The following tests ensure subclass functionality works as expected
         assert env.from_string('{{ missing.bar["baz"] }}').render() == u''
@@ -303,6 +312,10 @@ class TestUndefined(object):
         assert env.from_string('{{ foo.missing }}').render(foo=42) \
             == u"{{ no such element: int object['missing'] }}"
         assert env.from_string('{{ not missing }}').render() == 'True'
+        undefined_hint = 'this is testing undefined hint of DebugUndefined'
+        assert str(DebugUndefined(hint=undefined_hint)) == u'{{ undefined value printed: %s }}' % undefined_hint
+        with pytest.raises(AttributeError):
+            getattr(DebugUndefined, '__slots__')
 
     def test_strict_undefined(self):
         env = Environment(undefined=StrictUndefined)
@@ -319,6 +332,8 @@ class TestUndefined(object):
                       env.from_string('{{ not missing }}').render)
         assert env.from_string('{{ missing|default("default", true) }}')\
             .render() == 'default'
+        with pytest.raises(AttributeError):
+            getattr(StrictUndefined, '__slots__')
 
     def test_indexing_gives_undefined(self):
         t = Template("{{ var[42].foo }}")

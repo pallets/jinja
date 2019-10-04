@@ -355,15 +355,11 @@ class LRUCache(object):
         """Set `default` if the key is not in the cache otherwise
         leave unchanged. Return the value of this key.
         """
-        self._wlock.acquire()
         try:
-            try:
-                return self[key]
-            except KeyError:
-                self[key] = default
-                return default
-        finally:
-            self._wlock.release()
+            return self[key]
+        except KeyError:
+            self[key] = default
+            return default
 
     def clear(self):
         """Clear the cache."""
@@ -435,7 +431,6 @@ class LRUCache(object):
             try:
                 self._remove(key)
             except ValueError:
-                # __getitem__ is not locked, it might happen
                 pass
         finally:
             self._wlock.release()
@@ -479,7 +474,7 @@ class LRUCache(object):
     __iter__ = iterkeys
 
     def __reversed__(self):
-        """Iterate over the values in the cache dict, oldest items
+        """Iterate over the keys in the cache dict, oldest items
         coming first.
         """
         return iter(tuple(self._queue))
