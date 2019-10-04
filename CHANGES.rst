@@ -3,7 +3,7 @@
 Version 2.10.2
 --------------
 
-Unreleased
+Released 2019-10-04
 
 -   Fix Python 3.7 deprecation warnings.
 -   Using ``range`` in the sandboxed environment uses ``xrange`` on
