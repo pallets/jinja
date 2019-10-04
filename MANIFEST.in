@@ -1,5 +1,4 @@
-include AUTHORS CHANGES.rst LICENSE
-global-exclude *.py[co]
+include CHANGES.rst tox.ini
 graft artwork
 graft docs
 prune docs/_build
