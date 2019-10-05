@@ -24,6 +24,9 @@ Unreleased
 -   Fix a bug causing deadlocks in ``LRUCache.setdefault``. :pr:`1000`
 -   The ``trim`` filter takes an optional string of characters to trim.
     :pr:`828`
+-   A new ``jinja2.ext.debug`` extension adds a ``{% debug %}`` tag to
+    quickly dump the current context and available filters and tests.
+    :issue:`174`, :pr:`798, 983`
 
 
 Version 2.10.3

@@ -3,14 +3,20 @@
     jinja2.ext
     ~~~~~~~~~~
 
-    Jinja extensions allow to add custom tags similar to the way django custom
-    tags work.  By default two example extensions exist: an i18n and a cache
-    extension.
+    Jinja extensions allow adding custom tags and behavior. The
+    following extensions are included:
+
+    -   An 18n support ``{% trans %}`` tag.
+    -   A ``{% do %}`` tag.
+    -   Loop control ``{% break %}`` and ``{% continue %}`` tags.
+    -   A ``{% debug %}`` tag.
 
     :copyright: (c) 2017 by the Jinja Team.
     :license: BSD.
 """
+import pprint
 import re
+from sys import version_info
 
 from jinja2 import nodes
 from jinja2.defaults import BLOCK_START_STRING, \
@@ -19,10 +25,12 @@ from jinja2.defaults import BLOCK_START_STRING, \
      LINE_COMMENT_PREFIX, TRIM_BLOCKS, NEWLINE_SEQUENCE, \
      KEEP_TRAILING_NEWLINE, LSTRIP_BLOCKS
 from jinja2.environment import Environment
+from jinja2.nodes import ContextReference
 from jinja2.runtime import concat
 from jinja2.exceptions import TemplateAssertionError, TemplateSyntaxError
 from jinja2.utils import contextfunction, import_string, Markup
 from jinja2._compat import with_metaclass, string_types, iteritems
+from markupsafe import escape
 
 
 # the only real useful gettext functions for a Jinja template.  Note
@@ -434,6 +442,48 @@ class AutoEscapeExtension(Extension):
     pass
 
 
+class DebugExtension(Extension):
+    """A ``{% debug %}`` tag that dumps the available variables,
+    filters, and tests.
+
+    .. code-block:: html+jinja
+
+        <pre>{% debug %}</pre>
+
+    .. code-block:: text
+
+        {'context': {'cycler': <class 'jinja2.utils.Cycler'>,
+                     ...,
+                     'namespace': <class 'jinja2.utils.Namespace'>},
+         'filters': ['abs', 'attr', 'batch', 'capitalize', 'center', 'count', 'd',
+                     ..., 'urlencode', 'urlize', 'wordcount', 'wordwrap', 'xmlattr'],
+         'tests': ['!=', '<', '<=', '==', '>', '>=', 'callable', 'defined',
+                   ..., 'odd', 'sameas', 'sequence', 'string', 'undefined', 'upper']}
+
+    .. versionadded:: 2.11.0
+    """
+    tags = {'debug'}
+
+    def parse(self, parser):
+        lineno = parser.stream.expect("name:debug").lineno
+        context = ContextReference()
+        result = self.call_method("_render", [context], lineno=lineno)
+        return nodes.Output([result], lineno=lineno)
+
+    def _render(self, context):
+        result = {
+            "context": context.get_all(),
+            "filters": sorted(self.environment.filters.keys()),
+            "tests": sorted(self.environment.tests.keys()),
+        }
+
+        # Set the depth since the intent is to show the top few names.
+        if version_info[:2] >= (3, 4):
+            return pprint.pformat(result, depth=3, compact=True)
+        else:
+            return pprint.pformat(result, depth=3)
+
+
 def extract_from_ast(node, gettext_functions=GETTEXT_FUNCTIONS,
                      babel_style=True):
     """Extract localizable strings from the given template node.  Per
@@ -625,3 +675,4 @@ do = ExprStmtExtension
 loopcontrols = LoopControlExtension
 with_ = WithExtension
 autoescape = AutoEscapeExtension
+debug = DebugExtension
