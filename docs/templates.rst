@@ -1658,6 +1658,29 @@ Note that ``loop.index`` starts with 1, and ``loop.index0`` starts with 0
 (See: :ref:`for-loop`).
 
 
+Debug Statement
+~~~~~~~~~~~~~~~
+
+If the :ref:`debug-extension` is enabled, a ``{% debug %}`` tag will be
+available to dump the current context as well as the available filters
+and tests. This is useful to see what's available to use in the template
+without setting up a debugger.
+
+.. code-block:: html+jinja
+
+    <pre>{% debug %}</pre>
+
+.. code-block:: text
+
+    {'context': {'cycler': <class 'jinja2.utils.Cycler'>,
+                 ...,
+                 'namespace': <class 'jinja2.utils.Namespace'>},
+     'filters': ['abs', 'attr', 'batch', 'capitalize', 'center', 'count', 'd',
+                 ..., 'urlencode', 'urlize', 'wordcount', 'wordwrap', 'xmlattr'],
+     'tests': ['!=', '<', '<=', '==', '>', '>=', 'callable', 'defined',
+               ..., 'odd', 'sameas', 'sequence', 'string', 'undefined', 'upper']}
+
+
 With Statement
 ~~~~~~~~~~~~~~
 

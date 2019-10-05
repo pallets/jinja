@@ -3,13 +3,13 @@
     jinja2.ext
     ~~~~~~~~~~
 
-    Jinja extensions allow to add custom tags similar to the way django custom
-    tags work.  The following default example extensions are included:
+    Jinja extensions allow adding custom tags and behavior. The
+    following extensions are included:
 
-        - a i18n support {% trans %} tag
-        - a {% do %} tag
-        - loop control {% break %} and {% continue %} tags
-        - a {% debug %} tag
+    -   An 18n support ``{% trans %}`` tag.
+    -   A ``{% do %}`` tag.
+    -   Loop control ``{% break %}`` and ``{% continue %}`` tags.
+    -   A ``{% debug %}`` tag.
 
     :copyright: (c) 2017 by the Jinja Team.
     :license: BSD.
@@ -446,42 +446,35 @@ class DebugExtension(Extension):
     """A ``{% debug %}`` tag that dumps the available variables,
     filters, and tests.
 
-    .. codeblock:: html+jinja
+    .. code-block:: html+jinja
 
         <pre>{% debug %}</pre>
 
-    .. code-block:: python
+    .. code-block:: text
 
-        {'context': {'_': <function _gettext_alias at 0x7f9ceabde488>,
-                 'csrf_token': <SimpleLazyObject: 'lfPE7al...q3bykS4txKfb3'>,
-                 'cycler': <class 'jinja2.utils.Cycler'>,
-                 ...
-                 'view': <polls.views_auth.Login object at 0x7f9cea2cbe48>},
-        'filters': ['abs', 'add', 'addslashes', 'attr', 'batch', 'bootstrap',
-                 'bootstrap_classes', 'bootstrap_horizontal',
-                 'bootstrap_inline', ... 'yesno'],
-        'tests': ['callable', 'checkbox_field', 'defined', 'divisibleby',
-               'escaped', 'even', 'iterable', 'lower', 'mapping',
-               'multiple_checkbox_field', ... 'string', 'undefined', 'upper']}
+        {'context': {'cycler': <class 'jinja2.utils.Cycler'>,
+                     ...,
+                     'namespace': <class 'jinja2.utils.Namespace'>},
+         'filters': ['abs', 'attr', 'batch', 'capitalize', 'center', 'count', 'd',
+                     ..., 'urlencode', 'urlize', 'wordcount', 'wordwrap', 'xmlattr'],
+         'tests': ['!=', '<', '<=', '==', '>', '>=', 'callable', 'defined',
+                   ..., 'odd', 'sameas', 'sequence', 'string', 'undefined', 'upper']}
 
     .. versionadded:: 2.11.0
     """
     tags = {'debug'}
 
-    def __init__(self, environment):
-        super(DebugExtension, self).__init__(environment)
-
     def parse(self, parser):
-        lineno = parser.stream.expect('name:debug').lineno
+        lineno = parser.stream.expect("name:debug").lineno
         context = ContextReference()
-        result = self.call_method('_render', [context], lineno=lineno)
+        result = self.call_method("_render", [context], lineno=lineno)
         return nodes.Output([result], lineno=lineno)
 
     def _render(self, context):
         result = {
-            'filters': sorted(self.environment.filters.keys()),
-            'tests': sorted(self.environment.tests.keys()),
-            'context': context.get_all()
+            "context": context.get_all(),
+            "filters": sorted(self.environment.filters.keys()),
+            "tests": sorted(self.environment.tests.keys()),
         }
 
         # Set the depth since the intent is to show the top few names.
