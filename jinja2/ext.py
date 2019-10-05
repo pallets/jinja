@@ -443,16 +443,15 @@ class AutoEscapeExtension(Extension):
 
 
 class DebugExtension(Extension):
-    """
-    A ``{% debug %}`` tag that dumps the available variables, filters and tests.
-    Typical usage like this:
+    """A ``{% debug %}`` tag that dumps the available variables,
+    filters, and tests.
 
     .. codeblock:: html+jinja
+
         <pre>{% debug %}</pre>
 
-    produces output like this:
+    .. code-block:: python
 
-    ::
         {'context': {'_': <function _gettext_alias at 0x7f9ceabde488>,
                  'csrf_token': <SimpleLazyObject: 'lfPE7al...q3bykS4txKfb3'>,
                  'cycler': <class 'jinja2.utils.Cycler'>,
@@ -465,6 +464,7 @@ class DebugExtension(Extension):
                'escaped', 'even', 'iterable', 'lower', 'mapping',
                'multiple_checkbox_field', ... 'string', 'undefined', 'upper']}
 
+    .. versionadded:: 2.11.0
     """
     tags = {'debug'}
 
@@ -474,8 +474,8 @@ class DebugExtension(Extension):
     def parse(self, parser):
         lineno = parser.stream.expect('name:debug').lineno
         context = ContextReference()
-        call = self.call_method('_render', [context], lineno=lineno)
-        return nodes.Output([nodes.MarkSafe(call)])
+        result = self.call_method('_render', [context], lineno=lineno)
+        return nodes.Output([result], lineno=lineno)
 
     def _render(self, context):
         result = {
@@ -483,16 +483,12 @@ class DebugExtension(Extension):
             'tests': sorted(self.environment.tests.keys()),
             'context': context.get_all()
         }
-        #
-        # We set the depth since the intent is basically to show the top few
-        # names. TODO: provide user control over this?
-        #
-        if version_info[:2] >= (3,4):
-            text = pprint.pformat(result, depth=3, compact=True)
+
+        # Set the depth since the intent is to show the top few names.
+        if version_info[:2] >= (3, 4):
+            return pprint.pformat(result, depth=3, compact=True)
         else:
-            text = pprint.pformat(result, depth=3)
-        text = escape(text)
-        return text
+            return pprint.pformat(result, depth=3)
 
 
 def extract_from_ast(node, gettext_functions=GETTEXT_FUNCTIONS,

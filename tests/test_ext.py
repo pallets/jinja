@@ -241,20 +241,12 @@ class TestExtensions(object):
         assert ext[1].__class__ is T2
 
     def test_debug(self):
-        """Test for {% debug %}"""
         env = Environment(extensions=['jinja2.ext.debug'])
-        tmpl = env.from_string('''Hello{% debug %}Bye''')
-        out = tmpl.render()
-        out = out.replace('&#39;', "'").replace('&lt;', '<').replace('&gt;', '>')
-        #
-        # Check that some of the built-in items exist in the debug output...
-        #
-        assert "'context'" in out
-        assert "'cycler'" in out
-        assert "'filters'" in out
-        assert "'abs'" in out
-        assert "'tests'" in out
-        assert "'!='" in out
+        t = env.from_string('Hello\n{% debug %}\nGoodbye')
+        out = t.render()
+
+        for value in ("context", "cycler", "filters", "abs", "tests", "!="):
+            assert "'{}'".format(value) in out
 
 
 @pytest.mark.ext
