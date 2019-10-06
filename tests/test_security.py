@@ -140,12 +140,8 @@ class TestSandbox(object):
             assert t.render(ctx) == rv
             env.intercepted_binops = frozenset(['+'])
             t = env.from_string('{{ %s }}' % expr)
-            try:
+            with pytest.raises(TemplateRuntimeError):
                 t.render(ctx)
-            except TemplateRuntimeError as e:
-                pass
-            else:
-                assert False, 'expected runtime error'
 
     def test_unary_operator_intercepting(self, env):
         def disable_op(arg):
@@ -157,12 +153,8 @@ class TestSandbox(object):
             assert t.render(ctx) == rv
             env.intercepted_unops = frozenset(['-'])
             t = env.from_string('{{ %s }}' % expr)
-            try:
+            with pytest.raises(TemplateRuntimeError):
                 t.render(ctx)
-            except TemplateRuntimeError as e:
-                pass
-            else:
-                assert False, 'expected runtime error'
 
 
 @pytest.mark.sandbox
