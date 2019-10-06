@@ -223,12 +223,8 @@ class TestUndefined(object):
         pytest.raises(UndefinedError, t.render, test=test)
 
     def test_undefined_and_special_attributes(self):
-        try:
+        with pytest.raises(AttributeError):
             Undefined('Foo').__dict__
-        except AttributeError:
-            pass
-        else:
-            assert False, "Expected actual attribute error"
 
     def test_logging_undefined(self):
         _messages = []
