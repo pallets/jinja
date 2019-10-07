@@ -27,6 +27,8 @@ Unreleased
 -   A new ``jinja2.ext.debug`` extension adds a ``{% debug %}`` tag to
     quickly dump the current context and available filters and tests.
     :issue:`174`, :pr:`798, 983`
+-   Lexing templates with large amounts of whitespace is much faster.
+    :issue:`857`, :pr:`858`
 
 
 Version 2.10.3
