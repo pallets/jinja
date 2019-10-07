@@ -59,22 +59,20 @@ def ignore_case(value):
     return value.lower() if isinstance(value, string_types) else value
 
 
-def make_attrgetter(environment, attribute, postprocess=None):
+def make_attrgetter(environment, attribute, postprocess=None, default=None):
     """Returns a callable that looks up the given attribute from a
     passed object with the rules of the environment.  Dots are allowed
     to access attributes of attributes.  Integer parts in paths are
     looked up as integers.
     """
-    if attribute is None:
-        attribute = []
-    elif isinstance(attribute, string_types):
-        attribute = [int(x) if x.isdigit() else x for x in attribute.split('.')]
-    else:
-        attribute = [attribute]
+    attribute = _prepare_attribute_parts(attribute)
 
     def attrgetter(item):
         for part in attribute:
             item = environment.getitem(item, part)
+
+            if default and isinstance(item, Undefined):
+                item = default
 
         if postprocess is not None:
             item = postprocess(item)
@@ -82,6 +80,45 @@ def make_attrgetter(environment, attribute, postprocess=None):
         return item
 
     return attrgetter
+
+
+def make_multi_attrgetter(environment, attribute, postprocess=None):
+    """Returns a callable that looks up the given comma separated
+    attributes from a passed object with the rules of the environment.
+    Dots are allowed to access attributes of each attribute.  Integer
+    parts in paths are looked up as integers.
+
+    The value returned by the returned callable is a list of extracted
+    attribute values.
+
+    Examples of attribute: "attr1,attr2", "attr1.inner1.0,attr2.inner2.0", etc.
+    """
+    attribute_parts = attribute.split(',') if isinstance(attribute, string_types) else [attribute]
+    attribute = [_prepare_attribute_parts(attribute_part) for attribute_part in attribute_parts]
+
+    def attrgetter(item):
+        items = [None] * len(attribute)
+        for i, attribute_part in enumerate(attribute):
+            item_i = item
+            for part in attribute_part:
+                item_i = environment.getitem(item_i, part)
+
+            if postprocess is not None:
+                item_i = postprocess(item_i)
+
+            items[i] = item_i
+        return items
+
+    return attrgetter
+
+
+def _prepare_attribute_parts(attr):
+    if attr is None:
+        return []
+    elif isinstance(attr, string_types):
+        return [int(x) if x.isdigit() else x for x in attr.split('.')]
+    else:
+        return [attr]
 
 
 def do_forceescape(value):
@@ -243,35 +280,49 @@ def do_dictsort(value, case_sensitive=False, by='key', reverse=False):
 
 
 @environmentfilter
-def do_sort(
-    environment, value, reverse=False, case_sensitive=False, attribute=None
-):
-    """Sort an iterable.  Per default it sorts ascending, if you pass it
-    true as first argument it will reverse the sorting.
-
-    If the iterable is made of strings the third parameter can be used to
-    control the case sensitiveness of the comparison which is disabled by
-    default.
+def do_sort(environment, value, reverse=False, case_sensitive=False, attribute=None):
+    """Sort an iterable using Python's :func:`sorted`.
 
     .. sourcecode:: jinja
 
-        {% for item in iterable|sort %}
+        {% for city in cities|sort %}
             ...
         {% endfor %}
 
-    It is also possible to sort by an attribute (for example to sort
-    by the date of an object) by specifying the `attribute` parameter:
+    :param reverse: Sort descending instead of ascending.
+    :param case_sensitive: When sorting strings, sort upper and lower
+        case separately.
+    :param attribute: When sorting objects or dicts, an attribute or
+        key to sort by. Can use dot notation like ``"address.city"``.
+        Can be a list of attributes like ``"age,name"``.
+
+    The sort is stable, it does not change the relative order of
+    elements that compare equal. This makes it is possible to chain
+    sorts on different attributes and ordering.
 
     .. sourcecode:: jinja
 
-        {% for item in iterable|sort(attribute='date') %}
+        {% for user in users|sort(attribute="name")|sort(reverse=true, attribute="age") %}
             ...
         {% endfor %}
+
+    As a shortcut to chaining when the direction is the same for all
+    attributes, pass a comma separate list of attributes.
+
+    .. sourcecode:: jinja
+
+        {% for user users|sort(attribute="age,name") %}
+            ...
+        {% endfor %}
+
+    .. versionchanged:: 2.11.0
+        The ``attribute`` parameter can be a comma separated list of
+        attributes, e.g. ``"age,name"``.
 
     .. versionchanged:: 2.6
-       The `attribute` parameter was added.
+       The ``attribute`` parameter was added.
     """
-    key_func = make_attrgetter(
+    key_func = make_multi_attrgetter(
         environment, attribute,
         postprocess=ignore_case if not case_sensitive else None
     )
@@ -280,11 +331,11 @@ def do_sort(
 
 @environmentfilter
 def do_unique(environment, value, case_sensitive=False, attribute=None):
-    """Returns a list of unique items from the the given iterable.
+    """Returns a list of unique items from the given iterable.
 
     .. sourcecode:: jinja
 
-        {{ ['foo', 'bar', 'foobar', 'FooBar']|unique }}
+        {{ ['foo', 'bar', 'foobar', 'FooBar']|unique|list }}
             -> ['foo', 'bar', 'foobar']
 
     The unique items are yielded in the same order as their first occurrence in
@@ -316,8 +367,9 @@ def _min_or_max(environment, value, func, case_sensitive, attribute):
         return environment.undefined('No aggregated item, sequence was empty.')
 
     key_func = make_attrgetter(
-        environment, attribute,
-        ignore_case if not case_sensitive else None
+        environment,
+        attribute,
+        postprocess=ignore_case if not case_sensitive else None
     )
     return func(chain([first], it), key=key_func)
 
@@ -368,6 +420,12 @@ def do_default(value, default_value=u'', boolean=False):
     .. sourcecode:: jinja
 
         {{ ''|default('the string was empty', true) }}
+
+    .. versionchanged:: 2.11
+       It's now possible to configure the :class:`~jinja2.Environment` with
+       :class:`~jinja2.ChainableUndefined` to make the `default` filter work
+       on nested elements and attributes that may contain undefined values
+       in the chain without getting an :exc:`~jinja2.UndefinedError`.
     """
     if isinstance(value, Undefined) or (boolean and not value):
         return default_value
@@ -699,9 +757,9 @@ def do_format(value, *args, **kwargs):
     return soft_unicode(value) % (kwargs or args)
 
 
-def do_trim(value):
-    """Strip leading and trailing whitespace."""
-    return soft_unicode(value).strip()
+def do_trim(value, chars=None):
+    """Strip leading and trailing characters, by default whitespace."""
+    return soft_unicode(value).strip(chars)
 
 
 def do_striptags(value):
@@ -719,7 +777,7 @@ def do_slice(value, slices, fill_with=None):
 
     .. sourcecode:: html+jinja
 
-        <div class="columwrapper">
+        <div class="columnwrapper">
           {%- for column in items|slice(3) %}
             <ul class="column-{{ loop.index }}">
             {%- for item in column %}
@@ -822,44 +880,41 @@ _GroupTuple = namedtuple('_GroupTuple', ['grouper', 'list'])
 _GroupTuple.__repr__ = tuple.__repr__
 _GroupTuple.__str__ = tuple.__str__
 
+
 @environmentfilter
 def do_groupby(environment, value, attribute):
-    """Group a sequence of objects by a common attribute.
+    """Group a sequence of objects by an attribute using Python's
+    :func:`itertools.groupby`. The attribute can use dot notation for
+    nested access, like ``"address.city"``. Unlike Python's ``groupby``,
+    the values are sorted first so only one group is returned for each
+    unique value.
 
-    If you for example have a list of dicts or objects that represent persons
-    with `gender`, `first_name` and `last_name` attributes and you want to
-    group all users by genders you can do something like the following
-    snippet:
-
-    .. sourcecode:: html+jinja
-
-        <ul>
-        {% for group in persons|groupby('gender') %}
-            <li>{{ group.grouper }}<ul>
-            {% for person in group.list %}
-                <li>{{ person.first_name }} {{ person.last_name }}</li>
-            {% endfor %}</ul></li>
-        {% endfor %}
-        </ul>
-
-    Additionally it's possible to use tuple unpacking for the grouper and
-    list:
+    For example, a list of ``User`` objects with a ``city`` attribute
+    can be rendered in groups. In this example, ``grouper`` refers to
+    the ``city`` value of the group.
 
     .. sourcecode:: html+jinja
 
-        <ul>
-        {% for grouper, list in persons|groupby('gender') %}
-            ...
-        {% endfor %}
-        </ul>
+        <ul>{% for city, items in users|groupby("city") %}
+          <li>{{ city }}
+            <ul>{% for user in items %}
+              <li>{{ user.name }}
+            {% endfor %}</ul>
+          </li>
+        {% endfor %}</ul>
 
-    As you can see the item we're grouping by is stored in the `grouper`
-    attribute and the `list` contains all the objects that have this grouper
-    in common.
+    ``groupby`` yields namedtuples of ``(grouper, list)``, which
+    can be used instead of the tuple unpacking above. ``grouper`` is the
+    value of the attribute, and ``list`` is the items with that value.
+
+    .. sourcecode:: html+jinja
+
+        <ul>{% for group in users|groupby("city") %}
+          <li>{{ group.grouper }}: {{ group.list|join(", ") }}
+        {% endfor %}</ul>
 
     .. versionchanged:: 2.6
-       It's now possible to use dotted notation to group by the child
-       attribute of another attribute.
+        The attribute supports dot notation for nested access.
     """
     expr = make_attrgetter(environment, attribute)
     return [_GroupTuple(key, list(values)) for key, values
@@ -961,6 +1016,13 @@ def do_map(*args, **kwargs):
 
         Users on this page: {{ users|map(attribute='username')|join(', ') }}
 
+    You can specify a ``default`` value to use if an object in the list
+    does not have the given attribute.
+
+    .. sourcecode:: jinja
+
+        {{ users|map(attribute="username", default="Anonymous")|join(", ") }}
+
     Alternatively you can let it invoke a filter by passing the name of the
     filter and the arguments afterwards.  A good example would be applying a
     text conversion filter on a sequence:
@@ -968,6 +1030,9 @@ def do_map(*args, **kwargs):
     .. sourcecode:: jinja
 
         Users on this page: {{ titles|map('lower')|join(', ') }}
+
+    .. versionchanged:: 2.11.0
+        Added the ``default`` parameter.
 
     .. versionadded:: 2.7
     """
@@ -1095,13 +1160,15 @@ def do_tojson(eval_ctx, value, indent=None):
 def prepare_map(args, kwargs):
     context = args[0]
     seq = args[1]
+    default = None
 
     if len(args) == 2 and 'attribute' in kwargs:
         attribute = kwargs.pop('attribute')
+        default = kwargs.pop('default', None)
         if kwargs:
             raise FilterArgumentError('Unexpected keyword argument %r' %
                 next(iter(kwargs)))
-        func = make_attrgetter(context.environment, attribute)
+        func = make_attrgetter(context.environment, attribute, default=default)
     else:
         try:
             name = args[2]

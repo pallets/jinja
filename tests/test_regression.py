@@ -483,6 +483,10 @@ class TestBug(object):
         t = env.from_string('{% if foo %}{% else %}42{% endif %}')
         assert t.render(foo=False) == '42'
 
+    def test_subproperty_if(self, env):
+        t = env.from_string('{% if object1.subproperty1 is eq object2.subproperty2 %}42{% endif %}')
+        assert t.render(object1={'subproperty1': 'value'}, object2={'subproperty2': 'value'}) == '42'
+
     def test_set_and_include(self):
         env = Environment(loader=DictLoader({
             'inc': 'bar',
@@ -539,3 +543,8 @@ class TestBug(object):
             {%- for value in values recursive %}1{% else %}0{% endfor -%}
         ''')
         assert tmpl.render(values=[]) == '0'
+
+    def test_markup_and_chainable_undefined(self):
+        from jinja2 import Markup
+        from jinja2.runtime import ChainableUndefined
+        assert str(Markup(ChainableUndefined())) == ''

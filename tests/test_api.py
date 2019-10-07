@@ -13,8 +13,8 @@ import tempfile
 import shutil
 
 import pytest
-from jinja2 import Environment, Undefined, DebugUndefined, \
-     StrictUndefined, UndefinedError, meta, \
+from jinja2 import Environment, Undefined, ChainableUndefined, \
+     DebugUndefined, StrictUndefined, UndefinedError, meta, \
      is_undefined, Template, DictLoader, make_logging_undefined
 from jinja2.compiler import CodeGenerator
 from jinja2.runtime import Context
@@ -104,6 +104,15 @@ class TestExtendedAPI(object):
         t = env.from_string('{{ foo }}')
         assert t.render(foo='<foo>') == '<foo>'
 
+    def test_sandbox_max_range(self, env):
+        from jinja2.sandbox import SandboxedEnvironment, MAX_RANGE
+
+        env = SandboxedEnvironment()
+        t = env.from_string("{% for item in range(total) %}{{ item }}{% endfor %}")
+
+        with pytest.raises(OverflowError):
+            t.render(total=MAX_RANGE + 1)
+
 
 @pytest.mark.api
 @pytest.mark.meta
@@ -120,6 +129,10 @@ class TestMeta(object):
                         '{% endfor %}')
         x = meta.find_undeclared_variables(ast)
         assert x == set(['bar', 'seq', 'muh'])
+
+        ast = env.parse('{% for x in range(5) %}{{ x }}{% endfor %}{{ foo }}')
+        x = meta.find_undeclared_variables(ast)
+        assert x == set(['foo'])
 
     def test_find_refererenced_templates(self, env):
         ast = env.parse('{% extends "layout.html" %}{% include helper %}')
@@ -210,12 +223,8 @@ class TestUndefined(object):
         pytest.raises(UndefinedError, t.render, test=test)
 
     def test_undefined_and_special_attributes(self):
-        try:
+        with pytest.raises(AttributeError):
             Undefined('Foo').__dict__
-        except AttributeError:
-            pass
-        else:
-            assert False, "Expected actual attribute error"
 
     def test_logging_undefined(self):
         _messages = []
@@ -257,6 +266,36 @@ class TestUndefined(object):
         assert env.from_string('{{ not missing }}').render() == 'True'
         pytest.raises(UndefinedError,
                       env.from_string('{{ missing - 1}}').render)
+        und1 = Undefined(name='x')
+        und2 = Undefined(name='y')
+        assert und1 == und2
+        assert und1 != 42
+        assert hash(und1) == hash(und2) == hash(Undefined())
+        with pytest.raises(AttributeError):
+            getattr(Undefined, '__slots__')
+
+    def test_chainable_undefined(self):
+        env = Environment(undefined=ChainableUndefined)
+        # The following tests are copied from test_default_undefined
+        assert env.from_string('{{ missing }}').render() == u''
+        assert env.from_string('{{ missing|list }}').render() == '[]'
+        assert env.from_string('{{ missing is not defined }}').render() \
+            == 'True'
+        assert env.from_string('{{ foo.missing }}').render(foo=42) == ''
+        assert env.from_string('{{ not missing }}').render() == 'True'
+        pytest.raises(UndefinedError,
+                      env.from_string('{{ missing - 1}}').render)
+        with pytest.raises(AttributeError):
+            getattr(ChainableUndefined, '__slots__')
+
+        # The following tests ensure subclass functionality works as expected
+        assert env.from_string('{{ missing.bar["baz"] }}').render() == u''
+        assert env.from_string('{{ foo.bar["baz"]._undefined_name }}').render() \
+            == u'foo'
+        assert env.from_string('{{ foo.bar["baz"]._undefined_name }}').render(
+            foo=42) == u'bar'
+        assert env.from_string('{{ foo.bar["baz"]._undefined_name }}').render(
+            foo={'bar': 42}) == u'baz'
 
     def test_debug_undefined(self):
         env = Environment(undefined=DebugUndefined)
@@ -269,6 +308,10 @@ class TestUndefined(object):
         assert env.from_string('{{ foo.missing }}').render(foo=42) \
             == u"{{ no such element: int object['missing'] }}"
         assert env.from_string('{{ not missing }}').render() == 'True'
+        undefined_hint = 'this is testing undefined hint of DebugUndefined'
+        assert str(DebugUndefined(hint=undefined_hint)) == u'{{ undefined value printed: %s }}' % undefined_hint
+        with pytest.raises(AttributeError):
+            getattr(DebugUndefined, '__slots__')
 
     def test_strict_undefined(self):
         env = Environment(undefined=StrictUndefined)
@@ -285,6 +328,8 @@ class TestUndefined(object):
                       env.from_string('{{ not missing }}').render)
         assert env.from_string('{{ missing|default("default", true) }}')\
             .render() == 'default'
+        with pytest.raises(AttributeError):
+            getattr(StrictUndefined, '__slots__')
 
     def test_indexing_gives_undefined(self):
         t = Template("{{ var[42].foo }}")

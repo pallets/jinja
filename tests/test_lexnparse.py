@@ -336,9 +336,31 @@ class TestSyntax(object):
         tmpl = env.from_string('{{ 1 in [1, 2, 3] }}|{{ 1 not in [1, 2, 3] }}')
         assert tmpl.render() == 'True|False'
 
-    def test_literals(self, env):
-        tmpl = env.from_string('{{ [] }}|{{ {} }}|{{ () }}')
-        assert tmpl.render().lower() == '[]|{}|()'
+    @pytest.mark.parametrize("value", ("[]", "{}", "()"))
+    def test_collection_literal(self, env, value):
+        t = env.from_string("{{ %s }}" % value)
+        assert t.render() == value
+
+    @pytest.mark.parametrize(
+        ("value", "expect"),
+        (
+            ("1", "1"),
+            ("123", "123"),
+            ("12_34_56", "123456"),
+            ("1.2", "1.2"),
+            ("34.56", "34.56"),
+            ("3_4.5_6", "34.56"),
+            ("1e0", "1.0"),
+            ("10e1", "100.0"),
+            ("2.5e100", "2.5e+100"),
+            ("2.5e+100", "2.5e+100"),
+            ("25.6e-10", "2.56e-09"),
+            ("1_2.3_4e5_6", "1.234e+57"),
+        )
+    )
+    def test_numeric_literal(self, env, value, expect):
+        t = env.from_string("{{ %s }}" % value)
+        assert t.render() == expect
 
     def test_bool(self, env):
         tmpl = env.from_string('{{ true and false }}|{{ false '
@@ -500,6 +522,14 @@ class TestLstripBlocks(object):
 
     def test_no_lstrip(self, env):
         env = Environment(lstrip_blocks=True, trim_blocks=False)
+        tmpl = env.from_string('''    {%+ if True %}\n    {%+ endif %}''')
+        assert tmpl.render() == "    \n    "
+
+    def test_lstrip_blocks_false_with_no_lstrip(self, env):
+        # Test that + is a NOP (but does not cause an error) if lstrip_blocks=False
+        env = Environment(lstrip_blocks=False, trim_blocks=False)
+        tmpl = env.from_string('''    {% if True %}\n    {% endif %}''')
+        assert tmpl.render() == "    \n    "
         tmpl = env.from_string('''    {%+ if True %}\n    {%+ endif %}''')
         assert tmpl.render() == "    \n    "
 

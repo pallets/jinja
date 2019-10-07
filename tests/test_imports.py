@@ -139,8 +139,6 @@ class TestIncludes(object):
         test_includes(t, x='missing')
         t = test_env.from_string('{% include x %}')
         test_includes(t, x='header')
-        t = test_env.from_string('{% include x %}')
-        test_includes(t, x='header')
         t = test_env.from_string('{% include [x] %}')
         test_includes(t, x='header')
 

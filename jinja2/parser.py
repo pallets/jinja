@@ -841,7 +841,9 @@ class Parser(object):
                                            'name:and')):
             if self.stream.current.test('name:is'):
                 self.fail('You cannot chain multiple tests with is')
-            args = [self.parse_primary()]
+            arg_node = self.parse_primary()
+            arg_node = self.parse_postfix(arg_node)
+            args = [arg_node]
         else:
             args = []
         node = nodes.Test(node, name, args, kwargs, dyn_args,

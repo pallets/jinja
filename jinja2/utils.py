@@ -11,6 +11,7 @@
 import re
 import json
 import errno
+import warnings
 from collections import deque
 from threading import Lock
 from jinja2._compat import text_type, string_types, implements_iterator, \
@@ -135,9 +136,7 @@ def import_string(import_name, silent=False):
         if ':' in import_name:
             module, obj = import_name.split(':', 1)
         elif '.' in import_name:
-            items = import_name.split('.')
-            module = '.'.join(items[:-1])
-            obj = items[-1]
+            module, _, obj = import_name.rpartition('.')
         else:
             return __import__(import_name)
         return getattr(__import__(module, None, None, [obj]), obj)
@@ -356,15 +355,11 @@ class LRUCache(object):
         """Set `default` if the key is not in the cache otherwise
         leave unchanged. Return the value of this key.
         """
-        self._wlock.acquire()
         try:
-            try:
-                return self[key]
-            except KeyError:
-                self[key] = default
-                return default
-        finally:
-            self._wlock.release()
+            return self[key]
+        except KeyError:
+            self[key] = default
+            return default
 
     def clear(self):
         """Clear the cache."""
@@ -436,7 +431,6 @@ class LRUCache(object):
             try:
                 self._remove(key)
             except ValueError:
-                # __getitem__ is not locked, it might happen
                 pass
         finally:
             self._wlock.release()
@@ -457,6 +451,14 @@ class LRUCache(object):
 
     def itervalue(self):
         """Iterate over all values."""
+        warnings.warn(DeprecationWarning(
+            '"itervalue()" is deprecated and will be removed in version 2.12.'
+            + ' Use "itervalues()" instead.'
+        ), stacklevel=2)
+        return self.itervalues()
+
+    def itervalues(self):
+        """Iterate over all values."""
         return iter(self.values())
 
     def keys(self):
@@ -472,7 +474,7 @@ class LRUCache(object):
     __iter__ = iterkeys
 
     def __reversed__(self):
-        """Iterate over the values in the cache dict, oldest items
+        """Iterate over the keys in the cache dict, oldest items
         coming first.
         """
         return iter(tuple(self._queue))

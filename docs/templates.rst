@@ -395,7 +395,9 @@ this template "extends" another template.  When the template system evaluates
 this template, it first locates the parent.  The extends tag should be the
 first tag in the template.  Everything before it is printed out normally and
 may cause confusion.  For details about this behavior and how to take
-advantage of it, see :ref:`null-master-fallback`.
+advantage of it, see :ref:`null-master-fallback`. Also a block will always be
+filled in regardless of whether the surrounding condition is evaluated to be true
+or false.
 
 The filename of the template depends on the template loader.  For example, the
 :class:`FileSystemLoader` allows you to access other templates by giving the
@@ -425,7 +427,7 @@ If you want to print a block multiple times, you can, however, use the special
 Super Blocks
 ~~~~~~~~~~~~
 
-It's possible to render the contents of the parent block by calling `super`.
+It's possible to render the contents of the parent block by calling ``super()``.
 This gives back the results of the parent block::
 
     {% block sidebar %}
@@ -433,6 +435,41 @@ This gives back the results of the parent block::
         ...
         {{ super() }}
     {% endblock %}
+
+
+Nesting extends
+~~~~~~~~~~~~~~~
+
+In the case of multiple levels of ``{% extends %}``,
+``super`` references may be chained (as in ``super.super()``)
+to skip levels in the inheritance tree.
+
+For example::
+
+    # parent.tmpl
+    body: {% block body %}Hi from parent.{% endblock %}
+
+    # child.tmpl
+    {% extends "parent.tmpl" %}
+    {% block body %}Hi from child. {{ super() }}{% endblock %}
+
+    # grandchild1.tmpl
+    {% extends "child.tmpl" %}
+    {% block body %}Hi from grandchild1.{% endblock %}
+
+    # grandchild2.tmpl
+    {% extends "child.tmpl" %}
+    {% block body %}Hi from grandchild2. {{ super.super() }} {% endblock %}
+
+
+Rendering ``child.tmpl`` will give
+``body: Hi from child. Hi from parent.``
+
+Rendering ``grandchild1.tmpl`` will give
+``body: Hi from grandchild1.``
+
+Rendering ``grandchild2.tmpl`` will give
+``body: Hi from grandchild2. Hi from parent.``
 
 
 Named Block End-Tags
@@ -577,7 +614,7 @@ As variables in templates retain their object properties, it is possible to
 iterate over containers like `dict`::
 
     <dl>
-    {% for key, value in my_dict.iteritems() %}
+    {% for key, value in my_dict.items() %}
         <dt>{{ key|e }}</dt>
         <dd>{{ value|e }}</dd>
     {% endfor %}
@@ -1140,11 +1177,16 @@ for Python objects such as strings and numbers.  The following literals exist:
     arguments to function calls and filters, or just to extend or include a
     template).
 
-42 / 42.23:
-    Integers and floating point numbers are created by just writing the
-    number down.  If a dot is present, the number is a float, otherwise an
-    integer.  Keep in mind that, in Python, ``42`` and ``42.0``
-    are different (``int`` and ``float``, respectively).
+42 / 123_456:
+    Integers are whole numbers without a decimal part. The '_' character
+    can be used to separate groups for legibility.
+
+42.23 / 42.1e2 / 123_456.789:
+    Floating point numbers can be written using a '.' as a decimal mark.
+    They can also be written in scientific notation with an upper or
+    lower case 'e' to indicate the exponent part. The '_' character can
+    be used to separate groups for legibility, but cannot be used in the
+    exponent part.
 
 ['list', 'of', 'objects']:
     Everything between two brackets is a list.  Lists are useful for storing
@@ -1201,7 +1243,6 @@ but exists for completeness' sake.  The following operators are supported:
 /
     Divide two numbers.  The return value will be a floating point number.
     ``{{ 1 / 2 }}`` is ``{{ 0.5 }}``.
-    (Just like ``from __future__ import division``.)
 
 //
     Divide two numbers and return the truncated integer result.
@@ -1316,9 +1357,31 @@ something else>``.
 The `else` part is optional.  If not provided, the else block implicitly
 evaluates into an undefined object:
 
+.. sourcecode:: jinja
+
+    {{ "[{}]".format(page.title) if page.title }}
+
+
+.. _python-methods:
+
+Python Methods
+~~~~~~~~~~~~~~
+
+You can also use any of the methods of defined on a variable's type.
+The value returned from the method invocation is used as the value of the expression.
+Here is an example that uses methods defined on strings (where ``page.title`` is a string):
+
 .. code-block:: text
 
-    {{ ('[%s]' % page.title) if page.title }}
+    {{ page.title.capitalize() }}
+
+This also works for methods on user-defined types.
+For example, if variable ``f`` of type ``Foo`` has a method ``bar`` defined on it,
+you can do the following:
+
+.. code-block:: text
+
+    {{ f.bar() }}
 
 
 .. _builtin-filters:
@@ -1326,24 +1389,7 @@ evaluates into an undefined object:
 List of Builtin Filters
 -----------------------
 
-===================  ===================  ==================  ======================  ====================
-Built-in Filters Index
-==========================================================================================================
-:func:`abs`          :func:`attr`         :func:`batch`       :func:`capitalize`      :func:`center`
-:func:`default`      :func:`dictsort`     :func:`escape`      :func:`filesizeformat`  :func:`first`
-:func:`float`        :func:`forceescape`  :func:`format`      :func:`groupby`         :func:`indent`
-:func:`int`          :func:`join`         :func:`last`        :func:`length`          :func:`list`
-:func:`lower`        :func:`map`          :func:`max`         :func:`min`             :func:`pprint`
-:func:`random`       :func:`reject`       :func:`rejectattr`  :func:`replace`         :func:`reverse`
-:func:`round`        :func:`safe`         :func:`select`      :func:`selectattr`      :func:`slice`
-:func:`sort`         :func:`string`       :func:`striptags`   :func:`sum`             :func:`title`
-:func:`tojson`       :func:`trim`         :func:`truncate`    :func:`unique`          :func:`upper`
-:func:`urlencode`    :func:`urlize`       :func:`wordcount`   :func:`wordwrap`        :func:`xmlattr`
-===================  ===================  ==================  ======================  ====================
-
-
-
-.. jinjafilters::
+.. jinja:filters:: jinja2.defaults.DEFAULT_FILTERS
 
 
 .. _builtin-tests:
@@ -1351,17 +1397,8 @@ Built-in Filters Index
 List of Builtin Tests
 ---------------------
 
-===================  ==================  ===================  ================  ================
-Built-in Test Index
-================================================================================================
-:func:`callable`     :func:`defined`     :func:`divisibleby`  :func:`eq`        :func:`escaped`
-:func:`even`         :func:`ge`          :func:`gt`           :func:`in`        :func:`iterable`
-:func:`le`           :func:`lower`       :func:`lt`           :func:`mapping`   :func:`ne`
-:func:`none`         :func:`number`      :func:`odd`          :func:`sameas`    :func:`sequence`
-:func:`string`       :func:`undefined`   ..                   ..                ..
-===================  ==================  ===================  ================  ================
+.. jinja:tests:: jinja2.defaults.DEFAULT_TESTS
 
-.. jinjatests::
 
 .. _builtin-globals:
 
@@ -1619,6 +1656,29 @@ Likewise, a loop that stops processing after the 10th iteration::
 
 Note that ``loop.index`` starts with 1, and ``loop.index0`` starts with 0
 (See: :ref:`for-loop`).
+
+
+Debug Statement
+~~~~~~~~~~~~~~~
+
+If the :ref:`debug-extension` is enabled, a ``{% debug %}`` tag will be
+available to dump the current context as well as the available filters
+and tests. This is useful to see what's available to use in the template
+without setting up a debugger.
+
+.. code-block:: html+jinja
+
+    <pre>{% debug %}</pre>
+
+.. code-block:: text
+
+    {'context': {'cycler': <class 'jinja2.utils.Cycler'>,
+                 ...,
+                 'namespace': <class 'jinja2.utils.Namespace'>},
+     'filters': ['abs', 'attr', 'batch', 'capitalize', 'center', 'count', 'd',
+                 ..., 'urlencode', 'urlize', 'wordcount', 'wordwrap', 'xmlattr'],
+     'tests': ['!=', '<', '<=', '==', '>', '>=', 'callable', 'defined',
+               ..., 'odd', 'sameas', 'sequence', 'string', 'undefined', 'upper']}
 
 
 With Statement

@@ -8,15 +8,18 @@
     :copyright: (c) 2017 by the Jinja Team.
     :license: BSD, see LICENSE for more details.
 """
+
+from collections import deque
 import gc
+import pickle
+import random
 
 import pytest
 
-import pickle
-
+from jinja2._compat import string_types, range_type
 from jinja2.utils import LRUCache, escape, object_type_repr, urlize, \
-     select_autoescape
-
+     select_autoescape, generate_lorem_ipsum, missing, consume
+from markupsafe import Markup
 
 @pytest.mark.utils
 @pytest.mark.lrucache
@@ -32,6 +35,27 @@ class TestLRUCache(object):
         assert len(d) == 3
         assert 'a' in d and 'c' in d and 'd' in d and 'b' not in d
 
+    def test_itervalue_deprecated(self):
+        cache = LRUCache(3)
+        cache["a"] = 1
+        cache["b"] = 2
+        with pytest.deprecated_call():
+            cache.itervalue()
+
+    def test_itervalues(self):
+        cache = LRUCache(3)
+        cache["b"] = 1
+        cache["a"] = 2
+        values = [v for v in cache.itervalues()]
+        assert len(values) == 2
+        assert 1 in values
+        assert 2 in values
+
+    def test_itervalues_empty(self):
+        cache = LRUCache(2)
+        values = [v for v in cache.itervalues()]
+        assert len(values) == 0
+
     def test_pickleable(self):
         cache = LRUCache(2)
         cache["foo"] = 42
@@ -43,6 +67,50 @@ class TestLRUCache(object):
             assert copy.capacity == cache.capacity
             assert copy._mapping == cache._mapping
             assert copy._queue == cache._queue
+
+    def test_clear(self):
+        d = LRUCache(3)
+        d["a"] = 1
+        d["b"] = 2
+        d["c"] = 3
+        d.clear()
+        assert d.__getstate__() == {'capacity': 3, '_mapping': {}, '_queue': deque([])}
+
+    def test_repr(self):
+        d = LRUCache(3)
+        d["a"] = 1
+        d["b"] = 2
+        d["c"] = 3
+        # Sort the strings - mapping is unordered
+        assert sorted(repr(d)) == sorted(u"<LRUCache {'a': 1, 'b': 2, 'c': 3}>")
+
+    def test_items(self):
+        """Test various items, keys, values and iterators of LRUCache."""
+        d = LRUCache(3)
+        d["a"] = 1
+        d["b"] = 2
+        d["c"] = 3
+        assert d.items() == list(d.iteritems()) == [('c', 3), ('b', 2), ('a', 1)]
+        assert d.keys() == list(d.iterkeys()) == ['c', 'b', 'a']
+        assert d.values() == list(d.itervalues()) == [3, 2, 1]
+        assert list(reversed(d)) == ['a', 'b', 'c']
+
+        # Change the cache a little
+        d["b"]
+        d["a"] = 4
+        assert d.items() == list(d.iteritems()) == [('a', 4), ('b', 2), ('c', 3)]
+        assert d.keys() == list(d.iterkeys()) == ['a', 'b', 'c']
+        assert d.values() == list(d.itervalues()) == [4, 2, 3]
+        assert list(reversed(d)) == ['c', 'b', 'a']
+
+    def test_setdefault(self):
+        d = LRUCache(3)
+        assert len(d) == 0
+        assert d.setdefault("a") is None
+        assert d.setdefault("a", 1) is None
+        assert len(d) == 1
+        assert d.setdefault("b", 2) == 2
+        assert len(d) == 2
 
 
 @pytest.mark.utils
@@ -84,3 +152,47 @@ class TestEscapeUrlizeTarget(object):
         assert urlize(url, target=target) == ('<a href="http://example.org"'
                                               ' target="&lt;script&gt;">'
                                               'http://example.org</a>')
+
+
+@pytest.mark.utils
+@pytest.mark.loremIpsum
+class TestLoremIpsum(object):
+    def test_lorem_ipsum_markup(self):
+        """Test that output of lorem_ipsum is Markup by default."""
+        assert isinstance(generate_lorem_ipsum(), Markup)
+
+    def test_lorem_ipsum_html(self):
+        """Test that output of lorem_ipsum is a string_type when not html."""
+        assert isinstance(generate_lorem_ipsum(html=False), string_types)
+
+    def test_lorem_ipsum_n(self):
+        """Test that the n (number of lines) works as expected."""
+        assert generate_lorem_ipsum(n=0, html=False) == u''
+        for n in range_type(1, 50):
+            assert generate_lorem_ipsum(n=n, html=False).count('\n') == (n - 1) * 2
+
+    def test_lorem_ipsum_min(self):
+        """Test that at least min words are in the output of each line"""
+        for _ in range_type(5):
+           m = random.randrange(20, 99)
+           for _ in range_type(10):
+               assert generate_lorem_ipsum(n=1, min=m, html=False).count(' ') >= m - 1
+
+    def test_lorem_ipsum_max(self):
+        """Test that at least max words are in the output of each line"""
+        for _ in range_type(5):
+           m = random.randrange(21, 100)
+           for _ in range_type(10):
+               assert generate_lorem_ipsum(n=1, max=m, html=False).count(' ') < m - 1
+
+
+def test_missing():
+    """Test the repr of missing."""
+    assert repr(missing) == u'missing'
+
+def test_consume():
+    """Test that consume consumes an iterator."""
+    x = iter([1, 2, 3, 4, 5])
+    consume(x)
+    with pytest.raises(StopIteration):
+        next(x)

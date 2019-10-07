@@ -76,7 +76,7 @@ snippet and add it into your `config/environment.py`::
 
     config['pylons.strict_c'] = True
 
-.. _Pylons: http://www.pylonshq.com/
+.. _Pylons: https://pylonshq.com/
 
 TextMate
 --------
@@ -102,5 +102,5 @@ If you are using a plugin manager like `Pathogen`_, see the `vim-jinja
 ``bundle/`` directory.
 
 .. _Babel: http://babel.pocoo.org/
-.. _Vim: http://www.vim.org/
+.. _Vim: https://www.vim.org/
 .. _Pathogen: https://github.com/tpope/vim-pathogen

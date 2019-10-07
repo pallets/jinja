@@ -50,7 +50,7 @@ class TemplateNotFound(IOError, LookupError, TemplateError):
     message = None
 
     def __init__(self, name, message=None):
-        IOError.__init__(self)
+        IOError.__init__(self, name)
         if message is None:
             message = name
         self.message = message

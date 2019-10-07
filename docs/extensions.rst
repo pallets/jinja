@@ -14,7 +14,7 @@ Adding Extensions
 Extensions are added to the Jinja2 environment at creation time.  Once the
 environment is created additional extensions cannot be added.  To add an
 extension pass a list of extension classes or import paths to the
-`extensions` parameter of the :class:`Environment` constructor.  The following
+``extensions`` parameter of the :class:`~jinja2.Environment` constructor.  The following
 example creates a Jinja2 environment with the i18n extension loaded::
 
     jinja_env = Environment(extensions=['jinja2.ext.i18n'])
@@ -25,15 +25,15 @@ example creates a Jinja2 environment with the i18n extension loaded::
 i18n Extension
 --------------
 
-**Import name:** `jinja2.ext.i18n`
+**Import name:** ``jinja2.ext.i18n``
 
 The i18n extension can be used in combination with `gettext`_ or `babel`_.  If
-the i18n extension is enabled Jinja2 provides a `trans` statement that marks
-the wrapped string as translatable and calls `gettext`.
+the i18n extension is enabled Jinja2 provides a ``trans`` statement that marks
+the wrapped string as translatable and calls ``gettext``.
 
-After enabling, dummy `_` function that forwards calls to `gettext` is added
+After enabling, dummy ``_`` function that forwards calls to ``gettext`` is added
 to the environment globals.  An internationalized application then has to
-provide a `gettext` function and optionally an `ngettext` function into the
+provide a ``gettext`` function and optionally an ``ngettext`` function into the
 namespace, either globally or for each rendering.
 
 Environment Methods
@@ -45,9 +45,9 @@ additional methods:
 .. method:: jinja2.Environment.install_gettext_translations(translations, newstyle=False)
 
     Installs a translation globally for that environment.  The translations
-    object provided must implement at least `ugettext` and `ungettext`.
-    The `gettext.NullTranslations` and `gettext.GNUTranslations` classes
-    as well as `Babel`_\s `Translations` class are supported.
+    object provided must implement at least ``ugettext`` and ``ungettext``.
+    The ``gettext.NullTranslations`` and ``gettext.GNUTranslations`` classes
+    as well as `Babel`_\s ``Translations`` class are supported.
 
     .. versionchanged:: 2.5 newstyle gettext added
 
@@ -61,12 +61,12 @@ additional methods:
 
 .. method:: jinja2.Environment.install_gettext_callables(gettext, ngettext, newstyle=False)
 
-    Installs the given `gettext` and `ngettext` callables into the
+    Installs the given ``gettext`` and ``ngettext`` callables into the
     environment as globals.  They are supposed to behave exactly like the
     standard library's :func:`gettext.ugettext` and
     :func:`gettext.ungettext` functions.
 
-    If `newstyle` is activated, the callables are wrapped to work like
+    If ``newstyle`` is activated, the callables are wrapped to work like
     newstyle callables.  See :ref:`newstyle-gettext` for more information.
 
     .. versionadded:: 2.5
@@ -82,11 +82,11 @@ additional methods:
     For every string found this function yields a ``(lineno, function,
     message)`` tuple, where:
 
-    * `lineno` is the number of the line on which the string was found,
-    * `function` is the name of the `gettext` function used (if the
+    * ``lineno`` is the number of the line on which the string was found,
+    * ``function`` is the name of the ``gettext`` function used (if the
       string was extracted from embedded Python code), and
-    *  `message` is the string itself (a `unicode` object, or a tuple
-       of `unicode` objects for functions with multiple string arguments).
+    *  ``message`` is the string itself (a ``unicode`` object, or a tuple
+       of ``unicode`` objects for functions with multiple string arguments).
 
     If `Babel`_ is installed, :ref:`the babel integration <babel-integration>`
     can be used to extract strings for babel.
@@ -100,13 +100,13 @@ translation methods to the environment at environment generation time::
     env = Environment(extensions=['jinja2.ext.i18n'])
     env.install_gettext_translations(translations)
 
-The `get_gettext_translations` function would return the translator for the
-current configuration.  (For example by using `gettext.find`)
+The ``get_gettext_translations`` function would return the translator for the
+current configuration.  (For example by using ``gettext.find``)
 
-The usage of the `i18n` extension for template designers is covered as part
+The usage of the ``i18n`` extension for template designers is covered as part
 :ref:`of the template documentation <i18n-in-templates>`.
 
-.. _gettext: https://docs.python.org/dev/library/gettext
+.. _gettext: https://docs.python.org/3/library/gettext.html
 .. _Babel: http://babel.pocoo.org/
 
 .. _newstyle-gettext:
@@ -168,9 +168,9 @@ templates are experiencing over time when using autoescaping.
 Expression Statement
 --------------------
 
-**Import name:** `jinja2.ext.do`
+**Import name:** ``jinja2.ext.do``
 
-The "do" aka expression-statement extension adds a simple `do` tag to the
+The "do" aka expression-statement extension adds a simple ``do`` tag to the
 template engine that works like a variable expression but ignores the
 return value.
 
@@ -179,9 +179,9 @@ return value.
 Loop Controls
 -------------
 
-**Import name:** `jinja2.ext.loopcontrols`
+**Import name:** ``jinja2.ext.loopcontrols``
 
-This extension adds support for `break` and `continue` in loops.  After
+This extension adds support for ``break`` and ``continue`` in loops.  After
 enabling, Jinja2 provides those two keywords which work exactly like in
 Python.
 
@@ -190,23 +190,35 @@ Python.
 With Statement
 --------------
 
-**Import name:** `jinja2.ext.with_`
+**Import name:** ``jinja2.ext.with_``
 
 .. versionchanged:: 2.9
 
-This extension is now built-in and no longer does anything.
+    This extension is now built-in and no longer does anything.
 
 .. _autoescape-extension:
 
 Autoescape Extension
 --------------------
 
-**Import name:** `jinja2.ext.autoescape`
+**Import name:** ``jinja2.ext.autoescape``
 
 .. versionchanged:: 2.9
 
-This extension was removed and is now built-in.  Enabling the extension
-no longer does anything.
+    This extension was removed and is now built-in. Enabling the
+    extension no longer does anything.
+
+
+.. _debug-extension:
+
+Debug Extension
+---------------
+
+**Import name:** ``jinja2.ext.debug``
+
+Adds a ``{% debug %}`` tag to dump the current context as well as the
+available filters and tests. This is useful to see what's available to
+use in the template without setting up a debugger.
 
 
 .. _writing-extensions:
@@ -231,8 +243,8 @@ how to use them.
 Example Extension
 ~~~~~~~~~~~~~~~~~
 
-The following example implements a `cache` tag for Jinja2 by using the
-`Werkzeug`_ caching contrib module:
+The following example implements a ``cache`` tag for Jinja2 by using the
+`cachelib`_ library:
 
 .. literalinclude:: cache_extension.py
     :language: python
@@ -240,7 +252,7 @@ The following example implements a `cache` tag for Jinja2 by using the
 And here is how you use it in an environment::
 
     from jinja2 import Environment
-    from werkzeug.contrib.cache import SimpleCache
+    from cachelib import SimpleCache
 
     env = Environment(extensions=[FragmentCacheExtension])
     env.fragment_cache = SimpleCache()
@@ -256,7 +268,7 @@ following example caches a sidebar for 300 seconds:
     </div>
     {% endcache %}
 
-.. _Werkzeug: http://werkzeug.pocoo.org/
+.. _cachelib: https://github.com/pallets/cachelib
 
 Extension API
 ~~~~~~~~~~~~~
@@ -292,7 +304,7 @@ extensions:
         The filename of the template the parser processes.  This is **not**
         the load name of the template.  For the load name see :attr:`name`.
         For templates that were not loaded form the file system this is
-        `None`.
+        ``None``.
 
     .. attribute:: name
 
@@ -319,7 +331,7 @@ extensions:
     .. attribute:: type
 
         The type of the token.  This string is interned so you may compare
-        it with arbitrary strings using the `is` operator.
+        it with arbitrary strings using the ``is`` operator.
 
     .. attribute:: value
 
@@ -345,6 +357,6 @@ For more information have a look at the repr of :meth:`jinja2.Environment.parse`
 
 .. module:: jinja2.nodes
 
-.. jinjanodes::
+.. jinja:nodes:: jinja2.nodes.Node
 
 .. autoexception:: Impossible

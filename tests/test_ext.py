@@ -240,6 +240,14 @@ class TestExtensions(object):
         assert ext[0].__class__ is T1
         assert ext[1].__class__ is T2
 
+    def test_debug(self):
+        env = Environment(extensions=['jinja2.ext.debug'])
+        t = env.from_string('Hello\n{% debug %}\nGoodbye')
+        out = t.render()
+
+        for value in ("context", "cycler", "filters", "abs", "tests", "!="):
+            assert "'{}'".format(value) in out
+
 
 @pytest.mark.ext
 class TestInternationalization(object):

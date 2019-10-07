@@ -23,6 +23,16 @@ class Magic(object):
         return text_type(self.value)
 
 
+@implements_to_string
+class Magic2(object):
+    def __init__(self, value1, value2):
+        self.value1 = value1
+        self.value2 = value2
+
+    def __str__(self):
+        return u'(%s,%s)' % (text_type(self.value1), text_type(self.value2))
+
+
 @pytest.mark.filter
 class TestFilter(object):
 
@@ -75,6 +85,14 @@ class TestFilter(object):
         out = tmpl.render()
         assert out == '&lt;&#34;&gt;&amp;'
 
+    @pytest.mark.parametrize(
+        ("chars", "expect"), [(None, "..stays.."), (".", "  ..stays"), (" .", "stays")]
+    )
+    def test_trim(self, env, chars, expect):
+        tmpl = env.from_string("{{ foo|trim(chars) }}")
+        out = tmpl.render(foo="  ..stays..", chars=chars)
+        assert out == expect
+
     def test_striptags(self, env):
         tmpl = env.from_string('''{{ foo|striptags }}''')
         out = tmpl.render(foo='  <p>just a small   \n <a href="#">'
@@ -123,12 +141,16 @@ class TestFilter(object):
         out = tmpl.render(foo=list(range(10)))
         assert out == '0'
 
-    def test_float(self, env):
-        tmpl = env.from_string('{{ "42"|float }}|'
-                               '{{ "ajsghasjgd"|float }}|'
-                               '{{ "32.32"|float }}')
-        out = tmpl.render()
-        assert out == '42.0|0.0|32.32'
+    @pytest.mark.parametrize(
+        ("value", "expect"), (("42", "42.0"), ("abc", "0.0"), ("32.32", "32.32"),)
+    )
+    def test_float(self, env, value, expect):
+        t = env.from_string("{{ '%s'|float }}" % value)
+        assert t.render() == expect
+
+    def test_float_default(self, env):
+        t = env.from_string("{{ value|float(default=1.0) }}")
+        assert t.render(value="abc") == "1.0"
 
     def test_format(self, env):
         tmpl = env.from_string('''{{ "%s|%s"|format("a", "b") }}''')
@@ -168,17 +190,42 @@ class TestFilter(object):
         with pytest.warns(DeprecationWarning):
             env.from_string('{{ "jinja"|indent(indentfirst=true) }}').render()
 
-    def test_int(self, env):
+    @pytest.mark.parametrize(
+        ("value", "expect"),
+        (
+            ("42", "42"),
+            ("abc", "0"),
+            ("32.32", "32"),
+            ("12345678901234567890", "12345678901234567890"),
+        )
+    )
+    def test_int(self, env, value, expect):
+        t = env.from_string("{{ '%s'|int }}" % value)
+        assert t.render() == expect
+
+    @pytest.mark.parametrize(
+        ("value", "base", "expect"),
+        (
+            ("0x4d32", 16, "19762"),
+            ("011", 8, "9"),
+            ("0x33Z", 16, "0"),
+        )
+    )
+    def test_int_base(self, env, value, base, expect):
+        t = env.from_string("{{ '%s'|int(base=%d) }}" % (value, base))
+        assert t.render() == expect
+
+    def test_int_default(self, env):
+        t = env.from_string("{{ value|int(default=1) }}")
+        assert t.render(value="abc") == "1"
+
+    def test_int_special_method(self, env):
         class IntIsh(object):
             def __int__(self):
                 return 42
 
-        tmpl = env.from_string('{{ "42"|int }}|{{ "ajsghasjgd"|int }}|'
-                               '{{ "32.32"|int }}|{{ "0x4d32"|int(0, 16) }}|'
-                               '{{ "011"|int(0, 8)}}|{{ "0x33FU"|int(0, 16) }}|'
-                               '{{ obj|int }}')
-        out = tmpl.render(obj=IntIsh())
-        assert out == '42|0|32|19762|9|0|42'
+        t = env.from_string("{{ value|int }}")
+        assert t.render(value=IntIsh()) == "42"
 
     def test_join(self, env):
         tmpl = env.from_string('{{ [1, 2, 3]|join("|") }}')
@@ -417,6 +464,29 @@ class TestFilter(object):
         tmpl = env.from_string('''{{ items|sort(attribute='value')|join }}''')
         assert tmpl.render(items=map(Magic, [3, 2, 4, 1])) == '1234'
 
+    def test_sort5(self, env):
+        tmpl = env.from_string('''{{ items|sort(attribute='value.0')|join }}''')
+        assert tmpl.render(items=map(Magic, [[3], [2], [4], [1]])) == '[1][2][3][4]'
+
+    def test_sort6(self, env):
+        tmpl = env.from_string('''{{ items|sort(attribute='value1,value2')|join }}''')
+        assert (tmpl.render(items=map(
+            lambda x: Magic2(x[0], x[1]), [(3, 1), (2, 2), (2, 1), (2, 5)]))
+            == '(2,1)(2,2)(2,5)(3,1)')
+
+    def test_sort7(self, env):
+        tmpl = env.from_string('''{{ items|sort(attribute='value2,value1')|join }}''')
+        assert (tmpl.render(items=map(lambda x: Magic2(x[0], x[1]), [(3, 1), (2, 2), (2, 1), (2, 5)])) ==
+                '(2,1)(3,1)(2,2)(2,5)')
+
+    def test_sort8(self, env):
+        tmpl = env.from_string(
+            '''{{ items|sort(attribute='value1.0,value2.0')|join }}''')
+        assert (tmpl.render(items=map(
+            lambda x: Magic2(x[0], x[1]),
+            [([3], [1]), ([2], [2]), ([2], [1]), ([2], [5])]))
+            == '([2],[1])([2],[2])([2],[5])([3],[1])')
+
     def test_unique(self, env):
         t = env.from_string('{{ "".join(["b", "A", "a", "b"]|unique) }}')
         assert t.render() == "bA"
@@ -565,6 +635,28 @@ class TestFilter(object):
         env = Environment()
         tmpl = env.from_string('{{ none|map("upper")|list }}')
         assert tmpl.render() == '[]'
+
+    def test_map_default(self, env):
+        class Fullname(object):
+            def __init__(self, firstname, lastname):
+                self.firstname = firstname
+                self.lastname = lastname
+
+        class Firstname(object):
+            def __init__(self, firstname):
+                self.firstname = firstname
+
+        env = Environment()
+        tmpl = env.from_string(
+            '{{ users|map(attribute="lastname", default="smith")|join(", ") }}'
+        )
+        users = [
+            Fullname("john", "lennon"),
+            Fullname("jane", "edwards"),
+            Fullname("jon", None),
+            Firstname("mike")
+        ]
+        assert tmpl.render(users=users) == "lennon, edwards, None, smith"
 
     def test_simple_select(self, env):
         env = Environment()
