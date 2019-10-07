@@ -426,6 +426,8 @@ class OptionalLStrip(tuple):
     lstrip applied.
     """
 
+    __slots__ = ()
+
     # Even though it looks like a no-op, creating instances fails
     # without this.
     def __new__(cls, *members, **kwargs):
