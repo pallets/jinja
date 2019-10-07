@@ -1529,9 +1529,11 @@ class CodeGenerator(NodeVisitor):
 
     @optimizeconst
     def visit_Compare(self, node, frame):
+        self.write('(')
         self.visit(node.expr, frame)
         for op in node.ops:
             self.visit(op, frame)
+        self.write(')')
 
     def visit_Operand(self, node, frame):
         self.write(' %s ' % operators[node.op])
