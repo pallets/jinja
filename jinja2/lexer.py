@@ -23,8 +23,6 @@ from jinja2._compat import implements_iterator, intern, iteritems, text_type
 from jinja2.exceptions import TemplateSyntaxError
 from jinja2.utils import LRUCache
 
-from ast import literal_eval # to support scientific notation
-
 # cache for the lexers. Exists in order to be able to have multiple
 # environments with the same lexer
 _lexer_cache = LRUCache(50)
@@ -424,6 +422,12 @@ def get_lexer(environment):
 
 
 class OptionalLStrip(tuple):
+    """A special tuple for marking a point in the state that can have
+    lstrip applied.
+    """
+
+    # Even though it looks like a no-op, creating instances fails
+    # without this.
     def __new__(cls, *members, **kwargs):
         return super(OptionalLStrip, cls).__new__(cls, members)
 
@@ -462,9 +466,9 @@ class Lexer(object):
         # block suffix if trimming is enabled
         block_suffix_re = environment.trim_blocks and '\\n?' or ''
 
-        # strip leading spaces in blocks/comments if lstrip_blocks is enabled
-        # use for example '{%+' to disable lstrip_blocks behavior
-        self.lstrip_blocks_unless_re = c(r'[^ \t]') if environment.lstrip_blocks else None
+        # If lstrip is enabled, it should not be applied if there is any
+        # non-whitespace between the newline and block.
+        self.lstrip_unless_re = c(r"[^ \t]") if environment.lstrip_blocks else None
 
         self.newline_sequence = environment.newline_sequence
         self.keep_trailing_newline = environment.keep_trailing_newline
@@ -586,7 +590,6 @@ class Lexer(object):
         """This method tokenizes the text and returns the tokens in a
         generator.  Use this method if you just want to tokenize a template.
         """
-        neg_lstrip_re = self.lstrip_blocks_unless_re
         source = text_type(source)
         lines = source.splitlines()
         if self.keep_trailing_newline and source:
@@ -601,12 +604,10 @@ class Lexer(object):
         if state is not None and state != 'root':
             assert state in ('variable', 'block'), 'invalid state'
             stack.append(state + '_begin')
-        else:
-            state = 'root'
         statetokens = self.rules[stack[-1]]
         source_length = len(source)
-
         balancing_stack = []
+        lstrip_unless_re = self.lstrip_unless_re
 
         while 1:
             # tokenizer loop
@@ -630,17 +631,33 @@ class Lexer(object):
                     groups = m.groups()
 
                     if isinstance(tokens, OptionalLStrip):
-                        # state supports lstrip, determine override (-/+)
-                        strip_sign = next(group for group in groups[2::2]
-                                          if group is not None)
-                        if strip_sign == '-':
-                            groups = (groups[0].rstrip(),) + groups[1:]
-                        elif strip_sign != '+' and neg_lstrip_re is not None \
-                                and not m.groupdict().get('variable_begin'):
-                            # no override, but lstrip_blocks enabled
-                            l_pos = groups[0].rfind('\n') + 1
-                            if not neg_lstrip_re.search(groups[0], l_pos):
-                                groups = (groups[0][:l_pos],) + groups[1:]
+                        # Rule supports lstrip. Match will look like
+                        # text, block type, whitespace control, type, control, ...
+                        text = groups[0]
+
+                        # Skipping the text and first type, every other group is the
+                        # whitespace control for each type. One of the groups will be
+                        # -, +, or empty string instead of None.
+                        strip_sign = next(g for g in groups[2::2] if g is not None)
+
+                        if strip_sign == "-":
+                            # Strip all whitespace between the text and the tag.
+                            groups = (text.rstrip(),) + groups[1:]
+                        elif (
+                            # Not marked for preserving whitespace.
+                            strip_sign != "+"
+                            # lstrip is enabled.
+                            and lstrip_unless_re is not None
+                            # Not a variable expression.
+                            and not m.groupdict().get("variable_begin")
+                        ):
+                            # The start of text between the last newline and the tag.
+                            l_pos = text.rfind('\n') + 1
+
+                            # If there's only whitespace between the newline and the
+                            # tag, strip it.
+                            if not lstrip_unless_re.search(text, l_pos):
+                                groups = (text[:l_pos],) + groups[1:]
 
                     for idx, token in enumerate(tokens):
                         # failure group
