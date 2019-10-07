@@ -23,8 +23,6 @@ from jinja2._compat import implements_iterator, intern, iteritems, text_type
 from jinja2.exceptions import TemplateSyntaxError
 from jinja2.utils import LRUCache
 
-from ast import literal_eval # to support scientific notation
-
 # cache for the lexers. Exists in order to be able to have multiple
 # environments with the same lexer
 _lexer_cache = LRUCache(50)
@@ -423,6 +421,17 @@ def get_lexer(environment):
     return lexer
 
 
+class OptionalLStrip(tuple):
+    """A special tuple for marking a point in the state that can have
+    lstrip applied.
+    """
+
+    # Even though it looks like a no-op, creating instances fails
+    # without this.
+    def __new__(cls, *members, **kwargs):
+        return super(OptionalLStrip, cls).__new__(cls, members)
+
+
 class Lexer(object):
     """Class that implements a lexer for a given environment. Automatically
     created by the environment class, usually you don't have to do that.
@@ -457,51 +466,9 @@ class Lexer(object):
         # block suffix if trimming is enabled
         block_suffix_re = environment.trim_blocks and '\\n?' or ''
 
-        # strip leading spaces if lstrip_blocks is enabled
-        prefix_re = {}
-        no_lstrip_re = e('+')
-        # detect overlap between block and variable or comment strings
-        block_diff = c(r'^%s(.*)' % e(environment.block_start_string))
-        # make sure we don't mistake a block for a variable or a comment
-        m = block_diff.match(environment.comment_start_string)
-        no_lstrip_re += m and r'|%s' % e(m.group(1)) or ''
-        m = block_diff.match(environment.variable_start_string)
-        no_lstrip_re += m and r'|%s' % e(m.group(1)) or ''
-        # detect overlap between comment and variable strings
-        comment_diff = c(r'^%s(.*)' % e(environment.comment_start_string))
-        m = comment_diff.match(environment.variable_start_string)
-        no_variable_re = m and r'(?!%s)' % e(m.group(1)) or ''
-
-        if environment.lstrip_blocks:
-            # use '{%+' to manually disable lstrip_blocks behavior
-            lstrip_re = r'^[ \t]*'
-            block_prefix_re = r'%s%s(?!%s)|%s\+?' % (
-                    lstrip_re,
-                    e(environment.block_start_string),
-                    no_lstrip_re,
-                    e(environment.block_start_string),
-                    )
-            comment_prefix_re = r'%s%s%s|%s\+?' % (
-                    lstrip_re,
-                    e(environment.comment_start_string),
-                    no_variable_re,
-                    e(environment.comment_start_string),
-                    )
-        else:
-            # If lstrip_blocks is False, then '{%+' is allowed but a NOP
-            block_prefix_re = r'%s(?!%s)|%s\+?' % (
-                e(environment.block_start_string),
-                no_lstrip_re,
-                e(environment.block_start_string),
-            )
-            comment_prefix_re = r'%s%s|%s\+?' % (
-                e(environment.comment_start_string),
-                no_variable_re,
-                e(environment.comment_start_string),
-            )
-
-        prefix_re['block'] = block_prefix_re
-        prefix_re['comment'] = comment_prefix_re
+        # If lstrip is enabled, it should not be applied if there is any
+        # non-whitespace between the newline and block.
+        self.lstrip_unless_re = c(r"[^ \t]") if environment.lstrip_blocks else None
 
         self.newline_sequence = environment.newline_sequence
         self.keep_trailing_newline = environment.keep_trailing_newline
@@ -511,15 +478,14 @@ class Lexer(object):
             'root': [
                 # directives
                 (c('(.*?)(?:%s)' % '|'.join(
-                    [r'(?P<raw_begin>(?:\s*%s\-|%s)\s*raw\s*(?:\-%s\s*|%s))' % (
+                    [r'(?P<raw_begin>%s(\-|\+|)\s*raw\s*(?:\-%s\s*|%s))' % (
                         e(environment.block_start_string),
-                        block_prefix_re,
                         e(environment.block_end_string),
                         e(environment.block_end_string)
                     )] + [
-                        r'(?P<%s_begin>\s*%s\-|%s)' % (n, r, prefix_re.get(n,r))
+                        r'(?P<%s_begin>%s(\-|\+|))' % (n, r)
                         for n, r in root_tag_rules
-                    ])), (TOKEN_DATA, '#bygroup'), '#bygroup'),
+                    ])), OptionalLStrip(TOKEN_DATA, '#bygroup'), '#bygroup'),
                 # data
                 (c('.+'), TOKEN_DATA, None)
             ],
@@ -549,13 +515,12 @@ class Lexer(object):
             ] + tag_rules,
             # raw block
             TOKEN_RAW_BEGIN: [
-                (c(r'(.*?)((?:\s*%s\-|%s)\s*endraw\s*(?:\-%s\s*|%s%s))' % (
+                (c(r'(.*?)((?:%s(\-|\+|))\s*endraw\s*(?:\-%s\s*|%s%s))' % (
                     e(environment.block_start_string),
-                    block_prefix_re,
                     e(environment.block_end_string),
                     e(environment.block_end_string),
                     block_suffix_re
-                )), (TOKEN_DATA, TOKEN_RAW_END), '#pop'),
+                )), OptionalLStrip(TOKEN_DATA, TOKEN_RAW_END), '#pop'),
                 (c('(.)'), (Failure('Missing end of raw directive'),), None)
             ],
             # line statements
@@ -639,12 +604,10 @@ class Lexer(object):
         if state is not None and state != 'root':
             assert state in ('variable', 'block'), 'invalid state'
             stack.append(state + '_begin')
-        else:
-            state = 'root'
         statetokens = self.rules[stack[-1]]
         source_length = len(source)
-
         balancing_stack = []
+        lstrip_unless_re = self.lstrip_unless_re
 
         while 1:
             # tokenizer loop
@@ -665,6 +628,37 @@ class Lexer(object):
 
                 # tuples support more options
                 if isinstance(tokens, tuple):
+                    groups = m.groups()
+
+                    if isinstance(tokens, OptionalLStrip):
+                        # Rule supports lstrip. Match will look like
+                        # text, block type, whitespace control, type, control, ...
+                        text = groups[0]
+
+                        # Skipping the text and first type, every other group is the
+                        # whitespace control for each type. One of the groups will be
+                        # -, +, or empty string instead of None.
+                        strip_sign = next(g for g in groups[2::2] if g is not None)
+
+                        if strip_sign == "-":
+                            # Strip all whitespace between the text and the tag.
+                            groups = (text.rstrip(),) + groups[1:]
+                        elif (
+                            # Not marked for preserving whitespace.
+                            strip_sign != "+"
+                            # lstrip is enabled.
+                            and lstrip_unless_re is not None
+                            # Not a variable expression.
+                            and not m.groupdict().get("variable_begin")
+                        ):
+                            # The start of text between the last newline and the tag.
+                            l_pos = text.rfind('\n') + 1
+
+                            # If there's only whitespace between the newline and the
+                            # tag, strip it.
+                            if not lstrip_unless_re.search(text, l_pos):
+                                groups = (text[:l_pos],) + groups[1:]
+
                     for idx, token in enumerate(tokens):
                         # failure group
                         if token.__class__ is Failure:
@@ -685,7 +679,7 @@ class Lexer(object):
                                                    % regex)
                         # normal group
                         else:
-                            data = m.group(idx + 1)
+                            data = groups[idx]
                             if data or token not in ignore_if_empty:
                                 yield lineno, token, data
                             lineno += data.count('\n')
