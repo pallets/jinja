@@ -29,6 +29,9 @@ Unreleased
     :issue:`174`, :pr:`798, 983`
 -   Lexing templates with large amounts of whitespace is much faster.
     :issue:`857`, :pr:`858`
+-   Parentheses around comparisons are preserved, so
+    ``{{ 2 * (3 < 5) }}`` outputs "2" instead of "False".
+    :issue:`755`, :pr:`938`
 
 
 Version 2.10.3
