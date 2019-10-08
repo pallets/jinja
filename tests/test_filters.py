@@ -10,7 +10,10 @@
 """
 import random
 import pytest
-from jinja2 import Markup, Environment
+
+from markupsafe import Markup
+
+from jinja2 import Environment
 from jinja2._compat import text_type, implements_to_string
 
 

@@ -10,10 +10,12 @@
 """
 import pytest
 
+from markupsafe import Markup
+
 from jinja2 import Environment
 from jinja2.sandbox import SandboxedEnvironment, \
      ImmutableSandboxedEnvironment, unsafe
-from jinja2 import Markup, escape
+from jinja2 import escape
 from jinja2.exceptions import SecurityError, TemplateSyntaxError, \
      TemplateRuntimeError
 from jinja2.nodes import EvalContext

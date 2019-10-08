@@ -12,6 +12,9 @@ import os
 import sys
 import weakref
 from functools import reduce, partial
+
+from markupsafe import Markup
+
 from jinja2 import nodes
 from jinja2.defaults import BLOCK_START_STRING, \
      BLOCK_END_STRING, VARIABLE_START_STRING, VARIABLE_END_STRING, \
@@ -26,7 +29,7 @@ from jinja2.compiler import generate, CodeGenerator
 from jinja2.runtime import Undefined, new_context, Context
 from jinja2.exceptions import TemplateSyntaxError, TemplateNotFound, \
      TemplatesNotFound, TemplateRuntimeError
-from jinja2.utils import import_string, LRUCache, Markup, missing, \
+from jinja2.utils import import_string, LRUCache, missing, \
      concat, consume, internalcode, have_async_gen
 from jinja2._compat import imap, ifilter, string_types, iteritems, \
      text_type, reraise, implements_iterator, implements_to_string, \
@@ -189,15 +192,14 @@ class Environment(object):
             ``None`` implicitly into an empty string here.
 
         `autoescape`
-            If set to ``True`` the XML/HTML autoescaping feature is enabled by
-            default.  For more details about autoescaping see
-            :class:`~jinja2.utils.Markup`.  As of Jinja 2.4 this can also
-            be a callable that is passed the template name and has to
-            return ``True`` or ``False`` depending on autoescape should be
-            enabled by default.
+            If set to ``True`` the HTML/XML autoescaping feature is
+            enabled by default. For more details about autoescaping see
+            :ref:`autoescaping`. This can also be a callable that is
+            passed the template name and returns whether autoescaping
+            should be enabled.
 
             .. versionchanged:: 2.4
-               `autoescape` can now be a function
+                Can be a function.
 
         `loader`
             The template loader for this environment.

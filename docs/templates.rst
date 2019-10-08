@@ -391,7 +391,7 @@ this template, it first locates the parent.  The extends tag should be the
 first tag in the template.  Everything before it is printed out normally and
 may cause confusion.  For details about this behavior and how to take
 advantage of it, see :ref:`null-master-fallback`. Also a block will always be
-filled in regardless of whether the surrounding condition is evaluated to be true 
+filled in regardless of whether the surrounding condition is evaluated to be true
 or false.
 
 The filename of the template depends on the template loader.  For example, the
@@ -527,7 +527,7 @@ When automatic escaping is enabled, everything is escaped by default except
 for values explicitly marked as safe.  Variables and expressions
 can be marked as safe either in:
 
-a. the context dictionary by the application with `MarkupSafe.Markup`, or
+a. the context dictionary by the application with :class:`markupsafe.Markup`, or
 b. the template, with the `|safe` filter
 
 The main problem with this approach is that Python itself doesn't have the
@@ -543,7 +543,7 @@ data that is marked as safe.
 
 String literals in templates with automatic escaping are considered unsafe
 because native Python strings (``str``, ``unicode``, ``basestring``) are not
-`MarkupSafe.Markup` strings with an ``__html__`` attribute.
+:class:`markupsafe.Markup` strings with an ``__html__`` attribute.
 
 .. _list-of-control-structures:
 
@@ -1672,8 +1672,8 @@ Autoescape Overrides
 
 .. versionadded:: 2.4
 
-If you want you can activate and deactivate the autoescaping from within
-the templates.
+If you want you can activate and deactivate :ref:`autoescaping` from within
+a template.
 
 Example::
 
@@ -1685,7 +1685,7 @@ Example::
         Autoescaping is inactive within this block
     {% endautoescape %}
 
-After an `endautoescape` the behavior is reverted to what it was before.
+After an ``endautoescape`` the behavior is reverted to what it was before.
 
 .. admonition:: Extension
 

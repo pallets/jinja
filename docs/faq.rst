@@ -95,7 +95,7 @@ means that you will less likely have an XSS problem it also causes a huge
 amount of extra processing in the template engine which can cause serious
 performance problems.  As Python doesn't provide a way to mark strings as
 unsafe Jinja has to hack around that limitation by providing a custom
-string class (the :class:`Markup` string) that safely interacts with safe
+string class (the :class:`~markupsafe.Markup` string) that safely interacts with safe
 and unsafe strings.
 
 With explicit escaping however the template engine doesn't have to perform

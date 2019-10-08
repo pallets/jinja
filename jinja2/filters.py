@@ -12,14 +12,16 @@ import re
 import math
 import random
 import warnings
-
 from itertools import groupby, chain
 from collections import namedtuple
-from jinja2.utils import Markup, escape, pformat, urlize, soft_unicode, \
+
+from markupsafe import Markup, escape, soft_unicode
+
+from jinja2.utils import pformat, urlize, \
      unicode_urlencode, htmlsafe_json_dumps
 from jinja2.runtime import Undefined
 from jinja2.exceptions import FilterArgumentError
-from jinja2._compat import imap, string_types, text_type, iteritems, PY2
+from jinja2._compat import imap, string_types, text_type, iteritems
 
 
 _word_re = re.compile(r'\w+', re.UNICODE)

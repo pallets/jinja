@@ -13,6 +13,9 @@ import json
 import errno
 from collections import deque
 from threading import Lock
+
+from markupsafe import Markup, escape
+
 from jinja2._compat import text_type, string_types, implements_iterator, \
      url_quote, abc
 
@@ -483,25 +486,28 @@ class LRUCache(object):
 abc.MutableMapping.register(LRUCache)
 
 
-def select_autoescape(enabled_extensions=('html', 'htm', 'xml'),
-                      disabled_extensions=(),
-                      default_for_string=True,
-                      default=False):
-    """Intelligently sets the initial value of autoescaping based on the
-    filename of the template.  This is the recommended way to configure
+def select_autoescape(
+    enabled_extensions=("html", "htm", "xml"),
+    disabled_extensions=(),
+    default_for_string=True,
+    default=False,
+):
+    """Set the initial value of autoescaping based on the name of the
+    template, case insensitive. This is the recommended way to configure
     autoescaping if you do not want to write a custom function yourself.
 
-    If you want to enable it for all templates created from strings or
-    for all templates with `.html` and `.xml` extensions::
+    The defaults will enable autoescaping only for template names ending
+    with ".html", ".htm", and ".xml", as well as templates from strings.
+
+    .. code-block:: python
 
         from jinja2 import Environment, select_autoescape
-        env = Environment(autoescape=select_autoescape(
-            enabled_extensions=('html', 'xml'),
-            default_for_string=True,
-        ))
+        env = Environment(autoescape=select_autoescape())
 
-    Example configuration to turn it on at all times except if the template
-    ends with `.txt`::
+    The following configuration enables it for all templates except if
+    the name ends with ".txt".
+
+    .. code-block:: python
 
         from jinja2 import Environment, select_autoescape
         env = Environment(autoescape=select_autoescape(
@@ -510,30 +516,36 @@ def select_autoescape(enabled_extensions=('html', 'htm', 'xml'),
             default=True,
         ))
 
-    The `enabled_extensions` is an iterable of all the extensions that
-    autoescaping should be enabled for.  Likewise `disabled_extensions` is
-    a list of all templates it should be disabled for.  If a template is
-    loaded from a string then the default from `default_for_string` is used.
-    If nothing matches then the initial value of autoescaping is set to the
-    value of `default`.
-
-    For security reasons this function operates case insensitive.
+    :param enabled_extensions: Template names ending in these extensions
+        will have autoescaping enabled. A "." is prepended to each value
+        if it's missing.
+    :param disabled_extensions: Template names ending in these
+        extensions will have autoescaping disabled. A "." is prepended
+        to each value if it's missing.
+    :param default_for_string: What to do if the template is loaded from
+        a string and doesn't have a name.
+    :param default: What to do if the name does not match any of the
+        other rules.
 
     .. versionadded:: 2.9
     """
-    enabled_patterns = tuple('.' + x.lstrip('.').lower()
-                             for x in enabled_extensions)
-    disabled_patterns = tuple('.' + x.lstrip('.').lower()
-                              for x in disabled_extensions)
+    enabled_patterns = tuple("." + x.lstrip(".").lower() for x in enabled_extensions)
+    disabled_patterns = tuple("." + x.lstrip(".").lower() for x in disabled_extensions)
+
     def autoescape(template_name):
         if template_name is None:
             return default_for_string
+
         template_name = template_name.lower()
+
         if template_name.endswith(enabled_patterns):
             return True
+
         if template_name.endswith(disabled_patterns):
             return False
+
         return default
+
     return autoescape
 
 
@@ -636,7 +648,3 @@ try:
     have_async_gen = True
 except SyntaxError:
     have_async_gen = False
-
-
-# Imported here because that's where it was in the past
-from markupsafe import Markup, escape, soft_unicode

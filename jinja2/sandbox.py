@@ -14,13 +14,13 @@
 """
 import types
 import operator
+from string import Formatter
+
+from markupsafe import Markup, EscapeFormatter
+
 from jinja2.environment import Environment
 from jinja2.exceptions import SecurityError
 from jinja2._compat import string_types, PY2, abc, range_type
-from jinja2.utils import Markup
-
-from markupsafe import EscapeFormatter
-from string import Formatter
 
 
 #: maximum number of items a range may produce

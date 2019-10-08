@@ -9,20 +9,21 @@
     :license: BSD, see LICENSE for more details.
 """
 from itertools import chain
-from copy import deepcopy
-from keyword import iskeyword as is_python_keyword
 from functools import update_wrapper
+from keyword import iskeyword as is_python_keyword
+
+from markupsafe import Markup, escape
+
 from jinja2 import nodes
 from jinja2.nodes import EvalContext
 from jinja2.visitor import NodeVisitor
 from jinja2.optimizer import Optimizer
 from jinja2.exceptions import TemplateAssertionError
-from jinja2.utils import Markup, concat, escape
+from jinja2.utils import concat
 from jinja2._compat import range_type, text_type, string_types, \
      iteritems, NativeStringIO, imap, izip
 from jinja2.idtracking import Symbols, VAR_LOAD_PARAMETER, \
      VAR_LOAD_RESOLVE, VAR_LOAD_ALIAS, VAR_LOAD_UNDEFINED
-
 
 operators = {
     'eq':       '==',
