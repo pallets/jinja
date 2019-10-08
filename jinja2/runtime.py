@@ -13,8 +13,10 @@ import sys
 from itertools import chain
 from types import MethodType
 
+from markupsafe import Markup, escape, soft_unicode
+
 from jinja2.nodes import EvalContext, _context_function_types
-from jinja2.utils import Markup, soft_unicode, escape, missing, concat, \
+from jinja2.utils import missing, concat, \
      internalcode, object_type_repr, evalcontextfunction, Namespace
 from jinja2.exceptions import UndefinedError, TemplateRuntimeError, \
      TemplateNotFound

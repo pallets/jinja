@@ -10,7 +10,9 @@
 """
 import pytest
 
-from jinja2 import Markup, Environment
+from markupsafe import Markup
+
+from jinja2 import Environment
 
 
 @pytest.mark.test_tests

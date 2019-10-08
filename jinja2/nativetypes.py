@@ -1,11 +1,14 @@
 import sys
 from ast import literal_eval
+
+from markupsafe import escape
+
 from itertools import islice, chain
 from jinja2 import nodes
 from jinja2._compat import text_type
 from jinja2.compiler import CodeGenerator, has_safe_repr
 from jinja2.environment import Environment, Template
-from jinja2.utils import concat, escape
+from jinja2.utils import concat
 
 
 def native_concat(nodes):

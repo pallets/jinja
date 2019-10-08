@@ -15,8 +15,9 @@
 import types
 import operator
 
+from markupsafe import Markup
+
 from collections import deque
-from jinja2.utils import Markup
 from jinja2._compat import izip, with_metaclass, text_type, PY2
 
 

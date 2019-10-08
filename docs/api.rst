@@ -36,8 +36,8 @@ This will create a template environment with the default settings and a
 loader that looks up the templates in the `templates` folder inside the
 `yourapplication` python package.  Different loaders are available
 and you can also write your own if you want to load templates from a
-database or other resources.  This also enables autoescaping for HTML and
-XML files.
+database or other resources.  This also enables :ref:`autoescaping` for
+HTML and XML files.
 
 To load a template from this environment you just have to call the
 :meth:`get_template` method which then returns the loaded :class:`Template`::
@@ -51,12 +51,6 @@ To render it with some variables, just call the :meth:`render` method::
 Using a template loader rather than passing strings to :class:`Template`
 or :meth:`Environment.from_string` has multiple advantages.  Besides being
 a lot easier to use it also enables template inheritance.
-
-.. admonition:: Notes on Autoescaping
-
-   In future versions of Jinja2 we might enable autoescaping by default
-   for security reasons.  As such you are encouraged to explicitly
-   configure autoescaping now instead of relying on the default.
 
 
 Unicode
@@ -254,44 +248,37 @@ useful if you want to dig deeper into Jinja2 or :ref:`develop extensions
     :members: disable_buffering, enable_buffering, dump
 
 
+.. _autoescaping:
+
 Autoescaping
 ------------
 
-.. versionchanged:: 2.4
+Autoescaping is a feature to mitigate injection attacks when rendering
+HTML and XML documents. When autoescaping is enabled, Jinja will use
+`MarkupSafe`_ to escape unsafe characters in the output of expressions,
+unless the output is marked safe. For example, if a comment contained
+``<script>alert("hello")</script>``, the tags would be rendered with
+escapes like ``&lt;script&gt;``. In a user's browser, the comment would
+display as text, rather than being interpreted as a script.
 
-Jinja2 now comes with autoescaping support.  As of Jinja 2.9 the
-autoescape extension is removed and built-in.  However autoescaping is
-not yet enabled by default though this will most likely change in the
-future.  It's recommended to configure a sensible default for
-autoescaping.  This makes it possible to enable and disable autoescaping
-on a per-template basis (HTML versus text for instance).
+Because Jinja can be used to render any type of document for many types
+of applications, not just HTML with untrusted input, autoescaping is not
+enabled by default. You should configure a sensible default based on
+your use case when creating the environment. The
+:func:`~jinja2.select_autoescape` function can be used to enable
+autoescaping for HTML templates while disabling it in text templates.
 
 .. autofunction:: jinja2.select_autoescape
 
-Here a recommended setup that enables autoescaping for templates ending
-in ``'.html'``, ``'.htm'`` and ``'.xml'`` and disabling it by default
-for all other extensions.  You can use the :func:`~jinja2.select_autoescape`
-function for this::
+You can also pass ``autoescape=True`` to enable it unconditionally, or
+pass your own function that takes the name of the template and returns
+whether it should be enabled. When writing a function, make sure to
+accept ``None`` as a name, as that will be passed for string templates.
 
-    from jinja2 import Environment, select_autoescape
-    env = Environment(autoescape=select_autoescape(['html', 'htm', 'xml']),
-                      loader=PackageLoader('mypackage'))
+Inside a template the behaviour can be temporarily changed by using
+the ``autoescape`` block, see :ref:`autoescape-overrides`.
 
-The :func:`~jinja.select_autoescape` function returns a function that
-works rougly like this::
-
-    def autoescape(template_name):
-        if template_name is None:
-            return False
-        if template_name.endswith(('.html', '.htm', '.xml'))
-
-When implementing a guessing autoescape function, make sure you also
-accept `None` as valid template name.  This will be passed when generating
-templates from strings.  You should always configure autoescaping as
-defaults in the future might change.
-
-Inside the templates the behaviour can be temporarily changed by using
-the `autoescape` block (see :ref:`autoescape-overrides`).
+.. _MarkupSafe: https://markupsafe.palletsprojects.com/
 
 
 .. _identifier-naming:
@@ -637,28 +624,14 @@ functions to a Jinja2 environment.
 
 .. autofunction:: jinja2.evalcontextfunction
 
-.. function:: escape(s)
-
-    Convert the characters ``&``, ``<``, ``>``, ``'``, and ``"`` in string `s`
-    to HTML-safe sequences.  Use this if you need to display text that might
-    contain such characters in HTML.  This function will not escaped objects
-    that do have an HTML representation such as already escaped data.
-
-    The return value is a :class:`Markup` string.
-
 .. autofunction:: jinja2.clear_caches
 
 .. autofunction:: jinja2.is_undefined
 
-.. autoclass:: jinja2.Markup([string])
+.. autofunction:: markupsafe.escape
+
+.. autoclass:: markupsafe.Markup
     :members: escape, unescape, striptags
-
-.. admonition:: Note
-
-    The Jinja2 :class:`Markup` class is compatible with at least Pylons and
-    Genshi.  It's expected that more template engines and framework will pick
-    up the `__html__` concept soon.
-
 
 Exceptions
 ----------
@@ -738,7 +711,8 @@ paragraphs and marks the return value as safe HTML string if autoescaping is
 enabled::
 
     import re
-    from jinja2 import evalcontextfilter, Markup, escape
+    from jinja2 import evalcontextfilter
+    from markupsafe import Markup, escape
 
     _paragraph_re = re.compile(r'(?:\r\n|\r|\n){2,}')
 

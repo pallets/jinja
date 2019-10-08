@@ -12,6 +12,8 @@
 """
 import re
 
+from markupsafe import Markup
+
 from jinja2 import nodes
 from jinja2.defaults import BLOCK_START_STRING, \
      BLOCK_END_STRING, VARIABLE_START_STRING, VARIABLE_END_STRING, \
@@ -21,7 +23,7 @@ from jinja2.defaults import BLOCK_START_STRING, \
 from jinja2.environment import Environment
 from jinja2.runtime import concat
 from jinja2.exceptions import TemplateAssertionError, TemplateSyntaxError
-from jinja2.utils import contextfunction, import_string, Markup
+from jinja2.utils import contextfunction, import_string
 from jinja2._compat import with_metaclass, string_types, iteritems
 
 
