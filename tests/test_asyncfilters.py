@@ -91,14 +91,14 @@ def test_groupby_multidot(env_async, articles):
 
 
 @mark_dualiter('int_items', lambda: [1, 2, 3])
-def test_join(env_async, int_items):
+def test_join_env_int(env_async, int_items):
     tmpl = env_async.from_string('{{ items()|join("|") }}')
     out = tmpl.render(items=int_items)
     assert out == '1|2|3'
 
 
 @mark_dualiter('string_items', lambda: ["<foo>", Markup("<span>foo</span>")])
-def test_join(string_items):
+def test_join_string_list(string_items):
     env2 = Environment(autoescape=True, enable_async=True)
     tmpl = env2.from_string(
         '{{ ["<foo>", "<span>foo</span>"|safe]|join }}')
