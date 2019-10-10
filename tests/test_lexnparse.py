@@ -251,12 +251,8 @@ and bar comment #}
 
     def test_error_messages(self, env):
         def assert_error(code, expected):
-            try:
+            with pytest.raises(TemplateSyntaxError, match=expected):
                 Template(code)
-            except TemplateSyntaxError as e:
-                assert str(e) == expected, 'unexpected error message'
-            else:
-                assert False, 'that was supposed to be an error'
 
         assert_error('{% for item in seq %}...{% endif %}',
                      "Encountered unknown tag 'endif'. Jinja was looking "
