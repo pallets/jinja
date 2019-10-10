@@ -336,21 +336,12 @@ class TestUndefined(object):
         pytest.raises(UndefinedError, t.render, var=0)
 
     def test_none_gives_proper_error(self):
-        try:
+        with pytest.raises(UndefinedError, match="'None' has no attribute 'split'"):
             Environment().getattr(None, 'split')()
-        except UndefinedError as e:
-            assert e.message == "'None' has no attribute 'split'"
-        else:
-            assert False, 'expected exception'
 
     def test_object_repr(self):
-        try:
+        with pytest.raises(UndefinedError, match="'int object' has no attribute 'upper'"):
             Undefined(obj=42, name='upper')()
-        except UndefinedError as e:
-            assert e.message == "'int object' has no attribute 'upper'"
-        else:
-            assert False, 'expected exception'
-
 
 @pytest.mark.api
 @pytest.mark.lowlevel
