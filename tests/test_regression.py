@@ -257,12 +257,10 @@ class TestBug(object):
         env = Environment(loader=PrefixLoader({
             'foo':  DictLoader({})
         }))
-        try:
+        with pytest.raises(TemplateNotFound) as e:
             env.get_template('foo/bar.html')
-        except TemplateNotFound as e:
-            assert e.name == 'foo/bar.html'
-        else:
-            assert False, 'expected error here'
+
+        assert e.value.name == 'foo/bar.html'
 
     def test_contextfunction_callable_classes(self, env):
         from jinja2.utils import contextfunction

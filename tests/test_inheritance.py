@@ -242,7 +242,5 @@ class TestBugFix(object):
         """Ensures that a template with more than 1 {% extends ... %} usage
         raises a ``TemplateError``.
         """
-        try:
+        with pytest.raises(TemplateError):
             tmpl = env.get_template('doublee')
-        except Exception as e:
-            assert isinstance(e, TemplateError)

@@ -119,13 +119,11 @@ class TestIncludes(object):
 
         t = test_env.from_string('{% include ["missing", "missing2"] %}')
         pytest.raises(TemplateNotFound, t.render)
-        try:
+        with pytest.raises(TemplatesNotFound) as e:
             t.render()
-        except TemplatesNotFound as e:
-            assert e.templates == ['missing', 'missing2']
-            assert e.name == 'missing2'
-        else:
-            assert False, 'thou shalt raise'
+
+        assert e.value.templates == ['missing', 'missing2']
+        assert e.value.name == 'missing2'
 
         def test_includes(t, **ctx):
             ctx['foo'] = 42
