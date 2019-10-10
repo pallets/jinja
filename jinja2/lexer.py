@@ -182,7 +182,7 @@ def _describe_token_type(token_type):
 
 def describe_token(token):
     """Returns a description of the token."""
-    if token.type == 'name':
+    if token.type == TOKEN_NAME:
         return token.value
     return _describe_token_type(token.type)
 
@@ -191,7 +191,7 @@ def describe_token_expr(expr):
     """Like `describe_token` but for token expressions."""
     if ':' in expr:
         type, value = expr.split(':', 1)
-        if type == 'name':
+        if type == TOKEN_NAME:
             return value
     else:
         type = expr
@@ -209,19 +209,19 @@ def compile_rules(environment):
     """Compiles all the rules from the environment into a list of rules."""
     e = re.escape
     rules = [
-        (len(environment.comment_start_string), 'comment',
+        (len(environment.comment_start_string), TOKEN_COMMENT_BEGIN,
          e(environment.comment_start_string)),
-        (len(environment.block_start_string), 'block',
+        (len(environment.block_start_string), TOKEN_BLOCK_BEGIN,
          e(environment.block_start_string)),
-        (len(environment.variable_start_string), 'variable',
+        (len(environment.variable_start_string), TOKEN_VARIABLE_BEGIN,
          e(environment.variable_start_string))
     ]
 
     if environment.line_statement_prefix is not None:
-        rules.append((len(environment.line_statement_prefix), 'linestatement',
+        rules.append((len(environment.line_statement_prefix), TOKEN_LINESTATEMENT_BEGIN,
                       r'^[ \t\v]*' + e(environment.line_statement_prefix)))
     if environment.line_comment_prefix is not None:
-        rules.append((len(environment.line_comment_prefix), 'linecomment',
+        rules.append((len(environment.line_comment_prefix), TOKEN_LINECOMMENT_BEGIN,
                       r'(?:^|(?<=\S))[^\S\r\n]*' +
                       e(environment.line_comment_prefix)))
 
@@ -328,7 +328,10 @@ class TokenStream(object):
         return bool(self._pushed) or self.current.type is not TOKEN_EOF
     __nonzero__ = __bool__  # py2
 
-    eos = property(lambda x: not x, doc="Are we at the end of the stream?")
+    @property
+    def eos(self):
+        """Are we at the end of the stream?"""
+        return not self
 
     def push(self, token):
         """Push a token back to the stream."""
@@ -485,7 +488,7 @@ class Lexer(object):
                         e(environment.block_end_string),
                         e(environment.block_end_string)
                     )] + [
-                        r'(?P<%s_begin>%s(\-|\+|))' % (n, r)
+                        r'(?P<%s>%s(\-|\+|))' % (n, r)
                         for n, r in root_tag_rules
                     ])), OptionalLStrip(TOKEN_DATA, '#bygroup'), '#bygroup'),
                 # data
@@ -553,24 +556,24 @@ class Lexer(object):
         for lineno, token, value in stream:
             if token in ignored_tokens:
                 continue
-            elif token == 'linestatement_begin':
-                token = 'block_begin'
-            elif token == 'linestatement_end':
-                token = 'block_end'
+            elif token == TOKEN_LINESTATEMENT_BEGIN:
+                token = TOKEN_BLOCK_BEGIN
+            elif token == TOKEN_LINESTATEMENT_END:
+                token = TOKEN_BLOCK_END
             # we are not interested in those tokens in the parser
-            elif token in ('raw_begin', 'raw_end'):
+            elif token in (TOKEN_RAW_BEGIN, TOKEN_RAW_END):
                 continue
-            elif token == 'data':
+            elif token == TOKEN_DATA:
                 value = self._normalize_newlines(value)
             elif token == 'keyword':
                 token = value
-            elif token == 'name':
+            elif token == TOKEN_NAME:
                 value = str(value)
                 if check_ident and not value.isidentifier():
                     raise TemplateSyntaxError(
                         'Invalid character in identifier',
                         lineno, name, filename)
-            elif token == 'string':
+            elif token == TOKEN_STRING:
                 # try to unescape string
                 try:
                     value = self._normalize_newlines(value[1:-1]) \
@@ -579,12 +582,12 @@ class Lexer(object):
                 except Exception as e:
                     msg = str(e).split(':')[-1].strip()
                     raise TemplateSyntaxError(msg, lineno, name, filename)
-            elif token == 'integer':
+            elif token == TOKEN_INTEGER:
                 value = int(value.replace("_", ""))
-            elif token == 'float':
+            elif token == TOKEN_FLOAT:
                 # remove all "_" first to support more Python versions
                 value = literal_eval(value.replace("_", ""))
-            elif token == 'operator':
+            elif token == TOKEN_OPERATOR:
                 token = operators[value]
             yield Token(lineno, token, value)
 
@@ -623,9 +626,12 @@ class Lexer(object):
                 # are balanced. continue parsing with the lower rule which
                 # is the operator rule. do this only if the end tags look
                 # like operators
-                if balancing_stack and \
-                   tokens in ('variable_end', 'block_end',
-                              'linestatement_end'):
+                if (
+                    balancing_stack
+                    and tokens in (
+                        TOKEN_VARIABLE_END, TOKEN_BLOCK_END, TOKEN_LINESTATEMENT_END
+                    )
+                ):
                     continue
 
                 # tuples support more options
@@ -651,7 +657,7 @@ class Lexer(object):
                             # lstrip is enabled.
                             and lstrip_unless_re is not None
                             # Not a variable expression.
-                            and not m.groupdict().get("variable_begin")
+                            and not m.groupdict().get(TOKEN_VARIABLE_BEGIN)
                         ):
                             # The start of text between the last newline and the tag.
                             l_pos = text.rfind('\n') + 1
@@ -690,7 +696,7 @@ class Lexer(object):
                 else:
                     data = m.group()
                     # update brace/parentheses balance
-                    if tokens == 'operator':
+                    if tokens == TOKEN_OPERATOR:
                         if data == '{':
                             balancing_stack.append('}')
                         elif data == '(':
