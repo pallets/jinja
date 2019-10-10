@@ -11,7 +11,7 @@
 import pytest
 
 from jinja2 import Environment, DictLoader, TemplateError
-
+from jinja2 import TemplateRuntimeError
 
 LAYOUTTEMPLATE = '''\
 |{% block block1 %}block 1 from layout{% endblock %}
@@ -242,5 +242,5 @@ class TestBugFix(object):
         """Ensures that a template with more than 1 {% extends ... %} usage
         raises a ``TemplateError``.
         """
-        with pytest.raises(TemplateError):
-            tmpl = env.get_template('doublee')
+        with pytest.raises(TemplateRuntimeError, match="extended multiple times"):
+            env.get_template('doublee').render()
