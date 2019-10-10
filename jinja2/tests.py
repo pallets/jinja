@@ -130,7 +130,7 @@ def test_mapping(value):
 
 def test_number(value):
     """Return true if the variable is a number."""
-    return type(value) in integer_types + (float, complex, decimal.Decimal))
+    return type(value) in integer_types + (float, complex, decimal.Decimal)
 
 
 def test_sequence(value):
