@@ -81,8 +81,8 @@ class TestTestsCase(object):
         ('(10 ** 100) is float', False),
 
         ('none is number', False),
-        ('false is number', True),
-        ('true is number', True),
+        ('false is number', False),
+        ('true is number', False),
         ('42 is number', True),
         ('3.14159 is number', True),
         ('complex is number', True),
