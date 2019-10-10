@@ -32,6 +32,8 @@ Unreleased
 -   Parentheses around comparisons are preserved, so
     ``{{ 2 * (3 < 5) }}`` outputs "2" instead of "False".
     :issue:`755`, :pr:`938`
+-   Add new ``boolean``, ``false``, ``true``, ``integer`` and ``float``
+    tests. :pr:`824`
 
 
 Version 2.10.3

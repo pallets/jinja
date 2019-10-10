@@ -63,6 +63,48 @@ def test_none(value):
     return value is None
 
 
+def test_boolean(value):
+    """Return true if the object is a boolean value.
+
+    .. versionadded:: 2.11
+    """
+    return value is True or value is False
+
+
+def test_false(value):
+    """Return true if the object is False.
+
+    .. versionadded:: 2.11
+    """
+    return value is False
+
+
+def test_true(value):
+    """Return true if the object is True.
+
+    .. versionadded:: 2.11
+    """
+    return value is True
+
+
+# NOTE: The existing Jinja2 'number' test matches booleans and floats
+def test_integer(value):
+    """Return true if the object is an integer.
+
+    .. versionadded:: 2.11
+    """
+    return isinstance(value, integer_types) and value is not True and value is not False
+
+
+# NOTE: The existing Jinja2 'number' test matches booleans and integers
+def test_float(value):
+    """Return true if the object is a float.
+
+    .. versionadded:: 2.11
+    """
+    return isinstance(value, float)
+
+
 def test_lower(value):
     """Return true if the variable is lowercased."""
     return text_type(value).islower()
@@ -145,6 +187,11 @@ TESTS = {
     'defined':          test_defined,
     'undefined':        test_undefined,
     'none':             test_none,
+    'boolean':          test_boolean,
+    'false':            test_false,
+    'true':             test_true,
+    'integer':          test_integer,
+    'float':            test_float,
     'lower':            test_lower,
     'upper':            test_upper,
     'string':           test_string,
