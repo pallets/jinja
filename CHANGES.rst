@@ -39,6 +39,10 @@ Unreleased
     :issue:`63`
 -   When providing multiple paths to ``FileSystemLoader``, a template
     can have the same name as a directory. :issue:`821`
+-   Make the undefined object returned by ``{{ 'foo' if bar }}`` configurable,
+    and default to standard ``Undefined`` regardless of what is specified as
+    the environment's ``undefined`` object as doing so is not compatible with
+    ``StrictUndefined``. :issue:`710`, :pr:`1079`
 
 
 Version 2.10.3

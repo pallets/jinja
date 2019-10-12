@@ -1355,7 +1355,8 @@ The general syntax is ``<do something> if <something is true> else <do
 something else>``.
 
 The `else` part is optional.  If not provided, the else block implicitly
-evaluates into an undefined object:
+evaluates into an undefined object (using the environment's undefined object
+specified in ``cond_expr_undefined``):
 
 .. sourcecode:: jinja
 

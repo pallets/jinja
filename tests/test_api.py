@@ -368,6 +368,15 @@ class TestUndefined(object):
         with pytest.raises(AttributeError):
             getattr(StrictUndefined, '__slots__')
 
+    def test_cond_expr_undefined(self):
+        env = Environment(cond_expr_undefined=StrictUndefined)
+        env2 = Environment(undefined=StrictUndefined)
+        pytest.raises(UndefinedError,
+                      env.from_string('{{ "foo" if false }}').render)
+        assert env.from_string('{{ ("foo" if false) is defined }}').render() == 'False'
+        assert env2.from_string('{{ "foo" if false }}').render() == ''
+        assert env2.from_string('{{ ("foo" if false) is defined }}').render() == 'False'
+
     def test_indexing_gives_undefined(self):
         t = Template("{{ var[42].foo }}")
         pytest.raises(UndefinedError, t.render, var=0)
