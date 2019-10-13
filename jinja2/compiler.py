@@ -609,6 +609,9 @@ class CodeGenerator(NodeVisitor):
         """
         self.writeline('resolve = context.resolve_or_missing')
         self.writeline('undefined = environment.undefined')
+        # always use the standard Undefined class for the implicit else of
+        # conditional expressions
+        self.writeline('cond_expr_undefined = Undefined')
         self.writeline('if 0: yield None')
 
     def push_parameter_definitions(self, frame):
@@ -1623,7 +1626,7 @@ class CodeGenerator(NodeVisitor):
         def write_expr2():
             if node.expr2 is not None:
                 return self.visit(node.expr2, frame)
-            self.write('undefined(%r)' % ('the inline if-'
+            self.write('cond_expr_undefined(%r)' % ('the inline if-'
                        'expression on %s evaluated to false and '
                        'no else section was defined.' % self.position(node)))
 

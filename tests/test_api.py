@@ -367,6 +367,7 @@ class TestUndefined(object):
             .render() == 'default'
         with pytest.raises(AttributeError):
             getattr(StrictUndefined, '__slots__')
+        assert env.from_string('{{ "foo" if false }}').render() == ''
 
     def test_indexing_gives_undefined(self):
         t = Template("{{ var[42].foo }}")
