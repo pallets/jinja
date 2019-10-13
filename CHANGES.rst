@@ -1,7 +1,7 @@
 .. currentmodule:: jinja2
 
-Version 2.11
-------------
+Version 2.11.0
+--------------
 
 Unreleased
 
@@ -37,6 +37,8 @@ Unreleased
 -   The environment's ``finalize`` function is only applied to the
     output of expressions (constant or not), not static template data.
     :issue:`63`
+-   When providing multiple paths to ``FileSystemLoader``, a template
+    can have the same name as a directory. :issue:`821`
 
 
 Version 2.10.3
