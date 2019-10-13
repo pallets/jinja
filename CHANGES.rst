@@ -39,10 +39,11 @@ Unreleased
     :issue:`63`
 -   When providing multiple paths to ``FileSystemLoader``, a template
     can have the same name as a directory. :issue:`821`
--   Make the undefined object returned by ``{{ 'foo' if bar }}`` configurable,
-    and default to standard ``Undefined`` regardless of what is specified as
-    the environment's ``undefined`` object as doing so is not compatible with
-    ``StrictUndefined``. :issue:`710`, :pr:`1079`
+-   Always return a standard :class:`Undefined` when omitting the else clause
+    in a ``{{ 'foo' if bar }}`` expression, regardless of what is specified as
+    the environment's ``undefined`` class, as omitting the else clause is a
+    valid shortcut and not actually an undefined variable that shauld cause
+    an error (in case of :class:`StrictUndefined`). :issue:`710`, :pr:`1079`
 
 
 Version 2.10.3

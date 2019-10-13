@@ -367,15 +367,7 @@ class TestUndefined(object):
             .render() == 'default'
         with pytest.raises(AttributeError):
             getattr(StrictUndefined, '__slots__')
-
-    def test_cond_expr_undefined(self):
-        env = Environment(cond_expr_undefined=StrictUndefined)
-        env2 = Environment(undefined=StrictUndefined)
-        pytest.raises(UndefinedError,
-                      env.from_string('{{ "foo" if false }}').render)
-        assert env.from_string('{{ ("foo" if false) is defined }}').render() == 'False'
-        assert env2.from_string('{{ "foo" if false }}').render() == ''
-        assert env2.from_string('{{ ("foo" if false) is defined }}').render() == 'False'
+        assert env.from_string('{{ "foo" if false }}').render() == ''
 
     def test_indexing_gives_undefined(self):
         t = Template("{{ var[42].foo }}")
