@@ -34,6 +34,9 @@ Unreleased
     :issue:`755`, :pr:`938`
 -   Add new ``boolean``, ``false``, ``true``, ``integer`` and ``float``
     tests. :pr:`824`
+-   The environment's ``finalize`` function is only applied to the
+    output of expressions (constant or not), not static template data.
+    :issue:`63`
 
 
 Version 2.10.3
