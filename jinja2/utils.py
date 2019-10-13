@@ -8,9 +8,9 @@
     :copyright: (c) 2017 by the Jinja Team.
     :license: BSD, see LICENSE for more details.
 """
+import os
 import re
 import json
-import errno
 import warnings
 from collections import deque
 from threading import Lock
@@ -147,13 +147,12 @@ def import_string(import_name, silent=False):
 
 def open_if_exists(filename, mode='rb'):
     """Returns a file descriptor for the filename if that file exists,
-    otherwise `None`.
+    otherwise ``None``.
     """
-    try:
-        return open(filename, mode)
-    except IOError as e:
-        if e.errno not in (errno.ENOENT, errno.EISDIR, errno.EINVAL):
-            raise
+    if not os.path.isfile(filename):
+        return None
+
+    return open(filename, mode)
 
 
 def object_type_repr(obj):

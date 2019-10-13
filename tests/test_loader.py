@@ -44,6 +44,17 @@ class TestLoaders(object):
         assert tmpl.render().strip() == 'FOO'
         pytest.raises(TemplateNotFound, env.get_template, 'missing.html')
 
+    def test_filesystem_loader_overlapping_names(self, filesystem_loader):
+        res = os.path.dirname(filesystem_loader.searchpath[0])
+        t2_dir = os.path.join(res, "templates2")
+        # Make "foo" show up before "foo/test.html".
+        filesystem_loader.searchpath.insert(0, t2_dir)
+        e = Environment(loader=filesystem_loader)
+        e.get_template("foo")
+        # This would raise NotADirectoryError if "t2/foo" wasn't skipped.
+        e.get_template("foo/test.html")
+
+
     def test_choice_loader(self, choice_loader):
         env = Environment(loader=choice_loader)
         tmpl = env.get_template('justdict.html')
