@@ -19,6 +19,9 @@ from jinja2 import Environment, Undefined, ChainableUndefined, \
 from jinja2.compiler import CodeGenerator
 from jinja2.runtime import Context
 from jinja2.utils import Cycler
+from jinja2.utils import contextfunction
+from jinja2.utils import evalcontextfunction
+from jinja2.utils import environmentfunction
 
 
 @pytest.mark.api
@@ -37,16 +40,50 @@ class TestExtendedAPI(object):
             tmpl = env.from_string('{{ foo["items"] }}')
             assert tmpl.render(foo={'items': 42}) == '42'
 
-    def test_finalizer(self, env):
-        def finalize_none_empty(value):
-            if value is None:
-                value = u''
-            return value
-        env = Environment(finalize=finalize_none_empty)
-        tmpl = env.from_string('{% for item in seq %}|{{ item }}{% endfor %}')
-        assert tmpl.render(seq=(None, 1, "foo")) == '||1|foo'
-        tmpl = env.from_string('<{{ none }}>')
-        assert tmpl.render() == '<>'
+    def test_finalize(self):
+        e = Environment(finalize=lambda v: "" if v is None else v)
+        t = e.from_string("{% for item in seq %}|{{ item }}{% endfor %}")
+        assert t.render(seq=(None, 1, "foo")) == "||1|foo"
+
+    def test_finalize_constant_expression(self):
+        e = Environment(finalize=lambda v: "" if v is None else v)
+        t = e.from_string("<{{ none }}>")
+        assert t.render() == "<>"
+
+    def test_no_finalize_template_data(self):
+        e = Environment(finalize=lambda v: type(v).__name__)
+        t = e.from_string("<{{ value }}>")
+        # If template data was finalized, it would print "strintstr".
+        assert t.render(value=123) == "<int>"
+
+    def test_context_finalize(self):
+        @contextfunction
+        def finalize(context, value):
+            return value * context["scale"]
+
+        e = Environment(finalize=finalize)
+        t = e.from_string("{{ value }}")
+        assert t.render(value=5, scale=3) == "15"
+
+    def test_eval_finalize(self):
+        @evalcontextfunction
+        def finalize(eval_ctx, value):
+            return str(eval_ctx.autoescape) + value
+
+        e = Environment(finalize=finalize, autoescape=True)
+        t = e.from_string("{{ value }}")
+        assert t.render(value="<script>") == "True&lt;script&gt;"
+
+    def test_env_autoescape(self):
+        @environmentfunction
+        def finalize(env, value):
+            return " ".join(
+                (env.variable_start_string, repr(value), env.variable_end_string)
+            )
+
+        e = Environment(finalize=finalize)
+        t = e.from_string("{{ value }}")
+        assert t.render(value="hello") == "{{ 'hello' }}"
 
     def test_cycler(self, env):
         items = 1, 2, 3

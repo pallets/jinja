@@ -1224,19 +1224,28 @@ class CodeGenerator(NodeVisitor):
         if self.has_known_extends and frame.require_output_check:
             return
 
+        finalize = text_type
+        finalize_src = None
         allow_constant_finalize = True
+
         if self.environment.finalize:
-            func = self.environment.finalize
-            if getattr(func, 'contextfunction', False) or \
-               getattr(func, 'evalcontextfunction', False):
+            env_finalize = self.environment.finalize
+            finalize_src = "environment.finalize("
+
+            def finalize(value):
+                return text_type(env_finalize(value))
+
+            if getattr(env_finalize, "contextfunction", False):
+                finalize_src += "context, "
                 allow_constant_finalize = False
-            elif getattr(func, 'environmentfunction', False):
-                finalize = lambda x: text_type(
-                    self.environment.finalize(self.environment, x))
-            else:
-                finalize = lambda x: text_type(self.environment.finalize(x))
-        else:
-            finalize = text_type
+            elif getattr(env_finalize, "evalcontextfunction", False):
+                finalize_src += "context.eval_ctx, "
+                allow_constant_finalize = False
+            elif getattr(env_finalize, "environmentfunction", False):
+                finalize_src += "environment, "
+
+                def finalize(value):
+                    return text_type(env_finalize(self.environment, value))
 
         # if we are inside a frame that requires output checking, we do so
         outdent_later = False
@@ -1250,27 +1259,37 @@ class CodeGenerator(NodeVisitor):
         body = []
         for child in node.nodes:
             try:
-                if not allow_constant_finalize:
+                # If the finalize function needs context, and this isn't
+                # template data, evaluate the node at render.
+                if not (
+                    allow_constant_finalize
+                    or isinstance(child, nodes.TemplateData)
+                ):
                     raise nodes.Impossible()
+
                 const = child.as_const(frame.eval_ctx)
             except nodes.Impossible:
                 body.append(child)
                 continue
+
             # the frame can't be volatile here, becaus otherwise the
             # as_const() function would raise an Impossible exception
             # at that point.
             try:
                 if frame.eval_ctx.autoescape:
-                    if hasattr(const, '__html__'):
-                        const = const.__html__()
-                    else:
-                        const = escape(const)
-                const = finalize(const)
+                    const = escape(const)
+
+                # Only call finalize on expressions, not template data.
+                if isinstance(child, nodes.TemplateData):
+                    const = text_type(const)
+                else:
+                    const = finalize(const)
             except Exception:
                 # if something goes wrong here we evaluate the node
                 # at runtime for easier debugging
                 body.append(child)
                 continue
+
             if body and isinstance(body[-1], list):
                 body[-1].append(const)
             else:
@@ -1306,10 +1325,7 @@ class CodeGenerator(NodeVisitor):
                     else:
                         self.write('to_string(')
                     if self.environment.finalize is not None:
-                        self.write('environment.finalize(')
-                        if getattr(self.environment.finalize,
-                                   "contextfunction", False):
-                            self.write('context, ')
+                        self.write(finalize_src)
                         close += 1
                     self.visit(item, frame)
                     self.write(')' * close)
@@ -1344,16 +1360,7 @@ class CodeGenerator(NodeVisitor):
                     self.write('escape(')
                     close += 1
                 if self.environment.finalize is not None:
-                    self.write('environment.finalize(')
-                    if getattr(self.environment.finalize,
-                               'contextfunction', False):
-                        self.write('context, ')
-                    elif getattr(self.environment.finalize,
-                               'evalcontextfunction', False):
-                        self.write('context.eval_ctx, ')
-                    elif getattr(self.environment.finalize,
-                               'environmentfunction', False):
-                        self.write('environment, ')
+                    self.write(finalize_src)
                     close += 1
                 self.visit(argument, frame)
                 self.write(')' * close + ', ')
