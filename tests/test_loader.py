@@ -9,21 +9,24 @@
     :license: BSD, see LICENSE for more details.
 """
 import os
+import shutil
 import sys
 import tempfile
-import shutil
-import pytest
 import weakref
 
-from jinja2 import Environment, loaders
-from jinja2._compat import PYPY, PY2
-from jinja2.loaders import split_template_path
+import pytest
+
+from jinja2 import Environment
+from jinja2 import loaders
+from jinja2 import PackageLoader
+from jinja2._compat import PY2
+from jinja2._compat import PYPY
 from jinja2.exceptions import TemplateNotFound
+from jinja2.loaders import split_template_path
 
 
 @pytest.mark.loaders
 class TestLoaders(object):
-
     def test_dict_loader(self, dict_loader):
         env = Environment(loader=dict_loader)
         tmpl = env.get_template('justdict.html')
@@ -53,7 +56,6 @@ class TestLoaders(object):
         e.get_template("foo")
         # This would raise NotADirectoryError if "t2/foo" wasn't skipped.
         e.get_template("foo/test.html")
-
 
     def test_choice_loader(self, choice_loader):
         env = Environment(loader=choice_loader)
@@ -243,3 +245,52 @@ class TestModuleLoader(object):
         assert tmpl1.render() == 'BAR'
         tmpl2 = self.mod_env.get_template('DICT/test.html')
         assert tmpl2.render() == 'DICT_TEMPLATE'
+
+
+@pytest.fixture()
+def package_dir_loader(monkeypatch):
+    monkeypatch.syspath_prepend(os.path.dirname(__file__))
+    return PackageLoader("res")
+
+
+@pytest.mark.parametrize(
+    ("template", "expect"), [("foo/test.html", "FOO"), ("test.html", "BAR")]
+)
+def test_package_dir_source(package_dir_loader, template, expect):
+    source, name, up_to_date = package_dir_loader.get_source(None, template)
+    assert source.rstrip() == expect
+    assert name.endswith(os.path.join(*split_template_path(template)))
+    assert up_to_date()
+
+
+def test_package_dir_list(package_dir_loader):
+    templates = package_dir_loader.list_templates()
+    assert "foo/test.html" in templates
+    assert "test.html" in templates
+
+
+@pytest.fixture()
+def package_zip_loader(monkeypatch):
+    monkeypatch.syspath_prepend(
+        os.path.join(os.path.dirname(__file__), "res", "package.zip")
+    )
+    return PackageLoader("t_pack")
+
+
+@pytest.mark.parametrize(
+    ("template", "expect"), [("foo/test.html", "FOO"), ("test.html", "BAR")]
+)
+def test_package_zip_source(package_zip_loader, template, expect):
+    source, name, up_to_date = package_zip_loader.get_source(None, template)
+    assert source.rstrip() == expect
+    assert name.endswith(os.path.join(*split_template_path(template)))
+    assert up_to_date is None
+
+
+@pytest.mark.xfail(
+    PYPY,
+    reason="PyPy's zipimporter doesn't have a _files attribute.",
+    raises=TypeError,
+)
+def test_package_zip_list(package_zip_loader):
+    assert package_zip_loader.list_templates() == ["foo/test.html", "test.html"]
