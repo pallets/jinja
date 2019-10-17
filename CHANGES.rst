@@ -47,6 +47,8 @@ Unreleased
 -   Fix behavior of ``loop`` control variables such as ``length`` and
     ``revindex0`` when looping over a generator. :issue:`459, 751, 794`,
     :pr:`993`
+-   ``PackageLoader`` doesn't depend on setuptools or pkg_resources.
+    :issue:`970`
 
 
 Version 2.10.3
