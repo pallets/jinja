@@ -567,16 +567,19 @@ When automatic escaping is enabled, everything is escaped by default except
 for values explicitly marked as safe.  Variables and expressions
 can be marked as safe either in:
 
-a. the context dictionary by the application with `MarkupSafe.Markup`, or
-b. the template, with the `|safe` filter
+a.  The context dictionary by the application with
+    :class:`markupsafe.Markup`
+b.  The template, with the ``|safe`` filter.
 
-The main problem with this approach is that Python itself doesn't have the
-concept of tainted values; so whether a value is safe or unsafe can get lost.
+If a string that you marked safe is passed through other Python code
+that doesn't understand that mark, it may get lost. Be aware of when
+your data is marked safe and how it is processed before arriving at the
+template.
 
-If a value is not marked safe, auto-escaping will take place; which means that
-you could end up with double-escaped contents.  Double-escaping is easy to
-avoid, however: just rely on the tools Jinja2 provides and *don't use builtin
-Python constructs such as str.format or the string modulo operator (%)*.
+If a value has been escaped but is not marked safe, auto-escaping will
+still take place and result in double-escaped characters. If you know
+you have data that is already safe but not marked, be sure to wrap it in
+``Markup`` or use the ``|safe`` filter.
 
 Jinja2 functions (macros, `super`, `self.BLOCKNAME`) always return template
 data that is marked as safe.
@@ -1376,13 +1379,27 @@ Here is an example that uses methods defined on strings (where ``page.title`` is
 
     {{ page.title.capitalize() }}
 
-This also works for methods on user-defined types.
-For example, if variable ``f`` of type ``Foo`` has a method ``bar`` defined on it,
-you can do the following:
+This works for methods on user-defined types. For example, if variable
+``f`` of type ``Foo`` has a method ``bar`` defined on it, you can do the
+following:
 
 .. code-block:: text
 
-    {{ f.bar() }}
+    {{ f.bar(value) }}
+
+Operator methods also work as expected. For example, ``%`` implements
+printf-style for strings:
+
+.. code-block:: text
+
+    {{ "Hello, %s!" % name }}
+
+Although you should prefer the ``.format`` method for that case (which
+is a bit contrived in the context of rendering a template):
+
+.. code-block:: text
+
+    {{ "Hello, {}!".format(name) }}
 
 
 .. _builtin-filters:
