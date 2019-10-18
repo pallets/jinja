@@ -57,6 +57,20 @@ configured as follows:
 * ``#  ... ##`` for :ref:`Line Statements <line-statements>`
 
 
+Template File Extension
+~~~~~~~~~~~~~~~~~~~~~~~
+
+As stated above, any file can be loaded as a template, regardless of
+file extension. Adding a ``.jinja`` extension, like ``user.html.jinja``
+may make it easier for some IDEs or editor plugins, but is not required.
+Autoescaping, introduced later, can be applied based on file extension,
+so you'll need to take the extra suffix into account in that case.
+
+Another good heuristic for identifying templates is that they are in a
+``templates`` folder, regardless of extension. This is a common layout
+for projects.
+
+
 .. _variables:
 
 Variables
