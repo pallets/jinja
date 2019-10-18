@@ -743,13 +743,24 @@ def do_float(value, default=0.0):
 
 
 def do_format(value, *args, **kwargs):
-    """
-    Apply python string formatting on an object:
+    """Apply the given values to a `printf-style`_ format string, like
+    ``string % values``.
 
     .. sourcecode:: jinja
 
-        {{ "%s - %s"|format("Hello?", "Foo!") }}
-            -> Hello? - Foo!
+        {{ "%s, %s!"|format(greeting, name) }}
+        Hello, World!
+
+    In most cases it should be more convenient and efficient to use the
+    ``%`` operator or :meth:`str.format`.
+
+    .. code-block:: text
+
+        {{ "%s, %s!" % (greeting, name) }}
+        {{ "{}, {}!".format(greeting, name) }}
+
+    .. _printf-style: https://docs.python.org/library/stdtypes.html
+        #printf-style-string-formatting
     """
     if args and kwargs:
         raise FilterArgumentError('can\'t handle positional and keyword '
