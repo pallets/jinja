@@ -57,6 +57,20 @@ configured as follows:
 * ``#  ... ##`` for :ref:`Line Statements <line-statements>`
 
 
+Template File Extension
+~~~~~~~~~~~~~~~~~~~~~~~
+
+As stated above, any file can be loaded as a template, regardless of
+file extension. Adding a ``.jinja`` extension, like ``user.html.jinja``
+may make it easier for some IDEs or editor plugins, but is not required.
+Autoescaping, introduced later, can be applied based on file extension,
+so you'll need to take the extra suffix into account in that case.
+
+Another good heuristic for identifying templates is that they are in a
+``templates`` folder, regardless of extension. This is a common layout
+for projects.
+
+
 .. _variables:
 
 Variables
@@ -370,6 +384,10 @@ In this example, the ``{% block %}`` tags define four blocks that child template
 can fill in. All the `block` tag does is tell the template engine that a
 child template may override those placeholders in the template.
 
+``block`` tags can be inside other blocks such as ``if``, but they will
+always be executed regardless of if the ``if`` block is actually
+rendered.
+
 Child Template
 ~~~~~~~~~~~~~~
 
@@ -567,16 +585,19 @@ When automatic escaping is enabled, everything is escaped by default except
 for values explicitly marked as safe.  Variables and expressions
 can be marked as safe either in:
 
-a. the context dictionary by the application with `MarkupSafe.Markup`, or
-b. the template, with the `|safe` filter
+a.  The context dictionary by the application with
+    :class:`markupsafe.Markup`
+b.  The template, with the ``|safe`` filter.
 
-The main problem with this approach is that Python itself doesn't have the
-concept of tainted values; so whether a value is safe or unsafe can get lost.
+If a string that you marked safe is passed through other Python code
+that doesn't understand that mark, it may get lost. Be aware of when
+your data is marked safe and how it is processed before arriving at the
+template.
 
-If a value is not marked safe, auto-escaping will take place; which means that
-you could end up with double-escaped contents.  Double-escaping is easy to
-avoid, however: just rely on the tools Jinja2 provides and *don't use builtin
-Python constructs such as str.format or the string modulo operator (%)*.
+If a value has been escaped but is not marked safe, auto-escaping will
+still take place and result in double-escaped characters. If you know
+you have data that is already safe but not marked, be sure to wrap it in
+``Markup`` or use the ``|safe`` filter.
 
 Jinja2 functions (macros, `super`, `self.BLOCKNAME`) always return template
 data that is marked as safe.
@@ -1171,24 +1192,24 @@ Literals
 The simplest form of expressions are literals.  Literals are representations
 for Python objects such as strings and numbers.  The following literals exist:
 
-"Hello World":
+``"Hello World"``
     Everything between two double or single quotes is a string.  They are
     useful whenever you need a string in the template (e.g. as
     arguments to function calls and filters, or just to extend or include a
     template).
 
-42 / 123_456:
+``42`` / ``123_456``
     Integers are whole numbers without a decimal part. The '_' character
     can be used to separate groups for legibility.
 
-42.23 / 42.1e2 / 123_456.789:
+``42.23`` / ``42.1e2`` / ``123_456.789``
     Floating point numbers can be written using a '.' as a decimal mark.
     They can also be written in scientific notation with an upper or
     lower case 'e' to indicate the exponent part. The '_' character can
     be used to separate groups for legibility, but cannot be used in the
     exponent part.
 
-['list', 'of', 'objects']:
+``['list', 'of', 'objects']``
     Everything between two brackets is a list.  Lists are useful for storing
     sequential data to be iterated over.  For example, you can easily
     create a list of links using lists and tuples for (and with) a for loop::
@@ -1200,20 +1221,20 @@ for Python objects such as strings and numbers.  The following literals exist:
         {% endfor %}
         </ul>
 
-('tuple', 'of', 'values'):
+``('tuple', 'of', 'values')``
     Tuples are like lists that cannot be modified ("immutable").  If a tuple
     only has one item, it must be followed by a comma (``('1-tuple',)``).
     Tuples are usually used to represent items of two or more elements.
     See the list example above for more details.
 
-{'dict': 'of', 'key': 'and', 'value': 'pairs'}:
+``{'dict': 'of', 'key': 'and', 'value': 'pairs'}``
     A dict in Python is a structure that combines keys and values.  Keys must
     be unique and always have exactly one value.  Dicts are rarely used in
     templates; they are useful in some rare cases such as the :func:`xmlattr`
     filter.
 
-true / false:
-    true is always true and false is always false.
+``true`` / ``false``
+    ``true`` is always true and ``false`` is always false.
 
 .. admonition:: Note
 
@@ -1231,73 +1252,73 @@ Math
 Jinja allows you to calculate with values.  This is rarely useful in templates
 but exists for completeness' sake.  The following operators are supported:
 
-\+
+``+``
     Adds two objects together. Usually the objects are numbers, but if both are
     strings or lists, you can concatenate them this way.  This, however, is not
     the preferred way to concatenate strings!  For string concatenation, have
     a look-see at the ``~`` operator.  ``{{ 1 + 1 }}`` is ``2``.
 
-\-
+``-``
     Subtract the second number from the first one.  ``{{ 3 - 2 }}`` is ``1``.
 
-/
+``/``
     Divide two numbers.  The return value will be a floating point number.
     ``{{ 1 / 2 }}`` is ``{{ 0.5 }}``.
 
-//
+``//``
     Divide two numbers and return the truncated integer result.
     ``{{ 20 // 7 }}`` is ``2``.
 
-%
+``%``
     Calculate the remainder of an integer division.  ``{{ 11 % 7 }}`` is ``4``.
 
-\*
+``*``
     Multiply the left operand with the right one.  ``{{ 2 * 2 }}`` would
     return ``4``.  This can also be used to repeat a string multiple times.
     ``{{ '=' * 80 }}`` would print a bar of 80 equal signs.
 
-\**
+``**``
     Raise the left operand to the power of the right operand.  ``{{ 2**3 }}``
     would return ``8``.
 
 Comparisons
 ~~~~~~~~~~~
 
-==
+``==``
     Compares two objects for equality.
 
-!=
+``!=``
     Compares two objects for inequality.
 
->
-    `true` if the left hand side is greater than the right hand side.
+``>``
+    ``true`` if the left hand side is greater than the right hand side.
 
->=
-    `true` if the left hand side is greater or equal to the right hand side.
+``>=``
+    ``true`` if the left hand side is greater or equal to the right hand side.
 
-<
-    `true` if the left hand side is lower than the right hand side.
+``<``
+    ``true`` if the left hand side is lower than the right hand side.
 
-<=
-    `true` if the left hand side is lower or equal to the right hand side.
+``<=``
+    ``true`` if the left hand side is lower or equal to the right hand side.
 
 Logic
 ~~~~~
 
-For `if` statements, `for` filtering, and `if` expressions, it can be useful to
+For ``if`` statements, ``for`` filtering, and ``if`` expressions, it can be useful to
 combine multiple expressions:
 
-and
+``and``
     Return true if the left and the right operand are true.
 
-or
+``or``
     Return true if the left or the right operand are true.
 
-not
+``not``
     negate a statement (see below).
 
-(expr)
-    group an expression.
+``(expr)``
+    Parentheses group an expression.
 
 .. admonition:: Note
 
@@ -1313,30 +1334,30 @@ Other Operators
 The following operators are very useful but don't fit into any of the other
 two categories:
 
-in
+``in``
     Perform a sequence / mapping containment test.  Returns true if the left
     operand is contained in the right.  ``{{ 1 in [1, 2, 3] }}`` would, for
     example, return true.
 
-is
+``is``
     Performs a :ref:`test <tests>`.
 
-\|
+``|``
     Applies a :ref:`filter <filters>`.
 
-~
+``~``
     Converts all operands into strings and concatenates them.
 
     ``{{ "Hello " ~ name ~ "!" }}`` would return (assuming `name` is set
     to ``'John'``) ``Hello John!``.
 
-()
+``()``
     Call a callable: ``{{ post.render() }}``.  Inside of the parentheses you
     can use positional arguments and keyword arguments like in Python:
 
     ``{{ post.render(user, full=true) }}``.
 
-. / []
+``.`` / ``[]``
     Get an attribute of an object.  (See :ref:`variables`)
 
 
@@ -1376,13 +1397,27 @@ Here is an example that uses methods defined on strings (where ``page.title`` is
 
     {{ page.title.capitalize() }}
 
-This also works for methods on user-defined types.
-For example, if variable ``f`` of type ``Foo`` has a method ``bar`` defined on it,
-you can do the following:
+This works for methods on user-defined types. For example, if variable
+``f`` of type ``Foo`` has a method ``bar`` defined on it, you can do the
+following:
 
 .. code-block:: text
 
-    {{ f.bar() }}
+    {{ f.bar(value) }}
+
+Operator methods also work as expected. For example, ``%`` implements
+printf-style for strings:
+
+.. code-block:: text
+
+    {{ "Hello, %s!" % name }}
+
+Although you should prefer the ``.format`` method for that case (which
+is a bit contrived in the context of rendering a template):
+
+.. code-block:: text
+
+    {{ "Hello, {}!".format(name) }}
 
 
 .. _builtin-filters:

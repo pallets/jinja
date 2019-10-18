@@ -743,13 +743,24 @@ def do_float(value, default=0.0):
 
 
 def do_format(value, *args, **kwargs):
-    """
-    Apply python string formatting on an object:
+    """Apply the given values to a `printf-style`_ format string, like
+    ``string % values``.
 
     .. sourcecode:: jinja
 
-        {{ "%s - %s"|format("Hello?", "Foo!") }}
-            -> Hello? - Foo!
+        {{ "%s, %s!"|format(greeting, name) }}
+        Hello, World!
+
+    In most cases it should be more convenient and efficient to use the
+    ``%`` operator or :meth:`str.format`.
+
+    .. code-block:: text
+
+        {{ "%s, %s!" % (greeting, name) }}
+        {{ "{}, {}!".format(greeting, name) }}
+
+    .. _printf-style: https://docs.python.org/library/stdtypes.html
+        #printf-style-string-formatting
     """
     if args and kwargs:
         raise FilterArgumentError('can\'t handle positional and keyword '
@@ -1031,6 +1042,14 @@ def do_map(*args, **kwargs):
 
         Users on this page: {{ titles|map('lower')|join(', ') }}
 
+    Similar to a generator comprehension such as:
+
+    .. code-block:: python
+
+        (u.username for u in users)
+        (u.username or "Anonymous" for u in users)
+        (do_lower(x) for x in titles)
+
     .. versionchanged:: 2.11.0
         Added the ``default`` parameter.
 
@@ -1059,6 +1078,13 @@ def do_select(*args, **kwargs):
         {{ numbers|select("lessthan", 42) }}
         {{ strings|select("equalto", "mystring") }}
 
+    Similar to a generator comprehension such as:
+
+    .. code-block:: python
+
+        (n for n in numbers if test_odd(n))
+        (n for n in numbers if test_divisibleby(n, 3))
+
     .. versionadded:: 2.7
     """
     return select_or_reject(args, kwargs, lambda x: x, False)
@@ -1076,6 +1102,12 @@ def do_reject(*args, **kwargs):
     .. sourcecode:: jinja
 
         {{ numbers|reject("odd") }}
+
+    Similar to a generator comprehension such as:
+
+    .. code-block:: python
+
+        (n for n in numbers if not test_odd(n))
 
     .. versionadded:: 2.7
     """
@@ -1098,6 +1130,13 @@ def do_selectattr(*args, **kwargs):
         {{ users|selectattr("is_active") }}
         {{ users|selectattr("email", "none") }}
 
+    Similar to a generator comprehension such as:
+
+    .. code-block:: python
+
+        (u for user in users if user.is_active)
+        (u for user in users if test_none(user.email))
+
     .. versionadded:: 2.7
     """
     return select_or_reject(args, kwargs, lambda x: x, True)
@@ -1116,6 +1155,13 @@ def do_rejectattr(*args, **kwargs):
 
         {{ users|rejectattr("is_active") }}
         {{ users|rejectattr("email", "none") }}
+
+    Similar to a generator comprehension such as:
+
+    .. code-block:: python
+
+        (u for user in users if not user.is_active)
+        (u for user in users if not test_none(user.email))
 
     .. versionadded:: 2.7
     """

@@ -942,6 +942,11 @@ class ContextReference(Expr):
 
         Assign(Name('foo', ctx='store'),
                Getattr(ContextReference(), 'name'))
+
+    This is basically equivalent to using the
+    :func:`~jinja2.contextfunction` decorator when using the
+    high-level API, which causes a reference to the context to be passed
+    as the first argument to a function.
     """
 
 
