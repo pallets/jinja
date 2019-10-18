@@ -370,6 +370,10 @@ In this example, the ``{% block %}`` tags define four blocks that child template
 can fill in. All the `block` tag does is tell the template engine that a
 child template may override those placeholders in the template.
 
+``block`` tags can be inside other blocks such as ``if``, but they will
+always be executed regardless of if the ``if`` block is actually
+rendered.
+
 Child Template
 ~~~~~~~~~~~~~~
 
