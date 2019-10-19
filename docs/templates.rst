@@ -1569,33 +1569,43 @@ extensions not covered by this documentation; in which case there should
 be a separate document explaining said :ref:`extensions
 <jinja-extensions>`.
 
+
 .. _i18n-in-templates:
 
 i18n
 ~~~~
 
-If the i18n extension is enabled, it's possible to mark parts in the template
-as translatable.  To mark a section as translatable, you can use `trans`::
+If the :ref:`i18n-extension` is enabled, it's possible to mark text in
+the template as translatable. To mark a section as translatable, use a
+``trans`` block:
 
-    <p>{% trans %}Hello {{ user }}!{% endtrans %}</p>
+.. code-block:: jinja
 
-To translate a template expression --- say, using template filters, or by just
-accessing an attribute of an object --- you need to bind the expression to a
-name for use within the translation block::
+    {% trans %}Hello, {{ user }}!{% endtrans %}
 
-    <p>{% trans user=user.username %}Hello {{ user }}!{% endtrans %}</p>
+Inside the block, no statements are allowed, only text and simple
+variable tags.
 
-If you need to bind more than one expression inside a `trans` tag, separate
-the pieces with a comma (``,``)::
+Variable tags can only be a name, not attribute access, filters, or
+other expressions. To use an expression, bind it to a name in the
+``trans`` tag for use in the block.
+
+.. code-block:: jinja
+
+    {% trans user=user.username %}Hello, {{ user }}!{% endtrans %}
+
+To bind more than one expression, separate each with a comma (``,``).
+
+.. code-block:: jinja
 
     {% trans book_title=book.title, author=author.name %}
     This is {{ book_title }} by {{ author }}
     {% endtrans %}
 
-Inside trans tags no statements are allowed, only variable tags are.
+To pluralize, specify both the singular and plural forms separated by
+the ``pluralize`` tag.
 
-To pluralize, specify both the singular and plural forms with the `pluralize`
-tag, which appears between `trans` and `endtrans`::
+.. code-block:: jinja
 
     {% trans count=list|length %}
     There is {{ count }} {{ name }} object.
@@ -1603,60 +1613,70 @@ tag, which appears between `trans` and `endtrans`::
     There are {{ count }} {{ name }} objects.
     {% endtrans %}
 
-By default, the first variable in a block is used to determine the correct
-singular or plural form.  If that doesn't work out, you can specify the name
-which should be used for pluralizing by adding it as parameter to `pluralize`::
+By default, the first variable in a block is used to determine whether
+to use singular or plural form. If that isn't correct, specify the
+variable used for pluralizing as a parameter to ``pluralize``.
+
+.. code-block:: jinja
 
     {% trans ..., user_count=users|length %}...
     {% pluralize user_count %}...{% endtrans %}
 
-When translating longer blocks of text, whitespace and linebreaks result in
-rather ugly and error-prone translation strings.  To avoid this, a trans block
-can be marked as trimmed which will replace all linebreaks and the whitespace
-surrounding them with a single space and remove leading/trailing whitespace::
+When translating blocks of text, whitespace and linebreaks result in
+hard to read and error-prone translation strings. To avoid this, a trans
+block can be marked as trimmed, which will replace all linebreaks and
+the whitespace surrounding them with a single space and remove leading
+and trailing whitespace.
+
+.. code-block:: jinja
 
     {% trans trimmed book_title=book.title %}
         This is {{ book_title }}.
         You should read it!
     {% endtrans %}
 
-If trimming is enabled globally, the `notrimmed` modifier can be used to
-disable it for a `trans` block.
+This results in ``This is %(book_title)s. You should read it!`` in the
+translation file.
+
+If trimming is enabled globally, the ``notrimmed`` modifier can be used
+to disable it for a block.
 
 .. versionadded:: 2.10
-   The `trimmed` and `notrimmed` modifiers have been added.
+   The ``trimmed`` and ``notrimmed`` modifiers have been added.
 
-It's also possible to translate strings in expressions.  For that purpose,
-three functions exist:
+It's possible to translate strings in expressions with these functions:
 
--   `gettext`: translate a single string
--   `ngettext`: translate a pluralizable string
--   `_`: alias for `gettext`
+-   ``gettext``: translate a single string
+-   ``ngettext``: translate a pluralizable string
+-   ``_``: alias for ``gettext``
 
-For example, you can easily print a translated string like this::
+You can print a translated string like this:
 
-    {{ _('Hello World!') }}
+.. code-block:: jinja
 
-To use placeholders, use the `format` filter::
+    {{ _("Hello, World!") }}
 
-    {{ _('Hello %(user)s!')|format(user=user.username) }}
+To use placeholders, use the ``format`` filter.
 
-For multiple placeholders, always use keyword arguments to `format`,
-as other languages may not use the words in the same order.
+.. code-block:: jinja
 
-.. versionchanged:: 2.5
+    {{ _("Hello, %(user)s!")|format(user=user.username) }}
 
-If newstyle gettext calls are activated (:ref:`newstyle-gettext`), using
-placeholders is a lot easier:
+Always use keyword arguments to ``format``, as other languages may not
+use the words in the same order.
 
-.. sourcecode:: html+jinja
+If :ref:`newstyle-gettext` calls are activated, using placeholders is
+easier. Formatting is part of the ``gettext`` call instead of using the
+``format`` filter.
+
+.. sourcecode:: jinja
 
     {{ gettext('Hello World!') }}
     {{ gettext('Hello %(name)s!', name='World') }}
     {{ ngettext('%(num)d apple', '%(num)d apples', apples|count) }}
 
-Note that the `ngettext` function's format string automatically receives
-the count as a `num` parameter in addition to the regular parameters.
+The ``ngettext`` function's format string automatically receives the
+count as a ``num`` parameter in addition to the given parameters.
 
 
 Expression Statement
