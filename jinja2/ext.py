@@ -148,6 +148,9 @@ def _make_new_gettext(func):
         rv = __context.call(func, __string)
         if __context.eval_ctx.autoescape:
             rv = Markup(rv)
+        # Always treat as a format string, even if there are no
+        # variables. This makes translation strings more consistent
+        # and predictable. This requires escaping
         return rv % variables
     return gettext
 
@@ -159,13 +162,14 @@ def _make_new_ngettext(func):
         rv = __context.call(func, __singular, __plural, __num)
         if __context.eval_ctx.autoescape:
             rv = Markup(rv)
+        # Always treat as a format string, see gettext comment above.
         return rv % variables
     return ngettext
 
 
 class InternationalizationExtension(Extension):
     """This extension adds gettext support to Jinja2."""
-    tags = set(['trans'])
+    tags = {'trans'}
 
     # TODO: the i18n extension is currently reevaluating values in a few
     # situations.  Take this example:
