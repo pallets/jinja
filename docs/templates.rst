@@ -1480,41 +1480,44 @@ The following functions are available in the global scope by default:
 
 .. class:: cycler(\*items)
 
-    The cycler allows you to cycle among values similar to how `loop.cycle`
-    works.  Unlike `loop.cycle`, you can use this cycler outside of
-    loops or over multiple loops.
+    Cycle through values by yielding them one at a time, then restarting
+    once the end is reached.
 
-    This can be very useful if you want to show a list of folders and
-    files with the folders on top but both in the same list with alternating
-    row colors.
+    Similar to ``loop.cycle``, but can be used outside loops or across
+    multiple loops. For example, render a list of folders and files in a
+    list, alternating giving them "odd" and "even" classes.
 
-    The following example shows how `cycler` can be used::
+    .. code-block:: html+jinja
 
-        {% set row_class = cycler('odd', 'even') %}
+        {% set row_class = cycler("odd", "even") %}
         <ul class="browser">
         {% for folder in folders %}
-          <li class="folder {{ row_class.next() }}">{{ folder|e }}</li>
+          <li class="folder {{ row_class.next() }}">{{ folder }}
         {% endfor %}
-        {% for filename in files %}
-          <li class="file {{ row_class.next() }}">{{ filename|e }}</li>
+        {% for file in files %}
+          <li class="file {{ row_class.next() }}">{{ file }}
         {% endfor %}
         </ul>
 
-    A cycler has the following attributes and methods:
+    :param items: Each positional argument will be yielded in the order
+        given for each cycle.
 
-    .. method:: reset()
+    .. versionadded:: 2.1
 
-        Resets the cycle to the first item.
+    .. method:: current
+        :property:
+
+        Return the current item. Equivalent to the item that will be
+        returned next time :meth:`next` is called.
 
     .. method:: next()
 
-        Goes one item ahead and returns the then-current item.
+        Return the current item, then advance :attr:`current` to the
+        next item.
 
-    .. attribute:: current
+    .. method:: reset()
 
-        Returns the current item.
-
-    .. versionadded:: 2.1
+        Resets the current item to the first item.
 
 .. class:: joiner(sep=', ')
 

@@ -566,27 +566,53 @@ def htmlsafe_json_dumps(obj, dumper=None, **kwargs):
     return Markup(rv)
 
 
-@implements_iterator
 class Cycler(object):
-    """A cycle helper for templates."""
+    """Cycle through values by yield them one at a time, then restarting
+    once the end is reached. Available as ``cycler`` in templates.
+
+    Similar to ``loop.cycle``, but can be used outside loops or across
+    multiple loops. For example, render a list of folders and files in a
+    list, alternating giving them "odd" and "even" classes.
+
+    .. code-block:: html+jinja
+
+        {% set row_class = cycler("odd", "even") %}
+        <ul class="browser">
+        {% for folder in folders %}
+          <li class="folder {{ row_class.next() }}">{{ folder }}
+        {% endfor %}
+        {% for file in files %}
+          <li class="file {{ row_class.next() }}">{{ file }}
+        {% endfor %}
+        </ul>
+
+    :param items: Each positional argument will be yielded in the order
+        given for each cycle.
+
+    .. versionadded:: 2.1
+    """
 
     def __init__(self, *items):
         if not items:
             raise RuntimeError('at least one item has to be provided')
         self.items = items
-        self.reset()
+        self.pos = 0
 
     def reset(self):
-        """Resets the cycle."""
+        """Resets the current item to the first item."""
         self.pos = 0
 
     @property
     def current(self):
-        """Returns the current item."""
+        """Return the current item. Equivalent to the item that will be
+        returned next time :meth:`next` is called.
+        """
         return self.items[self.pos]
 
     def next(self):
-        """Goes one item ahead and returns it."""
+        """Return the current item, then advance :attr:`current` to the
+        next item.
+        """
         rv = self.current
         self.pos = (self.pos + 1) % len(self.items)
         return rv
