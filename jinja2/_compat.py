@@ -103,3 +103,22 @@ try:
     from collections import abc
 except ImportError:
     import collections as abc
+
+
+try:
+    from os import fspath
+except ImportError:
+    try:
+        from pathlib import PurePath
+    except ImportError:
+        PurePath = None
+
+    def fspath(path):
+        if hasattr(path, "__fspath__"):
+            return path.__fspath__()
+
+        # Python 3.5 doesn't have __fspath__ yet, use str.
+        if PurePath is not None and isinstance(path, PurePath):
+            return str(path)
+
+        return path

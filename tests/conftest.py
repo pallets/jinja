@@ -32,6 +32,7 @@ def pytest_configure(config):
         'escapeUrlizeTarget',
         'ext',
         'extended',
+        'filesystemloader',
         'filter',
         'for_loop',
         'helpers',

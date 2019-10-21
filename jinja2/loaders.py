@@ -17,7 +17,7 @@ from os import path
 from hashlib import sha1
 from jinja2.exceptions import TemplateNotFound
 from jinja2.utils import open_if_exists, internalcode
-from jinja2._compat import string_types, iteritems
+from jinja2._compat import string_types, iteritems, fspath, abc
 
 
 def split_template_path(template):
@@ -154,14 +154,21 @@ class FileSystemLoader(BaseLoader):
 
     >>> loader = FileSystemLoader('/path/to/templates', followlinks=True)
 
-    .. versionchanged:: 2.8+
-       The *followlinks* parameter was added.
+    .. versionchanged:: 2.8
+       The ``followlinks`` parameter was added.
     """
 
     def __init__(self, searchpath, encoding='utf-8', followlinks=False):
-        if isinstance(searchpath, string_types):
+        if (
+            not isinstance(searchpath, abc.Iterable)
+            or isinstance(searchpath, string_types)
+        ):
             searchpath = [searchpath]
-        self.searchpath = list(searchpath)
+
+        # In Python 3.5, os.path.join doesn't support Path. This can be
+        # simplified to list(searchpath) when Python 3.5 is dropped.
+        self.searchpath = [fspath(p) for p in searchpath]
+
         self.encoding = encoding
         self.followlinks = followlinks
 
@@ -484,11 +491,14 @@ class ModuleLoader(BaseLoader):
         # create a fake module that looks for the templates in the
         # path given.
         mod = _TemplateModule(package_name)
-        if isinstance(path, string_types):
+
+        if (
+            not isinstance(path, abc.Iterable)
+            or isinstance(path, string_types)
+        ):
             path = [path]
-        else:
-            path = list(path)
-        mod.__path__ = path
+
+        mod.__path__ = [fspath(p) for p in path]
 
         sys.modules[package_name] = weakref.proxy(mod,
             lambda x: sys.modules.pop(package_name, None))
