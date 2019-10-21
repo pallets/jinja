@@ -24,9 +24,6 @@ if not PY2:
     string_types = (str,)
     integer_types = (int,)
 
-    import pathlib
-    path_types = (str, pathlib.PurePath)
-
     iterkeys = lambda d: iter(d.keys())
     itervalues = lambda d: iter(d.values())
     iteritems = lambda d: iter(d.items())
@@ -55,8 +52,6 @@ else:
     range_type = xrange
     string_types = (str, unicode)
     integer_types = (int, long)
-
-    path_types = string_types
 
     iterkeys = lambda d: d.iterkeys()
     itervalues = lambda d: d.itervalues()
@@ -108,3 +103,22 @@ try:
     from collections import abc
 except ImportError:
     import collections as abc
+
+
+try:
+    from os import fspath
+except ImportError:
+    try:
+        from pathlib import PurePath
+    except ImportError:
+        PurePath = None
+
+    def fspath(path):
+        if hasattr(path, "__fspath__"):
+            return path.__fspath__()
+
+        # Python 3.5 doesn't have __fspath__ yet, use str.
+        if PurePath is not None and isinstance(path, PurePath):
+            return str(path)
+
+        return path

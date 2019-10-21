@@ -49,9 +49,9 @@ Unreleased
     :pr:`993`
 -   ``PackageLoader`` doesn't depend on setuptools or pkg_resources.
     :issue:`970`
--   Allow passing ``pathlib.Path`` as the search path in
-    :class:`~loader.FileSystemLoader` and
-    :class:`~loader.ModuleLoader`. :issue:`870`
+-   Support :class:`os.PathLike` objects in
+    :class:`~loader.FileSystemLoader` and :class:`~loader.ModuleLoader`.
+    :issue:`870`
 
 
 Version 2.10.3
