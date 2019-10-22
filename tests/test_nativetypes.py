@@ -109,8 +109,24 @@ class TestNativeEnvironment(object):
         assert not isinstance(result, type)
         assert result in ["<type 'bool'>", "<class 'bool'>"]
 
-    def test_string(self, env):
+    def test_string_literal_var(self, env):
         t = env.from_string("[{{ 'all' }}]")
         result = t.render()
         assert isinstance(result, text_type)
         assert result == "[all]"
+
+    def test_string_top_level(self, env):
+        t = env.from_string("'Jinja'")
+        result = t.render()
+        assert result == 'Jinja'
+
+    def test_tuple_of_variable_strings(self, env):
+        t = env.from_string("'{{ a }}', 'data', '{{ b }}', b'{{ c }}'")
+        result = t.render(a=1, b=2, c="bytes")
+        assert isinstance(result, tuple)
+        assert result == ("1", "data", "2", b"bytes")
+
+    def test_concat_strings_with_quotes(self, env):
+        t = env.from_string("--host='{{ host }}' --user \"{{ user }}\"")
+        result = t.render(host="localhost", user="Jinja")
+        assert result == "--host='localhost' --user \"Jinja\""

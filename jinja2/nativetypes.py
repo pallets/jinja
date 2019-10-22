@@ -9,12 +9,17 @@ from jinja2.environment import Environment, Template
 from jinja2.utils import concat, escape
 
 
-def native_concat(nodes):
-    """Return a native Python type from the list of compiled nodes. If the
-    result is a single node, its value is returned. Otherwise, the nodes are
-    concatenated as strings. If the result can be parsed with
-    :func:`ast.literal_eval`, the parsed value is returned. Otherwise, the
-    string is returned.
+def native_concat(nodes, preserve_quotes=True):
+    """Return a native Python type from the list of compiled nodes. If
+    the result is a single node, its value is returned. Otherwise, the
+    nodes are concatenated as strings. If the result can be parsed with
+    :func:`ast.literal_eval`, the parsed value is returned. Otherwise,
+    the string is returned.
+
+    :param nodes: Iterable of nodes to concatenate.
+    :param preserve_quotes: Whether to re-wrap literal strings with
+        quotes, to preserve quotes around expressions for later parsing.
+        Should be ``False`` in :meth:`NativeEnvironment.render`.
     """
     head = list(islice(nodes, 2))
 
@@ -22,16 +27,25 @@ def native_concat(nodes):
         return None
 
     if len(head) == 1:
-        out = head[0]
+        raw = head[0]
     else:
         if isinstance(nodes, types.GeneratorType):
             nodes = chain(head, nodes)
-        out = u''.join([text_type(v) for v in nodes])
+        raw = u''.join([text_type(v) for v in nodes])
 
     try:
-        return literal_eval(out)
+        literal = literal_eval(raw)
     except (ValueError, SyntaxError, MemoryError):
-        return out
+        return raw
+
+    # If literal_eval returned a string, re-wrap with the original
+    # quote character to avoid dropping quotes between expression nodes.
+    # Without this, "'{{ a }}', '{{ b }}'" results in "a, b", but should
+    # be ('a', 'b').
+    if preserve_quotes and isinstance(literal, str):
+        return "{quote}{}{quote}".format(literal, quote=raw[0])
+
+    return literal
 
 
 class NativeCodeGenerator(CodeGenerator):
@@ -200,16 +214,17 @@ class NativeCodeGenerator(CodeGenerator):
 
 class NativeTemplate(Template):
     def render(self, *args, **kwargs):
-        """Render the template to produce a native Python type. If the result
-        is a single node, its value is returned. Otherwise, the nodes are
-        concatenated as strings. If the result can be parsed with
-        :func:`ast.literal_eval`, the parsed value is returned. Otherwise, the
-        string is returned.
+        """Render the template to produce a native Python type. If the
+        result is a single node, its value is returned. Otherwise, the
+        nodes are concatenated as strings. If the result can be parsed
+        with :func:`ast.literal_eval`, the parsed value is returned.
+        Otherwise, the string is returned.
         """
         vars = dict(*args, **kwargs)
-
         try:
-            return native_concat(self.root_render_func(self.new_context(vars)))
+            return native_concat(
+                self.root_render_func(self.new_context(vars)), preserve_quotes=False
+            )
         except Exception:
             exc_info = sys.exc_info()
 

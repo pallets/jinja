@@ -52,6 +52,9 @@ Unreleased
 -   Support :class:`os.PathLike` objects in
     :class:`~loader.FileSystemLoader` and :class:`~loader.ModuleLoader`.
     :issue:`870`
+-   :class:`~nativetypes.NativeTemplate` correctly handles quotes
+    between expressions. ``"'{{ a }}', '{{ b }}'"`` renders as the tuple
+    ``('1', '2')`` rather than the string ``'1, 2'``. :issue:`1020`
 
 
 Version 2.10.3
