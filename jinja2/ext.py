@@ -100,7 +100,7 @@ class Extension(with_metaclass(ExtensionRegistry, object)):
         :class:`~jinja2.lexer.Token`\\s, but it doesn't have to return a
         :class:`~jinja2.lexer.TokenStream`.
 
-        In the `ext` folder of the Jinja2 source distribution there is a file
+        In the `ext` folder of the Jinja source distribution there is a file
         called `inlinegettext.py` which implements a filter that utilizes this
         method.
         """
@@ -168,7 +168,7 @@ def _make_new_ngettext(func):
 
 
 class InternationalizationExtension(Extension):
-    """This extension adds gettext support to Jinja2."""
+    """This extension adds gettext support to Jinja."""
     tags = {'trans'}
 
     # TODO: the i18n extension is currently reevaluating values in a few
@@ -416,7 +416,7 @@ class InternationalizationExtension(Extension):
 
 
 class ExprStmtExtension(Extension):
-    """Adds a `do` tag to Jinja2 that works like the print statement just
+    """Adds a `do` tag to Jinja that works like the print statement just
     that it doesn't print the return value.
     """
     tags = set(['do'])

@@ -18,7 +18,7 @@ How fast is it?
 We really hate benchmarks especially since they don't reflect much.  The
 performance of a template depends on many factors and you would have to
 benchmark different engines in different situations.  The benchmarks from the
-testsuite show that Jinja2 has a similar performance to `Mako`_ and is between
+testsuite show that Jinja has a similar performance to `Mako`_ and is between
 10 and 20 times faster than Django's template engine or Genshi.  These numbers
 should be taken with tons of salt as the benchmarks that took these numbers
 only test a few performance related situations such as looping.  Generally
@@ -28,12 +28,12 @@ code.
 
 .. _Mako: https://www.makotemplates.org/
 
-How Compatible is Jinja2 with Django?
--------------------------------------
+How Compatible is Jinja with Django?
+------------------------------------
 
-The default syntax of Jinja2 matches Django syntax in many ways.  However
+The default syntax of Jinja matches Django syntax in many ways.  However
 this similarity doesn't mean that you can use a Django template unmodified
-in Jinja2.  For example filter arguments use a function call syntax rather
+in Jinja.  For example filter arguments use a function call syntax rather
 than a colon to separate filter name and arguments.  Additionally the
 extension interface in Jinja is fundamentally different from the Django one
 which means that your custom tags won't work any longer.
@@ -80,7 +80,7 @@ So some amount of logic is required in templates to keep everyone happy.
 And Jinja leaves it pretty much to you how much logic you want to put into
 templates.  There are some restrictions in what you can do and what not.
 
-Jinja2 neither allows you to put arbitrary Python code into templates nor
+Jinja neither allows you to put arbitrary Python code into templates nor
 does it allow all Python expressions.  The operators are limited to the
 most common ones and more advanced expressions such as list comprehensions
 and generator expressions are not supported.  This keeps the template engine
@@ -106,7 +106,7 @@ integers and floats for a table of statistics the template designer can
 omit the escaping because he knows that integers or floats don't contain
 any unsafe parameters.
 
-Additionally Jinja2 is a general purpose template engine and not only used
+Additionally Jinja is a general purpose template engine and not only used
 for HTML/XML generation.  For example you may generate LaTeX, emails,
 CSS, JavaScript, or configuration files.
 
@@ -130,7 +130,7 @@ My tracebacks look weird.  What's happening?
 
 If the debugsupport module is not compiled and you are using a Python
 installation without ctypes (Python 2.4 without ctypes, Jython or Google's
-AppEngine) Jinja2 is unable to provide correct debugging information and
+AppEngine) Jinja is unable to provide correct debugging information and
 the traceback may be incomplete.  There is currently no good workaround
 for Jython or the AppEngine as ctypes is unavailable there and it's not
 possible to use the debugsupport extension.
@@ -150,7 +150,7 @@ Credit for this snippet goes to `Thomas Johansson
 Why is there no Python 2.3/2.4/2.5/2.6/3.1/3.2/3.3 support?
 -----------------------------------------------------------
 
-Python 2.3 is missing a lot of features that are used heavily in Jinja2.  This
+Python 2.3 is missing a lot of features that are used heavily in Jinja.  This
 decision was made as with the upcoming Python 2.6 and 3.0 versions it becomes
 harder to maintain the code for older Python versions.  If you really need
 Python 2.3 support you either have to use Jinja 1 or other templating
@@ -160,11 +160,11 @@ Python 2.4/2.5/3.1/3.2 support was removed when we switched to supporting
 Python 2 and 3 by the same sourcecode (without using 2to3). It was required to
 drop support because only Python 2.6/2.7 and >=3.3 support byte and unicode
 literals in a way compatible to each other version. If you really need support
-for older Python 2 (or 3) versions, you can just use Jinja2 2.6.
+for older Python 2 (or 3) versions, you can just use Jinja 2.6.
 
 Python 2.6/3.3 support was dropped because it got dropped in various upstream
 projects (such as wheel or pytest), which would make it difficult to continue
-supporting it. Jinja2 2.10 was the last version supporting Python 2.6/3.3.
+supporting it. Jinja 2.10 was the last version supporting Python 2.6/3.3.
 
 My Macros are overridden by something
 -------------------------------------
@@ -186,7 +186,7 @@ child.tmpl:
     {% macro foo() %}CHILD{% endmacro %}
     {% block body %}{{ foo() }}{% endblock %}
 
-This will print ``LAYOUT`` in Jinja2.  This is a side effect of having
+This will print ``LAYOUT`` in Jinja.  This is a side effect of having
 the parent template evaluated after the child one.  This allows child
 templates passing information to the parent template.  To avoid this
 issue rename the macro or variable in the parent template to have an

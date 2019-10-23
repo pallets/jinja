@@ -110,8 +110,8 @@ def consume(iterable):
 
 
 def clear_caches():
-    """Jinja2 keeps internal caches for environments and lexers.  These are
-    used so that Jinja2 doesn't have to recreate environments and lexers all
+    """Jinja keeps internal caches for environments and lexers.  These are
+    used so that Jinja doesn't have to recreate environments and lexers all
     the time.  Normally you don't have to care about that but if you are
     measuring memory consumption you may want to clean the caches.
     """

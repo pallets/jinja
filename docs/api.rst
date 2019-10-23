@@ -3,16 +3,16 @@ API
 
 .. module:: jinja2
     :noindex:
-    :synopsis: public Jinja2 API
+    :synopsis: public Jinja API
 
-This document describes the API to Jinja2 and not the template language.  It
+This document describes the API to Jinja and not the template language.  It
 will be most useful as reference to those implementing the template interface
-to the application and not those who are creating Jinja2 templates.
+to the application and not those who are creating Jinja templates.
 
 Basics
 ------
 
-Jinja2 uses a central object called the template :class:`Environment`.
+Jinja uses a central object called the template :class:`Environment`.
 Instances of this class are used to store the configuration and global objects,
 and are used to load templates from the file system or other locations.
 Even if you are creating templates from strings by using the constructor of
@@ -24,7 +24,7 @@ initialization and use that to load templates.  In some cases however, it's
 useful to have multiple environments side by side, if different configurations
 are in use.
 
-The simplest way to configure Jinja2 to load templates for your application
+The simplest way to configure Jinja to load templates for your application
 looks roughly like this::
 
     from jinja2 import Environment, PackageLoader, select_autoescape
@@ -55,7 +55,7 @@ a lot easier to use it also enables template inheritance.
 
 .. admonition:: Notes on Autoescaping
 
-   In future versions of Jinja2 we might enable autoescaping by default
+   In future versions of Jinja we might enable autoescaping by default
    for security reasons.  As such you are encouraged to explicitly
    configure autoescaping now instead of relying on the default.
 
@@ -63,7 +63,7 @@ a lot easier to use it also enables template inheritance.
 Unicode
 -------
 
-Jinja2 is using Unicode internally which means that you have to pass Unicode
+Jinja is using Unicode internally which means that you have to pass Unicode
 objects to the render function or bytestrings that only consist of ASCII
 characters.  Additionally newlines are normalized to one end of line
 sequence which is per default UNIX style (``\n``).
@@ -88,24 +88,24 @@ second line of the Python module using the Unicode literal::
 
 We recommend utf-8 as Encoding for Python modules and templates as it's
 possible to represent every Unicode character in utf-8 and because it's
-backwards compatible to ASCII.  For Jinja2 the default encoding of templates
+backwards compatible to ASCII.  For Jinja the default encoding of templates
 is assumed to be utf-8.
 
-It is not possible to use Jinja2 to process non-Unicode data.  The reason
-for this is that Jinja2 uses Unicode already on the language level.  For
-example Jinja2 treats the non-breaking space as valid whitespace inside
+It is not possible to use Jinja to process non-Unicode data.  The reason
+for this is that Jinja uses Unicode already on the language level.  For
+example Jinja treats the non-breaking space as valid whitespace inside
 expressions which requires knowledge of the encoding or operating on an
 Unicode string.
 
 For more details about Unicode in Python have a look at the excellent
 `Unicode documentation`_.
 
-Another important thing is how Jinja2 is handling string literals in
+Another important thing is how Jinja is handling string literals in
 templates.  A naive implementation would be using Unicode strings for
 all string literals but it turned out in the past that this is problematic
 as some libraries are typechecking against `str` explicitly.  For example
 `datetime.strftime` does not accept Unicode arguments.  To not break it
-completely Jinja2 is returning `str` for strings that fit into ASCII and
+completely Jinja is returning `str` for strings that fit into ASCII and
 for everything else `unicode`:
 
 >>> m = Template(u"{% set a, b = 'foo', 'föö' %}").module
@@ -121,8 +121,8 @@ High Level API
 --------------
 
 The high-level API is the API you will use in the application to load and
-render Jinja2 templates.  The :ref:`low-level-api` on the other side is only
-useful if you want to dig deeper into Jinja2 or :ref:`develop extensions
+render Jinja templates.  The :ref:`low-level-api` on the other side is only
+useful if you want to dig deeper into Jinja or :ref:`develop extensions
 <jinja-extensions>`.
 
 .. autoclass:: Environment([options])
@@ -260,7 +260,7 @@ Autoescaping
 
 .. versionchanged:: 2.4
 
-Jinja2 now comes with autoescaping support.  As of Jinja 2.9 the
+Jinja now comes with autoescaping support.  As of Jinja 2.9 the
 autoescape extension is removed and built-in.  However autoescaping is
 not yet enabled by default though this will most likely change in the
 future.  It's recommended to configure a sensible default for
@@ -300,10 +300,8 @@ the `autoescape` block (see :ref:`autoescape-overrides`).
 Notes on Identifiers
 --------------------
 
-Jinja2 uses the regular Python 2.x naming rules.  Valid identifiers have to
-match ``[a-zA-Z_][a-zA-Z0-9_]*``.  As a matter of fact non ASCII characters
-are currently not allowed.  This limitation will probably go away as soon as
-unicode identifiers are fully specified for Python 3.
+Jinja uses Python naming rules. Valid identifiers can be any combination
+of Unicode characters accepted by Python.
 
 Filters and tests are looked up in separate namespaces and have slightly
 modified identifier syntax.  Filters and tests may contain dots to group
@@ -445,11 +443,11 @@ The Context
 .. admonition:: Implementation
 
     Context is immutable for the same reason Python's frame locals are
-    immutable inside functions.  Both Jinja2 and Python are not using the
+    immutable inside functions.  Both Jinja and Python are not using the
     context / frame locals as data storage for variables but only as primary
     data source.
 
-    When a template accesses a variable the template does not define, Jinja2
+    When a template accesses a variable the template does not define, Jinja
     looks up the variable in the context, after that the variable is treated
     as if it was defined in the template.
 
@@ -469,7 +467,7 @@ own loader, subclass :class:`BaseLoader` and override `get_source`.
 .. autoclass:: jinja2.BaseLoader
     :members: get_source, load
 
-Here a list of the builtin loaders Jinja2 provides:
+Here a list of the builtin loaders Jinja provides:
 
 .. autoclass:: jinja2.FileSystemLoader
 
@@ -531,7 +529,7 @@ Builtin bytecode caches:
 Async Support
 -------------
 
-Starting with version 2.9, Jinja2 also supports the Python `async` and
+Starting with version 2.9, Jinja also supports the Python `async` and
 `await` constructs.  As far as template designers go this feature is
 entirely opaque to them however as a developer you should be aware of how
 it's implemented as it influences what type of APIs you can safely expose
@@ -578,7 +576,7 @@ Example::
     env.policies['urlize.rel'] = 'nofollow noopener'
 
 ``compiler.ascii_str``:
-    This boolean controls on Python 2 if Jinja2 should store ASCII only
+    This boolean controls on Python 2 if Jinja should store ASCII only
     literals as bytestring instead of unicode strings.  This used to be
     always enabled for Jinja versions below 2.9 and now can be changed.
     Traditionally it was done this way since some APIs in Python 2 failed
@@ -626,7 +624,7 @@ Utilities
 ---------
 
 These helper functions and classes are useful if you add custom filters or
-functions to a Jinja2 environment.
+functions to a Jinja environment.
 
 .. autofunction:: jinja2.environmentfilter
 
@@ -658,7 +656,7 @@ functions to a Jinja2 environment.
 
 .. admonition:: Note
 
-    The Jinja2 :class:`Markup` class is compatible with at least Pylons and
+    The Jinja :class:`Markup` class is compatible with at least Pylons and
     Genshi.  It's expected that more template engines and framework will pick
     up the `__html__` concept soon.
 
@@ -915,9 +913,9 @@ don't recommend using any of those.
 
 .. admonition:: Note
 
-    The low-level API is fragile.  Future Jinja2 versions will try not to
-    change it in a backwards incompatible way but modifications in the Jinja2
-    core may shine through.  For example if Jinja2 introduces a new AST node
+    The low-level API is fragile.  Future Jinja versions will try not to
+    change it in a backwards incompatible way but modifications in the Jinja
+    core may shine through.  For example if Jinja introduces a new AST node
     in later versions that may be returned by :meth:`~Environment.parse`.
 
 The Meta API

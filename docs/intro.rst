@@ -1,21 +1,21 @@
 Introduction
 ============
 
-This is the documentation for the Jinja2 general purpose templating language.
-Jinja2 is a library for Python that is designed to be flexible, fast and secure.
+This is the documentation for the Jinja general purpose templating language.
+Jinja is a library for Python that is designed to be flexible, fast and secure.
 
 If you have any exposure to other text-based template languages, such as Smarty or
-Django, you should feel right at home with Jinja2.  It's both designer and
+Django, you should feel right at home with Jinja.  It's both designer and
 developer friendly by sticking to Python's principles and adding functionality
 useful for templating environments.
 
 Prerequisites
 -------------
 
-Jinja2 works with Python 2.7.x and >= 3.4.  If you are using Python
-3.2 you can use an older release of Jinja2 (2.6) as support for Python 3.2
-was dropped in Jinja2 version 2.7. The last release which supported Python 2.6
-and 3.3 was Jinja2 2.10.
+Jinja works with Python 2.7.x and >= 3.5.  If you are using Python
+3.2 you can use an older release of Jinja (2.6) as support for Python 3.2
+was dropped in Jinja version 2.7. The last release which supported Python 2.6
+and 3.3 was Jinja 2.10.
 
 If you wish to use the :class:`~jinja2.PackageLoader` class, you will also
 need `setuptools`_ or `distribute`_ installed at runtime.
@@ -23,11 +23,11 @@ need `setuptools`_ or `distribute`_ installed at runtime.
 Installation
 ------------
 
-You can install the most recent Jinja2 version using `pip`_::
+You can install the most recent Jinja version using `pip`_::
 
     pip install Jinja2
 
-This will install Jinja2 in your Python installation's site-packages directory.
+This will install Jinja in your Python installation's site-packages directory.
 
 Installing the development version
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
@@ -50,15 +50,15 @@ has the advantage that the C extensions are compiled.
 MarkupSafe Dependency
 ~~~~~~~~~~~~~~~~~~~~~
 
-As of version 2.7 Jinja2 depends on the `MarkupSafe`_ module. If you install
-Jinja2 via ``pip`` it will be installed automatically for you.
+As of version 2.7 Jinja depends on the `MarkupSafe`_ module. If you install
+Jinja via ``pip`` it will be installed automatically for you.
 
 .. _MarkupSafe: https://markupsafe.palletsprojects.com/
 
 Basic API Usage
 ---------------
 
-This section gives you a brief introduction to the Python API for Jinja2
+This section gives you a brief introduction to the Python API for Jinja
 templates.
 
 The most basic way to create a template and render it is through
@@ -77,6 +77,6 @@ called with a dict or keyword arguments expands the template.  The dict
 or keywords arguments passed to the template are the so-called "context"
 of the template.
 
-What you can see here is that Jinja2 is using unicode internally and the
+What you can see here is that Jinja is using unicode internally and the
 return value is an unicode string.  So make sure that your application is
 indeed using unicode internally.

@@ -105,7 +105,7 @@ printed or iterated over, and to fail for every other operation.
 
 .. admonition:: Implementation
 
-    For the sake of convenience, ``foo.bar`` in Jinja2 does the following
+    For the sake of convenience, ``foo.bar`` in Jinja does the following
     things on the Python layer:
 
     -   check for an attribute called `bar` on `foo`
@@ -245,7 +245,7 @@ a list of numbers from ``1`` to ``9``, the output would be ``123456789``.
 If :ref:`line-statements` are enabled, they strip leading whitespace
 automatically up to the beginning of the line.
 
-By default, Jinja2 also removes trailing newlines.  To keep single
+By default, Jinja also removes trailing newlines.  To keep single
 trailing newlines, configure Jinja to `keep_trailing_newline`.
 
 .. admonition:: Note
@@ -493,7 +493,7 @@ Rendering ``grandchild2.tmpl`` will give
 Named Block End-Tags
 ~~~~~~~~~~~~~~~~~~~~
 
-Jinja2 allows you to put the name of the block after the end tag for better
+Jinja allows you to put the name of the block after the end tag for better
 readability::
 
     {% block sidebar %}
@@ -599,7 +599,7 @@ still take place and result in double-escaped characters. If you know
 you have data that is already safe but not marked, be sure to wrap it in
 ``Markup`` or use the ``|safe`` filter.
 
-Jinja2 functions (macros, `super`, `self.BLOCKNAME`) always return template
+Jinja functions (macros, `super`, `self.BLOCKNAME`) always return template
 data that is marked as safe.
 
 String literals in templates with automatic escaping are considered unsafe
@@ -747,7 +747,7 @@ writing `{% set outer_loop = loop %}` after the loop that we want to
 use recursively. Then, we can call it using `{{ outer_loop(...) }}`
 
 Please note that assignments in loops will be cleared at the end of the
-iteration and cannot outlive the loop scope.  Older versions of Jinja2 had
+iteration and cannot outlive the loop scope.  Older versions of Jinja had
 a bug where in some circumstances it appeared that assignments would work.
 This is not supported.  See :ref:`assignments` for more information about
 how to deal with this.
@@ -924,7 +924,7 @@ Here's an example of how a call block can be used with arguments::
 Filters
 ~~~~~~~
 
-Filter sections allow you to apply regular Jinja2 filters on a block of
+Filter sections allow you to apply regular Jinja filters on a block of
 template data.  Just wrap the code in the special `filter` section::
 
     {% filter upper %}
@@ -1089,7 +1089,7 @@ Example::
 Import
 ~~~~~~
 
-Jinja2 supports putting often used code into macros.  These macros can go into
+Jinja supports putting often used code into macros.  These macros can go into
 different templates and get imported from there.  This works similarly to the
 import statements in Python.  It's important to know that imports are cached
 and imported templates don't have access to the current template variables,
@@ -1566,7 +1566,7 @@ The following functions are available in the global scope by default:
 Extensions
 ----------
 
-The following sections cover the built-in Jinja2 extensions that may be
+The following sections cover the built-in Jinja extensions that may be
 enabled by an application.  An application could also provide further
 extensions not covered by this documentation; in which case there should
 be a separate document explaining said :ref:`extensions
@@ -1774,7 +1774,7 @@ behavior of referencing one variable to another had some unintended
 consequences.  In particular one variable could refer to another defined
 in the same with block's opening statement.  This caused issues with the
 cleaned up scoping behavior and has since been improved.  In particular
-in newer Jinja2 versions the following code always refers to the variable
+in newer Jinja versions the following code always refers to the variable
 `a` from outside the `with` block::
 
     {% with a={}, b=a.attribute %}...{% endwith %}

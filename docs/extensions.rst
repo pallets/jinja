@@ -3,7 +3,7 @@
 Extensions
 ==========
 
-Jinja2 supports extensions that can add extra filters, tests, globals or even
+Jinja supports extensions that can add extra filters, tests, globals or even
 extend the parser.  The main motivation of extensions is to move often used
 code into a reusable class like adding support for internationalization.
 
@@ -11,11 +11,11 @@ code into a reusable class like adding support for internationalization.
 Adding Extensions
 -----------------
 
-Extensions are added to the Jinja2 environment at creation time.  Once the
+Extensions are added to the Jinja environment at creation time.  Once the
 environment is created additional extensions cannot be added.  To add an
 extension pass a list of extension classes or import paths to the
 ``extensions`` parameter of the :class:`~jinja2.Environment` constructor.  The following
-example creates a Jinja2 environment with the i18n extension loaded::
+example creates a Jinja environment with the i18n extension loaded::
 
     jinja_env = Environment(extensions=['jinja2.ext.i18n'])
 
@@ -196,7 +196,7 @@ Loop Controls
 **Import name:** ``jinja2.ext.loopcontrols``
 
 This extension adds support for ``break`` and ``continue`` in loops.  After
-enabling, Jinja2 provides those two keywords which work exactly like in
+enabling, Jinja provides those two keywords which work exactly like in
 Python.
 
 .. _with-extension:
@@ -242,13 +242,13 @@ Writing Extensions
 
 .. module:: jinja2.ext
 
-By writing extensions you can add custom tags to Jinja2.  This is a non-trivial
+By writing extensions you can add custom tags to Jinja.  This is a non-trivial
 task and usually not needed as the default tags and expressions cover all
 common use cases.  The i18n extension is a good example of why extensions are
 useful. Another one would be fragment caching.
 
 When writing extensions you have to keep in mind that you are working with the
-Jinja2 template compiler which does not validate the node tree you are passing
+Jinja template compiler which does not validate the node tree you are passing
 to it.  If the AST is malformed you will get all kinds of compiler or runtime
 errors that are horrible to debug.  Always make sure you are using the nodes
 you create correctly.  The API documentation below shows which nodes exist and
@@ -257,7 +257,7 @@ how to use them.
 Example Extension
 ~~~~~~~~~~~~~~~~~
 
-The following example implements a ``cache`` tag for Jinja2 by using the
+The following example implements a ``cache`` tag for Jinja by using the
 `cachelib`_ library:
 
 .. literalinclude:: cache_extension.py
@@ -365,7 +365,7 @@ code objects.  Extensions that provide custom statements can return nodes to
 execute custom Python code.
 
 The list below describes all nodes that are currently available.  The AST may
-change between Jinja2 versions but will stay backwards compatible.
+change between Jinja versions but will stay backwards compatible.
 
 For more information have a look at the repr of :meth:`jinja2.Environment.parse`.
 

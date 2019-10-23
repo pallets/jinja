@@ -258,7 +258,7 @@ Released 2017-01-07, codename Derivation
 -   Change the logic for macro autoescaping to be based on the runtime
     autoescaping information at call time instead of macro define time.
 -   Ported a modified version of the ``tojson`` filter from Flask to
-    Jinja2 and hooked it up with the new policy framework.
+    Jinja and hooked it up with the new policy framework.
 -   Block sets are now marked ``safe`` by default.
 -   On Python 2 the asciification of ASCII strings can now be disabled
     with the ``compiler.ascii_str`` policy.
@@ -304,7 +304,7 @@ Released 2015-07-26, codename Replacement
 -   Changed cache keys to use absolute file names if available instead
     of load names.
 -   Fixed loop length calculation for some iterators.
--   Changed how Jinja2 enforces strings to be native strings in Python 2
+-   Changed how Jinja enforces strings to be native strings in Python 2
     to work when people break their default encoding.
 -   Added :func:`make_logging_undefined` which returns an undefined
     object that logs failures into a logger.
@@ -425,12 +425,12 @@ Released 2011-07-24, codename Convolution
     Previously an import suddenly "disappeared" in a scoped block.
 -   Automatically detect newer Python interpreter versions before
     loading code from bytecode caches to prevent segfaults on invalid
-    opcodes. The segfault in earlier Jinja2 versions here was not a
-    Jinja2 bug but a limitation in the underlying Python interpreter. If
-    you notice Jinja2 segfaulting in earlier versions after an upgrade
+    opcodes. The segfault in earlier Jinja versions here was not a
+    Jinja bug but a limitation in the underlying Python interpreter. If
+    you notice Jinja segfaulting in earlier versions after an upgrade
     of the Python interpreter you don't have to upgrade, it's enough to
     flush the bytecode cache. This just no longer makes this necessary,
-    Jinja2 will automatically detect these cases now.
+    Jinja will automatically detect these cases now.
 -   The sum filter can now sum up values by attribute. This is a
     backwards incompatible change. The argument to the filter previously
     was the optional starting index which defaults to zero. This now
@@ -498,7 +498,7 @@ Released 2010-08-17
     than the pluralize count will no longer raise a :exc:`KeyError`.
 -   Removed builtin markup class and switched to markupsafe. For
     backwards compatibility the pure Python implementation still exists
-    but is pulled from markupsafe by the Jinja2 developers. The debug
+    but is pulled from markupsafe by the Jinja developers. The debug
     support went into a separate feature called "debugsupport" and is
     disabled by default because it is only relevant for Python 2.4
 -   Fixed an issue with unary operators having the wrong precedence.
@@ -581,7 +581,7 @@ Version 2.2.1
 
 Released 2009-09-14
 
--   Fixes some smaller problems for Jinja2 on Jython.
+-   Fixes some smaller problems for Jinja on Jython.
 
 
 Version 2.2
@@ -687,4 +687,4 @@ Version 2.0rc1
 
 Released 2008-06-09
 
--   First release of Jinja2
+-   First release of Jinja 2.

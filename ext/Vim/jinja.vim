@@ -10,7 +10,7 @@
 "
 " Changes:
 "
-"     2008 May 9:     Added support for Jinja2 changes (new keyword rules)
+"     2008 May 9:     Added support for Jinja 2 changes (new keyword rules)
 
 " .vimrc variable to disable html highlighting
 if !exists('g:jinja_syntax_html')

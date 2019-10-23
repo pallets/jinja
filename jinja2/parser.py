@@ -30,7 +30,7 @@ _math_nodes = {
 
 
 class Parser(object):
-    """This is the central parsing class Jinja2 uses.  It's passed to
+    """This is the central parsing class Jinja uses.  It's passed to
     extensions and can be used to parse expressions or statements.
     """
 
@@ -395,7 +395,7 @@ class Parser(object):
 
     def parse_assign_target(self, with_tuple=True, name_only=False,
                             extra_end_rules=None, with_namespace=False):
-        """Parse an assignment target.  As Jinja2 allows assignments to
+        """Parse an assignment target.  As Jinja allows assignments to
         tuples, this function can parse all allowed assignment targets.  Per
         default assignments to tuples are parsed, that can be disable however
         by setting `with_tuple` to `False`.  If only assignments to names are

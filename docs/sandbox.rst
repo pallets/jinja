@@ -1,7 +1,7 @@
 Sandbox
 =======
 
-The Jinja2 sandbox can be used to evaluate untrusted code.  Access to unsafe
+The Jinja sandbox can be used to evaluate untrusted code.  Access to unsafe
 attributes and methods is prohibited.
 
 Assuming `env` is a :class:`SandboxedEnvironment` in the default configuration
@@ -36,7 +36,7 @@ API
 
 .. admonition:: Note
 
-    The Jinja2 sandbox alone is no solution for perfect security.  Especially
+    The Jinja sandbox alone is no solution for perfect security.  Especially
     for web applications you have to keep in mind that users may create
     templates with arbitrary HTML in so it's crucial to ensure that (if you
     are running multiple users on the same server) they can't harm each other
@@ -54,7 +54,7 @@ Operator Intercepting
 
 .. versionadded:: 2.6
 
-For maximum performance Jinja2 will let operators call directly the type
+For maximum performance Jinja will let operators call directly the type
 specific callback methods.  This means that it's not possible to have this
 intercepted by overriding :meth:`Environment.call`.  Furthermore a
 conversion from operator to special method is not always directly possible
@@ -65,7 +65,7 @@ With Jinja 2.6 there is now support for explicit operator intercepting.
 This can be used to customize specific operators as necessary.  In order
 to intercept an operator one has to override the
 :attr:`SandboxedEnvironment.intercepted_binops` attribute.  Once the
-operator that needs to be intercepted is added to that set Jinja2 will
+operator that needs to be intercepted is added to that set Jinja will
 generate bytecode that calls the :meth:`SandboxedEnvironment.call_binop`
 function.  For unary operators the `unary` attributes and methods have to
 be used instead.
@@ -90,5 +90,5 @@ Jinja2::
                                                    operator, left, right)
 
 Make sure to always call into the super method, even if you are not
-intercepting the call.  Jinja2 might internally call the method to
+intercepting the call.  Jinja might internally call the method to
 evaluate expressions.

@@ -1,6 +1,6 @@
 """\
-    This benchmark compares some python templating engines with Jinja 2 so
-    that we get a picture of how fast Jinja 2 is for a semi real world
+    This benchmark compares some python templating engines with Jinja so
+    that we get a picture of how fast Jinja is for a semi real world
     template.  If a template engine is not installed the test is skipped.\
 """
 import sys
