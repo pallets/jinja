@@ -1,7 +1,7 @@
 Integration
 ===========
 
-Jinja2 provides some code for integration into other tools such as frameworks,
+Jinja provides some code for integration into other tools such as frameworks,
 the `Babel`_ library or your favourite editor for fancy code highlighting.
 This is a brief description of whats included.
 
@@ -19,7 +19,7 @@ support is implemented as part of the :ref:`i18n-extension` extension.
 
 Gettext messages extracted from both `trans` tags and code expressions.
 
-To extract gettext messages from templates, the project needs a Jinja2 section
+To extract gettext messages from templates, the project needs a Jinja section
 in its Babel extraction method `mapping file`_:
 
 .. sourcecode:: ini
@@ -59,7 +59,7 @@ With `Pylons`_ 0.9.7 onwards it's incredible easy to integrate Jinja into a
 Pylons powered application.
 
 The template engine is configured in `config/environment.py`.  The configuration
-for Jinja2 looks something like that::
+for Jinja looks something like that::
 
     from jinja2 import Environment, PackageLoader
     config['pylons.app_globals'].jinja_env = Environment(
@@ -81,8 +81,8 @@ snippet and add it into your `config/environment.py`::
 TextMate
 --------
 
-There is a `bundle for TextMate`_ that supports syntax highlighting for Jinja1
-and Jinja2 for text based templates as well as HTML. It also contains a few
+There is a `bundle for TextMate`_ that supports syntax highlighting for Jinja 1
+and Jinja 2 for text based templates as well as HTML. It also contains a few
 often used snippets.
 
 .. _bundle for TextMate: https://github.com/mitsuhiko/jinja2-tmbundle
@@ -92,7 +92,7 @@ Vim
 
 A syntax plugin for `Vim`_ is available `from the jinja repository
 <https://github.com/pallets/jinja/blob/master/ext/Vim/jinja.vim>`_. The script
-supports Jinja1 and Jinja2. Once installed, two file types are available
+supports Jinja 1 and Jinja 2. Once installed, two file types are available
 (``jinja`` and ``htmljinja``). The first one is for text-based templates and the
 second is for HTML templates. For HTML documents, the plugin attempts to
 automatically detect Jinja syntax inside of existing HTML documents.

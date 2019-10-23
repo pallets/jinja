@@ -485,7 +485,7 @@ class Environment(object):
         executable source- or bytecode.  This is useful for debugging or to
         extract information from templates.
 
-        If you are :ref:`developing Jinja2 extensions <writing-extensions>`
+        If you are :ref:`developing Jinja extensions <writing-extensions>`
         this gives you a good overview of the node tree generated.
         """
         try:

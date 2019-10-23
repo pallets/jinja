@@ -87,7 +87,7 @@ def test_true(value):
     return value is True
 
 
-# NOTE: The existing Jinja2 'number' test matches booleans and floats
+# NOTE: The existing 'number' test matches booleans and floats
 def test_integer(value):
     """Return true if the object is an integer.
 
@@ -96,7 +96,7 @@ def test_integer(value):
     return isinstance(value, integer_types) and value is not True and value is not False
 
 
-# NOTE: The existing Jinja2 'number' test matches booleans and integers
+# NOTE: The existing 'number' test matches booleans and integers
 def test_float(value):
     """Return true if the object is a float.
 

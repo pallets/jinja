@@ -3,7 +3,7 @@
     djangojinja2
     ~~~~~~~~~~~~
 
-    Adds support for Jinja2 to Django.
+    Adds support for Jinja to Django.
 
     Configuration variables:
 
@@ -11,8 +11,8 @@
     Key                     Description
     ======================= =============================================
     `JINJA2_TEMPLATE_DIRS`  List of template folders
-    `JINJA2_EXTENSIONS`     List of Jinja2 extensions to use
-    `JINJA2_CACHE_SIZE`     The size of the Jinja2 template cache.
+    `JINJA2_EXTENSIONS`     List of Jinja extensions to use
+    `JINJA2_CACHE_SIZE`     The size of the Jinja template cache.
     ======================= =============================================
 
     :copyright: (c) 2009 by the Jinja Team.
@@ -33,7 +33,7 @@ _jinja_env = None
 
 
 def get_env():
-    """Get the Jinja2 env and initialize it if necessary."""
+    """Get the Jinja env and initialize it if necessary."""
     global _jinja_env
     if _jinja_env is None:
         _jinja_env = create_env()
@@ -41,7 +41,7 @@ def get_env():
 
 
 def create_env():
-    """Create a new Jinja2 environment."""
+    """Create a new Jinja environment."""
     searchpath = list(settings.JINJA2_TEMPLATE_DIRS)
     return Environment(loader=FileSystemLoader(searchpath),
                        auto_reload=settings.TEMPLATE_DEBUG,

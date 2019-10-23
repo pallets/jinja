@@ -3,7 +3,7 @@
     Django to Jinja
     ~~~~~~~~~~~~~~~
 
-    Helper module that can convert django templates into Jinja2 templates.
+    Helper module that can convert django templates into Jinja templates.
 
     This file is not intended to be used as stand alone application but to
     be used as library.  To convert templates you basically create your own

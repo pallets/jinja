@@ -668,7 +668,7 @@ def do_truncate(env, s, length=255, killwords=False, end='...', leeway=None):
         {{ "foo bar baz qux"|truncate(11, False, '...', 0) }}
             -> "foo bar..."
 
-    The default leeway on newer Jinja2 versions is 5 and was 0 before but
+    The default leeway on newer Jinja versions is 5 and was 0 before but
     can be reconfigured globally.
     """
     if leeway is None:

@@ -4,21 +4,21 @@ Switching from other Template Engines
 .. highlight:: html+jinja
 
 If you have used a different template engine in the past and want to switch
-to Jinja2 here is a small guide that shows the basic syntactic and semantic
+to Jinja here is a small guide that shows the basic syntactic and semantic
 changes between some common, similar text template engines for Python.
 
-Jinja1
-------
+Jinja 1
+-------
 
-Jinja2 is mostly compatible with Jinja1 in terms of API usage and template
-syntax.  The differences between Jinja1 and 2 are explained in the following
+Jinja 2 is mostly compatible with Jinja 1 in terms of API usage and template
+syntax.  The differences between Jinja 1 and 2 are explained in the following
 list.
 
 API
 ~~~
 
 Loaders
-    Jinja2 uses a different loader API.  Because the internal representation
+    Jinja 2 uses a different loader API.  Because the internal representation
     of templates changed there is no longer support for external caching
     systems such as memcached.  The memory consumed by templates is comparable
     with regular Python modules now and external caching doesn't give any
@@ -27,38 +27,38 @@ Loaders
 
 Loading templates from strings
     In the past it was possible to generate templates from a string with the
-    default environment configuration by using `jinja.from_string`.  Jinja2
+    default environment configuration by using `jinja.from_string`.  Jinja 2
     provides a :class:`Template` class that can be used to do the same, but
     with optional additional configuration.
 
 Automatic unicode conversion
-    Jinja1 performed automatic conversion of bytestrings in a given encoding
+    Jinja 1 performed automatic conversion of bytestrings in a given encoding
     into unicode objects.  This conversion is no longer implemented as it
     was inconsistent as most libraries are using the regular Python ASCII
-    bytestring to Unicode conversion.  An application powered by Jinja2
-    *has to* use unicode internally everywhere or make sure that Jinja2 only
+    bytestring to Unicode conversion.  An application powered by Jinja 2
+    *has to* use unicode internally everywhere or make sure that Jinja 2 only
     gets unicode strings passed.
 
 i18n
-    Jinja1 used custom translators for internationalization.  i18n is now
-    available as Jinja2 extension and uses a simpler, more gettext friendly
+    Jinja 1 used custom translators for internationalization.  i18n is now
+    available as Jinja 2 extension and uses a simpler, more gettext friendly
     interface and has support for babel.  For more details see
     :ref:`i18n-extension`.
 
 Internal methods
-    Jinja1 exposed a few internal methods on the environment object such
+    Jinja 1 exposed a few internal methods on the environment object such
     as `call_function`, `get_attribute` and others.  While they were marked
-    as being an internal method it was possible to override them.  Jinja2
+    as being an internal method it was possible to override them.  Jinja 2
     doesn't have equivalent methods.
 
 Sandbox
-    Jinja1 was running sandbox mode by default.  Few applications actually
-    used that feature so it became optional in Jinja2.  For more details
+    Jinja 1 was running sandbox mode by default.  Few applications actually
+    used that feature so it became optional in Jinja 2.  For more details
     about the sandboxed execution see :class:`SandboxedEnvironment`.
 
 Context
-    Jinja1 had a stacked context as storage for variables passed to the
-    environment.  In Jinja2 a similar object exists but it doesn't allow
+    Jinja 1 had a stacked context as storage for variables passed to the
+    environment.  In Jinja 2 a similar object exists but it doesn't allow
     modifications nor is it a singleton.  As inheritance is dynamic now
     multiple context objects may exist during template evaluation.
 
@@ -70,10 +70,10 @@ Filters and Tests
 Templates
 ~~~~~~~~~
 
-Jinja2 has mostly the same syntax as Jinja1.  What's different is that
+Jinja 2 has mostly the same syntax as Jinja 1.  What's different is that
 macros require parentheses around the argument list now.
 
-Additionally Jinja2 allows dynamic inheritance now and dynamic includes.
+Additionally Jinja 2 allows dynamic inheritance now and dynamic includes.
 The old helper function `rendertemplate` is gone now, `include` can be used
 instead.  Includes no longer import macros and variable assignments, for
 that the new `import` tag is used.  This concept is explained in the
@@ -88,10 +88,10 @@ Django
 ------
 
 If you have previously worked with Django templates, you should find
-Jinja2 very familiar.  In fact, most of the syntax elements look and
+Jinja very familiar.  In fact, most of the syntax elements look and
 work the same.
 
-However, Jinja2 provides some more syntax elements covered in the
+However, Jinja provides some more syntax elements covered in the
 documentation and some work a bit different.
 
 This section covers the template changes.  As the API is fundamentally
@@ -119,7 +119,7 @@ Django. This syntax is also used for macros.
 Filter Arguments
 ~~~~~~~~~~~~~~~~
 
-Jinja2 provides more than one argument for filters.  Also the syntax for
+Jinja provides more than one argument for filters.  Also the syntax for
 argument passing is different.  A template that looks like this in Django::
 
     {{ items|join:", " }}
@@ -146,10 +146,10 @@ operator.  Here are some examples::
 Loops
 ~~~~~
 
-For loops work very similarly to Django, but notably the Jinja2 special
+For loops work very similarly to Django, but notably the Jinja special
 variable for the loop context is called `loop`, not `forloop` as in Django.
 
-In addition, the Django `empty` argument is called `else` in Jinja2. For
+In addition, the Django `empty` argument is called `else` in Jinja. For
 example, the Django template::
 
     {% for item in items %}
@@ -192,17 +192,17 @@ Mako
 
 .. highlight:: html+mako
 
-If you have used Mako so far and want to switch to Jinja2 you can configure
-Jinja2 to look more like Mako:
+If you have used Mako so far and want to switch to Jinja you can configure
+Jinja to look more like Mako:
 
 .. sourcecode:: python
 
     env = Environment('<%', '%>', '${', '}', '<%doc>', '</%doc>', '%', '##')
 
-With an environment configured like that, Jinja2 should be able to interpret
-a small subset of Mako templates.  Jinja2 does not support embedded Python
+With an environment configured like that, Jinja should be able to interpret
+a small subset of Mako templates.  Jinja does not support embedded Python
 code, so you would have to move that out of the template.  The syntax for defs
-(which are called macros in Jinja2) and template inheritance is different too.
+(which are called macros in Jinja) and template inheritance is different too.
 The following Mako template::
 
     <%inherit file="layout.html" />
@@ -213,7 +213,7 @@ The following Mako template::
     % endfor
     </ul>
 
-Looks like this in Jinja2 with the above configuration::
+Looks like this in Jinja with the above configuration::
 
     <% extends "layout.html" %>
     <% block title %>Page Title<% endblock %>

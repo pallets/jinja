@@ -140,7 +140,7 @@ class BytecodeCache(object):
                     bucket.write_bytecode(f)
 
     A more advanced version of a filesystem based bytecode cache is part of
-    Jinja2.
+    Jinja.
     """
 
     def load_bytecode(self, bucket):
@@ -158,7 +158,7 @@ class BytecodeCache(object):
         raise NotImplementedError()
 
     def clear(self):
-        """Clears the cache.  This method is not used by Jinja2 but should be
+        """Clears the cache.  This method is not used by Jinja but should be
         implemented to allow applications to clear the bytecode cache used
         by a particular environment.
         """

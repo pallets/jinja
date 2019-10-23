@@ -1,10 +1,10 @@
 #!/usr/bin/env python
 # -*- coding: utf-8 -*-
 """
-    Jinja2 Debug Interface
-    ~~~~~~~~~~~~~~~~~~~~~~
+    Jinja Debug Interface
+    ~~~~~~~~~~~~~~~~~~~~~
 
-    Helper script for internal Jinja2 debugging.  Requires Werkzeug.
+    Helper script for internal Jinja debugging.  Requires Werkzeug.
 
     :copyright: Copyright 2010 by Armin Ronacher.
     :license: BSD.

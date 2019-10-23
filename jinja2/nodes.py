@@ -105,7 +105,7 @@ def get_eval_context(node, ctx):
 
 
 class Node(with_metaclass(NodeType, object)):
-    """Baseclass for all Jinja2 nodes.  There are a number of nodes available
+    """Baseclass for all Jinja nodes.  There are a number of nodes available
     of different types.  There are four major types:
 
     -   :class:`Stmt`: statements
