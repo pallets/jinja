@@ -75,7 +75,7 @@ will use the :attr:`SandboxedEnvironment.binop_table` to translate
 operator symbols into callbacks performing the default operator behavior.
 
 This example shows how the power (``**``) operator can be disabled in
-Jinja2::
+Jinja::
 
     from jinja2.sandbox import SandboxedEnvironment
 

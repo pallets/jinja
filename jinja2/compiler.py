@@ -521,7 +521,7 @@ class CodeGenerator(NodeVisitor):
         undeclared = find_undeclared(node.body, ('caller', 'kwargs', 'varargs'))
 
         if 'caller' in undeclared:
-            # In older Jinja2 versions there was a bug that allowed caller
+            # In older Jinja versions there was a bug that allowed caller
             # to retain the special behavior even if it was mentioned in
             # the argument list.  However thankfully this was only really
             # working if it was the last argument.  So we are explicitly

@@ -124,7 +124,7 @@ argument passing is different.  A template that looks like this in Django::
 
     {{ items|join:", " }}
 
-looks like this in Jinja2::
+looks like this in Jinja::
 
     {{ items|join(', ') }}
 
@@ -158,7 +158,7 @@ example, the Django template::
         No items!
     {% endfor %}
 
-...looks like this in Jinja2::
+...looks like this in Jinja::
 
     {% for item in items %}
         {{ item }}
@@ -169,7 +169,7 @@ example, the Django template::
 Cycle
 ~~~~~
 
-The ``{% cycle %}`` tag does not exist in Jinja2; however, you can achieve the
+The ``{% cycle %}`` tag does not exist in Jinja; however, you can achieve the
 same output by using the `cycle` method on the loop context special variable.
 
 The following Django template::
@@ -178,7 +178,7 @@ The following Django template::
         <li class="{% cycle 'odd' 'even' %}">{{ user }}</li>
     {% endfor %}
 
-...looks like this in Jinja2::
+...looks like this in Jinja::
 
     {% for user in users %}
         <li class="{{ loop.cycle('odd', 'even') }}">{{ user }}</li>
