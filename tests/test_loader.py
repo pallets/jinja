@@ -50,7 +50,7 @@ class TestLoaders(object):
         # This would raise NotADirectoryError if "t2/foo" wasn't skipped.
         e.get_template("foo/test.html")
         assert len(filesystem_loader.searchpath) == 2
-        fullpath = os.path.join(filesystem_loader.searchpath[1], "foo/test.html")
+        fullpath = os.path.join(filesystem_loader.searchpath[1], "foo", "test.html")
         assert os.path.exists(fullpath)
         if filesystem_loader.strict:
             pytest.raises(TemplateNotFound, e.get_template, fullpath)
