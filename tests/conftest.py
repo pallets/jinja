@@ -98,6 +98,14 @@ def filesystem_loader():
 
 
 @pytest.fixture
+def filesystem_loader_nostrict():
+    '''returns FileSystemLoader initialized to res/templates directory, no strict
+    '''
+    here = os.path.dirname(os.path.abspath(__file__))
+    return loaders.FileSystemLoader(here + '/res/templates', strict=False)
+
+
+@pytest.fixture
 def function_loader():
     '''returns a FunctionLoader
     '''

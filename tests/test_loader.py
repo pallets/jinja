@@ -49,6 +49,16 @@ class TestLoaders(object):
         e.get_template("foo")
         # This would raise NotADirectoryError if "t2/foo" wasn't skipped.
         e.get_template("foo/test.html")
+        assert len(filesystem_loader.searchpath) == 2
+        fullpath = os.path.join(filesystem_loader.searchpath[1], "foo/test.html")
+        assert os.path.exists(fullpath)
+        if filesystem_loader.strict:
+            pytest.raises(TemplateNotFound, e.get_template, fullpath)
+        else:
+            assert e.get_template(fullpath).render().strip() == 'FOO'
+
+    def test_filesystem_loader_nostrict(self, filesystem_loader_nostrict):
+        self.test_filesystem_loader_overlapping_names(filesystem_loader_nostrict)
 
     def test_choice_loader(self, choice_loader):
         env = Environment(loader=choice_loader)

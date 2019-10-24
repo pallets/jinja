@@ -152,13 +152,15 @@ class FileSystemLoader(BaseLoader):
 
     To follow symbolic links, set the *followlinks* parameter to ``True``::
 
+    To allow absolute template paths in the get_source, set the *strict* paramater to ``True``::
+
     >>> loader = FileSystemLoader('/path/to/templates', followlinks=True)
 
     .. versionchanged:: 2.8
        The ``followlinks`` parameter was added.
     """
 
-    def __init__(self, searchpath, encoding='utf-8', followlinks=False):
+    def __init__(self, searchpath, encoding='utf-8', followlinks=False, strict=True):
         if (
             not isinstance(searchpath, abc.Iterable)
             or isinstance(searchpath, string_types)
@@ -171,10 +173,14 @@ class FileSystemLoader(BaseLoader):
 
         self.encoding = encoding
         self.followlinks = followlinks
+        self.strict = strict
 
     def get_source(self, environment, template):
         pieces = split_template_path(template)
-        for searchpath in self.searchpath:
+        searchpaths = self.searchpath
+        if not self.strict and path.isabs(template):
+            pieces = [ template, ]
+        for searchpath in searchpaths:
             filename = path.join(searchpath, *pieces)
             f = open_if_exists(filename)
             if f is None:
