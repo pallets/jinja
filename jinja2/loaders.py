@@ -179,7 +179,8 @@ class FileSystemLoader(BaseLoader):
         pieces = split_template_path(template)
         searchpaths = self.searchpath
         if not self.strict and path.isabs(template):
-            pieces = [ template, ]
+            searchpaths = [ template, ]
+            pieces = (,)
         for searchpath in searchpaths:
             filename = path.join(searchpath, *pieces)
             f = open_if_exists(filename)
