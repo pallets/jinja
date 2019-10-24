@@ -17,9 +17,10 @@ import random
 import pytest
 
 from jinja2._compat import string_types, range_type
-from jinja2.utils import LRUCache, escape, object_type_repr, urlize, \
+from jinja2.utils import LRUCache, object_type_repr, urlize, \
      select_autoescape, generate_lorem_ipsum, missing, consume
 from markupsafe import Markup
+
 
 @pytest.mark.utils
 @pytest.mark.lrucache

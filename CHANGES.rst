@@ -55,8 +55,8 @@ Unreleased
 -   :class:`~nativetypes.NativeTemplate` correctly handles quotes
     between expressions. ``"'{{ a }}', '{{ b }}'"`` renders as the tuple
     ``('1', '2')`` rather than the string ``'1, 2'``. :issue:`1020`
--   ``LRUCache.copy()`` correctly re-initializes the queue methods
-    after copying. :issue:`843`
+-   After calling ``LRUCache.copy()``, the copy's queue methods point to
+    the correct queue. :issue:`843`
 
 
 Version 2.10.3
