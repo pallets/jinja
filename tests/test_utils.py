@@ -10,16 +10,17 @@
 """
 
 from collections import deque
-import gc
+from copy import copy as shallow_copy
 import pickle
 import random
 
 import pytest
 
 from jinja2._compat import string_types, range_type
-from jinja2.utils import LRUCache, escape, object_type_repr, urlize, \
+from jinja2.utils import LRUCache, object_type_repr, urlize, \
      select_autoescape, generate_lorem_ipsum, missing, consume
 from markupsafe import Markup
+
 
 @pytest.mark.utils
 @pytest.mark.lrucache
@@ -67,6 +68,17 @@ class TestLRUCache(object):
             assert copy.capacity == cache.capacity
             assert copy._mapping == cache._mapping
             assert copy._queue == cache._queue
+
+    @pytest.mark.parametrize("copy_func", [LRUCache.copy, shallow_copy])
+    def test_copy(self, copy_func):
+        cache = LRUCache(2)
+        cache['a'] = 1
+        cache['b'] = 2
+        copy = copy_func(cache)
+        assert copy._queue == cache._queue
+        copy['c'] = 3
+        assert copy._queue != cache._queue
+        assert 'a' not in copy and 'b' in copy and 'c' in copy
 
     def test_clear(self):
         d = LRUCache(3)
