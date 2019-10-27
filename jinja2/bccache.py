@@ -34,13 +34,13 @@ if not PY2:
 else:
 
     def marshal_dump(code, f):
-        if isinstance(f, file):
+        if isinstance(f, file):  # noqa: F821
             marshal.dump(code, f)
         else:
             f.write(marshal.dumps(code))
 
     def marshal_load(f):
-        if isinstance(f, file):
+        if isinstance(f, file):  # noqa: F821
             return marshal.load(f)
         return marshal.loads(f.read())
 

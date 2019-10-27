@@ -28,7 +28,7 @@ def test_ascii_str():
 
     env.policies['compiler.ascii_str'] = False
     t = env.from_string('{{ "foo"|assert }}')
-    t.render(expected_type=unicode)
+    t.render(expected_type=unicode)  # noqa: F821
 
     env.policies['compiler.ascii_str'] = True
     t = env.from_string('{{ "foo"|assert }}')
@@ -37,4 +37,4 @@ def test_ascii_str():
     for val in True, False:
         env.policies['compiler.ascii_str'] = val
         t = env.from_string(u'{{ "\N{SNOWMAN}"|assert }}')
-        t.render(expected_type=unicode)
+        t.render(expected_type=unicode)  # noqa: F821
