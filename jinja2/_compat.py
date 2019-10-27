@@ -16,14 +16,21 @@ PY2 = sys.version_info[0] == 2
 PYPY = hasattr(sys, 'pypy_translation_info')
 _identity = lambda x: x
 
-
-if not PY2:
+try:  # PY2
+    unichr = unichr
+    text_type = unicode
+    range_type = xrange
+    string_types = (str, unicode)
+    integer_types = (int, long)
+except NameError:  # PY3
     unichr = chr
     range_type = range
     text_type = str
     string_types = (str,)
     integer_types = (int,)
 
+
+if not PY2:
     iterkeys = lambda d: iter(d.keys())
     itervalues = lambda d: iter(d.values())
     iteritems = lambda d: iter(d.items())
@@ -47,12 +54,6 @@ if not PY2:
     encode_filename = _identity
 
 else:
-    unichr = unichr
-    text_type = unicode
-    range_type = xrange
-    string_types = (str, unicode)
-    integer_types = (int, long)
-
     iterkeys = lambda d: d.iterkeys()
     itervalues = lambda d: d.itervalues()
     iteritems = lambda d: d.iteritems()
@@ -77,7 +78,7 @@ else:
         return cls
 
     def encode_filename(filename):
-        if isinstance(filename, unicode):
+        if isinstance(filename, unicode):  # noqa: F821
             return filename.encode('utf-8')
         return filename
 
