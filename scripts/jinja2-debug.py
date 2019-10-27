@@ -9,6 +9,7 @@
     :copyright: Copyright 2010 by Armin Ronacher.
     :license: BSD.
 """
+from __future__ import print_function
 import sys
 import jinja2
 from werkzeug import script

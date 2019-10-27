@@ -1,3 +1,4 @@
+from __future__ import print_function
 try:
     from cProfile import Profile
 except ImportError:
@@ -42,7 +43,7 @@ jinja_template = JinjaEnvironment(
     variable_start_string="${",
     variable_end_string="}"
 ).from_string(source)
-print jinja_template.environment.compile(source, raw=True)
+print(jinja_template.environment.compile(source, raw=True))
 
 
 p = Profile()

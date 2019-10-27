@@ -68,6 +68,7 @@
     :copyright: (c) 2009 by the Jinja Team.
     :license: BSD.
 """
+from __future__ import print_function
 import re
 import os
 import sys
@@ -128,7 +129,7 @@ def convert_templates(output_dir, extensions=('.html', '.txt'), writer=None,
 
     if callback is None:
         def callback(template):
-            print template
+            print(template)
 
     for directory in settings.TEMPLATE_DIRS:
         for dirname, _, files in os.walk(directory):
@@ -308,7 +309,7 @@ class Writer(object):
         if node is not None and hasattr(node, 'source'):
             filename, lineno = self.get_location(*node.source)
             message = '[%s:%d] %s' % (filename, lineno, message)
-        print >> self.error_stream, message
+        print(message, file=self.error_stream)
 
     def translate_variable_name(self, var):
         """Performs variable name translation."""

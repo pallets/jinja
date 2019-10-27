@@ -53,7 +53,7 @@ def get_template(template_name, globals=None):
     """Load a template."""
     try:
         return get_env().get_template(template_name, globals=globals)
-    except TemplateNotFound, e:
+    except TemplateNotFound as e:
         raise TemplateDoesNotExist(str(e))
 
 
