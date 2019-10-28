@@ -684,17 +684,17 @@ class Environment(object):
                 if sys.version_info >= (3, 3):
                     py_header += u'\x00\x00\x00\x00'.encode('iso-8859-15')
 
-        def write_file(filename, data, mode):
+        def write_file(filename, data):
             if zip:
                 info = ZipInfo(filename)
                 info.external_attr = 0o755 << 16
                 zip_file.writestr(info, data)
             else:
-                f = open(os.path.join(target, filename), mode)
-                try:
+                if isinstance(data, text_type):
+                    data = data.encode("utf8")
+
+                with open(os.path.join(target, filename), "wb") as f:
                     f.write(data)
-                finally:
-                    f.close()
 
         if zip is not None:
             from zipfile import ZipFile, ZipInfo, ZIP_DEFLATED, ZIP_STORED
@@ -722,11 +722,11 @@ class Environment(object):
                 if py_compile:
                     c = self._compile(code, encode_filename(filename))
                     write_file(filename + 'c', py_header +
-                               marshal.dumps(c), 'wb')
+                               marshal.dumps(c))
                     log_function('Byte-compiled "%s" as %s' %
                                  (name, filename + 'c'))
                 else:
-                    write_file(filename, code, 'w')
+                    write_file(filename, code)
                     log_function('Compiled "%s" as %s' % (name, filename))
         finally:
             if zip:
