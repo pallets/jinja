@@ -60,6 +60,8 @@ Unreleased
     :class:`Environment`. :issue:`1091`
 -   After calling ``LRUCache.copy()``, the copy's queue methods point to
     the correct queue. :issue:`843`
+-   Compiling templates always writes UTF-8 instead of defaulting to the
+    system encoding. :issue:`889`
 
 
 Version 2.10.3
