@@ -41,20 +41,22 @@ _spontaneous_environments = LRUCache(10)
 _make_traceback = None
 
 
-def get_spontaneous_environment(*args):
-    """Return a new spontaneous environment.  A spontaneous environment is an
-    unnamed and unaccessible (in theory) environment that is used for
-    templates generated from a string and not from the file system.
+def get_spontaneous_environment(cls, *args):
+    """Return a new spontaneous environment. A spontaneous environment
+    is used for templates created directly rather than through an
+    existing environment.
+
+    :param cls: Environment class to create.
+    :param args: Positional arguments passed to environment.
     """
+    key = (cls, args)
+
     try:
-        env = _spontaneous_environments.get(args)
-    except TypeError:
-        return Environment(*args)
-    if env is not None:
+        return _spontaneous_environments[key]
+    except KeyError:
+        _spontaneous_environments[key] = env = cls(*args)
+        env.shared = True
         return env
-    _spontaneous_environments[args] = env = Environment(*args)
-    env.shared = True
-    return env
 
 
 def create_cache(size):
@@ -918,6 +920,10 @@ class Template(object):
     StopIteration
     """
 
+    #: Type of environment to create when creating a template directly
+    #: rather than through an existing environment.
+    environment_class = Environment
+
     def __new__(cls, source,
                 block_start_string=BLOCK_START_STRING,
                 block_end_string=BLOCK_END_STRING,
@@ -938,6 +944,7 @@ class Template(object):
                 autoescape=False,
                 enable_async=False):
         env = get_spontaneous_environment(
+            cls.environment_class,
             block_start_string, block_end_string, variable_start_string,
             variable_end_string, comment_start_string, comment_end_string,
             line_statement_prefix, line_comment_prefix, trim_blocks,
