@@ -212,7 +212,15 @@ class NativeCodeGenerator(CodeGenerator):
             self.outdent()
 
 
+class NativeEnvironment(Environment):
+    """An environment that renders templates to native Python types."""
+
+    code_generator_class = NativeCodeGenerator
+
+
 class NativeTemplate(Template):
+    environment_class = NativeEnvironment
+
     def render(self, *args, **kwargs):
         """Render the template to produce a native Python type. If the
         result is a single node, its value is returned. Otherwise, the
@@ -231,8 +239,4 @@ class NativeTemplate(Template):
         return self.environment.handle_exception(exc_info, True)
 
 
-class NativeEnvironment(Environment):
-    """An environment that renders templates to native Python types."""
-
-    code_generator_class = NativeCodeGenerator
-    template_class = NativeTemplate
+NativeEnvironment.template_class = NativeTemplate

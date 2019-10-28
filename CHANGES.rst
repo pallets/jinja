@@ -55,6 +55,9 @@ Unreleased
 -   :class:`~nativetypes.NativeTemplate` correctly handles quotes
     between expressions. ``"'{{ a }}', '{{ b }}'"`` renders as the tuple
     ``('1', '2')`` rather than the string ``'1, 2'``. :issue:`1020`
+-   Creating a :class:`~nativetypes.NativeTemplate` directly creates a
+    :class:`~nativetypes.NativeEnvironment` instead of a default
+    :class:`Environment`. :issue:`1091`
 -   After calling ``LRUCache.copy()``, the copy's queue methods point to
     the correct queue. :issue:`843`
 
