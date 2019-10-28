@@ -10,6 +10,7 @@
     :copyright: (c) 2009 by the Jinja Team.
     :license: BSD.
 """
+from __future__ import print_function
 import sys
 from os.path import join, dirname, abspath
 try:
@@ -104,7 +105,7 @@ if __name__ == '__main__':
         sys.stdout.write('\r    %-20s%.4f seconds\n' % (test, t.timeit(number=200) / 200))
 
     if '-p' in sys.argv:
-        print 'Jinja profile'
+        print('Jinja profile')
         p = Profile()
         p.runcall(test_jinja)
         stats = Stats(p)
