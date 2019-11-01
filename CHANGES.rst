@@ -65,6 +65,8 @@ Unreleased
 -   ``|wordwrap`` filter treats existing newlines as separate paragraphs
     to be wrapped individually, rather than creating short intermediate
     lines. :issue:`175`
+-   Add ``break_on_hyphens`` parameter to ``|wordwrap`` filter.
+    :issue:`550`
 
 
 Version 2.10.3
