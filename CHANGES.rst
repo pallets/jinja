@@ -62,6 +62,9 @@ Unreleased
     the correct queue. :issue:`843`
 -   Compiling templates always writes UTF-8 instead of defaulting to the
     system encoding. :issue:`889`
+-   ``|wordwrap`` filter treats existing newlines as separate paragraphs
+    to be wrapped individually, rather than creating short intermediate
+    lines. :issue:`175`
 
 
 Version 2.10.3

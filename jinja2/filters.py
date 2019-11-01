@@ -684,25 +684,46 @@ def do_truncate(env, s, length=255, killwords=False, end='...', leeway=None):
 
 
 @environmentfilter
-def do_wordwrap(environment, s, width=79, break_long_words=True,
-                wrapstring=None):
-    """
-    Return a copy of the string passed to the filter wrapped after
-    ``79`` characters.  You can override this default using the first
-    parameter.  If you set the second parameter to `false` Jinja will not
-    split words apart if they are longer than `width`. By default, the newlines
-    will be the default newlines for the environment, but this can be changed
-    using the wrapstring keyword argument.
+def do_wordwrap(environment, s, width=79, break_long_words=True, wrapstring=None):
+    """Wrap a string to the given width. Existing newlines are treated
+    as paragraphs to be wrapped separately.
 
-    .. versionadded:: 2.7
-       Added support for the `wrapstring` parameter.
+    :param s: Original text to wrap.
+    :param width: Maximum length of wrapped lines.
+    :param break_long_words: If a word is longer than ``width``, break
+        it across lines.
+    :param wrapstring: String to join each wrapped line. Defaults to
+        :attr:`Environment.newline_sequence`.
+
+    .. versionchanged:: 2.11
+        Existing newlines are treated as paragraphs wrapped separately.
+
+    .. versionchanged:: 2.7
+        Added the ``wrapstring`` parameter.
     """
+    import textwrap
+
     if not wrapstring:
         wrapstring = environment.newline_sequence
-    import textwrap
-    return wrapstring.join(textwrap.wrap(s, width=width, expand_tabs=False,
-                                   replace_whitespace=False,
-                                   break_long_words=break_long_words))
+
+    # textwrap.wrap doesn't consider existing newlines when wrapping.
+    # If the string has a newline before width, wrap will still insert
+    # a newline at width, resulting in a short line. Instead, split and
+    # wrap each paragraph individually.
+    return wrapstring.join(
+        [
+            wrapstring.join(
+                textwrap.wrap(
+                    line,
+                    width=width,
+                    expand_tabs=False,
+                    replace_whitespace=False,
+                    break_long_words=break_long_words,
+                )
+            )
+            for line in s.splitlines()
+        ]
+    )
 
 
 def do_wordcount(s):
