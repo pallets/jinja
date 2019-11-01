@@ -1133,8 +1133,10 @@ class Template(object):
     @property
     def debug_info(self):
         """The debug info mapping."""
-        return [tuple(imap(int, x.split('='))) for x in
-                self._debug_info.split('&')]
+        if self._debug_info:
+            return [tuple(imap(int, x.split('='))) for x in
+                    self._debug_info.split('&')]
+        return []
 
     def __repr__(self):
         if self.name is None:
