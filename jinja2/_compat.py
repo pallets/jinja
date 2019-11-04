@@ -13,6 +13,7 @@
 import sys
 
 PY2 = sys.version_info[0] == 2
+PY38 = sys.version_info[1] >= 8 and not PY2
 PYPY = hasattr(sys, 'pypy_translation_info')
 _identity = lambda x: x
 
@@ -99,10 +100,16 @@ except ImportError:
     from urllib import quote as url_quote
 
 
-try:
-    from collections import abc
-except ImportError:
-    import collections as abc
+if PY38:
+    try:
+        from collections.abc import abc
+    except ImportError:
+        import collections as abc
+else:
+    try:
+        from collections import abc
+    except ImportError:
+        import collections as abc
 
 
 try:
