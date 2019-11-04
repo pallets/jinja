@@ -19,7 +19,7 @@ from jinja2.utils import Markup, escape, pformat, urlize, soft_unicode, \
      unicode_urlencode, htmlsafe_json_dumps
 from jinja2.runtime import Undefined
 from jinja2.exceptions import FilterArgumentError
-from jinja2._compat import imap, string_types, text_type, iteritems, PY2
+from jinja2._compat import imap, string_types, text_type, iteritems, abc
 
 
 _word_re = re.compile(r'\w+', re.UNICODE)
@@ -129,24 +129,33 @@ def do_forceescape(value):
 
 
 def do_urlencode(value):
-    """Escape strings for use in URLs (uses UTF-8 encoding).  It accepts both
-    dictionaries and regular strings as well as pairwise iterables.
+    """Quote data for use in a URL path or query using UTF-8.
+
+    Basic wrapper around :func:`urllib.parse.quote` when given a
+    string, or :func:`urllib.parse.urlencode` for a dict or iterable.
+
+    :param value: Data to quote. A string will be quoted directly. A
+        dict or iterable of ``(key, value)`` pairs will be joined as a
+        query string.
+
+    When given a string, "/" is not quoted. HTTP servers treat "/" and
+    "%2F" equivalently in paths. If you need quoted slashes, use the
+    ``|replace("/", "%2F")`` filter.
 
     .. versionadded:: 2.7
     """
-    itemiter = None
-    if isinstance(value, dict):
-        itemiter = iteritems(value)
-    elif not isinstance(value, string_types):
-        try:
-            itemiter = iter(value)
-        except TypeError:
-            pass
-    if itemiter is None:
+    if isinstance(value, string_types) or not isinstance(value, abc.Iterable):
         return unicode_urlencode(value)
-    return u'&'.join(unicode_urlencode(k) + '=' +
-                     unicode_urlencode(v, for_qs=True)
-                     for k, v in itemiter)
+
+    if isinstance(value, dict):
+        items = iteritems(value)
+    else:
+        items = iter(value)
+
+    return u"&".join(
+        "%s=%s" % (unicode_urlencode(k, for_qs=True), unicode_urlencode(v, for_qs=True))
+        for k, v in items
+    )
 
 
 @evalcontextfilter

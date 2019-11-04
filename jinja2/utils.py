@@ -14,8 +14,7 @@ import json
 import warnings
 from collections import deque
 from threading import Lock
-from jinja2._compat import text_type, string_types, implements_iterator, \
-     url_quote, abc
+from jinja2._compat import text_type, string_types, url_quote, abc
 
 
 _word_split_re = re.compile(r'(\s+)')
@@ -282,22 +281,32 @@ def generate_lorem_ipsum(n=5, html=True, min=20, max=100):
     return Markup(u'\n'.join(u'<p>%s</p>' % escape(x) for x in result))
 
 
-def unicode_urlencode(obj, charset='utf-8', for_qs=False):
-    """URL escapes a single bytestring or unicode string with the
-    given charset if applicable to URL safe quoting under all rules
-    that need to be considered under all supported Python versions.
+def unicode_urlencode(obj, charset="utf-8", for_qs=False):
+    """Quote a string for use in a URL using the given charset.
 
-    If non strings are provided they are converted to their unicode
-    representation first.
+    This function is misnamed, it is a wrapper around
+    :func:`urllib.parse.quote`.
+
+    :param obj: String or bytes to quote. Other types are converted to
+        string then encoded to bytes using the given charset.
+    :param charset: Encode text to bytes using this charset.
+    :param for_qs: Quote "/" and use "+" for spaces.
     """
     if not isinstance(obj, string_types):
         obj = text_type(obj)
+
     if isinstance(obj, text_type):
         obj = obj.encode(charset)
-    safe = not for_qs and b'/' or b''
-    rv = text_type(url_quote(obj, safe))
+
+    safe = b"" if for_qs else b"/"
+    rv = url_quote(obj, safe)
+
+    if not isinstance(rv, text_type):
+        rv = rv.decode("utf-8")
+
     if for_qs:
-        rv = rv.replace('%20', '+')
+        rv = rv.replace("%20", "+")
+
     return rv
 
 
