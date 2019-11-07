@@ -705,7 +705,7 @@ class CodeGenerator(NodeVisitor):
 
         if self.environment.is_async:
             self.writeline('from jinja2.asyncsupport import auto_await, '
-                           'auto_aiter, make_async_loop_context')
+                           'auto_aiter, AsyncLoopContext')
 
         # if we want a deferred initialization we cannot move the
         # environment into a local name
@@ -1095,7 +1095,7 @@ class CodeGenerator(NodeVisitor):
         self.visit(node.target, loop_frame)
         if extended_loop:
             if self.environment.is_async:
-                self.write(', %s in await make_async_loop_context(' % loop_ref)
+                self.write(', %s in AsyncLoopContext(' % loop_ref)
             else:
                 self.write(', %s in LoopContext(' % loop_ref)
         else:
