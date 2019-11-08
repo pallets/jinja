@@ -9,14 +9,17 @@
     :copyright: (c) 2017 by the Jinja Team.
     :license: BSD, see LICENSE for more details.
 """
-import sys
 import asyncio
 import inspect
+import sys
 from functools import update_wrapper
 
-from jinja2.utils import concat, internalcode, Markup
 from jinja2.environment import TemplateModule
-from jinja2.runtime import LoopContextBase, _last_iteration
+from jinja2.runtime import LoopContext
+from jinja2.utils import concat
+from jinja2.utils import internalcode
+from jinja2.utils import Markup
+from jinja2.utils import missing
 
 
 async def concat_async(async_gen):
@@ -187,73 +190,80 @@ async def auto_aiter(iterable):
         yield item
 
 
-class AsyncLoopContext(LoopContextBase):
-
-    def __init__(self, async_iterator, undefined, after, length, recurse=None,
-                 depth0=0):
-        LoopContextBase.__init__(self, undefined, recurse, depth0)
-        self._async_iterator = async_iterator
-        self._after = after
-        self._length = length
+class AsyncLoopContext(LoopContext):
+    _to_iterator = staticmethod(auto_aiter)
 
     @property
-    def length(self):
-        if self._length is None:
-            raise TypeError('Loop length for some iterators cannot be '
-                            'lazily calculated in async mode')
+    async def length(self):
+        if self._length is not None:
+            return self._length
+
+        try:
+            self._length = len(self._iterable)
+        except TypeError:
+            iterable = [x async for x in self._iterator]
+            self._iterator = self._to_iterator(iterable)
+            self._length = len(iterable) + self.index + (self._after is not missing)
+
         return self._length
 
-    def __aiter__(self):
-        return AsyncLoopContextIterator(self)
+    @property
+    async def revindex0(self):
+        return await self.length - self.index
 
+    @property
+    async def revindex(self):
+        return await self.length - self.index0
 
-class AsyncLoopContextIterator(object):
-    __slots__ = ('context',)
+    async def _peek_next(self):
+        if self._after is not missing:
+            return self._after
 
-    def __init__(self, context):
-        self.context = context
+        try:
+            self._after = await self._iterator.__anext__()
+        except StopAsyncIteration:
+            self._after = missing
+
+        return self._after
+
+    @property
+    async def last(self):
+        return await self._peek_next() is missing
+
+    @property
+    async def nextitem(self):
+        rv = await self._peek_next()
+
+        if rv is missing:
+            return self._undefined("there is no next item")
+
+        return rv
 
     def __aiter__(self):
         return self
 
     async def __anext__(self):
-        ctx = self.context
-        ctx.index0 += 1
-        if ctx._after is _last_iteration:
-            raise StopAsyncIteration()
-        ctx._before = ctx._current
-        ctx._current = ctx._after
-        try:
-            ctx._after = await ctx._async_iterator.__anext__()
-        except StopAsyncIteration:
-            ctx._after = _last_iteration
-        return ctx._current, ctx
+        if self._after is not missing:
+            rv = self._after
+            self._after = missing
+        else:
+            rv = await self._iterator.__anext__()
+
+        self.index0 += 1
+        self._before = self._current
+        self._current = rv
+        return rv, self
 
 
 async def make_async_loop_context(iterable, undefined, recurse=None, depth0=0):
-    # Length is more complicated and less efficient in async mode.  The
-    # reason for this is that we cannot know if length will be used
-    # upfront but because length is a property we cannot lazily execute it
-    # later.  This means that we need to buffer it up and measure :(
-    #
-    # We however only do this for actual iterators, not for async
-    # iterators as blocking here does not seem like the best idea in the
-    # world.
-    try:
-        length = len(iterable)
-    except (TypeError, AttributeError):
-        if not hasattr(iterable, '__aiter__'):
-            iterable = tuple(iterable)
-            length = len(iterable)
-        else:
-            length = None
-    async_iterator = auto_aiter(iterable)
-    try:
-        after = await async_iterator.__anext__()
-    except StopAsyncIteration:
-        after = _last_iteration
-    return AsyncLoopContext(async_iterator, undefined, after, length, recurse,
-                            depth0)
+    import warnings
+    warnings.warn(
+        "This template must be recompiled with at least Jinja 2.11, or"
+        " it will fail in 3.0.",
+        DeprecationWarning,
+        stacklevel=2,
+    )
+    return AsyncLoopContext(iterable, undefined, recurse, depth0)
 
 
 patch_all()

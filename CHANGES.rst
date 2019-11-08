@@ -5,11 +5,7 @@ Version 2.11.0
 
 Unreleased
 
--   Async support is only loaded the first time an
-    :class:`~environment.Environment` enables it, in order to avoid a
-    slow initial import. :issue:`765`
--   Python 2.6 and 3.3 are not supported anymore.
--   The ``map`` filter in async mode now automatically awaits
+-   Python 2.6, 3.3, and 3.4 are not supported anymore.
 -   Added a new ``ChainableUndefined`` class to support getitem and
     getattr on an undefined object. :issue:`977`
 -   Allow ``{%+`` syntax (with NOP behavior) when ``lstrip_blocks`` is
@@ -47,6 +43,18 @@ Unreleased
 -   Fix behavior of ``loop`` control variables such as ``length`` and
     ``revindex0`` when looping over a generator. :issue:`459, 751, 794`,
     :pr:`993`
+-   Async support is only loaded the first time an environment enables
+    it, in order to avoid a slow initial import. :issue:`765`
+-   In async environments, the ``|map`` filter will await the filter
+    call if needed. :pr:`913`
+-   In for loops that access ``loop`` attributes, the iterator is not
+    advanced ahead of the current iteration unless ``length``,
+    ``revindex``, ``nextitem``, or ``last`` are accessed. This makes it
+    less likely to break ``groupby`` results. :issue:`555`, :pr:`1101`
+-   In async environments, the ``loop`` attributes ``length`` and
+    ``revindex`` work for async iterators. :pr:`1101`
+-   In async environments, values from attribute/property access will
+    be awaited if needed. :pr:`1101`
 -   ``PackageLoader`` doesn't depend on setuptools or pkg_resources.
     :issue:`970`
 -   Support :class:`os.PathLike` objects in

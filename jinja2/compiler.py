@@ -705,7 +705,7 @@ class CodeGenerator(NodeVisitor):
 
         if self.environment.is_async:
             self.writeline('from jinja2.asyncsupport import auto_await, '
-                           'auto_aiter, make_async_loop_context')
+                           'auto_aiter, AsyncLoopContext')
 
         # if we want a deferred initialization we cannot move the
         # environment into a local name
@@ -1095,7 +1095,7 @@ class CodeGenerator(NodeVisitor):
         self.visit(node.target, loop_frame)
         if extended_loop:
             if self.environment.is_async:
-                self.write(', %s in await make_async_loop_context(' % loop_ref)
+                self.write(', %s in AsyncLoopContext(' % loop_ref)
             else:
                 self.write(', %s in LoopContext(' % loop_ref)
         else:
@@ -1551,9 +1551,15 @@ class CodeGenerator(NodeVisitor):
 
     @optimizeconst
     def visit_Getattr(self, node, frame):
+        if self.environment.is_async:
+            self.write("await auto_await(")
+
         self.write('environment.getattr(')
         self.visit(node.node, frame)
         self.write(', %r)' % node.attr)
+
+        if self.environment.is_async:
+            self.write(")")
 
     @optimizeconst
     def visit_Getitem(self, node, frame):
@@ -1564,11 +1570,17 @@ class CodeGenerator(NodeVisitor):
             self.visit(node.arg, frame)
             self.write(']')
         else:
+            if self.environment.is_async:
+                self.write("await auto_await(")
+
             self.write('environment.getitem(')
             self.visit(node.node, frame)
             self.write(', ')
             self.visit(node.arg, frame)
             self.write(')')
+
+            if self.environment.is_async:
+                self.write(")")
 
     def visit_Slice(self, node, frame):
         if node.start is not None:

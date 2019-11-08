@@ -343,134 +343,197 @@ class BlockReference(object):
         return rv
 
 
-class LoopContextBase(object):
-    """A loop context for dynamic iteration."""
+@implements_iterator
+class LoopContext:
+    """A wrapper iterable for dynamic ``for`` loops, with information
+    about the loop and iteration.
+    """
 
-    _before = _first_iteration
-    _current = _first_iteration
-    _after = _last_iteration
+    #: Current iteration of the loop, starting at 0.
+    index0 = -1
+
     _length = None
+    _after = missing
+    _current = missing
+    _before = missing
+    _last_changed_value = missing
 
-    def __init__(self, undefined, recurse=None, depth0=0):
+    def __init__(self, iterable, undefined, recurse=None, depth0=0):
+        """
+        :param iterable: Iterable to wrap.
+        :param undefined: :class:`Undefined` class to use for next and
+            previous items.
+        :param recurse: The function to render the loop body when the
+            loop is marked recursive.
+        :param depth0: Incremented when looping recursively.
+        """
+        self._iterable = iterable
+        self._iterator = self._to_iterator(iterable)
         self._undefined = undefined
         self._recurse = recurse
-        self.index0 = -1
+        #: How many levels deep a recursive loop currently is, starting at 0.
         self.depth0 = depth0
-        self._last_checked_value = missing
 
-    def cycle(self, *args):
-        """Cycles among the arguments with the current loop index."""
-        if not args:
-            raise TypeError('no items for cycling given')
-        return args[self.index0 % len(args)]
-
-    def changed(self, *value):
-        """Checks whether the value has changed since the last call."""
-        if self._last_checked_value != value:
-            self._last_checked_value = value
-            return True
-        return False
-
-    first = property(lambda x: x.index0 == 0)
-    last = property(lambda x: x._after is _last_iteration)
-    index = property(lambda x: x.index0 + 1)
-    revindex = property(lambda x: x.length - x.index0)
-    revindex0 = property(lambda x: x.length - x.index)
-    depth = property(lambda x: x.depth0 + 1)
+    @staticmethod
+    def _to_iterator(iterable):
+        return iter(iterable)
 
     @property
-    def previtem(self):
-        if self._before is _first_iteration:
-            return self._undefined('there is no previous item')
-        return self._before
+    def length(self):
+        """Length of the iterable.
 
-    @property
-    def nextitem(self):
-        if self._after is _last_iteration:
-            return self._undefined('there is no next item')
-        return self._after
+        If the iterable is a generator or otherwise does not have a
+        size, it is eagerly evaluated to get a size.
+        """
+        if self._length is not None:
+            return self._length
+
+        try:
+            self._length = len(self._iterable)
+        except TypeError:
+            iterable = list(self._iterator)
+            self._iterator = self._to_iterator(iterable)
+            self._length = len(iterable) + self.index + (self._after is not missing)
+
+        return self._length
 
     def __len__(self):
         return self.length
 
-    @internalcode
-    def loop(self, iterable):
-        if self._recurse is None:
-            raise TypeError('Tried to call non recursive loop.  Maybe you '
-                            "forgot the 'recursive' modifier.")
-        return self._recurse(iterable, self._recurse, self.depth0 + 1)
-
-    # a nifty trick to enhance the error message if someone tried to call
-    # the loop without or with too many arguments.
-    __call__ = loop
-    del loop
-
-    def __repr__(self):
-        return '<%s %r/%r>' % (
-            self.__class__.__name__,
-            self.index,
-            self.length
-        )
-
-
-class LoopContext(LoopContextBase):
-
-    def __init__(self, iterable, undefined, recurse=None, depth0=0):
-        LoopContextBase.__init__(self, undefined, recurse, depth0)
-        self._iterator = iter(iterable)
-        self._iterations_done_count = 0
-        self._length = None
-        self._after = self._safe_next()
+    @property
+    def depth(self):
+        """How many levels deep a recursive loop currently is, starting at 1."""
+        return self.depth0 + 1
 
     @property
-    def length(self):
+    def index(self):
+        """Current iteration of the loop, starting at 1."""
+        return self.index0 + 1
+
+    @property
+    def revindex0(self):
+        """Number of iterations from the end of the loop, ending at 0.
+
+        Requires calculating :attr:`length`.
         """
-        Getting length of an iterator is a costly operation which requires extra memory
-        and traversing in linear time. So make it an on demand param that iterates from
-        the point onwards of the iterator and accounts for iterated elements.
+        return self.length - self.index
+
+    @property
+    def revindex(self):
+        """Number of iterations from the end of the loop, ending at 1.
+
+        Requires calculating :attr:`length`.
         """
-        if self._length is None:
-            # if was not possible to get the length of the iterator when
-            # the loop context was created (ie: iterating over a generator)
-            # we have to convert the iterable into a sequence and use the
-            # length of that + the number of iterations so far.
-            iterable = tuple(self._iterator)
-            self._iterator = iter(iterable)
-            self._length = len(iterable) + self._iterations_done_count
-        return self._length
+        return self.length - self.index0
 
-    def __iter__(self):
-        return LoopContextIterator(self)
+    @property
+    def first(self):
+        """Whether this is the first iteration of the loop."""
+        return self.index0 == 0
 
-    def _safe_next(self):
-        try:
-            tmp = next(self._iterator)
-            self._iterations_done_count += 1
-            return tmp
-        except StopIteration:
-            return _last_iteration
+    def _peek_next(self):
+        """Return the next element in the iterable, or :data:`missing`
+        if the iterable is exhausted. Only peeks one item ahead, caching
+        the result in :attr:`_last` for use in subsequent checks. The
+        cache is reset when :meth:`__next__` is called.
+        """
+        if self._after is not missing:
+            return self._after
 
+        self._after = next(self._iterator, missing)
+        return self._after
 
-@implements_iterator
-class LoopContextIterator(object):
-    """The iterator for a loop context."""
-    __slots__ = ('context',)
+    @property
+    def last(self):
+        """Whether this is the last iteration of the loop.
 
-    def __init__(self, context):
-        self.context = context
+        Causes the iterable to advance early. See
+        :func:`itertools.groupby` for issues this can cause.
+        The :func:`groupby` filter avoids that issue.
+        """
+        return self._peek_next() is missing
+
+    @property
+    def previtem(self):
+        """The item in the previous iteration. Undefined during the
+        first iteration.
+        """
+        if self.first:
+            return self._undefined("there is no previous item")
+
+        return self._before
+
+    @property
+    def nextitem(self):
+        """The item in the next iteration. Undefined during the last
+        iteration.
+
+        Causes the iterable to advance early. See
+        :func:`itertools.groupby` for issues this can cause.
+        The :func:`groupby` filter avoids that issue.
+        """
+        rv = self._peek_next()
+
+        if rv is missing:
+            return self._undefined("there is no next item")
+
+        return rv
+
+    def cycle(self, *args):
+        """Return a value from the given args, cycling through based on
+        the current :attr:`index0`.
+
+        :param args: One or more values to cycle through.
+        """
+        if not args:
+            raise TypeError("no items for cycling given")
+
+        return args[self.index0 % len(args)]
+
+    def changed(self, *value):
+        """Return ``True`` if previously called with a different value
+        (including when called for the first time).
+
+        :param value: One or more values to compare to the last call.
+        """
+        if self._last_changed_value != value:
+            self._last_changed_value = value
+            return True
+
+        return False
 
     def __iter__(self):
         return self
 
+    @internalcode
     def __next__(self):
-        ctx = self.context
-        ctx.index0 += 1
-        if ctx._after is _last_iteration:
-            raise StopIteration()
-        ctx._before = ctx._current
-        ctx._current = ctx._after
-        ctx._after = ctx._safe_next()
-        return ctx._current, ctx
+        if self._after is not missing:
+            rv = self._after
+            self._after = missing
+        else:
+            rv = next(self._iterator)
+
+        self.index0 += 1
+        self._before = self._current
+        self._current = rv
+        return rv, self
+
+    def __call__(self, iterable):
+        """When iterating over nested data, render the body of the loop
+        recursively with the given inner iterable data.
+
+        The loop must have the ``recursive`` marker for this to work.
+        """
+        if self._recurse is None:
+            raise TypeError(
+                "The loop must have the 'recursive' marker to be"
+                " called recursively."
+            )
+
+        return self._recurse(iterable, self._recurse, depth=self.depth)
+
+    def __repr__(self):
+        return "<%s %d/%d>" % (self.__class__.__name__, self.index, self.length)
 
 
 class Macro(object):
