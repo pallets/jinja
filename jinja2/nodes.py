@@ -772,6 +772,8 @@ class Compare(Expr):
             for op in self.ops:
                 new_value = op.expr.as_const(eval_ctx)
                 result = _cmpop_to_func[op.op](value, new_value)
+                if not result:
+                    return False
                 value = new_value
         except Exception:
             raise Impossible()
