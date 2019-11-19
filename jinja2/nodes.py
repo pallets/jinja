@@ -20,10 +20,6 @@ from jinja2.utils import Markup
 from jinja2._compat import izip, with_metaclass, text_type, PY2
 
 
-#: the types we support for context functions
-_context_function_types = (types.FunctionType, types.MethodType)
-
-
 _binop_to_func = {
     '*':        operator.mul,
     '/':        operator.truediv,

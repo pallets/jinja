@@ -75,6 +75,8 @@ Unreleased
     lines. :issue:`175`
 -   Add ``break_on_hyphens`` parameter to ``|wordwrap`` filter.
     :issue:`550`
+-   Use :func:`callable` to inject context at runtime for compatibility
+    with Cython compiled functions. :pr:`1108`
 
 
 Version 2.10.3

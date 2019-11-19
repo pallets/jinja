@@ -13,7 +13,7 @@ import sys
 from itertools import chain
 from types import MethodType
 
-from jinja2.nodes import EvalContext, _context_function_types
+from jinja2.nodes import EvalContext
 from jinja2.utils import Markup, soft_unicode, escape, missing, concat, \
      internalcode, object_type_repr, evalcontextfunction, Namespace
 from jinja2.exceptions import UndefinedError, TemplateRuntimeError, \
@@ -251,7 +251,7 @@ class Context(with_metaclass(ContextMeta)):
                     __obj = fn
                     break
 
-        if isinstance(__obj, _context_function_types):
+        if callable(__obj):
             if getattr(__obj, 'contextfunction', 0):
                 args = (__self,) + args
             elif getattr(__obj, 'evalcontextfunction', 0):
