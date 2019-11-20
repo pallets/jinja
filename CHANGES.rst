@@ -77,6 +77,10 @@ Unreleased
     :issue:`550`
 -   Use :func:`callable` to inject context at runtime for compatibility
     with Cython compiled functions. :pr:`1108`
+-   When chained comparisons of constants are evaluated at compile time,
+    the result follows Python's behavior of returning ``False`` if any
+    comparison returns ``False``, rather than only the last one.
+    :issue:`1102`
 
 
 Version 2.10.3

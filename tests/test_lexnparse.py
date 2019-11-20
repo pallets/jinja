@@ -323,16 +323,39 @@ class TestSyntax(object):
         tmpl = env.from_string("{{ [1, 2] ~ 'foo' }}")
         assert tmpl.render() == '[1, 2]foo'
 
-    def test_compare(self, env):
-        tmpl = env.from_string('{{ 1 > 0 }}|{{ 1 >= 1 }}|{{ 2 < 3 }}|'
-                               '{{ 2 == 2 }}|{{ 1 <= 1 }}')
-        assert tmpl.render() == 'True|True|True|True|True'
+    @pytest.mark.parametrize(
+        ("a", "op", "b"),
+        [
+            (1, ">", 0),
+            (1, ">=", 1),
+            (2, "<", 3),
+            (3, "<=", 4),
+            (4, "==", 4),
+            (4, "!=", 5),
+        ],
+    )
+    def test_compare(self, env, a, op, b):
+        t = env.from_string("{{ %d %s %d }}" % (a, op, b))
+        assert t.render() == "True"
 
     def test_compare_parens(self, env):
-        tmpl = env.from_string(
-            "{{ i*(j<5) }}"
-        )
-        assert tmpl.render(i=2, j=3) == '2'
+        t = env.from_string("{{ i * (j < 5) }}")
+        assert t.render(i=2, j=3) == "2"
+
+    @pytest.mark.parametrize(
+        ("src", "expect"),
+        [
+            ("{{ 4 < 2 < 3 }}", "False"),
+            ("{{ a < b < c }}", "False"),
+            ("{{ 4 > 2 > 3 }}", "False"),
+            ("{{ a > b > c }}", "False"),
+            ("{{ 4 > 2 < 3 }}", "True"),
+            ("{{ a > b < c }}", "True"),
+        ],
+    )
+    def test_compare_compound(self, env, src, expect):
+        t = env.from_string(src)
+        assert t.render(a=4, b=2, c=3) == expect
 
     def test_inop(self, env):
         tmpl = env.from_string('{{ 1 in [1, 2, 3] }}|{{ 1 not in [1, 2, 3] }}')
