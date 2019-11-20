@@ -11,6 +11,7 @@
 import os
 import tempfile
 import shutil
+from io import StringIO
 
 import pytest
 from jinja2 import Environment, Undefined, ChainableUndefined, \
@@ -206,25 +207,24 @@ class TestMeta(object):
 @pytest.mark.api
 @pytest.mark.streaming
 class TestStreaming(object):
-
     def test_basic_streaming(self, env):
-        tmpl = env.from_string("<ul>{% for item in seq %}<li>{{ loop.index "
-                               "}} - {{ item }}</li>{%- endfor %}</ul>")
-        stream = tmpl.stream(seq=list(range(4)))
-        assert next(stream) == '<ul>'
-        assert next(stream) == '<li>1 - 0</li>'
-        assert next(stream) == '<li>2 - 1</li>'
-        assert next(stream) == '<li>3 - 2</li>'
-        assert next(stream) == '<li>4 - 3</li>'
-        assert next(stream) == '</ul>'
+        t = env.from_string(
+            "<ul>{% for item in seq %}<li>{{ loop.index }} - {{ item }}</li>"
+            "{%- endfor %}</ul>"
+        )
+        stream = t.stream(seq=list(range(3)))
+        assert next(stream) == "<ul>"
+        assert "".join(stream) == "<li>1 - 0</li><li>2 - 1</li><li>3 - 2</li></ul>"
 
     def test_buffered_streaming(self, env):
-        tmpl = env.from_string("<ul>{% for item in seq %}<li>{{ loop.index "
-                               "}} - {{ item }}</li>{%- endfor %}</ul>")
-        stream = tmpl.stream(seq=list(range(4)))
+        tmpl = env.from_string(
+            "<ul>{% for item in seq %}<li>{{ loop.index }} - {{ item }}</li>"
+            "{%- endfor %}</ul>"
+        )
+        stream = tmpl.stream(seq=list(range(3)))
         stream.enable_buffering(size=3)
-        assert next(stream) == u'<ul><li>1 - 0</li><li>2 - 1</li>'
-        assert next(stream) == u'<li>3 - 2</li><li>4 - 3</li></ul>'
+        assert next(stream) == u'<ul><li>1'
+        assert next(stream) == u' - 0</li>'
 
     def test_streaming_behavior(self, env):
         tmpl = env.from_string("")
