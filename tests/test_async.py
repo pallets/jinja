@@ -102,13 +102,12 @@ def test_async_iteration_in_templates():
 
 
 def test_async_iteration_in_templates_extended():
-    t = Template('{% for x in rng %}{{ loop.index0 }}/{{ x }}{% endfor %}',
-                 enable_async=True)
-    async def async_iterator():
-        for item in [1, 2, 3]:
-            yield item
-    rv = list(t.generate(rng=async_iterator()))
-    assert rv == ['0/1', '1/2', '2/3']
+    t = Template(
+        "{% for x in rng %}{{ loop.index0 }}/{{ x }}{% endfor %}", enable_async=True
+    )
+    stream = t.generate(rng=auto_aiter(range(1, 4)))
+    assert next(stream) == "0"
+    assert "".join(stream) == "/11/22/3"
 
 
 @pytest.fixture

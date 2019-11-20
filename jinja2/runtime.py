@@ -505,7 +505,6 @@ class LoopContext:
     def __iter__(self):
         return self
 
-    @internalcode
     def __next__(self):
         if self._after is not missing:
             rv = self._after
@@ -518,6 +517,7 @@ class LoopContext:
         self._current = rv
         return rv, self
 
+    @internalcode
     def __call__(self, iterable):
         """When iterating over nested data, render the body of the loop
         recursively with the given inner iterable data.

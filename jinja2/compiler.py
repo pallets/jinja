@@ -8,8 +8,8 @@
     :copyright: (c) 2017 by the Jinja Team.
     :license: BSD, see LICENSE for more details.
 """
+from collections import namedtuple
 from itertools import chain
-from copy import deepcopy
 from keyword import iskeyword as is_python_keyword
 from functools import update_wrapper
 from jinja2 import nodes
@@ -1221,75 +1221,136 @@ class CodeGenerator(NodeVisitor):
         self.newline(node)
         self.visit(node.node, frame)
 
-    def visit_Output(self, node, frame):
-        # if we have a known extends statement, we don't output anything
-        # if we are in a require_output_check section
-        if self.has_known_extends and frame.require_output_check:
-            return
+    _FinalizeInfo = namedtuple("_FinalizeInfo", ("const", "src"))
+    #: The default finalize function if the environment isn't configured
+    #: with one. Or if the environment has one, this is called on that
+    #: function's output for constants.
+    _default_finalize = text_type
+    _finalize = None
 
-        finalize = text_type
-        finalize_src = None
-        allow_constant_finalize = True
+    def _make_finalize(self):
+        """Build the finalize function to be used on constants and at
+        runtime. Cached so it's only created once for all output nodes.
+
+        Returns a ``namedtuple`` with the following attributes:
+
+        ``const``
+            A function to finalize constant data at compile time.
+
+        ``src``
+            Source code to output around nodes to be evaluated at
+            runtime.
+        """
+        if self._finalize is not None:
+            return self._finalize
+
+        finalize = default = self._default_finalize
+        src = None
 
         if self.environment.finalize:
+            src = "environment.finalize("
             env_finalize = self.environment.finalize
-            finalize_src = "environment.finalize("
 
             def finalize(value):
-                return text_type(env_finalize(value))
+                return default(env_finalize(value))
 
             if getattr(env_finalize, "contextfunction", False):
-                finalize_src += "context, "
-                allow_constant_finalize = False
+                src += "context, "
+                finalize = None
             elif getattr(env_finalize, "evalcontextfunction", False):
-                finalize_src += "context.eval_ctx, "
-                allow_constant_finalize = False
+                src += "context.eval_ctx, "
+                finalize = None
             elif getattr(env_finalize, "environmentfunction", False):
-                finalize_src += "environment, "
+                src += "environment, "
 
                 def finalize(value):
-                    return text_type(env_finalize(self.environment, value))
+                    return default(env_finalize(self.environment, value))
 
-        # if we are inside a frame that requires output checking, we do so
-        outdent_later = False
+        self._finalize = self._FinalizeInfo(finalize, src)
+        return self._finalize
+
+    def _output_const_repr(self, group):
+        """Given a group of constant values converted from ``Output``
+        child nodes, produce a string to write to the template module
+        source.
+        """
+        return repr(concat(group))
+
+    def _output_child_to_const(self, node, frame, finalize):
+        """Try to optimize a child of an ``Output`` node by trying to
+        convert it to constant, finalized data at compile time.
+
+        If :exc:`Impossible` is raised, the node is not constant and
+        will be evaluated at runtime. Any other exception will also be
+        evaluated at runtime for easier debugging.
+        """
+        const = node.as_const(frame.eval_ctx)
+
+        if frame.eval_ctx.autoescape:
+            const = escape(const)
+
+        # Template data doesn't go through finalize.
+        if isinstance(node, nodes.TemplateData):
+            return text_type(const)
+
+        return finalize.const(const)
+
+    def _output_child_pre(self, node, frame, finalize):
+        """Output extra source code before visiting a child of an
+        ``Output`` node.
+        """
+        if frame.eval_ctx.volatile:
+            self.write("(escape if context.eval_ctx.autoescape else to_string)(")
+        elif frame.eval_ctx.autoescape:
+            self.write("escape(")
+        else:
+            self.write("to_string(")
+
+        if finalize.src is not None:
+            self.write(finalize.src)
+
+    def _output_child_post(self, node, frame, finalize):
+        """Output extra source code after visiting a child of an
+        ``Output`` node.
+        """
+        self.write(")")
+
+        if finalize.src is not None:
+            self.write(")")
+
+    def visit_Output(self, node, frame):
+        # If an extends is active, don't render outside a block.
         if frame.require_output_check:
-            self.writeline('if parent_template is None:')
-            self.indent()
-            outdent_later = True
+            # A top-level extends is known to exist at compile time.
+            if self.has_known_extends:
+                return
 
-        # try to evaluate as many chunks as possible into a static
-        # string at compile time.
+            self.writeline("if parent_template is None:")
+            self.indent()
+
+        finalize = self._make_finalize()
         body = []
+
+        # Evaluate constants at compile time if possible. Each item in
+        # body will be either a list of static data or a node to be
+        # evaluated at runtime.
         for child in node.nodes:
             try:
-                # If the finalize function needs context, and this isn't
-                # template data, evaluate the node at render.
                 if not (
-                    allow_constant_finalize
+                    # If the finalize function requires runtime context,
+                    # constants can't be evaluated at compile time.
+                    finalize.const
+                    # Unless it's basic template data that won't be
+                    # finalized anyway.
                     or isinstance(child, nodes.TemplateData)
                 ):
                     raise nodes.Impossible()
 
-                const = child.as_const(frame.eval_ctx)
-            except nodes.Impossible:
-                body.append(child)
-                continue
-
-            # the frame can't be volatile here, becaus otherwise the
-            # as_const() function would raise an Impossible exception
-            # at that point.
-            try:
-                if frame.eval_ctx.autoescape:
-                    const = escape(const)
-
-                # Only call finalize on expressions, not template data.
-                if isinstance(child, nodes.TemplateData):
-                    const = text_type(const)
-                else:
-                    const = finalize(const)
-            except Exception:
-                # if something goes wrong here we evaluate the node
-                # at runtime for easier debugging
+                const = self._output_child_to_const(child, frame, finalize)
+            except (nodes.Impossible, Exception):
+                # The node was not constant and needs to be evaluated at
+                # runtime. Or another error was raised, which is easier
+                # to debug at runtime.
                 body.append(child)
                 continue
 
@@ -1298,79 +1359,42 @@ class CodeGenerator(NodeVisitor):
             else:
                 body.append([const])
 
-        # if we have less than 3 nodes or a buffer we yield or extend/append
-        if len(body) < 3 or frame.buffer is not None:
-            if frame.buffer is not None:
-                # for one item we append, for more we extend
-                if len(body) == 1:
-                    self.writeline('%s.append(' % frame.buffer)
-                else:
-                    self.writeline('%s.extend((' % frame.buffer)
-                self.indent()
-            for item in body:
-                if isinstance(item, list):
-                    val = repr(concat(item))
-                    if frame.buffer is None:
-                        self.writeline('yield ' + val)
-                    else:
-                        self.writeline(val + ',')
-                else:
-                    if frame.buffer is None:
-                        self.writeline('yield ', item)
-                    else:
-                        self.newline(item)
-                    close = 1
-                    if frame.eval_ctx.volatile:
-                        self.write('(escape if context.eval_ctx.autoescape'
-                                   ' else to_string)(')
-                    elif frame.eval_ctx.autoescape:
-                        self.write('escape(')
-                    else:
-                        self.write('to_string(')
-                    if self.environment.finalize is not None:
-                        self.write(finalize_src)
-                        close += 1
-                    self.visit(item, frame)
-                    self.write(')' * close)
-                    if frame.buffer is not None:
-                        self.write(',')
-            if frame.buffer is not None:
-                # close the open parentheses
-                self.outdent()
-                self.writeline(len(body) == 1 and ')' or '))')
+        if frame.buffer is not None:
+            if len(body) == 1:
+                self.writeline("%s.append(" % frame.buffer)
+            else:
+                self.writeline("%s.extend((" % frame.buffer)
 
-        # otherwise we create a format string as this is faster in that case
-        else:
-            format = []
-            arguments = []
-            for item in body:
-                if isinstance(item, list):
-                    format.append(concat(item).replace('%', '%%'))
-                else:
-                    format.append('%s')
-                    arguments.append(item)
-            self.writeline('yield ')
-            self.write(repr(concat(format)) + ' % (')
             self.indent()
-            for argument in arguments:
-                self.newline(argument)
-                close = 0
-                if frame.eval_ctx.volatile:
-                    self.write('(escape if context.eval_ctx.autoescape else'
-                               ' to_string)(')
-                    close += 1
-                elif frame.eval_ctx.autoescape:
-                    self.write('escape(')
-                    close += 1
-                if self.environment.finalize is not None:
-                    self.write(finalize_src)
-                    close += 1
-                self.visit(argument, frame)
-                self.write(')' * close + ', ')
-            self.outdent()
-            self.writeline(')')
 
-        if outdent_later:
+        for item in body:
+            if isinstance(item, list):
+                # A group of constant data to join and output.
+                val = self._output_const_repr(item)
+
+                if frame.buffer is None:
+                    self.writeline("yield " + val)
+                else:
+                    self.writeline(val + ",")
+            else:
+                if frame.buffer is None:
+                    self.writeline("yield ", item)
+                else:
+                    self.newline(item)
+
+                # A node to be evaluated at runtime.
+                self._output_child_pre(item, frame, finalize)
+                self.visit(item, frame)
+                self._output_child_post(item, frame, finalize)
+
+                if frame.buffer is not None:
+                    self.write(",")
+
+        if frame.buffer is not None:
+            self.outdent()
+            self.writeline(")" if len(body) == 1 else "))")
+
+        if frame.require_output_check:
             self.outdent()
 
     def visit_Assign(self, node, frame):
