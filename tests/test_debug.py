@@ -71,9 +71,9 @@ ZeroDivisionError: (int(eger)? )?division (or modulo )?by zero
   line 42''')
 
     def test_local_extraction(self):
-        from jinja2.debug import get_jinja_locals
+        from jinja2.debug import get_template_locals
         from jinja2.runtime import missing
-        locals = get_jinja_locals({
+        locals = get_template_locals({
             'l_0_foo': 42,
             'l_1_foo': 23,
             'l_2_foo': 13,

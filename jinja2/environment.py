@@ -36,10 +36,6 @@ from jinja2._compat import imap, ifilter, string_types, iteritems, \
 # for direct template usage we have up to ten living environments
 _spontaneous_environments = LRUCache(10)
 
-# the function to create jinja traceback objects.  This is dynamically
-# imported on the first exception in the exception handler.
-_make_traceback = None
-
 
 def get_spontaneous_environment(cls, *args):
     """Return a new spontaneous environment. A spontaneous environment
@@ -250,10 +246,6 @@ class Environment(object):
     #: shared environments have this set to `True`.  A shared environment
     #: must not be modified
     shared = False
-
-    #: these are currently EXPERIMENTAL undocumented features.
-    exception_handler = None
-    exception_formatter = None
 
     #: the class that is used for code generation.  See
     #: :class:`~jinja2.compiler.CodeGenerator` for more information.
@@ -493,8 +485,7 @@ class Environment(object):
         try:
             return self._parse(source, name, filename)
         except TemplateSyntaxError:
-            exc_info = sys.exc_info()
-        self.handle_exception(exc_info, source_hint=source)
+            self.handle_exception(source=source)
 
     def _parse(self, source, name, filename):
         """Internal parsing function used by `parse` and `compile`."""
@@ -514,8 +505,7 @@ class Environment(object):
         try:
             return self.lexer.tokeniter(source, name, filename)
         except TemplateSyntaxError:
-            exc_info = sys.exc_info()
-        self.handle_exception(exc_info, source_hint=source)
+            self.handle_exception(source=source)
 
     def preprocess(self, source, name=None, filename=None):
         """Preprocesses the source with all extensions.  This is automatically
@@ -591,8 +581,7 @@ class Environment(object):
                 filename = encode_filename(filename)
             return self._compile(source, filename)
         except TemplateSyntaxError:
-            exc_info = sys.exc_info()
-        self.handle_exception(exc_info, source_hint=source_hint)
+            self.handle_exception(source=source_hint)
 
     def compile_expression(self, source, undefined_to_none=True):
         """A handy helper method that returns a callable that accepts keyword
@@ -623,7 +612,6 @@ class Environment(object):
         .. versionadded:: 2.1
         """
         parser = Parser(self, source, state='variable')
-        exc_info = None
         try:
             expr = parser.parse_expression()
             if not parser.stream.eos:
@@ -632,9 +620,9 @@ class Environment(object):
                                           None, None)
             expr.set_environment(self)
         except TemplateSyntaxError:
-            exc_info = sys.exc_info()
-        if exc_info is not None:
-            self.handle_exception(exc_info, source_hint=source)
+            if sys.exc_info() is not None:
+                self.handle_exception(source=source)
+
         body = [nodes.Assign(nodes.Name('result', 'store'), expr, lineno=1)]
         template = self.from_string(nodes.Template(body, lineno=1))
         return TemplateExpression(template, undefined_to_none)
@@ -761,27 +749,12 @@ class Environment(object):
             x = list(ifilter(filter_func, x))
         return x
 
-    def handle_exception(self, exc_info=None, rendered=False, source_hint=None):
+    def handle_exception(self, source=None):
         """Exception handling helper.  This is used internally to either raise
         rewritten exceptions or return a rendered traceback for the template.
         """
-        global _make_traceback
-        if exc_info is None:
-            exc_info = sys.exc_info()
-
-        # the debugging module is imported when it's used for the first time.
-        # we're doing a lot of stuff there and for applications that do not
-        # get any exceptions in template rendering there is no need to load
-        # all of that.
-        if _make_traceback is None:
-            from jinja2.debug import make_traceback as _make_traceback
-        traceback = _make_traceback(exc_info, source_hint)
-        if rendered and self.exception_formatter is not None:
-            return self.exception_formatter(traceback)
-        if self.exception_handler is not None:
-            self.exception_handler(traceback)
-        exc_type, exc_value, tb = traceback.standard_exc_info
-        reraise(exc_type, exc_value, tb)
+        from jinja2.debug import rewrite_traceback_stack
+        reraise(*rewrite_traceback_stack(source=source))
 
     def join_path(self, template, parent):
         """Join a template with the parent.  By default all the lookups are
@@ -1013,8 +986,7 @@ class Template(object):
         try:
             return concat(self.root_render_func(self.new_context(vars)))
         except Exception:
-            exc_info = sys.exc_info()
-        return self.environment.handle_exception(exc_info, True)
+            self.environment.handle_exception()
 
     def render_async(self, *args, **kwargs):
         """This works similar to :meth:`render` but returns a coroutine
@@ -1048,10 +1020,7 @@ class Template(object):
             for event in self.root_render_func(self.new_context(vars)):
                 yield event
         except Exception:
-            exc_info = sys.exc_info()
-        else:
-            return
-        yield self.environment.handle_exception(exc_info, True)
+            yield self.environment.handle_exception()
 
     def generate_async(self, *args, **kwargs):
         """An async version of :meth:`generate`.  Works very similarly but

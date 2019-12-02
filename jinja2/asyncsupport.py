@@ -11,7 +11,6 @@
 """
 import asyncio
 import inspect
-import sys
 from functools import update_wrapper
 
 from jinja2.environment import TemplateModule
@@ -37,10 +36,7 @@ async def generate_async(self, *args, **kwargs):
         async for event in self.root_render_func(self.new_context(vars)):
             yield event
     except Exception:
-        exc_info = sys.exc_info()
-    else:
-        return
-    yield self.environment.handle_exception(exc_info, True)
+        yield self.environment.handle_exception()
 
 
 def wrap_generate_func(original_generate):
@@ -69,8 +65,7 @@ async def render_async(self, *args, **kwargs):
     try:
         return await concat_async(self.root_render_func(ctx))
     except Exception:
-        exc_info = sys.exc_info()
-    return self.environment.handle_exception(exc_info, True)
+        return self.environment.handle_exception()
 
 
 def wrap_render_func(original_render):

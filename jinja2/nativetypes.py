@@ -1,4 +1,3 @@
-import sys
 import types
 from ast import literal_eval
 from itertools import islice, chain
@@ -102,9 +101,7 @@ class NativeTemplate(Template):
                 self.root_render_func(self.new_context(vars)), preserve_quotes=False
             )
         except Exception:
-            exc_info = sys.exc_info()
-
-        return self.environment.handle_exception(exc_info, True)
+            return self.environment.handle_exception()
 
 
 NativeEnvironment.template_class = NativeTemplate
