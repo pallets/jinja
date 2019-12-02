@@ -81,6 +81,10 @@ Unreleased
     the result follows Python's behavior of returning ``False`` if any
     comparison returns ``False``, rather than only the last one.
     :issue:`1102`
+-   Tracebacks for exceptions in templates show the correct line numbers
+    and source for Python >= 3.7. :issue:`1104`
+-   Tracebacks for template syntax errors in Python 3 no longer show
+    internal compiler frames. :issue:`763`
 
 
 Version 2.10.3
