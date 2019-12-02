@@ -952,6 +952,15 @@ class ContextReference(Expr):
     """
 
 
+class DerivedContextReference(Expr):
+    """Return the current template context including locals. Behaves
+    exactly like :class:`ContextReference`, but includes local
+    variables, such as from a ``for`` loop.
+
+    .. versionadded:: 2.11
+    """
+
+
 class Continue(Stmt):
     """Continue a loop."""
 

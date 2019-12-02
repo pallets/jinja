@@ -85,6 +85,9 @@ Unreleased
     and source for Python >= 3.7. :issue:`1104`
 -   Tracebacks for template syntax errors in Python 3 no longer show
     internal compiler frames. :issue:`763`
+-   Add a ``DerivedContextReference`` node that can be used by
+    extensions to get the current context and local variables such as
+    ``loop``. :issue:`860`
 
 
 Version 2.10.3
