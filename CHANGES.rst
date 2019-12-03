@@ -90,6 +90,8 @@ Unreleased
     ``loop``. :issue:`860`
 -   Constant folding during compilation is applied to some node types
     that were previously overlooked. :issue:`733`
+-   ``TemplateSyntaxError.source`` is not empty when raised from an
+    included template. :issue:`457`
 
 
 Version 2.10.3

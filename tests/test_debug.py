@@ -14,6 +14,8 @@ import re
 import sys
 from traceback import format_exception
 
+from jinja2 import ChoiceLoader
+from jinja2 import DictLoader
 from jinja2 import Environment, TemplateSyntaxError
 
 
@@ -51,10 +53,9 @@ ZeroDivisionError: (int(eger)? )?division (or modulo )?by zero
 ''')
 
     def test_syntax_error(self, fs_env):
-        # XXX: the .*? is necessary for python3 which does not hide
-        # some of the stack frames we don't want to show.  Not sure
-        # what's up with that, but that is not that critical.  Should
-        # be fixed though.
+        # The trailing .*? is for PyPy 2 and 3, which don't seem to
+        # clear the exception's original traceback, leaving the syntax
+        # error in the middle of other compiler frames.
         self.assert_traceback_matches(lambda: fs_env.get_template('syntaxerror.html'), r'''(?sm)
   File ".*?syntaxerror.html", line 4, in (template|<module>)
     \{% endif %\}.*?
@@ -69,6 +70,20 @@ ZeroDivisionError: (int(eger)? )?division (or modulo )?by zero
     raise TemplateSyntaxError\('wtf', 42\)
 (jinja2\.exceptions\.)?TemplateSyntaxError: wtf
   line 42''')
+
+    def test_include_syntax_error_source(self, filesystem_loader):
+        e = Environment(loader=ChoiceLoader(
+            [
+                filesystem_loader,
+                DictLoader({"inc": "a\n{% include 'syntaxerror.html' %}\nb"}),
+            ]
+        ))
+        t = e.get_template("inc")
+
+        with pytest.raises(TemplateSyntaxError) as exc_info:
+            t.render()
+
+        assert exc_info.value.source is not None
 
     def test_local_extraction(self):
         from jinja2.debug import get_template_locals
