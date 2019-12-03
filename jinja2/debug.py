@@ -21,14 +21,10 @@ def rewrite_traceback_stack(source=None):
     :return: A :meth:`sys.exc_info` tuple that can be re-raised.
     """
     exc_type, exc_value, tb = sys.exc_info()
-    # The new stack of traceback objects, to be joined together by
-    # tb_set_next later.
-    stack = []
 
-    if isinstance(exc_value, TemplateSyntaxError):
-        exc_value.source = source
-        # The exception doesn't need to output location info manually.
+    if isinstance(exc_value, TemplateSyntaxError) and not exc_value.translated:
         exc_value.translated = True
+        exc_value.source = source
 
         try:
             # Remove the old traceback on Python 3, otherwise the frames
@@ -45,6 +41,8 @@ def rewrite_traceback_stack(source=None):
     else:
         # Skip the frame for the render function.
         tb = tb.tb_next
+
+    stack = []
 
     # Build the stack of traceback object, replacing any in template
     # code with the source file and line information.
