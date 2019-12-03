@@ -88,6 +88,8 @@ Unreleased
 -   Add a ``DerivedContextReference`` node that can be used by
     extensions to get the current context and local variables such as
     ``loop``. :issue:`860`
+-   Constant folding during compilation is applied to some node types
+    that were previously overlooked. :issue:`733`
 
 
 Version 2.10.3
