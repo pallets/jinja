@@ -55,8 +55,10 @@ Unreleased
     ``revindex`` work for async iterators. :pr:`1101`
 -   In async environments, values from attribute/property access will
     be awaited if needed. :pr:`1101`
--   ``PackageLoader`` doesn't depend on setuptools or pkg_resources.
-    :issue:`970`
+-   :class:`~loader.PackageLoader` doesn't depend on setuptools or
+    pkg_resources. :issue:`970`
+-   ``PackageLoader`` has limited support for :pep:`420` namespace
+    packages. :issue:`1097`
 -   Support :class:`os.PathLike` objects in
     :class:`~loader.FileSystemLoader` and :class:`~loader.ModuleLoader`.
     :issue:`870`
