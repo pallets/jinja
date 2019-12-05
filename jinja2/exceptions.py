@@ -43,7 +43,12 @@ class TemplateError(Exception):
 
 @implements_to_string
 class TemplateNotFound(IOError, LookupError, TemplateError):
-    """Raised if a template does not exist."""
+    """Raised if a template does not exist.
+
+    .. versionchanged:: 2.11
+        If the given name is :class:`Undefined` and no message was
+        provided, an :exc:`UndefinedError` is raised.
+    """
 
     # looks weird, but removes the warning descriptor that just
     # bogusly warns us about message being deprecated
@@ -51,8 +56,15 @@ class TemplateNotFound(IOError, LookupError, TemplateError):
 
     def __init__(self, name, message=None):
         IOError.__init__(self, name)
+
         if message is None:
+            from jinja2.runtime import Undefined
+
+            if isinstance(name, Undefined):
+                name._fail_with_undefined_error()
+
             message = name
+
         self.message = message
         self.name = name
         self.templates = [name]
@@ -66,13 +78,27 @@ class TemplatesNotFound(TemplateNotFound):
     are selected.  This is a subclass of :class:`TemplateNotFound`
     exception, so just catching the base exception will catch both.
 
+    .. versionchanged:: 2.11
+        If a name in the list of names is :class:`Undefined`, a message
+        about it being undefined is shown rather than the empty string.
+
     .. versionadded:: 2.2
     """
 
     def __init__(self, names=(), message=None):
         if message is None:
+            from jinja2.runtime import Undefined
+
+            parts = []
+
+            for name in names:
+                if isinstance(name, Undefined):
+                    parts.append(name._undefined_message)
+                else:
+                    parts.append(name)
+
             message = u'none of the templates given were found: ' + \
-                      u', '.join(imap(text_type, names))
+                      u', '.join(imap(text_type, parts))
         TemplateNotFound.__init__(self, names and names[-1] or None, message)
         self.templates = list(names)
 

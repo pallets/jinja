@@ -17,6 +17,7 @@ import pytest
 from jinja2 import Environment, Undefined, ChainableUndefined, \
      DebugUndefined, StrictUndefined, UndefinedError, meta, \
      is_undefined, Template, DictLoader, make_logging_undefined
+from jinja2 import TemplatesNotFound
 from jinja2.compiler import CodeGenerator
 from jinja2.runtime import Context
 from jinja2.utils import Cycler
@@ -124,6 +125,30 @@ class TestExtendedAPI(object):
         assert env.select_template([t]) is t
         assert env.get_or_select_template([t]) is t
         assert env.get_or_select_template(t) is t
+
+    def test_get_template_undefined(self, env):
+        """Passing Undefined to get/select_template raises an
+        UndefinedError or shows the undefined message in the list.
+        """
+        env.loader=DictLoader({})
+        t = Undefined(name="no_name_1")
+
+        with pytest.raises(UndefinedError):
+            env.get_template(t)
+
+        with pytest.raises(UndefinedError):
+            env.get_or_select_template(t)
+
+        with pytest.raises(UndefinedError):
+            env.select_template(t)
+
+        with pytest.raises(TemplatesNotFound) as exc_info:
+            env.select_template([t, "no_name_2"])
+
+        exc_message = str(exc_info.value)
+        assert "'no_name_1' is undefined" in exc_message
+        assert "no_name_2" in exc_message
+
 
     def test_autoescape_autoselect(self, env):
         def select_autoescape(name):

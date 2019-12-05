@@ -94,7 +94,11 @@ Unreleased
     that were previously overlooked. :issue:`733`
 -   ``TemplateSyntaxError.source`` is not empty when raised from an
     included template. :issue:`457`
-
+-   Passing an ``Undefined`` value to ``get_template`` (such as through
+    ``extends``, ``import``, or ``include``), raises an
+    ``UndefinedError`` consistently. ``select_template`` will show the
+    undefined message in the list of attempts rather than the empty
+    string. :issue:`1037`
 
 Version 2.10.3
 --------------
