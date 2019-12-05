@@ -12,6 +12,7 @@ import os
 import pkgutil
 import sys
 import weakref
+from importlib import import_module
 from types import ModuleType
 from os import path
 from hashlib import sha1
@@ -231,8 +232,16 @@ class PackageLoader(BaseLoader):
     introspecting data in packages is too limited to support other
     installation methods the way this loader requires.
 
+    There is limited support for :pep:`420` namespace packages. The
+    template directory is assumed to only be in one namespace
+    contributor. Zip files contributing to a namespace are not
+    supported.
+
     .. versionchanged:: 2.11.0
         No longer uses ``setuptools`` as a dependency.
+
+    .. versionchanged:: 2.11.0
+        Limited PEP 420 namespace package support.
     """
 
     def __init__(self, package_name, package_path="templates", encoding="utf-8"):
@@ -241,18 +250,40 @@ class PackageLoader(BaseLoader):
         elif package_path[:2] == os.path.curdir + os.path.sep:
             package_path = package_path[2:]
 
-        package_path = os.path.normpath(package_path)
-
-        self.package_name = package_name
+        package_path = os.path.normpath(package_path).rstrip(os.path.sep)
         self.package_path = package_path
+        self.package_name = package_name
         self.encoding = encoding
 
-        self._loader = pkgutil.get_loader(package_name)
+        # Make sure the package exists. This also makes namespace
+        # packages work, otherwise get_loader returns None.
+        import_module(package_name)
+        self._loader = loader = pkgutil.get_loader(package_name)
+
         # Zip loader's archive attribute points at the zip.
-        self._archive = getattr(self._loader, "archive", None)
-        self._template_root = os.path.join(
-            os.path.dirname(self._loader.get_filename(package_name)), package_path
-        ).rstrip(os.path.sep)
+        self._archive = getattr(loader, "archive", None)
+        self._template_root = None
+
+        if hasattr(loader, "get_filename"):
+            # A standard directory package, or a zip package.
+            self._template_root = os.path.join(
+                os.path.dirname(loader.get_filename(package_name)), package_path
+            )
+        elif hasattr(loader, "_path"):
+            # A namespace package, limited support. Find the first
+            # contributor with the template directory.
+            for root in loader._path:
+                root = os.path.join(root, package_path)
+
+                if os.path.isdir(root):
+                    self._template_root = root
+                    break
+
+        if self._template_root is None:
+            raise ValueError(
+                "The %r package was not installed in a way that"
+                " PackageLoader understands." % package_name
+            )
 
     def get_source(self, environment, template):
         p = os.path.join(self._template_root, *split_template_path(template))
