@@ -668,27 +668,34 @@ class Undefined(object):
         self._undefined_name = name
         self._undefined_exception = exc
 
+    @property
+    def _undefined_message(self):
+        """Build a message about the undefined value based on how it was
+        accessed.
+        """
+        if self._undefined_hint:
+            return self._undefined_hint
+
+        if self._undefined_obj is missing:
+            return '%r is undefined' % self._undefined_name
+
+        if not isinstance(self._undefined_name, string_types):
+            return '%s has no element %r' % (
+                object_type_repr(self._undefined_obj),
+                self._undefined_name
+            )
+
+        return '%r has no attribute %r' % (
+            object_type_repr(self._undefined_obj),
+            self._undefined_name
+        )
+
     @internalcode
     def _fail_with_undefined_error(self, *args, **kwargs):
-        """Regular callback function for undefined objects that raises an
-        `UndefinedError` on call.
+        """Raise an :exc:`UndefinedError` when operations are performed
+        on the undefined value.
         """
-        if self._undefined_hint is None:
-            if self._undefined_obj is missing:
-                hint = '%r is undefined' % self._undefined_name
-            elif not isinstance(self._undefined_name, string_types):
-                hint = '%s has no element %r' % (
-                    object_type_repr(self._undefined_obj),
-                    self._undefined_name
-                )
-            else:
-                hint = '%r has no attribute %r' % (
-                    object_type_repr(self._undefined_obj),
-                    self._undefined_name
-                )
-        else:
-            hint = self._undefined_hint
-        raise self._undefined_exception(hint)
+        raise self._undefined_exception(self._undefined_message)
 
     @internalcode
     def __getattr__(self, name):

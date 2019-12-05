@@ -25,7 +25,7 @@ from jinja2.nodes import EvalContext
 from jinja2.compiler import generate, CodeGenerator
 from jinja2.runtime import Undefined, new_context, Context
 from jinja2.exceptions import TemplateSyntaxError, TemplateNotFound, \
-     TemplatesNotFound, TemplateRuntimeError
+     TemplatesNotFound, TemplateRuntimeError, UndefinedError
 from jinja2.utils import import_string, LRUCache, Markup, missing, \
      concat, consume, internalcode, have_async_gen
 from jinja2._compat import imap, ifilter, string_types, iteritems, \
@@ -812,12 +812,20 @@ class Environment(object):
         before it fails.  If it cannot find any of the templates, it will
         raise a :exc:`TemplatesNotFound` exception.
 
-        .. versionadded:: 2.3
+        .. versionchanged:: 2.11
+            If names is :class:`Undefined`, an :exc:`UndefinedError` is
+            raised instead. If no templates were found and names
+            contains :class:`Undefined`, the message is more helpful.
 
         .. versionchanged:: 2.4
            If `names` contains a :class:`Template` object it is returned
            from the function unchanged.
+
+        .. versionadded:: 2.3
         """
+        if isinstance(names, Undefined):
+            names._fail_with_undefined_error()
+
         if not names:
             raise TemplatesNotFound(message=u'Tried to select from an empty list '
                                             u'of templates.')
@@ -829,7 +837,7 @@ class Environment(object):
                 name = self.join_path(name, parent)
             try:
                 return self._load_template(name, globals)
-            except TemplateNotFound:
+            except (TemplateNotFound, UndefinedError):
                 pass
         raise TemplatesNotFound(names)
 
@@ -842,7 +850,7 @@ class Environment(object):
 
         .. versionadded:: 2.3
         """
-        if isinstance(template_name_or_list, string_types):
+        if isinstance(template_name_or_list, (string_types, Undefined)):
             return self.get_template(template_name_or_list, parent, globals)
         elif isinstance(template_name_or_list, Template):
             return template_name_or_list
