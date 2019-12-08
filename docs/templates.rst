@@ -983,7 +983,7 @@ Assignments use the `set` tag and can have multiple targets::
         {% endfor %}
         Found item having something: {{ ns.found }}
 
-    Note hat the ``obj.attr`` notation in the `set` tag is only allowed for
+    Note that the ``obj.attr`` notation in the `set` tag is only allowed for
     namespace objects; attempting to assign an attribute on any other object
     will raise an exception.
 
