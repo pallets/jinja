@@ -141,6 +141,13 @@ class TemplateSyntaxError(TemplateError):
 
         return u'\n'.join(lines)
 
+    def __reduce__(self):
+        # https://bugs.python.org/issue1692335 Exceptions that take
+        # multiple required arguments have problems with pickling.
+        # Without this, raises TypeError: __init__() missing 1 required
+        # positional argument: 'lineno'
+        return self.__class__, (self.message, self.lineno, self.name, self.filename)
+
 
 class TemplateAssertionError(TemplateSyntaxError):
     """Like a template syntax error, but covers cases where something in the

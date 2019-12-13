@@ -99,6 +99,8 @@ Unreleased
     ``UndefinedError`` consistently. ``select_template`` will show the
     undefined message in the list of attempts rather than the empty
     string. :issue:`1037`
+-   ``TemplateSyntaxError`` can be pickled. :pr:`1117`
+
 
 Version 2.10.3
 --------------

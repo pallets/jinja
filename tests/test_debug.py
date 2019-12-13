@@ -10,6 +10,7 @@
 """
 import pytest
 
+import pickle
 import re
 import sys
 from traceback import format_exception
@@ -70,6 +71,12 @@ ZeroDivisionError: (int(eger)? )?division (or modulo )?by zero
     raise TemplateSyntaxError\('wtf', 42\)
 (jinja2\.exceptions\.)?TemplateSyntaxError: wtf
   line 42''')
+
+    def test_pickleable_syntax_error(self, fs_env):
+        original = TemplateSyntaxError("bad template", 42, "test", "test.txt")
+        unpickled = pickle.loads(pickle.dumps(original))
+        assert str(original) == str(unpickled)
+        assert original.name == unpickled.name
 
     def test_include_syntax_error_source(self, filesystem_loader):
         e = Environment(loader=ChoiceLoader(
