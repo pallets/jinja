@@ -1042,7 +1042,7 @@ class Template(object):
         """Create a new :class:`Context` for this template.  The vars
         provided will be passed to the template.  Per default the globals
         are added to the context.  If shared is set to `True` the data
-        is passed as it to the context without adding the globals.
+        is passed as is to the context without adding the globals.
 
         `locals` can be a dict of local variables for internal usage.
         """
