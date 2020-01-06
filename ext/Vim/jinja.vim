@@ -14,23 +14,23 @@
 
 " .vimrc variable to disable html highlighting
 if !exists('g:jinja_syntax_html')
-   let g:jinja_syntax_html=1
+  let g:jinja_syntax_html=1
 endif
 
 " For version 5.x: Clear all syntax items
 " For version 6.x: Quit when a syntax file was already loaded
 if !exists("main_syntax")
-  if version < 600
+  if v:version < 600
     syntax clear
   elseif exists("b:current_syntax")
-  finish
-endif
+    finish
+  endif
   let main_syntax = 'jinja'
 endif
 
 " Pull in the HTML syntax.
 if g:jinja_syntax_html
-  if version < 600
+  if v:version < 600
     so <sfile>:p:h/html.vim
   else
     runtime! syntax/html.vim
@@ -98,8 +98,8 @@ syn match jinjaStatement containedin=jinjaTagBlock contained /\<with\(out\)\?\s\
 " Define the default highlighting.
 " For version 5.7 and earlier: only when not done already
 " For version 5.8 and later: only when an item doesn't have highlighting yet
-if version >= 508 || !exists("did_jinja_syn_inits")
-  if version < 508
+if v:version >= 508 || !exists("did_jinja_syn_inits")
+  if v:version < 508
     let did_jinja_syn_inits = 1
     command -nargs=+ HiLink hi link <args>
   else
@@ -133,6 +133,6 @@ endif
 
 let b:current_syntax = "jinja"
 
-if main_syntax == 'jinja'
+if main_syntax ==# 'jinja'
   unlet main_syntax
 endif
