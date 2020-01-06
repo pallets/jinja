@@ -14,7 +14,7 @@
 
 " .vimrc variable to disable html highlighting
 if !exists('g:jinja_syntax_html')
-   let g:jinja_syntax_html=1
+  let g:jinja_syntax_html=1
 endif
 
 " For version 5.x: Clear all syntax items
@@ -23,8 +23,8 @@ if !exists("main_syntax")
   if version < 600
     syntax clear
   elseif exists("b:current_syntax")
-  finish
-endif
+    finish
+  endif
   let main_syntax = 'jinja'
 endif
 
