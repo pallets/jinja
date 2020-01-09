@@ -9,8 +9,12 @@
     :license: BSD, see LICENSE for more details.
 """
 import pytest
-from jinja2 import Environment, TemplateSyntaxError, TemplateRuntimeError, \
-     UndefinedError, DictLoader
+
+from jinja2 import DictLoader
+from jinja2 import Environment
+from jinja2 import TemplateRuntimeError
+from jinja2 import TemplateSyntaxError
+from jinja2 import UndefinedError
 
 
 @pytest.fixture

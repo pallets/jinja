@@ -1,7 +1,16 @@
 # -*- coding: utf-8 -*-
-from rwbench import ROOT
 from os.path import join
+
+from django import template as django_template_module
 from django.conf import settings
+from django.template import Context as DjangoContext
+from django.template import loader as django_loader
+from django.template import Node
+from django.template import TokenParser
+from django.template import Variable
+from rwbench import dateformat
+from rwbench import ROOT
+
 settings.configure(
     TEMPLATE_DIRS=(join(ROOT, 'django'),),
     TEMPLATE_LOADERS=(
@@ -10,19 +19,12 @@ settings.configure(
         )),
     )
 )
-from django.template import loader as django_loader, Context as DjangoContext, \
-     Node, NodeList, Variable, TokenParser
-from django import template as django_template_module
-from django.template import Library
-
 
 # for django extensions.  We monkey patch our extensions in so that
 # we don't have to initialize a more complex django setup.
 django_extensions = django_template_module.Library()
 django_template_module.builtins.append(django_extensions)
 
-
-from rwbench import dateformat
 django_extensions.filter(dateformat)
 
 

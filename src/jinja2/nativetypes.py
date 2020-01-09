@@ -1,10 +1,14 @@
 import types
 from ast import literal_eval
-from itertools import islice, chain
-from jinja2 import nodes
-from jinja2._compat import text_type
-from jinja2.compiler import CodeGenerator, has_safe_repr
-from jinja2.environment import Environment, Template
+from itertools import chain
+from itertools import islice
+
+from . import nodes
+from ._compat import text_type
+from .compiler import CodeGenerator
+from .compiler import has_safe_repr
+from .environment import Environment
+from .environment import Template
 
 
 def native_concat(nodes, preserve_quotes=True):

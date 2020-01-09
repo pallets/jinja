@@ -8,16 +8,18 @@
     :copyright: (c) 2017 by the Jinja Team.
     :license: BSD, see LICENSE for more details.
 """
+import decimal
 import operator
 import re
-from jinja2.runtime import Undefined
-from jinja2._compat import text_type, string_types, integer_types, abc
-import decimal
+
+from ._compat import abc
+from ._compat import integer_types
+from ._compat import string_types
+from ._compat import text_type
+from .runtime import Undefined
 
 number_re = re.compile(r'^-?\d+(\.\d+)?$')
 regex_type = type(number_re)
-
-
 test_callable = callable
 
 

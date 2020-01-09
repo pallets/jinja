@@ -1,10 +1,10 @@
 import sys
 from types import CodeType
 
-from jinja2 import TemplateSyntaxError
-from jinja2._compat import PYPY
-from jinja2.utils import internal_code
-from jinja2.utils import missing
+from . import TemplateSyntaxError
+from ._compat import PYPY
+from .utils import internal_code
+from .utils import missing
 
 
 def rewrite_traceback_stack(source=None):

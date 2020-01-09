@@ -13,12 +13,12 @@ import asyncio
 import inspect
 from functools import update_wrapper
 
-from jinja2.environment import TemplateModule
-from jinja2.runtime import LoopContext
-from jinja2.utils import concat
-from jinja2.utils import internalcode
-from jinja2.utils import Markup
-from jinja2.utils import missing
+from .environment import TemplateModule
+from .runtime import LoopContext
+from .utils import concat
+from .utils import internalcode
+from .utils import Markup
+from .utils import missing
 
 
 async def concat_async(async_gen):

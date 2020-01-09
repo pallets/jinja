@@ -18,20 +18,30 @@ import pprint
 import re
 from sys import version_info
 
-from jinja2 import nodes
-from jinja2.defaults import BLOCK_START_STRING, \
-     BLOCK_END_STRING, VARIABLE_START_STRING, VARIABLE_END_STRING, \
-     COMMENT_START_STRING, COMMENT_END_STRING, LINE_STATEMENT_PREFIX, \
-     LINE_COMMENT_PREFIX, TRIM_BLOCKS, NEWLINE_SEQUENCE, \
-     KEEP_TRAILING_NEWLINE, LSTRIP_BLOCKS
-from jinja2.environment import Environment
-from jinja2.nodes import ContextReference
-from jinja2.runtime import concat
-from jinja2.exceptions import TemplateAssertionError, TemplateSyntaxError
-from jinja2.utils import contextfunction, import_string, Markup
-from jinja2._compat import with_metaclass, string_types, iteritems
-from markupsafe import escape
-
+from . import nodes
+from ._compat import iteritems
+from ._compat import string_types
+from ._compat import with_metaclass
+from .defaults import BLOCK_END_STRING
+from .defaults import BLOCK_START_STRING
+from .defaults import COMMENT_END_STRING
+from .defaults import COMMENT_START_STRING
+from .defaults import KEEP_TRAILING_NEWLINE
+from .defaults import LINE_COMMENT_PREFIX
+from .defaults import LINE_STATEMENT_PREFIX
+from .defaults import LSTRIP_BLOCKS
+from .defaults import NEWLINE_SEQUENCE
+from .defaults import TRIM_BLOCKS
+from .defaults import VARIABLE_END_STRING
+from .defaults import VARIABLE_START_STRING
+from .environment import Environment
+from .exceptions import TemplateAssertionError
+from .exceptions import TemplateSyntaxError
+from .nodes import ContextReference
+from .runtime import concat
+from .utils import contextfunction
+from .utils import import_string
+from .utils import Markup
 
 # the only real useful gettext functions for a Jinja template.  Note
 # that ugettext must be assigned to gettext as Jinja doesn't support

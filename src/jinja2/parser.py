@@ -8,11 +8,12 @@
     :copyright: (c) 2017 by the Jinja Team.
     :license: BSD, see LICENSE for more details.
 """
-from jinja2 import nodes
-from jinja2.exceptions import TemplateSyntaxError, TemplateAssertionError
-from jinja2.lexer import describe_token, describe_token_expr
-from jinja2._compat import imap
-
+from . import nodes
+from ._compat import imap
+from .exceptions import TemplateAssertionError
+from .exceptions import TemplateSyntaxError
+from .lexer import describe_token
+from .lexer import describe_token_expr
 
 _statement_keywords = frozenset(['for', 'if', 'block', 'extends', 'print',
                                  'macro', 'include', 'from', 'import',

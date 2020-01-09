@@ -8,7 +8,10 @@
     :copyright: (c) 2017 by the Jinja Team.
     :license: BSD, see LICENSE for more details.
 """
-from jinja2._compat import imap, text_type, PY2, implements_to_string
+from ._compat import imap
+from ._compat import implements_to_string
+from ._compat import PY2
+from ._compat import text_type
 
 
 class TemplateError(Exception):

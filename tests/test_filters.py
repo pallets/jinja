@@ -9,9 +9,13 @@
     :license: BSD, see LICENSE for more details.
 """
 import random
+
 import pytest
-from jinja2 import Markup, Environment
-from jinja2._compat import text_type, implements_to_string
+
+from jinja2 import Environment
+from jinja2 import Markup
+from jinja2._compat import implements_to_string
+from jinja2._compat import text_type
 
 
 @implements_to_string

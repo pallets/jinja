@@ -11,22 +11,32 @@
     :license: BSD.
 """
 from __future__ import print_function
+
 import sys
-from os.path import join, dirname, abspath
+from datetime import datetime
+from os.path import abspath
+from os.path import dirname
+from os.path import join
+from pstats import Stats
+from random import choice
+from random import randrange
+from timeit import Timer
+
+from djangoext import django_loader
+from djangoext import DjangoContext
+from genshi.template import TemplateLoader as GenshiTemplateLoader
+from mako.lookup import TemplateLookup
+
+from jinja2 import Environment
+from jinja2 import FileSystemLoader
+from jinja2.utils import generate_lorem_ipsum
+
 try:
     from cProfile import Profile
 except ImportError:
     from profile import Profile
-from pstats import Stats
-ROOT = abspath(dirname(__file__))
 
-from random import choice, randrange
-from datetime import datetime
-from timeit import Timer
-from jinja2 import Environment, FileSystemLoader
-from jinja2.utils import generate_lorem_ipsum
-from mako.lookup import TemplateLookup
-from genshi.template import TemplateLoader as GenshiTemplateLoader
+ROOT = abspath(dirname(__file__))
 
 
 def dateformat(x):
@@ -37,6 +47,7 @@ jinja_env = Environment(loader=FileSystemLoader(join(ROOT, 'jinja')))
 jinja_env.filters['dateformat'] = dateformat
 mako_lookup = TemplateLookup(directories=[join(ROOT, 'mako')])
 genshi_loader = GenshiTemplateLoader([join(ROOT, 'genshi')])
+
 
 class Article(object):
 
@@ -70,7 +81,6 @@ navigation = [
 
 context = dict(users=users, articles=articles, page_navigation=navigation)
 
-
 jinja_template = jinja_env.get_template('index.html')
 mako_template = mako_lookup.get_template('index.html')
 genshi_template = genshi_loader.load('index.html')
@@ -83,7 +93,6 @@ def test_mako():
     mako_template.render_unicode(**context)
 
 
-from djangoext import django_loader, DjangoContext
 def test_django():
     # not cached because django is not thread safe and does
     # not cache by itself so it would be unfair to cache it here.

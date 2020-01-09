@@ -10,7 +10,8 @@
 """
 import pytest
 
-from jinja2 import Markup, Environment
+from jinja2 import Environment
+from jinja2 import Markup
 
 class MyDict(dict):
     pass

@@ -14,18 +14,22 @@
     :copyright: (c) 2017 by the Jinja Team.
     :license: BSD.
 """
-from os import path, listdir
-import os
-import sys
-import stat
 import errno
-import marshal
-import tempfile
 import fnmatch
+import marshal
+import os
+import stat
+import sys
+import tempfile
 from hashlib import sha1
-from jinja2.utils import open_if_exists
-from jinja2._compat import BytesIO, pickle, PY2, text_type
+from os import listdir
+from os import path
 
+from ._compat import BytesIO
+from ._compat import pickle
+from ._compat import PY2
+from ._compat import text_type
+from .utils import open_if_exists
 
 # marshal works better on 3.x, one hack less required
 if not PY2:

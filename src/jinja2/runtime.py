@@ -9,19 +9,31 @@
     :license: BSD.
 """
 import sys
-
 from itertools import chain
 from types import MethodType
 
-from jinja2.nodes import EvalContext
-from jinja2.utils import Markup, soft_unicode, escape, missing, concat, \
-     internalcode, object_type_repr, evalcontextfunction, Namespace
-from jinja2.exceptions import UndefinedError, TemplateRuntimeError, \
-     TemplateNotFound
-from jinja2._compat import imap, text_type, iteritems, \
-     implements_iterator, implements_to_string, string_types, PY2, \
-     with_metaclass, abc
-
+from ._compat import abc
+from ._compat import imap
+from ._compat import implements_iterator
+from ._compat import implements_to_string
+from ._compat import iteritems
+from ._compat import PY2
+from ._compat import string_types
+from ._compat import text_type
+from ._compat import with_metaclass
+from .exceptions import TemplateNotFound
+from .exceptions import TemplateRuntimeError
+from .exceptions import UndefinedError
+from .nodes import EvalContext
+from .utils import concat
+from .utils import escape
+from .utils import evalcontextfunction
+from .utils import internalcode
+from .utils import Markup
+from .utils import missing
+from .utils import Namespace
+from .utils import object_type_repr
+from .utils import soft_unicode
 
 # these variables are exported to the template runtime
 __all__ = ['LoopContext', 'TemplateReference', 'Macro', 'Markup',

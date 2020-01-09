@@ -9,20 +9,30 @@
     :license: BSD, see LICENSE for more details.
 """
 from collections import namedtuple
+from functools import update_wrapper
 from itertools import chain
 from keyword import iskeyword as is_python_keyword
-from functools import update_wrapper
-from jinja2 import nodes
-from jinja2.nodes import EvalContext
-from jinja2.visitor import NodeVisitor
-from jinja2.optimizer import Optimizer
-from jinja2.exceptions import TemplateAssertionError
-from jinja2.utils import Markup, concat, escape
-from jinja2._compat import range_type, text_type, string_types, \
-     iteritems, NativeStringIO, imap, izip
-from jinja2.idtracking import Symbols, VAR_LOAD_PARAMETER, \
-     VAR_LOAD_RESOLVE, VAR_LOAD_ALIAS, VAR_LOAD_UNDEFINED
 
+from . import nodes
+from ._compat import imap
+from ._compat import iteritems
+from ._compat import izip
+from ._compat import NativeStringIO
+from ._compat import range_type
+from ._compat import string_types
+from ._compat import text_type
+from .exceptions import TemplateAssertionError
+from .idtracking import Symbols
+from .idtracking import VAR_LOAD_ALIAS
+from .idtracking import VAR_LOAD_PARAMETER
+from .idtracking import VAR_LOAD_RESOLVE
+from .idtracking import VAR_LOAD_UNDEFINED
+from .nodes import EvalContext
+from .optimizer import Optimizer
+from .utils import concat
+from .utils import escape
+from .utils import Markup
+from .visitor import NodeVisitor
 
 operators = {
     'eq':       '==',

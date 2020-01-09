@@ -8,14 +8,17 @@
     :copyright: (c) 2017 by the Jinja Team.
     :license: BSD, see LICENSE for more details.
 """
+import json
 import os
 import re
-import json
 import warnings
 from collections import deque
 from threading import Lock
-from jinja2._compat import text_type, string_types, url_quote, abc
 
+from ._compat import abc
+from ._compat import string_types
+from ._compat import text_type
+from ._compat import url_quote
 
 _word_split_re = re.compile(r'(\s+)')
 _punctuation_re = re.compile(

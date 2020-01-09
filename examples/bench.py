@@ -3,9 +3,10 @@
     that we get a picture of how fast Jinja is for a semi real world
     template.  If a template engine is not installed the test is skipped.\
 """
-import sys
 import cgi
+import sys
 from timeit import Timer
+
 from jinja2 import Environment as JinjaEnvironment
 
 context = {

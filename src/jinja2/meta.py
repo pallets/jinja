@@ -9,9 +9,10 @@
     :copyright: (c) 2017 by the Jinja Team, see AUTHORS for more details.
     :license: BSD, see LICENSE for more details.
 """
-from jinja2 import nodes
-from jinja2.compiler import CodeGenerator
-from jinja2._compat import string_types, iteritems
+from . import nodes
+from ._compat import iteritems
+from ._compat import string_types
+from .compiler import CodeGenerator
 
 
 class TrackingCodeGenerator(CodeGenerator):

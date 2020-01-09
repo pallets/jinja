@@ -19,9 +19,12 @@ from ast import literal_eval
 from collections import deque
 from operator import itemgetter
 
-from jinja2._compat import implements_iterator, intern, iteritems, text_type
-from jinja2.exceptions import TemplateSyntaxError
-from jinja2.utils import LRUCache
+from ._compat import implements_iterator
+from ._compat import intern
+from ._compat import iteritems
+from ._compat import text_type
+from .exceptions import TemplateSyntaxError
+from .utils import LRUCache
 
 # cache for the lexers. Exists in order to be able to have multiple
 # environments with the same lexer

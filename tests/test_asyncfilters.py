@@ -1,4 +1,5 @@
 import pytest
+
 from jinja2 import Environment
 from jinja2.utils import Markup
 

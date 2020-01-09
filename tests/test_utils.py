@@ -8,18 +8,23 @@
     :copyright: (c) 2017 by the Jinja Team.
     :license: BSD, see LICENSE for more details.
 """
-
-from collections import deque
-from copy import copy as shallow_copy
 import pickle
 import random
+from collections import deque
+from copy import copy as shallow_copy
 
 import pytest
-
-from jinja2._compat import string_types, range_type
-from jinja2.utils import LRUCache, object_type_repr, urlize, \
-     select_autoescape, generate_lorem_ipsum, missing, consume
 from markupsafe import Markup
+
+from jinja2._compat import range_type
+from jinja2._compat import string_types
+from jinja2.utils import consume
+from jinja2.utils import generate_lorem_ipsum
+from jinja2.utils import LRUCache
+from jinja2.utils import missing
+from jinja2.utils import object_type_repr
+from jinja2.utils import select_autoescape
+from jinja2.utils import urlize
 
 
 @pytest.mark.utils

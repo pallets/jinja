@@ -69,17 +69,25 @@
     :license: BSD.
 """
 from __future__ import print_function
-import re
+
 import os
+import re
 import sys
-from jinja2.defaults import *
+
 from django.conf import settings
-from django.template import defaulttags as core_tags, loader, TextNode, \
-     FilterExpression, libraries, Variable, loader_tags, TOKEN_TEXT, \
-     TOKEN_VAR
+from django.template import defaulttags as core_tags
+from django.template import FilterExpression
+from django.template import libraries
+from django.template import loader
+from django.template import loader_tags
+from django.template import TextNode
+from django.template import TOKEN_TEXT
+from django.template import TOKEN_VAR
+from django.template import Variable
 from django.template.debug import DebugVariableNode as VariableNode
 from django.templatetags import i18n as i18n_tags
-from StringIO import StringIO
+
+from jinja2.defaults import *
 
 
 _node_handlers = {}

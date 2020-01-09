@@ -1,4 +1,5 @@
 from __future__ import print_function
+
 from jinja2 import Environment
 
 tmpl = Environment().from_string("""\
@@ -9,5 +10,4 @@ tmpl = Environment().from_string("""\
 </ul>
 if condition: {{ 1 if foo else 0 }}
 """)
-
 print(tmpl.render(foo=True))

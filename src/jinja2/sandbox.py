@@ -12,16 +12,19 @@
     :copyright: (c) 2017 by the Jinja Team.
     :license: BSD.
 """
-import types
 import operator
-from jinja2.environment import Environment
-from jinja2.exceptions import SecurityError
-from jinja2._compat import string_types, PY2, abc, range_type
-from jinja2.utils import Markup
-
-from markupsafe import EscapeFormatter
+import types
 from string import Formatter
 
+from markupsafe import EscapeFormatter
+
+from ._compat import abc
+from ._compat import PY2
+from ._compat import range_type
+from ._compat import string_types
+from .environment import Environment
+from .exceptions import SecurityError
+from .utils import Markup
 
 #: maximum number of items a range may produce
 MAX_RANGE = 100000

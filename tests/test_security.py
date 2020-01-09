@@ -11,13 +11,16 @@
 import pytest
 
 from jinja2 import Environment
-from jinja2.sandbox import SandboxedEnvironment, \
-     ImmutableSandboxedEnvironment, unsafe
-from jinja2 import Markup, escape
-from jinja2.exceptions import SecurityError, TemplateSyntaxError, \
-     TemplateRuntimeError
-from jinja2.nodes import EvalContext
+from jinja2 import escape
+from jinja2 import Markup
 from jinja2._compat import text_type
+from jinja2.exceptions import SecurityError
+from jinja2.exceptions import TemplateRuntimeError
+from jinja2.exceptions import TemplateSyntaxError
+from jinja2.nodes import EvalContext
+from jinja2.sandbox import ImmutableSandboxedEnvironment
+from jinja2.sandbox import SandboxedEnvironment
+from jinja2.sandbox import unsafe
 
 
 class PrivateStuff(object):

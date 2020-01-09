@@ -8,12 +8,12 @@
     :copyright: (c) 2017 by the Jinja Team.
     :license: BSD, see LICENSE for more details.
 """
-
 import pytest
 
 from jinja2 import Environment
-from jinja2.bccache import Bucket, FileSystemBytecodeCache, \
-    MemcachedBytecodeCache
+from jinja2.bccache import Bucket
+from jinja2.bccache import FileSystemBytecodeCache
+from jinja2.bccache import MemcachedBytecodeCache
 from jinja2.exceptions import TemplateNotFound
 
 

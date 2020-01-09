@@ -1,4 +1,5 @@
 from __future__ import print_function
+
 from jinja2 import Environment
 
 env = Environment(extensions=['jinja2.ext.i18n'])

@@ -10,9 +10,11 @@
 """
 import pytest
 
-from jinja2 import Environment, DictLoader
-from jinja2.exceptions import TemplateNotFound, TemplatesNotFound, \
-    TemplateSyntaxError
+from jinja2 import DictLoader
+from jinja2 import Environment
+from jinja2.exceptions import TemplateNotFound
+from jinja2.exceptions import TemplatesNotFound
+from jinja2.exceptions import TemplateSyntaxError
 
 
 @pytest.fixture

@@ -11,27 +11,59 @@
 import os
 import sys
 import weakref
-from functools import reduce, partial
-from jinja2 import nodes
-from jinja2.defaults import BLOCK_START_STRING, \
-     BLOCK_END_STRING, VARIABLE_START_STRING, VARIABLE_END_STRING, \
-     COMMENT_START_STRING, COMMENT_END_STRING, LINE_STATEMENT_PREFIX, \
-     LINE_COMMENT_PREFIX, TRIM_BLOCKS, NEWLINE_SEQUENCE, \
-     DEFAULT_FILTERS, DEFAULT_TESTS, DEFAULT_NAMESPACE, \
-     DEFAULT_POLICIES, KEEP_TRAILING_NEWLINE, LSTRIP_BLOCKS
-from jinja2.lexer import get_lexer, TokenStream
-from jinja2.parser import Parser
-from jinja2.nodes import EvalContext
-from jinja2.compiler import generate, CodeGenerator
-from jinja2.runtime import Undefined, new_context, Context
-from jinja2.exceptions import TemplateSyntaxError, TemplateNotFound, \
-     TemplatesNotFound, TemplateRuntimeError, UndefinedError
-from jinja2.utils import import_string, LRUCache, Markup, missing, \
-     concat, consume, internalcode, have_async_gen
-from jinja2._compat import imap, ifilter, string_types, iteritems, \
-     text_type, reraise, implements_iterator, implements_to_string, \
-     encode_filename, PY2, PYPY
+from functools import partial
+from functools import reduce
 
+from . import nodes
+from ._compat import encode_filename
+from ._compat import ifilter
+from ._compat import imap
+from ._compat import implements_iterator
+from ._compat import implements_to_string
+from ._compat import iteritems
+from ._compat import PY2
+from ._compat import PYPY
+from ._compat import reraise
+from ._compat import string_types
+from ._compat import text_type
+from .compiler import CodeGenerator
+from .compiler import generate
+from .defaults import BLOCK_END_STRING
+from .defaults import BLOCK_START_STRING
+from .defaults import COMMENT_END_STRING
+from .defaults import COMMENT_START_STRING
+from .defaults import DEFAULT_FILTERS
+from .defaults import DEFAULT_NAMESPACE
+from .defaults import DEFAULT_POLICIES
+from .defaults import DEFAULT_TESTS
+from .defaults import KEEP_TRAILING_NEWLINE
+from .defaults import LINE_COMMENT_PREFIX
+from .defaults import LINE_STATEMENT_PREFIX
+from .defaults import LSTRIP_BLOCKS
+from .defaults import NEWLINE_SEQUENCE
+from .defaults import TRIM_BLOCKS
+from .defaults import VARIABLE_END_STRING
+from .defaults import VARIABLE_START_STRING
+from .exceptions import TemplateNotFound
+from .exceptions import TemplateRuntimeError
+from .exceptions import TemplatesNotFound
+from .exceptions import TemplateSyntaxError
+from .exceptions import UndefinedError
+from .lexer import get_lexer
+from .lexer import TokenStream
+from .nodes import EvalContext
+from .parser import Parser
+from .runtime import Context
+from .runtime import new_context
+from .runtime import Undefined
+from .utils import concat
+from .utils import consume
+from .utils import have_async_gen
+from .utils import import_string
+from .utils import internalcode
+from .utils import LRUCache
+from .utils import Markup
+from .utils import missing
 
 # for direct template usage we have up to ten living environments
 _spontaneous_environments = LRUCache(10)

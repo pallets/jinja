@@ -12,13 +12,14 @@
     :copyright: (c) 2017 by the Jinja Team.
     :license: BSD, see LICENSE for more details.
 """
-import types
 import operator
-
 from collections import deque
-from jinja2.utils import Markup
-from jinja2._compat import izip, with_metaclass, text_type, PY2
 
+from ._compat import izip
+from ._compat import PY2
+from ._compat import text_type
+from ._compat import with_metaclass
+from .utils import Markup
 
 _binop_to_func = {
     '*':        operator.mul,

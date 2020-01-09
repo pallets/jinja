@@ -12,13 +12,18 @@ import os
 import pkgutil
 import sys
 import weakref
-from importlib import import_module
-from types import ModuleType
-from os import path
 from hashlib import sha1
-from jinja2.exceptions import TemplateNotFound
-from jinja2.utils import open_if_exists, internalcode
-from jinja2._compat import string_types, iteritems, fspath, abc
+from importlib import import_module
+from os import path
+from types import ModuleType
+
+from ._compat import abc
+from ._compat import fspath
+from ._compat import iteritems
+from ._compat import string_types
+from .exceptions import TemplateNotFound
+from .utils import internalcode
+from .utils import open_if_exists
 
 
 def split_template_path(template):

@@ -16,8 +16,8 @@
     :copyright: (c) 2017 by the Jinja Team.
     :license: BSD.
 """
-from jinja2 import nodes
-from jinja2.visitor import NodeTransformer
+from . import nodes
+from .visitor import NodeTransformer
 
 
 def optimize(node, environment):

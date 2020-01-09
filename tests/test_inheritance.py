@@ -10,7 +10,9 @@
 """
 import pytest
 
-from jinja2 import Environment, DictLoader, TemplateError
+from jinja2 import DictLoader
+from jinja2 import Environment
+from jinja2 import TemplateError
 from jinja2 import TemplateRuntimeError
 
 LAYOUTTEMPLATE = '''\

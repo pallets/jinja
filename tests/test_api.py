@@ -9,21 +9,29 @@
     :license: BSD, see LICENSE for more details.
 """
 import os
-import tempfile
 import shutil
-from io import StringIO
+import tempfile
 
 import pytest
-from jinja2 import Environment, Undefined, ChainableUndefined, \
-     DebugUndefined, StrictUndefined, UndefinedError, meta, \
-     is_undefined, Template, DictLoader, make_logging_undefined
+
+from jinja2 import ChainableUndefined
+from jinja2 import DebugUndefined
+from jinja2 import DictLoader
+from jinja2 import Environment
+from jinja2 import is_undefined
+from jinja2 import make_logging_undefined
+from jinja2 import meta
+from jinja2 import StrictUndefined
+from jinja2 import Template
 from jinja2 import TemplatesNotFound
+from jinja2 import Undefined
+from jinja2 import UndefinedError
 from jinja2.compiler import CodeGenerator
 from jinja2.runtime import Context
-from jinja2.utils import Cycler
 from jinja2.utils import contextfunction
-from jinja2.utils import evalcontextfunction
+from jinja2.utils import Cycler
 from jinja2.utils import environmentfunction
+from jinja2.utils import evalcontextfunction
 
 
 @pytest.mark.api

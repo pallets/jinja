@@ -8,16 +8,17 @@
     :copyright: (c) 2017 by the Jinja Team.
     :license: BSD, see LICENSE for more details.
 """
-import pytest
-
 import pickle
 import re
 import sys
 from traceback import format_exception
 
+import pytest
+
 from jinja2 import ChoiceLoader
 from jinja2 import DictLoader
-from jinja2 import Environment, TemplateSyntaxError
+from jinja2 import Environment
+from jinja2 import TemplateSyntaxError
 
 
 @pytest.fixture

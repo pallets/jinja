@@ -9,13 +9,20 @@
     :license: BSD, see LICENSE for more details.
 """
 import re
+
 import pytest
 
-from jinja2 import Environment, DictLoader, contextfunction, nodes
+from jinja2 import contextfunction
+from jinja2 import DictLoader
+from jinja2 import Environment
+from jinja2 import nodes
+from jinja2._compat import BytesIO
+from jinja2._compat import itervalues
+from jinja2._compat import text_type
 from jinja2.exceptions import TemplateAssertionError
 from jinja2.ext import Extension
-from jinja2.lexer import Token, count_newlines
-from jinja2._compat import BytesIO, itervalues, text_type
+from jinja2.lexer import count_newlines
+from jinja2.lexer import Token
 
 importable_object = 23
 

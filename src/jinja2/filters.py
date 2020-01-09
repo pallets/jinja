@@ -8,19 +8,28 @@
     :copyright: (c) 2017 by the Jinja Team.
     :license: BSD, see LICENSE for more details.
 """
-import re
 import math
 import random
+import re
 import warnings
-
-from itertools import groupby, chain
 from collections import namedtuple
-from jinja2.utils import Markup, escape, pformat, urlize, soft_unicode, \
-     unicode_urlencode, htmlsafe_json_dumps
-from jinja2.runtime import Undefined
-from jinja2.exceptions import FilterArgumentError
-from jinja2._compat import imap, string_types, text_type, iteritems, abc
+from itertools import chain
+from itertools import groupby
 
+from ._compat import abc
+from ._compat import imap
+from ._compat import iteritems
+from ._compat import string_types
+from ._compat import text_type
+from .exceptions import FilterArgumentError
+from .runtime import Undefined
+from .utils import escape
+from .utils import htmlsafe_json_dumps
+from .utils import Markup
+from .utils import pformat
+from .utils import soft_unicode
+from .utils import unicode_urlencode
+from .utils import urlize
 
 _word_re = re.compile(r'\w+', re.UNICODE)
 _word_beginning_split_re = re.compile(r'([-\s\(\{\[\<]+)', re.UNICODE)

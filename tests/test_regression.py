@@ -9,10 +9,16 @@
     :license: BSD, see LICENSE for more details.
 """
 import sys
+
 import pytest
 
-from jinja2 import Template, Environment, DictLoader, TemplateSyntaxError, \
-     TemplateAssertionError, TemplateNotFound, PrefixLoader
+from jinja2 import DictLoader
+from jinja2 import Environment
+from jinja2 import PrefixLoader
+from jinja2 import Template
+from jinja2 import TemplateAssertionError
+from jinja2 import TemplateNotFound
+from jinja2 import TemplateSyntaxError
 from jinja2._compat import text_type
 
 

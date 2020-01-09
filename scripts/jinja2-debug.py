@@ -10,9 +10,12 @@
     :license: BSD.
 """
 from __future__ import print_function
+
 import sys
-import jinja2
+
 from werkzeug import script
+
+import jinja2
 
 env = jinja2.Environment(extensions=['jinja2.ext.i18n', 'jinja2.ext.do',
                                      'jinja2.ext.loopcontrols',

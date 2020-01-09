@@ -8,9 +8,11 @@
     :copyright: (c) 2017 by the Jinja Team.
     :license: BSD, see LICENSE for more details.
 """
-from jinja2._compat import range_type
-from jinja2.utils import generate_lorem_ipsum, Cycler, Joiner, Namespace
-
+from ._compat import range_type
+from .utils import Cycler
+from .utils import generate_lorem_ipsum
+from .utils import Joiner
+from .utils import Namespace
 
 # defaults for the parser / lexer
 BLOCK_START_STRING = '{%'
@@ -26,7 +28,6 @@ LSTRIP_BLOCKS = False
 NEWLINE_SEQUENCE = '\n'
 KEEP_TRAILING_NEWLINE = False
 
-
 # default filters, tests and namespace
 from jinja2.filters import FILTERS as DEFAULT_FILTERS
 from jinja2.tests import TESTS as DEFAULT_TESTS
@@ -39,7 +40,6 @@ DEFAULT_NAMESPACE = {
     'namespace':    Namespace
 }
 
-
 # default policies
 DEFAULT_POLICIES = {
     'compiler.ascii_str':   True,
@@ -50,7 +50,6 @@ DEFAULT_POLICIES = {
     'json.dumps_kwargs':    {'sort_keys': True},
     'ext.i18n.trimmed':     False,
 }
-
 
 # export all constants
 __all__ = tuple(x for x in locals().keys() if x.isupper())
