@@ -1,38 +1,25 @@
 # -*- coding: utf-8 -*-
-"""
-    jinja2.testsuite.bytecode_cache
-    ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-
-    Test bytecode caching
-
-    :copyright: (c) 2017 by the Jinja Team.
-    :license: BSD, see LICENSE for more details.
-"""
-
 import pytest
 
 from jinja2 import Environment
-from jinja2.bccache import Bucket, FileSystemBytecodeCache, \
-    MemcachedBytecodeCache
+from jinja2.bccache import Bucket
+from jinja2.bccache import FileSystemBytecodeCache
+from jinja2.bccache import MemcachedBytecodeCache
 from jinja2.exceptions import TemplateNotFound
 
 
 @pytest.fixture
 def env(package_loader):
     bytecode_cache = FileSystemBytecodeCache()
-    return Environment(
-        loader=package_loader,
-        bytecode_cache=bytecode_cache,
-    )
+    return Environment(loader=package_loader, bytecode_cache=bytecode_cache,)
 
 
 @pytest.mark.byte_code_cache
 class TestByteCodeCache(object):
-
     def test_simple(self, env):
-        tmpl = env.get_template('test.html')
-        assert tmpl.render().strip() == 'BAR'
-        pytest.raises(TemplateNotFound, env.get_template, 'missing.html')
+        tmpl = env.get_template("test.html")
+        assert tmpl.render().strip() == "BAR"
+        pytest.raises(TemplateNotFound, env.get_template, "missing.html")
 
 
 class MockMemcached(object):
@@ -63,22 +50,22 @@ class TestMemcachedBytecodeCache(object):
         memcached = MockMemcached()
         m = MemcachedBytecodeCache(memcached)
 
-        b = Bucket(None, 'key', '')
-        b.code = 'code'
+        b = Bucket(None, "key", "")
+        b.code = "code"
         m.dump_bytecode(b)
-        assert memcached.key == 'jinja2/bytecode/key'
+        assert memcached.key == "jinja2/bytecode/key"
 
-        b = Bucket(None, 'key', '')
+        b = Bucket(None, "key", "")
         m.load_bytecode(b)
-        assert b.code == 'code'
+        assert b.code == "code"
 
     def test_exception(self):
         memcached = MockMemcached()
         memcached.get = memcached.get_side_effect
         memcached.set = memcached.set_side_effect
         m = MemcachedBytecodeCache(memcached)
-        b = Bucket(None, 'key', '')
-        b.code = 'code'
+        b = Bucket(None, "key", "")
+        b.code = "code"
 
         m.dump_bytecode(b)
         m.load_bytecode(b)

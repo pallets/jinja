@@ -13,17 +13,17 @@ def env():
 
 
 def test_is_defined_native_return(env):
-    t = env.from_string('{{ missing is defined }}')
+    t = env.from_string("{{ missing is defined }}")
     assert not t.render()
 
 
 def test_undefined_native_return(env):
-    t = env.from_string('{{ missing }}')
+    t = env.from_string("{{ missing }}")
     assert isinstance(t.render(), Undefined)
 
 
 def test_adding_undefined_native_return(env):
-    t = env.from_string('{{ 3 + missing }}')
+    t = env.from_string("{{ 3 + missing }}")
 
     with pytest.raises(UndefinedError):
         t.render()
@@ -31,30 +31,30 @@ def test_adding_undefined_native_return(env):
 
 def test_cast_int(env):
     t = env.from_string("{{ value|int }}")
-    result = t.render(value='3')
+    result = t.render(value="3")
     assert isinstance(result, int)
     assert result == 3
 
 
 def test_list_add(env):
     t = env.from_string("{{ a + b }}")
-    result = t.render(a=['a', 'b'], b=['c', 'd'])
+    result = t.render(a=["a", "b"], b=["c", "d"])
     assert isinstance(result, list)
-    assert result == ['a', 'b', 'c', 'd']
+    assert result == ["a", "b", "c", "d"]
 
 
 def test_multi_expression_add(env):
     t = env.from_string("{{ a }} + {{ b }}")
-    result = t.render(a=['a', 'b'], b=['c', 'd'])
+    result = t.render(a=["a", "b"], b=["c", "d"])
     assert not isinstance(result, list)
     assert result == "['a', 'b'] + ['c', 'd']"
 
 
 def test_loops(env):
     t = env.from_string("{% for x in value %}{{ x }}{% endfor %}")
-    result = t.render(value=['a', 'b', 'c', 'd'])
+    result = t.render(value=["a", "b", "c", "d"])
     assert isinstance(result, text_type)
-    assert result == 'abcd'
+    assert result == "abcd"
 
 
 def test_loops_with_ints(env):
@@ -71,14 +71,17 @@ def test_loop_look_alike(env):
     assert result == 1
 
 
-@pytest.mark.parametrize(("source", "expect"), (
-    ("{{ value }}", True),
-    ("{{ value }}", False),
-    ("{{ 1 == 1 }}", True),
-    ("{{ 2 + 2 == 5 }}", False),
-    ("{{ None is none }}", True),
-    ("{{ '' == None }}", False),
-))
+@pytest.mark.parametrize(
+    ("source", "expect"),
+    (
+        ("{{ value }}", True),
+        ("{{ value }}", False),
+        ("{{ 1 == 1 }}", True),
+        ("{{ 2 + 2 == 5 }}", False),
+        ("{{ None is none }}", True),
+        ("{{ '' == None }}", False),
+    ),
+)
 def test_booleans(env, source, expect):
     t = env.from_string(source)
     result = t.render(value=expect)
@@ -115,7 +118,7 @@ def test_string_literal_var(env):
 def test_string_top_level(env):
     t = env.from_string("'Jinja'")
     result = t.render()
-    assert result == 'Jinja'
+    assert result == "Jinja"
 
 
 def test_tuple_of_variable_strings(env):

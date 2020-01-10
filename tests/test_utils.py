@@ -1,31 +1,26 @@
 # -*- coding: utf-8 -*-
-"""
-    jinja2.testsuite.utils
-    ~~~~~~~~~~~~~~~~~~~~~~
-
-    Tests utilities jinja uses.
-
-    :copyright: (c) 2017 by the Jinja Team.
-    :license: BSD, see LICENSE for more details.
-"""
-
-from collections import deque
-from copy import copy as shallow_copy
 import pickle
 import random
+from collections import deque
+from copy import copy as shallow_copy
 
 import pytest
-
-from jinja2._compat import string_types, range_type
-from jinja2.utils import LRUCache, object_type_repr, urlize, \
-     select_autoescape, generate_lorem_ipsum, missing, consume
 from markupsafe import Markup
+
+from jinja2._compat import range_type
+from jinja2._compat import string_types
+from jinja2.utils import consume
+from jinja2.utils import generate_lorem_ipsum
+from jinja2.utils import LRUCache
+from jinja2.utils import missing
+from jinja2.utils import object_type_repr
+from jinja2.utils import select_autoescape
+from jinja2.utils import urlize
 
 
 @pytest.mark.utils
 @pytest.mark.lrucache
 class TestLRUCache(object):
-
     def test_simple(self):
         d = LRUCache(3)
         d["a"] = 1
@@ -34,7 +29,7 @@ class TestLRUCache(object):
         d["a"]
         d["d"] = 4
         assert len(d) == 3
-        assert 'a' in d and 'c' in d and 'd' in d and 'b' not in d
+        assert "a" in d and "c" in d and "d" in d and "b" not in d
 
     def test_itervalue_deprecated(self):
         cache = LRUCache(3)
@@ -47,14 +42,14 @@ class TestLRUCache(object):
         cache = LRUCache(3)
         cache["b"] = 1
         cache["a"] = 2
-        values = [v for v in cache.itervalues()]
+        values = [v for v in cache.values()]
         assert len(values) == 2
         assert 1 in values
         assert 2 in values
 
     def test_itervalues_empty(self):
         cache = LRUCache(2)
-        values = [v for v in cache.itervalues()]
+        values = [v for v in cache.values()]
         assert len(values) == 0
 
     def test_pickleable(self):
@@ -72,13 +67,13 @@ class TestLRUCache(object):
     @pytest.mark.parametrize("copy_func", [LRUCache.copy, shallow_copy])
     def test_copy(self, copy_func):
         cache = LRUCache(2)
-        cache['a'] = 1
-        cache['b'] = 2
+        cache["a"] = 1
+        cache["b"] = 2
         copy = copy_func(cache)
         assert copy._queue == cache._queue
-        copy['c'] = 3
+        copy["c"] = 3
         assert copy._queue != cache._queue
-        assert 'a' not in copy and 'b' in copy and 'c' in copy
+        assert "a" not in copy and "b" in copy and "c" in copy
 
     def test_clear(self):
         d = LRUCache(3)
@@ -86,7 +81,7 @@ class TestLRUCache(object):
         d["b"] = 2
         d["c"] = 3
         d.clear()
-        assert d.__getstate__() == {'capacity': 3, '_mapping': {}, '_queue': deque([])}
+        assert d.__getstate__() == {"capacity": 3, "_mapping": {}, "_queue": deque([])}
 
     def test_repr(self):
         d = LRUCache(3)
@@ -102,18 +97,18 @@ class TestLRUCache(object):
         d["a"] = 1
         d["b"] = 2
         d["c"] = 3
-        assert d.items() == list(d.iteritems()) == [('c', 3), ('b', 2), ('a', 1)]
-        assert d.keys() == list(d.iterkeys()) == ['c', 'b', 'a']
-        assert d.values() == list(d.itervalues()) == [3, 2, 1]
-        assert list(reversed(d)) == ['a', 'b', 'c']
+        assert d.items() == [("c", 3), ("b", 2), ("a", 1)]
+        assert d.keys() == ["c", "b", "a"]
+        assert d.values() == [3, 2, 1]
+        assert list(reversed(d)) == ["a", "b", "c"]
 
         # Change the cache a little
         d["b"]
         d["a"] = 4
-        assert d.items() == list(d.iteritems()) == [('a', 4), ('b', 2), ('c', 3)]
-        assert d.keys() == list(d.iterkeys()) == ['a', 'b', 'c']
-        assert d.values() == list(d.itervalues()) == [4, 2, 3]
-        assert list(reversed(d)) == ['c', 'b', 'a']
+        assert d.items() == [("a", 4), ("b", 2), ("c", 3)]
+        assert d.keys() == ["a", "b", "c"]
+        assert d.values() == [4, 2, 3]
+        assert list(reversed(d)) == ["c", "b", "a"]
 
     def test_setdefault(self):
         d = LRUCache(3)
@@ -128,31 +123,31 @@ class TestLRUCache(object):
 @pytest.mark.utils
 @pytest.mark.helpers
 class TestHelpers(object):
-
     def test_object_type_repr(self):
         class X(object):
             pass
-        assert object_type_repr(42) == 'int object'
-        assert object_type_repr([]) == 'list object'
-        assert object_type_repr(X()) == 'test_utils.X object'
-        assert object_type_repr(None) == 'None'
-        assert object_type_repr(Ellipsis) == 'Ellipsis'
+
+        assert object_type_repr(42) == "int object"
+        assert object_type_repr([]) == "list object"
+        assert object_type_repr(X()) == "test_utils.X object"
+        assert object_type_repr(None) == "None"
+        assert object_type_repr(Ellipsis) == "Ellipsis"
 
     def test_autoescape_select(self):
         func = select_autoescape(
-            enabled_extensions=('html', '.htm'),
-            disabled_extensions=('txt',),
-            default_for_string='STRING',
-            default='NONE',
+            enabled_extensions=("html", ".htm"),
+            disabled_extensions=("txt",),
+            default_for_string="STRING",
+            default="NONE",
         )
 
-        assert func(None) == 'STRING'
-        assert func('unknown.foo') == 'NONE'
-        assert func('foo.html') == True
-        assert func('foo.htm') == True
-        assert func('foo.txt') == False
-        assert func('FOO.HTML') == True
-        assert func('FOO.TXT') == False
+        assert func(None) == "STRING"
+        assert func("unknown.foo") == "NONE"
+        assert func("foo.html")
+        assert func("foo.htm")
+        assert not func("foo.txt")
+        assert func("FOO.HTML")
+        assert not func("FOO.TXT")
 
 
 @pytest.mark.utils
@@ -161,9 +156,11 @@ class TestEscapeUrlizeTarget(object):
     def test_escape_urlize_target(self):
         url = "http://example.org"
         target = "<script>"
-        assert urlize(url, target=target) == ('<a href="http://example.org"'
-                                              ' target="&lt;script&gt;">'
-                                              'http://example.org</a>')
+        assert urlize(url, target=target) == (
+            '<a href="http://example.org"'
+            ' target="&lt;script&gt;">'
+            "http://example.org</a>"
+        )
 
 
 @pytest.mark.utils
@@ -179,28 +176,29 @@ class TestLoremIpsum(object):
 
     def test_lorem_ipsum_n(self):
         """Test that the n (number of lines) works as expected."""
-        assert generate_lorem_ipsum(n=0, html=False) == u''
+        assert generate_lorem_ipsum(n=0, html=False) == u""
         for n in range_type(1, 50):
-            assert generate_lorem_ipsum(n=n, html=False).count('\n') == (n - 1) * 2
+            assert generate_lorem_ipsum(n=n, html=False).count("\n") == (n - 1) * 2
 
     def test_lorem_ipsum_min(self):
         """Test that at least min words are in the output of each line"""
         for _ in range_type(5):
-           m = random.randrange(20, 99)
-           for _ in range_type(10):
-               assert generate_lorem_ipsum(n=1, min=m, html=False).count(' ') >= m - 1
+            m = random.randrange(20, 99)
+            for _ in range_type(10):
+                assert generate_lorem_ipsum(n=1, min=m, html=False).count(" ") >= m - 1
 
     def test_lorem_ipsum_max(self):
         """Test that at least max words are in the output of each line"""
         for _ in range_type(5):
-           m = random.randrange(21, 100)
-           for _ in range_type(10):
-               assert generate_lorem_ipsum(n=1, max=m, html=False).count(' ') < m - 1
+            m = random.randrange(21, 100)
+            for _ in range_type(10):
+                assert generate_lorem_ipsum(n=1, max=m, html=False).count(" ") < m - 1
 
 
 def test_missing():
     """Test the repr of missing."""
-    assert repr(missing) == u'missing'
+    assert repr(missing) == u"missing"
+
 
 def test_consume():
     """Test that consume consumes an iterator."""

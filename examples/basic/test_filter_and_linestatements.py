@@ -1,9 +1,12 @@
 from __future__ import print_function
+
 from jinja2 import Environment
 
-
-env = Environment(line_statement_prefix='%', variable_start_string="${", variable_end_string="}")
-tmpl = env.from_string("""\
+env = Environment(
+    line_statement_prefix="%", variable_start_string="${", variable_end_string="}"
+)
+tmpl = env.from_string(
+    """\
 % macro foo()
     ${caller(42)}
 % endmacro
@@ -21,6 +24,6 @@ tmpl = env.from_string("""\
       -  ${item}
     % endfor
 % endfilter
-""")
-
+"""
+)
 print(tmpl.render(seq=range(10)))

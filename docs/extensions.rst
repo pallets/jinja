@@ -254,13 +254,17 @@ errors that are horrible to debug.  Always make sure you are using the nodes
 you create correctly.  The API documentation below shows which nodes exist and
 how to use them.
 
-Example Extension
-~~~~~~~~~~~~~~~~~
+
+Example Extensions
+------------------
+
+Cache
+~~~~~
 
 The following example implements a ``cache`` tag for Jinja by using the
 `cachelib`_ library:
 
-.. literalinclude:: cache_extension.py
+.. literalinclude:: examples/cache_extension.py
     :language: python
 
 And here is how you use it in an environment::
@@ -284,8 +288,30 @@ following example caches a sidebar for 300 seconds:
 
 .. _cachelib: https://github.com/pallets/cachelib
 
+
+Inline ``gettext``
+~~~~~~~~~~~~~~~~~~
+
+The following example demonstrates using :meth:`Extension.filter_stream`
+to parse calls to the ``_()`` gettext function inline with static data
+without needing Jinja blocks.
+
+.. code-block:: html
+
+        <h1>_(Welcome)</h1>
+        <p>_(This is a paragraph)</p>
+
+It requires the i18n extension to be loaded and configured.
+
+.. literalinclude:: examples/inline_gettext_extension.py
+    :language: python
+
+
 Extension API
-~~~~~~~~~~~~~
+-------------
+
+Extension
+~~~~~~~~~
 
 Extensions always have to extend the :class:`jinja2.ext.Extension` class:
 
@@ -302,8 +328,9 @@ Extensions always have to extend the :class:`jinja2.ext.Extension` class:
         If the extension implements custom tags this is a set of tag names
         the extension is listening for.
 
-Parser API
-~~~~~~~~~~
+
+Parser
+~~~~~~
 
 The parser passed to :meth:`Extension.parse` provides ways to parse
 expressions of different types.  The following methods may be used by
@@ -355,6 +382,7 @@ There is also a utility function in the lexer module that can count newline
 characters in strings:
 
 .. autofunction:: jinja2.lexer.count_newlines
+
 
 AST
 ~~~
