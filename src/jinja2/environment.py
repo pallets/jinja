@@ -367,7 +367,7 @@ class Environment(object):
         self.is_async = self.enable_async and have_async_gen
         if self.is_async:
             # runs patch_all() to enable async support
-            import jinja2.asyncsupport  # noqa: F401
+            from . import asyncsupport  # noqa: F401
 
         _environment_sanity_check(self)
 
@@ -718,7 +718,7 @@ class Environment(object):
 
         .. versionadded:: 2.4
         """
-        from jinja2.loaders import ModuleLoader
+        from .loaders import ModuleLoader
 
         if log_function is None:
 
@@ -832,7 +832,7 @@ class Environment(object):
         """Exception handling helper.  This is used internally to either raise
         rewritten exceptions or return a rendered traceback for the template.
         """
-        from jinja2.debug import rewrite_traceback_stack
+        from .debug import rewrite_traceback_stack
 
         reraise(*rewrite_traceback_stack(source=source))
 

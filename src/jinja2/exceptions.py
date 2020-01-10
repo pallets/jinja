@@ -64,7 +64,7 @@ class TemplateNotFound(IOError, LookupError, TemplateError):
         IOError.__init__(self, name)
 
         if message is None:
-            from jinja2.runtime import Undefined
+            from .runtime import Undefined
 
             if isinstance(name, Undefined):
                 name._fail_with_undefined_error()
@@ -93,7 +93,7 @@ class TemplatesNotFound(TemplateNotFound):
 
     def __init__(self, names=(), message=None):
         if message is None:
-            from jinja2.runtime import Undefined
+            from .runtime import Undefined
 
             parts = []
 

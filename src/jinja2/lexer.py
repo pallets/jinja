@@ -55,24 +55,15 @@ try:
     # check if this Python supports Unicode identifiers
     compile("föö", "<unknown>", "eval")
 except SyntaxError:
-    # no Unicode support, use ASCII identifiers
+    # Python 2, no Unicode support, use ASCII identifiers
     name_re = re.compile(r"[a-zA-Z_][a-zA-Z0-9_]*")
     check_ident = False
 else:
-    # Unicode support, build a pattern to match valid characters, and set flag
-    # to use str.isidentifier to validate during lexing
-    from jinja2 import _identifier
+    # Unicode support, import generated re pattern and set flag to use
+    # str.isidentifier to validate during lexing.
+    from ._identifier import pattern as name_re
 
-    name_re = re.compile(r"[\w{0}]+".format(_identifier.pattern))
     check_ident = True
-    # remove the pattern from memory after building the regex
-    import sys
-
-    del sys.modules["jinja2._identifier"]
-    import jinja2
-
-    del jinja2._identifier
-    del _identifier
 
 # internal the tokens and keep references to them
 TOKEN_ADD = intern("add")
