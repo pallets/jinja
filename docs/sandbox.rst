@@ -17,7 +17,7 @@ SecurityError: access to attribute 'func_code' of 'function' object is unsafe.
 API
 ---
 
-.. module:: jinja2.sandbox
+.. module:: jinja.sandbox
 
 .. autoclass:: SandboxedEnvironment([options])
     :members: is_safe_attribute, is_safe_callable, default_binop_table,
@@ -77,7 +77,7 @@ operator symbols into callbacks performing the default operator behavior.
 This example shows how the power (``**``) operator can be disabled in
 Jinja::
 
-    from jinja2.sandbox import SandboxedEnvironment
+    from jinja.sandbox import SandboxedEnvironment
 
 
     class MyEnvironment(SandboxedEnvironment):

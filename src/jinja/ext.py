@@ -93,10 +93,10 @@ class Extension(with_metaclass(ExtensionRegistry, object)):
         return source
 
     def filter_stream(self, stream):
-        """It's passed a :class:`~jinja2.lexer.TokenStream` that can be used
+        """It's passed a :class:`~jinja.lexer.TokenStream` that can be used
         to filter tokens returned.  This method has to return an iterable of
-        :class:`~jinja2.lexer.Token`\\s, but it doesn't have to return a
-        :class:`~jinja2.lexer.TokenStream`.
+        :class:`~jinja.lexer.Token`\\s, but it doesn't have to return a
+        :class:`~jinja.lexer.TokenStream`.
         """
         return stream
 
@@ -122,7 +122,7 @@ class Extension(with_metaclass(ExtensionRegistry, object)):
         self, name, args=None, kwargs=None, dyn_args=None, dyn_kwargs=None, lineno=None
     ):
         """Call a method of the extension.  This is a shortcut for
-        :meth:`attr` + :class:`jinja2.nodes.Call`.
+        :meth:`attr` + :class:`jinja.nodes.Call`.
         """
         if args is None:
             args = []
@@ -476,9 +476,9 @@ class DebugExtension(Extension):
 
     .. code-block:: text
 
-        {'context': {'cycler': <class 'jinja2.utils.Cycler'>,
+        {'context': {'cycler': <class 'jinja.utils.Cycler'>,
                      ...,
-                     'namespace': <class 'jinja2.utils.Namespace'>},
+                     'namespace': <class 'jinja.utils.Namespace'>},
          'filters': ['abs', 'attr', 'batch', 'capitalize', 'center', 'count', 'd',
                      ..., 'urlencode', 'urlize', 'wordcount', 'wordwrap', 'xmlattr'],
          'tests': ['!=', '<', '<=', '==', '>', '>=', 'callable', 'defined',
@@ -523,7 +523,7 @@ def extract_from_ast(node, gettext_functions=GETTEXT_FUNCTIONS, babel_style=True
 
     This example explains the behavior:
 
-    >>> from jinja2 import Environment
+    >>> from jinja import Environment
     >>> env = Environment()
     >>> node = env.parse('{{ (_("foo"), _(), ngettext("foo", "bar", 42)) }}')
     >>> list(extract_from_ast(node))

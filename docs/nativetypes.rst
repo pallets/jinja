@@ -1,11 +1,11 @@
-.. module:: jinja2.nativetypes
+.. module:: jinja.nativetypes
 
 .. _nativetypes:
 
 Native Python Types
 ===================
 
-The default :class:`~jinja2.Environment` renders templates to strings. With
+The default :class:`~jinja.Environment` renders templates to strings. With
 :class:`NativeEnvironment`, rendering a template produces a native Python type.
 This is useful if you are using Jinja outside the context of creating text
 files. For example, your code may have an intermediate step where users may use

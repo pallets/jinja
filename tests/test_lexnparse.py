@@ -1,19 +1,19 @@
 # -*- coding: utf-8 -*-
 import pytest
 
-from jinja2 import Environment
-from jinja2 import nodes
-from jinja2 import Template
-from jinja2 import TemplateSyntaxError
-from jinja2 import UndefinedError
-from jinja2._compat import iteritems
-from jinja2._compat import PY2
-from jinja2._compat import text_type
-from jinja2.lexer import Token
-from jinja2.lexer import TOKEN_BLOCK_BEGIN
-from jinja2.lexer import TOKEN_BLOCK_END
-from jinja2.lexer import TOKEN_EOF
-from jinja2.lexer import TokenStream
+from jinja import Environment
+from jinja import nodes
+from jinja import Template
+from jinja import TemplateSyntaxError
+from jinja import UndefinedError
+from jinja._compat import iteritems
+from jinja._compat import PY2
+from jinja._compat import text_type
+from jinja.lexer import Token
+from jinja.lexer import TOKEN_BLOCK_BEGIN
+from jinja.lexer import TOKEN_BLOCK_END
+from jinja.lexer import TOKEN_EOF
+from jinja.lexer import TokenStream
 
 
 # how does a string look like in jinja syntax?
@@ -122,7 +122,7 @@ class TestLexer(object):
         assert tmpl.render() == pformat("foo") + "|" + pformat(u"bär")
 
     def test_operators(self, env):
-        from jinja2.lexer import operators
+        from jinja.lexer import operators
 
         for test, expect in iteritems(operators):
             if test in "([{}])":

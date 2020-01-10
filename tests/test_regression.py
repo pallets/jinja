@@ -3,14 +3,14 @@ import sys
 
 import pytest
 
-from jinja2 import DictLoader
-from jinja2 import Environment
-from jinja2 import PrefixLoader
-from jinja2 import Template
-from jinja2 import TemplateAssertionError
-from jinja2 import TemplateNotFound
-from jinja2 import TemplateSyntaxError
-from jinja2._compat import text_type
+from jinja import DictLoader
+from jinja import Environment
+from jinja import PrefixLoader
+from jinja import Template
+from jinja import TemplateAssertionError
+from jinja import TemplateNotFound
+from jinja import TemplateSyntaxError
+from jinja._compat import text_type
 
 
 @pytest.mark.regression
@@ -295,7 +295,7 @@ class TestBug(object):
         assert e.value.name == "foo/bar.html"
 
     def test_contextfunction_callable_classes(self, env):
-        from jinja2.utils import contextfunction
+        from jinja.utils import contextfunction
 
         class CallableClass(object):
             @contextfunction
@@ -369,7 +369,7 @@ class TestBug(object):
 
     def test_macro_escaping(self):
         env = Environment(
-            autoescape=lambda x: False, extensions=["jinja2.ext.autoescape"]
+            autoescape=lambda x: False, extensions=["jinja.ext.autoescape"]
         )
         template = "{% macro m() %}<html>{% endmacro %}"
         template += "{% autoescape true %}{{ m() }}{% endautoescape %}"
@@ -577,7 +577,7 @@ class TestBug(object):
         assert env.get_template("main").render() == "123"
 
     def test_grouper_repr(self):
-        from jinja2.filters import _GroupTuple
+        from jinja.filters import _GroupTuple
 
         t = _GroupTuple("foo", [1, 2])
         assert t.grouper == "foo"
@@ -586,7 +586,7 @@ class TestBug(object):
         assert str(t) == "('foo', [1, 2])"
 
     def test_custom_context(self, env):
-        from jinja2.runtime import Context
+        from jinja.runtime import Context
 
         class MyContext(Context):
             pass
@@ -599,7 +599,7 @@ class TestBug(object):
         assert env.get_template("test").render(foobar="test") == "test"
 
     def test_legacy_custom_context(self, env):
-        from jinja2.runtime import Context, missing
+        from jinja.runtime import Context, missing
 
         class MyContext(Context):
             def resolve(self, name):
@@ -620,7 +620,7 @@ class TestBug(object):
         assert tmpl.render(values=[]) == "0"
 
     def test_markup_and_chainable_undefined(self):
-        from jinja2 import Markup
-        from jinja2.runtime import ChainableUndefined
+        from jinja import Markup
+        from jinja.runtime import ChainableUndefined
 
         assert str(Markup(ChainableUndefined())) == ""

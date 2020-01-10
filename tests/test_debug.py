@@ -5,10 +5,10 @@ from traceback import format_exception
 
 import pytest
 
-from jinja2 import ChoiceLoader
-from jinja2 import DictLoader
-from jinja2 import Environment
-from jinja2 import TemplateSyntaxError
+from jinja import ChoiceLoader
+from jinja import DictLoader
+from jinja import Environment
+from jinja import TemplateSyntaxError
 
 
 @pytest.fixture
@@ -55,7 +55,7 @@ ZeroDivisionError: (int(eger)? )?division (or modulo )?by zero
             """(?sm)
   File ".*?syntaxerror.html", line 4, in (template|<module>)
     \\{% endif %\\}.*?
-(jinja2\\.exceptions\\.)?TemplateSyntaxError: Encountered unknown tag 'endif'. Jinja \
+(jinja\\.exceptions\\.)?TemplateSyntaxError: Encountered unknown tag 'endif'. Jinja \
 was looking for the following tags: 'endfor' or 'else'. The innermost block that needs \
 to be closed is 'for'.
     """,
@@ -70,7 +70,7 @@ to be closed is 'for'.
             r"""
   File ".*debug.pyc?", line \d+, in test
     raise TemplateSyntaxError\("wtf", 42\)
-(jinja2\.exceptions\.)?TemplateSyntaxError: wtf
+(jinja\.exceptions\.)?TemplateSyntaxError: wtf
   line 42""",
         )
 
@@ -97,8 +97,8 @@ to be closed is 'for'.
         assert exc_info.value.source is not None
 
     def test_local_extraction(self):
-        from jinja2.debug import get_template_locals
-        from jinja2.runtime import missing
+        from jinja.debug import get_template_locals
+        from jinja.runtime import missing
 
         locals = get_template_locals(
             {

@@ -1,7 +1,7 @@
 API
 ===
 
-.. module:: jinja2
+.. module:: jinja
     :noindex:
     :synopsis: public Jinja API
 
@@ -27,7 +27,7 @@ are in use.
 The simplest way to configure Jinja to load templates for your application
 looks roughly like this::
 
-    from jinja2 import Environment, PackageLoader, select_autoescape
+    from jinja import Environment, PackageLoader, select_autoescape
     env = Environment(
         loader=PackageLoader('yourapplication', 'templates'),
         autoescape=select_autoescape(['html', 'xml'])
@@ -142,7 +142,7 @@ useful if you want to dig deeper into Jinja or :ref:`develop extensions
 
         If the environment is sandboxed this attribute is `True`.  For the
         sandbox mode have a look at the documentation for the
-        :class:`~jinja2.sandbox.SandboxedEnvironment`.
+        :class:`~jinja.sandbox.SandboxedEnvironment`.
 
     .. attribute:: filters
 
@@ -182,7 +182,7 @@ useful if you want to dig deeper into Jinja or :ref:`develop extensions
        The context used for templates.  This should not be changed
        in most cases, unless you need to modify internals of how
        template variables are handled.  For details, see
-       :class:`~jinja2.runtime.Context`.
+       :class:`~jinja.runtime.Context`.
 
     .. automethod:: overlay([options])
 
@@ -251,7 +251,7 @@ useful if you want to dig deeper into Jinja or :ref:`develop extensions
     .. automethod:: generate_async([context])
 
 
-.. autoclass:: jinja2.environment.TemplateStream()
+.. autoclass:: jinja.environment.TemplateStream()
     :members: disable_buffering, enable_buffering, dump
 
 
@@ -267,14 +267,14 @@ future.  It's recommended to configure a sensible default for
 autoescaping.  This makes it possible to enable and disable autoescaping
 on a per-template basis (HTML versus text for instance).
 
-.. autofunction:: jinja2.select_autoescape
+.. autofunction:: jinja.select_autoescape
 
 Here a recommended setup that enables autoescaping for templates ending
 in ``'.html'``, ``'.htm'`` and ``'.xml'`` and disabling it by default
-for all other extensions.  You can use the :func:`~jinja2.select_autoescape`
+for all other extensions.  You can use the :func:`~jinja.select_autoescape`
 function for this::
 
-    from jinja2 import Environment, select_autoescape
+    from jinja import Environment, select_autoescape
     env = Environment(autoescape=select_autoescape(['html', 'htm', 'xml']),
                       loader=PackageLoader('mypackage'))
 
@@ -324,7 +324,7 @@ others fail.
 The closest to regular Python behavior is the :class:`StrictUndefined` which
 disallows all operations beside testing if it's an undefined object.
 
-.. autoclass:: jinja2.Undefined()
+.. autoclass:: jinja.Undefined()
 
     .. attribute:: _undefined_hint
 
@@ -352,16 +352,16 @@ disallows all operations beside testing if it's an undefined object.
         :attr:`_undefined_exception` with an error message generated
         from the undefined hints stored on the undefined object.
 
-.. autoclass:: jinja2.ChainableUndefined()
+.. autoclass:: jinja.ChainableUndefined()
 
-.. autoclass:: jinja2.DebugUndefined()
+.. autoclass:: jinja.DebugUndefined()
 
-.. autoclass:: jinja2.StrictUndefined()
+.. autoclass:: jinja.StrictUndefined()
 
 There is also a factory function that can decorate undefined objects to
 implement logging on failures:
 
-.. autofunction:: jinja2.make_logging_undefined
+.. autofunction:: jinja.make_logging_undefined
 
 Undefined objects are created by calling :attr:`undefined`.
 
@@ -393,7 +393,7 @@ Undefined objects are created by calling :attr:`undefined`.
 The Context
 -----------
 
-.. autoclass:: jinja2.runtime.Context()
+.. autoclass:: jinja.runtime.Context()
     :members: resolve, get_exported, get_all
 
     .. attribute:: parent
@@ -437,7 +437,7 @@ The Context
 
         The current :ref:`eval-context`.
 
-    .. automethod:: jinja2.runtime.Context.call(callable, \*args, \**kwargs)
+    .. automethod:: jinja.runtime.Context.call(callable, \*args, \**kwargs)
 
 
 .. admonition:: Implementation
@@ -464,24 +464,24 @@ size by default and templates are automatically reloaded.
 All loaders are subclasses of :class:`BaseLoader`.  If you want to create your
 own loader, subclass :class:`BaseLoader` and override `get_source`.
 
-.. autoclass:: jinja2.BaseLoader
+.. autoclass:: jinja.BaseLoader
     :members: get_source, load
 
 Here a list of the builtin loaders Jinja provides:
 
-.. autoclass:: jinja2.FileSystemLoader
+.. autoclass:: jinja.FileSystemLoader
 
-.. autoclass:: jinja2.PackageLoader
+.. autoclass:: jinja.PackageLoader
 
-.. autoclass:: jinja2.DictLoader
+.. autoclass:: jinja.DictLoader
 
-.. autoclass:: jinja2.FunctionLoader
+.. autoclass:: jinja.FunctionLoader
 
-.. autoclass:: jinja2.PrefixLoader
+.. autoclass:: jinja.PrefixLoader
 
-.. autoclass:: jinja2.ChoiceLoader
+.. autoclass:: jinja.ChoiceLoader
 
-.. autoclass:: jinja2.ModuleLoader
+.. autoclass:: jinja.ModuleLoader
 
 
 .. _bytecode-cache:
@@ -499,10 +499,10 @@ the application.
 
 To use a bytecode cache, instantiate it and pass it to the :class:`Environment`.
 
-.. autoclass:: jinja2.BytecodeCache
+.. autoclass:: jinja.BytecodeCache
     :members: load_bytecode, dump_bytecode, clear
 
-.. autoclass:: jinja2.bccache.Bucket
+.. autoclass:: jinja.bccache.Bucket
     :members: write_bytecode, load_bytecode, bytecode_from_string,
               bytecode_to_string, reset
 
@@ -521,9 +521,9 @@ To use a bytecode cache, instantiate it and pass it to the :class:`Environment`.
 
 Builtin bytecode caches:
 
-.. autoclass:: jinja2.FileSystemBytecodeCache
+.. autoclass:: jinja.FileSystemBytecodeCache
 
-.. autoclass:: jinja2.MemcachedBytecodeCache
+.. autoclass:: jinja.MemcachedBytecodeCache
 
 
 Async Support
@@ -569,7 +569,7 @@ Policies
 Starting with Jinja 2.9 policies can be configured on the environment
 which can slightly influence how filters and other template constructs
 behave.  They can be configured with the
-:attr:`~jinja2.Environment.policies` attribute.
+:attr:`~jinja.Environment.policies` attribute.
 
 Example::
 
@@ -626,17 +626,17 @@ Utilities
 These helper functions and classes are useful if you add custom filters or
 functions to a Jinja environment.
 
-.. autofunction:: jinja2.environmentfilter
+.. autofunction:: jinja.environmentfilter
 
-.. autofunction:: jinja2.contextfilter
+.. autofunction:: jinja.contextfilter
 
-.. autofunction:: jinja2.evalcontextfilter
+.. autofunction:: jinja.evalcontextfilter
 
-.. autofunction:: jinja2.environmentfunction
+.. autofunction:: jinja.environmentfunction
 
-.. autofunction:: jinja2.contextfunction
+.. autofunction:: jinja.contextfunction
 
-.. autofunction:: jinja2.evalcontextfunction
+.. autofunction:: jinja.evalcontextfunction
 
 .. function:: escape(s)
 
@@ -647,11 +647,11 @@ functions to a Jinja environment.
 
     The return value is a :class:`Markup` string.
 
-.. autofunction:: jinja2.clear_caches
+.. autofunction:: jinja.clear_caches
 
-.. autofunction:: jinja2.is_undefined
+.. autofunction:: jinja.is_undefined
 
-.. autoclass:: jinja2.Markup([string])
+.. autoclass:: jinja.Markup([string])
     :members: escape, unescape, striptags
 
 .. admonition:: Note
@@ -664,15 +664,15 @@ functions to a Jinja environment.
 Exceptions
 ----------
 
-.. autoexception:: jinja2.TemplateError
+.. autoexception:: jinja.TemplateError
 
-.. autoexception:: jinja2.UndefinedError
+.. autoexception:: jinja.UndefinedError
 
-.. autoexception:: jinja2.TemplateNotFound
+.. autoexception:: jinja.TemplateNotFound
 
-.. autoexception:: jinja2.TemplatesNotFound
+.. autoexception:: jinja.TemplatesNotFound
 
-.. autoexception:: jinja2.TemplateSyntaxError
+.. autoexception:: jinja.TemplateSyntaxError
 
     .. attribute:: message
 
@@ -695,9 +695,9 @@ Exceptions
     unicode strings is that Python 2.x is not using unicode for exceptions
     and tracebacks as well as the compiler.  This will change with Python 3.
 
-.. autoexception:: jinja2.TemplateRuntimeError
+.. autoexception:: jinja.TemplateRuntimeError
 
-.. autoexception:: jinja2.TemplateAssertionError
+.. autoexception:: jinja.TemplateAssertionError
 
 
 .. _writing-filters:
@@ -739,7 +739,7 @@ paragraphs and marks the return value as safe HTML string if autoescaping is
 enabled::
 
     import re
-    from jinja2 import evalcontextfilter, Markup, escape
+    from jinja import evalcontextfilter, Markup, escape
 
     _paragraph_re = re.compile(r'(?:\r\n|\r(?!\n)|\n){2,}')
 
@@ -805,7 +805,7 @@ must only happen with a :class:`nodes.EvalContextModifier` and
 :class:`nodes.ScopedEvalContextModifier` from an extension, not on the
 eval context object itself.
 
-.. autoclass:: jinja2.nodes.EvalContext
+.. autoclass:: jinja.nodes.EvalContext
 
    .. attribute:: autoescape
 
@@ -928,6 +928,6 @@ could help applications to implement more advanced template concepts.  All
 the functions of the meta API operate on an abstract syntax tree as
 returned by the :meth:`Environment.parse` method.
 
-.. autofunction:: jinja2.meta.find_undeclared_variables
+.. autofunction:: jinja.meta.find_undeclared_variables
 
-.. autofunction:: jinja2.meta.find_referenced_templates
+.. autofunction:: jinja.meta.find_referenced_templates

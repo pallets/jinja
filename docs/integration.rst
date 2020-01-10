@@ -14,7 +14,7 @@ Babel Integration
 -----------------
 
 Jinja provides support for extracting gettext messages from templates via a
-`Babel`_ extractor entry point called `jinja2.ext.babel_extract`.  The Babel
+`Babel`_ extractor entry point called `jinja.ext.babel_extract`.  The Babel
 support is implemented as part of the :ref:`i18n-extension` extension.
 
 Gettext messages extracted from both `trans` tags and code expressions.
@@ -24,7 +24,7 @@ in its Babel extraction method `mapping file`_:
 
 .. sourcecode:: ini
 
-    [jinja2: **/templates/**.html]
+    [jinja: **/templates/**.html]
     encoding = utf-8
 
 The syntax related options of the :class:`Environment` are also available as
@@ -33,7 +33,7 @@ that templates use ``%`` as `line_statement_prefix` you can use this code:
 
 .. sourcecode:: ini
 
-    [jinja2: **/templates/**.html]
+    [jinja: **/templates/**.html]
     encoding = utf-8
     line_statement_prefix = %
 
@@ -61,7 +61,7 @@ Pylons powered application.
 The template engine is configured in `config/environment.py`.  The configuration
 for Jinja looks something like that::
 
-    from jinja2 import Environment, PackageLoader
+    from jinja import Environment, PackageLoader
     config['pylons.app_globals'].jinja_env = Environment(
         loader=PackageLoader('yourapplication', 'templates')
     )

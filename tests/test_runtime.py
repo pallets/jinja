@@ -1,7 +1,7 @@
 import itertools
 
-from jinja2 import Template
-from jinja2.runtime import LoopContext
+from jinja import Template
+from jinja.runtime import LoopContext
 
 TEST_IDX_TEMPLATE_STR_1 = (
     "[{% for i in lst|reverse %}(len={{ loop.length }},"

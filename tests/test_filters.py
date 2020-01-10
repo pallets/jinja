@@ -4,10 +4,10 @@ from collections import namedtuple
 
 import pytest
 
-from jinja2 import Environment
-from jinja2 import Markup
-from jinja2._compat import implements_to_string
-from jinja2._compat import text_type
+from jinja import Environment
+from jinja import Markup
+from jinja._compat import implements_to_string
+from jinja._compat import text_type
 
 
 @implements_to_string

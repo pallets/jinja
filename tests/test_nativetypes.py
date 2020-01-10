@@ -1,10 +1,10 @@
 import pytest
 
-from jinja2._compat import text_type
-from jinja2.exceptions import UndefinedError
-from jinja2.nativetypes import NativeEnvironment
-from jinja2.nativetypes import NativeTemplate
-from jinja2.runtime import Undefined
+from jinja._compat import text_type
+from jinja.exceptions import UndefinedError
+from jinja.nativetypes import NativeEnvironment
+from jinja.nativetypes import NativeTemplate
+from jinja.runtime import Undefined
 
 
 @pytest.fixture

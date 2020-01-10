@@ -397,7 +397,7 @@ class TokenStream(object):
 
     def expect(self, expr):
         """Expect a given token type and return it.  This accepts the same
-        argument as :meth:`jinja2.lexer.Token.test`.
+        argument as :meth:`jinja.lexer.Token.test`.
         """
         if not self.current.test(expr):
             expr = describe_token_expr(expr)

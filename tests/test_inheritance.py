@@ -1,9 +1,9 @@
 # -*- coding: utf-8 -*-
 import pytest
 
-from jinja2 import DictLoader
-from jinja2 import Environment
-from jinja2 import TemplateRuntimeError
+from jinja import DictLoader
+from jinja import Environment
+from jinja import TemplateRuntimeError
 
 LAYOUTTEMPLATE = """\
 |{% block block1 %}block 1 from layout{% endblock %}

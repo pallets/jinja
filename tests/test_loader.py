@@ -8,13 +8,13 @@ import weakref
 
 import pytest
 
-from jinja2 import Environment
-from jinja2 import loaders
-from jinja2 import PackageLoader
-from jinja2._compat import PY2
-from jinja2._compat import PYPY
-from jinja2.exceptions import TemplateNotFound
-from jinja2.loaders import split_template_path
+from jinja import Environment
+from jinja import loaders
+from jinja import PackageLoader
+from jinja._compat import PY2
+from jinja._compat import PYPY
+from jinja.exceptions import TemplateNotFound
+from jinja.loaders import split_template_path
 
 
 @pytest.mark.loaders

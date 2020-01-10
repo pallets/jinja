@@ -1,17 +1,17 @@
 # -*- coding: utf-8 -*-
 import pytest
 
-from jinja2 import Environment
-from jinja2 import escape
-from jinja2 import Markup
-from jinja2._compat import text_type
-from jinja2.exceptions import SecurityError
-from jinja2.exceptions import TemplateRuntimeError
-from jinja2.exceptions import TemplateSyntaxError
-from jinja2.nodes import EvalContext
-from jinja2.sandbox import ImmutableSandboxedEnvironment
-from jinja2.sandbox import SandboxedEnvironment
-from jinja2.sandbox import unsafe
+from jinja import Environment
+from jinja import escape
+from jinja import Markup
+from jinja._compat import text_type
+from jinja.exceptions import SecurityError
+from jinja.exceptions import TemplateRuntimeError
+from jinja.exceptions import TemplateSyntaxError
+from jinja.nodes import EvalContext
+from jinja.sandbox import ImmutableSandboxedEnvironment
+from jinja.sandbox import SandboxedEnvironment
+from jinja.sandbox import unsafe
 
 
 class PrivateStuff(object):
