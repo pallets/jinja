@@ -1,5 +1,4 @@
 import io
-import re
 
 from setuptools import find_packages
 from setuptools import setup
@@ -7,12 +6,9 @@ from setuptools import setup
 with io.open("README.rst", "rt", encoding="utf8") as f:
     readme = f.read()
 
-with io.open("src/jinja/__init__.py", "rt", encoding="utf8") as f:
-    version = re.search(r'__version__ = "(.*?)"', f.read(), re.M).group(1)
-
 setup(
-    name="Jinja",
-    version=version,
+    name="Jinja2",
+    version="2.11.0rc1",
     url="https://palletsprojects.com/p/jinja/",
     project_urls={
         "Documentation": "https://jinja.palletsprojects.com/",
@@ -22,7 +18,10 @@ setup(
     license="BSD-3-Clause",
     maintainer="Pallets",
     maintainer_email="contact@palletsprojects.com",
-    description="A very fast and expressive template engine.",
+    description=(
+        "A very fast and expressive template engine. Compatibility"
+        " package for Jinja2 to Jinja rename."
+    ),
     long_description=readme,
     classifiers=[
         "Development Status :: 5 - Production/Stable",
@@ -48,7 +47,7 @@ setup(
     package_dir={"": "src"},
     include_package_data=True,
     python_requires=">=2.7, !=3.0.*, !=3.1.*, !=3.2.*, !=3.3.*, !=3.4.*",
-    install_requires=["MarkupSafe>=0.23"],
+    install_requires=["Jinja<4.0"],
     extras_require={"i18n": ["Babel>=0.8"]},
-    entry_points={"babel.extractors": ["jinja = jinja.ext:babel_extract[i18n]"]},
+    entry_points={"babel.extractors": ["jinja2 = jinja2.ext:babel_extract[i18n]"]},
 )
