@@ -111,10 +111,6 @@ class Extension(with_metaclass(ExtensionRegistry, object)):
         to filter tokens returned.  This method has to return an iterable of
         :class:`~jinja2.lexer.Token`\\s, but it doesn't have to return a
         :class:`~jinja2.lexer.TokenStream`.
-
-        In the `ext` folder of the Jinja source distribution there is a file
-        called `inlinegettext.py` which implements a filter that utilizes this
-        method.
         """
         return stream
 
