@@ -9,6 +9,7 @@
     :license: BSD, see LICENSE for more details.
 """
 import random
+from collections import namedtuple
 
 import pytest
 
@@ -81,9 +82,7 @@ class TestFilter(object):
         )
 
     def test_slice(self, env):
-        tmpl = env.from_string(
-            "{{ foo|slice(3)|list }}|" '{{ foo|slice(3, "X")|list }}'
-        )
+        tmpl = env.from_string("{{ foo|slice(3)|list }}|{{ foo|slice(3, 'X')|list }}")
         out = tmpl.render(foo=list(range(10)))
         assert out == (
             "[[0, 1, 2, 3], [4, 5, 6], [7, 8, 9]]|"
@@ -244,10 +243,7 @@ class TestFilter(object):
         assert tmpl.render() == "&lt;foo&gt;<span>foo</span>"
 
     def test_join_attribute(self, env):
-        class User(object):
-            def __init__(self, username):
-                self.username = username
-
+        User = namedtuple("User", "username")
         tmpl = env.from_string("""{{ users|join(', ', 'username') }}""")
         assert tmpl.render(users=map(User, ["foo", "bar"])) == "foo, bar"
 
@@ -291,7 +287,7 @@ class TestFilter(object):
 
     def test_reverse(self, env):
         tmpl = env.from_string(
-            '{{ "foobar"|reverse|join }}|' "{{ [1, 2, 3]|reverse|list }}"
+            "{{ 'foobar'|reverse|join }}|{{ [1, 2, 3]|reverse|list }}"
         )
         assert tmpl.render() == "raboof|[3, 2, 1]"
 
@@ -370,7 +366,7 @@ class TestFilter(object):
         env.policies["urlize.rel"] = None
         tmpl = env.from_string('{{ "foo http://www.example.com/ bar"|urlize }}')
         assert tmpl.render() == (
-            'foo <a href="http://www.example.com/">' "http://www.example.com/</a> bar"
+            'foo <a href="http://www.example.com/">http://www.example.com/</a> bar'
         )
 
     def test_urlize_target_parameter(self, env):
@@ -401,7 +397,7 @@ class TestFilter(object):
 
     def test_sum_attributes(self, env):
         tmpl = env.from_string("""{{ values|sum('value') }}""")
-        assert tmpl.render(values=[{"value": 23}, {"value": 1}, {"value": 18},]) == "42"
+        assert tmpl.render(values=[{"value": 23}, {"value": 1}, {"value": 18}]) == "42"
 
     def test_sum_attributes_nested(self, env):
         tmpl = env.from_string("""{{ values|sum('real.value') }}""")
@@ -418,7 +414,7 @@ class TestFilter(object):
 
     def test_sum_attributes_tuple(self, env):
         tmpl = env.from_string("""{{ values.items()|sum('1') }}""")
-        assert tmpl.render(values={"foo": 23, "bar": 1, "baz": 18,}) == "42"
+        assert tmpl.render(values={"foo": 23, "bar": 1, "baz": 18}) == "42"
 
     def test_abs(self, env):
         tmpl = env.from_string("""{{ -1|abs }}|{{ 1|abs }}""")
@@ -561,22 +557,13 @@ class TestFilter(object):
         assert tmpl.render() == "a:1:2|b:1|"
 
     def test_groupby_multidot(self, env):
-        class Date(object):
-            def __init__(self, day, month, year):
-                self.day = day
-                self.month = month
-                self.year = year
-
-        class Article(object):
-            def __init__(self, title, *date):
-                self.date = Date(*date)
-                self.title = title
-
+        Date = namedtuple("Date", "day,month,year")
+        Article = namedtuple("Article", "title,date")
         articles = [
-            Article("aha", 1, 1, 1970),
-            Article("interesting", 2, 1, 1970),
-            Article("really?", 3, 1, 1970),
-            Article("totally not", 1, 1, 1971),
+            Article("aha", Date(1, 1, 1970)),
+            Article("interesting", Date(2, 1, 1970)),
+            Article("really?", Date(3, 1, 1970)),
+            Article("totally not", Date(1, 1, 1971)),
         ]
         tmpl = env.from_string(
             """
@@ -647,10 +634,7 @@ class TestFilter(object):
         assert tmpl.render() == "[3, 3, 15]"
 
     def test_attribute_map(self, env):
-        class User(object):
-            def __init__(self, name):
-                self.name = name
-
+        User = namedtuple("User", "name")
         env = Environment()
         users = [
             User("john"),
@@ -666,15 +650,8 @@ class TestFilter(object):
         assert tmpl.render() == "[]"
 
     def test_map_default(self, env):
-        class Fullname(object):
-            def __init__(self, firstname, lastname):
-                self.firstname = firstname
-                self.lastname = lastname
-
-        class Firstname(object):
-            def __init__(self, firstname):
-                self.firstname = firstname
-
+        Fullname = namedtuple("Fullname", "firstname,lastname")
+        Firstname = namedtuple("Firstname", "firstname")
         env = Environment()
         tmpl = env.from_string(
             '{{ users|map(attribute="lastname", default="smith")|join(", ") }}'
@@ -708,11 +685,7 @@ class TestFilter(object):
         assert tmpl.render() == "None|False|0"
 
     def test_simple_select_attr(self, env):
-        class User(object):
-            def __init__(self, name, is_active):
-                self.name = name
-                self.is_active = is_active
-
+        User = namedtuple("User", "name,is_active")
         env = Environment()
         users = [
             User("john", True),
@@ -725,11 +698,7 @@ class TestFilter(object):
         assert tmpl.render(users=users) == "john|jane"
 
     def test_simple_reject_attr(self, env):
-        class User(object):
-            def __init__(self, name, is_active):
-                self.name = name
-                self.is_active = is_active
-
+        User = namedtuple("User", "name,is_active")
         env = Environment()
         users = [
             User("john", True),
@@ -742,11 +711,7 @@ class TestFilter(object):
         assert tmpl.render(users=users) == "mike"
 
     def test_func_select_attr(self, env):
-        class User(object):
-            def __init__(self, id, name):
-                self.id = id
-                self.name = name
-
+        User = namedtuple("User", "id,name")
         env = Environment()
         users = [
             User(1, "john"),
@@ -759,11 +724,7 @@ class TestFilter(object):
         assert tmpl.render(users=users) == "john|mike"
 
     def test_func_reject_attr(self, env):
-        class User(object):
-            def __init__(self, id, name):
-                self.id = id
-                self.name = name
-
+        User = namedtuple("User", "id,name")
         env = Environment()
         users = [
             User(1, "john"),

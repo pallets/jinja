@@ -180,9 +180,9 @@ class TestIncludes(object):
 
     def test_import_from_with_context(self):
         env = Environment(
-            loader=DictLoader({"a": "{% macro x() %}{{ foobar }}{% endmacro %}",})
+            loader=DictLoader({"a": "{% macro x() %}{{ foobar }}{% endmacro %}"})
         )
         t = env.from_string(
-            '{% set foobar = 42 %}{% from "a" ' "import x with context %}{{ x() }}"
+            "{% set foobar = 42 %}{% from 'a' import x with context %}{{ x() }}"
         )
         assert t.render() == "42"

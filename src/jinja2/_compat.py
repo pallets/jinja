@@ -1,4 +1,5 @@
 # -*- coding: utf-8 -*-
+# flake8: noqa
 """
     jinja2._compat
     ~~~~~~~~~~~~~~
@@ -10,6 +11,7 @@
     :copyright: Copyright 2013 by the Jinja team, see AUTHORS.
     :license: BSD, see LICENSE for details.
 """
+import marshal
 import sys
 
 PY2 = sys.version_info[0] == 2
@@ -45,6 +47,9 @@ if not PY2:
     implements_iterator = _identity
     implements_to_string = _identity
     encode_filename = _identity
+
+    marshal_dump = marshal.dump
+    marshal_load = marshal.load
 
 else:
     unichr = unichr
@@ -82,6 +87,17 @@ else:
         if isinstance(filename, unicode):
             return filename.encode("utf-8")
         return filename
+
+    def marshal_dump(code, f):
+        if isinstance(f, file):
+            marshal.dump(code, f)
+        else:
+            f.write(marshal.dumps(code))
+
+    def marshal_load(f):
+        if isinstance(f, file):
+            return marshal.load(f)
+        return marshal.loads(f.read())
 
 
 def with_metaclass(meta, *bases):

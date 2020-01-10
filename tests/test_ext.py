@@ -343,7 +343,7 @@ class TestInternationalization(object):
         # unlikely variable name, but when used as a variable
         # it should not enable trimming
         tmpl = i18n_env.from_string(
-            '{%- trans trimmed = "world" %}  hello\n  {{ trimmed }}  ' "{% endtrans -%}"
+            "{%- trans trimmed = 'world' %}  hello\n  {{ trimmed }}  {% endtrans -%}"
         )
         assert tmpl.render() == "  hello\n  world  "
 

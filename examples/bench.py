@@ -8,6 +8,7 @@ import sys
 from timeit import Timer
 
 from jinja2 import Environment as JinjaEnvironment
+from jinja2._compat import text_type
 
 context = {
     "page_title": "mitsuhiko's benchmark",
@@ -171,7 +172,8 @@ else:
       <h1>${page_title|h}</h1>
     </div>
     <ul class="navigation">
-    % for href, caption in [('index.html', 'Index'), ('downloads.html', 'Downloads'), ('products.html', 'Products')]:
+    % for href, caption in [('index.html', 'Index'), ('downloads.html', 'Downloads'), \
+('products.html', 'Products')]:
       <li><a href="${href|h}">${caption|h}</a></li>
     % endfor
     </ul>
@@ -250,7 +252,8 @@ else:
       <h1>$cgi.escape($page_title)</h1>
     </div>
     <ul class="navigation">
-    #for $href, $caption in [('index.html', 'Index'), ('downloads.html', 'Downloads'), ('products.html', 'Products')]:
+    #for $href, $caption in [('index.html', 'Index'), ('downloads.html', 'Downloads'), \
+('products.html', 'Products')]:
       <li><a href="$cgi.escape($href)">$cgi.escape($caption)</a></li>
     #end for
     </ul>
@@ -272,7 +275,7 @@ else:
     )
 
     def test_cheetah():
-        unicode(cheetah_template)
+        text_type(cheetah_template)
 
 
 try:
@@ -293,7 +296,8 @@ else:
       <h1>${page_title}</h1>
     </div>
     <ul class="navigation">
-<?py for href, caption in [('index.html', 'Index'), ('downloads.html', 'Downloads'), ('products.html', 'Products')]: ?>
+<?py for href, caption in [('index.html', 'Index'), ('downloads.html', 'Downloads'), \
+('products.html', 'Products')]: ?>
       <li><a href="${href}">${caption}</a></li>
 <?py #end ?>
     </ul>
@@ -314,8 +318,6 @@ else:
     )
 
     def test_tenjin():
-        from tenjin.helpers import escape, to_str
-
         tenjin_template.render(context, locals())
 
 
@@ -337,7 +339,8 @@ else:
       <h1>$cgi.escape($page_title)</h1>
     </div>
     <ul class="navigation">
-    #for $href, $caption in [('index.html', 'Index'), ('downloads.html', 'Downloads'), ('products.html', 'Products')]
+    #for $href, $caption in [('index.html', 'Index'), ('downloads.html', 'Downloads'), \
+('products.html', 'Products')]
       <li><a href="$cgi.escape($href)">$cgi.escape($caption)</a></li>
     #end for
     </ul>
@@ -381,7 +384,8 @@ else:
       <h1 tal:content="page_title">Page Title</h1>
     </div>
     <ul class="navigation">
-    <li tal:repeat="item sections"><a tal:attributes="href item[0]" tal:content="item[1]">caption</a></li>
+    <li tal:repeat="item sections"><a tal:attributes="href item[0]" \
+tal:content="item[1]">caption</a></li>
     </ul>
     <div class="table">
       <table>

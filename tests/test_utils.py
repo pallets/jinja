@@ -51,14 +51,14 @@ class TestLRUCache(object):
         cache = LRUCache(3)
         cache["b"] = 1
         cache["a"] = 2
-        values = [v for v in cache.itervalues()]
+        values = [v for v in cache.values()]
         assert len(values) == 2
         assert 1 in values
         assert 2 in values
 
     def test_itervalues_empty(self):
         cache = LRUCache(2)
-        values = [v for v in cache.itervalues()]
+        values = [v for v in cache.values()]
         assert len(values) == 0
 
     def test_pickleable(self):
@@ -106,17 +106,17 @@ class TestLRUCache(object):
         d["a"] = 1
         d["b"] = 2
         d["c"] = 3
-        assert d.items() == list(d.iteritems()) == [("c", 3), ("b", 2), ("a", 1)]
-        assert d.keys() == list(d.iterkeys()) == ["c", "b", "a"]
-        assert d.values() == list(d.itervalues()) == [3, 2, 1]
+        assert d.items() == [("c", 3), ("b", 2), ("a", 1)]
+        assert d.keys() == ["c", "b", "a"]
+        assert d.values() == [3, 2, 1]
         assert list(reversed(d)) == ["a", "b", "c"]
 
         # Change the cache a little
         d["b"]
         d["a"] = 4
-        assert d.items() == list(d.iteritems()) == [("a", 4), ("b", 2), ("c", 3)]
-        assert d.keys() == list(d.iterkeys()) == ["a", "b", "c"]
-        assert d.values() == list(d.itervalues()) == [4, 2, 3]
+        assert d.items() == [("a", 4), ("b", 2), ("c", 3)]
+        assert d.keys() == ["a", "b", "c"]
+        assert d.values() == [4, 2, 3]
         assert list(reversed(d)) == ["c", "b", "a"]
 
     def test_setdefault(self):
@@ -152,11 +152,11 @@ class TestHelpers(object):
 
         assert func(None) == "STRING"
         assert func("unknown.foo") == "NONE"
-        assert func("foo.html") == True
-        assert func("foo.htm") == True
-        assert func("foo.txt") == False
-        assert func("FOO.HTML") == True
-        assert func("FOO.TXT") == False
+        assert func("foo.html")
+        assert func("foo.htm")
+        assert not func("foo.txt")
+        assert func("FOO.HTML")
+        assert not func("FOO.TXT")
 
 
 @pytest.mark.utils

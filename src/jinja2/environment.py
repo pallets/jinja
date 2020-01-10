@@ -16,8 +16,6 @@ from functools import reduce
 
 from . import nodes
 from ._compat import encode_filename
-from ._compat import ifilter
-from ._compat import imap
 from ._compat import implements_iterator
 from ._compat import implements_to_string
 from ._compat import iteritems
@@ -368,7 +366,8 @@ class Environment(object):
         self.enable_async = enable_async
         self.is_async = self.enable_async and have_async_gen
         if self.is_async:
-            import jinja2.asyncsupport  # runs patch_all() once
+            # runs patch_all() to enable async support
+            import jinja2.asyncsupport  # noqa: F401
 
         _environment_sanity_check(self)
 
@@ -722,7 +721,9 @@ class Environment(object):
         from jinja2.loaders import ModuleLoader
 
         if log_function is None:
-            log_function = lambda x: None
+
+            def log_function(x):
+                pass
 
         if py_compile:
             if not PY2 or PYPY:
@@ -806,16 +807,21 @@ class Environment(object):
 
         .. versionadded:: 2.4
         """
-        x = self.loader.list_templates()
+        names = self.loader.list_templates()
+
         if extensions is not None:
             if filter_func is not None:
                 raise TypeError(
                     "either extensions or filter_func can be passed, but not both"
                 )
-            filter_func = lambda x: "." in x and x.rsplit(".", 1)[1] in extensions
+
+            def filter_func(x):
+                return "." in x and x.rsplit(".", 1)[1] in extensions
+
         if filter_func is not None:
-            x = list(ifilter(filter_func, x))
-        return x
+            names = [name for name in names if filter_func(name)]
+
+        return names
 
     def handle_exception(self, source=None):
         """Exception handling helper.  This is used internally to either raise
@@ -1202,7 +1208,7 @@ class Template(object):
     def debug_info(self):
         """The debug info mapping."""
         if self._debug_info:
-            return [tuple(imap(int, x.split("="))) for x in self._debug_info.split("&")]
+            return [tuple(map(int, x.split("="))) for x in self._debug_info.split("&")]
         return []
 
     def __repr__(self):

@@ -12,6 +12,10 @@ import sys
 from itertools import chain
 from types import MethodType
 
+from markupsafe import escape
+from markupsafe import Markup
+from markupsafe import soft_unicode
+
 from ._compat import abc
 from ._compat import imap
 from ._compat import implements_iterator
@@ -26,14 +30,11 @@ from .exceptions import TemplateRuntimeError
 from .exceptions import UndefinedError
 from .nodes import EvalContext
 from .utils import concat
-from .utils import escape
 from .utils import evalcontextfunction
 from .utils import internalcode
-from .utils import Markup
 from .utils import missing
 from .utils import Namespace
 from .utils import object_type_repr
-from .utils import soft_unicode
 
 # these variables are exported to the template runtime
 __all__ = [
@@ -58,11 +59,12 @@ __all__ = [
 #: a string.  We can just use the text type here.
 to_string = text_type
 
-#: the identity function.  Useful for certain things in the environment
-identity = lambda x: x
 
-_first_iteration = object()
-_last_iteration = object()
+def identity(x):
+    """Returns its argument. Useful for certain things in the
+    environment.
+    """
+    return x
 
 
 def markup_join(seq):
@@ -127,8 +129,8 @@ def _get_func(x):
 
 
 class ContextMeta(type):
-    def __new__(cls, name, bases, d):
-        rv = type.__new__(cls, name, bases, d)
+    def __new__(mcs, name, bases, d):
+        rv = type.__new__(mcs, name, bases, d)
         if bases == ():
             return rv
 
@@ -264,7 +266,7 @@ class Context(with_metaclass(ContextMeta)):
         return dict(self.parent, **self.vars)
 
     @internalcode
-    def call(__self, __obj, *args, **kwargs):
+    def call(__self, __obj, *args, **kwargs):  # noqa: B902
         """Call the callable with the arguments and keyword arguments
         provided but inject the active context or environment as first
         argument if the callable is a :func:`contextfunction` or
@@ -274,7 +276,7 @@ class Context(with_metaclass(ContextMeta)):
             __traceback_hide__ = True  # noqa
 
         # Allow callable classes to take a context
-        if hasattr(__obj, "__call__"):
+        if hasattr(__obj, "__call__"):  # noqa: B004
             fn = __obj.__call__
             for fn_type in (
                 "contextfunction",
@@ -313,8 +315,10 @@ class Context(with_metaclass(ContextMeta)):
         context.blocks.update((k, list(v)) for k, v in iteritems(self.blocks))
         return context
 
-    def _all(meth):
-        proxy = lambda self: getattr(self.get_all(), meth)()
+    def _all(meth):  # noqa: B902
+        def proxy(self):
+            return getattr(self.get_all(), meth)()
+
         proxy.__doc__ = getattr(dict, meth).__doc__
         proxy.__name__ = meth
         return proxy
@@ -635,7 +639,7 @@ class Macro(object):
         # arguments expected we start filling in keyword arguments
         # and defaults.
         if off != self._argument_count:
-            for idx, name in enumerate(self.arguments[len(arguments) :]):
+            for name in self.arguments[len(arguments) :]:
                 try:
                     value = kwargs.pop(name)
                 except KeyError:

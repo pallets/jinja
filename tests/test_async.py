@@ -396,9 +396,8 @@ class TestAsyncForLoop(object):
 
     def test_recursive_depth0(self, test_env_async):
         tmpl = test_env_async.from_string(
-            """{% for item in seq recursive -%}
-            [{{ loop.depth0 }}:{{ item.a }}{% if item.b %}<{{ loop(item.b) }}>{% endif %}]
-        {%- endfor %}"""
+            "{% for item in seq recursive %}[{{ loop.depth0 }}:{{ item.a }}"
+            "{% if item.b %}<{{ loop(item.b) }}>{% endif %}]{% endfor %}"
         )
         assert (
             tmpl.render(
@@ -413,9 +412,8 @@ class TestAsyncForLoop(object):
 
     def test_recursive_depth(self, test_env_async):
         tmpl = test_env_async.from_string(
-            """{% for item in seq recursive -%}
-            [{{ loop.depth }}:{{ item.a }}{% if item.b %}<{{ loop(item.b) }}>{% endif %}]
-        {%- endfor %}"""
+            "{% for item in seq recursive %}[{{ loop.depth }}:{{ item.a }}"
+            "{% if item.b %}<{{ loop(item.b) }}>{% endif %}]{% endfor %}"
         )
         assert (
             tmpl.render(
@@ -544,9 +542,7 @@ class TestAsyncForLoop(object):
         )
         sm = t.render(
             this="/foo",
-            site={
-                "root": {"url": "/", "children": [{"url": "/foo"}, {"url": "/bar"},]}
-            },
+            site={"root": {"url": "/", "children": [{"url": "/foo"}, {"url": "/bar"}]}},
         )
         lines = [x.strip() for x in sm.splitlines() if x.strip()]
         assert lines == [
@@ -569,7 +565,7 @@ class TestAsyncForLoop(object):
         """
         )
         sm = t.render(
-            this="/foo", items=[{"url": "/"}, {"url": "/foo"}, {"url": "/bar"},]
+            this="/foo", items=[{"url": "/"}, {"url": "/foo"}, {"url": "/bar"}]
         )
         lines = [x.strip() for x in sm.splitlines() if x.strip()]
         assert lines == [

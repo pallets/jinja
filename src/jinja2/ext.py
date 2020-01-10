@@ -48,12 +48,14 @@ from .utils import Markup
 # non unicode strings.
 GETTEXT_FUNCTIONS = ("_", "gettext", "ngettext")
 
+_ws_re = re.compile(r"\s*\n\s*")
+
 
 class ExtensionRegistry(type):
     """Gives the extension an unique identifier."""
 
-    def __new__(cls, name, bases, d):
-        rv = type.__new__(cls, name, bases, d)
+    def __new__(mcs, name, bases, d):
+        rv = type.__new__(mcs, name, bases, d)
         rv.identifier = rv.__module__ + "." + rv.__name__
         return rv
 
@@ -356,7 +358,7 @@ class InternationalizationExtension(Extension):
         else:
             return node
 
-    def _trim_whitespace(self, string, _ws_re=re.compile(r"\s*\n\s*")):
+    def _trim_whitespace(self, string, _ws_re=_ws_re):
         return _ws_re.sub(" ", string.strip())
 
     def _parse_block(self, parser, allow_pluralize):
@@ -389,7 +391,7 @@ class InternationalizationExtension(Extension):
             elif parser.stream.eos:
                 parser.fail("unclosed translation block")
             else:
-                assert False, "internal parser error"
+                raise RuntimeError("internal parser error")
 
         return referenced, concat(buf)
 
@@ -574,7 +576,7 @@ def extract_from_ast(node, gettext_functions=GETTEXT_FUNCTIONS, babel_style=True
             else:
                 strings.append(None)
 
-        for arg in node.kwargs:
+        for _ in node.kwargs:
             strings.append(None)
         if node.dyn_args is not None:
             strings.append(None)
@@ -699,7 +701,7 @@ def babel_extract(fileobj, keywords, comment_tags, options):
     try:
         node = environment.parse(source)
         tokens = list(environment.lex(environment.preprocess(source)))
-    except TemplateSyntaxError as e:
+    except TemplateSyntaxError:
         if not silent:
             raise
         # skip templates with syntax errors

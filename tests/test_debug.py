@@ -10,7 +10,6 @@
 """
 import pickle
 import re
-import sys
 from traceback import format_exception
 
 import pytest
@@ -30,17 +29,15 @@ def fs_env(filesystem_loader):
 @pytest.mark.debug
 class TestDebug(object):
     def assert_traceback_matches(self, callback, expected_tb):
-        try:
+        with pytest.raises(Exception) as exc_info:
             callback()
-        except Exception:
-            tb = format_exception(*sys.exc_info())
-            if re.search(expected_tb.strip(), "".join(tb)) is None:
-                assert False, "Traceback did not match:\n\n%s\nexpected:\n%s" % (
-                    "".join(tb),
-                    expected_tb,
-                )
-        else:
-            assert False, "Expected exception"
+
+        tb = format_exception(exc_info.type, exc_info.value, exc_info.tb)
+        m = re.search(expected_tb.strip(), "".join(tb))
+        assert m is not None, "Traceback did not match:\n\n%s\nexpected:\n%s" % (
+            "".join(tb),
+            expected_tb,
+        )
 
     def test_runtime_error(self, fs_env):
         def test():
@@ -64,10 +61,12 @@ ZeroDivisionError: (int(eger)? )?division (or modulo )?by zero
         # error in the middle of other compiler frames.
         self.assert_traceback_matches(
             lambda: fs_env.get_template("syntaxerror.html"),
-            r"""(?sm)
+            """(?sm)
   File ".*?syntaxerror.html", line 4, in (template|<module>)
-    \{% endif %\}.*?
-(jinja2\.exceptions\.)?TemplateSyntaxError: Encountered unknown tag 'endif'. Jinja was looking for the following tags: 'endfor' or 'else'. The innermost block that needs to be closed is 'for'.
+    \\{% endif %\\}.*?
+(jinja2\\.exceptions\\.)?TemplateSyntaxError: Encountered unknown tag 'endif'. Jinja \
+was looking for the following tags: 'endfor' or 'else'. The innermost block that needs \
+to be closed is 'for'.
     """,
         )
 

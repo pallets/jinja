@@ -54,7 +54,7 @@ class NodeType(type):
     inheritance.  fields and attributes from the parent class are
     automatically forwarded to the child."""
 
-    def __new__(cls, name, bases, d):
+    def __new__(mcs, name, bases, d):
         for attr in "fields", "attributes":
             storage = []
             storage.extend(getattr(bases[0], attr, ()))
@@ -63,7 +63,7 @@ class NodeType(type):
             assert len(storage) == len(set(storage)), "layout conflict"
             d[attr] = tuple(storage)
         d.setdefault("abstract", False)
-        return type.__new__(cls, name, bases, d)
+        return type.__new__(mcs, name, bases, d)
 
 
 class EvalContext(object):
@@ -165,7 +165,7 @@ class Node(with_metaclass(NodeType, object)):
         over all fields and yields the values of they are nodes.  If the value
         of a field is a list all the nodes in that list are returned.
         """
-        for field, item in self.iter_fields(exclude, only):
+        for _, item in self.iter_fields(exclude, only):
             if isinstance(item, list):
                 for n in item:
                     if isinstance(n, Node):

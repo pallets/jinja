@@ -1,72 +1,75 @@
 # -*- coding: utf-8 -*-
 """
-    Django to Jinja
-    ~~~~~~~~~~~~~~~
+Django to Jinja
+~~~~~~~~~~~~~~~
 
-    Helper module that can convert django templates into Jinja templates.
+Helper module that can convert django templates into Jinja templates.
 
-    This file is not intended to be used as stand alone application but to
-    be used as library.  To convert templates you basically create your own
-    writer, add extra conversion logic for your custom template tags,
-    configure your django environment and run the `convert_templates`
-    function.
+This file is not intended to be used as stand alone application but to
+be used as library.  To convert templates you basically create your own
+writer, add extra conversion logic for your custom template tags,
+configure your django environment and run the `convert_templates`
+function.
 
-    Here a simple example::
+Here a simple example::
 
-        # configure django (or use settings.configure)
-        import os
-        os.environ['DJANGO_SETTINGS_MODULE'] = 'yourapplication.settings'
-        from yourapplication.foo.templatetags.bar import MyNode
+    # configure django (or use settings.configure)
+    import os
 
-        from django2jinja import Writer, convert_templates
+    os.environ["DJANGO_SETTINGS_MODULE"] = "yourapplication.settings"
+    from yourapplication.foo.templatetags.bar import MyNode
 
-        def write_my_node(writer, node):
-            writer.start_variable()
-            writer.write('myfunc(')
-            for idx, arg in enumerate(node.args):
-                if idx:
-                    writer.write(', ')
-                writer.node(arg)
-            writer.write(')')
-            writer.end_variable()
+    from django2jinja import Writer, convert_templates
 
-        writer = Writer()
-        writer.node_handlers[MyNode] = write_my_node
-        convert_templates('/path/to/output/folder', writer=writer)
+    def write_my_node(writer, node):
+        writer.start_variable()
+        writer.write("myfunc(")
+        for idx, arg in enumerate(node.args):
+            if idx:
+                writer.write(", ")
+            writer.node(arg)
+        writer.write(")")
+        writer.end_variable()
 
-    Here is an example hos to automatically translate your django
-    variables to jinja2::
+    writer = Writer()
+    writer.node_handlers[MyNode] = write_my_node
+    convert_templates("/path/to/output/folder", writer=writer)
 
-        import re
-        # List of tuple (Match pattern, Replace pattern, Exclusion pattern)
+Here is an example hos to automatically translate your django
+variables to jinja2::
 
-        var_re  = ((re.compile(r"(u|user)\.is_authenticated"), r"\1.is_authenticated()", None),
-                  (re.compile(r"\.non_field_errors"), r".non_field_errors()", None),
-                  (re.compile(r"\.label_tag"), r".label_tag()", None),
-                  (re.compile(r"\.as_dl"), r".as_dl()", None),
-                  (re.compile(r"\.as_table"), r".as_table()", None),
-                  (re.compile(r"\.as_widget"), r".as_widget()", None),
-                  (re.compile(r"\.as_hidden"), r".as_hidden()", None),
+    import re
+    # List of tuple (Match pattern, Replace pattern, Exclusion pattern)
+    var_re = (
+        (re.compile("(u|user)\\.is_authenticated"), "\\1.is_authenticated()", None),
+        (re.compile("\\.non_field_errors"), ".non_field_errors()", None),
+        (re.compile("\\.label_tag"), ".label_tag()", None),
+        (re.compile("\\.as_dl"), ".as_dl()", None),
+        (re.compile("\\.as_table"), ".as_table()", None),
+        (re.compile("\\.as_widget"), ".as_widget()", None),
+        (re.compile("\\.as_hidden"), ".as_hidden()", None),
+        (re.compile("\\.get_([0-9_\\w]+)_url"), ".get_\\1_url()", None),
+        (re.compile("\\.url"), ".url()", re.compile("(form|calendar).url")),
+        (re.compile("\\.get_([0-9_\\w]+)_display"), ".get_\\1_display()", None),
+        (re.compile("loop\\.counte"), "loop.index", None),
+        (re.compile("loop\\.revcounte"), "loop.revindex", None),
+        (
+            re.compile("request\\.GET\\.([0-9_\\w]+)"),
+            "request.GET.get('\\1', '')",
+            None,
+        ),
+        (re.compile("request\\.get_host"), "request.get_host()", None),
+        (re.compile("\\.all(?!_)"), ".all()", None),
+        (re.compile("\\.all\\.0"), ".all()[0]", None),
+        (re.compile("\\.([0-9])($|\\s+)"), "[\\1]\\2", None),
+        (re.compile("\\.items"), ".items()", None),
+    )
+    writer = Writer(var_re=var_re)
 
-                  (re.compile(r"\.get_([0-9_\w]+)_url"), r".get_\1_url()", None),
-                  (re.compile(r"\.url"), r".url()", re.compile(r"(form|calendar).url")),
-                  (re.compile(r"\.get_([0-9_\w]+)_display"), r".get_\1_display()", None),
-                  (re.compile(r"loop\.counter"), r"loop.index", None),
-                  (re.compile(r"loop\.revcounter"), r"loop.revindex", None),
-                  (re.compile(r"request\.GET\.([0-9_\w]+)"), r"request.GET.get('\1', '')", None),
-                  (re.compile(r"request\.get_host"), r"request.get_host()", None),
+For details about the writing process have a look at the module code.
 
-                  (re.compile(r"\.all(?!_)"), r".all()", None),
-                  (re.compile(r"\.all\.0"), r".all()[0]", None),
-                  (re.compile(r"\.([0-9])($|\s+)"), r"[\1]\2", None),
-                  (re.compile(r"\.items"), r".items()", None),
-        )
-        writer = Writer(var_re=var_re)
-
-    For details about the writing process have a look at the module code.
-
-    :copyright: (c) 2009 by the Jinja Team.
-    :license: BSD.
+:copyright: (c) 2009 by the Jinja Team.
+:license: BSD.
 """
 from __future__ import print_function
 
@@ -87,13 +90,11 @@ from django.template import Variable
 from django.template.debug import DebugVariableNode as VariableNode
 from django.templatetags import i18n as i18n_tags
 
-from jinja2.defaults import *
-
+from jinja2 import defaults
 
 _node_handlers = {}
 _resolved_filters = {}
 _newline_re = re.compile(r"(?:\r\n|\r|\n)")
-
 
 # Django stores an itertools object on the cycle node.  Not only is this
 # thread unsafe but also a problem for the converter which needs the raw
@@ -122,7 +123,8 @@ def convert_templates(
     output_dir, extensions=(".html", ".txt"), writer=None, callback=None
 ):
     """Iterates over all templates in the template dirs configured and
-    translates them and writes the new templates into the output directory.
+    translates them and writes the new templates into the output
+    directory.
     """
     if writer is None:
         writer = Writer()
@@ -156,11 +158,8 @@ def convert_templates(
                 if not os.path.exists(basetarget):
                     os.makedirs(basetarget)
                 callback(source)
-                f = file(target, "w")
-                try:
+                with open(target, "w") as f:
                     translate(f, source)
-                finally:
-                    f.close()
 
 
 class Writer(object):
@@ -170,16 +169,16 @@ class Writer(object):
         self,
         stream=None,
         error_stream=None,
-        block_start_string=BLOCK_START_STRING,
-        block_end_string=BLOCK_END_STRING,
-        variable_start_string=VARIABLE_START_STRING,
-        variable_end_string=VARIABLE_END_STRING,
-        comment_start_string=COMMENT_START_STRING,
-        comment_end_string=COMMENT_END_STRING,
+        block_start_string=defaults.BLOCK_START_STRING,
+        block_end_string=defaults.BLOCK_END_STRING,
+        variable_start_string=defaults.VARIABLE_START_STRING,
+        variable_end_string=defaults.VARIABLE_END_STRING,
+        comment_start_string=defaults.COMMENT_START_STRING,
+        comment_end_string=defaults.COMMENT_END_STRING,
         initial_autoescape=True,
         use_jinja_autoescape=False,
         custom_node_handlers=None,
-        var_re=[],
+        var_re=None,
         env=None,
     ):
         if stream is None:
@@ -200,12 +199,12 @@ class Writer(object):
         self.node_handlers = dict(_node_handlers, **(custom_node_handlers or {}))
         self._loop_depth = 0
         self._filters_warned = set()
-        self.var_re = var_re
+        self.var_re = [] if var_re is None else var_re
         self.env = env
 
     def enter_loop(self):
-        """Increments the loop depth so that write functions know if they
-        are in a loop.
+        """Increments the loop depth so that write functions know if
+        they are in a loop.
         """
         self._loop_depth += 1
 
@@ -223,7 +222,9 @@ class Writer(object):
         self.stream.write(s.encode(settings.FILE_CHARSET))
 
     def print_expr(self, expr):
-        """Open a variable tag, write to the string to the stream and close."""
+        """Open a variable tag, write to the string to the stream and
+        close.
+        """
         self.start_variable()
         self.write(expr)
         self.end_variable()
@@ -269,7 +270,9 @@ class Writer(object):
         self.end_block()
 
     def variable(self, name):
-        """Prints a variable.  This performs variable name transformation."""
+        """Prints a variable. This performs variable name
+        transformation.
+        """
         self.write(self.translate_variable_name(name))
 
     def literal(self, value):
@@ -287,7 +290,10 @@ class Writer(object):
             if name is None:
                 self.warn("Could not find filter %s" % name)
                 continue
-            if name not in DEFAULT_FILTERS and name not in self._filters_warned:
+            if (
+                name not in defaults.DEFAULT_FILTERS
+                and name not in self._filters_warned
+            ):
                 self._filters_warned.add(name)
                 self.warn("Filter %s probably doesn't exist in Jinja" % name)
             if not want_pipe:
@@ -344,13 +350,13 @@ class Writer(object):
         """
         if filter not in _resolved_filters:
             for library in libraries.values():
-                for key, value in library.filters.iteritems():
+                for key, value in library.filters.items():
                     _resolved_filters[value] = key
         return _resolved_filters.get(filter, None)
 
     def node(self, node):
         """Invokes the node handler for a node."""
-        for cls, handler in self.node_handlers.iteritems():
+        for cls, handler in self.node_handlers.items():
             if type(node) is cls or type(node).__name__ == cls:
                 handler(self, node)
                 break
@@ -410,7 +416,7 @@ def comment_tag(writer, node):
 
 
 @node(core_tags.DebugNode)
-def comment_tag(writer, node):
+def debug_tag(writer, node):
     writer.warn(
         "Debug tag detected.  Make sure to add a global function "
         "called debug to the namespace.",
@@ -596,7 +602,6 @@ def url_tag(writer, node):
         writer.write("set %s = " % node.asvar)
     else:
         writer.start_variable()
-    autoescape = writer.autoescape
     writer.write("url(")
     writer.literal(node.view_name)
     for arg in node.args:
@@ -740,10 +745,7 @@ def translate_block(writer, node):
         touch_var(key)
         writer.node(var.filter_expression)
 
-    have_plural = False
-    plural_var = None
     if node.plural and node.countervar and node.counter:
-        have_plural = True
         plural_var = node.countervar
         if plural_var not in variables:
             if idx > -1:

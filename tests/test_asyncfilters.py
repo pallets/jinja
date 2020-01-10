@@ -1,3 +1,5 @@
+from collections import namedtuple
+
 import pytest
 
 from jinja2 import Environment
@@ -12,7 +14,7 @@ async def make_aiter(iter):
 def mark_dualiter(parameter, factory):
     def decorator(f):
         return pytest.mark.parametrize(
-            parameter, [lambda: factory(), lambda: make_aiter(factory()),]
+            parameter, [lambda: factory(), lambda: make_aiter(factory())]
         )(f)
 
     return decorator
@@ -66,22 +68,13 @@ def test_groupby_tuple_index(env_async, items):
 
 
 def make_articles():
-    class Date(object):
-        def __init__(self, day, month, year):
-            self.day = day
-            self.month = month
-            self.year = year
-
-    class Article(object):
-        def __init__(self, title, *date):
-            self.date = Date(*date)
-            self.title = title
-
+    Date = namedtuple("Date", "day,month,year")
+    Article = namedtuple("Article", "title,date")
     return [
-        Article("aha", 1, 1, 1970),
-        Article("interesting", 2, 1, 1970),
-        Article("really?", 3, 1, 1970),
-        Article("totally not", 1, 1, 1971),
+        Article("aha", Date(1, 1, 1970)),
+        Article("interesting", Date(2, 1, 1970)),
+        Article("really?", Date(3, 1, 1970)),
+        Article("totally not", Date(1, 1, 1971)),
     ]
 
 
@@ -115,10 +108,7 @@ def test_join_string_list(string_items):
 
 
 def make_users():
-    class User(object):
-        def __init__(self, username):
-            self.username = username
-
+    User = namedtuple("User", "username")
     return map(User, ["foo", "bar"])
 
 
@@ -153,11 +143,7 @@ def test_bool_select(env_async, items):
 
 
 def make_users():
-    class User(object):
-        def __init__(self, name, is_active):
-            self.name = name
-            self.is_active = is_active
-
+    User = namedtuple("User", "name,is_active")
     return [
         User("john", True),
         User("jane", True),
@@ -201,7 +187,7 @@ def test_sum(env_async, items):
     assert tmpl.render(items=items) == "21"
 
 
-@mark_dualiter("items", lambda: [{"value": 23}, {"value": 1}, {"value": 18},])
+@mark_dualiter("items", lambda: [{"value": 23}, {"value": 1}, {"value": 18}])
 def test_sum_attributes(env_async, items):
     tmpl = env_async.from_string("""{{ items()|sum('value') }}""")
     assert tmpl.render(items=items)
@@ -223,13 +209,13 @@ def test_sum_attributes_nested(env_async):
 
 def test_sum_attributes_tuple(env_async):
     tmpl = env_async.from_string("""{{ values.items()|sum('1') }}""")
-    assert tmpl.render(values={"foo": 23, "bar": 1, "baz": 18,}) == "42"
+    assert tmpl.render(values={"foo": 23, "bar": 1, "baz": 18}) == "42"
 
 
 @mark_dualiter("items", lambda: range(10))
 def test_slice(env_async, items):
     tmpl = env_async.from_string(
-        "{{ items()|slice(3)|list }}|" '{{ items()|slice(3, "X")|list }}'
+        "{{ items()|slice(3)|list }}|{{ items()|slice(3, 'X')|list }}"
     )
     out = tmpl.render(items=items)
     assert out == (

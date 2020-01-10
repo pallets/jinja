@@ -254,35 +254,34 @@ class TestBug(object):
         )
         pytest.raises(TemplateSyntaxError, Template, "{% for x in %}..{% endfor %}")
 
-    def test_recursive_loop_bug(self, env):
-        tpl1 = Template(
+    def test_recursive_loop_compile(self, env):
+        Template(
             """
-        {% for p in foo recursive%}
-            {{p.bar}}
-            {% for f in p.fields recursive%}
-                {{f.baz}}
+            {% for p in foo recursive%}
                 {{p.bar}}
-                {% if f.rec %}
-                    {{ loop(f.sub) }}
-                {% endif %}
+                {% for f in p.fields recursive%}
+                    {{f.baz}}
+                    {{p.bar}}
+                    {% if f.rec %}
+                        {{ loop(f.sub) }}
+                    {% endif %}
+                {% endfor %}
             {% endfor %}
-        {% endfor %}
-        """
+            """
         )
-
-        tpl2 = Template(
+        Template(
             """
-        {% for p in foo%}
-            {{p.bar}}
-            {% for f in p.fields recursive%}
-                {{f.baz}}
+            {% for p in foo%}
                 {{p.bar}}
-                {% if f.rec %}
-                    {{ loop(f.sub) }}
-                {% endif %}
+                {% for f in p.fields recursive%}
+                    {{f.baz}}
+                    {{p.bar}}
+                    {% if f.rec %}
+                        {{ loop(f.sub) }}
+                    {% endif %}
+                {% endfor %}
             {% endfor %}
-        {% endfor %}
-        """
+            """
         )
 
     def test_else_loop_bug(self, env):
@@ -327,7 +326,7 @@ class TestBug(object):
 
     def test_block_set_with_extends(self):
         env = Environment(
-            loader=DictLoader({"main": "{% block body %}[{{ x }}]{% endblock %}",})
+            loader=DictLoader({"main": "{% block body %}[{{ x }}]{% endblock %}"})
         )
         t = env.from_string('{% extends "main" %}{% set x %}42{% endset %}')
         assert t.render() == "[42]"
@@ -538,9 +537,7 @@ class TestBug(object):
         )
         sm = t.render(
             this="/foo",
-            site={
-                "root": {"url": "/", "children": [{"url": "/foo"}, {"url": "/bar"},]}
-            },
+            site={"root": {"url": "/", "children": [{"url": "/foo"}, {"url": "/bar"}]}},
         )
         lines = [x.strip() for x in sm.splitlines() if x.strip()]
         assert lines == [
@@ -581,8 +578,8 @@ class TestBug(object):
         env = Environment(
             loader=DictLoader(
                 {
-                    "inc": "{{ item }}",
-                    "main": '{% for item in [1, 2, 3] %}{% include "inc" %}{% endfor %}',
+                    "inc": "{{ i }}",
+                    "main": '{% for i in [1, 2, 3] %}{% include "inc" %}{% endfor %}',
                 }
             )
         )
@@ -611,7 +608,7 @@ class TestBug(object):
         assert env.get_template("test").render(foobar="test") == "test"
 
     def test_legacy_custom_context(self, env):
-        from jinja2.runtime import Context, Undefined, missing
+        from jinja2.runtime import Context, missing
 
         class MyContext(Context):
             def resolve(self, name):
@@ -627,9 +624,7 @@ class TestBug(object):
 
     def test_recursive_loop_bug(self, env):
         tmpl = env.from_string(
-            """
-            {%- for value in values recursive %}1{% else %}0{% endfor -%}
-        """
+            "{%- for value in values recursive %}1{% else %}0{% endfor -%}"
         )
         assert tmpl.render(values=[]) == "0"
 

@@ -12,7 +12,6 @@ import pytest
 
 from jinja2 import DictLoader
 from jinja2 import Environment
-from jinja2 import TemplateError
 from jinja2 import TemplateRuntimeError
 
 LAYOUTTEMPLATE = """\
@@ -135,7 +134,7 @@ class TestInheritance(object):
         assert tmpl.render() == "--INTRO--|BEFORE|[(INNER)]|AFTER"
 
     def test_working(self, env):
-        tmpl = env.get_template("working")
+        env.get_template("working")
 
     def test_reuse_blocks(self, env):
         tmpl = env.from_string(
@@ -196,7 +195,7 @@ class TestInheritance(object):
             )
         )
         t = env.from_string(
-            '{% extends "master.html" %}{% block item %}' "{{ item }}{% endblock %}"
+            "{% extends 'master.html' %}{% block item %}{{ item }}{% endblock %}"
         )
         assert t.render(seq=list(range(5))) == "[0][1][2][3][4]"
 

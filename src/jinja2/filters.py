@@ -328,7 +328,8 @@ def do_sort(environment, value, reverse=False, case_sensitive=False, attribute=N
 
     .. sourcecode:: jinja
 
-        {% for user in users|sort(attribute="name")|sort(reverse=true, attribute="age") %}
+        {% for user in users|sort(attribute="name")
+            |sort(reverse=true, attribute="age") %}
             ...
         {% endfor %}
 
@@ -523,7 +524,8 @@ def do_last(environment, seq):
     """
     Return the last item of a sequence.
 
-    Note: Does not work with generators. You may want to explicitly convert it to a list:
+    Note: Does not work with generators. You may want to explicitly
+    convert it to a list:
 
     .. sourcecode:: jinja
 
@@ -931,7 +933,7 @@ def do_round(value, precision=0, method="common"):
         {{ 42.55|round|int }}
             -> 43
     """
-    if not method in ("common", "ceil", "floor"):
+    if method not in {"common", "ceil", "floor"}:
         raise FilterArgumentError("method must be common, ceil or floor")
     if method == "common":
         return round(value, precision)
@@ -1282,9 +1284,11 @@ def prepare_map(args, kwargs):
             args = args[3:]
         except LookupError:
             raise FilterArgumentError("map requires a filter argument")
-        func = lambda item: context.environment.call_filter(
-            name, item, args, kwargs, context=context
-        )
+
+        def func(item):
+            return context.environment.call_filter(
+                name, item, args, kwargs, context=context
+            )
 
     return seq, func
 
@@ -1301,12 +1305,17 @@ def prepare_select_or_reject(args, kwargs, modfunc, lookup_attr):
         off = 1
     else:
         off = 0
-        transfunc = lambda x: x
+
+        def transfunc(x):
+            return x
 
     try:
         name = args[2 + off]
         args = args[3 + off :]
-        func = lambda item: context.environment.call_test(name, item, args, kwargs)
+
+        def func(item):
+            return context.environment.call_test(name, item, args, kwargs)
+
     except LookupError:
         func = bool
 

@@ -163,7 +163,7 @@ class TestForLoop(object):
     def test_recursive_depth0(self, env):
         tmpl = env.from_string(
             """{% for item in seq recursive -%}
-            [{{ loop.depth0 }}:{{ item.a }}{% if item.b %}<{{ loop(item.b) }}>{% endif %}]
+        [{{ loop.depth0 }}:{{ item.a }}{% if item.b %}<{{ loop(item.b) }}>{% endif %}]
         {%- endfor %}"""
         )
         assert (
@@ -180,7 +180,7 @@ class TestForLoop(object):
     def test_recursive_depth(self, env):
         tmpl = env.from_string(
             """{% for item in seq recursive -%}
-            [{{ loop.depth }}:{{ item.a }}{% if item.b %}<{{ loop(item.b) }}>{% endif %}]
+        [{{ loop.depth }}:{{ item.a }}{% if item.b %}<{{ loop(item.b) }}>{% endif %}]
         {%- endfor %}"""
         )
         assert (
@@ -513,15 +513,13 @@ class TestSet(object):
         assert "non-namespace object" in exc_info.value.message
 
     def test_namespace_redefined(self, env_trim):
-        tmpl = env_trim.from_string(
-            "{% set ns = namespace() %}" '{% set ns.bar = "hi" %}'
-        )
+        tmpl = env_trim.from_string("{% set ns = namespace() %}{% set ns.bar = 'hi' %}")
         exc_info = pytest.raises(TemplateRuntimeError, tmpl.render, namespace=dict)
         assert "non-namespace object" in exc_info.value.message
 
     def test_namespace(self, env_trim):
         tmpl = env_trim.from_string(
-            "{% set ns = namespace() %}" '{% set ns.bar = "42" %}' "{{ ns.bar }}"
+            "{% set ns = namespace() %}{% set ns.bar = '42' %}{{ ns.bar }}"
         )
         assert tmpl.render() == "42"
 

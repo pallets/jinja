@@ -379,7 +379,7 @@ class TokenStream(object):
 
     def skip(self, n=1):
         """Got n tokens ahead."""
-        for x in range(n):
+        for _ in range(n):
             next(self)
 
     def next_if(self, expr):
@@ -485,8 +485,10 @@ class Lexer(object):
 
     def __init__(self, environment):
         # shortcuts
-        c = lambda x: re.compile(x, re.M | re.S)
         e = re.escape
+
+        def c(x):
+            return re.compile(x, re.M | re.S)
 
         # lexing rules for tags
         tag_rules = [

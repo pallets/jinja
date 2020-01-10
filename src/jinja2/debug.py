@@ -160,7 +160,7 @@ def fake_traceback(exc_value, tb, filename, lineno):
     # the new traceback without this frame.
     try:
         exec(code, globals, locals)
-    except:
+    except BaseException:
         return sys.exc_info()[2].tb_next
 
 

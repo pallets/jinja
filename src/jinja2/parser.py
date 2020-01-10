@@ -245,7 +245,6 @@ class Parser(object):
         targets = []
         values = []
         while self.stream.current.type != "block_end":
-            lineno = self.stream.current.lineno
             if targets:
                 self.stream.expect("comma")
             target = self.parse_assign_target()
@@ -639,7 +638,10 @@ class Parser(object):
         elif with_condexpr:
             parse = self.parse_expression
         else:
-            parse = lambda: self.parse_expression(with_condexpr=False)
+
+            def parse():
+                return self.parse_expression(with_condexpr=False)
+
         args = []
         is_tuple = False
         while 1:

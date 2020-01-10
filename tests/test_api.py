@@ -105,17 +105,6 @@ class TestExtendedAPI(object):
         c.reset()
         assert c.current == 1
 
-    def test_cycler_nextmethod(self, env):
-        items = 1, 2, 3
-        c = Cycler(*items)
-        for item in items + items:
-            assert c.current == item
-            assert c.next() == item
-        c.next()
-        assert c.current == 2
-        c.reset()
-        assert c.current == 1
-
     def test_expressions(self, env):
         expr = env.compile_expression("foo")
         assert expr() is None
@@ -338,7 +327,7 @@ class TestUndefined(object):
         assert und1 != 42
         assert hash(und1) == hash(und2) == hash(Undefined())
         with pytest.raises(AttributeError):
-            getattr(Undefined, "__slots__")
+            getattr(Undefined, "__slots__")  # noqa: B009
 
     def test_chainable_undefined(self):
         env = Environment(undefined=ChainableUndefined)
@@ -350,7 +339,7 @@ class TestUndefined(object):
         assert env.from_string("{{ not missing }}").render() == "True"
         pytest.raises(UndefinedError, env.from_string("{{ missing - 1}}").render)
         with pytest.raises(AttributeError):
-            getattr(ChainableUndefined, "__slots__")
+            getattr(ChainableUndefined, "__slots__")  # noqa: B009
 
         # The following tests ensure subclass functionality works as expected
         assert env.from_string('{{ missing.bar["baz"] }}').render() == u""
@@ -385,7 +374,7 @@ class TestUndefined(object):
             == u"{{ undefined value printed: %s }}" % undefined_hint
         )
         with pytest.raises(AttributeError):
-            getattr(DebugUndefined, "__slots__")
+            getattr(DebugUndefined, "__slots__")  # noqa: B009
 
     def test_strict_undefined(self):
         env = Environment(undefined=StrictUndefined)
@@ -402,7 +391,7 @@ class TestUndefined(object):
             == "default"
         )
         with pytest.raises(AttributeError):
-            getattr(StrictUndefined, "__slots__")
+            getattr(StrictUndefined, "__slots__")  # noqa: B009
         assert env.from_string('{{ "foo" if false }}').render() == ""
 
     def test_indexing_gives_undefined(self):

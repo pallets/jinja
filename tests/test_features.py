@@ -5,6 +5,7 @@ import pytest
 from jinja2 import contextfilter
 from jinja2 import Environment
 from jinja2 import Template
+from jinja2._compat import text_type
 
 
 @pytest.mark.skipif(sys.version_info < (3, 5), reason="Requires 3.5 or later")
@@ -29,7 +30,7 @@ def test_ascii_str():
 
     env.policies["compiler.ascii_str"] = False
     t = env.from_string('{{ "foo"|assert }}')
-    t.render(expected_type=unicode)
+    t.render(expected_type=text_type)
 
     env.policies["compiler.ascii_str"] = True
     t = env.from_string('{{ "foo"|assert }}')
@@ -38,4 +39,4 @@ def test_ascii_str():
     for val in True, False:
         env.policies["compiler.ascii_str"] = val
         t = env.from_string(u'{{ "\N{SNOWMAN}"|assert }}')
-        t.render(expected_type=unicode)
+        t.render(expected_type=text_type)

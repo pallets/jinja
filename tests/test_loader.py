@@ -99,7 +99,7 @@ class TestLoaders(object):
         t2 = env.get_template("two")
         assert t2 is env.get_template("two")
         assert t1 is env.get_template("one")
-        t3 = env.get_template("three")
+        env.get_template("three")
         loader_ref = weakref.ref(loader)
         assert (loader_ref, "one") in env.cache
         assert (loader_ref, "two") not in env.cache
@@ -183,7 +183,10 @@ class TestFileSystemLoader(object):
 
     @pytest.mark.parametrize(
         ("encoding", "expect"),
-        [("utf-8", u"文字化け"), ("iso-8859-1", u"æ\x96\x87å\xad\x97å\x8c\x96ã\x81\x91"),],
+        [
+            ("utf-8", u"文字化け"),
+            ("iso-8859-1", u"æ\x96\x87\xe5\xad\x97\xe5\x8c\x96\xe3\x81\x91"),
+        ],
     )
     def test_uses_specified_encoding(self, encoding, expect):
         loader = loaders.FileSystemLoader(self.searchpath, encoding=encoding)
@@ -254,7 +257,7 @@ class TestModuleLoader(object):
 
     def test_weak_references(self, prefix_loader):
         self.compile_down(prefix_loader)
-        tmpl = self.mod_env.get_template("a/test.html")
+        self.mod_env.get_template("a/test.html")
         key = loaders.ModuleLoader.get_template_key("a/test.html")
         name = self.mod_env.loader.module.__name__
 
@@ -262,13 +265,13 @@ class TestModuleLoader(object):
         assert name in sys.modules
 
         # unset all, ensure the module is gone from sys.modules
-        self.mod_env = tmpl = None
+        self.mod_env = None
 
         try:
             import gc
 
             gc.collect()
-        except:
+        except BaseException:
             pass
 
         assert name not in sys.modules
@@ -280,32 +283,28 @@ class TestModuleLoader(object):
     def test_byte_compilation(self, prefix_loader):
         log = self.compile_down(prefix_loader, py_compile=True)
         assert 'Byte-compiled "a/test.html"' in log
-        tmpl1 = self.mod_env.get_template("a/test.html")
+        self.mod_env.get_template("a/test.html")
         mod = self.mod_env.loader.module.tmpl_3c4ddf650c1a73df961a6d3d2ce2752f1b8fd490
         assert mod.__file__.endswith(".pyc")
 
     def test_choice_loader(self, prefix_loader):
-        log = self.compile_down(prefix_loader)
-
+        self.compile_down(prefix_loader)
         self.mod_env.loader = loaders.ChoiceLoader(
             [self.mod_env.loader, loaders.DictLoader({"DICT_SOURCE": "DICT_TEMPLATE"})]
         )
-
         tmpl1 = self.mod_env.get_template("a/test.html")
         assert tmpl1.render() == "BAR"
         tmpl2 = self.mod_env.get_template("DICT_SOURCE")
         assert tmpl2.render() == "DICT_TEMPLATE"
 
     def test_prefix_loader(self, prefix_loader):
-        log = self.compile_down(prefix_loader)
-
+        self.compile_down(prefix_loader)
         self.mod_env.loader = loaders.PrefixLoader(
             {
                 "MOD": self.mod_env.loader,
                 "DICT": loaders.DictLoader({"test.html": "DICT_TEMPLATE"}),
             }
         )
-
         tmpl1 = self.mod_env.get_template("MOD/a/test.html")
         assert tmpl1.render() == "BAR"
         tmpl2 = self.mod_env.get_template("DICT/test.html")

@@ -549,10 +549,10 @@ class CodeGenerator(NodeVisitor):
             else:
                 args.append(frame.symbols.declare_parameter("caller"))
             macro_ref.accesses_caller = True
-        if "kwargs" in undeclared and not "kwargs" in skip_special_params:
+        if "kwargs" in undeclared and "kwargs" not in skip_special_params:
             args.append(frame.symbols.declare_parameter("kwargs"))
             macro_ref.accesses_kwargs = True
-        if "varargs" in undeclared and not "varargs" in skip_special_params:
+        if "varargs" in undeclared and "varargs" not in skip_special_params:
             args.append(frame.symbols.declare_parameter("varargs"))
             macro_ref.accesses_varargs = True
 
@@ -1242,7 +1242,6 @@ class CodeGenerator(NodeVisitor):
         if frame.toplevel:
             if not node.name.startswith("_"):
                 self.write("context.exported_vars.add(%r)" % node.name)
-            ref = frame.symbols.ref(node.name)
             self.writeline("context.vars[%r] = " % node.name)
         self.write("%s = " % frame.symbols.ref(node.name))
         self.macro_def(macro_ref, macro_frame)
@@ -1270,7 +1269,7 @@ class CodeGenerator(NodeVisitor):
         with_frame = frame.inner()
         with_frame.symbols.analyze_node(node)
         self.enter_frame(with_frame)
-        for idx, (target, expr) in enumerate(izip(node.targets, node.values)):
+        for target, expr in izip(node.targets, node.values):
             self.newline()
             self.visit(target, with_frame)
             self.write(" = ")
@@ -1317,7 +1316,7 @@ class CodeGenerator(NodeVisitor):
 
             if getattr(env_finalize, "contextfunction", False):
                 src += "context, "
-                finalize = None
+                finalize = None  # noqa: F811
             elif getattr(env_finalize, "evalcontextfunction", False):
                 src += "context.eval_ctx, "
                 finalize = None
@@ -1570,7 +1569,7 @@ class CodeGenerator(NodeVisitor):
             self.visit(item.value, frame)
         self.write("}")
 
-    def binop(operator, interceptable=True):
+    def binop(operator, interceptable=True):  # noqa: B902
         @optimizeconst
         def visitor(self, node, frame):
             if (
@@ -1590,7 +1589,7 @@ class CodeGenerator(NodeVisitor):
 
         return visitor
 
-    def uaop(operator, interceptable=True):
+    def uaop(operator, interceptable=True):  # noqa: B902
         @optimizeconst
         def visitor(self, node, frame):
             if (

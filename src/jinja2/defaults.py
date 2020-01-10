@@ -9,6 +9,8 @@
     :license: BSD, see LICENSE for more details.
 """
 from ._compat import range_type
+from .filters import FILTERS as DEFAULT_FILTERS  # noqa: F401
+from .tests import TESTS as DEFAULT_TESTS  # noqa: F401
 from .utils import Cycler
 from .utils import generate_lorem_ipsum
 from .utils import Joiner
@@ -29,8 +31,6 @@ NEWLINE_SEQUENCE = "\n"
 KEEP_TRAILING_NEWLINE = False
 
 # default filters, tests and namespace
-from jinja2.filters import FILTERS as DEFAULT_FILTERS
-from jinja2.tests import TESTS as DEFAULT_TESTS
 
 DEFAULT_NAMESPACE = {
     "range": range_type,

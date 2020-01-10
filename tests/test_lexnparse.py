@@ -81,13 +81,15 @@ class TestLexer(object):
         assert tmpl.render() == "123"
 
     def test_raw3(self, env):
-        # The second newline after baz exists because it is AFTER the {% raw %} and is ignored.
+        # The second newline after baz exists because it is AFTER the
+        # {% raw %} and is ignored.
         env = Environment(lstrip_blocks=True, trim_blocks=True)
         tmpl = env.from_string("bar\n{% raw %}\n  {{baz}}2 spaces\n{% endraw %}\nfoo")
         assert tmpl.render(baz="test") == "bar\n\n  {{baz}}2 spaces\nfoo"
 
     def test_raw4(self, env):
-        # The trailing dash of the {% raw -%} cleans both the spaces and newlines up to the first character of data.
+        # The trailing dash of the {% raw -%} cleans both the spaces and
+        # newlines up to the first character of data.
         env = Environment(lstrip_blocks=True, trim_blocks=False)
         tmpl = env.from_string(
             "bar\n{%- raw -%}\n\n  \n  2 spaces\n space{%- endraw -%}\nfoo"
@@ -531,7 +533,7 @@ class TestSyntax(object):
     def test_notin(self, env):
         bar = range(100)
         tmpl = env.from_string("""{{ not 42 in bar }}""")
-        assert tmpl.render(bar=bar) == text_type(not 42 in bar)
+        assert tmpl.render(bar=bar) == "False"
 
     def test_operator_precedence(self, env):
         tmpl = env.from_string("""{{ 2 * 3 + 4 % 2 + 1 - 2 }}""")

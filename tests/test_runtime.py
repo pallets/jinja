@@ -3,18 +3,14 @@ import itertools
 from jinja2 import Template
 from jinja2.runtime import LoopContext
 
-
 TEST_IDX_TEMPLATE_STR_1 = (
-    "[{% for i in lst|reverse %}"
-    + "(len={{ loop.length }}, revindex={{ loop.revindex }}, index={{ loop.index }}, val={{ i }})"
-    + "{% endfor %}]"
+    "[{% for i in lst|reverse %}(len={{ loop.length }},"
+    " revindex={{ loop.revindex }}, index={{ loop.index }}, val={{ i }}){% endfor %}]"
 )
-
-
 TEST_IDX0_TEMPLATE_STR_1 = (
-    "[{% for i in lst|reverse %}"
-    + "(len={{ loop.length }}, revindex0={{ loop.revindex0 }}, index0={{ loop.index0 }}, val={{ i }})"
-    + "{% endfor %}]"
+    "[{% for i in lst|reverse %}(len={{ loop.length }},"
+    " revindex0={{ loop.revindex0 }}, index0={{ loop.index0 }}, val={{ i }})"
+    "{% endfor %}]"
 )
 
 
@@ -34,20 +30,20 @@ def test_loop_idx0():
 
 def test_loopcontext0():
     in_lst = []
-    l = LoopContext(reversed(in_lst), None)
-    assert l.length == len(in_lst)
+    lc = LoopContext(reversed(in_lst), None)
+    assert lc.length == len(in_lst)
 
 
 def test_loopcontext1():
     in_lst = [10]
-    l = LoopContext(reversed(in_lst), None)
-    assert l.length == len(in_lst)
+    lc = LoopContext(reversed(in_lst), None)
+    assert lc.length == len(in_lst)
 
 
 def test_loopcontext2():
     in_lst = [10, 11]
-    l = LoopContext(reversed(in_lst), None)
-    assert l.length == len(in_lst)
+    lc = LoopContext(reversed(in_lst), None)
+    assert lc.length == len(in_lst)
 
 
 def test_iterator_not_advanced_early():

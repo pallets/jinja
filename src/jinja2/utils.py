@@ -15,6 +15,9 @@ import warnings
 from collections import deque
 from threading import Lock
 
+from markupsafe import escape
+from markupsafe import Markup
+
 from ._compat import abc
 from ._compat import string_types
 from ._compat import text_type
@@ -109,7 +112,7 @@ def is_undefined(obj):
 
 def consume(iterable):
     """Consumes an iterable without doing anything with it."""
-    for event in iterable:
+    for _ in iterable:
         pass
 
 
@@ -246,7 +249,7 @@ def urlize(text, trim_url_limit=None, rel=None, target=None):
             if (
                 "@" in middle
                 and not middle.startswith("www.")
-                and not ":" in middle
+                and ":" not in middle
                 and _simple_email_re.match(middle)
             ):
                 middle = '<a href="mailto:%s">%s</a>' % (middle, middle)
@@ -472,6 +475,12 @@ class LRUCache(object):
 
     def iteritems(self):
         """Iterate over all items."""
+        warnings.warn(
+            "'iteritems()' will be removed in version 3.0. Use"
+            " 'iter(cache.items())' instead.",
+            DeprecationWarning,
+            stacklevel=2,
+        )
         return iter(self.items())
 
     def values(self):
@@ -481,16 +490,21 @@ class LRUCache(object):
     def itervalue(self):
         """Iterate over all values."""
         warnings.warn(
-            DeprecationWarning(
-                '"itervalue()" is deprecated and will be removed in version 2.12.'
-                + ' Use "itervalues()" instead.'
-            ),
+            "'itervalue()' will be removed in version 3.0. Use"
+            " 'iter(cache.values())' instead.",
+            DeprecationWarning,
             stacklevel=2,
         )
-        return self.itervalues()
+        return iter(self.values())
 
     def itervalues(self):
         """Iterate over all values."""
+        warnings.warn(
+            "'itervalues()' will be removed in version 3.0. Use"
+            " 'iter(cache.values())' instead.",
+            DeprecationWarning,
+            stacklevel=2,
+        )
         return iter(self.values())
 
     def keys(self):
@@ -501,9 +515,16 @@ class LRUCache(object):
         """Iterate over all keys in the cache dict, ordered by
         the most recent usage.
         """
-        return reversed(tuple(self._queue))
+        warnings.warn(
+            "'iterkeys()' will be removed in version 3.0. Use"
+            " 'iter(cache.keys())' instead.",
+            DeprecationWarning,
+            stacklevel=2,
+        )
+        return iter(self)
 
-    __iter__ = iterkeys
+    def __iter__(self):
+        return reversed(tuple(self._queue))
 
     def __reversed__(self):
         """Iterate over the keys in the cache dict, oldest items
@@ -675,7 +696,7 @@ class Namespace(object):
     """A namespace object that can hold arbitrary attributes.  It may be
     initialized from a dictionary or with keyword arguments."""
 
-    def __init__(*args, **kwargs):
+    def __init__(*args, **kwargs):  # noqa: B902
         self, args = args[0], args[1:]
         self.__attrs = dict(*args, **kwargs)
 
@@ -702,5 +723,13 @@ except SyntaxError:
     have_async_gen = False
 
 
-# Imported here because that's where it was in the past
-from markupsafe import Markup, escape, soft_unicode
+def soft_unicode(s):
+    from markupsafe import soft_unicode
+
+    warnings.warn(
+        "'jinja2.utils.soft_unicode' will be removed in version 3.0."
+        " Use 'markupsafe.soft_unicode' instead.",
+        DeprecationWarning,
+        stacklevel=2,
+    )
+    return soft_unicode(s)

@@ -208,7 +208,7 @@ class FileSystemLoader(BaseLoader):
         found = set()
         for searchpath in self.searchpath:
             walk_dir = os.walk(searchpath, followlinks=self.followlinks)
-            for dirpath, dirnames, filenames in walk_dir:
+            for dirpath, _, filenames in walk_dir:
                 for filename in filenames:
                     template = (
                         os.path.join(dirpath, filename)[len(searchpath) :]

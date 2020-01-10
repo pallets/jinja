@@ -36,8 +36,11 @@ class PrivateStuff(object):
 
 
 class PublicStuff(object):
-    bar = lambda self: 23
-    _foo = lambda self: 42
+    def bar(self):
+        return 23
+
+    def _foo(self):
+        return 42
 
     def __repr__(self):
         return "PublicStuff"

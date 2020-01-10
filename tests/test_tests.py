@@ -195,9 +195,8 @@ class TestTestsCase(object):
         env = Environment()
         env.tests["matching"] = matching
         tmpl = env.from_string(
-            "{{ 'us-west-1' is matching "
-            "'(us-east-1|ap-northeast-1)' "
-            "or 'stage' is matching '(dev|stage)' }}"
+            "{{ 'us-west-1' is matching '(us-east-1|ap-northeast-1)'"
+            " or 'stage' is matching '(dev|stage)' }}"
         )
         assert tmpl.render() == "False"
         assert items == [

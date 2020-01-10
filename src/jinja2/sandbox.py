@@ -14,6 +14,8 @@
 """
 import operator
 import types
+import warnings
+from collections import deque
 from string import Formatter
 
 from markupsafe import EscapeFormatter
@@ -31,35 +33,34 @@ MAX_RANGE = 100000
 
 #: attributes of function objects that are considered unsafe.
 if PY2:
-    UNSAFE_FUNCTION_ATTRIBUTES = set(
-        ["func_closure", "func_code", "func_dict", "func_defaults", "func_globals"]
-    )
+    UNSAFE_FUNCTION_ATTRIBUTES = {
+        "func_closure",
+        "func_code",
+        "func_dict",
+        "func_defaults",
+        "func_globals",
+    }
 else:
     # On versions > python 2 the special attributes on functions are gone,
     # but they remain on methods and generators for whatever reason.
     UNSAFE_FUNCTION_ATTRIBUTES = set()
 
-
 #: unsafe method attributes.  function attributes are unsafe for methods too
-UNSAFE_METHOD_ATTRIBUTES = set(["im_class", "im_func", "im_self"])
+UNSAFE_METHOD_ATTRIBUTES = {"im_class", "im_func", "im_self"}
 
 #: unsafe generator attributes.
-UNSAFE_GENERATOR_ATTRIBUTES = set(["gi_frame", "gi_code"])
+UNSAFE_GENERATOR_ATTRIBUTES = {"gi_frame", "gi_code"}
 
 #: unsafe attributes on coroutines
-UNSAFE_COROUTINE_ATTRIBUTES = set(["cr_frame", "cr_code"])
+UNSAFE_COROUTINE_ATTRIBUTES = {"cr_frame", "cr_code"}
 
 #: unsafe attributes on async generators
-UNSAFE_ASYNC_GENERATOR_ATTRIBUTES = set(["ag_code", "ag_frame"])
-
-import warnings
+UNSAFE_ASYNC_GENERATOR_ATTRIBUTES = {"ag_code", "ag_frame"}
 
 # make sure we don't warn in python 2.6 about stuff we don't care about
 warnings.filterwarnings(
     "ignore", "the sets module", DeprecationWarning, module="jinja2.sandbox"
 )
-
-from collections import deque
 
 _mutable_set_types = (set,)
 _mutable_mapping_types = (dict,)
@@ -88,7 +89,6 @@ except ImportError:
 _mutable_set_types += (abc.MutableSet,)
 _mutable_mapping_types += (abc.MutableMapping,)
 _mutable_sequence_types += (abc.MutableSequence,)
-
 
 _mutable_spec = (
     (
@@ -460,7 +460,7 @@ class SandboxedEnvironment(Environment):
         rv = formatter.vformat(s, args, kwargs)
         return type(s)(rv)
 
-    def call(__self, __context, __obj, *args, **kwargs):
+    def call(__self, __context, __obj, *args, **kwargs):  # noqa: B902
         """Call an object from sandboxed code."""
         fmt = inspect_format_method(__obj)
         if fmt is not None:

@@ -27,7 +27,7 @@ def parse_changelog():
     with open("CHANGES.rst") as f:
         lineiter = iter(f)
         for line in lineiter:
-            match = re.search("^Version\s+(.*)", line.strip())
+            match = re.search(r"^Version\s+(.*)", line.strip())
 
             if match is None:
                 continue
@@ -161,7 +161,7 @@ def main():
         fail("You have uncommitted changes in git")
 
     try:
-        import wheel
+        __import__("wheel")
     except ImportError:
         fail("You need to install the wheel package.")
 

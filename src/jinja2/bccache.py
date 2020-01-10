@@ -16,7 +16,6 @@
 """
 import errno
 import fnmatch
-import marshal
 import os
 import stat
 import sys
@@ -26,28 +25,11 @@ from os import listdir
 from os import path
 
 from ._compat import BytesIO
+from ._compat import marshal_dump
+from ._compat import marshal_load
 from ._compat import pickle
-from ._compat import PY2
 from ._compat import text_type
 from .utils import open_if_exists
-
-# marshal works better on 3.x, one hack less required
-if not PY2:
-    marshal_dump = marshal.dump
-    marshal_load = marshal.load
-else:
-
-    def marshal_dump(code, f):
-        if isinstance(f, file):
-            marshal.dump(code, f)
-        else:
-            f.write(marshal.dumps(code))
-
-    def marshal_load(f):
-        if isinstance(f, file):
-            return marshal.load(f)
-        return marshal.loads(f.read())
-
 
 bc_version = 3
 

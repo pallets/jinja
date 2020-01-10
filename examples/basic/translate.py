@@ -12,7 +12,9 @@ print(
     env.from_string(
         """\
 {% trans %}Hello {{ user }}!{% endtrans %}
-{% trans count=users|count %}{{ count }} user{% pluralize %}{{ count }} users{% endtrans %}
+{% trans count=users|count -%}
+{{ count }} user{% pluralize %}{{ count }} users
+{% endtrans %}
 """
     ).render(user="someone", users=[1, 2, 3])
 )
