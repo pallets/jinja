@@ -18,7 +18,7 @@ from ._compat import string_types
 from ._compat import text_type
 from .runtime import Undefined
 
-number_re = re.compile(r'^-?\d+(\.\d+)?$')
+number_re = re.compile(r"^-?\d+(\.\d+)?$")
 regex_type = type(number_re)
 test_callable = callable
 
@@ -171,7 +171,7 @@ def test_iterable(value):
 
 def test_escaped(value):
     """Check if the value is escaped."""
-    return hasattr(value, '__html__')
+    return hasattr(value, "__html__")
 
 
 def test_in(value, seq):
@@ -183,41 +183,41 @@ def test_in(value, seq):
 
 
 TESTS = {
-    'odd':              test_odd,
-    'even':             test_even,
-    'divisibleby':      test_divisibleby,
-    'defined':          test_defined,
-    'undefined':        test_undefined,
-    'none':             test_none,
-    'boolean':          test_boolean,
-    'false':            test_false,
-    'true':             test_true,
-    'integer':          test_integer,
-    'float':            test_float,
-    'lower':            test_lower,
-    'upper':            test_upper,
-    'string':           test_string,
-    'mapping':          test_mapping,
-    'number':           test_number,
-    'sequence':         test_sequence,
-    'iterable':         test_iterable,
-    'callable':         test_callable,
-    'sameas':           test_sameas,
-    'escaped':          test_escaped,
-    'in':               test_in,
-    '==':               operator.eq,
-    'eq':               operator.eq,
-    'equalto':          operator.eq,
-    '!=':               operator.ne,
-    'ne':               operator.ne,
-    '>':                operator.gt,
-    'gt':               operator.gt,
-    'greaterthan':      operator.gt,
-    'ge':               operator.ge,
-    '>=':               operator.ge,
-    '<':                operator.lt,
-    'lt':               operator.lt,
-    'lessthan':         operator.lt,
-    '<=':               operator.le,
-    'le':               operator.le,
+    "odd": test_odd,
+    "even": test_even,
+    "divisibleby": test_divisibleby,
+    "defined": test_defined,
+    "undefined": test_undefined,
+    "none": test_none,
+    "boolean": test_boolean,
+    "false": test_false,
+    "true": test_true,
+    "integer": test_integer,
+    "float": test_float,
+    "lower": test_lower,
+    "upper": test_upper,
+    "string": test_string,
+    "mapping": test_mapping,
+    "number": test_number,
+    "sequence": test_sequence,
+    "iterable": test_iterable,
+    "callable": test_callable,
+    "sameas": test_sameas,
+    "escaped": test_escaped,
+    "in": test_in,
+    "==": operator.eq,
+    "eq": operator.eq,
+    "equalto": operator.eq,
+    "!=": operator.ne,
+    "ne": operator.ne,
+    ">": operator.gt,
+    "gt": operator.gt,
+    "greaterthan": operator.gt,
+    "ge": operator.ge,
+    ">=": operator.ge,
+    "<": operator.lt,
+    "lt": operator.lt,
+    "lessthan": operator.lt,
+    "<=": operator.le,
+    "le": operator.le,
 }

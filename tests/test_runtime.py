@@ -52,9 +52,9 @@ def test_loopcontext2():
 
 def test_iterator_not_advanced_early():
     t = Template("{% for _, g in gs %}{{ loop.index }} {{ g|list }}\n{% endfor %}")
-    out = t.render(gs=itertools.groupby(
-        [(1, "a"), (1, "b"), (2, "c"), (3, "d")], lambda x: x[0]
-    ))
+    out = t.render(
+        gs=itertools.groupby([(1, "a"), (1, "b"), (2, "c"), (3, "d")], lambda x: x[0])
+    )
     # groupby groups depend on the current position of the iterator. If
     # it was advanced early, the lists would appear empty.
     assert out == "1 [(1, 'a'), (1, 'b')]\n2 [(2, 'c')]\n3 [(3, 'd')]\n"

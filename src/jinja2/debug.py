@@ -100,7 +100,7 @@ def fake_traceback(exc_value, tb, filename, lineno):
         "__jinja_exception__": exc_value,
     }
     # Raise an exception at the correct line number.
-    code = compile('\n' * (lineno - 1) + "raise __jinja_exception__", filename, "exec")
+    code = compile("\n" * (lineno - 1) + "raise __jinja_exception__", filename, "exec")
 
     # Build a new code object that points to the template file and
     # replaces the location with a block name.
@@ -213,6 +213,8 @@ if sys.version_info >= (3, 7):
     def tb_set_next(tb, tb_next):
         tb.tb_next = tb_next
         return tb
+
+
 elif PYPY:
     # PyPy might have special support, and won't work with ctypes.
     try:
@@ -221,6 +223,7 @@ elif PYPY:
         # Without tproxy support, use the original traceback.
         def tb_set_next(tb, tb_next):
             return tb
+
     else:
         # With tproxy support, create a proxy around the traceback that
         # returns the new tb_next.
@@ -232,6 +235,8 @@ elif PYPY:
                 return op.delegate()
 
             return tputil.make_proxy(controller, obj=tb)
+
+
 else:
     # Use ctypes to assign tb_next at the C level since it's read-only
     # from Python.

@@ -92,7 +92,7 @@ from jinja2.defaults import *
 
 _node_handlers = {}
 _resolved_filters = {}
-_newline_re = re.compile(r'(?:\r\n|\r|\n)')
+_newline_re = re.compile(r"(?:\r\n|\r|\n)")
 
 
 # Django stores an itertools object on the cycle node.  Not only is this
@@ -100,9 +100,13 @@ _newline_re = re.compile(r'(?:\r\n|\r|\n)')
 # string values passed to the constructor to create a jinja loop.cycle()
 # call from it.
 _old_cycle_init = core_tags.CycleNode.__init__
+
+
 def _fixed_cycle_init(self, cyclevars, variable_name=None):
     self.raw_cycle_vars = map(Variable, cyclevars)
     _old_cycle_init(self, cyclevars, variable_name)
+
+
 core_tags.CycleNode.__init__ = _fixed_cycle_init
 
 
@@ -110,11 +114,13 @@ def node(cls):
     def proxy(f):
         _node_handlers[cls] = f
         return f
+
     return proxy
 
 
-def convert_templates(output_dir, extensions=('.html', '.txt'), writer=None,
-                      callback=None):
+def convert_templates(
+    output_dir, extensions=(".html", ".txt"), writer=None, callback=None
+):
     """Iterates over all templates in the template dirs configured and
     translates them and writes the new templates into the output directory.
     """
@@ -136,12 +142,13 @@ def convert_templates(output_dir, extensions=('.html', '.txt'), writer=None,
         writer.stream = original
 
     if callback is None:
+
         def callback(template):
             print(template)
 
     for directory in settings.TEMPLATE_DIRS:
         for dirname, _, files in os.walk(directory):
-            dirname = dirname[len(directory) + 1:]
+            dirname = dirname[len(directory) + 1 :]
             for filename in filter_templates(files):
                 source = os.path.normpath(os.path.join(dirname, filename))
                 target = os.path.join(output_dir, dirname, filename)
@@ -149,7 +156,7 @@ def convert_templates(output_dir, extensions=('.html', '.txt'), writer=None,
                 if not os.path.exists(basetarget):
                     os.makedirs(basetarget)
                 callback(source)
-                f = file(target, 'w')
+                f = file(target, "w")
                 try:
                     translate(f, source)
                 finally:
@@ -159,18 +166,22 @@ def convert_templates(output_dir, extensions=('.html', '.txt'), writer=None,
 class Writer(object):
     """The core writer class."""
 
-    def __init__(self, stream=None, error_stream=None,
-                 block_start_string=BLOCK_START_STRING,
-                 block_end_string=BLOCK_END_STRING,
-                 variable_start_string=VARIABLE_START_STRING,
-                 variable_end_string=VARIABLE_END_STRING,
-                 comment_start_string=COMMENT_START_STRING,
-                 comment_end_string=COMMENT_END_STRING,
-                 initial_autoescape=True,
-                 use_jinja_autoescape=False,
-                 custom_node_handlers=None,
-                 var_re=[],
-                 env=None):
+    def __init__(
+        self,
+        stream=None,
+        error_stream=None,
+        block_start_string=BLOCK_START_STRING,
+        block_end_string=BLOCK_END_STRING,
+        variable_start_string=VARIABLE_START_STRING,
+        variable_end_string=VARIABLE_END_STRING,
+        comment_start_string=COMMENT_START_STRING,
+        comment_end_string=COMMENT_END_STRING,
+        initial_autoescape=True,
+        use_jinja_autoescape=False,
+        custom_node_handlers=None,
+        var_re=[],
+        env=None,
+    ):
         if stream is None:
             stream = sys.stdout
         if error_stream is None:
@@ -186,8 +197,7 @@ class Writer(object):
         self.autoescape = initial_autoescape
         self.spaceless = False
         self.use_jinja_autoescape = use_jinja_autoescape
-        self.node_handlers = dict(_node_handlers,
-                                  **(custom_node_handlers or {}))
+        self.node_handlers = dict(_node_handlers, **(custom_node_handlers or {}))
         self._loop_depth = 0
         self._filters_warned = set()
         self.var_re = var_re
@@ -220,15 +230,15 @@ class Writer(object):
 
     def _post_open(self):
         if self.spaceless:
-            self.write('- ')
+            self.write("- ")
         else:
-            self.write(' ')
+            self.write(" ")
 
     def _pre_close(self):
         if self.spaceless:
-            self.write(' -')
+            self.write(" -")
         else:
-            self.write(' ')
+            self.write(" ")
 
     def start_variable(self):
         """Start a variable."""
@@ -237,9 +247,8 @@ class Writer(object):
 
     def end_variable(self, always_safe=False):
         """End a variable."""
-        if not always_safe and self.autoescape and \
-           not self.use_jinja_autoescape:
-            self.write('|e')
+        if not always_safe and self.autoescape and not self.use_jinja_autoescape:
+            self.write("|e")
         self._pre_close()
         self.write(self.variable_end_string)
 
@@ -276,52 +285,50 @@ class Writer(object):
         for filter, args in filters:
             name = self.get_filter_name(filter)
             if name is None:
-                self.warn('Could not find filter %s' % name)
+                self.warn("Could not find filter %s" % name)
                 continue
-            if name not in DEFAULT_FILTERS and \
-               name not in self._filters_warned:
+            if name not in DEFAULT_FILTERS and name not in self._filters_warned:
                 self._filters_warned.add(name)
-                self.warn('Filter %s probably doesn\'t exist in Jinja' %
-                            name)
+                self.warn("Filter %s probably doesn't exist in Jinja" % name)
             if not want_pipe:
                 want_pipe = True
             else:
-                self.write('|')
+                self.write("|")
             self.write(name)
             if args:
-                self.write('(')
+                self.write("(")
                 for idx, (is_var, value) in enumerate(args):
                     if idx:
-                        self.write(', ')
+                        self.write(", ")
                     if is_var:
                         self.node(value)
                     else:
                         self.literal(value)
-                self.write(')')
+                self.write(")")
 
     def get_location(self, origin, position):
         """Returns the location for an origin and position tuple as name
         and lineno.
         """
-        if hasattr(origin, 'source'):
+        if hasattr(origin, "source"):
             source = origin.source
-            name = '<unknown source>'
+            name = "<unknown source>"
         else:
             source = origin.loader(origin.loadname, origin.dirs)[0]
             name = origin.loadname
-        lineno = len(_newline_re.findall(source[:position[0]])) + 1
+        lineno = len(_newline_re.findall(source[: position[0]])) + 1
         return name, lineno
 
     def warn(self, message, node=None):
         """Prints a warning to the error stream."""
-        if node is not None and hasattr(node, 'source'):
+        if node is not None and hasattr(node, "source"):
             filename, lineno = self.get_location(*node.source)
-            message = '[%s:%d] %s' % (filename, lineno, message)
+            message = "[%s:%d] %s" % (filename, lineno, message)
         print(message, file=self.error_stream)
 
     def translate_variable_name(self, var):
         """Performs variable name translation."""
-        if self.in_loop and var == 'forloop' or var.startswith('forloop.'):
+        if self.in_loop and var == "forloop" or var.startswith("forloop."):
             var = var[3:]
 
         for reg, rep, unless in self.var_re:
@@ -348,10 +355,11 @@ class Writer(object):
                 handler(self, node)
                 break
         else:
-            self.warn('Untranslatable node %s.%s found' % (
-                node.__module__,
-                node.__class__.__name__
-            ), node)
+            self.warn(
+                "Untranslatable node %s.%s found"
+                % (node.__module__, node.__class__.__name__),
+                node,
+            )
 
     def body(self, nodes):
         """Calls node() for every node in the iterable passed."""
@@ -367,22 +375,24 @@ def text_node(writer, node):
 @node(Variable)
 def variable(writer, node):
     if node.translate:
-        writer.warn('i18n system used, make sure to install translations', node)
-        writer.write('_(')
+        writer.warn("i18n system used, make sure to install translations", node)
+        writer.write("_(")
     if node.literal is not None:
         writer.literal(node.literal)
     else:
         writer.variable(node.var)
     if node.translate:
-        writer.write(')')
+        writer.write(")")
 
 
 @node(VariableNode)
 def variable_node(writer, node):
     writer.start_variable()
-    if node.filter_expression.var.var == 'block.super' \
-       and not node.filter_expression.filters:
-        writer.write('super()')
+    if (
+        node.filter_expression.var.var == "block.super"
+        and not node.filter_expression.filters
+    ):
+        writer.write("super()")
     else:
         writer.node(node.filter_expression)
     writer.end_variable()
@@ -401,86 +411,89 @@ def comment_tag(writer, node):
 
 @node(core_tags.DebugNode)
 def comment_tag(writer, node):
-    writer.warn('Debug tag detected.  Make sure to add a global function '
-                'called debug to the namespace.', node=node)
-    writer.print_expr('debug()')
+    writer.warn(
+        "Debug tag detected.  Make sure to add a global function "
+        "called debug to the namespace.",
+        node=node,
+    )
+    writer.print_expr("debug()")
 
 
 @node(core_tags.ForNode)
 def for_loop(writer, node):
     writer.start_block()
-    writer.write('for ')
+    writer.write("for ")
     for idx, var in enumerate(node.loopvars):
         if idx:
-            writer.write(', ')
+            writer.write(", ")
         writer.variable(var)
-    writer.write(' in ')
+    writer.write(" in ")
     if node.is_reversed:
-        writer.write('(')
+        writer.write("(")
     writer.node(node.sequence)
     if node.is_reversed:
-        writer.write(')|reverse')
+        writer.write(")|reverse")
     writer.end_block()
     writer.enter_loop()
     writer.body(node.nodelist_loop)
     writer.leave_loop()
-    writer.tag('endfor')
+    writer.tag("endfor")
 
 
 @node(core_tags.IfNode)
 def if_condition(writer, node):
     writer.start_block()
-    writer.write('if ')
-    join_with = 'and'
+    writer.write("if ")
+    join_with = "and"
     if node.link_type == core_tags.IfNode.LinkTypes.or_:
-        join_with = 'or'
+        join_with = "or"
 
     for idx, (ifnot, expr) in enumerate(node.bool_exprs):
         if idx:
-            writer.write(' %s ' % join_with)
+            writer.write(" %s " % join_with)
         if ifnot:
-            writer.write('not ')
+            writer.write("not ")
         writer.node(expr)
     writer.end_block()
     writer.body(node.nodelist_true)
     if node.nodelist_false:
-        writer.tag('else')
+        writer.tag("else")
         writer.body(node.nodelist_false)
-    writer.tag('endif')
+    writer.tag("endif")
 
 
 @node(core_tags.IfEqualNode)
 def if_equal(writer, node):
     writer.start_block()
-    writer.write('if ')
+    writer.write("if ")
     writer.node(node.var1)
     if node.negate:
-        writer.write(' != ')
+        writer.write(" != ")
     else:
-        writer.write(' == ')
+        writer.write(" == ")
     writer.node(node.var2)
     writer.end_block()
     writer.body(node.nodelist_true)
     if node.nodelist_false:
-        writer.tag('else')
+        writer.tag("else")
         writer.body(node.nodelist_false)
-    writer.tag('endif')
+    writer.tag("endif")
 
 
 @node(loader_tags.BlockNode)
 def block(writer, node):
-    writer.tag('block ' + node.name.replace('-', '_').rstrip('_'))
+    writer.tag("block " + node.name.replace("-", "_").rstrip("_"))
     node = node
     while node.parent is not None:
         node = node.parent
     writer.body(node.nodelist)
-    writer.tag('endblock')
+    writer.tag("endblock")
 
 
 @node(loader_tags.ExtendsNode)
 def extends(writer, node):
     writer.start_block()
-    writer.write('extends ')
+    writer.write("extends ")
     if node.parent_name_expr:
         writer.node(node.parent_name_expr)
     else:
@@ -493,8 +506,8 @@ def extends(writer, node):
 @node(loader_tags.IncludeNode)
 def include(writer, node):
     writer.start_block()
-    writer.write('include ')
-    if hasattr(node, 'template'):
+    writer.write("include ")
+    if hasattr(node, "template"):
         writer.literal(node.template.name)
     else:
         writer.node(node.template_name)
@@ -504,19 +517,19 @@ def include(writer, node):
 @node(core_tags.CycleNode)
 def cycle(writer, node):
     if not writer.in_loop:
-        writer.warn('Untranslatable free cycle (cycle outside loop)', node=node)
+        writer.warn("Untranslatable free cycle (cycle outside loop)", node=node)
         return
     if node.variable_name is not None:
         writer.start_block()
-        writer.write('set %s = ' % node.variable_name)
+        writer.write("set %s = " % node.variable_name)
     else:
         writer.start_variable()
-    writer.write('loop.cycle(')
+    writer.write("loop.cycle(")
     for idx, var in enumerate(node.raw_cycle_vars):
         if idx:
-            writer.write(', ')
+            writer.write(", ")
         writer.node(var)
-    writer.write(')')
+    writer.write(")")
     if node.variable_name is not None:
         writer.end_block()
     else:
@@ -526,11 +539,11 @@ def cycle(writer, node):
 @node(core_tags.FilterNode)
 def filter(writer, node):
     writer.start_block()
-    writer.write('filter ')
+    writer.write("filter ")
     writer.filters(node.filter_expr.filters, True)
     writer.end_block()
     writer.body(node.nodelist)
-    writer.tag('endfilter')
+    writer.tag("endfilter")
 
 
 @node(core_tags.AutoEscapeControlNode)
@@ -545,7 +558,7 @@ def autoescape_control(writer, node):
 def spaceless(writer, node):
     original = writer.spaceless
     writer.spaceless = True
-    writer.warn('entering spaceless mode with different semantics', node)
+    writer.warn("entering spaceless mode with different semantics", node)
     # do the initial stripping
     nodelist = list(node.nodelist)
     if nodelist:
@@ -560,14 +573,14 @@ def spaceless(writer, node):
 @node(core_tags.TemplateTagNode)
 def template_tag(writer, node):
     tag = {
-        'openblock':            writer.block_start_string,
-        'closeblock':           writer.block_end_string,
-        'openvariable':         writer.variable_start_string,
-        'closevariable':        writer.variable_end_string,
-        'opencomment':          writer.comment_start_string,
-        'closecomment':         writer.comment_end_string,
-        'openbrace':            '{',
-        'closebrace':           '}'
+        "openblock": writer.block_start_string,
+        "closeblock": writer.block_end_string,
+        "openvariable": writer.variable_start_string,
+        "closevariable": writer.variable_end_string,
+        "opencomment": writer.comment_start_string,
+        "closecomment": writer.comment_end_string,
+        "openbrace": "{",
+        "closebrace": "}",
     }.get(node.tagtype)
     if tag:
         writer.start_variable()
@@ -577,23 +590,22 @@ def template_tag(writer, node):
 
 @node(core_tags.URLNode)
 def url_tag(writer, node):
-    writer.warn('url node used.  make sure to provide a proper url() '
-                'function', node)
+    writer.warn("url node used.  make sure to provide a proper url() function", node)
     if node.asvar:
         writer.start_block()
-        writer.write('set %s = ' % node.asvar)
+        writer.write("set %s = " % node.asvar)
     else:
         writer.start_variable()
     autoescape = writer.autoescape
-    writer.write('url(')
+    writer.write("url(")
     writer.literal(node.view_name)
     for arg in node.args:
-        writer.write(', ')
+        writer.write(", ")
         writer.node(arg)
     for key, arg in node.kwargs.items():
-        writer.write(', %s=' % key)
+        writer.write(", %s=" % key)
         writer.node(arg)
-    writer.write(')')
+    writer.write(")")
     if node.asvar:
         writer.end_block()
     else:
@@ -602,25 +614,31 @@ def url_tag(writer, node):
 
 @node(core_tags.WidthRatioNode)
 def width_ratio(writer, node):
-    writer.warn('widthratio expanded into formula.  You may want to provide '
-                'a helper function for this calculation', node)
+    writer.warn(
+        "widthratio expanded into formula.  You may want to provide "
+        "a helper function for this calculation",
+        node,
+    )
     writer.start_variable()
-    writer.write('(')
+    writer.write("(")
     writer.node(node.val_expr)
-    writer.write(' / ')
+    writer.write(" / ")
     writer.node(node.max_expr)
-    writer.write(' * ')
+    writer.write(" * ")
     writer.write(str(int(node.max_width)))
-    writer.write(')|round|int')
+    writer.write(")|round|int")
     writer.end_variable(always_safe=True)
 
 
 @node(core_tags.WithNode)
 def with_block(writer, node):
-    writer.warn('with block expanded into set statement.  This could cause '
-                'variables following that block to be overridden.', node)
+    writer.warn(
+        "with block expanded into set statement.  This could cause "
+        "variables following that block to be overridden.",
+        node,
+    )
     writer.start_block()
-    writer.write('set %s = ' % node.name)
+    writer.write("set %s = " % node.name)
     writer.node(node.var)
     writer.end_block()
     writer.body(node.nodelist)
@@ -629,55 +647,67 @@ def with_block(writer, node):
 @node(core_tags.RegroupNode)
 def regroup(writer, node):
     if node.expression.var.literal:
-        writer.warn('literal in groupby filter used.   Behavior in that '
-                    'situation is undefined and translation is skipped.', node)
+        writer.warn(
+            "literal in groupby filter used.   Behavior in that "
+            "situation is undefined and translation is skipped.",
+            node,
+        )
         return
     elif node.expression.filters:
-        writer.warn('filters in groupby filter used.   Behavior in that '
-                    'situation is undefined which is most likely a bug '
-                    'in your code.  Filters were ignored.', node)
+        writer.warn(
+            "filters in groupby filter used.   Behavior in that "
+            "situation is undefined which is most likely a bug "
+            "in your code.  Filters were ignored.",
+            node,
+        )
     writer.start_block()
-    writer.write('set %s = ' % node.var_name)
+    writer.write("set %s = " % node.var_name)
     writer.node(node.target)
-    writer.write('|groupby(')
+    writer.write("|groupby(")
     writer.literal(node.expression.var.var)
-    writer.write(')')
+    writer.write(")")
     writer.end_block()
 
 
 @node(core_tags.LoadNode)
 def warn_load(writer, node):
-    writer.warn('load statement used which was ignored on conversion', node)
+    writer.warn("load statement used which was ignored on conversion", node)
 
 
 @node(i18n_tags.GetAvailableLanguagesNode)
 def get_available_languages(writer, node):
-    writer.warn('make sure to provide a get_available_languages function', node)
-    writer.tag('set %s = get_available_languages()' %
-               writer.translate_variable_name(node.variable))
+    writer.warn("make sure to provide a get_available_languages function", node)
+    writer.tag(
+        "set %s = get_available_languages()"
+        % writer.translate_variable_name(node.variable)
+    )
 
 
 @node(i18n_tags.GetCurrentLanguageNode)
 def get_current_language(writer, node):
-    writer.warn('make sure to provide a get_current_language function', node)
-    writer.tag('set %s = get_current_language()' %
-               writer.translate_variable_name(node.variable))
+    writer.warn("make sure to provide a get_current_language function", node)
+    writer.tag(
+        "set %s = get_current_language()"
+        % writer.translate_variable_name(node.variable)
+    )
 
 
 @node(i18n_tags.GetCurrentLanguageBidiNode)
 def get_current_language_bidi(writer, node):
-    writer.warn('make sure to provide a get_current_language_bidi function', node)
-    writer.tag('set %s = get_current_language_bidi()' %
-               writer.translate_variable_name(node.variable))
+    writer.warn("make sure to provide a get_current_language_bidi function", node)
+    writer.tag(
+        "set %s = get_current_language_bidi()"
+        % writer.translate_variable_name(node.variable)
+    )
 
 
 @node(i18n_tags.TranslateNode)
 def simple_gettext(writer, node):
-    writer.warn('i18n system used, make sure to install translations', node)
+    writer.warn("i18n system used, make sure to install translations", node)
     writer.start_variable()
-    writer.write('_(')
+    writer.write("_(")
     writer.node(node.value)
-    writer.write(')')
+    writer.write(")")
     writer.end_variable()
 
 
@@ -699,14 +729,14 @@ def translate_block(writer, node):
                 writer.print_expr(token.contents)
                 touch_var(token.contents)
 
-    writer.warn('i18n system used, make sure to install translations', node)
+    writer.warn("i18n system used, make sure to install translations", node)
     writer.start_block()
-    writer.write('trans')
+    writer.write("trans")
     idx = -1
     for idx, (key, var) in enumerate(node.extra_context.items()):
         if idx:
-            writer.write(',')
-        writer.write(' %s=' % key)
+            writer.write(",")
+        writer.write(" %s=" % key)
         touch_var(key)
         writer.node(var.filter_expression)
 
@@ -717,61 +747,64 @@ def translate_block(writer, node):
         plural_var = node.countervar
         if plural_var not in variables:
             if idx > -1:
-                writer.write(',')
+                writer.write(",")
             touch_var(plural_var)
-            writer.write(' %s=' % plural_var)
+            writer.write(" %s=" % plural_var)
             writer.node(node.counter)
 
     writer.end_block()
     dump_token_list(node.singular)
     if node.plural and node.countervar and node.counter:
         writer.start_block()
-        writer.write('pluralize')
+        writer.write("pluralize")
         if node.countervar != first_var[0]:
-            writer.write(' ' + node.countervar)
+            writer.write(" " + node.countervar)
         writer.end_block()
         dump_token_list(node.plural)
-    writer.tag('endtrans')
+    writer.tag("endtrans")
+
 
 @node("SimpleNode")
 def simple_tag(writer, node):
     """Check if the simple tag exist as a filter in """
     name = node.tag_name
-    if writer.env and \
-       name not in writer.env.filters and \
-       name not in writer._filters_warned:
+    if (
+        writer.env
+        and name not in writer.env.filters
+        and name not in writer._filters_warned
+    ):
         writer._filters_warned.add(name)
-        writer.warn('Filter %s probably doesn\'t exist in Jinja' %
-                    name)
+        writer.warn("Filter %s probably doesn't exist in Jinja" % name)
 
     if not node.vars_to_resolve:
         # No argument, pass the request
         writer.start_variable()
-        writer.write('request|')
+        writer.write("request|")
         writer.write(name)
         writer.end_variable()
         return
 
-    first_var =  node.vars_to_resolve[0]
+    first_var = node.vars_to_resolve[0]
     args = node.vars_to_resolve[1:]
     writer.start_variable()
 
     # Copied from Writer.filters()
     writer.node(first_var)
 
-    writer.write('|')
+    writer.write("|")
     writer.write(name)
     if args:
-        writer.write('(')
+        writer.write("(")
         for idx, var in enumerate(args):
             if idx:
-                writer.write(', ')
+                writer.write(", ")
             if var.var:
                 writer.node(var)
             else:
                 writer.literal(var.literal)
-        writer.write(')')
+        writer.write(")")
     writer.end_variable()
+
 
 # get rid of node now, it shouldn't be used normally
 del node

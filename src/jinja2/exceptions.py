@@ -18,9 +18,10 @@ class TemplateError(Exception):
     """Baseclass for all template errors."""
 
     if PY2:
+
         def __init__(self, message=None):
             if message is not None:
-                message = text_type(message).encode('utf-8')
+                message = text_type(message).encode("utf-8")
             Exception.__init__(self, message)
 
         @property
@@ -28,11 +29,13 @@ class TemplateError(Exception):
             if self.args:
                 message = self.args[0]
                 if message is not None:
-                    return message.decode('utf-8', 'replace')
+                    return message.decode("utf-8", "replace")
 
         def __unicode__(self):
-            return self.message or u''
+            return self.message or u""
+
     else:
+
         def __init__(self, message=None):
             Exception.__init__(self, message)
 
@@ -100,8 +103,9 @@ class TemplatesNotFound(TemplateNotFound):
                 else:
                     parts.append(name)
 
-            message = u'none of the templates given were found: ' + \
-                      u', '.join(imap(text_type, parts))
+            message = u"none of the templates given were found: " + u", ".join(
+                imap(text_type, parts)
+            )
         TemplateNotFound.__init__(self, names and names[-1] or None, message)
         self.templates = list(names)
 
@@ -127,11 +131,11 @@ class TemplateSyntaxError(TemplateError):
             return self.message
 
         # otherwise attach some stuff
-        location = 'line %d' % self.lineno
+        location = "line %d" % self.lineno
         name = self.filename or self.name
         if name:
             location = 'File "%s", %s' % (name, location)
-        lines = [self.message, '  ' + location]
+        lines = [self.message, "  " + location]
 
         # if the source is set, add the line to the output
         if self.source is not None:
@@ -140,9 +144,9 @@ class TemplateSyntaxError(TemplateError):
             except IndexError:
                 line = None
             if line:
-                lines.append('    ' + line.strip())
+                lines.append("    " + line.strip())
 
-        return u'\n'.join(lines)
+        return u"\n".join(lines)
 
     def __reduce__(self):
         # https://bugs.python.org/issue1692335 Exceptions that take

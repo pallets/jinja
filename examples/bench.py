@@ -10,15 +10,16 @@ from timeit import Timer
 from jinja2 import Environment as JinjaEnvironment
 
 context = {
-    'page_title': 'mitsuhiko\'s benchmark',
-    'table': [dict(a=1,b=2,c=3,d=4,e=5,f=6,g=7,h=8,i=9,j=10) for x in range(1000)]
+    "page_title": "mitsuhiko's benchmark",
+    "table": [
+        dict(a=1, b=2, c=3, d=4, e=5, f=6, g=7, h=8, i=9, j=10) for x in range(1000)
+    ],
 }
 
 jinja_template = JinjaEnvironment(
-    line_statement_prefix='%',
-    variable_start_string="${",
-    variable_end_string="}"
-).from_string("""\
+    line_statement_prefix="%", variable_start_string="${", variable_end_string="}"
+).from_string(
+    """\
 <!doctype html>
 <html>
   <head>
@@ -50,17 +51,21 @@ jinja_template = JinjaEnvironment(
     </div>
   </body>
 </html>\
-""")
+"""
+)
+
 
 def test_jinja():
     jinja_template.render(context)
+
 
 try:
     from tornado.template import Template
 except ImportError:
     test_tornado = None
 else:
-    tornado_template = Template("""\
+    tornado_template = Template(
+        """\
 <!doctype html>
 <html>
   <head>
@@ -92,19 +97,23 @@ else:
     </div>
   </body>
 </html>\
-""")
+"""
+    )
 
     def test_tornado():
         tornado_template.generate(**context)
 
+
 try:
     from django.conf import settings
+
     settings.configure()
     from django.template import Template as DjangoTemplate, Context as DjangoContext
 except ImportError:
     test_django = None
 else:
-    django_template = DjangoTemplate("""\
+    django_template = DjangoTemplate(
+        """\
 <!doctype html>
 <html>
   <head>
@@ -132,20 +141,26 @@ else:
     </div>
   </body>
 </html>\
-""")
+"""
+    )
 
     def test_django():
         c = DjangoContext(context)
-        c['navigation'] = [('index.html', 'Index'), ('downloads.html', 'Downloads'),
-                           ('products.html', 'Products')]
+        c["navigation"] = [
+            ("index.html", "Index"),
+            ("downloads.html", "Downloads"),
+            ("products.html", "Products"),
+        ]
         django_template.render(c)
+
 
 try:
     from mako.template import Template as MakoTemplate
 except ImportError:
     test_mako = None
 else:
-    mako_template = MakoTemplate("""\
+    mako_template = MakoTemplate(
+        """\
 <!doctype html>
 <html>
   <head>
@@ -173,17 +188,20 @@ else:
     </div>
   </body>
 </html>\
-""")
+"""
+    )
 
     def test_mako():
         mako_template.render(**context)
+
 
 try:
     from genshi.template import MarkupTemplate as GenshiTemplate
 except ImportError:
     test_genshi = None
 else:
-    genshi_template = GenshiTemplate("""\
+    genshi_template = GenshiTemplate(
+        """\
 <html xmlns="http://www.w3.org/1999/xhtml" xmlns:py="http://genshi.edgewall.org/">
   <head>
     <title>${page_title}</title>
@@ -207,17 +225,20 @@ else:
     </div>
   </body>
 </html>\
-""")
+"""
+    )
 
     def test_genshi():
-        genshi_template.generate(**context).render('html', strip_whitespace=False)
+        genshi_template.generate(**context).render("html", strip_whitespace=False)
+
 
 try:
     from Cheetah.Template import Template as CheetahTemplate
 except ImportError:
     test_cheetah = None
 else:
-    cheetah_template = CheetahTemplate("""\
+    cheetah_template = CheetahTemplate(
+        """\
 #import cgi
 <!doctype html>
 <html>
@@ -246,10 +267,13 @@ else:
     </div>
   </body>
 </html>\
-""", searchList=[dict(context)])
+""",
+        searchList=[dict(context)],
+    )
 
     def test_cheetah():
         unicode(cheetah_template)
+
 
 try:
     import tenjin
@@ -257,7 +281,8 @@ except ImportError:
     test_tenjin = None
 else:
     tenjin_template = tenjin.Template()
-    tenjin_template.convert("""\
+    tenjin_template.convert(
+        """\
 <!doctype html>
 <html>
   <head>
@@ -285,11 +310,14 @@ else:
     </div>
   </body>
 </html>\
-""")
+"""
+    )
 
     def test_tenjin():
         from tenjin.helpers import escape, to_str
+
         tenjin_template.render(context, locals())
+
 
 try:
     from spitfire.compiler import util as SpitfireTemplate
@@ -297,7 +325,8 @@ try:
 except ImportError:
     test_spitfire = None
 else:
-    spitfire_template = SpitfireTemplate.load_template("""\
+    spitfire_template = SpitfireTemplate.load_template(
+        """\
 <!doctype html>
 <html>
   <head>
@@ -325,8 +354,12 @@ else:
     </div>
   </body>
 </html>\
-""", 'spitfire_tmpl', spitfire_optimizer, {'enable_filters': False})
-    spitfire_context = dict(context, **{'cgi': cgi})
+""",
+        "spitfire_tmpl",
+        spitfire_optimizer,
+        {"enable_filters": False},
+    )
+    spitfire_context = dict(context, **{"cgi": cgi})
 
     def test_spitfire():
         spitfire_template(search_list=[spitfire_context]).main()
@@ -337,7 +370,8 @@ try:
 except ImportError:
     test_chameleon = None
 else:
-    chameleon_template = PageTemplate("""\
+    chameleon_template = PageTemplate(
+        """\
 <html xmlns:tal="http://xml.zope.org/namespaces/tal">
   <head>
     <title tal:content="page_title">Page Title</title>
@@ -358,15 +392,18 @@ else:
     </div>
   </body>
 </html>\
-""")
+"""
+    )
     chameleon_context = dict(context)
-    chameleon_context['sections'] = [
-        ('index.html', 'Index'),
-        ('downloads.html', 'Downloads'),
-        ('products.html', 'Products')
+    chameleon_context["sections"] = [
+        ("index.html", "Index"),
+        ("downloads.html", "Downloads"),
+        ("products.html", "Products"),
     ]
+
     def test_chameleon():
         chameleon_template.render(**chameleon_context)
+
 
 try:
     from chameleon.zpt.template import PageTemplate
@@ -374,7 +411,8 @@ try:
 except ImportError:
     test_chameleon_genshi = None
 else:
-    chameleon_genshi_template = PageTemplate("""\
+    chameleon_genshi_template = PageTemplate(
+        """\
 <html xmlns="http://www.w3.org/1999/xhtml" xmlns:py="http://genshi.edgewall.org/">
   <head>
     <title>${page_title}</title>
@@ -395,40 +433,63 @@ else:
     </div>
   </body>
 </html>\
-""", parser=language.Parser())
+""",
+        parser=language.Parser(),
+    )
     chameleon_genshi_context = dict(context)
-    chameleon_genshi_context['sections'] = [
-        ('index.html', 'Index'),
-        ('downloads.html', 'Downloads'),
-        ('products.html', 'Products')
+    chameleon_genshi_context["sections"] = [
+        ("index.html", "Index"),
+        ("downloads.html", "Downloads"),
+        ("products.html", "Products"),
     ]
+
     def test_chameleon_genshi():
         chameleon_genshi_template.render(**chameleon_genshi_context)
 
 
-sys.stdout.write('\r' + '\n'.join((
-    '=' * 80,
-    'Template Engine BigTable Benchmark'.center(80),
-    '=' * 80,
-    __doc__,
-    '-' * 80
-)) + '\n')
+sys.stdout.write(
+    "\r"
+    + "\n".join(
+        (
+            "=" * 80,
+            "Template Engine BigTable Benchmark".center(80),
+            "=" * 80,
+            __doc__,
+            "-" * 80,
+        )
+    )
+    + "\n"
+)
 
 
-for test in 'jinja', 'mako', 'tornado', 'tenjin', 'spitfire', 'django', 'genshi', 'cheetah', 'chameleon', 'chameleon_genshi':
-    if locals()['test_' + test] is None:
-        sys.stdout.write('    %-20s*not installed*\n' % test)
+for test in (
+    "jinja",
+    "mako",
+    "tornado",
+    "tenjin",
+    "spitfire",
+    "django",
+    "genshi",
+    "cheetah",
+    "chameleon",
+    "chameleon_genshi",
+):
+    if locals()["test_" + test] is None:
+        sys.stdout.write("    %-20s*not installed*\n" % test)
         continue
-    t = Timer(setup='from __main__ import test_%s as bench' % test,
-              stmt='bench()')
-    sys.stdout.write(' >> %-20s<running>' % test)
+    t = Timer(setup="from __main__ import test_%s as bench" % test, stmt="bench()")
+    sys.stdout.write(" >> %-20s<running>" % test)
     sys.stdout.flush()
-    sys.stdout.write('\r    %-20s%.4f seconds\n' % (test, t.timeit(number=50) / 50))
-sys.stdout.write('-' * 80 + '\n')
-sys.stdout.write('''\
+    sys.stdout.write("\r    %-20s%.4f seconds\n" % (test, t.timeit(number=50) / 50))
+sys.stdout.write("-" * 80 + "\n")
+sys.stdout.write(
+    """\
     WARNING: The results of this benchmark are useless to compare the
     performance of template engines and should not be taken seriously in any
     way.  It's testing the performance of simple loops and has no real-world
     usefulnes.  It only used to check if changes on the Jinja code affect
     performance in a good or bad way and how it roughly compares to others.
-''' + '=' * 80 + '\n')
+"""
+    + "=" * 80
+    + "\n"
+)

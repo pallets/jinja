@@ -4,16 +4,13 @@ from jinja2.ext import Extension
 
 class FragmentCacheExtension(Extension):
     # a set of names that trigger the extension.
-    tags = {'cache'}
+    tags = {"cache"}
 
     def __init__(self, environment):
         super(FragmentCacheExtension, self).__init__(environment)
 
         # add the defaults to the environment
-        environment.extend(
-            fragment_cache_prefix='',
-            fragment_cache=None
-        )
+        environment.extend(fragment_cache_prefix="", fragment_cache=None)
 
     def parse(self, parser):
         # the first token is the token that started the tag.  In our case
@@ -27,19 +24,20 @@ class FragmentCacheExtension(Extension):
 
         # if there is a comma, the user provided a timeout.  If not use
         # None as second parameter.
-        if parser.stream.skip_if('comma'):
+        if parser.stream.skip_if("comma"):
             args.append(parser.parse_expression())
         else:
             args.append(nodes.Const(None))
 
         # now we parse the body of the cache block up to `endcache` and
         # drop the needle (which would always be `endcache` in that case)
-        body = parser.parse_statements(['name:endcache'], drop_needle=True)
+        body = parser.parse_statements(["name:endcache"], drop_needle=True)
 
         # now return a `CallBlock` node that calls our _cache_support
         # helper method on this extension.
-        return nodes.CallBlock(self.call_method('_cache_support', args),
-                               [], [], body).set_lineno(lineno)
+        return nodes.CallBlock(
+            self.call_method("_cache_support", args), [], [], body
+        ).set_lineno(lineno)
 
     def _cache_support(self, name, timeout, caller):
         """Helper callback."""

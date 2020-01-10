@@ -23,9 +23,11 @@ from .utils import missing
 
 async def concat_async(async_gen):
     rv = []
+
     async def collect():
         async for event in async_gen:
             rv.append(event)
+
     await collect()
     return concat(rv)
 
@@ -47,17 +49,18 @@ def wrap_generate_func(original_generate):
                 yield loop.run_until_complete(async_gen.__anext__())
         except StopAsyncIteration:
             pass
+
     def generate(self, *args, **kwargs):
         if not self.environment.is_async:
             return original_generate(self, *args, **kwargs)
         return _convert_generator(self, asyncio.get_event_loop(), args, kwargs)
+
     return update_wrapper(generate, original_generate)
 
 
 async def render_async(self, *args, **kwargs):
     if not self.environment.is_async:
-        raise RuntimeError('The environment was not created with async mode '
-                           'enabled.')
+        raise RuntimeError("The environment was not created with async mode enabled.")
 
     vars = dict(*args, **kwargs)
     ctx = self.new_context(vars)
@@ -74,6 +77,7 @@ def wrap_render_func(original_render):
             return original_render(self, *args, **kwargs)
         loop = asyncio.get_event_loop()
         return loop.run_until_complete(self.render_async(*args, **kwargs))
+
     return update_wrapper(render, original_render)
 
 
@@ -107,6 +111,7 @@ def wrap_macro_invoke(original_invoke):
         if not self._environment.is_async:
             return original_invoke(self, arguments, autoescape)
         return async_invoke(self, arguments, autoescape)
+
     return update_wrapper(_invoke, original_invoke)
 
 
@@ -122,9 +127,9 @@ def wrap_default_module(original_default_module):
     @internalcode
     def _get_default_module(self):
         if self.environment.is_async:
-            raise RuntimeError('Template module attribute is unavailable '
-                               'in async mode')
+            raise RuntimeError("Template module attribute is unavailable in async mode")
         return original_default_module(self)
+
     return _get_default_module
 
 
@@ -138,29 +143,29 @@ async def make_module_async(self, vars=None, shared=False, locals=None):
 
 def patch_template():
     from jinja2 import Template
+
     Template.generate = wrap_generate_func(Template.generate)
-    Template.generate_async = update_wrapper(
-        generate_async, Template.generate_async)
-    Template.render_async = update_wrapper(
-        render_async, Template.render_async)
+    Template.generate_async = update_wrapper(generate_async, Template.generate_async)
+    Template.render_async = update_wrapper(render_async, Template.render_async)
     Template.render = wrap_render_func(Template.render)
-    Template._get_default_module = wrap_default_module(
-        Template._get_default_module)
+    Template._get_default_module = wrap_default_module(Template._get_default_module)
     Template._get_default_module_async = get_default_module_async
     Template.make_module_async = update_wrapper(
-        make_module_async, Template.make_module_async)
+        make_module_async, Template.make_module_async
+    )
 
 
 def patch_runtime():
     from jinja2.runtime import BlockReference, Macro
-    BlockReference.__call__ = wrap_block_reference_call(
-        BlockReference.__call__)
+
+    BlockReference.__call__ = wrap_block_reference_call(BlockReference.__call__)
     Macro._invoke = wrap_macro_invoke(Macro._invoke)
 
 
 def patch_filters():
     from jinja2.filters import FILTERS
     from jinja2.asyncfilters import ASYNC_FILTERS
+
     FILTERS.update(ASYNC_FILTERS)
 
 
@@ -177,7 +182,7 @@ async def auto_await(value):
 
 
 async def auto_aiter(iterable):
-    if hasattr(iterable, '__aiter__'):
+    if hasattr(iterable, "__aiter__"):
         async for item in iterable:
             yield item
         return
@@ -252,6 +257,7 @@ class AsyncLoopContext(LoopContext):
 
 async def make_async_loop_context(iterable, undefined, recurse=None, depth0=0):
     import warnings
+
     warnings.warn(
         "This template must be recompiled with at least Jinja 2.11, or"
         " it will fail in 3.0.",

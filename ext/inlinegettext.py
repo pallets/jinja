@@ -17,8 +17,8 @@ from jinja2.lexer import count_newlines
 from jinja2.lexer import Token
 
 
-_outside_re = re.compile(r'\\?(gettext|_)\(')
-_inside_re = re.compile(r'\\?[()]')
+_outside_re = re.compile(r"\\?(gettext|_)\(")
+_inside_re = re.compile(r"\\?[()]")
 
 
 class InlineGettext(Extension):
@@ -34,7 +34,7 @@ class InlineGettext(Extension):
         paren_stack = 0
 
         for token in stream:
-            if token.type != 'data':
+            if token.type != "data":
                 yield token
                 continue
 
@@ -51,30 +51,33 @@ class InlineGettext(Extension):
                 new_pos = match.start()
                 if new_pos > pos:
                     preval = token.value[pos:new_pos]
-                    yield Token(lineno, 'data', preval)
+                    yield Token(lineno, "data", preval)
                     lineno += count_newlines(preval)
                 gtok = match.group()
-                if gtok[0] == '\\':
-                    yield Token(lineno, 'data', gtok[1:])
+                if gtok[0] == "\\":
+                    yield Token(lineno, "data", gtok[1:])
                 elif not paren_stack:
-                    yield Token(lineno, 'block_begin', None)
-                    yield Token(lineno, 'name', 'trans')
-                    yield Token(lineno, 'block_end', None)
+                    yield Token(lineno, "block_begin", None)
+                    yield Token(lineno, "name", "trans")
+                    yield Token(lineno, "block_end", None)
                     paren_stack = 1
                 else:
-                    if gtok == '(' or paren_stack > 1:
-                        yield Token(lineno, 'data', gtok)
-                    paren_stack += gtok == ')' and -1 or 1
+                    if gtok == "(" or paren_stack > 1:
+                        yield Token(lineno, "data", gtok)
+                    paren_stack += gtok == ")" and -1 or 1
                     if not paren_stack:
-                        yield Token(lineno, 'block_begin', None)
-                        yield Token(lineno, 'name', 'endtrans')
-                        yield Token(lineno, 'block_end', None)
+                        yield Token(lineno, "block_begin", None)
+                        yield Token(lineno, "name", "endtrans")
+                        yield Token(lineno, "block_end", None)
                 pos = match.end()
 
             if pos < len(token.value):
-                yield Token(lineno, 'data', token.value[pos:])
+                yield Token(lineno, "data", token.value[pos:])
 
         if paren_stack:
-            raise TemplateSyntaxError('unclosed gettext expression',
-                                      token.lineno, stream.name,
-                                      stream.filename)
+            raise TemplateSyntaxError(
+                "unclosed gettext expression",
+                token.lineno,
+                stream.name,
+                stream.filename,
+            )

@@ -33,7 +33,7 @@ def native_concat(nodes, preserve_quotes=True):
     else:
         if isinstance(nodes, types.GeneratorType):
             nodes = chain(head, nodes)
-        raw = u''.join([text_type(v) for v in nodes])
+        raw = u"".join([text_type(v) for v in nodes])
 
     try:
         literal = literal_eval(raw)

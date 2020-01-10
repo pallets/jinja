@@ -56,9 +56,11 @@ bc_version = 3
 # reason for this is that Python tends to segfault if fed earlier bytecode
 # versions because someone thought it would be a good idea to reuse opcodes
 # or make Python incompatible with earlier versions.
-bc_magic = 'j2'.encode('ascii') + \
-    pickle.dumps(bc_version, 2) + \
-    pickle.dumps((sys.version_info[0] << 24) | sys.version_info[1])
+bc_magic = (
+    "j2".encode("ascii")
+    + pickle.dumps(bc_version, 2)
+    + pickle.dumps((sys.version_info[0] << 24) | sys.version_info[1])
+)
 
 
 class Bucket(object):
@@ -102,7 +104,7 @@ class Bucket(object):
     def write_bytecode(self, f):
         """Dump the bytecode into the file or file like object passed."""
         if self.code is None:
-            raise TypeError('can\'t write empty bucket')
+            raise TypeError("can't write empty bucket")
         f.write(bc_magic)
         pickle.dump(self.checksum, f, 2)
         marshal_dump(self.code, f)
@@ -169,17 +171,17 @@ class BytecodeCache(object):
 
     def get_cache_key(self, name, filename=None):
         """Returns the unique hash key for this template name."""
-        hash = sha1(name.encode('utf-8'))
+        hash = sha1(name.encode("utf-8"))
         if filename is not None:
-            filename = '|' + filename
+            filename = "|" + filename
             if isinstance(filename, text_type):
-                filename = filename.encode('utf-8')
+                filename = filename.encode("utf-8")
             hash.update(filename)
         return hash.hexdigest()
 
     def get_source_checksum(self, source):
         """Returns a checksum for the source."""
-        return sha1(source.encode('utf-8')).hexdigest()
+        return sha1(source.encode("utf-8")).hexdigest()
 
     def get_bucket(self, environment, name, filename, source):
         """Return a cache bucket for the given template.  All arguments are
@@ -214,7 +216,7 @@ class FileSystemBytecodeCache(BytecodeCache):
     This bytecode cache supports clearing of the cache using the clear method.
     """
 
-    def __init__(self, directory=None, pattern='__jinja2_%s.cache'):
+    def __init__(self, directory=None, pattern="__jinja2_%s.cache"):
         if directory is None:
             directory = self._get_default_cache_dir()
         self.directory = directory
@@ -222,19 +224,21 @@ class FileSystemBytecodeCache(BytecodeCache):
 
     def _get_default_cache_dir(self):
         def _unsafe_dir():
-            raise RuntimeError('Cannot determine safe temp directory.  You '
-                               'need to explicitly provide one.')
+            raise RuntimeError(
+                "Cannot determine safe temp directory.  You "
+                "need to explicitly provide one."
+            )
 
         tmpdir = tempfile.gettempdir()
 
         # On windows the temporary directory is used specific unless
         # explicitly forced otherwise.  We can just use that.
-        if os.name == 'nt':
+        if os.name == "nt":
             return tmpdir
-        if not hasattr(os, 'getuid'):
+        if not hasattr(os, "getuid"):
             _unsafe_dir()
 
-        dirname = '_jinja2-cache-%d' % os.getuid()
+        dirname = "_jinja2-cache-%d" % os.getuid()
         actual_dir = os.path.join(tmpdir, dirname)
 
         try:
@@ -245,18 +249,22 @@ class FileSystemBytecodeCache(BytecodeCache):
         try:
             os.chmod(actual_dir, stat.S_IRWXU)
             actual_dir_stat = os.lstat(actual_dir)
-            if actual_dir_stat.st_uid != os.getuid() \
-               or not stat.S_ISDIR(actual_dir_stat.st_mode) \
-               or stat.S_IMODE(actual_dir_stat.st_mode) != stat.S_IRWXU:
+            if (
+                actual_dir_stat.st_uid != os.getuid()
+                or not stat.S_ISDIR(actual_dir_stat.st_mode)
+                or stat.S_IMODE(actual_dir_stat.st_mode) != stat.S_IRWXU
+            ):
                 _unsafe_dir()
         except OSError as e:
             if e.errno != errno.EEXIST:
                 raise
 
         actual_dir_stat = os.lstat(actual_dir)
-        if actual_dir_stat.st_uid != os.getuid() \
-           or not stat.S_ISDIR(actual_dir_stat.st_mode) \
-           or stat.S_IMODE(actual_dir_stat.st_mode) != stat.S_IRWXU:
+        if (
+            actual_dir_stat.st_uid != os.getuid()
+            or not stat.S_ISDIR(actual_dir_stat.st_mode)
+            or stat.S_IMODE(actual_dir_stat.st_mode) != stat.S_IRWXU
+        ):
             _unsafe_dir()
 
         return actual_dir
@@ -265,7 +273,7 @@ class FileSystemBytecodeCache(BytecodeCache):
         return path.join(self.directory, self.pattern % bucket.key)
 
     def load_bytecode(self, bucket):
-        f = open_if_exists(self._get_cache_filename(bucket), 'rb')
+        f = open_if_exists(self._get_cache_filename(bucket), "rb")
         if f is not None:
             try:
                 bucket.load_bytecode(f)
@@ -273,7 +281,7 @@ class FileSystemBytecodeCache(BytecodeCache):
                 f.close()
 
     def dump_bytecode(self, bucket):
-        f = open(self._get_cache_filename(bucket), 'wb')
+        f = open(self._get_cache_filename(bucket), "wb")
         try:
             bucket.write_bytecode(f)
         finally:
@@ -284,7 +292,8 @@ class FileSystemBytecodeCache(BytecodeCache):
         # write access on the file system and the function does not exist
         # normally.
         from os import remove
-        files = fnmatch.filter(listdir(self.directory), self.pattern % '*')
+
+        files = fnmatch.filter(listdir(self.directory), self.pattern % "*")
         for filename in files:
             try:
                 remove(path.join(self.directory, filename))
@@ -337,8 +346,13 @@ class MemcachedBytecodeCache(BytecodeCache):
        `ignore_memcache_errors` parameter.
     """
 
-    def __init__(self, client, prefix='jinja2/bytecode/', timeout=None,
-                 ignore_memcache_errors=True):
+    def __init__(
+        self,
+        client,
+        prefix="jinja2/bytecode/",
+        timeout=None,
+        ignore_memcache_errors=True,
+    ):
         self.client = client
         self.prefix = prefix
         self.timeout = timeout

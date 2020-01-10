@@ -31,8 +31,8 @@ from .utils import soft_unicode
 from .utils import unicode_urlencode
 from .utils import urlize
 
-_word_re = re.compile(r'\w+', re.UNICODE)
-_word_beginning_split_re = re.compile(r'([-\s\(\{\[\<]+)', re.UNICODE)
+_word_re = re.compile(r"\w+", re.UNICODE)
+_word_beginning_split_re = re.compile(r"([-\s\(\{\[\<]+)", re.UNICODE)
 
 
 def contextfilter(f):
@@ -102,8 +102,12 @@ def make_multi_attrgetter(environment, attribute, postprocess=None):
 
     Examples of attribute: "attr1,attr2", "attr1.inner1.0,attr2.inner2.0", etc.
     """
-    attribute_parts = attribute.split(',') if isinstance(attribute, string_types) else [attribute]
-    attribute = [_prepare_attribute_parts(attribute_part) for attribute_part in attribute_parts]
+    attribute_parts = (
+        attribute.split(",") if isinstance(attribute, string_types) else [attribute]
+    )
+    attribute = [
+        _prepare_attribute_parts(attribute_part) for attribute_part in attribute_parts
+    ]
 
     def attrgetter(item):
         items = [None] * len(attribute)
@@ -125,14 +129,14 @@ def _prepare_attribute_parts(attr):
     if attr is None:
         return []
     elif isinstance(attr, string_types):
-        return [int(x) if x.isdigit() else x for x in attr.split('.')]
+        return [int(x) if x.isdigit() else x for x in attr.split(".")]
     else:
         return [attr]
 
 
 def do_forceescape(value):
     """Enforce HTML escaping.  This will probably double escape variables."""
-    if hasattr(value, '__html__'):
+    if hasattr(value, "__html__"):
         value = value.__html__()
     return escape(text_type(value))
 
@@ -187,8 +191,11 @@ def do_replace(eval_ctx, s, old, new, count=None):
         count = -1
     if not eval_ctx.autoescape:
         return text_type(s).replace(text_type(old), text_type(new), count)
-    if hasattr(old, '__html__') or hasattr(new, '__html__') and \
-       not hasattr(s, '__html__'):
+    if (
+        hasattr(old, "__html__")
+        or hasattr(new, "__html__")
+        and not hasattr(s, "__html__")
+    ):
         s = escape(s)
     else:
         s = soft_unicode(s)
@@ -229,13 +236,13 @@ def do_xmlattr(_eval_ctx, d, autospace=True):
     As you can see it automatically prepends a space in front of the item
     if the filter returned something unless the second parameter is false.
     """
-    rv = u' '.join(
+    rv = u" ".join(
         u'%s="%s"' % (escape(key), escape(value))
         for key, value in iteritems(d)
         if value is not None and not isinstance(value, Undefined)
     )
     if autospace and rv:
-        rv = u' ' + rv
+        rv = u" " + rv
     if _eval_ctx.autoescape:
         rv = Markup(rv)
     return rv
@@ -252,13 +259,16 @@ def do_title(s):
     """Return a titlecased version of the value. I.e. words will start with
     uppercase letters, all remaining characters are lowercase.
     """
-    return ''.join(
-        [item[0].upper() + item[1:].lower()
-         for item in _word_beginning_split_re.split(soft_unicode(s))
-         if item])
+    return "".join(
+        [
+            item[0].upper() + item[1:].lower()
+            for item in _word_beginning_split_re.split(soft_unicode(s))
+            if item
+        ]
+    )
 
 
-def do_dictsort(value, case_sensitive=False, by='key', reverse=False):
+def do_dictsort(value, case_sensitive=False, by="key", reverse=False):
     """Sort a dict and yield (key, value) pairs. Because python dicts are
     unsorted you may want to use this function to order them by either
     key or value:
@@ -277,14 +287,12 @@ def do_dictsort(value, case_sensitive=False, by='key', reverse=False):
         {% for item in mydict|dictsort(false, 'value') %}
             sort the dict by value, case insensitive
     """
-    if by == 'key':
+    if by == "key":
         pos = 0
-    elif by == 'value':
+    elif by == "value":
         pos = 1
     else:
-        raise FilterArgumentError(
-            'You can only sort by either "key" or "value"'
-        )
+        raise FilterArgumentError('You can only sort by either "key" or "value"')
 
     def sort_func(item):
         value = item[pos]
@@ -341,8 +349,7 @@ def do_sort(environment, value, reverse=False, case_sensitive=False, attribute=N
        The ``attribute`` parameter was added.
     """
     key_func = make_multi_attrgetter(
-        environment, attribute,
-        postprocess=ignore_case if not case_sensitive else None
+        environment, attribute, postprocess=ignore_case if not case_sensitive else None
     )
     return sorted(value, key=key_func, reverse=reverse)
 
@@ -363,8 +370,7 @@ def do_unique(environment, value, case_sensitive=False, attribute=None):
     :param attribute: Filter objects with unique values for this attribute.
     """
     getter = make_attrgetter(
-        environment, attribute,
-        postprocess=ignore_case if not case_sensitive else None
+        environment, attribute, postprocess=ignore_case if not case_sensitive else None
     )
     seen = set()
 
@@ -382,12 +388,10 @@ def _min_or_max(environment, value, func, case_sensitive, attribute):
     try:
         first = next(it)
     except StopIteration:
-        return environment.undefined('No aggregated item, sequence was empty.')
+        return environment.undefined("No aggregated item, sequence was empty.")
 
     key_func = make_attrgetter(
-        environment,
-        attribute,
-        postprocess=ignore_case if not case_sensitive else None
+        environment, attribute, postprocess=ignore_case if not case_sensitive else None
     )
     return func(chain([first], it), key=key_func)
 
@@ -422,7 +426,7 @@ def do_max(environment, value, case_sensitive=False, attribute=None):
     return _min_or_max(environment, value, max, case_sensitive, attribute)
 
 
-def do_default(value, default_value=u'', boolean=False):
+def do_default(value, default_value=u"", boolean=False):
     """If the value is undefined it will return the passed default value,
     otherwise the value of the variable:
 
@@ -451,7 +455,7 @@ def do_default(value, default_value=u'', boolean=False):
 
 
 @evalcontextfilter
-def do_join(eval_ctx, value, d=u'', attribute=None):
+def do_join(eval_ctx, value, d=u"", attribute=None):
     """Return a string which is the concatenation of the strings in the
     sequence. The separator between elements is an empty string per
     default, you can define it with the optional parameter:
@@ -482,11 +486,11 @@ def do_join(eval_ctx, value, d=u'', attribute=None):
 
     # if the delimiter doesn't have an html representation we check
     # if any of the items has.  If yes we do a coercion to Markup
-    if not hasattr(d, '__html__'):
+    if not hasattr(d, "__html__"):
         value = list(value)
         do_escape = False
         for idx, item in enumerate(value):
-            if hasattr(item, '__html__'):
+            if hasattr(item, "__html__"):
                 do_escape = True
             else:
                 value[idx] = text_type(item)
@@ -511,7 +515,7 @@ def do_first(environment, seq):
     try:
         return next(iter(seq))
     except StopIteration:
-        return environment.undefined('No first item, sequence was empty.')
+        return environment.undefined("No first item, sequence was empty.")
 
 
 @environmentfilter
@@ -528,7 +532,7 @@ def do_last(environment, seq):
     try:
         return next(iter(reversed(seq)))
     except StopIteration:
-        return environment.undefined('No last item, sequence was empty.')
+        return environment.undefined("No last item, sequence was empty.")
 
 
 @contextfilter
@@ -537,7 +541,7 @@ def do_random(context, seq):
     try:
         return random.choice(seq)
     except IndexError:
-        return context.environment.undefined('No random item, sequence was empty.')
+        return context.environment.undefined("No random item, sequence was empty.")
 
 
 def do_filesizeformat(value, binary=False):
@@ -549,25 +553,25 @@ def do_filesizeformat(value, binary=False):
     bytes = float(value)
     base = binary and 1024 or 1000
     prefixes = [
-        (binary and 'KiB' or 'kB'),
-        (binary and 'MiB' or 'MB'),
-        (binary and 'GiB' or 'GB'),
-        (binary and 'TiB' or 'TB'),
-        (binary and 'PiB' or 'PB'),
-        (binary and 'EiB' or 'EB'),
-        (binary and 'ZiB' or 'ZB'),
-        (binary and 'YiB' or 'YB')
+        (binary and "KiB" or "kB"),
+        (binary and "MiB" or "MB"),
+        (binary and "GiB" or "GB"),
+        (binary and "TiB" or "TB"),
+        (binary and "PiB" or "PB"),
+        (binary and "EiB" or "EB"),
+        (binary and "ZiB" or "ZB"),
+        (binary and "YiB" or "YB"),
     ]
     if bytes == 1:
-        return '1 Byte'
+        return "1 Byte"
     elif bytes < base:
-        return '%d Bytes' % bytes
+        return "%d Bytes" % bytes
     else:
         for i, prefix in enumerate(prefixes):
             unit = base ** (i + 2)
             if bytes < unit:
-                return '%.1f %s' % ((base * bytes / unit), prefix)
-        return '%.1f %s' % ((base * bytes / unit), prefix)
+                return "%.1f %s" % ((base * bytes / unit), prefix)
+        return "%.1f %s" % ((base * bytes / unit), prefix)
 
 
 def do_pprint(value, verbose=False):
@@ -580,8 +584,9 @@ def do_pprint(value, verbose=False):
 
 
 @evalcontextfilter
-def do_urlize(eval_ctx, value, trim_url_limit=None, nofollow=False,
-              target=None, rel=None):
+def do_urlize(
+    eval_ctx, value, trim_url_limit=None, nofollow=False, target=None, rel=None
+):
     """Converts URLs in plain text into clickable links.
 
     If you pass the filter an additional integer it will shorten the urls
@@ -604,22 +609,20 @@ def do_urlize(eval_ctx, value, trim_url_limit=None, nofollow=False,
        The *target* parameter was added.
     """
     policies = eval_ctx.environment.policies
-    rel = set((rel or '').split() or [])
+    rel = set((rel or "").split() or [])
     if nofollow:
-        rel.add('nofollow')
-    rel.update((policies['urlize.rel'] or '').split())
+        rel.add("nofollow")
+    rel.update((policies["urlize.rel"] or "").split())
     if target is None:
-        target = policies['urlize.target']
-    rel = ' '.join(sorted(rel)) or None
+        target = policies["urlize.target"]
+    rel = " ".join(sorted(rel)) or None
     rv = urlize(value, trim_url_limit, rel=rel, target=target)
     if eval_ctx.autoescape:
         rv = Markup(rv)
     return rv
 
 
-def do_indent(
-    s, width=4, first=False, blank=False, indentfirst=None
-):
+def do_indent(s, width=4, first=False, blank=False, indentfirst=None):
     """Return a copy of the string with each line indented by 4 spaces. The
     first line and blank lines are not indented by default.
 
@@ -633,13 +636,14 @@ def do_indent(
         Rename the ``indentfirst`` argument to ``first``.
     """
     if indentfirst is not None:
-        warnings.warn(DeprecationWarning(
-            'The "indentfirst" argument is renamed to "first".'
-        ), stacklevel=2)
+        warnings.warn(
+            DeprecationWarning('The "indentfirst" argument is renamed to "first".'),
+            stacklevel=2,
+        )
         first = indentfirst
 
-    indention = u' ' * width
-    newline = u'\n'
+    indention = u" " * width
+    newline = u"\n"
 
     if isinstance(s, Markup):
         indention = Markup(indention)
@@ -665,7 +669,7 @@ def do_indent(
 
 
 @environmentfilter
-def do_truncate(env, s, length=255, killwords=False, end='...', leeway=None):
+def do_truncate(env, s, length=255, killwords=False, end="...", leeway=None):
     """Return a truncated copy of the string. The length is specified
     with the first parameter which defaults to ``255``. If the second
     parameter is ``true`` the filter will cut the text at length. Otherwise
@@ -690,14 +694,14 @@ def do_truncate(env, s, length=255, killwords=False, end='...', leeway=None):
     can be reconfigured globally.
     """
     if leeway is None:
-        leeway = env.policies['truncate.leeway']
-    assert length >= len(end), 'expected length >= %s, got %s' % (len(end), length)
-    assert leeway >= 0, 'expected leeway >= 0, got %s' % leeway
+        leeway = env.policies["truncate.leeway"]
+    assert length >= len(end), "expected length >= %s, got %s" % (len(end), length)
+    assert leeway >= 0, "expected leeway >= 0, got %s" % leeway
     if len(s) <= length + leeway:
         return s
     if killwords:
-        return s[:length - len(end)] + end
-    result = s[:length - len(end)].rsplit(' ', 1)[0]
+        return s[: length - len(end)] + end
+    result = s[: length - len(end)].rsplit(" ", 1)[0]
     return result + end
 
 
@@ -816,8 +820,9 @@ def do_format(value, *args, **kwargs):
         #printf-style-string-formatting
     """
     if args and kwargs:
-        raise FilterArgumentError('can\'t handle positional and keyword '
-                                  'arguments at the same time')
+        raise FilterArgumentError(
+            "can't handle positional and keyword arguments at the same time"
+        )
     return soft_unicode(value) % (kwargs or args)
 
 
@@ -827,9 +832,8 @@ def do_trim(value, chars=None):
 
 
 def do_striptags(value):
-    """Strip SGML/XML tags and replace adjacent whitespace by one space.
-    """
-    if hasattr(value, '__html__'):
+    """Strip SGML/XML tags and replace adjacent whitespace by one space."""
+    if hasattr(value, "__html__"):
         value = value.__html__()
     return Markup(text_type(value)).striptags()
 
@@ -901,7 +905,7 @@ def do_batch(value, linecount, fill_with=None):
         yield tmp
 
 
-def do_round(value, precision=0, method='common'):
+def do_round(value, precision=0, method="common"):
     """Round the number to a given precision. The first
     parameter specifies the precision (default is ``0``), the
     second the rounding method:
@@ -927,9 +931,9 @@ def do_round(value, precision=0, method='common'):
         {{ 42.55|round|int }}
             -> 43
     """
-    if not method in ('common', 'ceil', 'floor'):
-        raise FilterArgumentError('method must be common, ceil or floor')
-    if method == 'common':
+    if not method in ("common", "ceil", "floor"):
+        raise FilterArgumentError("method must be common, ceil or floor")
+    if method == "common":
         return round(value, precision)
     func = getattr(math, method)
     return func(value * (10 ** precision)) / (10 ** precision)
@@ -940,7 +944,7 @@ def do_round(value, precision=0, method='common'):
 # we do not want to accidentally expose an auto generated repr in case
 # people start to print this out in comments or something similar for
 # debugging.
-_GroupTuple = namedtuple('_GroupTuple', ['grouper', 'list'])
+_GroupTuple = namedtuple("_GroupTuple", ["grouper", "list"])
 _GroupTuple.__repr__ = tuple.__repr__
 _GroupTuple.__str__ = tuple.__str__
 
@@ -981,8 +985,10 @@ def do_groupby(environment, value, attribute):
         The attribute supports dot notation for nested access.
     """
     expr = make_attrgetter(environment, attribute)
-    return [_GroupTuple(key, list(values)) for key, values
-            in groupby(sorted(value, key=expr), expr)]
+    return [
+        _GroupTuple(key, list(values))
+        for key, values in groupby(sorted(value, key=expr), expr)
+    ]
 
 
 @environmentfilter
@@ -1039,7 +1045,7 @@ def do_reverse(value):
             rv.reverse()
             return rv
         except TypeError:
-            raise FilterArgumentError('argument must be iterable')
+            raise FilterArgumentError("argument must be iterable")
 
 
 @environmentfilter
@@ -1060,8 +1066,9 @@ def do_attr(environment, obj, name):
         except AttributeError:
             pass
         else:
-            if environment.sandboxed and not \
-               environment.is_safe_attribute(obj, name, value):
+            if environment.sandboxed and not environment.is_safe_attribute(
+                obj, name, value
+            ):
                 return environment.unsafe_undefined(obj, name)
             return value
     return environment.undefined(obj=obj, name=name)
@@ -1248,11 +1255,11 @@ def do_tojson(eval_ctx, value, indent=None):
     .. versionadded:: 2.9
     """
     policies = eval_ctx.environment.policies
-    dumper = policies['json.dumps_function']
-    options = policies['json.dumps_kwargs']
+    dumper = policies["json.dumps_function"]
+    options = policies["json.dumps_kwargs"]
     if indent is not None:
         options = dict(options)
-        options['indent'] = indent
+        options["indent"] = indent
     return htmlsafe_json_dumps(value, dumper=dumper, **options)
 
 
@@ -1261,21 +1268,23 @@ def prepare_map(args, kwargs):
     seq = args[1]
     default = None
 
-    if len(args) == 2 and 'attribute' in kwargs:
-        attribute = kwargs.pop('attribute')
-        default = kwargs.pop('default', None)
+    if len(args) == 2 and "attribute" in kwargs:
+        attribute = kwargs.pop("attribute")
+        default = kwargs.pop("default", None)
         if kwargs:
-            raise FilterArgumentError('Unexpected keyword argument %r' %
-                next(iter(kwargs)))
+            raise FilterArgumentError(
+                "Unexpected keyword argument %r" % next(iter(kwargs))
+            )
         func = make_attrgetter(context.environment, attribute, default=default)
     else:
         try:
             name = args[2]
             args = args[3:]
         except LookupError:
-            raise FilterArgumentError('map requires a filter argument')
+            raise FilterArgumentError("map requires a filter argument")
         func = lambda item: context.environment.call_filter(
-            name, item, args, kwargs, context=context)
+            name, item, args, kwargs, context=context
+        )
 
     return seq, func
 
@@ -1287,7 +1296,7 @@ def prepare_select_or_reject(args, kwargs, modfunc, lookup_attr):
         try:
             attr = args[2]
         except LookupError:
-            raise FilterArgumentError('Missing parameter for attribute name')
+            raise FilterArgumentError("Missing parameter for attribute name")
         transfunc = make_attrgetter(context.environment, attr)
         off = 1
     else:
@@ -1296,9 +1305,8 @@ def prepare_select_or_reject(args, kwargs, modfunc, lookup_attr):
 
     try:
         name = args[2 + off]
-        args = args[3 + off:]
-        func = lambda item: context.environment.call_test(
-            name, item, args, kwargs)
+        args = args[3 + off :]
+        func = lambda item: context.environment.call_test(name, item, args, kwargs)
     except LookupError:
         func = bool
 
@@ -1314,57 +1322,57 @@ def select_or_reject(args, kwargs, modfunc, lookup_attr):
 
 
 FILTERS = {
-    'abs':                  abs,
-    'attr':                 do_attr,
-    'batch':                do_batch,
-    'capitalize':           do_capitalize,
-    'center':               do_center,
-    'count':                len,
-    'd':                    do_default,
-    'default':              do_default,
-    'dictsort':             do_dictsort,
-    'e':                    escape,
-    'escape':               escape,
-    'filesizeformat':       do_filesizeformat,
-    'first':                do_first,
-    'float':                do_float,
-    'forceescape':          do_forceescape,
-    'format':               do_format,
-    'groupby':              do_groupby,
-    'indent':               do_indent,
-    'int':                  do_int,
-    'join':                 do_join,
-    'last':                 do_last,
-    'length':               len,
-    'list':                 do_list,
-    'lower':                do_lower,
-    'map':                  do_map,
-    'min':                  do_min,
-    'max':                  do_max,
-    'pprint':               do_pprint,
-    'random':               do_random,
-    'reject':               do_reject,
-    'rejectattr':           do_rejectattr,
-    'replace':              do_replace,
-    'reverse':              do_reverse,
-    'round':                do_round,
-    'safe':                 do_mark_safe,
-    'select':               do_select,
-    'selectattr':           do_selectattr,
-    'slice':                do_slice,
-    'sort':                 do_sort,
-    'string':               soft_unicode,
-    'striptags':            do_striptags,
-    'sum':                  do_sum,
-    'title':                do_title,
-    'trim':                 do_trim,
-    'truncate':             do_truncate,
-    'unique':               do_unique,
-    'upper':                do_upper,
-    'urlencode':            do_urlencode,
-    'urlize':               do_urlize,
-    'wordcount':            do_wordcount,
-    'wordwrap':             do_wordwrap,
-    'xmlattr':              do_xmlattr,
-    'tojson':               do_tojson,
+    "abs": abs,
+    "attr": do_attr,
+    "batch": do_batch,
+    "capitalize": do_capitalize,
+    "center": do_center,
+    "count": len,
+    "d": do_default,
+    "default": do_default,
+    "dictsort": do_dictsort,
+    "e": escape,
+    "escape": escape,
+    "filesizeformat": do_filesizeformat,
+    "first": do_first,
+    "float": do_float,
+    "forceescape": do_forceescape,
+    "format": do_format,
+    "groupby": do_groupby,
+    "indent": do_indent,
+    "int": do_int,
+    "join": do_join,
+    "last": do_last,
+    "length": len,
+    "list": do_list,
+    "lower": do_lower,
+    "map": do_map,
+    "min": do_min,
+    "max": do_max,
+    "pprint": do_pprint,
+    "random": do_random,
+    "reject": do_reject,
+    "rejectattr": do_rejectattr,
+    "replace": do_replace,
+    "reverse": do_reverse,
+    "round": do_round,
+    "safe": do_mark_safe,
+    "select": do_select,
+    "selectattr": do_selectattr,
+    "slice": do_slice,
+    "sort": do_sort,
+    "string": soft_unicode,
+    "striptags": do_striptags,
+    "sum": do_sum,
+    "title": do_title,
+    "trim": do_trim,
+    "truncate": do_truncate,
+    "unique": do_unique,
+    "upper": do_upper,
+    "urlencode": do_urlencode,
+    "urlize": do_urlize,
+    "wordcount": do_wordcount,
+    "wordwrap": do_wordwrap,
+    "xmlattr": do_xmlattr,
+    "tojson": do_tojson,
 }
