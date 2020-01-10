@@ -196,10 +196,6 @@ class TestFilter(object):
         """
         self._test_indent_multiline_template(env, markup=True)
 
-    def test_indentfirst_deprecated(self, env):
-        with pytest.warns(DeprecationWarning):
-            env.from_string('{{ "jinja"|indent(indentfirst=true) }}').render()
-
     @pytest.mark.parametrize(
         ("value", "expect"),
         (

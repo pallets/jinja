@@ -59,13 +59,12 @@ UNSAFE_ASYNC_GENERATOR_ATTRIBUTES = {"ag_code", "ag_frame"}
 
 # make sure we don't warn in python 2.6 about stuff we don't care about
 warnings.filterwarnings(
-    "ignore", "the sets module", DeprecationWarning, module="jinja2.sandbox"
+    "ignore", "the sets module", DeprecationWarning, module=__name__
 )
 
 _mutable_set_types = (set,)
 _mutable_mapping_types = (dict,)
 _mutable_sequence_types = (list,)
-
 
 # on python 2.x we can register the user collection types
 try:

@@ -16,6 +16,10 @@ from collections import namedtuple
 from itertools import chain
 from itertools import groupby
 
+from markupsafe import escape
+from markupsafe import Markup
+from markupsafe import soft_unicode
+
 from ._compat import abc
 from ._compat import imap
 from ._compat import iteritems
@@ -23,11 +27,8 @@ from ._compat import string_types
 from ._compat import text_type
 from .exceptions import FilterArgumentError
 from .runtime import Undefined
-from .utils import escape
 from .utils import htmlsafe_json_dumps
-from .utils import Markup
 from .utils import pformat
-from .utils import soft_unicode
 from .utils import unicode_urlencode
 from .utils import urlize
 
@@ -639,7 +640,9 @@ def do_indent(s, width=4, first=False, blank=False, indentfirst=None):
     """
     if indentfirst is not None:
         warnings.warn(
-            DeprecationWarning('The "indentfirst" argument is renamed to "first".'),
+            "The 'indentfirst' argument is renamed to 'first' and will"
+            " be removed in version 3.0.",
+            DeprecationWarning,
             stacklevel=2,
         )
         first = indentfirst

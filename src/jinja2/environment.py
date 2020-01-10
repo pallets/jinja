@@ -727,9 +727,14 @@ class Environment(object):
 
         if py_compile:
             if not PY2 or PYPY:
-                from warnings import warn
+                import warnings
 
-                warn(Warning("py_compile has no effect on pypy or Python 3"))
+                warnings.warn(
+                    "'py_compile=True' has no effect on PyPy or Python"
+                    " 3 and will be removed in version 3.0",
+                    DeprecationWarning,
+                    stacklevel=2,
+                )
                 py_compile = False
             else:
                 import imp
