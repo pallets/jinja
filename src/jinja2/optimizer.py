@@ -1,20 +1,12 @@
 # -*- coding: utf-8 -*-
-"""
-    jinja2.optimizer
-    ~~~~~~~~~~~~~~~~
+"""The optimizer tries to constant fold expressions and modify the AST
+in place so that it should be faster to evaluate.
 
-    The jinja optimizer is currently trying to constant fold a few expressions
-    and modify the AST in place so that it should be easier to evaluate it.
-
-    Because the AST does not contain all the scoping information and the
-    compiler has to find that out, we cannot do all the optimizations we
-    want.  For example loop unrolling doesn't work because unrolled loops would
-    have a different scoping.
-
-    The solution would be a second syntax tree that has the scoping rules stored.
-
-    :copyright: (c) 2017 by the Jinja Team.
-    :license: BSD.
+Because the AST does not contain all the scoping information and the
+compiler has to find that out, we cannot do all the optimizations we
+want. For example, loop unrolling doesn't work because unrolled loops
+would have a different scope. The solution would be a second syntax tree
+that stored the scoping rules.
 """
 from . import nodes
 from .visitor import NodeTransformer

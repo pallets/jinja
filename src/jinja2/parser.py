@@ -1,13 +1,5 @@
 # -*- coding: utf-8 -*-
-"""
-    jinja2.parser
-    ~~~~~~~~~~~~~
-
-    Implements the template parser.
-
-    :copyright: (c) 2017 by the Jinja Team.
-    :license: BSD, see LICENSE for more details.
-"""
+"""Parse tokens from the lexer into nodes for the compiler."""
 from . import nodes
 from ._compat import imap
 from .exceptions import TemplateAssertionError

@@ -1,13 +1,4 @@
 # -*- coding: utf-8 -*-
-"""
-    jinja2.testsuite.ext
-    ~~~~~~~~~~~~~~~~~~~~
-
-    Tests for the extensions.
-
-    :copyright: (c) 2017 by the Jinja Team.
-    :license: BSD, see LICENSE for more details.
-"""
 import re
 
 import pytest

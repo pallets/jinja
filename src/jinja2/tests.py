@@ -1,13 +1,5 @@
 # -*- coding: utf-8 -*-
-"""
-    jinja2.tests
-    ~~~~~~~~~~~~
-
-    Jinja test functions. Used with the "is" operator.
-
-    :copyright: (c) 2017 by the Jinja Team.
-    :license: BSD, see LICENSE for more details.
-"""
+"""Built-in template tests used with the ``is`` operator."""
 import decimal
 import operator
 import re

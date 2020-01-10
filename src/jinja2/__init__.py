@@ -1,30 +1,7 @@
 # -*- coding: utf-8 -*-
-"""
-    jinja2
-    ~~~~~~
-
-    Jinja is a template engine written in pure Python.  It provides a
-    Django inspired non-XML syntax but supports inline expressions and
-    an optional sandboxed environment.
-
-    Nutshell
-    --------
-
-    Here a small example of a Jinja template::
-
-        {% extends 'base.html' %}
-        {% block title %}Memberlist{% endblock %}
-        {% block content %}
-          <ul>
-          {% for user in users %}
-            <li><a href="{{ user.url }}">{{ user.username }}</a></li>
-          {% endfor %}
-          </ul>
-        {% endblock %}
-
-
-    :copyright: (c) 2017 by the Jinja Team.
-    :license: BSD, see LICENSE for more details.
+"""Jinja is a template engine written in pure Python. It provides a
+non-XML syntax that supports inline expressions and an optional
+sandboxed environment.
 """
 from .bccache import BytecodeCache
 from .bccache import FileSystemBytecodeCache

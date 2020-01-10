@@ -1,18 +1,10 @@
 # -*- coding: utf-8 -*-
-"""
-    jinja2.bccache
-    ~~~~~~~~~~~~~~
+"""The optional bytecode cache system. This is useful if you have very
+complex template situations and the compilation of all those templates
+slows down your application too much.
 
-    This module implements the bytecode cache system that Jinja optionally uses.
-    This is useful if you have very complex template situations and
-    the compilation of all those templates slows down your application too
-    much.
-
-    Situations where this is useful are often forking web applications that
-    are initialized on the first request.
-
-    :copyright: (c) 2017 by the Jinja Team.
-    :license: BSD.
+Situations where this is useful are often forking web applications that
+are initialized on the first request.
 """
 import errno
 import fnmatch

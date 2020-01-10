@@ -1,13 +1,5 @@
 # -*- coding: utf-8 -*-
-"""
-    jinja2.compiler
-    ~~~~~~~~~~~~~~~
-
-    Compiles nodes into python code.
-
-    :copyright: (c) 2017 by the Jinja Team.
-    :license: BSD, see LICENSE for more details.
-"""
+"""Compiles nodes from the parser into Python code."""
 from collections import namedtuple
 from functools import update_wrapper
 from itertools import chain

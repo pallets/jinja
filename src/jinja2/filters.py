@@ -1,13 +1,5 @@
 # -*- coding: utf-8 -*-
-"""
-    jinja2.filters
-    ~~~~~~~~~~~~~~
-
-    Bundled jinja filters.
-
-    :copyright: (c) 2017 by the Jinja Team.
-    :license: BSD, see LICENSE for more details.
-"""
+"""Built-in template filters used with the ``|`` operator."""
 import math
 import random
 import re

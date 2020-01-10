@@ -1,12 +1,6 @@
 # -*- coding: utf-8 -*-
-"""
-    jinja2.loaders
-    ~~~~~~~~~~~~~~
-
-    Jinja loader classes.
-
-    :copyright: (c) 2017 by the Jinja Team.
-    :license: BSD, see LICENSE for more details.
+"""API and implementations for loading templates from different data
+sources.
 """
 import os
 import pkgutil

@@ -1,16 +1,6 @@
 # -*- coding: utf-8 -*-
-"""
-    jinja2.sandbox
-    ~~~~~~~~~~~~~~
-
-    Adds a sandbox layer to Jinja as it was the default behavior in the old
-    Jinja 1 releases.  This sandbox is slightly different from Jinja 1 as the
-    default behavior is easier to use.
-
-    The behavior can be changed by subclassing the environment.
-
-    :copyright: (c) 2017 by the Jinja Team.
-    :license: BSD.
+"""A sandbox layer that ensures unsafe operations cannot be performed.
+Useful when the template itself comes from an untrusted source.
 """
 import operator
 import types

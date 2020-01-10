@@ -1,12 +1,6 @@
 # -*- coding: utf-8 -*-
-"""
-    jinja2.environment
-    ~~~~~~~~~~~~~~~~~~
-
-    Provides a class that holds runtime and parsing time options.
-
-    :copyright: (c) 2017 by the Jinja Team.
-    :license: BSD, see LICENSE for more details.
+"""Classes for managing templates and their runtime and compile time
+options.
 """
 import os
 import sys

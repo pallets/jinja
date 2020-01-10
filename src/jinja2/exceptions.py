@@ -1,13 +1,4 @@
 # -*- coding: utf-8 -*-
-"""
-    jinja2.exceptions
-    ~~~~~~~~~~~~~~~~~
-
-    Jinja exceptions.
-
-    :copyright: (c) 2017 by the Jinja Team.
-    :license: BSD, see LICENSE for more details.
-"""
 from ._compat import imap
 from ._compat import implements_to_string
 from ._compat import PY2

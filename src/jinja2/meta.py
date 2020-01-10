@@ -1,13 +1,6 @@
 # -*- coding: utf-8 -*-
-"""
-    jinja2.meta
-    ~~~~~~~~~~~
-
-    This module implements various functions that exposes information about
-    templates that might be interesting for various kinds of applications.
-
-    :copyright: (c) 2017 by the Jinja Team, see AUTHORS for more details.
-    :license: BSD, see LICENSE for more details.
+"""Functions that expose information about templates that might be
+interesting for introspection.
 """
 from . import nodes
 from ._compat import iteritems

@@ -1,13 +1,4 @@
 # -*- coding: utf-8 -*-
-"""
-    jinja.constants
-    ~~~~~~~~~~~~~~~
-
-    Various constants.
-
-    :copyright: (c) 2017 by the Jinja Team.
-    :license: BSD, see LICENSE for more details.
-"""
 #: list of lorem ipsum words used by the lipsum() helper function
 LOREM_IPSUM_WORDS = u"""\
 a ac accumsan ad adipiscing aenean aliquam aliquet amet ante aptent arcu at

@@ -1,13 +1,4 @@
 # -*- coding: utf-8 -*-
-"""
-    jinja2.testsuite.filters
-    ~~~~~~~~~~~~~~~~~~~~~~~~
-
-    Tests for the jinja filters.
-
-    :copyright: (c) 2017 by the Jinja Team.
-    :license: BSD, see LICENSE for more details.
-"""
 import random
 from collections import namedtuple
 

@@ -1,13 +1,4 @@
 # -*- coding: utf-8 -*-
-"""
-    jinja2.testsuite.utils
-    ~~~~~~~~~~~~~~~~~~~~~~
-
-    Tests utilities jinja uses.
-
-    :copyright: (c) 2017 by the Jinja Team.
-    :license: BSD, see LICENSE for more details.
-"""
 import pickle
 import random
 from collections import deque

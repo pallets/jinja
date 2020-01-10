@@ -1,13 +1,4 @@
 # -*- coding: utf-8 -*-
-"""
-    jinja2.testsuite.security
-    ~~~~~~~~~~~~~~~~~~~~~~~~~
-
-    Checks the sandbox and other security features.
-
-    :copyright: (c) 2017 by the Jinja Team.
-    :license: BSD, see LICENSE for more details.
-"""
 import pytest
 
 from jinja2 import Environment

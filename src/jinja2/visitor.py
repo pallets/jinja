@@ -1,12 +1,6 @@
 # -*- coding: utf-8 -*-
-"""
-    jinja2.visitor
-    ~~~~~~~~~~~~~~
-
-    This module implements a visitor for the nodes.
-
-    :copyright: (c) 2017 by the Jinja Team.
-    :license: BSD.
+"""API for traversing the AST nodes. Implemented by the compiler and
+meta introspection.
 """
 from .nodes import Node
 

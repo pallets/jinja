@@ -1,13 +1,4 @@
 # -*- coding: utf-8 -*-
-"""
-    jinja2.testsuite.api
-    ~~~~~~~~~~~~~~~~~~~~
-
-    Tests the public API and related stuff.
-
-    :copyright: (c) 2017 by the Jinja Team.
-    :license: BSD, see LICENSE for more details.
-"""
 import os
 import shutil
 import tempfile

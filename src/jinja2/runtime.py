@@ -1,13 +1,5 @@
 # -*- coding: utf-8 -*-
-"""
-    jinja2.runtime
-    ~~~~~~~~~~~~~~
-
-    Runtime helpers.
-
-    :copyright: (c) 2017 by the Jinja Team.
-    :license: BSD.
-"""
+"""The runtime functions and state used by compiled templates."""
 import sys
 from itertools import chain
 from types import MethodType

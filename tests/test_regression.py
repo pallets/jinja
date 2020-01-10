@@ -1,13 +1,4 @@
 # -*- coding: utf-8 -*-
-"""
-    jinja2.testsuite.regression
-    ~~~~~~~~~~~~~~~~~~~~~~~~~~~
-
-    Tests corner cases and bugs.
-
-    :copyright: (c) 2017 by the Jinja Team.
-    :license: BSD, see LICENSE for more details.
-"""
 import sys
 
 import pytest

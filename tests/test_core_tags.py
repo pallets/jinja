@@ -1,13 +1,4 @@
 # -*- coding: utf-8 -*-
-"""
-    jinja2.testsuite.core_tags
-    ~~~~~~~~~~~~~~~~~~~~~~~~~~
-
-    Test the core tags like for and if.
-
-    :copyright: (c) 2017 by the Jinja Team.
-    :license: BSD, see LICENSE for more details.
-"""
 import pytest
 
 from jinja2 import DictLoader

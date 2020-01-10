@@ -1,18 +1,8 @@
 # -*- coding: utf-8 -*-
-"""
-    jinja2.lexer
-    ~~~~~~~~~~~~
-
-    This module implements a Jinja / Python combination lexer. The
-    `Lexer` class provided by this module is used to do some preprocessing
-    for Jinja.
-
-    On the one hand it filters out invalid operators like the bitshift
-    operators we don't allow in templates. On the other hand it separates
-    template code and python code in expressions.
-
-    :copyright: (c) 2017 by the Jinja Team.
-    :license: BSD, see LICENSE for more details.
+"""Implements a Jinja / Python combination lexer. The ``Lexer`` class
+is used to do some preprocessing. It filters out invalid operators like
+the bitshift operators we don't allow in templates. It separates
+template code and python code in expressions.
 """
 import re
 from ast import literal_eval

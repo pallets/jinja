@@ -1,16 +1,5 @@
 # -*- coding: utf-8 -*-
 # flake8: noqa
-"""
-    jinja2._compat
-    ~~~~~~~~~~~~~~
-
-    Some py2/py3 compatibility support based on a stripped down
-    version of six so we don't have to depend on a specific version
-    of it.
-
-    :copyright: Copyright 2013 by the Jinja team, see AUTHORS.
-    :license: BSD, see LICENSE for details.
-"""
 import marshal
 import sys
 

@@ -1,13 +1,6 @@
 # -*- coding: utf-8 -*-
-"""
-    jinja2.asyncsupport
-    ~~~~~~~~~~~~~~~~~~~
-
-    Has all the code for async support which is implemented as a patch
-    for supported Python versions.
-
-    :copyright: (c) 2017 by the Jinja Team.
-    :license: BSD, see LICENSE for more details.
+"""The code for async support. Importing this patches Jinja on supported
+Python versions.
 """
 import asyncio
 import inspect

@@ -1,19 +1,5 @@
 # -*- coding: utf-8 -*-
-"""
-    jinja2.ext
-    ~~~~~~~~~~
-
-    Jinja extensions allow adding custom tags and behavior. The
-    following extensions are included:
-
-    -   An 18n support ``{% trans %}`` tag.
-    -   A ``{% do %}`` tag.
-    -   Loop control ``{% break %}`` and ``{% continue %}`` tags.
-    -   A ``{% debug %}`` tag.
-
-    :copyright: (c) 2017 by the Jinja Team.
-    :license: BSD.
-"""
+"""Extension API for adding custom tags and behavior."""
 import pprint
 import re
 from sys import version_info
