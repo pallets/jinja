@@ -6,7 +6,7 @@ from pallets_sphinx_themes import ProjectLink
 project = "Jinja"
 copyright = "2007 Pallets"
 author = "Pallets"
-release, version = get_version("Jinja2")
+release, version = get_version("Jinja")
 
 # General --------------------------------------------------------------
 
@@ -29,7 +29,7 @@ html_context = {
     "project_links": [
         ProjectLink("Donate to Pallets", "https://palletsprojects.com/donate"),
         ProjectLink("Jinja Website", "https://palletsprojects.com/p/jinja/"),
-        ProjectLink("PyPI releases", "https://pypi.org/project/Jinja2/"),
+        ProjectLink("PyPI releases", "https://pypi.org/project/Jinja/"),
         ProjectLink("Source Code", "https://github.com/pallets/jinja/"),
         ProjectLink("Issue Tracker", "https://github.com/pallets/jinja/issues/"),
     ]

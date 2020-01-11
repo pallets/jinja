@@ -2,13 +2,13 @@ import asyncio
 
 import pytest
 
-from jinja2 import DictLoader
-from jinja2 import Environment
-from jinja2 import Template
-from jinja2.asyncsupport import auto_aiter
-from jinja2.exceptions import TemplateNotFound
-from jinja2.exceptions import TemplatesNotFound
-from jinja2.exceptions import UndefinedError
+from jinja import DictLoader
+from jinja import Environment
+from jinja import Template
+from jinja.asyncsupport import auto_aiter
+from jinja.exceptions import TemplateNotFound
+from jinja.exceptions import TemplatesNotFound
+from jinja.exceptions import UndefinedError
 
 
 def run(coro):

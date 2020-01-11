@@ -218,7 +218,7 @@ class Environment(object):
         `autoescape`
             If set to ``True`` the XML/HTML autoescaping feature is enabled by
             default.  For more details about autoescaping see
-            :class:`~jinja2.utils.Markup`.  As of Jinja 2.4 this can also
+            :class:`~markupsafe.Markup`. This can also
             be a callable that is passed the template name and has to
             return ``True`` or ``False`` depending on autoescape should be
             enabled by default.
@@ -262,7 +262,7 @@ class Environment(object):
 
     #: if this environment is sandboxed.  Modifying this variable won't make
     #: the environment sandboxed though.  For a real sandboxed environment
-    #: have a look at jinja2.sandbox.  This flag alone controls the code
+    #: have a look at jinja.sandbox.  This flag alone controls the code
     #: generation by the compiler.
     sandboxed = False
 
@@ -277,11 +277,11 @@ class Environment(object):
     shared = False
 
     #: the class that is used for code generation.  See
-    #: :class:`~jinja2.compiler.CodeGenerator` for more information.
+    #: :class:`~jinja.compiler.CodeGenerator` for more information.
     code_generator_class = CodeGenerator
 
     #: the context class thatis used for templates.  See
-    #: :class:`~jinja2.runtime.Context` for more information.
+    #: :class:`~jinja.runtime.Context` for more information.
     context_class = Context
 
     def __init__(
@@ -566,7 +566,7 @@ class Environment(object):
 
     def _tokenize(self, source, name, filename=None, state=None):
         """Called by the parser to do the preprocessing and filtering
-        for all the extensions.  Returns a :class:`~jinja2.lexer.TokenStream`.
+        for all the extensions.  Returns a :class:`~jinja.lexer.TokenStream`.
         """
         source = self.preprocess(source, name, filename)
         stream = self.lexer.tokenize(source, name, filename, state)
@@ -1254,7 +1254,7 @@ class TemplateModule(object):
 
 
 class TemplateExpression(object):
-    """The :meth:`jinja2.Environment.compile_expression` method returns an
+    """The :meth:`jinja.Environment.compile_expression` method returns an
     instance of this object.  It encapsulates the expression-like access
     to the template with an expression it wraps.
     """

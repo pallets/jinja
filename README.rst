@@ -33,7 +33,7 @@ Install and update using `pip`_:
 
 .. code-block:: text
 
-    $ pip install -U Jinja2
+    $ pip install -U Jinja
 
 .. _pip: https://pip.pypa.io/en/stable/quickstart/
 
@@ -59,7 +59,7 @@ Links
 
 -   Website: https://palletsprojects.com/p/jinja/
 -   Documentation: https://jinja.palletsprojects.com/
--   Releases: https://pypi.org/project/Jinja2/
+-   Releases: https://pypi.org/project/Jinja/
 -   Code: https://github.com/pallets/jinja
 -   Issue tracker: https://github.com/pallets/jinja/issues
 -   Test status: https://dev.azure.com/pallets/jinja/_build

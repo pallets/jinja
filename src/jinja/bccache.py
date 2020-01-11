@@ -23,17 +23,14 @@ from ._compat import pickle
 from ._compat import text_type
 from .utils import open_if_exists
 
-bc_version = 3
-
-# magic version used to only change with new jinja versions.  With 2.6
-# we change this to also take Python version changes into account.  The
-# reason for this is that Python tends to segfault if fed earlier bytecode
-# versions because someone thought it would be a good idea to reuse opcodes
-# or make Python incompatible with earlier versions.
+bc_version = 4
+# Magic bytes to identify Jinja bytecode cache files. Contains the
+# Python major and minor version to avoid loading incompatible bytecode
+# if a project upgrades its Python version.
 bc_magic = (
-    "j2".encode("ascii")
+    b"jinja"
     + pickle.dumps(bc_version, 2)
-    + pickle.dumps((sys.version_info[0] << 24) | sys.version_info[1])
+    + pickle.dumps((sys.version_info[0] << 24) | sys.version_info[1], 2)
 )
 
 
@@ -97,7 +94,7 @@ class Bucket(object):
 class BytecodeCache(object):
     """To implement your own bytecode cache you have to subclass this class
     and override :meth:`load_bytecode` and :meth:`dump_bytecode`.  Both of
-    these methods are passed a :class:`~jinja2.bccache.Bucket`.
+    these methods are passed a :class:`Bucket`.
 
     A very basic bytecode cache that saves the bytecode on the file system::
 
@@ -182,15 +179,20 @@ class FileSystemBytecodeCache(BytecodeCache):
     is created for the user in the system temp directory.
 
     The pattern can be used to have multiple separate caches operate on the
-    same directory.  The default pattern is ``'__jinja2_%s.cache'``.  ``%s``
+    same directory.  The default pattern is ``'__jinja_%s.cache'``.  ``%s``
     is replaced with the cache key.
 
     >>> bcc = FileSystemBytecodeCache('/tmp/jinja_cache', '%s.cache')
 
     This bytecode cache supports clearing of the cache using the clear method.
+
+    .. versionchanged:; 2.11
+        The default cache directory was renamed to
+        ``_jinja-cache-{uid}``. The default filename pattern was renamed
+        to ``__jinja_%s.cache``.
     """
 
-    def __init__(self, directory=None, pattern="__jinja2_%s.cache"):
+    def __init__(self, directory=None, pattern="__jinja_%s.cache"):
         if directory is None:
             directory = self._get_default_cache_dir()
         self.directory = directory
@@ -212,7 +214,7 @@ class FileSystemBytecodeCache(BytecodeCache):
         if not hasattr(os, "getuid"):
             _unsafe_dir()
 
-        dirname = "_jinja2-cache-%d" % os.getuid()
+        dirname = "_jinja-cache-%d" % os.getuid()
         actual_dir = os.path.join(tmpdir, dirname)
 
         try:
@@ -315,15 +317,18 @@ class MemcachedBytecodeCache(BytecodeCache):
     This bytecode cache does not support clearing of used items in the cache.
     The clear method is a no-operation function.
 
-    .. versionadded:: 2.7
-       Added support for ignoring memcache errors through the
-       `ignore_memcache_errors` parameter.
+    .. versionchanged:: 2.11
+        The default prefix was renamed to ``jinja/bytecode/``.
+
+    .. versionchanged:: 2.7
+        Added support for ignoring memcache errors through the
+        ``ignore_memcache_errors`` parameter.
     """
 
     def __init__(
         self,
         client,
-        prefix="jinja2/bytecode/",
+        prefix="jinja/bytecode/",
         timeout=None,
         ignore_memcache_errors=True,
     ):

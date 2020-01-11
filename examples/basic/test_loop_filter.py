@@ -1,6 +1,6 @@
 from __future__ import print_function
 
-from jinja2 import Environment
+from jinja import Environment
 
 tmpl = Environment().from_string(
     """\

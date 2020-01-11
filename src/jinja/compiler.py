@@ -712,14 +712,14 @@ class CodeGenerator(NodeVisitor):
         assert frame is None, "no root frame allowed"
         eval_ctx = EvalContext(self.environment, self.name)
 
-        from .runtime import __all__ as exported
+        from .runtime import exported
 
         self.writeline("from __future__ import %s" % ", ".join(code_features))
-        self.writeline("from jinja2.runtime import " + ", ".join(exported))
+        self.writeline("from jinja.runtime import " + ", ".join(exported))
 
         if self.environment.is_async:
             self.writeline(
-                "from jinja2.asyncsupport import auto_await, "
+                "from jinja.asyncsupport import auto_await, "
                 "auto_aiter, AsyncLoopContext"
             )
 
