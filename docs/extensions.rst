@@ -34,9 +34,11 @@ The i18n extension can be used in combination with `gettext`_ or
 `Babel`_.  When it's enabled, Jinja provides a ``trans`` statement that
 marks a block as translatable and calls ``gettext``.
 
-After enabling, an application has to provide ``gettext`` and
-``ngettext`` functions, either globally or when rendering. A ``_()``
-function is added as an alias to the ``gettext`` function.
+After enabling, an application has to provide functions for ``gettext``,
+``ngettext``, and optionally ``pgettext`` and ``npgettext``, either
+globally or when rendering. A ``_()`` function is added as an alias to
+the ``gettext`` function.
+
 
 Environment Methods
 ~~~~~~~~~~~~~~~~~~~
@@ -47,11 +49,16 @@ additional methods:
 .. method:: jinja2.Environment.install_gettext_translations(translations, newstyle=False)
 
     Installs a translation globally for the environment. The
-    ``translations`` object must implement ``gettext`` and ``ngettext``.
+    ``translations`` object must implement ``gettext``, ``ngettext``,
+    and optionally ``pgettext`` and ``npgettext``.
     :class:`gettext.NullTranslations`, :class:`gettext.GNUTranslations`,
     and `Babel`_\s ``Translations`` are supported.
 
-    .. versionchanged:: 2.5 Added new-style gettext support.
+    .. versionchanged:: 3.0
+        Added ``pgettext`` and ``npgettext``.
+
+    .. versionchanged:: 2.5
+        Added new-style gettext support.
 
 .. method:: jinja2.Environment.install_null_translations(newstyle=False)
 
@@ -61,16 +68,21 @@ additional methods:
 
     .. versionchanged:: 2.5 Added new-style gettext support.
 
-.. method:: jinja2.Environment.install_gettext_callables(gettext, ngettext, newstyle=False)
+.. method:: jinja2.Environment.install_gettext_callables(gettext, ngettext, newstyle=False, pgettext=None, npgettext=None)
 
-    Install the given ``gettext`` and ``ngettext`` callables into the
-    environment. They should behave exactly like
-    :func:`gettext.gettext` and :func:`gettext.ngettext`.
+    Install the given ``gettext``, ``ngettext``, ``pgettext``, and
+    ``npgettext`` callables into the environment. They should behave
+    exactly like :func:`gettext.gettext`, :func:`gettext.ngettext`,
+    :func:`gettext.pgettext` and :func:`gettext.npgettext`.
 
     If ``newstyle`` is activated, the callables are wrapped to work like
     newstyle callables.  See :ref:`newstyle-gettext` for more information.
 
-    .. versionadded:: 2.5 Added new-style gettext support.
+    .. versionchanged:: 3.0
+        Added ``pgettext`` and ``npgettext``.
+
+    .. versionadded:: 2.5
+        Added new-style gettext support.
 
 .. method:: jinja2.Environment.uninstall_gettext_translations()
 
@@ -154,6 +166,10 @@ done with the ``|format`` filter. This requires duplicating work for
     {{ ngettext(
            "%(num)d apple", "%(num)d apples", apples|count
        )|format(num=apples|count) }}
+    {{ pgettext("greeting", "Hello, World!") }}
+    {{ npgettext(
+           "fruit", "%(num)d apple", "%(num)d apples", apples|count
+       )|format(num=apples|count) }}
 
 New style ``gettext`` make formatting part of the call, and behind the
 scenes enforce more consistency.
@@ -163,6 +179,8 @@ scenes enforce more consistency.
     {{ gettext("Hello, World!") }}
     {{ gettext("Hello, %(name)s!", name=name) }}
     {{ ngettext("%(num)d apple", "%(num)d apples", apples|count) }}
+    {{ pgettext("greeting", "Hello, World!") }}
+    {{ npgettext("fruit", "%(num)d apple", "%(num)d apples", apples|count) }}
 
 The advantages of newstyle gettext are:
 

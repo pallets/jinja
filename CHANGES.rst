@@ -46,6 +46,8 @@ Unreleased
     available in a template before using it. Test functions can be
     decorated with ``@environmentfunction``, ``@evalcontextfunction``,
     or ``@contextfunction``. :issue:`842`, :pr:`1248`
+-   Support ``pgettext`` and ``npgettext`` (message contexts) in i18n
+    extension. :issue:`441`
 
 
 Version 2.11.3
