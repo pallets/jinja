@@ -897,7 +897,9 @@ class Parser(object):
                 lineno = data_buffer[0].lineno
                 if hasattr(data_buffer[0],'data'):
                     end_line = lineno + data_buffer[0].data.count('\n')
-                    body.append(nodes.Output(data_buffer[:], lineno=lineno, end_line=end_line))
+                    body.append(
+                        nodes.Output(data_buffer[:], lineno=lineno, end_line=end_line)
+                    )
                 else:
                     body.append(nodes.Output(data_buffer[:], lineno=lineno))
                 del data_buffer[:]
