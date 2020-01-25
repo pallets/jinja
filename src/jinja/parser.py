@@ -895,8 +895,11 @@ class Parser(object):
         def flush_data():
             if data_buffer:
                 lineno = data_buffer[0].lineno
-                end_line = lineno + data_buffer[0].data.count('\n')
-                body.append(nodes.Output(data_buffer[:], lineno=lineno, end_line=end_line))
+                if hasattr(data_buffer[0],'data'):
+                    end_line = lineno + data_buffer[0].data.count('\n')
+                    body.append(nodes.Output(data_buffer[:], lineno=lineno, end_line=end_line))
+                else:
+                    body.append(nodes.Output(data_buffer[:], lineno=lineno))
                 del data_buffer[:]
 
         try:
