@@ -108,7 +108,7 @@ class Node(with_metaclass(NodeType, object)):
     """
 
     fields = ()
-    attributes = ("lineno", "environment")
+    attributes = ("lineno", "environment","end_line")
     abstract = True
 
     def __init__(self, *fields, **attributes):
