@@ -3,7 +3,6 @@
 import math
 import random
 import re
-import warnings
 from collections import namedtuple
 from itertools import chain
 from itertools import groupby
@@ -617,7 +616,7 @@ def do_urlize(
     return rv
 
 
-def do_indent(s, width=4, first=False, blank=False, indentfirst=None):
+def do_indent(s, width=4, first=False, blank=False):
     """Return a copy of the string with each line indented by 4 spaces. The
     first line and blank lines are not indented by default.
 
@@ -630,15 +629,6 @@ def do_indent(s, width=4, first=False, blank=False, indentfirst=None):
 
         Rename the ``indentfirst`` argument to ``first``.
     """
-    if indentfirst is not None:
-        warnings.warn(
-            "The 'indentfirst' argument is renamed to 'first' and will"
-            " be removed in version 3.0.",
-            DeprecationWarning,
-            stacklevel=2,
-        )
-        first = indentfirst
-
     indention = u" " * width
     newline = u"\n"
 

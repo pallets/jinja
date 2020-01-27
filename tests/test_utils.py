@@ -31,13 +31,6 @@ class TestLRUCache(object):
         assert len(d) == 3
         assert "a" in d and "c" in d and "d" in d and "b" not in d
 
-    def test_itervalue_deprecated(self):
-        cache = LRUCache(3)
-        cache["a"] = 1
-        cache["b"] = 2
-        with pytest.deprecated_call():
-            cache.itervalue()
-
     def test_itervalues(self):
         cache = LRUCache(3)
         cache["b"] = 1

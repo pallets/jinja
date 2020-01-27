@@ -4,7 +4,6 @@ Useful when the template itself comes from an untrusted source.
 """
 import operator
 import types
-import warnings
 from collections import deque
 from string import Formatter
 
@@ -46,11 +45,6 @@ UNSAFE_COROUTINE_ATTRIBUTES = {"cr_frame", "cr_code"}
 
 #: unsafe attributes on async generators
 UNSAFE_ASYNC_GENERATOR_ATTRIBUTES = {"ag_code", "ag_frame"}
-
-# make sure we don't warn in python 2.6 about stuff we don't care about
-warnings.filterwarnings(
-    "ignore", "the sets module", DeprecationWarning, module=__name__
-)
 
 _mutable_set_types = (set,)
 _mutable_mapping_types = (dict,)

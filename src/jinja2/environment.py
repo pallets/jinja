@@ -15,8 +15,6 @@ from ._compat import encode_filename
 from ._compat import implements_iterator
 from ._compat import implements_to_string
 from ._compat import iteritems
-from ._compat import PY2
-from ._compat import PYPY
 from ._compat import reraise
 from ._compat import string_types
 from ._compat import text_type
@@ -689,7 +687,6 @@ class Environment(object):
         zip="deflated",
         log_function=None,
         ignore_errors=True,
-        py_compile=False,
     ):
         """Finds all the templates the loader can find, compiles them
         and stores them in `target`.  If `zip` is `None`, instead of in a
@@ -706,11 +703,6 @@ class Environment(object):
         syntax errors to abort the compilation you can set `ignore_errors`
         to `False` and you will get an exception on syntax errors.
 
-        If `py_compile` is set to `True` .pyc files will be written to the
-        target instead of standard .py files.  This flag does not do anything
-        on pypy and Python 3 where pyc files are not picked up by itself and
-        don't give much benefit.
-
         .. versionadded:: 2.4
         """
         from .loaders import ModuleLoader
@@ -719,27 +711,6 @@ class Environment(object):
 
             def log_function(x):
                 pass
-
-        if py_compile:
-            if not PY2 or PYPY:
-                import warnings
-
-                warnings.warn(
-                    "'py_compile=True' has no effect on PyPy or Python"
-                    " 3 and will be removed in version 3.0",
-                    DeprecationWarning,
-                    stacklevel=2,
-                )
-                py_compile = False
-            else:
-                import imp
-                import marshal
-
-                py_header = imp.get_magic() + u"\xff\xff\xff\xff".encode("iso-8859-15")
-
-                # Python 3.3 added a source filesize to the header
-                if sys.version_info >= (3, 3):
-                    py_header += u"\x00\x00\x00\x00".encode("iso-8859-15")
 
         def write_file(filename, data):
             if zip:
@@ -778,13 +749,8 @@ class Environment(object):
 
                 filename = ModuleLoader.get_module_filename(name)
 
-                if py_compile:
-                    c = self._compile(code, encode_filename(filename))
-                    write_file(filename + "c", py_header + marshal.dumps(c))
-                    log_function('Byte-compiled "%s" as %s' % (name, filename + "c"))
-                else:
-                    write_file(filename, code)
-                    log_function('Compiled "%s" as %s' % (name, filename))
+                write_file(filename, code)
+                log_function('Compiled "%s" as %s' % (name, filename))
         finally:
             if zip:
                 zip_file.close()

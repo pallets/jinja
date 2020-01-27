@@ -47,8 +47,8 @@ class TemplateNotFound(IOError, LookupError, TemplateError):
         provided, an :exc:`UndefinedError` is raised.
     """
 
-    # looks weird, but removes the warning descriptor that just
-    # bogusly warns us about message being deprecated
+    # Silence the Python warning about message being deprecated since
+    # it's not valid here.
     message = None
 
     def __init__(self, name, message=None):

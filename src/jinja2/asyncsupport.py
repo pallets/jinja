@@ -249,16 +249,4 @@ class AsyncLoopContext(LoopContext):
         return rv, self
 
 
-async def make_async_loop_context(iterable, undefined, recurse=None, depth0=0):
-    import warnings
-
-    warnings.warn(
-        "This template must be recompiled with at least Jinja 2.11, or"
-        " it will fail in 3.0.",
-        DeprecationWarning,
-        stacklevel=2,
-    )
-    return AsyncLoopContext(iterable, undefined, recurse, depth0)
-
-
 patch_all()

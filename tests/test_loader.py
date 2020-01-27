@@ -191,7 +191,7 @@ class TestFileSystemLoader(object):
 class TestModuleLoader(object):
     archive = None
 
-    def compile_down(self, prefix_loader, zip="deflated", py_compile=False):
+    def compile_down(self, prefix_loader, zip="deflated"):
         log = []
         self.reg_env = Environment(loader=prefix_loader)
         if zip is not None:
@@ -199,9 +199,7 @@ class TestModuleLoader(object):
             os.close(fd)
         else:
             self.archive = tempfile.mkdtemp()
-        self.reg_env.compile_templates(
-            self.archive, zip=zip, log_function=log.append, py_compile=py_compile
-        )
+        self.reg_env.compile_templates(self.archive, zip=zip, log_function=log.append)
         self.mod_env = Environment(loader=loaders.ModuleLoader(self.archive))
         return "".join(log)
 

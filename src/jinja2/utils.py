@@ -2,7 +2,6 @@
 import json
 import os
 import re
-import warnings
 from collections import deque
 from random import choice
 from random import randrange
@@ -465,55 +464,13 @@ class LRUCache(object):
         result.reverse()
         return result
 
-    def iteritems(self):
-        """Iterate over all items."""
-        warnings.warn(
-            "'iteritems()' will be removed in version 3.0. Use"
-            " 'iter(cache.items())' instead.",
-            DeprecationWarning,
-            stacklevel=2,
-        )
-        return iter(self.items())
-
     def values(self):
         """Return a list of all values."""
         return [x[1] for x in self.items()]
 
-    def itervalue(self):
-        """Iterate over all values."""
-        warnings.warn(
-            "'itervalue()' will be removed in version 3.0. Use"
-            " 'iter(cache.values())' instead.",
-            DeprecationWarning,
-            stacklevel=2,
-        )
-        return iter(self.values())
-
-    def itervalues(self):
-        """Iterate over all values."""
-        warnings.warn(
-            "'itervalues()' will be removed in version 3.0. Use"
-            " 'iter(cache.values())' instead.",
-            DeprecationWarning,
-            stacklevel=2,
-        )
-        return iter(self.values())
-
     def keys(self):
         """Return a list of all keys ordered by most recent usage."""
         return list(self)
-
-    def iterkeys(self):
-        """Iterate over all keys in the cache dict, ordered by
-        the most recent usage.
-        """
-        warnings.warn(
-            "'iterkeys()' will be removed in version 3.0. Use"
-            " 'iter(cache.keys())' instead.",
-            DeprecationWarning,
-            stacklevel=2,
-        )
-        return iter(self)
 
     def __iter__(self):
         return reversed(tuple(self._queue))
@@ -713,15 +670,3 @@ try:
     have_async_gen = True
 except SyntaxError:
     have_async_gen = False
-
-
-def soft_unicode(s):
-    from markupsafe import soft_unicode
-
-    warnings.warn(
-        "'jinja2.utils.soft_unicode' will be removed in version 3.0."
-        " Use 'markupsafe.soft_unicode' instead.",
-        DeprecationWarning,
-        stacklevel=2,
-    )
-    return soft_unicode(s)
