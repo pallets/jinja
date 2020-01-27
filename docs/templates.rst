@@ -602,9 +602,8 @@ you have data that is already safe but not marked, be sure to wrap it in
 Jinja functions (macros, `super`, `self.BLOCKNAME`) always return template
 data that is marked as safe.
 
-String literals in templates with automatic escaping are considered unsafe
-because native Python strings (``str``, ``unicode``, ``basestring``) are not
-`MarkupSafe.Markup` strings with an ``__html__`` attribute.
+String literals in templates with automatic escaping are considered
+unsafe because native Python strings are not safe.
 
 .. _list-of-control-structures:
 

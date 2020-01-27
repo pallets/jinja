@@ -244,8 +244,7 @@ def modifies_known_mutable(obj, attr):
     >>> modifies_known_mutable([], "index")
     False
 
-    If called with an unsupported object (such as unicode) `False` is
-    returned.
+    If called with an unsupported object, ``False`` is returned.
 
     >>> modifies_known_mutable("foo", "upper")
     False

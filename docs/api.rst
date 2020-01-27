@@ -60,63 +60,6 @@ a lot easier to use it also enables template inheritance.
    configure autoescaping now instead of relying on the default.
 
 
-Unicode
--------
-
-Jinja is using Unicode internally which means that you have to pass Unicode
-objects to the render function or bytestrings that only consist of ASCII
-characters.  Additionally newlines are normalized to one end of line
-sequence which is per default UNIX style (``\n``).
-
-Python 2.x supports two ways of representing string objects.  One is the
-`str` type and the other is the `unicode` type, both of which extend a type
-called `basestring`.  Unfortunately the default is `str` which should not
-be used to store text based information unless only ASCII characters are
-used.  With Python 2.6 it is possible to make `unicode` the default on a per
-module level and with Python 3 it will be the default.
-
-To explicitly use a Unicode string you have to prefix the string literal
-with a `u`: ``u'Hänsel und Gretel sagen Hallo'``.  That way Python will
-store the string as Unicode by decoding the string with the character
-encoding from the current Python module.  If no encoding is specified this
-defaults to 'ASCII' which means that you can't use any non ASCII identifier.
-
-To set a better module encoding add the following comment to the first or
-second line of the Python module using the Unicode literal::
-
-    # -*- coding: utf-8 -*-
-
-We recommend utf-8 as Encoding for Python modules and templates as it's
-possible to represent every Unicode character in utf-8 and because it's
-backwards compatible to ASCII.  For Jinja the default encoding of templates
-is assumed to be utf-8.
-
-It is not possible to use Jinja to process non-Unicode data.  The reason
-for this is that Jinja uses Unicode already on the language level.  For
-example Jinja treats the non-breaking space as valid whitespace inside
-expressions which requires knowledge of the encoding or operating on an
-Unicode string.
-
-For more details about Unicode in Python have a look at the excellent
-`Unicode documentation`_.
-
-Another important thing is how Jinja is handling string literals in
-templates.  A naive implementation would be using Unicode strings for
-all string literals but it turned out in the past that this is problematic
-as some libraries are typechecking against `str` explicitly.  For example
-`datetime.strftime` does not accept Unicode arguments.  To not break it
-completely Jinja is returning `str` for strings that fit into ASCII and
-for everything else `unicode`:
-
->>> m = Template(u"{% set a, b = 'foo', 'föö' %}").module
->>> m.a
-'foo'
->>> m.b
-u'f\xf6\xf6'
-
-
-.. _Unicode documentation: https://docs.python.org/3/howto/unicode.html
-
 High Level API
 --------------
 
@@ -301,12 +244,12 @@ Notes on Identifiers
 --------------------
 
 Jinja uses Python naming rules. Valid identifiers can be any combination
-of Unicode characters accepted by Python.
+of characters accepted by Python.
 
 Filters and tests are looked up in separate namespaces and have slightly
 modified identifier syntax.  Filters and tests may contain dots to group
 filters and tests by topic.  For example it's perfectly valid to add a
-function into the filter dict and call it `to.unicode`.  The regular
+function into the filter dict and call it `to.str`.  The regular
 expression for filter and test identifiers is
 ``[a-zA-Z_][a-zA-Z0-9_]*(\.[a-zA-Z_][a-zA-Z0-9_]*)*```.
 
@@ -328,8 +271,8 @@ disallows all operations beside testing if it's an undefined object.
 
     .. attribute:: _undefined_hint
 
-        Either `None` or an unicode string with the error message for
-        the undefined object.
+        Either `None` or a string with the error message for the
+        undefined object.
 
     .. attribute:: _undefined_obj
 
@@ -367,27 +310,32 @@ Undefined objects are created by calling :attr:`undefined`.
 
 .. admonition:: Implementation
 
-    :class:`Undefined` objects are implemented by overriding the special
-    `__underscore__` methods.  For example the default :class:`Undefined`
-    class implements `__unicode__` in a way that it returns an empty
-    string, however `__int__` and others still fail with an exception.  To
-    allow conversion to int by returning ``0`` you can implement your own::
+    :class:`Undefined` is implemented by overriding the special
+    ``__underscore__`` methods. For example the default
+    :class:`Undefined` class implements ``__str__`` to returns an empty
+    string, while ``__int__`` and others fail with an exception. To
+    allow conversion to int by returning ``0`` you can implement your
+    own subclass.
+
+    .. code-block:: python
 
         class NullUndefined(Undefined):
             def __int__(self):
                 return 0
+
             def __float__(self):
                 return 0.0
 
-    To disallow a method, just override it and raise
-    :attr:`~Undefined._undefined_exception`.  Because this is a very common
-    idiom in undefined objects there is the helper method
-    :meth:`~Undefined._fail_with_undefined_error` that does the error raising
-    automatically.  Here a class that works like the regular :class:`Undefined`
-    but chokes on iteration::
+    To disallow a method, override it and raise
+    :attr:`~Undefined._undefined_exception`.  Because this is very
+    common there is the helper method
+    :meth:`~Undefined._fail_with_undefined_error` that raises the error
+    with the correct information. Here's a class that works like the
+    regular :class:`Undefined` but fails on iteration::
 
         class NonIterableUndefined(Undefined):
-            __iter__ = Undefined._fail_with_undefined_error
+            def __iter__(self):
+                self._fail_with_undefined_error()
 
 
 The Context
@@ -575,16 +523,6 @@ Example::
 
     env.policies['urlize.rel'] = 'nofollow noopener'
 
-``compiler.ascii_str``:
-    This boolean controls on Python 2 if Jinja should store ASCII only
-    literals as bytestring instead of unicode strings.  This used to be
-    always enabled for Jinja versions below 2.9 and now can be changed.
-    Traditionally it was done this way since some APIs in Python 2 failed
-    badly for unicode strings (for instance the datetime strftime API).
-    Now however sometimes the inverse is true (for instance str.format).
-    If this is set to False then all strings are stored as unicode
-    internally.
-
 ``truncate.leeway``:
     Configures the leeway default for the `truncate` filter.  Leeway as
     introduced in 2.9 but to restore compatibility with older templates
@@ -676,24 +614,20 @@ Exceptions
 
     .. attribute:: message
 
-        The error message as utf-8 bytestring.
+        The error message.
 
     .. attribute:: lineno
 
-        The line number where the error occurred
+        The line number where the error occurred.
 
     .. attribute:: name
 
-        The load name for the template as unicode string.
+        The load name for the template.
 
     .. attribute:: filename
 
-        The filename that loaded the template as bytestring in the encoding
-        of the file system (most likely utf-8 or mbcs on Windows systems).
-
-    The reason why the filename and error message are bytestrings and not
-    unicode strings is that Python 2.x is not using unicode for exceptions
-    and tracebacks as well as the compiler.  This will change with Python 3.
+        The filename that loaded the template in the encoding of the
+        file system (most likely utf-8, or mbcs on Windows systems).
 
 .. autoexception:: jinja2.TemplateRuntimeError
 
@@ -894,7 +828,7 @@ don't recommend using any of those.
     that has to be created by :meth:`new_context` of the same template or
     a compatible template.  This render function is generated by the
     compiler from the template code and returns a generator that yields
-    unicode strings.
+    strings.
 
     If an exception in the template code happens the template engine will
     not rewrite the exception but pass through the original one.  As a

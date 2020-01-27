@@ -77,9 +77,9 @@ class BaseLoader(object):
         `TemplateNotFound` error if it can't locate the template.
 
         The source part of the returned tuple must be the source of the
-        template as unicode string or a ASCII bytestring.  The filename should
-        be the name of the file on the filesystem if it was loaded from there,
-        otherwise `None`.  The filename is used by python for the tracebacks
+        template as a string. The filename should be the name of the
+        file on the filesystem if it was loaded from there, otherwise
+        ``None``. The filename is used by Python for the tracebacks
         if no loader extension is used.
 
         The last item in the tuple is the `uptodate` function.  If auto
@@ -357,8 +357,8 @@ class PackageLoader(BaseLoader):
 
 
 class DictLoader(BaseLoader):
-    """Loads a template from a python dict.  It's passed a dict of unicode
-    strings bound to template names.  This loader is useful for unittesting:
+    """Loads a template from a Python dict mapping template names to
+    template source.  This loader is useful for unittesting:
 
     >>> loader = DictLoader({'index.html': 'source here'})
 
@@ -381,7 +381,7 @@ class DictLoader(BaseLoader):
 class FunctionLoader(BaseLoader):
     """A loader that is passed a function which does the loading.  The
     function receives the name of the template and has to return either
-    an unicode string with the template source, a tuple in the form ``(source,
+    a string with the template source, a tuple in the form ``(source,
     filename, uptodatefunc)`` or `None` if the template does not exist.
 
     >>> def load_template(name):

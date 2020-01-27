@@ -607,7 +607,9 @@ class Lexer(object):
         }
 
     def _normalize_newlines(self, value):
-        """Called for strings and template data to normalize it to unicode."""
+        """Replace all newlines with the configured sequence in strings
+        and template data.
+        """
         return newline_re.sub(self.newline_sequence, value)
 
     def tokenize(self, source, name=None, filename=None, state=None):

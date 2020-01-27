@@ -788,8 +788,8 @@ class Slice(Expr):
 
 
 class Concat(Expr):
-    """Concatenates the list of expressions provided after converting them to
-    unicode.
+    """Concatenates the list of expressions provided after converting
+    them to strings.
     """
 
     fields = ("nodes",)

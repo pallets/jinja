@@ -125,19 +125,18 @@ instead that one can assign to a variable by using set::
 
     {% set comments = get_latest_comments() %}
 
-My tracebacks look weird.  What's happening?
---------------------------------------------
+My tracebacks look weird. What's happening?
+-------------------------------------------
 
-If the debugsupport module is not compiled and you are using a Python
-installation without ctypes (Python 2.4 without ctypes, Jython or Google's
-AppEngine) Jinja is unable to provide correct debugging information and
-the traceback may be incomplete.  There is currently no good workaround
-for Jython or the AppEngine as ctypes is unavailable there and it's not
-possible to use the debugsupport extension.
+Jinja can rewrite tracebacks so they show the template lines numbers and
+source rather than the underlying compiled code, but this requires
+special Python support. CPython <3.7 requires ``ctypes``, and PyPy
+requires transparent proxy support.
 
-If you are working in the Google AppEngine development server you can
-whitelist the ctypes module to restore the tracebacks.  This however won't
-work in production environments::
+If you are using Google App Engine, ``ctypes`` is not available. You can
+make it available in development, but not in production.
+
+.. code-block:: python
 
     import os
     if os.environ.get('SERVER_SOFTWARE', '').startswith('Dev'):
@@ -146,25 +145,6 @@ work in production environments::
 
 Credit for this snippet goes to `Thomas Johansson
 <https://stackoverflow.com/questions/3086091/debug-jinja2-in-google-app-engine/3694434#3694434>`_
-
-Why is there no Python 2.3/2.4/2.5/2.6/3.1/3.2/3.3 support?
------------------------------------------------------------
-
-Python 2.3 is missing a lot of features that are used heavily in Jinja.  This
-decision was made as with the upcoming Python 2.6 and 3.0 versions it becomes
-harder to maintain the code for older Python versions.  If you really need
-Python 2.3 support you either have to use Jinja 1 or other templating
-engines that still support 2.3.
-
-Python 2.4/2.5/3.1/3.2 support was removed when we switched to supporting
-Python 2 and 3 by the same sourcecode (without using 2to3). It was required to
-drop support because only Python 2.6/2.7 and >=3.3 support byte and unicode
-literals in a way compatible to each other version. If you really need support
-for older Python 2 (or 3) versions, you can just use Jinja 2.6.
-
-Python 2.6/3.3 support was dropped because it got dropped in various upstream
-projects (such as wheel or pytest), which would make it difficult to continue
-supporting it. Jinja 2.10 was the last version supporting Python 2.6/3.3.
 
 My Macros are overridden by something
 -------------------------------------

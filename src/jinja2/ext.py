@@ -538,8 +538,8 @@ def extract_from_ast(node, gettext_functions=GETTEXT_FUNCTIONS, babel_style=True
     * ``lineno`` is the number of the line on which the string was found,
     * ``function`` is the name of the ``gettext`` function used (if the
       string was extracted from embedded Python code), and
-    *  ``message`` is the string itself (a ``unicode`` object, or a tuple
-       of ``unicode`` objects for functions with multiple string arguments).
+    *   ``message`` is the string, or a tuple of strings for functions
+         with multiple string arguments.
 
     This extraction function operates on the AST and is because of that unable
     to extract any comments.  For comment support you have to use the babel

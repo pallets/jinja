@@ -284,7 +284,7 @@ class MemcachedBytecodeCache(BytecodeCache):
     -   `python-memcached <https://pypi.org/project/python-memcached/>`_
 
     (Unfortunately the django cache interface is not compatible because it
-    does not support storing binary data, only unicode.  You can however pass
+    does not support storing binary data, only text. You can however pass
     the underlying cache client to the bytecode cache which is available
     as `django.core.cache.cache._client`.)
 

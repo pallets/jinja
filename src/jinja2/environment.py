@@ -1081,7 +1081,7 @@ class Template(object):
             template.render(knights='that say nih')
             template.render({'knights': 'that say nih'})
 
-        This will return the rendered template as unicode string.
+        This will return the rendered template as a string.
         """
         vars = dict(*args, **kwargs)
         try:
@@ -1113,7 +1113,7 @@ class Template(object):
         """For very large templates it can be useful to not render the whole
         template at once but evaluate each statement after another and yield
         piece for piece.  This method basically does exactly that and returns
-        a generator that yields one item after another as unicode strings.
+        a generator that yields one item after another as strings.
 
         It accepts the same arguments as :meth:`render`.
         """
@@ -1223,7 +1223,7 @@ class Template(object):
 class TemplateModule(object):
     """Represents an imported template.  All the exported names of the
     template are available as attributes on this object.  Additionally
-    converting it into an unicode- or bytestrings renders the contents.
+    converting it into a string renders the contents.
     """
 
     def __init__(self, template, context, body_stream=None):
@@ -1278,10 +1278,10 @@ class TemplateStream(object):
     """A template stream works pretty much like an ordinary python generator
     but it can buffer multiple items to reduce the number of total iterations.
     Per default the output is unbuffered which means that for every unbuffered
-    instruction in the template one unicode string is yielded.
+    instruction in the template one string is yielded.
 
     If buffering is enabled with a buffer size of 5, five items are combined
-    into a new unicode string.  This is mainly useful if you are streaming
+    into a new string.  This is mainly useful if you are streaming
     big templates to a client via WSGI which flushes after each iteration.
     """
 
@@ -1291,7 +1291,7 @@ class TemplateStream(object):
 
     def dump(self, fp, encoding=None, errors="strict"):
         """Dump the complete stream into a file or file-like object.
-        Per default unicode strings are written, if you want to encode
+        Per default strings are written, if you want to encode
         before writing specify an `encoding`.
 
         Example usage::

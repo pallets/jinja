@@ -60,7 +60,7 @@ def identity(x):
 
 
 def markup_join(seq):
-    """Concatenation that escapes if necessary and converts to unicode."""
+    """Concatenation that escapes if necessary and converts to string."""
     buf = []
     iterator = imap(soft_unicode, seq)
     for arg in iterator:
@@ -71,7 +71,7 @@ def markup_join(seq):
 
 
 def unicode_join(seq):
-    """Simple args to unicode conversion and concatenation."""
+    """Simple args to string conversion and concatenation."""
     return concat(imap(text_type, seq))
 
 
