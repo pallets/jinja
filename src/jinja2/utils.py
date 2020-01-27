@@ -543,7 +543,7 @@ def select_autoescape(
     If you want to enable it for all templates created from strings or
     for all templates with `.html` and `.xml` extensions::
 
-        from jinja import Environment, select_autoescape
+        from jinja2 import Environment, select_autoescape
         env = Environment(autoescape=select_autoescape(
             enabled_extensions=('html', 'xml'),
             default_for_string=True,
@@ -552,7 +552,7 @@ def select_autoescape(
     Example configuration to turn it on at all times except if the template
     ends with `.txt`::
 
-        from jinja import Environment, select_autoescape
+        from jinja2 import Environment, select_autoescape
         env = Environment(autoescape=select_autoescape(
             disabled_extensions=('txt',),
             default_for_string=True,
@@ -719,7 +719,7 @@ def soft_unicode(s):
     from markupsafe import soft_unicode
 
     warnings.warn(
-        "'jinja.utils.soft_unicode' will be removed in version 3.0."
+        "'jinja2.utils.soft_unicode' will be removed in version 3.0."
         " Use 'markupsafe.soft_unicode' instead.",
         DeprecationWarning,
         stacklevel=2,

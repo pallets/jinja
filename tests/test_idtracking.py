@@ -1,5 +1,5 @@
-from jinja import nodes
-from jinja.idtracking import symbols_for_node
+from jinja2 import nodes
+from jinja2.idtracking import symbols_for_node
 
 
 def test_basics():

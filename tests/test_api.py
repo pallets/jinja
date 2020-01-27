@@ -5,31 +5,31 @@ import tempfile
 
 import pytest
 
-from jinja import ChainableUndefined
-from jinja import DebugUndefined
-from jinja import DictLoader
-from jinja import Environment
-from jinja import is_undefined
-from jinja import make_logging_undefined
-from jinja import meta
-from jinja import StrictUndefined
-from jinja import Template
-from jinja import TemplatesNotFound
-from jinja import Undefined
-from jinja import UndefinedError
-from jinja.compiler import CodeGenerator
-from jinja.runtime import Context
-from jinja.utils import contextfunction
-from jinja.utils import Cycler
-from jinja.utils import environmentfunction
-from jinja.utils import evalcontextfunction
+from jinja2 import ChainableUndefined
+from jinja2 import DebugUndefined
+from jinja2 import DictLoader
+from jinja2 import Environment
+from jinja2 import is_undefined
+from jinja2 import make_logging_undefined
+from jinja2 import meta
+from jinja2 import StrictUndefined
+from jinja2 import Template
+from jinja2 import TemplatesNotFound
+from jinja2 import Undefined
+from jinja2 import UndefinedError
+from jinja2.compiler import CodeGenerator
+from jinja2.runtime import Context
+from jinja2.utils import contextfunction
+from jinja2.utils import Cycler
+from jinja2.utils import environmentfunction
+from jinja2.utils import evalcontextfunction
 
 
 @pytest.mark.api
 @pytest.mark.extended
 class TestExtendedAPI(object):
     def test_item_and_attribute(self, env):
-        from jinja.sandbox import SandboxedEnvironment
+        from jinja2.sandbox import SandboxedEnvironment
 
         for env in Environment(), SandboxedEnvironment():
             # the |list is necessary for python3
@@ -154,7 +154,7 @@ class TestExtendedAPI(object):
         assert t.render(foo="<foo>") == "<foo>"
 
     def test_sandbox_max_range(self, env):
-        from jinja.sandbox import SandboxedEnvironment, MAX_RANGE
+        from jinja2.sandbox import SandboxedEnvironment, MAX_RANGE
 
         env = SandboxedEnvironment()
         t = env.from_string("{% for item in range(total) %}{{ item }}{% endfor %}")

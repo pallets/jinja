@@ -1,7 +1,7 @@
 from __future__ import print_function
 
-from jinja import Environment
-from jinja.loaders import DictLoader
+from jinja2 import Environment
+from jinja2.loaders import DictLoader
 
 env = Environment(
     loader=DictLoader(

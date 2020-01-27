@@ -123,7 +123,7 @@ class Parser(object):
         return False
 
     def free_identifier(self, lineno=None):
-        """Return a new free identifier as :class:`~jinja.nodes.InternalName`."""
+        """Return a new free identifier as :class:`~jinja2.nodes.InternalName`."""
         self._last_identifier += 1
         rv = object.__new__(nodes.InternalName)
         nodes.Node.__init__(rv, "fi%d" % self._last_identifier, lineno=lineno)
@@ -607,7 +607,7 @@ class Parser(object):
         explicit_parentheses=False,
     ):
         """Works like `parse_expression` but if multiple expressions are
-        delimited by a comma a :class:`~jinja.nodes.Tuple` node is created.
+        delimited by a comma a :class:`~jinja2.nodes.Tuple` node is created.
         This method could also return a regular expression instead of a tuple
         if no commas where found.
 

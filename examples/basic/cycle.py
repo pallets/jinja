@@ -1,6 +1,6 @@
 from __future__ import print_function
 
-from jinja import Environment
+from jinja2 import Environment
 
 env = Environment(
     line_statement_prefix="#", variable_start_string="${", variable_end_string="}"

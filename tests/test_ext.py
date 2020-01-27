@@ -3,17 +3,17 @@ import re
 
 import pytest
 
-from jinja import contextfunction
-from jinja import DictLoader
-from jinja import Environment
-from jinja import nodes
-from jinja._compat import BytesIO
-from jinja._compat import itervalues
-from jinja._compat import text_type
-from jinja.exceptions import TemplateAssertionError
-from jinja.ext import Extension
-from jinja.lexer import count_newlines
-from jinja.lexer import Token
+from jinja2 import contextfunction
+from jinja2 import DictLoader
+from jinja2 import Environment
+from jinja2 import nodes
+from jinja2._compat import BytesIO
+from jinja2._compat import itervalues
+from jinja2._compat import text_type
+from jinja2.exceptions import TemplateAssertionError
+from jinja2.ext import Extension
+from jinja2.lexer import count_newlines
+from jinja2.lexer import Token
 
 importable_object = 23
 
@@ -80,16 +80,18 @@ def ngettext(context, s, p, n):
     return languages.get(language, {}).get(s, s)
 
 
-i18n_env = Environment(loader=DictLoader(i18n_templates), extensions=["jinja.ext.i18n"])
+i18n_env = Environment(
+    loader=DictLoader(i18n_templates), extensions=["jinja2.ext.i18n"]
+)
 i18n_env.globals.update({"_": gettext, "gettext": gettext, "ngettext": ngettext})
-i18n_env_trimmed = Environment(extensions=["jinja.ext.i18n"])
+i18n_env_trimmed = Environment(extensions=["jinja2.ext.i18n"])
 i18n_env_trimmed.policies["ext.i18n.trimmed"] = True
 i18n_env_trimmed.globals.update(
     {"_": gettext, "gettext": gettext, "ngettext": ngettext}
 )
 
 newstyle_i18n_env = Environment(
-    loader=DictLoader(newstyle_i18n_templates), extensions=["jinja.ext.i18n"]
+    loader=DictLoader(newstyle_i18n_templates), extensions=["jinja2.ext.i18n"]
 )
 newstyle_i18n_env.install_gettext_callables(gettext, ngettext, newstyle=True)
 
@@ -169,12 +171,12 @@ class StreamFilterExtension(Extension):
 class TestExtensions(object):
     def test_extend_late(self):
         env = Environment()
-        env.add_extension("jinja.ext.autoescape")
+        env.add_extension("jinja2.ext.autoescape")
         t = env.from_string('{% autoescape true %}{{ "<test>" }}{% endautoescape %}')
         assert t.render() == "&lt;test&gt;"
 
     def test_loop_controls(self):
-        env = Environment(extensions=["jinja.ext.loopcontrols"])
+        env = Environment(extensions=["jinja2.ext.loopcontrols"])
 
         tmpl = env.from_string(
             """
@@ -195,7 +197,7 @@ class TestExtensions(object):
         assert tmpl.render() == "12"
 
     def test_do(self):
-        env = Environment(extensions=["jinja.ext.do"])
+        env = Environment(extensions=["jinja2.ext.do"])
         tmpl = env.from_string(
             """
             {%- set items = [] %}
@@ -257,7 +259,7 @@ class TestExtensions(object):
         assert ext[1].__class__ is T2
 
     def test_debug(self):
-        env = Environment(extensions=["jinja.ext.debug"])
+        env = Environment(extensions=["jinja2.ext.debug"])
         t = env.from_string("Hello\n{% debug %}\nGoodbye")
         out = t.render()
 
@@ -337,7 +339,7 @@ class TestInternationalization(object):
         assert tmpl.render() == "  hello\n  world  "
 
     def test_extract(self):
-        from jinja.ext import babel_extract
+        from jinja2.ext import babel_extract
 
         source = BytesIO(
             """
@@ -355,7 +357,7 @@ class TestInternationalization(object):
         ]
 
     def test_extract_trimmed(self):
-        from jinja.ext import babel_extract
+        from jinja2.ext import babel_extract
 
         source = BytesIO(
             """
@@ -374,7 +376,7 @@ class TestInternationalization(object):
         ]
 
     def test_extract_trimmed_option(self):
-        from jinja.ext import babel_extract
+        from jinja2.ext import babel_extract
 
         source = BytesIO(
             """
@@ -394,7 +396,7 @@ class TestInternationalization(object):
         ]
 
     def test_comment_extract(self):
-        from jinja.ext import babel_extract
+        from jinja2.ext import babel_extract
 
         source = BytesIO(
             """
@@ -483,7 +485,7 @@ class TestNewstyleInternationalization(object):
         assert tmpl.render(LANGUAGE="de", apples=5) == u"5 Äpfel"
 
     def test_autoescape_support(self):
-        env = Environment(extensions=["jinja.ext.autoescape", "jinja.ext.i18n"])
+        env = Environment(extensions=["jinja2.ext.autoescape", "jinja2.ext.i18n"])
         env.install_gettext_callables(
             lambda x: u"<strong>Wert: %(name)s</strong>",
             lambda s, p, n: s,
@@ -497,7 +499,7 @@ class TestNewstyleInternationalization(object):
         assert t.render(ae=False) == "<strong>Wert: <test></strong>"
 
     def test_autoescape_macros(self):
-        env = Environment(autoescape=False, extensions=["jinja.ext.autoescape"])
+        env = Environment(autoescape=False, extensions=["jinja2.ext.autoescape"])
         template = (
             "{% macro m() %}<html>{% endmacro %}"
             "{% autoescape true %}{{ m() }}{% endautoescape %}"
@@ -545,7 +547,7 @@ class TestNewstyleInternationalization(object):
 @pytest.mark.ext
 class TestAutoEscape(object):
     def test_scoped_setting(self):
-        env = Environment(extensions=["jinja.ext.autoescape"], autoescape=True)
+        env = Environment(extensions=["jinja2.ext.autoescape"], autoescape=True)
         tmpl = env.from_string(
             """
             {{ "<HelloWorld>" }}
@@ -561,7 +563,7 @@ class TestAutoEscape(object):
             u"&lt;HelloWorld&gt;",
         ]
 
-        env = Environment(extensions=["jinja.ext.autoescape"], autoescape=False)
+        env = Environment(extensions=["jinja2.ext.autoescape"], autoescape=False)
         tmpl = env.from_string(
             """
             {{ "<HelloWorld>" }}
@@ -578,7 +580,7 @@ class TestAutoEscape(object):
         ]
 
     def test_nonvolatile(self):
-        env = Environment(extensions=["jinja.ext.autoescape"], autoescape=True)
+        env = Environment(extensions=["jinja2.ext.autoescape"], autoescape=True)
         tmpl = env.from_string('{{ {"foo": "<test>"}|xmlattr|escape }}')
         assert tmpl.render() == ' foo="&lt;test&gt;"'
         tmpl = env.from_string(
@@ -588,7 +590,7 @@ class TestAutoEscape(object):
         assert tmpl.render() == " foo=&#34;&amp;lt;test&amp;gt;&#34;"
 
     def test_volatile(self):
-        env = Environment(extensions=["jinja.ext.autoescape"], autoescape=True)
+        env = Environment(extensions=["jinja2.ext.autoescape"], autoescape=True)
         tmpl = env.from_string(
             '{% autoescape foo %}{{ {"foo": "<test>"}'
             "|xmlattr|escape }}{% endautoescape %}"
@@ -597,7 +599,7 @@ class TestAutoEscape(object):
         assert tmpl.render(foo=True) == ' foo="&lt;test&gt;"'
 
     def test_scoping(self):
-        env = Environment(extensions=["jinja.ext.autoescape"])
+        env = Environment(extensions=["jinja2.ext.autoescape"])
         tmpl = env.from_string(
             '{% autoescape true %}{% set x = "<x>" %}{{ x }}'
             '{% endautoescape %}{{ x }}{{ "<y>" }}'
@@ -605,7 +607,7 @@ class TestAutoEscape(object):
         assert tmpl.render(x=1) == "&lt;x&gt;1<y>"
 
     def test_volatile_scoping(self):
-        env = Environment(extensions=["jinja.ext.autoescape"])
+        env = Environment(extensions=["jinja2.ext.autoescape"])
         tmplsource = """
         {% autoescape val %}
             {% macro foo(x) %}
@@ -621,11 +623,11 @@ class TestAutoEscape(object):
 
         # looking at the source we should see <testing> there in raw
         # (and then escaped as well)
-        env = Environment(extensions=["jinja.ext.autoescape"])
+        env = Environment(extensions=["jinja2.ext.autoescape"])
         pysource = env.compile(tmplsource, raw=True)
         assert "<testing>\\n" in pysource
 
-        env = Environment(extensions=["jinja.ext.autoescape"], autoescape=True)
+        env = Environment(extensions=["jinja2.ext.autoescape"], autoescape=True)
         pysource = env.compile(tmplsource, raw=True)
         assert "&lt;testing&gt;\\n" in pysource
 

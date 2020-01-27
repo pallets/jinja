@@ -1,5 +1,5 @@
-from jinja import nodes
-from jinja.ext import Extension
+from jinja2 import nodes
+from jinja2.ext import Extension
 
 
 class FragmentCacheExtension(Extension):

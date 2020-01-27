@@ -1425,7 +1425,7 @@ is a bit contrived in the context of rendering a template):
 List of Builtin Filters
 -----------------------
 
-.. jinja:filters:: jinja.defaults.DEFAULT_FILTERS
+.. jinja:filters:: jinja2.defaults.DEFAULT_FILTERS
 
 
 .. _builtin-tests:
@@ -1433,7 +1433,7 @@ List of Builtin Filters
 List of Builtin Tests
 ---------------------
 
-.. jinja:tests:: jinja.defaults.DEFAULT_TESTS
+.. jinja:tests:: jinja2.defaults.DEFAULT_TESTS
 
 
 .. _builtin-globals:
@@ -1731,9 +1731,9 @@ without setting up a debugger.
 
 .. code-block:: text
 
-    {'context': {'cycler': <class 'jinja.utils.Cycler'>,
+    {'context': {'cycler': <class 'jinja2.utils.Cycler'>,
                  ...,
-                 'namespace': <class 'jinja.utils.Namespace'>},
+                 'namespace': <class 'jinja2.utils.Namespace'>},
      'filters': ['abs', 'attr', 'batch', 'capitalize', 'center', 'count', 'd',
                  ..., 'urlencode', 'urlize', 'wordcount', 'wordwrap', 'xmlattr'],
      'tests': ['!=', '<', '<=', '==', '>', '>=', 'callable', 'defined',
