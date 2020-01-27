@@ -1,5 +1,15 @@
 .. currentmodule:: jinja2
 
+Version 3.0.0
+-------------
+
+Unreleased
+
+-   Drop support for Python 2.7 and 3.5.
+-   Bump MarkupSafe dependency to >=1.1.
+-   Bump Babel optional dependency to >=2.1.
+
+
 Version 2.11.0
 --------------
 
