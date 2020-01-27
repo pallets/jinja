@@ -3,9 +3,10 @@
 Version 2.11.0
 --------------
 
-Unreleased
+Released 2020-01-27
 
--   Python 2.6, 3.3, and 3.4 are not supported anymore.
+-   Drop support for Python 2.6, 3.3, and 3.4. This will be the last
+    version to support Python 2.7 and 3.5.
 -   Added a new ``ChainableUndefined`` class to support getitem and
     getattr on an undefined object. :issue:`977`
 -   Allow ``{%+`` syntax (with NOP behavior) when ``lstrip_blocks`` is
@@ -39,7 +40,7 @@ Unreleased
     in a ``{{ 'foo' if bar }}`` expression, regardless of the
     environment's ``undefined`` class. Omitting the ``else`` clause is a
     valid shortcut and should not raise an error when using
-    :class:`StrictUndefined`). :issue:`710`, :pr:`1079`
+    :class:`StrictUndefined`. :issue:`710`, :pr:`1079`
 -   Fix behavior of ``loop`` control variables such as ``length`` and
     ``revindex0`` when looping over a generator. :issue:`459, 751, 794`,
     :pr:`993`
@@ -77,8 +78,8 @@ Unreleased
     lines. :issue:`175`
 -   Add ``break_on_hyphens`` parameter to ``|wordwrap`` filter.
     :issue:`550`
--   Use :func:`callable` to inject context at runtime for compatibility
-    with Cython compiled functions. :pr:`1108`
+-   Cython compiled functions decorated as context functions will be
+    passed the context. :pr:`1108`
 -   When chained comparisons of constants are evaluated at compile time,
     the result follows Python's behavior of returning ``False`` if any
     comparison returns ``False``, rather than only the last one.
