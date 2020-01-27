@@ -23,17 +23,14 @@ from ._compat import pickle
 from ._compat import text_type
 from .utils import open_if_exists
 
-bc_version = 3
-
-# magic version used to only change with new jinja versions.  With 2.6
-# we change this to also take Python version changes into account.  The
-# reason for this is that Python tends to segfault if fed earlier bytecode
-# versions because someone thought it would be a good idea to reuse opcodes
-# or make Python incompatible with earlier versions.
+bc_version = 4
+# Magic bytes to identify Jinja bytecode cache files. Contains the
+# Python major and minor version to avoid loading incompatible bytecode
+# if a project upgrades its Python version.
 bc_magic = (
-    "j2".encode("ascii")
+    b"j2"
     + pickle.dumps(bc_version, 2)
-    + pickle.dumps((sys.version_info[0] << 24) | sys.version_info[1])
+    + pickle.dumps((sys.version_info[0] << 24) | sys.version_info[1], 2)
 )
 
 
