@@ -1,11 +1,11 @@
 # -*- coding: utf-8 -*-
 import pytest
 
-from jinja import DictLoader
-from jinja import Environment
-from jinja import TemplateRuntimeError
-from jinja import TemplateSyntaxError
-from jinja import UndefinedError
+from jinja2 import DictLoader
+from jinja2 import Environment
+from jinja2 import TemplateRuntimeError
+from jinja2 import TemplateSyntaxError
+from jinja2 import UndefinedError
 
 
 @pytest.fixture

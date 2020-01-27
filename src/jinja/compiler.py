@@ -715,11 +715,11 @@ class CodeGenerator(NodeVisitor):
         from .runtime import __all__ as exported
 
         self.writeline("from __future__ import %s" % ", ".join(code_features))
-        self.writeline("from jinja.runtime import " + ", ".join(exported))
+        self.writeline("from jinja2.runtime import " + ", ".join(exported))
 
         if self.environment.is_async:
             self.writeline(
-                "from jinja.asyncsupport import auto_await, "
+                "from jinja2.asyncsupport import auto_await, "
                 "auto_aiter, AsyncLoopContext"
             )
 

@@ -32,7 +32,7 @@ def find_undeclared_variables(ast):
     variables will be used depending on the path the execution takes at
     runtime, all variables are returned.
 
-    >>> from jinja import Environment, meta
+    >>> from jinja2 import Environment, meta
     >>> env = Environment()
     >>> ast = env.parse('{% set foo = 42 %}{{ bar + foo }}')
     >>> meta.find_undeclared_variables(ast) == set(['bar'])
@@ -56,7 +56,7 @@ def find_referenced_templates(ast):
     imports.  If dynamic inheritance or inclusion is used, `None` will be
     yielded.
 
-    >>> from jinja import Environment, meta
+    >>> from jinja2 import Environment, meta
     >>> env = Environment()
     >>> ast = env.parse('{% extends "layout.html" %}{% include helper %}')
     >>> list(meta.find_referenced_templates(ast))

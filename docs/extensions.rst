@@ -14,10 +14,10 @@ Adding Extensions
 Extensions are added to the Jinja environment at creation time.  Once the
 environment is created additional extensions cannot be added.  To add an
 extension pass a list of extension classes or import paths to the
-``extensions`` parameter of the :class:`~jinja.Environment` constructor.  The following
+``extensions`` parameter of the :class:`~jinja2.Environment` constructor.  The following
 example creates a Jinja environment with the i18n extension loaded::
 
-    jinja_env = Environment(extensions=['jinja.ext.i18n'])
+    jinja_env = Environment(extensions=['jinja2.ext.i18n'])
 
 
 .. _i18n-extension:
@@ -25,7 +25,7 @@ example creates a Jinja environment with the i18n extension loaded::
 i18n Extension
 --------------
 
-**Import name:** ``jinja.ext.i18n``
+**Import name:** ``jinja2.ext.i18n``
 
 The i18n extension can be used in combination with `gettext`_ or
 `Babel`_.  When it's enabled, Jinja provides a ``trans`` statement that
@@ -41,7 +41,7 @@ Environment Methods
 After enabling the extension, the environment provides the following
 additional methods:
 
-.. method:: jinja.Environment.install_gettext_translations(translations, newstyle=False)
+.. method:: jinja2.Environment.install_gettext_translations(translations, newstyle=False)
 
     Installs a translation globally for the environment. The
     ``translations`` object must implement ``gettext`` and ``ngettext``
@@ -51,7 +51,7 @@ additional methods:
 
     .. versionchanged:: 2.5 Added new-style gettext support.
 
-.. method:: jinja.Environment.install_null_translations(newstyle=False)
+.. method:: jinja2.Environment.install_null_translations(newstyle=False)
 
     Install no-op gettext functions. This is useful if you want to
     prepare the application for internationalization but don't want to
@@ -59,7 +59,7 @@ additional methods:
 
     .. versionchanged:: 2.5 Added new-style gettext support.
 
-.. method:: jinja.Environment.install_gettext_callables(gettext, ngettext, newstyle=False)
+.. method:: jinja2.Environment.install_gettext_callables(gettext, ngettext, newstyle=False)
 
     Install the given ``gettext`` and ``ngettext`` callables into the
     environment. They should behave exactly like
@@ -71,11 +71,11 @@ additional methods:
 
     .. versionadded:: 2.5 Added new-style gettext support.
 
-.. method:: jinja.Environment.uninstall_gettext_translations()
+.. method:: jinja2.Environment.uninstall_gettext_translations()
 
     Uninstall the environment's globally installed translation.
 
-.. method:: jinja.Environment.extract_translations(source)
+.. method:: jinja2.Environment.extract_translations(source)
 
     Extract localizable strings from the given template node or source.
 
@@ -100,7 +100,7 @@ installed when the environment is created.
 .. code-block:: python
 
     translations = get_gettext_translations()
-    env = Environment(extensions=["jinja.ext.i18n"])
+    env = Environment(extensions=["jinja2.ext.i18n"])
     env.install_gettext_translations(translations)
 
 The ``get_gettext_translations`` function would return the translator
@@ -182,7 +182,7 @@ The advantages of newstyle gettext are:
 Expression Statement
 --------------------
 
-**Import name:** ``jinja.ext.do``
+**Import name:** ``jinja2.ext.do``
 
 The "do" aka expression-statement extension adds a simple ``do`` tag to the
 template engine that works like a variable expression but ignores the
@@ -193,7 +193,7 @@ return value.
 Loop Controls
 -------------
 
-**Import name:** ``jinja.ext.loopcontrols``
+**Import name:** ``jinja2.ext.loopcontrols``
 
 This extension adds support for ``break`` and ``continue`` in loops.  After
 enabling, Jinja provides those two keywords which work exactly like in
@@ -204,7 +204,7 @@ Python.
 With Statement
 --------------
 
-**Import name:** ``jinja.ext.with_``
+**Import name:** ``jinja2.ext.with_``
 
 .. versionchanged:: 2.9
 
@@ -215,7 +215,7 @@ With Statement
 Autoescape Extension
 --------------------
 
-**Import name:** ``jinja.ext.autoescape``
+**Import name:** ``jinja2.ext.autoescape``
 
 .. versionchanged:: 2.9
 
@@ -228,7 +228,7 @@ Autoescape Extension
 Debug Extension
 ---------------
 
-**Import name:** ``jinja.ext.debug``
+**Import name:** ``jinja2.ext.debug``
 
 Adds a ``{% debug %}`` tag to dump the current context as well as the
 available filters and tests. This is useful to see what's available to
@@ -240,7 +240,7 @@ use in the template without setting up a debugger.
 Writing Extensions
 ------------------
 
-.. module:: jinja.ext
+.. module:: jinja2.ext
 
 By writing extensions you can add custom tags to Jinja.  This is a non-trivial
 task and usually not needed as the default tags and expressions cover all
@@ -269,7 +269,7 @@ The following example implements a ``cache`` tag for Jinja by using the
 
 And here is how you use it in an environment::
 
-    from jinja import Environment
+    from jinja2 import Environment
     from cachelib import SimpleCache
 
     env = Environment(extensions=[FragmentCacheExtension])
@@ -313,7 +313,7 @@ Extension API
 Extension
 ~~~~~~~~~
 
-Extensions always have to extend the :class:`jinja.ext.Extension` class:
+Extensions always have to extend the :class:`jinja2.ext.Extension` class:
 
 .. autoclass:: Extension
     :members: preprocess, filter_stream, parse, attr, call_method
@@ -336,7 +336,7 @@ The parser passed to :meth:`Extension.parse` provides ways to parse
 expressions of different types.  The following methods may be used by
 extensions:
 
-.. autoclass:: jinja.parser.Parser
+.. autoclass:: jinja2.parser.Parser
     :members: parse_expression, parse_tuple, parse_assign_target,
               parse_statements, free_identifier, fail
 
@@ -353,16 +353,16 @@ extensions:
 
     .. attribute:: stream
 
-        The current :class:`~jinja.lexer.TokenStream`
+        The current :class:`~jinja2.lexer.TokenStream`
 
-.. autoclass:: jinja.lexer.TokenStream
+.. autoclass:: jinja2.lexer.TokenStream
    :members: push, look, eos, skip, __next__, next_if, skip_if, expect
 
    .. attribute:: current
 
-        The current :class:`~jinja.lexer.Token`.
+        The current :class:`~jinja2.lexer.Token`.
 
-.. autoclass:: jinja.lexer.Token
+.. autoclass:: jinja2.lexer.Token
     :members: test, test_any
 
     .. attribute:: lineno
@@ -381,7 +381,7 @@ extensions:
 There is also a utility function in the lexer module that can count newline
 characters in strings:
 
-.. autofunction:: jinja.lexer.count_newlines
+.. autofunction:: jinja2.lexer.count_newlines
 
 
 AST
@@ -395,10 +395,10 @@ execute custom Python code.
 The list below describes all nodes that are currently available.  The AST may
 change between Jinja versions but will stay backwards compatible.
 
-For more information have a look at the repr of :meth:`jinja.Environment.parse`.
+For more information have a look at the repr of :meth:`jinja2.Environment.parse`.
 
-.. module:: jinja.nodes
+.. module:: jinja2.nodes
 
-.. jinja:nodes:: jinja.nodes.Node
+.. jinja:nodes:: jinja2.nodes.Node
 
 .. autoexception:: Impossible

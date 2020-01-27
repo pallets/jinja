@@ -7,15 +7,15 @@ from copy import copy as shallow_copy
 import pytest
 from markupsafe import Markup
 
-from jinja._compat import range_type
-from jinja._compat import string_types
-from jinja.utils import consume
-from jinja.utils import generate_lorem_ipsum
-from jinja.utils import LRUCache
-from jinja.utils import missing
-from jinja.utils import object_type_repr
-from jinja.utils import select_autoescape
-from jinja.utils import urlize
+from jinja2._compat import range_type
+from jinja2._compat import string_types
+from jinja2.utils import consume
+from jinja2.utils import generate_lorem_ipsum
+from jinja2.utils import LRUCache
+from jinja2.utils import missing
+from jinja2.utils import object_type_repr
+from jinja2.utils import select_autoescape
+from jinja2.utils import urlize
 
 
 @pytest.mark.utils

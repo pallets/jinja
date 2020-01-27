@@ -2,10 +2,10 @@ import sys
 
 import pytest
 
-from jinja import contextfilter
-from jinja import Environment
-from jinja import Template
-from jinja._compat import text_type
+from jinja2 import contextfilter
+from jinja2 import Environment
+from jinja2 import Template
+from jinja2._compat import text_type
 
 
 @pytest.mark.skipif(sys.version_info < (3, 5), reason="Requires 3.5 or later")

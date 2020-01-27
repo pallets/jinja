@@ -1,8 +1,8 @@
 # -*- coding: utf-8 -*-
 import pytest
 
-from jinja import Environment
-from jinja import Markup
+from jinja2 import Environment
+from jinja2 import Markup
 
 
 class MyDict(dict):

@@ -1,11 +1,11 @@
 # -*- coding: utf-8 -*-
 import pytest
 
-from jinja import Environment
-from jinja.bccache import Bucket
-from jinja.bccache import FileSystemBytecodeCache
-from jinja.bccache import MemcachedBytecodeCache
-from jinja.exceptions import TemplateNotFound
+from jinja2 import Environment
+from jinja2.bccache import Bucket
+from jinja2.bccache import FileSystemBytecodeCache
+from jinja2.bccache import MemcachedBytecodeCache
+from jinja2.exceptions import TemplateNotFound
 
 
 @pytest.fixture
@@ -53,7 +53,7 @@ class TestMemcachedBytecodeCache(object):
         b = Bucket(None, "key", "")
         b.code = "code"
         m.dump_bytecode(b)
-        assert memcached.key == "jinja/bytecode/key"
+        assert memcached.key == "jinja2/bytecode/key"
 
         b = Bucket(None, "key", "")
         m.load_bytecode(b)

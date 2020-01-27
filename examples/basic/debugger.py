@@ -1,7 +1,7 @@
 from __future__ import print_function
 
-from jinja import Environment
-from jinja.loaders import FileSystemLoader
+from jinja2 import Environment
+from jinja2.loaders import FileSystemLoader
 
 env = Environment(loader=FileSystemLoader("templates"))
 tmpl = env.get_template("broken.html")

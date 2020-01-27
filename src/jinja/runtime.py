@@ -701,7 +701,7 @@ class Undefined(object):
     >>> foo + 42
     Traceback (most recent call last):
       ...
-    jinja.exceptions.UndefinedError: 'foo' is undefined
+    jinja2.exceptions.UndefinedError: 'foo' is undefined
     """
 
     __slots__ = (
@@ -926,7 +926,7 @@ class ChainableUndefined(Undefined):
     >>> foo.bar['baz'] + 42
     Traceback (most recent call last):
       ...
-    jinja.exceptions.UndefinedError: 'foo' is undefined
+    jinja2.exceptions.UndefinedError: 'foo' is undefined
 
     .. versionadded:: 2.11.0
     """
@@ -954,7 +954,7 @@ class DebugUndefined(Undefined):
     >>> foo + 42
     Traceback (most recent call last):
       ...
-    jinja.exceptions.UndefinedError: 'foo' is undefined
+    jinja2.exceptions.UndefinedError: 'foo' is undefined
     """
 
     __slots__ = ()
@@ -980,15 +980,15 @@ class StrictUndefined(Undefined):
     >>> str(foo)
     Traceback (most recent call last):
       ...
-    jinja.exceptions.UndefinedError: 'foo' is undefined
+    jinja2.exceptions.UndefinedError: 'foo' is undefined
     >>> not foo
     Traceback (most recent call last):
       ...
-    jinja.exceptions.UndefinedError: 'foo' is undefined
+    jinja2.exceptions.UndefinedError: 'foo' is undefined
     >>> foo + 42
     Traceback (most recent call last):
       ...
-    jinja.exceptions.UndefinedError: 'foo' is undefined
+    jinja2.exceptions.UndefinedError: 'foo' is undefined
     """
 
     __slots__ = ()
