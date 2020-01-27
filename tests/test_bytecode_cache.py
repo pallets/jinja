@@ -9,9 +9,9 @@ from jinja.exceptions import TemplateNotFound
 
 
 @pytest.fixture
-def env(package_loader, tmp_path):
-    bytecode_cache = FileSystemBytecodeCache(str(tmp_path))
-    return Environment(loader=package_loader, bytecode_cache=bytecode_cache)
+def env(package_loader):
+    bytecode_cache = FileSystemBytecodeCache()
+    return Environment(loader=package_loader, bytecode_cache=bytecode_cache,)
 
 
 @pytest.mark.byte_code_cache

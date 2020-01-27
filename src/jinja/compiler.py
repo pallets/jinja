@@ -712,7 +712,7 @@ class CodeGenerator(NodeVisitor):
         assert frame is None, "no root frame allowed"
         eval_ctx = EvalContext(self.environment, self.name)
 
-        from .runtime import exported
+        from .runtime import __all__ as exported
 
         self.writeline("from __future__ import %s" % ", ".join(code_features))
         self.writeline("from jinja.runtime import " + ", ".join(exported))

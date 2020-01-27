@@ -40,4 +40,4 @@ from .utils import is_undefined
 from .utils import Markup
 from .utils import select_autoescape
 
-__version__ = "2.11.0rc1"
+__version__ = "2.11.0.dev0"
