@@ -9,6 +9,7 @@ from collections import deque
 from string import Formatter
 
 from markupsafe import EscapeFormatter
+from markupsafe import Markup
 
 from ._compat import abc
 from ._compat import PY2
@@ -16,7 +17,6 @@ from ._compat import range_type
 from ._compat import string_types
 from .environment import Environment
 from .exceptions import SecurityError
-from .utils import Markup
 
 #: maximum number of items a range may produce
 MAX_RANGE = 100000

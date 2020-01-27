@@ -4,6 +4,8 @@ import pprint
 import re
 from sys import version_info
 
+from markupsafe import Markup
+
 from . import nodes
 from ._compat import iteritems
 from ._compat import string_types
@@ -27,7 +29,6 @@ from .nodes import ContextReference
 from .runtime import concat
 from .utils import contextfunction
 from .utils import import_string
-from .utils import Markup
 
 # the only real useful gettext functions for a Jinja template.  Note
 # that ugettext must be assigned to gettext as Jinja doesn't support

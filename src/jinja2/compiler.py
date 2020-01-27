@@ -5,6 +5,9 @@ from functools import update_wrapper
 from itertools import chain
 from keyword import iskeyword as is_python_keyword
 
+from markupsafe import escape
+from markupsafe import Markup
+
 from . import nodes
 from ._compat import imap
 from ._compat import iteritems
@@ -22,8 +25,6 @@ from .idtracking import VAR_LOAD_UNDEFINED
 from .nodes import EvalContext
 from .optimizer import Optimizer
 from .utils import concat
-from .utils import escape
-from .utils import Markup
 from .visitor import NodeVisitor
 
 operators = {
@@ -712,7 +713,7 @@ class CodeGenerator(NodeVisitor):
         assert frame is None, "no root frame allowed"
         eval_ctx = EvalContext(self.environment, self.name)
 
-        from .runtime import __all__ as exported
+        from .runtime import exported
 
         self.writeline("from __future__ import %s" % ", ".join(code_features))
         self.writeline("from jinja2.runtime import " + ", ".join(exported))

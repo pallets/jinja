@@ -42,6 +42,3 @@ DEFAULT_POLICIES = {
     "json.dumps_kwargs": {"sort_keys": True},
     "ext.i18n.trimmed": False,
 }
-
-# export all constants
-__all__ = tuple(x for x in locals().keys() if x.isupper())

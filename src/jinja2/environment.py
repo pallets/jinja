@@ -8,6 +8,8 @@ import weakref
 from functools import partial
 from functools import reduce
 
+from markupsafe import Markup
+
 from . import nodes
 from ._compat import encode_filename
 from ._compat import implements_iterator
@@ -54,7 +56,6 @@ from .utils import have_async_gen
 from .utils import import_string
 from .utils import internalcode
 from .utils import LRUCache
-from .utils import Markup
 from .utils import missing
 
 # for direct template usage we have up to ten living environments
@@ -218,7 +219,7 @@ class Environment(object):
         `autoescape`
             If set to ``True`` the XML/HTML autoescaping feature is enabled by
             default.  For more details about autoescaping see
-            :class:`~jinja2.utils.Markup`.  As of Jinja 2.4 this can also
+            :class:`~markupsafe.Markup`.  As of Jinja 2.4 this can also
             be a callable that is passed the template name and has to
             return ``True`` or ``False`` depending on autoescape should be
             enabled by default.

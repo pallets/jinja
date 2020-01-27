@@ -6,11 +6,12 @@ import asyncio
 import inspect
 from functools import update_wrapper
 
+from markupsafe import Markup
+
 from .environment import TemplateModule
 from .runtime import LoopContext
 from .utils import concat
 from .utils import internalcode
-from .utils import Markup
 from .utils import missing
 
 

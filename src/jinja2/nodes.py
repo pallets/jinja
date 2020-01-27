@@ -6,11 +6,12 @@ to normalize nodes.
 import operator
 from collections import deque
 
+from markupsafe import Markup
+
 from ._compat import izip
 from ._compat import PY2
 from ._compat import text_type
 from ._compat import with_metaclass
-from .utils import Markup
 
 _binop_to_func = {
     "*": operator.mul,
