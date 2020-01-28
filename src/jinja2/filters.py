@@ -564,13 +564,9 @@ def do_filesizeformat(value, binary=False):
         return "%.1f %s" % ((base * bytes / unit), prefix)
 
 
-def do_pprint(value, verbose=False):
-    """Pretty print a variable. Useful for debugging.
-
-    With Jinja 1.2 onwards you can pass it a parameter.  If this parameter
-    is truthy the output will be more verbose (this requires `pretty`)
-    """
-    return pformat(value, verbose=verbose)
+def do_pprint(value):
+    """Pretty print a variable. Useful for debugging."""
+    return pformat(value)
 
 
 @evalcontextfilter
@@ -595,8 +591,8 @@ def do_urlize(
 
        {{ mytext|urlize(40, target='_blank') }}
 
-    .. versionchanged:: 2.8+
-       The *target* parameter was added.
+    .. versionchanged:: 2.8
+       The ``target`` parameter was added.
     """
     policies = eval_ctx.environment.policies
     rel = set((rel or "").split() or [])

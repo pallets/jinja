@@ -32,7 +32,6 @@ class TestExtendedAPI(object):
         from jinja2.sandbox import SandboxedEnvironment
 
         for env in Environment(), SandboxedEnvironment():
-            # the |list is necessary for python3
             tmpl = env.from_string("{{ foo.items()|list }}")
             assert tmpl.render(foo={"items": 42}) == "[('items', 42)]"
             tmpl = env.from_string('{{ foo|attr("items")()|list }}')

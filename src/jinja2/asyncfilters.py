@@ -146,8 +146,7 @@ ASYNC_FILTERS = {
     "groupby": do_groupby,
     "join": do_join,
     "list": do_list,
-    # we intentionally do not support do_last because that would be
-    # ridiculous
+    # we intentionally do not support do_last because it may not be safe in async
     "reject": do_reject,
     "rejectattr": do_rejectattr,
     "map": do_map,

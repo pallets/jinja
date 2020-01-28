@@ -151,9 +151,6 @@ class TestStringFormat(object):
 
 
 @pytest.mark.sandbox
-@pytest.mark.skipif(
-    not hasattr(str, "format_map"), reason="requires str.format_map method"
-)
 class TestStringFormatMap(object):
     def test_basic_format_safety(self):
         env = SandboxedEnvironment()

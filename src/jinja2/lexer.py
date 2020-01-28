@@ -10,6 +10,7 @@ from collections import deque
 from operator import itemgetter
 from sys import intern
 
+from ._identifier import pattern as name_re
 from .exceptions import TemplateSyntaxError
 from .utils import LRUCache
 
@@ -37,20 +38,6 @@ float_re = re.compile(
     """,
     re.IGNORECASE | re.VERBOSE,
 )
-
-try:
-    # check if this Python supports Unicode identifiers
-    compile("föö", "<unknown>", "eval")
-except SyntaxError:
-    # Python 2, no Unicode support, use ASCII identifiers
-    name_re = re.compile(r"[a-zA-Z_][a-zA-Z0-9_]*")
-    check_ident = False
-else:
-    # Unicode support, import generated re pattern and set flag to use
-    # str.isidentifier to validate during lexing.
-    from ._identifier import pattern as name_re
-
-    check_ident = True
 
 # internal the tokens and keep references to them
 TOKEN_ADD = intern("add")
@@ -632,7 +619,7 @@ class Lexer(object):
                 token = value
             elif token == TOKEN_NAME:
                 value = str(value)
-                if check_ident and not value.isidentifier():
+                if not value.isidentifier():
                     raise TemplateSyntaxError(
                         "Invalid character in identifier", lineno, name, filename
                     )

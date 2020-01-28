@@ -340,14 +340,12 @@ class TestInternationalization(object):
         from jinja2.ext import babel_extract
 
         source = BytesIO(
+            b"""
+            {{ gettext('Hello World') }}
+            {% trans %}Hello World{% endtrans %}
+            {% trans %}{{ users }} user{% pluralize %}{{ users }} users{% endtrans %}
             """
-        {{ gettext('Hello World') }}
-        {% trans %}Hello World{% endtrans %}
-        {% trans %}{{ users }} user{% pluralize %}{{ users }} users{% endtrans %}
-        """.encode(
-                "ascii"
-            )
-        )  # make python 3 happy
+        )
         assert list(babel_extract(source, ("gettext", "ngettext", "_"), [], {})) == [
             (2, "gettext", u"Hello World", []),
             (3, "gettext", u"Hello World", []),
@@ -358,15 +356,13 @@ class TestInternationalization(object):
         from jinja2.ext import babel_extract
 
         source = BytesIO(
+            b"""
+            {{ gettext(' Hello  \n  World') }}
+            {% trans trimmed %} Hello  \n  World{% endtrans %}
+            {% trans trimmed %}{{ users }} \n user
+            {%- pluralize %}{{ users }} \n users{% endtrans %}
             """
-        {{ gettext(' Hello  \n  World') }}
-        {% trans trimmed %} Hello  \n  World{% endtrans %}
-        {% trans trimmed %}{{ users }} \n user
-        {%- pluralize %}{{ users }} \n users{% endtrans %}
-        """.encode(
-                "ascii"
-            )
-        )  # make python 3 happy
+        )
         assert list(babel_extract(source, ("gettext", "ngettext", "_"), [], {})) == [
             (2, "gettext", u" Hello  \n  World", []),
             (4, "gettext", u"Hello World", []),
@@ -377,15 +373,13 @@ class TestInternationalization(object):
         from jinja2.ext import babel_extract
 
         source = BytesIO(
+            b"""
+            {{ gettext(' Hello  \n  World') }}
+            {% trans %} Hello  \n  World{% endtrans %}
+            {% trans %}{{ users }} \n user
+            {%- pluralize %}{{ users }} \n users{% endtrans %}
             """
-        {{ gettext(' Hello  \n  World') }}
-        {% trans %} Hello  \n  World{% endtrans %}
-        {% trans %}{{ users }} \n user
-        {%- pluralize %}{{ users }} \n users{% endtrans %}
-        """.encode(
-                "ascii"
-            )
-        )  # make python 3 happy
+        )
         opts = {"trimmed": "true"}
         assert list(babel_extract(source, ("gettext", "ngettext", "_"), [], opts)) == [
             (2, "gettext", u" Hello  \n  World", []),
@@ -397,16 +391,14 @@ class TestInternationalization(object):
         from jinja2.ext import babel_extract
 
         source = BytesIO(
+            b"""
+            {# trans first #}
+            {{ gettext('Hello World') }}
+            {% trans %}Hello World{% endtrans %}{# trans second #}
+            {#: third #}
+            {% trans %}{{ users }} user{% pluralize %}{{ users }} users{% endtrans %}
             """
-        {# trans first #}
-        {{ gettext('Hello World') }}
-        {% trans %}Hello World{% endtrans %}{# trans second #}
-        {#: third #}
-        {% trans %}{{ users }} user{% pluralize %}{{ users }} users{% endtrans %}
-        """.encode(
-                "utf-8"
-            )
-        )  # make python 3 happy
+        )
         assert list(
             babel_extract(source, ("gettext", "ngettext", "_"), ["trans", ":"], {})
         ) == [

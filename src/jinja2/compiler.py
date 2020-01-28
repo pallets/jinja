@@ -681,6 +681,7 @@ class CodeGenerator(NodeVisitor):
 
         from .runtime import exported
 
+        self.writeline("from __future__ import generator_stop")  # Python < 3.7
         self.writeline("from jinja2.runtime import " + ", ".join(exported))
 
         if self.environment.is_async:

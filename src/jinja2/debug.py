@@ -23,14 +23,9 @@ def rewrite_traceback_stack(source=None):
     if isinstance(exc_value, TemplateSyntaxError) and not exc_value.translated:
         exc_value.translated = True
         exc_value.source = source
-
-        try:
-            # Remove the old traceback on Python 3, otherwise the frames
-            # from the compiler still show up.
-            exc_value.with_traceback(None)
-        except AttributeError:
-            pass
-
+        # Remove the old traceback, otherwise the frames from the
+        # compiler still show up.
+        exc_value.with_traceback(None)
         # Outside of runtime, so the frame isn't executing template
         # code, but it still needs to point at the template.
         tb = fake_traceback(
@@ -121,7 +116,7 @@ def fake_traceback(exc_value, tb, filename, lineno):
         for attr in (
             "argcount",
             "posonlyargcount",  # Python 3.8
-            "kwonlyargcount",  # Python 3
+            "kwonlyargcount",
             "nlocals",
             "stacksize",
             "flags",

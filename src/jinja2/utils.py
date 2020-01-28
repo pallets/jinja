@@ -169,18 +169,12 @@ def object_type_repr(obj):
     return "%s object" % name
 
 
-def pformat(obj, verbose=False):
-    """Prettyprint an object.  Either use the `pretty` library or the
-    builtin `pprint`.
+def pformat(obj):
+    """Format an object using :func:`pprint.pformat`.
     """
-    try:
-        from pretty import pretty
+    from pprint import pformat
 
-        return pretty(obj, verbose=verbose)
-    except ImportError:
-        from pprint import pformat
-
-        return pformat(obj)
+    return pformat(obj)
 
 
 def urlize(text, trim_url_limit=None, rel=None, target=None):

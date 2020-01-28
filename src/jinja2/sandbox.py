@@ -4,6 +4,7 @@ Useful when the template itself comes from an untrusted source.
 """
 import operator
 import types
+from _string import formatter_field_name_split
 from collections import abc
 from collections import deque
 from string import Formatter
@@ -183,10 +184,8 @@ def is_internal_attribute(obj, attr):
 
 def modifies_known_mutable(obj, attr):
     """This function checks if an attribute on a builtin mutable object
-    (list, dict, set or deque) would modify it if called.  It also supports
-    the "user"-versions of the objects (`sets.Set`, `UserDict.*` etc.) and
-    with Python 2.6 onwards the abstract base classes `MutableSet`,
-    `MutableMapping`, and `MutableSequence`.
+    (list, dict, set or deque) or the corresponding ABCs would modify it
+    if called.
 
     >>> modifies_known_mutable({}, "clear")
     True
@@ -424,15 +423,6 @@ class ImmutableSandboxedEnvironment(SandboxedEnvironment):
         if not SandboxedEnvironment.is_safe_attribute(self, obj, attr, value):
             return False
         return not modifies_known_mutable(obj, attr)
-
-
-# This really is not a public API apparently.
-try:
-    from _string import formatter_field_name_split
-except ImportError:
-
-    def formatter_field_name_split(field_name):
-        return field_name._formatter_field_name_split()
 
 
 class SandboxedFormatterMixin(object):

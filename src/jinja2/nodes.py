@@ -212,15 +212,13 @@ class Node(metaclass=NodeType):
         return self
 
     def __eq__(self, other):
-        return type(self) is type(other) and tuple(self.iter_fields()) == tuple(
-            other.iter_fields()
-        )
+        if type(self) is not type(other):
+            return NotImplemented
 
-    def __ne__(self, other):
-        return not self.__eq__(other)
+        return tuple(self.iter_fields()) == tuple(other.iter_fields())
 
-    # Restore Python 2 hashing behavior on Python 3
-    __hash__ = object.__hash__
+    def __hash__(self):
+        return hash(tuple(self.iter_fields()))
 
     def __repr__(self):
         return "%s(%s)" % (
@@ -649,11 +647,6 @@ class Filter(Expr):
         if eval_ctx.volatile or self.node is None:
             raise Impossible()
 
-        # we have to be careful here because we call filter_ below.
-        # if this variable would be called filter, 2to3 would wrap the
-        # call in a list because it is assuming we are talking about the
-        # builtin filter function here which no longer returns a list in
-        # python 3.  because of that, do not rename filter_ to filter!
         filter_ = self.environment.filters.get(self.name)
 
         if filter_ is None or getattr(filter_, "contextfilter", False) is True:

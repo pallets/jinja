@@ -247,9 +247,8 @@ class Environment(object):
             See :ref:`bytecode-cache` for more information.
 
         `enable_async`
-            If set to true this enables async template execution which allows
-            you to take advantage of newer Python features.  This requires
-            Python 3.6 or later.
+            If set to true this enables async template execution which
+            allows using async functions and generators.
     """
 
     #: if this environment is sandboxed.  Modifying this variable won't make
@@ -470,12 +469,11 @@ class Environment(object):
     def call_filter(
         self, name, value, args=None, kwargs=None, context=None, eval_ctx=None
     ):
-        """Invokes a filter on a value the same way the compiler does it.
+        """Invokes a filter on a value the same way the compiler does.
 
-        Note that on Python 3 this might return a coroutine in case the
-        filter is running from an environment in async mode and the filter
-        supports async execution.  It's your responsibility to await this
-        if needed.
+        This might return a coroutine if the filter is running from an
+        environment in async mode and the filter supports async
+        execution. It's your responsibility to await this if needed.
 
         .. versionadded:: 2.7
         """
