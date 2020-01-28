@@ -2,18 +2,15 @@
 import json
 import os
 import re
+from collections import abc
 from collections import deque
 from random import choice
 from random import randrange
 from threading import Lock
+from urllib.parse import quote_from_bytes
 
 from markupsafe import escape
 from markupsafe import Markup
-
-from ._compat import abc
-from ._compat import string_types
-from ._compat import text_type
-from ._compat import url_quote
 
 _word_split_re = re.compile(r"(\s+)")
 _punctuation_re = re.compile(
@@ -205,8 +202,8 @@ def urlize(text, trim_url_limit=None, rel=None, target=None):
         and (x[:limit] + (len(x) >= limit and "..." or ""))
         or x
     )
-    words = _word_split_re.split(text_type(escape(text)))
-    rel_attr = rel and ' rel="%s"' % text_type(escape(rel)) or ""
+    words = _word_split_re.split(str(escape(text)))
+    rel_attr = rel and ' rel="%s"' % str(escape(rel)) or ""
     target_attr = target and ' target="%s"' % escape(target) or ""
 
     for i, word in enumerate(words):
@@ -299,7 +296,7 @@ def generate_lorem_ipsum(n=5, html=True, min=20, max=100):
     return Markup(u"\n".join(u"<p>%s</p>" % escape(x) for x in result))
 
 
-def unicode_urlencode(obj, charset="utf-8", for_qs=False):
+def url_quote(obj, charset="utf-8", for_qs=False):
     """Quote a string for use in a URL using the given charset.
 
     This function is misnamed, it is a wrapper around
@@ -310,17 +307,14 @@ def unicode_urlencode(obj, charset="utf-8", for_qs=False):
     :param charset: Encode text to bytes using this charset.
     :param for_qs: Quote "/" and use "+" for spaces.
     """
-    if not isinstance(obj, string_types):
-        obj = text_type(obj)
+    if not isinstance(obj, bytes):
+        if not isinstance(obj, str):
+            obj = str(obj)
 
-    if isinstance(obj, text_type):
         obj = obj.encode(charset)
 
     safe = b"" if for_qs else b"/"
-    rv = url_quote(obj, safe)
-
-    if not isinstance(rv, text_type):
-        rv = rv.decode("utf-8")
+    rv = quote_from_bytes(obj, safe)
 
     if for_qs:
         rv = rv.replace("%20", "+")
@@ -328,6 +322,19 @@ def unicode_urlencode(obj, charset="utf-8", for_qs=False):
     return rv
 
 
+def unicode_urlencode(obj, charset="utf-8", for_qs=False):
+    import warnings
+
+    warnings.warn(
+        "'unicode_urlencode' has been renamed to 'url_quote'. The old"
+        " name will be removed in version 3.1.",
+        DeprecationWarning,
+        stacklevel=2,
+    )
+    return url_quote(obj, charset=charset, for_qs=for_qs)
+
+
+@abc.MutableMapping.register
 class LRUCache(object):
     """A simple LRU Cache implementation."""
 
@@ -482,9 +489,6 @@ class LRUCache(object):
         return iter(tuple(self._queue))
 
     __copy__ = copy
-
-
-abc.MutableMapping.register(LRUCache)
 
 
 def select_autoescape(

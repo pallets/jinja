@@ -6,15 +6,11 @@ import os
 import pkgutil
 import sys
 import weakref
+from collections import abc
 from hashlib import sha1
 from importlib import import_module
-from os import path
 from types import ModuleType
 
-from ._compat import abc
-from ._compat import fspath
-from ._compat import iteritems
-from ._compat import string_types
 from .exceptions import TemplateNotFound
 from .utils import internalcode
 from .utils import open_if_exists
@@ -27,9 +23,9 @@ def split_template_path(template):
     pieces = []
     for piece in template.split("/"):
         if (
-            path.sep in piece
-            or (path.altsep and path.altsep in piece)
-            or piece == path.pardir
+            os.path.sep in piece
+            or (os.path.altsep and os.path.altsep in piece)
+            or piece == os.path.pardir
         ):
             raise TemplateNotFound(template)
         elif piece and piece != ".":
@@ -163,22 +159,17 @@ class FileSystemLoader(BaseLoader):
     """
 
     def __init__(self, searchpath, encoding="utf-8", followlinks=False):
-        if not isinstance(searchpath, abc.Iterable) or isinstance(
-            searchpath, string_types
-        ):
+        if not isinstance(searchpath, abc.Iterable) or isinstance(searchpath, str):
             searchpath = [searchpath]
 
-        # In Python 3.5, os.path.join doesn't support Path. This can be
-        # simplified to list(searchpath) when Python 3.5 is dropped.
-        self.searchpath = [fspath(p) for p in searchpath]
-
+        self.searchpath = list(searchpath)
         self.encoding = encoding
         self.followlinks = followlinks
 
     def get_source(self, environment, template):
         pieces = split_template_path(template)
         for searchpath in self.searchpath:
-            filename = path.join(searchpath, *pieces)
+            filename = os.path.join(searchpath, *pieces)
             f = open_if_exists(filename)
             if f is None:
                 continue
@@ -187,11 +178,11 @@ class FileSystemLoader(BaseLoader):
             finally:
                 f.close()
 
-            mtime = path.getmtime(filename)
+            mtime = os.path.getmtime(filename)
 
             def uptodate():
                 try:
-                    return path.getmtime(filename) == mtime
+                    return os.path.getmtime(filename) == mtime
                 except OSError:
                     return False
 
@@ -403,7 +394,7 @@ class FunctionLoader(BaseLoader):
         rv = self.load_func(template)
         if rv is None:
             raise TemplateNotFound(template)
-        elif isinstance(rv, string_types):
+        elif isinstance(rv, str):
             return rv, None, None
         return rv
 
@@ -456,7 +447,7 @@ class PrefixLoader(BaseLoader):
 
     def list_templates(self):
         result = []
-        for prefix, loader in iteritems(self.mapping):
+        for prefix, loader in self.mapping.items():
             for template in loader.list_templates():
                 result.append(prefix + self.delimiter + template)
         return result
@@ -529,10 +520,10 @@ class ModuleLoader(BaseLoader):
         # path given.
         mod = _TemplateModule(package_name)
 
-        if not isinstance(path, abc.Iterable) or isinstance(path, string_types):
+        if not isinstance(path, abc.Iterable) or isinstance(path, str):
             path = [path]
 
-        mod.__path__ = [fspath(p) for p in path]
+        mod.__path__ = [os.fspath(p) for p in path]
 
         sys.modules[package_name] = weakref.proxy(
             mod, lambda x: sys.modules.pop(package_name, None)

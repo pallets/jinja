@@ -1,4 +1,3 @@
-from ._compat import iteritems
 from .visitor import NodeVisitor
 
 VAR_LOAD_PARAMETER = "param"
@@ -114,7 +113,7 @@ class Symbols(object):
             self.loads.update(sym.loads)
             self.stores.update(sym.stores)
 
-        for name, branch_count in iteritems(stores):
+        for name, branch_count in stores.items():
             if branch_count == len(branch_symbols):
                 continue
             target = self.find_ref(name)
@@ -141,7 +140,7 @@ class Symbols(object):
         rv = set()
         node = self
         while node is not None:
-            for target, (instr, _) in iteritems(self.loads):
+            for target, (instr, _) in self.loads.items():
                 if instr == VAR_LOAD_PARAMETER:
                     rv.add(target)
             node = node.parent

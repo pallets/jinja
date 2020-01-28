@@ -6,27 +6,23 @@ import pytest
 
 from jinja2 import Environment
 from jinja2 import Markup
-from jinja2._compat import implements_to_string
-from jinja2._compat import text_type
 
 
-@implements_to_string
 class Magic(object):
     def __init__(self, value):
         self.value = value
 
     def __str__(self):
-        return text_type(self.value)
+        return str(self.value)
 
 
-@implements_to_string
 class Magic2(object):
     def __init__(self, value1, value2):
         self.value1 = value1
         self.value2 = value2
 
     def __str__(self):
-        return u"(%s,%s)" % (text_type(self.value1), text_type(self.value2))
+        return u"(%s,%s)" % (str(self.value1), str(self.value2))
 
 
 @pytest.mark.filter
@@ -281,7 +277,7 @@ class TestFilter(object):
     def test_string(self, env):
         x = [1, 2, 3, 4, 5]
         tmpl = env.from_string("""{{ obj|string }}""")
-        assert tmpl.render(obj=x) == text_type(x)
+        assert tmpl.render(obj=x) == str(x)
 
     def test_title(self, env):
         tmpl = env.from_string("""{{ "foo bar"|title }}""")

@@ -1,5 +1,6 @@
 # -*- coding: utf-8 -*-
 import re
+from io import BytesIO
 
 import pytest
 
@@ -7,9 +8,6 @@ from jinja2 import contextfunction
 from jinja2 import DictLoader
 from jinja2 import Environment
 from jinja2 import nodes
-from jinja2._compat import BytesIO
-from jinja2._compat import itervalues
-from jinja2._compat import text_type
 from jinja2.exceptions import TemplateAssertionError
 from jinja2.ext import Extension
 from jinja2.lexer import count_newlines
@@ -231,7 +229,7 @@ class TestExtensions(object):
         original = Environment(extensions=[ExampleExtension])
         overlay = original.overlay()
         for env in original, overlay:
-            for ext in itervalues(env.extensions):
+            for ext in env.extensions.values():
                 assert ext.environment is env
 
     def test_preprocessor_extension(self):
@@ -619,7 +617,7 @@ class TestAutoEscape(object):
         """
         tmpl = env.from_string(tmplsource)
         assert tmpl.render(val=True).split()[0] == "Markup"
-        assert tmpl.render(val=False).split()[0] == text_type.__name__
+        assert tmpl.render(val=False).split()[0] == "str"
 
         # looking at the source we should see <testing> there in raw
         # (and then escaped as well)

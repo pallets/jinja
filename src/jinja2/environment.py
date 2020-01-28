@@ -11,13 +11,6 @@ from functools import reduce
 from markupsafe import Markup
 
 from . import nodes
-from ._compat import encode_filename
-from ._compat import implements_iterator
-from ._compat import implements_to_string
-from ._compat import iteritems
-from ._compat import reraise
-from ._compat import string_types
-from ._compat import text_type
 from .compiler import CodeGenerator
 from .compiler import generate
 from .defaults import BLOCK_END_STRING
@@ -102,7 +95,7 @@ def load_extensions(environment, extensions):
     """
     result = {}
     for extension in extensions:
-        if isinstance(extension, string_types):
+        if isinstance(extension, str):
             extension = import_string(extension)
         result[extension.identifier] = extension(environment)
     return result
@@ -376,7 +369,7 @@ class Environment(object):
         yet.  This is used by :ref:`extensions <writing-extensions>` to register
         callbacks and configuration values without breaking inheritance.
         """
-        for key, value in iteritems(attributes):
+        for key, value in attributes.items():
             if not hasattr(self, key):
                 setattr(self, key, value)
 
@@ -421,7 +414,7 @@ class Environment(object):
         rv.overlayed = True
         rv.linked_to = self
 
-        for key, value in iteritems(args):
+        for key, value in args.items():
             if value is not missing:
                 setattr(rv, key, value)
 
@@ -431,7 +424,7 @@ class Environment(object):
             rv.cache = copy_cache(self.cache)
 
         rv.extensions = {}
-        for key, value in iteritems(self.extensions):
+        for key, value in self.extensions.items():
             rv.extensions[key] = value.bind(rv)
         if extensions is not missing:
             rv.extensions.update(load_extensions(rv, extensions))
@@ -449,7 +442,7 @@ class Environment(object):
         try:
             return obj[argument]
         except (AttributeError, TypeError, LookupError):
-            if isinstance(argument, string_types):
+            if isinstance(argument, str):
                 try:
                     attr = str(argument)
                 except Exception:
@@ -534,7 +527,7 @@ class Environment(object):
 
     def _parse(self, source, name, filename):
         """Internal parsing function used by `parse` and `compile`."""
-        return Parser(self, source, name, encode_filename(filename)).parse()
+        return Parser(self, source, name, filename).parse()
 
     def lex(self, source, name=None, filename=None):
         """Lex the given sourcecode and return a generator that yields
@@ -546,7 +539,7 @@ class Environment(object):
         of the extensions to be applied you have to filter source through
         the :meth:`preprocess` method.
         """
-        source = text_type(source)
+        source = str(source)
         try:
             return self.lexer.tokeniter(source, name, filename)
         except TemplateSyntaxError:
@@ -560,7 +553,7 @@ class Environment(object):
         return reduce(
             lambda s, e: e.preprocess(s, name, filename),
             self.iter_extensions(),
-            text_type(source),
+            str(source),
         )
 
     def _tokenize(self, source, name, filename=None, state=None):
@@ -621,7 +614,7 @@ class Environment(object):
         """
         source_hint = None
         try:
-            if isinstance(source, string_types):
+            if isinstance(source, str):
                 source_hint = source
                 source = self._parse(source, name, filename)
             source = self._generate(source, name, filename, defer_init=defer_init)
@@ -629,8 +622,6 @@ class Environment(object):
                 return source
             if filename is None:
                 filename = "<template>"
-            else:
-                filename = encode_filename(filename)
             return self._compile(source, filename)
         except TemplateSyntaxError:
             self.handle_exception(source=source_hint)
@@ -718,7 +709,7 @@ class Environment(object):
                 info.external_attr = 0o755 << 16
                 zip_file.writestr(info, data)
             else:
-                if isinstance(data, text_type):
+                if isinstance(data, str):
                     data = data.encode("utf8")
 
                 with open(os.path.join(target, filename), "wb") as f:
@@ -795,7 +786,7 @@ class Environment(object):
         """
         from .debug import rewrite_traceback_stack
 
-        reraise(*rewrite_traceback_stack(source=source))
+        raise rewrite_traceback_stack(source=source)
 
     def join_path(self, template, parent):
         """Join a template with the parent.  By default all the lookups are
@@ -892,7 +883,7 @@ class Environment(object):
 
         .. versionadded:: 2.3
         """
-        if isinstance(template_name_or_list, (string_types, Undefined)):
+        if isinstance(template_name_or_list, (str, Undefined)):
             return self.get_template(template_name_or_list, parent, globals)
         elif isinstance(template_name_or_list, Template):
             return template_name_or_list
@@ -1185,7 +1176,6 @@ class Template(object):
         return "<%s %s>" % (self.__class__.__name__, name)
 
 
-@implements_to_string
 class TemplateModule(object):
     """Represents an imported template.  All the exported names of the
     template are available as attributes on this object.  Additionally
@@ -1239,7 +1229,6 @@ class TemplateExpression(object):
         return rv
 
 
-@implements_iterator
 class TemplateStream(object):
     """A template stream works pretty much like an ordinary python generator
     but it can buffer multiple items to reduce the number of total iterations.
@@ -1265,7 +1254,7 @@ class TemplateStream(object):
             Template('Hello {{ name }}!').stream(name='foo').dump('hello.html')
         """
         close = False
-        if isinstance(fp, string_types):
+        if isinstance(fp, str):
             if encoding is None:
                 encoding = "utf-8"
             fp = open(fp, "wb")

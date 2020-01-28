@@ -1,5 +1,4 @@
 # -*- coding: utf-8 -*-
-from ._compat import range_type
 from .filters import FILTERS as DEFAULT_FILTERS  # noqa: F401
 from .tests import TESTS as DEFAULT_TESTS  # noqa: F401
 from .utils import Cycler
@@ -24,7 +23,7 @@ KEEP_TRAILING_NEWLINE = False
 # default filters, tests and namespace
 
 DEFAULT_NAMESPACE = {
-    "range": range_type,
+    "range": range,
     "dict": dict,
     "lipsum": generate_lorem_ipsum,
     "cycler": Cycler,

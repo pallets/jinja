@@ -1,8 +1,8 @@
+import platform
 import sys
 from types import CodeType
 
 from . import TemplateSyntaxError
-from ._compat import PYPY
 from .utils import internal_code
 from .utils import missing
 
@@ -14,13 +14,11 @@ def rewrite_traceback_stack(source=None):
 
     This must be called within an ``except`` block.
 
-    :param exc_info: A :meth:`sys.exc_info` tuple. If not provided,
-        the current ``exc_info`` is used.
     :param source: For ``TemplateSyntaxError``, the original source if
         known.
-    :return: A :meth:`sys.exc_info` tuple that can be re-raised.
+    :return: The original exception with the rewritten traceback.
     """
-    exc_type, exc_value, tb = sys.exc_info()
+    _, exc_value, tb = sys.exc_info()
 
     if isinstance(exc_value, TemplateSyntaxError) and not exc_value.translated:
         exc_value.translated = True
@@ -70,7 +68,7 @@ def rewrite_traceback_stack(source=None):
     for tb in reversed(stack):
         tb_next = tb_set_next(tb, tb_next)
 
-    return exc_type, exc_value, tb_next
+    return exc_value.with_traceback(tb_next)
 
 
 def fake_traceback(exc_value, tb, filename, lineno):
@@ -215,7 +213,7 @@ if sys.version_info >= (3, 7):
         return tb
 
 
-elif PYPY:
+elif platform.python_implementation() == "PyPy":
     # PyPy might have special support, and won't work with ctypes.
     try:
         import tputil

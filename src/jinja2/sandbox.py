@@ -4,38 +4,24 @@ Useful when the template itself comes from an untrusted source.
 """
 import operator
 import types
+from collections import abc
 from collections import deque
 from string import Formatter
 
 from markupsafe import EscapeFormatter
 from markupsafe import Markup
 
-from ._compat import abc
-from ._compat import PY2
-from ._compat import range_type
-from ._compat import string_types
 from .environment import Environment
 from .exceptions import SecurityError
 
 #: maximum number of items a range may produce
 MAX_RANGE = 100000
 
-#: attributes of function objects that are considered unsafe.
-if PY2:
-    UNSAFE_FUNCTION_ATTRIBUTES = {
-        "func_closure",
-        "func_code",
-        "func_dict",
-        "func_defaults",
-        "func_globals",
-    }
-else:
-    # On versions > python 2 the special attributes on functions are gone,
-    # but they remain on methods and generators for whatever reason.
-    UNSAFE_FUNCTION_ATTRIBUTES = set()
+#: Unsafe function attributes.
+UNSAFE_FUNCTION_ATTRIBUTES = set()
 
-#: unsafe method attributes.  function attributes are unsafe for methods too
-UNSAFE_METHOD_ATTRIBUTES = {"im_class", "im_func", "im_self"}
+#: Unsafe method attributes. Function attributes are unsafe for methods too.
+UNSAFE_METHOD_ATTRIBUTES = set()
 
 #: unsafe generator attributes.
 UNSAFE_GENERATOR_ATTRIBUTES = {"gi_frame", "gi_code"}
@@ -46,36 +32,9 @@ UNSAFE_COROUTINE_ATTRIBUTES = {"cr_frame", "cr_code"}
 #: unsafe attributes on async generators
 UNSAFE_ASYNC_GENERATOR_ATTRIBUTES = {"ag_code", "ag_frame"}
 
-_mutable_set_types = (set,)
-_mutable_mapping_types = (dict,)
-_mutable_sequence_types = (list,)
-
-# on python 2.x we can register the user collection types
-try:
-    from UserDict import UserDict, DictMixin
-    from UserList import UserList
-
-    _mutable_mapping_types += (UserDict, DictMixin)
-    _mutable_set_types += (UserList,)
-except ImportError:
-    pass
-
-# if sets is still available, register the mutable set from there as well
-try:
-    from sets import Set
-
-    _mutable_set_types += (Set,)
-except ImportError:
-    pass
-
-#: register Python 2.6 abstract base classes
-_mutable_set_types += (abc.MutableSet,)
-_mutable_mapping_types += (abc.MutableMapping,)
-_mutable_sequence_types += (abc.MutableSequence,)
-
 _mutable_spec = (
     (
-        _mutable_set_types,
+        abc.MutableSet,
         frozenset(
             [
                 "add",
@@ -90,11 +49,11 @@ _mutable_spec = (
         ),
     ),
     (
-        _mutable_mapping_types,
+        abc.MutableMapping,
         frozenset(["clear", "pop", "popitem", "setdefault", "update"]),
     ),
     (
-        _mutable_sequence_types,
+        abc.MutableSequence,
         frozenset(["append", "reverse", "insert", "sort", "extend", "remove"]),
     ),
     (
@@ -153,7 +112,7 @@ def inspect_format_method(callable):
     ) or callable.__name__ not in ("format", "format_map"):
         return None
     obj = callable.__self__
-    if isinstance(obj, string_types):
+    if isinstance(obj, str):
         return obj
 
 
@@ -161,7 +120,7 @@ def safe_range(*args):
     """A range that can't generate ranges with a length of more than
     MAX_RANGE items.
     """
-    rng = range_type(*args)
+    rng = range(*args)
 
     if len(rng) > MAX_RANGE:
         raise OverflowError(
@@ -376,7 +335,7 @@ class SandboxedEnvironment(Environment):
         try:
             return obj[argument]
         except (TypeError, LookupError):
-            if isinstance(argument, string_types):
+            if isinstance(argument, str):
                 try:
                     attr = str(argument)
                 except Exception:

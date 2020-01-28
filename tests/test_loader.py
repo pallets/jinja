@@ -1,5 +1,6 @@
 # -*- coding: utf-8 -*-
 import os
+import platform
 import shutil
 import sys
 import tempfile
@@ -11,8 +12,6 @@ import pytest
 from jinja2 import Environment
 from jinja2 import loaders
 from jinja2 import PackageLoader
-from jinja2._compat import PY2
-from jinja2._compat import PYPY
 from jinja2.exceptions import TemplateNotFound
 from jinja2.loaders import split_template_path
 
@@ -138,25 +137,19 @@ class TestFileSystemLoader(object):
         env = Environment(loader=filesystem_loader)
         self._test_common(env)
 
-    @pytest.mark.skipif(PY2, reason="pathlib is not available in Python 2")
     def test_searchpath_as_pathlib(self):
         import pathlib
 
         searchpath = pathlib.Path(self.searchpath)
-
         filesystem_loader = loaders.FileSystemLoader(searchpath)
-
         env = Environment(loader=filesystem_loader)
         self._test_common(env)
 
-    @pytest.mark.skipif(PY2, reason="pathlib is not available in Python 2")
     def test_searchpath_as_list_including_pathlib(self):
         import pathlib
 
         searchpath = pathlib.Path(self.searchpath)
-
         filesystem_loader = loaders.FileSystemLoader(["/tmp/templates", searchpath])
-
         env = Environment(loader=filesystem_loader)
         self._test_common(env)
 
@@ -265,17 +258,6 @@ class TestModuleLoader(object):
 
         assert name not in sys.modules
 
-    # This test only makes sense on non-pypy python 2
-    @pytest.mark.skipif(
-        not (PY2 and not PYPY), reason="This test only makes sense on non-pypy python 2"
-    )
-    def test_byte_compilation(self, prefix_loader):
-        log = self.compile_down(prefix_loader, py_compile=True)
-        assert 'Byte-compiled "a/test.html"' in log
-        self.mod_env.get_template("a/test.html")
-        mod = self.mod_env.loader.module.tmpl_3c4ddf650c1a73df961a6d3d2ce2752f1b8fd490
-        assert mod.__file__.endswith(".pyc")
-
     def test_choice_loader(self, prefix_loader):
         self.compile_down(prefix_loader)
         self.mod_env.loader = loaders.ChoiceLoader(
@@ -299,7 +281,6 @@ class TestModuleLoader(object):
         tmpl2 = self.mod_env.get_template("DICT/test.html")
         assert tmpl2.render() == "DICT_TEMPLATE"
 
-    @pytest.mark.skipif(PY2, reason="pathlib is not available in Python 2")
     def test_path_as_pathlib(self, prefix_loader):
         self.compile_down(prefix_loader)
 
@@ -312,7 +293,6 @@ class TestModuleLoader(object):
 
         self._test_common()
 
-    @pytest.mark.skipif(PY2, reason="pathlib is not available in Python 2")
     def test_supports_pathlib_in_list_of_paths(self, prefix_loader):
         self.compile_down(prefix_loader)
 
@@ -367,7 +347,7 @@ def test_package_zip_source(package_zip_loader, template, expect):
 
 
 @pytest.mark.xfail(
-    PYPY,
+    platform.python_implementation() == "PyPy",
     reason="PyPy's zipimporter doesn't have a _files attribute.",
     raises=TypeError,
 )

@@ -8,11 +8,6 @@ from collections import deque
 
 from markupsafe import Markup
 
-from ._compat import izip
-from ._compat import PY2
-from ._compat import text_type
-from ._compat import with_metaclass
-
 _binop_to_func = {
     "*": operator.mul,
     "/": operator.truediv,
@@ -49,9 +44,9 @@ class NodeType(type):
     def __new__(mcs, name, bases, d):
         for attr in "fields", "attributes":
             storage = []
-            storage.extend(getattr(bases[0], attr, ()))
+            storage.extend(getattr(bases[0] if bases else object, attr, ()))
             storage.extend(d.get(attr, ()))
-            assert len(bases) == 1, "multiple inheritance not allowed"
+            assert len(bases) <= 1, "multiple inheritance not allowed"
             assert len(storage) == len(set(storage)), "layout conflict"
             d[attr] = tuple(storage)
         d.setdefault("abstract", False)
@@ -91,7 +86,7 @@ def get_eval_context(node, ctx):
     return ctx
 
 
-class Node(with_metaclass(NodeType, object)):
+class Node(metaclass=NodeType):
     """Baseclass for all Jinja nodes.  There are a number of nodes available
     of different types.  There are four major types:
 
@@ -127,7 +122,7 @@ class Node(with_metaclass(NodeType, object)):
                         len(self.fields) != 1 and "s" or "",
                     )
                 )
-            for name, arg in izip(self.fields, fields):
+            for name, arg in zip(self.fields, fields):
                 setattr(self, name, arg)
         for attr in self.attributes:
             setattr(self, attr, attributes.pop(attr, None))
@@ -510,17 +505,7 @@ class Const(Literal):
     fields = ("value",)
 
     def as_const(self, eval_ctx=None):
-        rv = self.value
-        if (
-            PY2
-            and type(rv) is text_type
-            and self.environment.policies["compiler.ascii_str"]
-        ):
-            try:
-                rv = rv.encode("ascii")
-            except UnicodeError:
-                pass
-        return rv
+        return self.value
 
     @classmethod
     def from_untrusted(cls, value, lineno=None, environment=None):
@@ -796,7 +781,7 @@ class Concat(Expr):
 
     def as_const(self, eval_ctx=None):
         eval_ctx = get_eval_context(self, eval_ctx)
-        return "".join(text_type(x.as_const(eval_ctx)) for x in self.nodes)
+        return "".join(str(x.as_const(eval_ctx)) for x in self.nodes)
 
 
 class Compare(Expr):

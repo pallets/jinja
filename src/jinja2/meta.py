@@ -3,8 +3,6 @@
 interesting for introspection.
 """
 from . import nodes
-from ._compat import iteritems
-from ._compat import string_types
 from .compiler import CodeGenerator
 
 
@@ -21,7 +19,7 @@ class TrackingCodeGenerator(CodeGenerator):
     def enter_frame(self, frame):
         """Remember all undeclared identifiers."""
         CodeGenerator.enter_frame(self, frame)
-        for _, (action, param) in iteritems(frame.symbols.loads):
+        for _, (action, param) in frame.symbols.loads.items():
             if action == "resolve" and param not in self.environment.globals:
                 self.undeclared_identifiers.add(param)
 
@@ -35,7 +33,7 @@ def find_undeclared_variables(ast):
     >>> from jinja2 import Environment, meta
     >>> env = Environment()
     >>> ast = env.parse('{% set foo = 42 %}{{ bar + foo }}')
-    >>> meta.find_undeclared_variables(ast) == set(['bar'])
+    >>> meta.find_undeclared_variables(ast) == {'bar'}
     True
 
     .. admonition:: Implementation
@@ -75,7 +73,7 @@ def find_referenced_templates(ast):
                     # something const, only yield the strings and ignore
                     # non-string consts that really just make no sense
                     if isinstance(template_name, nodes.Const):
-                        if isinstance(template_name.value, string_types):
+                        if isinstance(template_name.value, str):
                             yield template_name.value
                     # something dynamic in there
                     else:
@@ -85,7 +83,7 @@ def find_referenced_templates(ast):
                 yield None
             continue
         # constant is a basestring, direct template name
-        if isinstance(node.template.value, string_types):
+        if isinstance(node.template.value, str):
             yield node.template.value
         # a tuple or list (latter *should* not happen) made of consts,
         # yield the consts that are strings.  We could warn here for
@@ -94,7 +92,7 @@ def find_referenced_templates(ast):
             node.template.value, (tuple, list)
         ):
             for template_name in node.template.value:
-                if isinstance(template_name, string_types):
+                if isinstance(template_name, str):
                     yield template_name
         # something else we don't care about, we could warn here
         else:

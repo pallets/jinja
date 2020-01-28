@@ -1,6 +1,4 @@
 # -*- coding: utf-8 -*-
-import sys
-
 import pytest
 
 from jinja2 import DictLoader
@@ -10,7 +8,6 @@ from jinja2 import Template
 from jinja2 import TemplateAssertionError
 from jinja2 import TemplateNotFound
 from jinja2 import TemplateSyntaxError
-from jinja2._compat import text_type
 
 
 @pytest.mark.regression
@@ -134,7 +131,7 @@ class TestBug(object):
         """
         )
 
-        assert tmpl.render().split() == [text_type(x) for x in range(1, 11)] * 5
+        assert tmpl.render().split() == [str(x) for x in range(1, 11)] * 5
 
     def test_weird_inline_comment(self, env):
         env = Environment(line_statement_prefix="%")
@@ -307,13 +304,6 @@ class TestBug(object):
         expected = "TEST"
 
         assert output == expected
-
-    @pytest.mark.skipif(sys.version_info[0] > 2, reason="This only works on 2.x")
-    def test_old_style_attribute(self, env):
-        class Foo:
-            x = 42
-
-        assert env.getitem(Foo(), "x") == 42
 
     def test_block_set_with_extends(self):
         env = Environment(

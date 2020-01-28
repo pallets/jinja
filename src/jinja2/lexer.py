@@ -8,11 +8,8 @@ import re
 from ast import literal_eval
 from collections import deque
 from operator import itemgetter
+from sys import intern
 
-from ._compat import implements_iterator
-from ._compat import intern
-from ._compat import iteritems
-from ._compat import text_type
 from .exceptions import TemplateSyntaxError
 from .utils import LRUCache
 
@@ -21,7 +18,7 @@ from .utils import LRUCache
 _lexer_cache = LRUCache(50)
 
 # static regular expressions
-whitespace_re = re.compile(r"\s+", re.U)
+whitespace_re = re.compile(r"\s+")
 newline_re = re.compile(r"(\r\n|\r|\n)")
 string_re = re.compile(
     r"('([^'\\]*(?:\\.[^'\\]*)*)'" r'|"([^"\\]*(?:\\.[^"\\]*)*)")', re.S
@@ -136,7 +133,7 @@ operators = {
     ";": TOKEN_SEMICOLON,
 }
 
-reverse_operators = dict([(v, k) for k, v in iteritems(operators)])
+reverse_operators = dict([(v, k) for k, v in operators.items()])
 assert len(operators) == len(reverse_operators), "operators dropped"
 operator_re = re.compile(
     "(%s)" % "|".join(re.escape(x) for x in sorted(operators, key=lambda x: -len(x)))
@@ -296,7 +293,6 @@ class Token(tuple):
         return "Token(%r, %r, %r)" % (self.lineno, self.type, self.value)
 
 
-@implements_iterator
 class TokenStreamIterator(object):
     """The iterator for tokenstreams.  Iterate over the stream
     until the eof token is reached.
@@ -317,7 +313,6 @@ class TokenStreamIterator(object):
         return token
 
 
-@implements_iterator
 class TokenStream(object):
     """A token stream is an iterable that yields :class:`Token`\\s.  The
     parser however does not iterate over it but calls :meth:`next` to go
@@ -665,7 +660,6 @@ class Lexer(object):
         """This method tokenizes the text and returns the tokens in a
         generator.  Use this method if you just want to tokenize a template.
         """
-        source = text_type(source)
         lines = source.splitlines()
         if self.keep_trailing_newline and source:
             for newline in ("\r\n", "\r", "\n"):
@@ -744,7 +738,7 @@ class Lexer(object):
                         # yield for the current token the first named
                         # group that matched
                         elif token == "#bygroup":
-                            for key, value in iteritems(m.groupdict()):
+                            for key, value in m.groupdict().items():
                                 if value is not None:
                                     yield lineno, key, value
                                     lineno += value.count("\n")
@@ -804,7 +798,7 @@ class Lexer(object):
                         stack.pop()
                     # resolve the new state by group checking
                     elif new_state == "#bygroup":
-                        for key, value in iteritems(m.groupdict()):
+                        for key, value in m.groupdict().items():
                             if value is not None:
                                 stack.append(key)
                                 break

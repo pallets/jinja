@@ -1,22 +1,14 @@
 # -*- coding: utf-8 -*-
 """The runtime functions and state used by compiled templates."""
 import sys
+from collections import abc
 from itertools import chain
 from types import MethodType
 
 from markupsafe import escape  # noqa: F401
 from markupsafe import Markup
-from markupsafe import soft_unicode
+from markupsafe import soft_str
 
-from ._compat import abc
-from ._compat import imap
-from ._compat import implements_iterator
-from ._compat import implements_to_string
-from ._compat import iteritems
-from ._compat import PY2
-from ._compat import string_types
-from ._compat import text_type
-from ._compat import with_metaclass
 from .exceptions import TemplateNotFound  # noqa: F401
 from .exceptions import TemplateRuntimeError  # noqa: F401
 from .exceptions import UndefinedError
@@ -39,17 +31,12 @@ exported = [
     "concat",
     "escape",
     "markup_join",
-    "unicode_join",
-    "to_string",
+    "str_join",
     "identity",
     "TemplateNotFound",
     "Namespace",
     "Undefined",
 ]
-
-#: the name of the function that is used to convert something into
-#: a string.  We can just use the text type here.
-to_string = text_type
 
 
 def identity(x):
@@ -62,7 +49,7 @@ def identity(x):
 def markup_join(seq):
     """Concatenation that escapes if necessary and converts to string."""
     buf = []
-    iterator = imap(soft_unicode, seq)
+    iterator = map(soft_str, seq)
     for arg in iterator:
         buf.append(arg)
         if hasattr(arg, "__html__"):
@@ -70,9 +57,21 @@ def markup_join(seq):
     return concat(buf)
 
 
-def unicode_join(seq):
+def str_join(seq):
     """Simple args to string conversion and concatenation."""
-    return concat(imap(text_type, seq))
+    return concat(map(str, seq))
+
+
+def unicode_join(seq):
+    import warnings
+
+    warnings.warn(
+        "This template must be recompiled with at least Jinja 3.0, or"
+        " it will fail in 3.1.",
+        DeprecationWarning,
+        stacklevel=2,
+    )
+    return str_join(seq)
 
 
 def new_context(
@@ -96,7 +95,7 @@ def new_context(
         # we don't want to modify the dict passed
         if shared:
             parent = dict(parent)
-        for key, value in iteritems(locals):
+        for key, value in locals.items():
             if value is not missing:
                 parent[key] = value
     return environment.context_class(environment, parent, template_name, blocks)
@@ -155,7 +154,8 @@ def resolve_or_missing(context, key, missing=missing):
     return missing
 
 
-class Context(with_metaclass(ContextMeta)):
+@abc.Mapping.register
+class Context(metaclass=ContextMeta):
     """The template context holds the variables of a template.  It stores the
     values passed to the template and also the names the template exports.
     Creating instances is neither supported nor useful as it's created
@@ -191,7 +191,7 @@ class Context(with_metaclass(ContextMeta)):
         # create the initial mapping of blocks.  Whenever template inheritance
         # takes place the runtime will update this mapping with the new blocks
         # from the template.
-        self.blocks = dict((k, [v]) for k, v in iteritems(blocks))
+        self.blocks = {k: [v] for k, v in blocks.items()}
 
         # In case we detect the fast resolve mode we can set up an alias
         # here that bypasses the legacy code logic.
@@ -304,7 +304,7 @@ class Context(with_metaclass(ContextMeta)):
             self.environment, self.name, {}, self.get_all(), True, None, locals
         )
         context.eval_ctx = self.eval_ctx
-        context.blocks.update((k, list(v)) for k, v in iteritems(self.blocks))
+        context.blocks.update((k, list(v)) for k, v in self.blocks.items())
         return context
 
     def _all(meth):  # noqa: B902
@@ -318,12 +318,6 @@ class Context(with_metaclass(ContextMeta)):
     keys = _all("keys")
     values = _all("values")
     items = _all("items")
-
-    # not available on python 3
-    if PY2:
-        iterkeys = _all("iterkeys")
-        itervalues = _all("itervalues")
-        iteritems = _all("iteritems")
     del _all
 
     def __contains__(self, name):
@@ -344,9 +338,6 @@ class Context(with_metaclass(ContextMeta)):
             repr(self.get_all()),
             self.name,
         )
-
-
-abc.Mapping.register(Context)
 
 
 class BlockReference(object):
@@ -375,7 +366,6 @@ class BlockReference(object):
         return rv
 
 
-@implements_iterator
 class LoopContext:
     """A wrapper iterable for dynamic ``for`` loops, with information
     about the loop and iteration.
@@ -688,7 +678,6 @@ class Macro(object):
         )
 
 
-@implements_to_string
 class Undefined(object):
     """The default undefined type.  This undefined type can be printed and
     iterated over, but every other access will raise an :exc:`UndefinedError`:
@@ -728,7 +717,7 @@ class Undefined(object):
         if self._undefined_obj is missing:
             return "%r is undefined" % self._undefined_name
 
-        if not isinstance(self._undefined_name, string_types):
+        if not isinstance(self._undefined_name, str):
             return "%s has no element %r" % (
                 object_type_repr(self._undefined_obj),
                 self._undefined_name,
@@ -752,51 +741,16 @@ class Undefined(object):
             raise AttributeError(name)
         return self._fail_with_undefined_error()
 
-    __add__ = (
-        __radd__
-    ) = (
-        __mul__
-    ) = (
-        __rmul__
-    ) = (
-        __div__
-    ) = (
-        __rdiv__
-    ) = (
-        __truediv__
-    ) = (
-        __rtruediv__
-    ) = (
-        __floordiv__
-    ) = (
-        __rfloordiv__
-    ) = (
-        __mod__
-    ) = (
-        __rmod__
-    ) = (
-        __pos__
-    ) = (
-        __neg__
-    ) = (
-        __call__
-    ) = (
-        __getitem__
-    ) = (
-        __lt__
-    ) = (
-        __le__
-    ) = (
-        __gt__
-    ) = (
-        __ge__
-    ) = (
-        __int__
-    ) = (
-        __float__
-    ) = (
-        __complex__
-    ) = __pow__ = __rpow__ = __sub__ = __rsub__ = _fail_with_undefined_error
+    __add__ = __radd__ = __sub__ = __rsub__ = _fail_with_undefined_error
+    __mul__ = __rmul__ = __div__ = __rdiv__ = _fail_with_undefined_error
+    __truediv__ = __rtruediv__ = _fail_with_undefined_error
+    __floordiv__ = __rfloordiv__ = _fail_with_undefined_error
+    __mod__ = __rmod__ = _fail_with_undefined_error
+    __pos__ = __neg__ = _fail_with_undefined_error
+    __call__ = __getitem__ = _fail_with_undefined_error
+    __lt__ = __le__ = __gt__ = __ge__ = _fail_with_undefined_error
+    __int__ = __float__ = __complex__ = _fail_with_undefined_error
+    __pow__ = __rpow__ = _fail_with_undefined_error
 
     def __eq__(self, other):
         return type(self) is type(other)
@@ -817,10 +771,8 @@ class Undefined(object):
         if 0:
             yield None
 
-    def __nonzero__(self):
+    def __bool__(self):
         return False
-
-    __bool__ = __nonzero__
 
     def __repr__(self):
         return "Undefined"
@@ -858,7 +810,7 @@ def make_logging_undefined(logger=None, base=None):
         if undef._undefined_hint is None:
             if undef._undefined_obj is missing:
                 hint = "%s is undefined" % undef._undefined_name
-            elif not isinstance(undef._undefined_name, string_types):
+            elif not isinstance(undef._undefined_name, str):
                 hint = "%s has no element %s" % (
                     object_type_repr(undef._undefined_obj),
                     undef._undefined_name,
@@ -890,31 +842,14 @@ def make_logging_undefined(logger=None, base=None):
             _log_message(self)
             return rv
 
-        if PY2:
-
-            def __nonzero__(self):
-                rv = base.__nonzero__(self)
-                _log_message(self)
-                return rv
-
-            def __unicode__(self):
-                rv = base.__unicode__(self)
-                _log_message(self)
-                return rv
-
-        else:
-
-            def __bool__(self):
-                rv = base.__bool__(self)
-                _log_message(self)
-                return rv
+        def __bool__(self):
+            rv = base.__bool__(self)
+            _log_message(self)
+            return rv
 
     return LoggingUndefined
 
 
-# No @implements_to_string decorator here because __str__
-# is not overwritten from Undefined in this class.
-# This would cause a recursion error in Python 2.
 class ChainableUndefined(Undefined):
     """An undefined that is chainable, where both ``__getattr__`` and
     ``__getitem__`` return itself rather than raising an
@@ -942,7 +877,6 @@ class ChainableUndefined(Undefined):
     __getitem__ = __getattr__
 
 
-@implements_to_string
 class DebugUndefined(Undefined):
     """An undefined that returns the debug info when printed.
 
@@ -970,7 +904,6 @@ class DebugUndefined(Undefined):
         return u"{{ undefined value printed: %s }}" % self._undefined_hint
 
 
-@implements_to_string
 class StrictUndefined(Undefined):
     """An undefined that barks on print and iteration as well as boolean
     tests and all kinds of comparisons.  In other words: you can do nothing
@@ -992,17 +925,12 @@ class StrictUndefined(Undefined):
     """
 
     __slots__ = ()
-    __iter__ = (
-        __str__
-    ) = (
-        __len__
-    ) = (
-        __nonzero__
-    ) = __eq__ = __ne__ = __bool__ = __hash__ = Undefined._fail_with_undefined_error
+    __iter__ = __str__ = __len__ = Undefined._fail_with_undefined_error
+    __eq__ = __ne__ = __bool__ = __hash__ = Undefined._fail_with_undefined_error
 
 
-# remove remaining slots attributes, after the metaclass did the magic they
-# are unneeded and irritating as they contain wrong data for the subclasses.
+# Remove slots attributes, after the metaclass is applied they are
+# unneeded and contain wrong data for subclasses.
 del (
     Undefined.__slots__,
     ChainableUndefined.__slots__,

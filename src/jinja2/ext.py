@@ -7,9 +7,6 @@ from sys import version_info
 from markupsafe import Markup
 
 from . import nodes
-from ._compat import iteritems
-from ._compat import string_types
-from ._compat import with_metaclass
 from .defaults import BLOCK_END_STRING
 from .defaults import BLOCK_START_STRING
 from .defaults import COMMENT_END_STRING
@@ -47,7 +44,7 @@ class ExtensionRegistry(type):
         return rv
 
 
-class Extension(with_metaclass(ExtensionRegistry, object)):
+class Extension(metaclass=ExtensionRegistry):
     """Extensions can be used to add extra functionality to the Jinja template
     system at the parser level.  Custom extensions are bound to an environment
     but may not store environment specific data on `self`.  The reason for
@@ -222,7 +219,7 @@ class InternationalizationExtension(Extension):
             self.environment.globals.pop(key, None)
 
     def _extract(self, source, gettext_functions=GETTEXT_FUNCTIONS):
-        if isinstance(source, string_types):
+        if isinstance(source, str):
             source = self.environment.parse(source)
         return extract_from_ast(source, gettext_functions)
 
@@ -409,7 +406,7 @@ class InternationalizationExtension(Extension):
         # enough to handle the variable expansion and autoescape
         # handling itself
         if self.environment.newstyle_gettext:
-            for key, value in iteritems(variables):
+            for key, value in variables.items():
                 # the function adds that later anyways in case num was
                 # called num, so just skip it.
                 if num_called_num and key == "num":
@@ -554,7 +551,7 @@ def extract_from_ast(node, gettext_functions=GETTEXT_FUNCTIONS, babel_style=True
 
         strings = []
         for arg in node.args:
-            if isinstance(arg, nodes.Const) and isinstance(arg.value, string_types):
+            if isinstance(arg, nodes.Const) and isinstance(arg.value, str):
                 strings.append(arg.value)
             else:
                 strings.append(None)

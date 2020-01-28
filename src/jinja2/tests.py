@@ -1,13 +1,10 @@
 # -*- coding: utf-8 -*-
 """Built-in template tests used with the ``is`` operator."""
-import decimal
 import operator
 import re
+from collections import abc
+from numbers import Number
 
-from ._compat import abc
-from ._compat import integer_types
-from ._compat import string_types
-from ._compat import text_type
 from .runtime import Undefined
 
 number_re = re.compile(r"^-?\d+(\.\d+)?$")
@@ -87,7 +84,7 @@ def test_integer(value):
 
     .. versionadded:: 2.11
     """
-    return isinstance(value, integer_types) and value is not True and value is not False
+    return isinstance(value, int) and value is not True and value is not False
 
 
 # NOTE: The existing 'number' test matches booleans and integers
@@ -101,17 +98,17 @@ def test_float(value):
 
 def test_lower(value):
     """Return true if the variable is lowercased."""
-    return text_type(value).islower()
+    return str(value).islower()
 
 
 def test_upper(value):
     """Return true if the variable is uppercased."""
-    return text_type(value).isupper()
+    return str(value).isupper()
 
 
 def test_string(value):
     """Return true if the object is a string."""
-    return isinstance(value, string_types)
+    return isinstance(value, str)
 
 
 def test_mapping(value):
@@ -124,7 +121,7 @@ def test_mapping(value):
 
 def test_number(value):
     """Return true if the variable is a number."""
-    return isinstance(value, integer_types + (float, complex, decimal.Decimal))
+    return isinstance(value, Number)
 
 
 def test_sequence(value):

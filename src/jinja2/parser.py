@@ -1,7 +1,6 @@
 # -*- coding: utf-8 -*-
 """Parse tokens from the lexer into nodes for the compiler."""
 from . import nodes
-from ._compat import imap
 from .exceptions import TemplateAssertionError
 from .exceptions import TemplateSyntaxError
 from .lexer import describe_token
@@ -66,7 +65,7 @@ class Parser(object):
     def _fail_ut_eof(self, name, end_token_stack, lineno):
         expected = []
         for exprs in end_token_stack:
-            expected.extend(imap(describe_token_expr, exprs))
+            expected.extend(map(describe_token_expr, exprs))
         if end_token_stack:
             currently_looking = " or ".join(
                 "'%s'" % describe_token_expr(expr) for expr in end_token_stack[-1]

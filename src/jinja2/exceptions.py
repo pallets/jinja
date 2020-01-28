@@ -1,44 +1,15 @@
-# -*- coding: utf-8 -*-
-from ._compat import imap
-from ._compat import implements_to_string
-from ._compat import PY2
-from ._compat import text_type
-
-
 class TemplateError(Exception):
     """Baseclass for all template errors."""
 
-    if PY2:
+    def __init__(self, message=None):
+        super().__init__(message)
 
-        def __init__(self, message=None):
-            if message is not None:
-                message = text_type(message).encode("utf-8")
-            Exception.__init__(self, message)
-
-        @property
-        def message(self):
-            if self.args:
-                message = self.args[0]
-                if message is not None:
-                    return message.decode("utf-8", "replace")
-
-        def __unicode__(self):
-            return self.message or u""
-
-    else:
-
-        def __init__(self, message=None):
-            Exception.__init__(self, message)
-
-        @property
-        def message(self):
-            if self.args:
-                message = self.args[0]
-                if message is not None:
-                    return message
+    @property
+    def message(self):
+        if self.args:
+            return self.args[0]
 
 
-@implements_to_string
 class TemplateNotFound(IOError, LookupError, TemplateError):
     """Raised if a template does not exist.
 
@@ -95,13 +66,12 @@ class TemplatesNotFound(TemplateNotFound):
                     parts.append(name)
 
             message = u"none of the templates given were found: " + u", ".join(
-                imap(text_type, parts)
+                map(str, parts)
             )
         TemplateNotFound.__init__(self, names and names[-1] or None, message)
         self.templates = list(names)
 
 
-@implements_to_string
 class TemplateSyntaxError(TemplateError):
     """Raised to tell the user that there is a problem with the template."""
 

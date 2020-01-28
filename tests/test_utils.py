@@ -7,8 +7,6 @@ from copy import copy as shallow_copy
 import pytest
 from markupsafe import Markup
 
-from jinja2._compat import range_type
-from jinja2._compat import string_types
 from jinja2.utils import consume
 from jinja2.utils import generate_lorem_ipsum
 from jinja2.utils import LRUCache
@@ -165,26 +163,26 @@ class TestLoremIpsum(object):
 
     def test_lorem_ipsum_html(self):
         """Test that output of lorem_ipsum is a string_type when not html."""
-        assert isinstance(generate_lorem_ipsum(html=False), string_types)
+        assert isinstance(generate_lorem_ipsum(html=False), str)
 
     def test_lorem_ipsum_n(self):
         """Test that the n (number of lines) works as expected."""
         assert generate_lorem_ipsum(n=0, html=False) == u""
-        for n in range_type(1, 50):
+        for n in range(1, 50):
             assert generate_lorem_ipsum(n=n, html=False).count("\n") == (n - 1) * 2
 
     def test_lorem_ipsum_min(self):
         """Test that at least min words are in the output of each line"""
-        for _ in range_type(5):
+        for _ in range(5):
             m = random.randrange(20, 99)
-            for _ in range_type(10):
+            for _ in range(10):
                 assert generate_lorem_ipsum(n=1, min=m, html=False).count(" ") >= m - 1
 
     def test_lorem_ipsum_max(self):
         """Test that at least max words are in the output of each line"""
-        for _ in range_type(5):
+        for _ in range(5):
             m = random.randrange(21, 100)
-            for _ in range_type(10):
+            for _ in range(10):
                 assert generate_lorem_ipsum(n=1, max=m, html=False).count(" ") < m - 1
 
 

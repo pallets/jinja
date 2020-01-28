@@ -6,25 +6,11 @@ from jinja2 import nodes
 from jinja2 import Template
 from jinja2 import TemplateSyntaxError
 from jinja2 import UndefinedError
-from jinja2._compat import iteritems
-from jinja2._compat import PY2
-from jinja2._compat import text_type
 from jinja2.lexer import Token
 from jinja2.lexer import TOKEN_BLOCK_BEGIN
 from jinja2.lexer import TOKEN_BLOCK_END
 from jinja2.lexer import TOKEN_EOF
 from jinja2.lexer import TokenStream
-
-
-# how does a string look like in jinja syntax?
-if PY2:
-
-    def jinja_string_repr(string):
-        return repr(string)[1:]
-
-
-else:
-    jinja_string_repr = repr
 
 
 @pytest.mark.lexnparse
@@ -111,7 +97,7 @@ class TestLexer(object):
 
     def test_string_escapes(self, env):
         for char in u"\0", u"\u2668", u"\xe4", u"\t", u"\r", u"\n":
-            tmpl = env.from_string("{{ %s }}" % jinja_string_repr(char))
+            tmpl = env.from_string("{{ %s }}" % repr(char))
             assert tmpl.render() == char
         assert env.from_string('{{ "\N{HOT SPRINGS}" }}').render() == u"\u2668"
 
@@ -124,7 +110,7 @@ class TestLexer(object):
     def test_operators(self, env):
         from jinja2.lexer import operators
 
-        for test, expect in iteritems(operators):
+        for test, expect in operators.items():
             if test in "([{}])":
                 continue
             stream = env.lexer.tokenize("{{ %s }}" % test)
@@ -153,30 +139,30 @@ class TestLexer(object):
                 assert result == expect, (keep, template, result, expect)
 
     @pytest.mark.parametrize(
-        "name,valid2,valid3",
-        (
-            (u"foo", True, True),
-            (u"föö", False, True),
-            (u"き", False, True),
-            (u"_", True, True),
-            (u"1a", False, False),  # invalid ascii start
-            (u"a-", False, False),  # invalid ascii continue
-            (u"🐍", False, False),  # invalid unicode start
-            (u"a🐍", False, False),  # invalid unicode continue
+        ("name", "valid"),
+        [
+            (u"foo", True),
+            (u"föö", True),
+            (u"き", True),
+            (u"_", True),
+            (u"1a", False),  # invalid ascii start
+            (u"a-", False),  # invalid ascii continue
+            (u"🐍", False),  # invalid unicode start
+            (u"a🐍", False),  # invalid unicode continue
             # start characters not matched by \w
-            (u"\u1885", False, True),
-            (u"\u1886", False, True),
-            (u"\u2118", False, True),
-            (u"\u212e", False, True),
+            (u"\u1885", True),
+            (u"\u1886", True),
+            (u"\u2118", True),
+            (u"\u212e", True),
             # continue character not matched by \w
-            (u"\xb7", False, False),
-            (u"a\xb7", False, True),
-        ),
+            (u"\xb7", False),
+            (u"a\xb7", True),
+        ],
     )
-    def test_name(self, env, name, valid2, valid3):
+    def test_name(self, env, name, valid):
         t = u"{{ " + name + u" }}"
 
-        if (valid2 and PY2) or (valid3 and not PY2):
+        if valid:
             # valid for version being tested, shouldn't raise
             env.from_string(t)
         else:
@@ -528,7 +514,7 @@ class TestSyntax(object):
 
     def test_operator_precedence(self, env):
         tmpl = env.from_string("""{{ 2 * 3 + 4 % 2 + 1 - 2 }}""")
-        assert tmpl.render() == text_type(2 * 3 + 4 % 2 + 1 - 2)
+        assert tmpl.render() == "5"
 
     def test_implicit_subscribed_tuple(self, env):
         class Foo(object):
