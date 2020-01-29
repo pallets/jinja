@@ -26,11 +26,9 @@ from .runtime import concat
 from .utils import contextfunction
 from .utils import import_string
 
-# the only real useful gettext functions for a Jinja template.  Note
-# that ugettext must be assigned to gettext as Jinja doesn't support
-# non unicode strings.
+# I18N functions available in Jinja templates. If the I18N library
+# provides ugettext, it will be assigned to gettext.
 GETTEXT_FUNCTIONS = ("_", "gettext", "ngettext")
-
 _ws_re = re.compile(r"\s*\n\s*")
 
 
@@ -192,6 +190,8 @@ class InternationalizationExtension(Extension):
         )
 
     def _install(self, translations, newstyle=None):
+        # ugettext and ungettext are preferred in case the I18N library
+        # is providing compatibility with older Python versions.
         gettext = getattr(translations, "ugettext", None)
         if gettext is None:
             gettext = translations.gettext
