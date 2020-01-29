@@ -18,7 +18,7 @@ from io import BytesIO
 
 from .utils import open_if_exists
 
-bc_version = 4
+bc_version = 5
 # Magic bytes to identify Jinja bytecode cache files. Contains the
 # Python major and minor version to avoid loading incompatible bytecode
 # if a project upgrades its Python version.
