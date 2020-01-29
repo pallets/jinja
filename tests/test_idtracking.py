@@ -38,7 +38,7 @@ def test_basics():
 
 def test_complex():
     title_block = nodes.Block(
-        "title", [nodes.Output([nodes.TemplateData(u"Page Title")])], False
+        "title", [nodes.Output([nodes.TemplateData("Page Title")])], False
     )
 
     render_title_macro = nodes.Macro(
@@ -48,11 +48,11 @@ def test_complex():
         [
             nodes.Output(
                 [
-                    nodes.TemplateData(u'\n  <div class="title">\n    <h1>'),
+                    nodes.TemplateData('\n  <div class="title">\n    <h1>'),
                     nodes.Name("title", "load"),
-                    nodes.TemplateData(u"</h1>\n    <p>"),
+                    nodes.TemplateData("</h1>\n    <p>"),
                     nodes.Name("subtitle", "load"),
-                    nodes.TemplateData(u"</p>\n    "),
+                    nodes.TemplateData("</p>\n    "),
                 ]
             ),
             nodes.Assign(
@@ -60,9 +60,9 @@ def test_complex():
             ),
             nodes.Output(
                 [
-                    nodes.TemplateData(u"\n    <p>"),
+                    nodes.TemplateData("\n    <p>"),
                     nodes.Name("subtitle", "load"),
-                    nodes.TemplateData(u"</p>\n  </div>\n"),
+                    nodes.TemplateData("</p>\n  </div>\n"),
                     nodes.If(
                         nodes.Name("something", "load"),
                         [
@@ -104,13 +104,13 @@ def test_complex():
         [
             nodes.Output(
                 [
-                    nodes.TemplateData(u"\n    <li>"),
+                    nodes.TemplateData("\n    <li>"),
                     nodes.Name("item", "load"),
-                    nodes.TemplateData(u"</li>\n    <span>"),
+                    nodes.TemplateData("</li>\n    <span>"),
                 ]
             ),
             nodes.Include(nodes.Const("helper.html"), True, False),
-            nodes.Output([nodes.TemplateData(u"</span>\n  ")]),
+            nodes.Output([nodes.TemplateData("</span>\n  ")]),
         ],
         [],
         None,
@@ -122,7 +122,7 @@ def test_complex():
         [
             nodes.Output(
                 [
-                    nodes.TemplateData(u"\n  "),
+                    nodes.TemplateData("\n  "),
                     nodes.Call(
                         nodes.Name("render_title", "load"),
                         [nodes.Name("item", "load")],
@@ -130,11 +130,11 @@ def test_complex():
                         None,
                         None,
                     ),
-                    nodes.TemplateData(u"\n  <ul>\n  "),
+                    nodes.TemplateData("\n  <ul>\n  "),
                 ]
             ),
             for_loop,
-            nodes.Output([nodes.TemplateData(u"\n  </ul>\n")]),
+            nodes.Output([nodes.TemplateData("\n  </ul>\n")]),
         ],
         False,
     )
@@ -155,7 +155,7 @@ def test_complex():
     assert tmpl_sym.loads == {
         "l_0_render_title": ("undefined", None),
     }
-    assert tmpl_sym.stores == set(["render_title"])
+    assert tmpl_sym.stores == {"render_title"}
     assert tmpl_sym.dump_stores() == {
         "render_title": "l_0_render_title",
     }
@@ -173,7 +173,7 @@ def test_complex():
         "l_1_title": ("param", None),
         "l_1_title_upper": ("resolve", "title_upper"),
     }
-    assert macro_sym.stores == set(["title", "title_upper", "subtitle"])
+    assert macro_sym.stores == {"title", "title_upper", "subtitle"}
     assert macro_sym.find_ref("render_title") == "l_0_render_title"
     assert macro_sym.dump_stores() == {
         "title": "l_1_title",
@@ -193,7 +193,7 @@ def test_complex():
         "l_0_seq": ("resolve", "seq"),
         "l_0_render_title": ("resolve", "render_title"),
     }
-    assert body_sym.stores == set([])
+    assert body_sym.stores == set()
 
     for_sym = symbols_for_node(for_loop, body_sym)
     assert for_sym.refs == {
@@ -202,7 +202,7 @@ def test_complex():
     assert for_sym.loads == {
         "l_1_item": ("param", None),
     }
-    assert for_sym.stores == set(["item"])
+    assert for_sym.stores == {"item"}
     assert for_sym.dump_stores() == {
         "item": "l_1_item",
     }
@@ -222,7 +222,7 @@ def test_if_branching_stores():
 
     sym = symbols_for_node(tmpl)
     assert sym.refs == {"variable": "l_0_variable", "expression": "l_0_expression"}
-    assert sym.stores == set(["variable"])
+    assert sym.stores == {"variable"}
     assert sym.loads == {
         "l_0_variable": ("resolve", "variable"),
         "l_0_expression": ("resolve", "expression"),
@@ -247,7 +247,7 @@ def test_if_branching_stores_undefined():
 
     sym = symbols_for_node(tmpl)
     assert sym.refs == {"variable": "l_0_variable", "expression": "l_0_expression"}
-    assert sym.stores == set(["variable"])
+    assert sym.stores == {"variable"}
     assert sym.loads == {
         "l_0_variable": ("undefined", None),
         "l_0_expression": ("resolve", "expression"),
@@ -281,7 +281,7 @@ def test_if_branching_multi_scope():
 
     tmpl_sym = symbols_for_node(tmpl)
     for_sym = symbols_for_node(for_loop, tmpl_sym)
-    assert for_sym.stores == set(["item", "x"])
+    assert for_sym.stores == {"item", "x"}
     assert for_sym.loads == {
         "l_1_x": ("alias", "l_0_x"),
         "l_1_item": ("param", None),

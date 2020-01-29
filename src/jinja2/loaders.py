@@ -1,4 +1,3 @@
-# -*- coding: utf-8 -*-
 """API and implementations for loading templates from different data
 sources.
 """
@@ -33,7 +32,7 @@ def split_template_path(template):
     return pieces
 
 
-class BaseLoader(object):
+class BaseLoader:
     """Baseclass for all loaders.  Subclass this and override `get_source` to
     implement a custom loading mechanism.  The environment provides a
     `get_template` method that calls the loader's `load` method to get the
@@ -86,7 +85,7 @@ class BaseLoader(object):
         """
         if not self.has_source_access:
             raise RuntimeError(
-                "%s cannot provide access to the source" % self.__class__.__name__
+                f"{self.__class__.__name__} cannot provide access to the source"
             )
         raise TemplateNotFound(template)
 
@@ -277,8 +276,8 @@ class PackageLoader(BaseLoader):
 
         if self._template_root is None:
             raise ValueError(
-                "The %r package was not installed in a way that"
-                " PackageLoader understands." % package_name
+                f"The {package_name!r} package was not installed in a"
+                " way that PackageLoader understands."
             )
 
     def get_source(self, environment, template):
@@ -514,7 +513,7 @@ class ModuleLoader(BaseLoader):
     has_source_access = False
 
     def __init__(self, path):
-        package_name = "_jinja2_module_templates_%x" % id(self)
+        package_name = f"_jinja2_module_templates_{id(self):x}"
 
         # create a fake module that looks for the templates in the
         # path given.
@@ -546,7 +545,7 @@ class ModuleLoader(BaseLoader):
     @internalcode
     def load(self, environment, name, globals=None):
         key = self.get_template_key(name)
-        module = "%s.%s" % (self.package_name, key)
+        module = f"{self.package_name}.{key}"
         mod = getattr(self.module, module, None)
         if mod is None:
             try:

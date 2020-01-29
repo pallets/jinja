@@ -42,11 +42,9 @@ singlehtml_sidebars = {"index": ["project.html", "localtoc.html"]}
 html_static_path = ["_static"]
 html_favicon = "_static/jinja-logo-sidebar.png"
 html_logo = "_static/jinja-logo-sidebar.png"
-html_title = "Jinja Documentation ({})".format(version)
+html_title = f"Jinja Documentation ({version})"
 html_show_sourcelink = False
 
 # LaTeX ----------------------------------------------------------------
 
-latex_documents = [
-    (master_doc, "Jinja-{}.tex".format(version), html_title, author, "manual")
-]
+latex_documents = [(master_doc, f"Jinja-{version}.tex", html_title, author, "manual")]

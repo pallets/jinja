@@ -1,4 +1,3 @@
-# -*- coding: utf-8 -*-
 """The code for async support. Importing this patches Jinja."""
 import asyncio
 import inspect

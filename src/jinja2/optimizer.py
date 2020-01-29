@@ -1,4 +1,3 @@
-# -*- coding: utf-8 -*-
 """The optimizer tries to constant fold expressions and modify the AST
 in place so that it should be faster to evaluate.
 
@@ -24,7 +23,7 @@ class Optimizer(NodeTransformer):
         self.environment = environment
 
     def generic_visit(self, node, *args, **kwargs):
-        node = super(Optimizer, self).generic_visit(node, *args, **kwargs)
+        node = super().generic_visit(node, *args, **kwargs)
 
         # Do constant folding. Some other nodes besides Expr have
         # as_const, but folding them causes errors later on.

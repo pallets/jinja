@@ -1,4 +1,3 @@
-# -*- coding: utf-8 -*-
 import pytest
 
 from jinja2 import Environment
@@ -12,7 +11,7 @@ from jinja2.sandbox import SandboxedEnvironment
 from jinja2.sandbox import unsafe
 
 
-class PrivateStuff(object):
+class PrivateStuff:
     def bar(self):
         return 23
 
@@ -24,7 +23,7 @@ class PrivateStuff(object):
         return "PrivateStuff"
 
 
-class PublicStuff(object):
+class PublicStuff:
     def bar(self):
         return 23
 
@@ -36,7 +35,7 @@ class PublicStuff(object):
 
 
 @pytest.mark.sandbox
-class TestSandbox(object):
+class TestSandbox:
     def test_unsafe(self, env):
         env = SandboxedEnvironment()
         pytest.raises(
@@ -105,10 +104,10 @@ class TestSandbox(object):
         for expr, ctx, rv in ("1 + 2", {}, "3"), ("a + 2", {"a": 2}, "4"):
             env = SandboxedEnvironment()
             env.binop_table["+"] = disable_op
-            t = env.from_string("{{ %s }}" % expr)
+            t = env.from_string(f"{{{{ {expr} }}}}")
             assert t.render(ctx) == rv
             env.intercepted_binops = frozenset(["+"])
-            t = env.from_string("{{ %s }}" % expr)
+            t = env.from_string(f"{{{{ {expr} }}}}")
             with pytest.raises(TemplateRuntimeError):
                 t.render(ctx)
 
@@ -119,16 +118,16 @@ class TestSandbox(object):
         for expr, ctx, rv in ("-1", {}, "-1"), ("-a", {"a": 2}, "-2"):
             env = SandboxedEnvironment()
             env.unop_table["-"] = disable_op
-            t = env.from_string("{{ %s }}" % expr)
+            t = env.from_string(f"{{{{ {expr} }}}}")
             assert t.render(ctx) == rv
             env.intercepted_unops = frozenset(["-"])
-            t = env.from_string("{{ %s }}" % expr)
+            t = env.from_string(f"{{{{ {expr} }}}}")
             with pytest.raises(TemplateRuntimeError):
                 t.render(ctx)
 
 
 @pytest.mark.sandbox
-class TestStringFormat(object):
+class TestStringFormat:
     def test_basic_format_safety(self):
         env = SandboxedEnvironment()
         t = env.from_string('{{ "a{0.__class__}b".format(42) }}')
@@ -151,7 +150,7 @@ class TestStringFormat(object):
 
 
 @pytest.mark.sandbox
-class TestStringFormatMap(object):
+class TestStringFormatMap:
     def test_basic_format_safety(self):
         env = SandboxedEnvironment()
         t = env.from_string('{{ "a{x.__class__}b".format_map({"x":42}) }}')

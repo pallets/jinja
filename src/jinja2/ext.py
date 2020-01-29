@@ -1,4 +1,3 @@
-# -*- coding: utf-8 -*-
 """Extension API for adding custom tags and behavior."""
 import pprint
 import re
@@ -40,7 +39,7 @@ class ExtensionRegistry(type):
 
     def __new__(mcs, name, bases, d):
         rv = type.__new__(mcs, name, bases, d)
-        rv.identifier = rv.__module__ + "." + rv.__name__
+        rv.identifier = f"{rv.__module__}.{rv.__name__}"
         return rv
 
 
@@ -203,7 +202,7 @@ class InternationalizationExtension(Extension):
 
     def _install_null(self, newstyle=None):
         self._install_callables(
-            lambda x: x, lambda s, p, n: (n != 1 and (p,) or (s,))[0], newstyle
+            lambda x: x, lambda s, p, n: s if n == 1 else p, newstyle
         )
 
     def _install_callables(self, gettext, ngettext, newstyle=None):
@@ -246,7 +245,7 @@ class InternationalizationExtension(Extension):
             name = parser.stream.expect("name")
             if name.value in variables:
                 parser.fail(
-                    "translatable variable %r defined twice." % name.value,
+                    f"translatable variable {name.value!r} defined twice.",
                     name.lineno,
                     exc=TemplateAssertionError,
                 )
@@ -294,7 +293,7 @@ class InternationalizationExtension(Extension):
                 name = parser.stream.expect("name")
                 if name.value not in variables:
                     parser.fail(
-                        "unknown variable %r for pluralization" % name.value,
+                        f"unknown variable {name.value!r} for pluralization",
                         name.lineno,
                         exc=TemplateAssertionError,
                     )
@@ -353,7 +352,7 @@ class InternationalizationExtension(Extension):
                 next(parser.stream)
                 name = parser.stream.expect("name").value
                 referenced.append(name)
-                buf.append("%%(%s)s" % name)
+                buf.append(f"%({name})s")
                 parser.stream.expect("variable_end")
             elif parser.stream.current.type == "block_begin":
                 next(parser.stream)
@@ -436,7 +435,7 @@ class ExprStmtExtension(Extension):
     that it doesn't print the return value.
     """
 
-    tags = set(["do"])
+    tags = {"do"}
 
     def parse(self, parser):
         node = nodes.ExprStmt(lineno=next(parser.stream).lineno)
@@ -447,7 +446,7 @@ class ExprStmtExtension(Extension):
 class LoopControlExtension(Extension):
     """Adds break and continue to the template engine."""
 
-    tags = set(["break", "continue"])
+    tags = {"break", "continue"}
 
     def parse(self, parser):
         token = next(parser.stream)
@@ -575,7 +574,7 @@ def extract_from_ast(node, gettext_functions=GETTEXT_FUNCTIONS, babel_style=True
         yield node.lineno, node.node.name, strings
 
 
-class _CommentFinder(object):
+class _CommentFinder:
     """Helper class to find comments in a token stream.  Can only
     find comments for gettext calls forwards.  Once the comment
     from line 4 is found, a comment for line 1 will not return a

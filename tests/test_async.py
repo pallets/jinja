@@ -131,7 +131,7 @@ def test_env_async():
 
 
 @pytest.mark.imports
-class TestAsyncImports(object):
+class TestAsyncImports:
     def test_context_imports(self, test_env_async):
         t = test_env_async.from_string('{% import "module" as m %}{{ m.test() }}')
         assert t.render(foo=42) == "[|23]"
@@ -182,7 +182,7 @@ class TestAsyncImports(object):
 
 @pytest.mark.imports
 @pytest.mark.includes
-class TestAsyncIncludes(object):
+class TestAsyncIncludes:
     def test_context_include(self, test_env_async):
         t = test_env_async.from_string('{% include "header" %}')
         assert t.render(foo=42) == "[42|23]"
@@ -281,7 +281,7 @@ class TestAsyncIncludes(object):
 
 @pytest.mark.core_tags
 @pytest.mark.for_loop
-class TestAsyncForLoop(object):
+class TestAsyncForLoop:
     def test_simple(self, test_env_async):
         tmpl = test_env_async.from_string("{% for item in seq %}{{ item }}{% endfor %}")
         assert tmpl.render(seq=list(range(10))) == "0123456789"
@@ -345,8 +345,7 @@ class TestAsyncForLoop(object):
 
     def test_varlen(self, test_env_async):
         def inner():
-            for item in range(5):
-                yield item
+            yield from range(5)
 
         tmpl = test_env_async.from_string(
             "{% for item in iter %}{{ item }}{% endfor %}"

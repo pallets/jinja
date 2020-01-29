@@ -65,10 +65,10 @@ class TemplatesNotFound(TemplateNotFound):
                 else:
                     parts.append(name)
 
-            message = u"none of the templates given were found: " + u", ".join(
+            message = "none of the templates given were found: " + ", ".join(
                 map(str, parts)
             )
-        TemplateNotFound.__init__(self, names and names[-1] or None, message)
+        TemplateNotFound.__init__(self, names[-1] if names else None, message)
         self.templates = list(names)
 
 
@@ -92,10 +92,10 @@ class TemplateSyntaxError(TemplateError):
             return self.message
 
         # otherwise attach some stuff
-        location = "line %d" % self.lineno
+        location = f"line {self.lineno}"
         name = self.filename or self.name
         if name:
-            location = 'File "%s", %s' % (name, location)
+            location = f'File "{name}", {location}'
         lines = [self.message, "  " + location]
 
         # if the source is set, add the line to the output
@@ -107,7 +107,7 @@ class TemplateSyntaxError(TemplateError):
             if line:
                 lines.append("    " + line.strip())
 
-        return u"\n".join(lines)
+        return "\n".join(lines)
 
     def __reduce__(self):
         # https://bugs.python.org/issue1692335 Exceptions that take

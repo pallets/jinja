@@ -1,4 +1,3 @@
-# -*- coding: utf-8 -*-
 import os
 import shutil
 import tempfile
@@ -27,7 +26,7 @@ from jinja2.utils import evalcontextfunction
 
 @pytest.mark.api
 @pytest.mark.extended
-class TestExtendedAPI(object):
+class TestExtendedAPI:
     def test_item_and_attribute(self, env):
         from jinja2.sandbox import SandboxedEnvironment
 
@@ -164,11 +163,11 @@ class TestExtendedAPI(object):
 
 @pytest.mark.api
 @pytest.mark.meta
-class TestMeta(object):
+class TestMeta:
     def test_find_undeclared_variables(self, env):
         ast = env.parse("{% set foo = 42 %}{{ bar + foo }}")
         x = meta.find_undeclared_variables(ast)
-        assert x == set(["bar"])
+        assert x == {"bar"}
 
         ast = env.parse(
             "{% set foo = 42 %}{{ bar + foo }}"
@@ -177,11 +176,11 @@ class TestMeta(object):
             "{% endfor %}"
         )
         x = meta.find_undeclared_variables(ast)
-        assert x == set(["bar", "seq", "muh"])
+        assert x == {"bar", "seq", "muh"}
 
         ast = env.parse("{% for x in range(5) %}{{ x }}{% endfor %}{{ foo }}")
         x = meta.find_undeclared_variables(ast)
-        assert x == set(["foo"])
+        assert x == {"foo"}
 
     def test_find_refererenced_templates(self, env):
         ast = env.parse('{% extends "layout.html" %}{% include helper %}')
@@ -219,7 +218,7 @@ class TestMeta(object):
 
 @pytest.mark.api
 @pytest.mark.streaming
-class TestStreaming(object):
+class TestStreaming:
     def test_basic_streaming(self, env):
         t = env.from_string(
             "<ul>{% for item in seq %}<li>{{ loop.index }} - {{ item }}</li>"
@@ -236,8 +235,8 @@ class TestStreaming(object):
         )
         stream = tmpl.stream(seq=list(range(3)))
         stream.enable_buffering(size=3)
-        assert next(stream) == u"<ul><li>1"
-        assert next(stream) == u" - 0</li>"
+        assert next(stream) == "<ul><li>1"
+        assert next(stream) == " - 0</li>"
 
     def test_streaming_behavior(self, env):
         tmpl = env.from_string("")
@@ -251,7 +250,7 @@ class TestStreaming(object):
     def test_dump_stream(self, env):
         tmp = tempfile.mkdtemp()
         try:
-            tmpl = env.from_string(u"\u2713")
+            tmpl = env.from_string("\u2713")
             stream = tmpl.stream()
             stream.dump(os.path.join(tmp, "dump.txt"), "utf-8")
             with open(os.path.join(tmp, "dump.txt"), "rb") as f:
@@ -262,7 +261,7 @@ class TestStreaming(object):
 
 @pytest.mark.api
 @pytest.mark.undefined
-class TestUndefined(object):
+class TestUndefined:
     def test_stopiteration_is_undefined(self):
         def test():
             raise StopIteration()
@@ -279,7 +278,7 @@ class TestUndefined(object):
     def test_logging_undefined(self):
         _messages = []
 
-        class DebugLogger(object):
+        class DebugLogger:
             def warning(self, msg, *args):
                 _messages.append("W:" + msg % args)
 
@@ -288,23 +287,23 @@ class TestUndefined(object):
 
         logging_undefined = make_logging_undefined(DebugLogger())
         env = Environment(undefined=logging_undefined)
-        assert env.from_string("{{ missing }}").render() == u""
+        assert env.from_string("{{ missing }}").render() == ""
         pytest.raises(UndefinedError, env.from_string("{{ missing.attribute }}").render)
         assert env.from_string("{{ missing|list }}").render() == "[]"
         assert env.from_string("{{ missing is not defined }}").render() == "True"
         assert env.from_string("{{ foo.missing }}").render(foo=42) == ""
         assert env.from_string("{{ not missing }}").render() == "True"
         assert _messages == [
-            "W:Template variable warning: missing is undefined",
+            "W:Template variable warning: 'missing' is undefined",
             "E:Template variable error: 'missing' is undefined",
-            "W:Template variable warning: missing is undefined",
-            "W:Template variable warning: int object has no attribute missing",
-            "W:Template variable warning: missing is undefined",
+            "W:Template variable warning: 'missing' is undefined",
+            "W:Template variable warning: 'int object' has no attribute 'missing'",
+            "W:Template variable warning: 'missing' is undefined",
         ]
 
     def test_default_undefined(self):
         env = Environment(undefined=Undefined)
-        assert env.from_string("{{ missing }}").render() == u""
+        assert env.from_string("{{ missing }}").render() == ""
         pytest.raises(UndefinedError, env.from_string("{{ missing.attribute }}").render)
         assert env.from_string("{{ missing|list }}").render() == "[]"
         assert env.from_string("{{ missing is not defined }}").render() == "True"
@@ -322,7 +321,7 @@ class TestUndefined(object):
     def test_chainable_undefined(self):
         env = Environment(undefined=ChainableUndefined)
         # The following tests are copied from test_default_undefined
-        assert env.from_string("{{ missing }}").render() == u""
+        assert env.from_string("{{ missing }}").render() == ""
         assert env.from_string("{{ missing|list }}").render() == "[]"
         assert env.from_string("{{ missing is not defined }}").render() == "True"
         assert env.from_string("{{ foo.missing }}").render(foo=42) == ""
@@ -332,19 +331,17 @@ class TestUndefined(object):
             getattr(ChainableUndefined, "__slots__")  # noqa: B009
 
         # The following tests ensure subclass functionality works as expected
-        assert env.from_string('{{ missing.bar["baz"] }}').render() == u""
-        assert (
-            env.from_string('{{ foo.bar["baz"]._undefined_name }}').render() == u"foo"
-        )
+        assert env.from_string('{{ missing.bar["baz"] }}').render() == ""
+        assert env.from_string('{{ foo.bar["baz"]._undefined_name }}').render() == "foo"
         assert (
             env.from_string('{{ foo.bar["baz"]._undefined_name }}').render(foo=42)
-            == u"bar"
+            == "bar"
         )
         assert (
             env.from_string('{{ foo.bar["baz"]._undefined_name }}').render(
                 foo={"bar": 42}
             )
-            == u"baz"
+            == "baz"
         )
 
     def test_debug_undefined(self):
@@ -355,13 +352,13 @@ class TestUndefined(object):
         assert env.from_string("{{ missing is not defined }}").render() == "True"
         assert (
             env.from_string("{{ foo.missing }}").render(foo=42)
-            == u"{{ no such element: int object['missing'] }}"
+            == "{{ no such element: int object['missing'] }}"
         )
         assert env.from_string("{{ not missing }}").render() == "True"
         undefined_hint = "this is testing undefined hint of DebugUndefined"
         assert (
             str(DebugUndefined(hint=undefined_hint))
-            == u"{{ undefined value printed: %s }}" % undefined_hint
+            == f"{{{{ undefined value printed: {undefined_hint} }}}}"
         )
         with pytest.raises(AttributeError):
             getattr(DebugUndefined, "__slots__")  # noqa: B009
@@ -401,7 +398,7 @@ class TestUndefined(object):
 
 @pytest.mark.api
 @pytest.mark.lowlevel
-class TestLowLevel(object):
+class TestLowLevel:
     def test_custom_code_generator(self):
         class CustomCodeGenerator(CodeGenerator):
             def visit_Const(self, node, frame=None):
@@ -409,7 +406,7 @@ class TestLowLevel(object):
                 if node.value == "foo":
                     self.write(repr("bar"))
                 else:
-                    super(CustomCodeGenerator, self).visit_Const(node, frame)
+                    super().visit_Const(node, frame)
 
         class CustomEnvironment(Environment):
             code_generator_class = CustomCodeGenerator

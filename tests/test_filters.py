@@ -1,4 +1,3 @@
-# -*- coding: utf-8 -*-
 import random
 from collections import namedtuple
 
@@ -8,7 +7,7 @@ from jinja2 import Environment
 from jinja2 import Markup
 
 
-class Magic(object):
+class Magic:
     def __init__(self, value):
         self.value = value
 
@@ -16,17 +15,17 @@ class Magic(object):
         return str(self.value)
 
 
-class Magic2(object):
+class Magic2:
     def __init__(self, value1, value2):
         self.value1 = value1
         self.value2 = value2
 
     def __str__(self):
-        return u"(%s,%s)" % (str(self.value1), str(self.value2))
+        return f"({self.value1},{self.value2})"
 
 
 @pytest.mark.filter
-class TestFilter(object):
+class TestFilter:
     def test_filter_calling(self, env):
         rv = env.call_filter("sum", [1, 2, 3])
         assert rv == 6
@@ -56,7 +55,7 @@ class TestFilter(object):
         ),
     )
     def test_dictsort(self, env, args, expect):
-        t = env.from_string("{{{{ foo|dictsort({args}) }}}}".format(args=args))
+        t = env.from_string(f"{{{{ foo|dictsort({args}) }}}}")
         out = t.render(foo={"aa": 0, "b": 1, "c": 2, "AB": 3})
         assert out == expect
 
@@ -139,18 +138,18 @@ class TestFilter(object):
         assert out == "0"
 
     @pytest.mark.parametrize(
-        ("value", "expect"), (("42", "42.0"), ("abc", "0.0"), ("32.32", "32.32"),)
+        ("value", "expect"), (("42", "42.0"), ("abc", "0.0"), ("32.32", "32.32"))
     )
     def test_float(self, env, value, expect):
-        t = env.from_string("{{ '%s'|float }}" % value)
-        assert t.render() == expect
+        t = env.from_string("{{ value|float }}")
+        assert t.render(value=value) == expect
 
     def test_float_default(self, env):
         t = env.from_string("{{ value|float(default=1.0) }}")
         assert t.render(value="abc") == "1.0"
 
     def test_format(self, env):
-        tmpl = env.from_string("""{{ "%s|%s"|format("a", "b") }}""")
+        tmpl = env.from_string("{{ '%s|%s'|format('a', 'b') }}")
         out = tmpl.render()
         assert out == "a|b"
 
@@ -193,23 +192,23 @@ class TestFilter(object):
         ),
     )
     def test_int(self, env, value, expect):
-        t = env.from_string("{{ '%s'|int }}" % value)
-        assert t.render() == expect
+        t = env.from_string("{{ value|int }}")
+        assert t.render(value=value) == expect
 
     @pytest.mark.parametrize(
         ("value", "base", "expect"),
         (("0x4d32", 16, "19762"), ("011", 8, "9"), ("0x33Z", 16, "0"),),
     )
     def test_int_base(self, env, value, base, expect):
-        t = env.from_string("{{ '%s'|int(base=%d) }}" % (value, base))
-        assert t.render() == expect
+        t = env.from_string("{{ value|int(base=base) }}")
+        assert t.render(value=value, base=base) == expect
 
     def test_int_default(self, env):
         t = env.from_string("{{ value|int(default=1) }}")
         assert t.render(value="abc") == "1"
 
     def test_int_special_method(self, env):
-        class IntIsh(object):
+        class IntIsh:
             def __int__(self):
                 return 42
 
@@ -318,20 +317,19 @@ class TestFilter(object):
             "{{ smalldata|truncate(15) }}"
         )
         out = tmpl.render(data="foobar baz bar" * 1000, smalldata="foobar baz bar")
-        msg = "Current output: %s" % out
-        assert out == "foobar baz b>>>|foobar baz>>>|foobar baz bar", msg
+        assert out == "foobar baz b>>>|foobar baz>>>|foobar baz bar"
 
     def test_truncate_very_short(self, env):
         tmpl = env.from_string(
             '{{ "foo bar baz"|truncate(9) }}|{{ "foo bar baz"|truncate(9, true) }}'
         )
         out = tmpl.render()
-        assert out == "foo bar baz|foo bar baz", out
+        assert out == "foo bar baz|foo bar baz"
 
     def test_truncate_end_length(self, env):
         tmpl = env.from_string('{{ "Joel is a slug"|truncate(7, true) }}')
         out = tmpl.render()
-        assert out == "Joel...", "Current output: %s" % out
+        assert out == "Joel..."
 
     def test_upper(self, env):
         tmpl = env.from_string('{{ "foo"|upper }}')
@@ -580,7 +578,7 @@ class TestFilter(object):
 
     def test_forceescape(self, env):
         tmpl = env.from_string("{{ x|forceescape }}")
-        assert tmpl.render(x=Markup("<div />")) == u"&lt;div /&gt;"
+        assert tmpl.render(x=Markup("<div />")) == "&lt;div /&gt;"
 
     def test_safe(self, env):
         env = Environment(autoescape=True)
@@ -593,10 +591,10 @@ class TestFilter(object):
         ("value", "expect"),
         [
             ("Hello, world!", "Hello%2C%20world%21"),
-            (u"Hello, world\u203d", "Hello%2C%20world%E2%80%BD"),
+            ("Hello, world\u203d", "Hello%2C%20world%E2%80%BD"),
             ({"f": 1}, "f=1"),
             ([("f", 1), ("z", 2)], "f=1&amp;z=2"),
-            ({u"\u203d": 1}, "%E2%80%BD=1"),
+            ({"\u203d": 1}, "%E2%80%BD=1"),
             ({0: 1}, "0=1"),
             ([("a b/c", "a b/c")], "a+b%2Fc=a+b%2Fc"),
             ("a b/c", "a%20b/c"),

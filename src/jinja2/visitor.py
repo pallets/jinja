@@ -1,11 +1,10 @@
-# -*- coding: utf-8 -*-
 """API for traversing the AST nodes. Implemented by the compiler and
 meta introspection.
 """
 from .nodes import Node
 
 
-class NodeVisitor(object):
+class NodeVisitor:
     """Walks the abstract syntax tree and call visitor functions for every
     node found.  The visitor functions may return values which will be
     forwarded by the `visit` method.
@@ -22,8 +21,7 @@ class NodeVisitor(object):
         exists for this node.  In that case the generic visit function is
         used instead.
         """
-        method = "visit_" + node.__class__.__name__
-        return getattr(self, method, None)
+        return getattr(self, f"visit_{node.__class__.__name__}", None)
 
     def visit(self, node, *args, **kwargs):
         """Visit a node."""

@@ -1,4 +1,3 @@
-# -*- coding: utf-8 -*-
 """A sandbox layer that ensures unsafe operations cannot be performed.
 Useful when the template itself comes from an untrusted source.
 """
@@ -126,7 +125,7 @@ def safe_range(*args):
     if len(rng) > MAX_RANGE:
         raise OverflowError(
             "Range too big. The sandbox blocks ranges larger than"
-            " MAX_RANGE (%d)." % MAX_RANGE
+            f" MAX_RANGE ({MAX_RANGE})."
         )
 
     return rng
@@ -135,7 +134,7 @@ def safe_range(*args):
 def unsafe(f):
     """Marks a function or method as unsafe.
 
-    ::
+    .. code-block: python
 
         @unsafe
         def delete(self):
@@ -370,8 +369,8 @@ class SandboxedEnvironment(Environment):
     def unsafe_undefined(self, obj, attribute):
         """Return an undefined object for unsafe attributes."""
         return self.undefined(
-            "access to attribute %r of %r "
-            "object is unsafe." % (attribute, obj.__class__.__name__),
+            f"access to attribute {attribute!r} of"
+            f" {obj.__class__.__name__!r} object is unsafe.",
             name=attribute,
             obj=obj,
             exc=SecurityError,
@@ -389,8 +388,8 @@ class SandboxedEnvironment(Environment):
         if format_func is not None and format_func.__name__ == "format_map":
             if len(args) != 1 or kwargs:
                 raise TypeError(
-                    "format_map() takes exactly one argument %d given"
-                    % (len(args) + (kwargs is not None))
+                    "format_map() takes exactly one argument"
+                    f" {len(args) + (kwargs is not None)} given"
                 )
 
             kwargs = args[0]
@@ -409,7 +408,7 @@ class SandboxedEnvironment(Environment):
         # the double prefixes are to avoid double keyword argument
         # errors when proxying the call.
         if not __self.is_safe_callable(__obj):
-            raise SecurityError("%r is not safely callable" % (__obj,))
+            raise SecurityError(f"{__obj!r} is not safely callable")
         return __context.call(__obj, *args, **kwargs)
 
 
@@ -425,7 +424,7 @@ class ImmutableSandboxedEnvironment(SandboxedEnvironment):
         return not modifies_known_mutable(obj, attr)
 
 
-class SandboxedFormatterMixin(object):
+class SandboxedFormatterMixin:
     def __init__(self, env):
         self._env = env
 

@@ -1,4 +1,3 @@
-# -*- coding: utf-8 -*-
 """Built-in template tests used with the ``is`` operator."""
 import operator
 import re

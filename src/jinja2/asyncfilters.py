@@ -84,7 +84,7 @@ async def do_groupby(environment, value, attribute):
 
 
 @asyncfiltervariant(filters.do_join)
-async def do_join(eval_ctx, value, d=u"", attribute=None):
+async def do_join(eval_ctx, value, d="", attribute=None):
     return filters.do_join(eval_ctx, await auto_to_seq(value), d, attribute)
 
 

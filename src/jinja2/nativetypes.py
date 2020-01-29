@@ -32,7 +32,7 @@ def native_concat(nodes, preserve_quotes=True):
     else:
         if isinstance(nodes, types.GeneratorType):
             nodes = chain(head, nodes)
-        raw = u"".join([str(v) for v in nodes])
+        raw = "".join([str(v) for v in nodes])
 
     try:
         literal = literal_eval(raw)
@@ -44,7 +44,8 @@ def native_concat(nodes, preserve_quotes=True):
     # Without this, "'{{ a }}', '{{ b }}'" results in "a, b", but should
     # be ('a', 'b').
     if preserve_quotes and isinstance(literal, str):
-        return "{quote}{}{quote}".format(literal, quote=raw[0])
+        quote = raw[0]
+        return f"{quote}{literal}{quote}"
 
     return literal
 

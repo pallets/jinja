@@ -1,4 +1,3 @@
-# -*- coding: utf-8 -*-
 """Classes for managing templates and their runtime and compile time
 options.
 """
@@ -101,13 +100,14 @@ def load_extensions(environment, extensions):
     return result
 
 
-def fail_for_missing_callable(string, name):
-    msg = string % name
+def fail_for_missing_callable(thing, name):
+    msg = f"no {thing} named {name!r}"
+
     if isinstance(name, Undefined):
         try:
             name._fail_with_undefined_error()
         except Exception as e:
-            msg = "%s (%s; did you forget to quote the callable name?)" % (msg, e)
+            msg = f"{msg} ({e}; did you forget to quote the callable name?)"
     raise TemplateRuntimeError(msg)
 
 
@@ -121,15 +121,15 @@ def _environment_sanity_check(environment):
         != environment.variable_start_string
         != environment.comment_start_string
     ), "block, variable and comment start strings must be different"
-    assert environment.newline_sequence in (
+    assert environment.newline_sequence in {
         "\r",
         "\r\n",
         "\n",
-    ), "newline_sequence set to unknown line ending string."
+    }, "newline_sequence set to unknown line ending string."
     return environment
 
 
-class Environment(object):
+class Environment:
     r"""The core component of Jinja is the `Environment`.  It contains
     important shared variables like configuration, filters, tests,
     globals and others.  Instances of this class may be modified if
@@ -479,7 +479,7 @@ class Environment(object):
         """
         func = self.filters.get(name)
         if func is None:
-            fail_for_missing_callable("no filter named %r", name)
+            fail_for_missing_callable("filter", name)
         args = [value] + list(args or ())
         if getattr(func, "contextfilter", False) is True:
             if context is None:
@@ -505,7 +505,7 @@ class Environment(object):
         """
         func = self.tests.get(name)
         if func is None:
-            fail_for_missing_callable("no test named %r", name)
+            fail_for_missing_callable("test", name)
         return func(value, *(args or ()), **(kwargs or {}))
 
     @internalcode
@@ -719,11 +719,11 @@ class Environment(object):
             zip_file = ZipFile(
                 target, "w", dict(deflated=ZIP_DEFLATED, stored=ZIP_STORED)[zip]
             )
-            log_function('Compiling into Zip archive "%s"' % target)
+            log_function(f"Compiling into Zip archive {target!r}")
         else:
             if not os.path.isdir(target):
                 os.makedirs(target)
-            log_function('Compiling into folder "%s"' % target)
+            log_function(f"Compiling into folder {target!r}")
 
         try:
             for name in self.list_templates(extensions, filter_func):
@@ -733,13 +733,13 @@ class Environment(object):
                 except TemplateSyntaxError as e:
                     if not ignore_errors:
                         raise
-                    log_function('Could not compile "%s": %s' % (name, e))
+                    log_function(f'Could not compile "{name}": {e}')
                     continue
 
                 filename = ModuleLoader.get_module_filename(name)
 
                 write_file(filename, code)
-                log_function('Compiled "%s" as %s' % (name, filename))
+                log_function(f'Compiled "{name}" as {filename}')
         finally:
             if zip:
                 zip_file.close()
@@ -859,7 +859,7 @@ class Environment(object):
 
         if not names:
             raise TemplatesNotFound(
-                message=u"Tried to select from an empty list " u"of templates."
+                message="Tried to select from an empty list of templates."
             )
         globals = self.make_globals(globals)
         for name in names:
@@ -902,7 +902,7 @@ class Environment(object):
         return dict(self.globals, **d)
 
 
-class Template(object):
+class Template:
     """The central template object.  This class represents a compiled template
     and is used to evaluate it.
 
@@ -1074,8 +1074,7 @@ class Template(object):
         """
         vars = dict(*args, **kwargs)
         try:
-            for event in self.root_render_func(self.new_context(vars)):
-                yield event
+            yield from self.root_render_func(self.new_context(vars))
         except Exception:
             yield self.environment.handle_exception()
 
@@ -1168,13 +1167,13 @@ class Template(object):
 
     def __repr__(self):
         if self.name is None:
-            name = "memory:%x" % id(self)
+            name = f"memory:{id(self):x}"
         else:
             name = repr(self.name)
-        return "<%s %s>" % (self.__class__.__name__, name)
+        return f"<{self.__class__.__name__} {name}>"
 
 
-class TemplateModule(object):
+class TemplateModule:
     """Represents an imported template.  All the exported names of the
     template are available as attributes on this object.  Additionally
     converting it into a string renders the contents.
@@ -1202,13 +1201,13 @@ class TemplateModule(object):
 
     def __repr__(self):
         if self.__name__ is None:
-            name = "memory:%x" % id(self)
+            name = f"memory:{id(self):x}"
         else:
             name = repr(self.__name__)
-        return "<%s %s>" % (self.__class__.__name__, name)
+        return f"<{self.__class__.__name__} {name}>"
 
 
-class TemplateExpression(object):
+class TemplateExpression:
     """The :meth:`jinja2.Environment.compile_expression` method returns an
     instance of this object.  It encapsulates the expression-like access
     to the template with an expression it wraps.
@@ -1227,7 +1226,7 @@ class TemplateExpression(object):
         return rv
 
 
-class TemplateStream(object):
+class TemplateStream:
     """A template stream works pretty much like an ordinary python generator
     but it can buffer multiple items to reduce the number of total iterations.
     Per default the output is unbuffered which means that for every unbuffered

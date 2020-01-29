@@ -1,4 +1,3 @@
-# -*- coding: utf-8 -*-
 import pickle
 import random
 from collections import deque
@@ -18,7 +17,7 @@ from jinja2.utils import urlize
 
 @pytest.mark.utils
 @pytest.mark.lrucache
-class TestLRUCache(object):
+class TestLRUCache:
     def test_simple(self):
         d = LRUCache(3)
         d["a"] = 1
@@ -80,7 +79,7 @@ class TestLRUCache(object):
         d["b"] = 2
         d["c"] = 3
         # Sort the strings - mapping is unordered
-        assert sorted(repr(d)) == sorted(u"<LRUCache {'a': 1, 'b': 2, 'c': 3}>")
+        assert sorted(repr(d)) == sorted("<LRUCache {'a': 1, 'b': 2, 'c': 3}>")
 
     def test_items(self):
         """Test various items, keys, values and iterators of LRUCache."""
@@ -113,9 +112,9 @@ class TestLRUCache(object):
 
 @pytest.mark.utils
 @pytest.mark.helpers
-class TestHelpers(object):
+class TestHelpers:
     def test_object_type_repr(self):
-        class X(object):
+        class X:
             pass
 
         assert object_type_repr(42) == "int object"
@@ -143,7 +142,7 @@ class TestHelpers(object):
 
 @pytest.mark.utils
 @pytest.mark.escapeUrlizeTarget
-class TestEscapeUrlizeTarget(object):
+class TestEscapeUrlizeTarget:
     def test_escape_urlize_target(self):
         url = "http://example.org"
         target = "<script>"
@@ -156,7 +155,7 @@ class TestEscapeUrlizeTarget(object):
 
 @pytest.mark.utils
 @pytest.mark.loremIpsum
-class TestLoremIpsum(object):
+class TestLoremIpsum:
     def test_lorem_ipsum_markup(self):
         """Test that output of lorem_ipsum is Markup by default."""
         assert isinstance(generate_lorem_ipsum(), Markup)
@@ -167,7 +166,7 @@ class TestLoremIpsum(object):
 
     def test_lorem_ipsum_n(self):
         """Test that the n (number of lines) works as expected."""
-        assert generate_lorem_ipsum(n=0, html=False) == u""
+        assert generate_lorem_ipsum(n=0, html=False) == ""
         for n in range(1, 50):
             assert generate_lorem_ipsum(n=n, html=False).count("\n") == (n - 1) * 2
 
@@ -188,7 +187,7 @@ class TestLoremIpsum(object):
 
 def test_missing():
     """Test the repr of missing."""
-    assert repr(missing) == u"missing"
+    assert repr(missing) == "missing"
 
 
 def test_consume():

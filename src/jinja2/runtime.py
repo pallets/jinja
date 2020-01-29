@@ -1,4 +1,3 @@
-# -*- coding: utf-8 -*-
 """The runtime functions and state used by compiled templates."""
 import sys
 from collections import abc
@@ -53,7 +52,7 @@ def markup_join(seq):
     for arg in iterator:
         buf.append(arg)
         if hasattr(arg, "__html__"):
-            return Markup(u"").join(chain(buf, iterator))
+            return Markup("").join(chain(buf, iterator))
     return concat(buf)
 
 
@@ -101,7 +100,7 @@ def new_context(
     return environment.context_class(environment, parent, template_name, blocks)
 
 
-class TemplateReference(object):
+class TemplateReference:
     """The `self` in templates."""
 
     def __init__(self, context):
@@ -112,7 +111,7 @@ class TemplateReference(object):
         return BlockReference(name, self.__context, blocks, 0)
 
     def __repr__(self):
-        return "<%s %r>" % (self.__class__.__name__, self.__context.name)
+        return f"<{self.__class__.__name__} {self.__context.name!r}>"
 
 
 def _get_func(x):
@@ -206,7 +205,7 @@ class Context(metaclass=ContextMeta):
             blocks[index]
         except LookupError:
             return self.environment.undefined(
-                "there is no parent block called %r." % name, name="super"
+                f"there is no parent block called {name!r}.", name="super"
             )
         return BlockReference(name, self, blocks, index)
 
@@ -244,7 +243,7 @@ class Context(metaclass=ContextMeta):
 
     def get_exported(self):
         """Get a new dict with the exported variables."""
-        return dict((k, self.vars[k]) for k in self.exported_vars)
+        return {k: self.vars[k] for k in self.exported_vars}
 
     def get_all(self):
         """Return the complete context as dict including the exported
@@ -290,9 +289,8 @@ class Context(metaclass=ContextMeta):
             return __obj(*args, **kwargs)
         except StopIteration:
             return __self.environment.undefined(
-                "value was undefined because "
-                "a callable raised a "
-                "StopIteration exception"
+                "value was undefined because a callable raised a"
+                " StopIteration exception"
             )
 
     def derived(self, locals=None):
@@ -333,14 +331,10 @@ class Context(metaclass=ContextMeta):
         return item
 
     def __repr__(self):
-        return "<%s %s of %r>" % (
-            self.__class__.__name__,
-            repr(self.get_all()),
-            self.name,
-        )
+        return f"<{self.__class__.__name__} {self.get_all()!r} of {self.name!r}>"
 
 
-class BlockReference(object):
+class BlockReference:
     """One block on a template reference."""
 
     def __init__(self, name, context, stack, depth):
@@ -354,7 +348,7 @@ class BlockReference(object):
         """Super the block."""
         if self._depth + 1 >= len(self._stack):
             return self._context.environment.undefined(
-                "there is no parent block called %r." % self.name, name="super"
+                f"there is no parent block called {self.name!r}.", name="super"
             )
         return BlockReference(self.name, self._context, self._stack, self._depth + 1)
 
@@ -554,10 +548,10 @@ class LoopContext:
         return self._recurse(iterable, self._recurse, depth=self.depth)
 
     def __repr__(self):
-        return "<%s %d/%d>" % (self.__class__.__name__, self.index, self.length)
+        return f"<{self.__class__.__name__} {self.index}/{self.length}>"
 
 
-class Macro(object):
+class Macro:
     """Wraps a macro function."""
 
     def __init__(
@@ -646,20 +640,18 @@ class Macro(object):
         elif kwargs:
             if "caller" in kwargs:
                 raise TypeError(
-                    "macro %r was invoked with two values for "
-                    "the special caller argument.  This is "
-                    "most likely a bug." % self.name
+                    f"macro {self.name!r} was invoked with two values for the special"
+                    " caller argument. This is most likely a bug."
                 )
             raise TypeError(
-                "macro %r takes no keyword argument %r"
-                % (self.name, next(iter(kwargs)))
+                f"macro {self.name!r} takes no keyword argument {next(iter(kwargs))!r}"
             )
         if self.catch_varargs:
             arguments.append(args[self._argument_count :])
         elif len(args) > self._argument_count:
             raise TypeError(
-                "macro %r takes not more than %d argument(s)"
-                % (self.name, len(self.arguments))
+                f"macro {self.name!r} takes not more than"
+                f" {len(self.arguments)} argument(s)"
             )
 
         return self._invoke(arguments, autoescape)
@@ -672,13 +664,11 @@ class Macro(object):
         return rv
 
     def __repr__(self):
-        return "<%s %s>" % (
-            self.__class__.__name__,
-            self.name is None and "anonymous" or repr(self.name),
-        )
+        name = "anonymous" if self.name is None else repr(self.name)
+        return f"<{self.__class__.__name__} {name}>"
 
 
-class Undefined(object):
+class Undefined:
     """The default undefined type.  This undefined type can be printed and
     iterated over, but every other access will raise an :exc:`UndefinedError`:
 
@@ -715,17 +705,17 @@ class Undefined(object):
             return self._undefined_hint
 
         if self._undefined_obj is missing:
-            return "%r is undefined" % self._undefined_name
+            return f"{self._undefined_name!r} is undefined"
 
         if not isinstance(self._undefined_name, str):
-            return "%s has no element %r" % (
-                object_type_repr(self._undefined_obj),
-                self._undefined_name,
+            return (
+                f"{object_type_repr(self._undefined_obj)} has no"
+                f" element {self._undefined_name!r}"
             )
 
-        return "%r has no attribute %r" % (
-            object_type_repr(self._undefined_obj),
-            self._undefined_name,
+        return (
+            f"{object_type_repr(self._undefined_obj)!r} has no"
+            f" attribute {self._undefined_name!r}"
         )
 
     @internalcode
@@ -762,7 +752,7 @@ class Undefined(object):
         return id(type(self))
 
     def __str__(self):
-        return u""
+        return ""
 
     def __len__(self):
         return 0
@@ -807,45 +797,27 @@ def make_logging_undefined(logger=None, base=None):
         base = Undefined
 
     def _log_message(undef):
-        if undef._undefined_hint is None:
-            if undef._undefined_obj is missing:
-                hint = "%s is undefined" % undef._undefined_name
-            elif not isinstance(undef._undefined_name, str):
-                hint = "%s has no element %s" % (
-                    object_type_repr(undef._undefined_obj),
-                    undef._undefined_name,
-                )
-            else:
-                hint = "%s has no attribute %s" % (
-                    object_type_repr(undef._undefined_obj),
-                    undef._undefined_name,
-                )
-        else:
-            hint = undef._undefined_hint
-        logger.warning("Template variable warning: %s", hint)
+        logger.warning("Template variable warning: %s", undef._undefined_message)
 
     class LoggingUndefined(base):
         def _fail_with_undefined_error(self, *args, **kwargs):
             try:
-                return base._fail_with_undefined_error(self, *args, **kwargs)
+                return super()._fail_with_undefined_error(*args, **kwargs)
             except self._undefined_exception as e:
-                logger.error("Template variable error: %s", str(e))
+                logger.error(f"Template variable error: %s", e)
                 raise e
 
         def __str__(self):
-            rv = base.__str__(self)
             _log_message(self)
-            return rv
+            return super().__str__()
 
         def __iter__(self):
-            rv = base.__iter__(self)
             _log_message(self)
-            return rv
+            return super().__iter__()
 
         def __bool__(self):
-            rv = base.__bool__(self)
             _log_message(self)
-            return rv
+            return super().__bool__()
 
     return LoggingUndefined
 
@@ -894,14 +866,19 @@ class DebugUndefined(Undefined):
     __slots__ = ()
 
     def __str__(self):
-        if self._undefined_hint is None:
-            if self._undefined_obj is missing:
-                return u"{{ %s }}" % self._undefined_name
-            return "{{ no such element: %s[%r] }}" % (
-                object_type_repr(self._undefined_obj),
-                self._undefined_name,
+        if self._undefined_hint:
+            message = f"undefined value printed: {self._undefined_hint}"
+
+        elif self._undefined_obj is missing:
+            message = self._undefined_name
+
+        else:
+            message = (
+                f"no such element: {object_type_repr(self._undefined_obj)}"
+                f"[{self._undefined_name!r}]"
             )
-        return u"{{ undefined value printed: %s }}" % self._undefined_hint
+
+        return f"{{{{ {message} }}}}"
 
 
 class StrictUndefined(Undefined):

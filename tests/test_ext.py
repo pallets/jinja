@@ -1,4 +1,3 @@
-# -*- coding: utf-8 -*-
 import re
 from io import BytesIO
 
@@ -52,14 +51,14 @@ newstyle_i18n_templates = {
 
 languages = {
     "de": {
-        "missing": u"fehlend",
-        "watch out": u"pass auf",
-        "One user online": u"Ein Benutzer online",
-        "%(user_count)s users online": u"%(user_count)s Benutzer online",
-        "User: %(num)s": u"Benutzer: %(num)s",
-        "User: %(count)s": u"Benutzer: %(count)s",
-        "%(num)s apple": u"%(num)s Apfel",
-        "%(num)s apples": u"%(num)s Äpfel",
+        "missing": "fehlend",
+        "watch out": "pass auf",
+        "One user online": "Ein Benutzer online",
+        "%(user_count)s users online": "%(user_count)s Benutzer online",
+        "User: %(num)s": "Benutzer: %(num)s",
+        "User: %(count)s": "Benutzer: %(count)s",
+        "%(num)s apple": "%(num)s Apfel",
+        "%(num)s apples": "%(num)s Äpfel",
     }
 }
 
@@ -95,7 +94,7 @@ newstyle_i18n_env.install_gettext_callables(gettext, ngettext, newstyle=True)
 
 
 class ExampleExtension(Extension):
-    tags = set(["test"])
+    tags = {"test"}
     ext_attr = 42
     context_reference_node_cls = nodes.ContextReference
 
@@ -115,12 +114,9 @@ class ExampleExtension(Extension):
         ).set_lineno(next(parser.stream).lineno)
 
     def _dump(self, sandboxed, ext_attr, imported_object, context):
-        return "%s|%s|%s|%s|%s" % (
-            sandboxed,
-            ext_attr,
-            imported_object,
-            context.blocks,
-            context.get("test_var"),
+        return (
+            f"{sandboxed}|{ext_attr}|{imported_object}|{context.blocks}"
+            f"|{context.get('test_var')}"
         )
 
 
@@ -137,8 +133,7 @@ class StreamFilterExtension(Extension):
     def filter_stream(self, stream):
         for token in stream:
             if token.type == "data":
-                for t in self.interpolate(token):
-                    yield t
+                yield from self.interpolate(token)
             else:
                 yield token
 
@@ -166,7 +161,7 @@ class StreamFilterExtension(Extension):
 
 
 @pytest.mark.ext
-class TestExtensions(object):
+class TestExtensions:
     def test_extend_late(self):
         env = Environment()
         env.add_extension("jinja2.ext.autoescape")
@@ -262,11 +257,11 @@ class TestExtensions(object):
         out = t.render()
 
         for value in ("context", "cycler", "filters", "abs", "tests", "!="):
-            assert "'{}'".format(value) in out
+            assert f"'{value}'" in out
 
 
 @pytest.mark.ext
-class TestInternationalization(object):
+class TestInternationalization:
     def test_trans(self):
         tmpl = i18n_env.get_template("child.html")
         assert tmpl.render(LANGUAGE="de") == "<title>fehlend</title>pass auf"
@@ -347,9 +342,9 @@ class TestInternationalization(object):
             """
         )
         assert list(babel_extract(source, ("gettext", "ngettext", "_"), [], {})) == [
-            (2, "gettext", u"Hello World", []),
-            (3, "gettext", u"Hello World", []),
-            (4, "ngettext", (u"%(users)s user", u"%(users)s users", None), []),
+            (2, "gettext", "Hello World", []),
+            (3, "gettext", "Hello World", []),
+            (4, "ngettext", ("%(users)s user", "%(users)s users", None), []),
         ]
 
     def test_extract_trimmed(self):
@@ -364,9 +359,9 @@ class TestInternationalization(object):
             """
         )
         assert list(babel_extract(source, ("gettext", "ngettext", "_"), [], {})) == [
-            (2, "gettext", u" Hello  \n  World", []),
-            (4, "gettext", u"Hello World", []),
-            (6, "ngettext", (u"%(users)s user", u"%(users)s users", None), []),
+            (2, "gettext", " Hello  \n  World", []),
+            (4, "gettext", "Hello World", []),
+            (6, "ngettext", ("%(users)s user", "%(users)s users", None), []),
         ]
 
     def test_extract_trimmed_option(self):
@@ -382,9 +377,9 @@ class TestInternationalization(object):
         )
         opts = {"trimmed": "true"}
         assert list(babel_extract(source, ("gettext", "ngettext", "_"), [], opts)) == [
-            (2, "gettext", u" Hello  \n  World", []),
-            (4, "gettext", u"Hello World", []),
-            (6, "ngettext", (u"%(users)s user", u"%(users)s users", None), []),
+            (2, "gettext", " Hello  \n  World", []),
+            (4, "gettext", "Hello World", []),
+            (6, "ngettext", ("%(users)s user", "%(users)s users", None), []),
         ]
 
     def test_comment_extract(self):
@@ -402,18 +397,18 @@ class TestInternationalization(object):
         assert list(
             babel_extract(source, ("gettext", "ngettext", "_"), ["trans", ":"], {})
         ) == [
-            (3, "gettext", u"Hello World", ["first"]),
-            (4, "gettext", u"Hello World", ["second"]),
-            (6, "ngettext", (u"%(users)s user", u"%(users)s users", None), ["third"]),
+            (3, "gettext", "Hello World", ["first"]),
+            (4, "gettext", "Hello World", ["second"]),
+            (6, "ngettext", ("%(users)s user", "%(users)s users", None), ["third"]),
         ]
 
 
 @pytest.mark.ext
-class TestScope(object):
+class TestScope:
     def test_basic_scope_behavior(self):
         # This is what the old with statement compiled down to
         class ScopeExt(Extension):
-            tags = set(["scope"])
+            tags = {"scope"}
 
             def parse(self, parser):
                 node = nodes.Scope(lineno=next(parser.stream).lineno)
@@ -443,7 +438,7 @@ class TestScope(object):
 
 
 @pytest.mark.ext
-class TestNewstyleInternationalization(object):
+class TestNewstyleInternationalization:
     def test_trans(self):
         tmpl = newstyle_i18n_env.get_template("child.html")
         assert tmpl.render(LANGUAGE="de") == "<title>fehlend</title>pass auf"
@@ -472,12 +467,12 @@ class TestNewstyleInternationalization(object):
     def test_newstyle_plural(self):
         tmpl = newstyle_i18n_env.get_template("ngettext.html")
         assert tmpl.render(LANGUAGE="de", apples=1) == "1 Apfel"
-        assert tmpl.render(LANGUAGE="de", apples=5) == u"5 Äpfel"
+        assert tmpl.render(LANGUAGE="de", apples=5) == "5 Äpfel"
 
     def test_autoescape_support(self):
         env = Environment(extensions=["jinja2.ext.autoescape", "jinja2.ext.i18n"])
         env.install_gettext_callables(
-            lambda x: u"<strong>Wert: %(name)s</strong>",
+            lambda x: "<strong>Wert: %(name)s</strong>",
             lambda s, p, n: s,
             newstyle=True,
         )
@@ -498,7 +493,7 @@ class TestNewstyleInternationalization(object):
 
     def test_num_used_twice(self):
         tmpl = newstyle_i18n_env.get_template("ngettext_long.html")
-        assert tmpl.render(apples=5, LANGUAGE="de") == u"5 Äpfel"
+        assert tmpl.render(apples=5, LANGUAGE="de") == "5 Äpfel"
 
     def test_num_called_num(self):
         source = newstyle_i18n_env.compile(
@@ -513,7 +508,7 @@ class TestNewstyleInternationalization(object):
         # would work) for better performance.  This only works on the
         # newstyle gettext of course
         assert (
-            re.search(r"u?'\%\(num\)s apple', u?'\%\(num\)s " r"apples', 3", source)
+            re.search(r"u?'%\(num\)s apple', u?'%\(num\)s apples', 3", source)
             is not None
         )
 
@@ -535,7 +530,7 @@ class TestNewstyleInternationalization(object):
 
 
 @pytest.mark.ext
-class TestAutoEscape(object):
+class TestAutoEscape:
     def test_scoped_setting(self):
         env = Environment(extensions=["jinja2.ext.autoescape"], autoescape=True)
         tmpl = env.from_string(
@@ -548,9 +543,9 @@ class TestAutoEscape(object):
         """
         )
         assert tmpl.render().split() == [
-            u"&lt;HelloWorld&gt;",
-            u"<HelloWorld>",
-            u"&lt;HelloWorld&gt;",
+            "&lt;HelloWorld&gt;",
+            "<HelloWorld>",
+            "&lt;HelloWorld&gt;",
         ]
 
         env = Environment(extensions=["jinja2.ext.autoescape"], autoescape=False)
@@ -564,9 +559,9 @@ class TestAutoEscape(object):
         """
         )
         assert tmpl.render().split() == [
-            u"<HelloWorld>",
-            u"&lt;HelloWorld&gt;",
-            u"<HelloWorld>",
+            "<HelloWorld>",
+            "&lt;HelloWorld&gt;",
+            "<HelloWorld>",
         ]
 
     def test_nonvolatile(self):
@@ -623,7 +618,7 @@ class TestAutoEscape(object):
 
     def test_overlay_scopes(self):
         class MagicScopeExtension(Extension):
-            tags = set(["overlay"])
+            tags = {"overlay"}
 
             def parse(self, parser):
                 node = nodes.OverlayScope(lineno=next(parser.stream).lineno)

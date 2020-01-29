@@ -106,7 +106,7 @@ def fake_traceback(exc_value, tb, filename, lineno):
             if function == "root":
                 location = "top-level template code"
             elif function.startswith("block_"):
-                location = 'block "%s"' % function[6:]
+                location = f"block {function[6:]!r}"
 
         # Collect arguments for the new code object. CodeType only
         # accepts positional arguments, and arguments were inserted in

@@ -1,4 +1,3 @@
-# -*- coding: utf-8 -*-
 import re
 
 from jinja2.exceptions import TemplateSyntaxError
@@ -54,7 +53,7 @@ class InlineGettext(Extension):
                 else:
                     if gtok == "(" or paren_stack > 1:
                         yield Token(lineno, "data", gtok)
-                    paren_stack += gtok == ")" and -1 or 1
+                    paren_stack += -1 if gtok == ")" else 1
                     if not paren_stack:
                         yield Token(lineno, "block_begin", None)
                         yield Token(lineno, "name", "endtrans")

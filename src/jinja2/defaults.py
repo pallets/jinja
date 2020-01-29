@@ -1,4 +1,3 @@
-# -*- coding: utf-8 -*-
 from .filters import FILTERS as DEFAULT_FILTERS  # noqa: F401
 from .tests import TESTS as DEFAULT_TESTS  # noqa: F401
 from .utils import Cycler

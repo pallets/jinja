@@ -1,11 +1,11 @@
-# -*- coding: utf-8 -*-
 import pytest
 
-from jinja2 import DictLoader
-from jinja2 import Environment
+from jinja2.environment import Environment
 from jinja2.exceptions import TemplateNotFound
 from jinja2.exceptions import TemplatesNotFound
 from jinja2.exceptions import TemplateSyntaxError
+from jinja2.exceptions import UndefinedError
+from jinja2.loaders import DictLoader
 
 
 @pytest.fixture
@@ -24,7 +24,7 @@ def test_env():
 
 
 @pytest.mark.imports
-class TestImports(object):
+class TestImports:
     def test_context_imports(self, test_env):
         t = test_env.from_string('{% import "module" as m %}{{ m.test() }}')
         assert t.render(foo=42) == "[|23]"
@@ -93,10 +93,16 @@ class TestImports(object):
         assert m.variable == 42
         assert not hasattr(m, "notthere")
 
+    def test_not_exported(self, test_env):
+        t = test_env.from_string("{% from 'module' import nothing %}{{ nothing() }}")
+
+        with pytest.raises(UndefinedError, match="does not export the requested name"):
+            t.render()
+
 
 @pytest.mark.imports
 @pytest.mark.includes
-class TestIncludes(object):
+class TestIncludes:
     def test_context_include(self, test_env):
         t = test_env.from_string('{% include "header" %}')
         assert t.render(foo=42) == "[42|23]"

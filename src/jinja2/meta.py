@@ -1,4 +1,3 @@
-# -*- coding: utf-8 -*-
 """Functions that expose information about templates that might be
 interesting for introspection.
 """

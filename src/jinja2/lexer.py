@@ -1,4 +1,3 @@
-# -*- coding: utf-8 -*-
 """Implements a Jinja / Python combination lexer. The ``Lexer`` class
 is used to do some preprocessing. It filters out invalid operators like
 the bitshift operators we don't allow in templates. It separates
@@ -120,10 +119,10 @@ operators = {
     ";": TOKEN_SEMICOLON,
 }
 
-reverse_operators = dict([(v, k) for k, v in operators.items()])
+reverse_operators = {v: k for k, v in operators.items()}
 assert len(operators) == len(reverse_operators), "operators dropped"
 operator_re = re.compile(
-    "(%s)" % "|".join(re.escape(x) for x in sorted(operators, key=lambda x: -len(x)))
+    f"({'|'.join(re.escape(x) for x in sorted(operators, key=lambda x: -len(x)))})"
 )
 
 ignored_tokens = frozenset(
@@ -227,7 +226,7 @@ def compile_rules(environment):
     return [x[1:] for x in sorted(rules, reverse=True)]
 
 
-class Failure(object):
+class Failure:
     """Class that raises a `TemplateSyntaxError` if called.
     Used by the `Lexer` to specify known errors.
     """
@@ -277,10 +276,10 @@ class Token(tuple):
         return False
 
     def __repr__(self):
-        return "Token(%r, %r, %r)" % (self.lineno, self.type, self.value)
+        return f"Token({self.lineno!r}, {self.type!r}, {self.value!r})"
 
 
-class TokenStreamIterator(object):
+class TokenStreamIterator:
     """The iterator for tokenstreams.  Iterate over the stream
     until the eof token is reached.
     """
@@ -300,7 +299,7 @@ class TokenStreamIterator(object):
         return token
 
 
-class TokenStream(object):
+class TokenStream:
     """A token stream is an iterable that yields :class:`Token`\\s.  The
     parser however does not iterate over it but calls :meth:`next` to go
     one token ahead.  The current active token is stored as :attr:`current`.
@@ -385,13 +384,13 @@ class TokenStream(object):
             expr = describe_token_expr(expr)
             if self.current.type is TOKEN_EOF:
                 raise TemplateSyntaxError(
-                    "unexpected end of template, expected %r." % expr,
+                    f"unexpected end of template, expected {expr!r}.",
                     self.current.lineno,
                     self.name,
                     self.filename,
                 )
             raise TemplateSyntaxError(
-                "expected token %r, got %r" % (expr, describe_token(self.current)),
+                f"expected token {expr!r}, got {describe_token(self.current)!r}",
                 self.current.lineno,
                 self.name,
                 self.filename,
@@ -435,10 +434,10 @@ class OptionalLStrip(tuple):
     # Even though it looks like a no-op, creating instances fails
     # without this.
     def __new__(cls, *members, **kwargs):
-        return super(OptionalLStrip, cls).__new__(cls, members)
+        return super().__new__(cls, members)
 
 
-class Lexer(object):
+class Lexer:
     """Class that implements a lexer for a given environment. Automatically
     created by the environment class, usually you don't have to do that.
 
@@ -471,8 +470,13 @@ class Lexer(object):
         # is required.
         root_tag_rules = compile_rules(environment)
 
+        block_start_re = e(environment.block_start_string)
+        block_end_re = e(environment.block_end_string)
+        comment_end_re = e(environment.comment_end_string)
+        variable_end_re = e(environment.variable_end_string)
+
         # block suffix if trimming is enabled
-        block_suffix_re = environment.trim_blocks and "\\n?" or ""
+        block_suffix_re = "\\n?" if environment.trim_blocks else ""
 
         # If lstrip is enabled, it should not be applied if there is any
         # non-whitespace between the newline and block.
@@ -481,28 +485,20 @@ class Lexer(object):
         self.newline_sequence = environment.newline_sequence
         self.keep_trailing_newline = environment.keep_trailing_newline
 
+        root_raw_re = (
+            fr"(?P<raw_begin>{block_start_re}(\-|\+|)\s*raw\s*"
+            fr"(?:\-{block_end_re}\s*|{block_end_re}))"
+        )
+        root_parts_re = "|".join(
+            [root_raw_re] + [fr"(?P<{n}>{r}(\-|\+|))" for n, r in root_tag_rules]
+        )
+
         # global lexing rules
         self.rules = {
             "root": [
                 # directives
                 (
-                    c(
-                        "(.*?)(?:%s)"
-                        % "|".join(
-                            [
-                                r"(?P<raw_begin>%s(\-|\+|)\s*raw\s*(?:\-%s\s*|%s))"
-                                % (
-                                    e(environment.block_start_string),
-                                    e(environment.block_end_string),
-                                    e(environment.block_end_string),
-                                )
-                            ]
-                            + [
-                                r"(?P<%s>%s(\-|\+|))" % (n, r)
-                                for n, r in root_tag_rules
-                            ]
-                        )
-                    ),
+                    c(fr"(.*?)(?:{root_parts_re})"),
                     OptionalLStrip(TOKEN_DATA, "#bygroup"),
                     "#bygroup",
                 ),
@@ -513,29 +509,18 @@ class Lexer(object):
             TOKEN_COMMENT_BEGIN: [
                 (
                     c(
-                        r"(.*?)((?:\-%s\s*|%s)%s)"
-                        % (
-                            e(environment.comment_end_string),
-                            e(environment.comment_end_string),
-                            block_suffix_re,
-                        )
+                        fr"(.*?)((?:\-{comment_end_re}\s*"
+                        fr"|{comment_end_re}){block_suffix_re})"
                     ),
                     (TOKEN_COMMENT, TOKEN_COMMENT_END),
                     "#pop",
                 ),
-                (c("(.)"), (Failure("Missing end of comment tag"),), None),
+                (c(r"(.)"), (Failure("Missing end of comment tag"),), None),
             ],
             # blocks
             TOKEN_BLOCK_BEGIN: [
                 (
-                    c(
-                        r"(?:\-%s\s*|%s)%s"
-                        % (
-                            e(environment.block_end_string),
-                            e(environment.block_end_string),
-                            block_suffix_re,
-                        )
-                    ),
+                    c(fr"(?:\-{block_end_re}\s*|{block_end_re}){block_suffix_re}"),
                     TOKEN_BLOCK_END,
                     "#pop",
                 ),
@@ -544,13 +529,7 @@ class Lexer(object):
             # variables
             TOKEN_VARIABLE_BEGIN: [
                 (
-                    c(
-                        r"\-%s\s*|%s"
-                        % (
-                            e(environment.variable_end_string),
-                            e(environment.variable_end_string),
-                        )
-                    ),
+                    c(fr"\-{variable_end_re}\s*|{variable_end_re}"),
                     TOKEN_VARIABLE_END,
                     "#pop",
                 )
@@ -560,18 +539,13 @@ class Lexer(object):
             TOKEN_RAW_BEGIN: [
                 (
                     c(
-                        r"(.*?)((?:%s(\-|\+|))\s*endraw\s*(?:\-%s\s*|%s%s))"
-                        % (
-                            e(environment.block_start_string),
-                            e(environment.block_end_string),
-                            e(environment.block_end_string),
-                            block_suffix_re,
-                        )
+                        fr"(.*?)((?:{block_start_re}(\-|\+|))\s*endraw\s*"
+                        fr"(?:\-{block_end_re}\s*|{block_end_re}{block_suffix_re}))"
                     ),
                     OptionalLStrip(TOKEN_DATA, TOKEN_RAW_END),
                     "#pop",
                 ),
-                (c("(.)"), (Failure("Missing end of raw directive"),), None),
+                (c(r"(.)"), (Failure("Missing end of raw directive"),), None),
             ],
             # line statements
             TOKEN_LINESTATEMENT_BEGIN: [
@@ -649,10 +623,8 @@ class Lexer(object):
         """
         lines = source.splitlines()
         if self.keep_trailing_newline and source:
-            for newline in ("\r\n", "\r", "\n"):
-                if source.endswith(newline):
-                    lines.append("")
-                    break
+            if source.endswith(("\r\n", "\r", "\n")):
+                lines.append("")
         source = "\n".join(lines)
         pos = 0
         lineno = 1
@@ -732,9 +704,8 @@ class Lexer(object):
                                     break
                             else:
                                 raise RuntimeError(
-                                    "%r wanted to resolve "
-                                    "the token dynamically"
-                                    " but no group matched" % regex
+                                    f"{regex!r} wanted to resolve the token dynamically"
+                                    " but no group matched"
                                 )
                         # normal group
                         else:
@@ -757,13 +728,12 @@ class Lexer(object):
                         elif data in ("}", ")", "]"):
                             if not balancing_stack:
                                 raise TemplateSyntaxError(
-                                    "unexpected '%s'" % data, lineno, name, filename
+                                    f"unexpected '{data}'", lineno, name, filename
                                 )
                             expected_op = balancing_stack.pop()
                             if expected_op != data:
                                 raise TemplateSyntaxError(
-                                    "unexpected '%s', "
-                                    "expected '%s'" % (data, expected_op),
+                                    f"unexpected '{data}', expected '{expected_op}'",
                                     lineno,
                                     name,
                                     filename,
@@ -791,9 +761,8 @@ class Lexer(object):
                                 break
                         else:
                             raise RuntimeError(
-                                "%r wanted to resolve the "
-                                "new state dynamically but"
-                                " no group matched" % regex
+                                f"{regex!r} wanted to resolve the new state dynamically"
+                                f" but no group matched"
                             )
                     # direct state name given
                     else:
@@ -804,7 +773,7 @@ class Lexer(object):
                 # raise error
                 elif pos2 == pos:
                     raise RuntimeError(
-                        "%r yielded empty string without stack change" % regex
+                        f"{regex!r} yielded empty string without stack change"
                     )
                 # publish new function and start again
                 pos = pos2
@@ -817,8 +786,5 @@ class Lexer(object):
                     return
                 # something went wrong
                 raise TemplateSyntaxError(
-                    "unexpected char %r at %d" % (source[pos], pos),
-                    lineno,
-                    name,
-                    filename,
+                    f"unexpected char {source[pos]!r} at {pos}", lineno, name, filename
                 )

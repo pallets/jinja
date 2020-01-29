@@ -1,4 +1,3 @@
-# -*- coding: utf-8 -*-
 import os
 import platform
 import shutil
@@ -17,7 +16,7 @@ from jinja2.loaders import split_template_path
 
 
 @pytest.mark.loaders
-class TestLoaders(object):
+class TestLoaders:
     def test_dict_loader(self, dict_loader):
         env = Environment(loader=dict_loader)
         tmpl = env.get_template("justdict.html")
@@ -67,7 +66,7 @@ class TestLoaders(object):
 
         class TestLoader(loaders.BaseLoader):
             def get_source(self, environment, template):
-                return u"foo", None, lambda: not changed
+                return "foo", None, lambda: not changed
 
         env = Environment(loader=TestLoader(), cache_size=-1)
         tmpl = env.get_template("template")
@@ -118,7 +117,7 @@ class TestLoaders(object):
 
 @pytest.mark.loaders
 @pytest.mark.filesystemloader
-class TestFileSystemLoader(object):
+class TestFileSystemLoader:
     searchpath = os.path.join(
         os.path.dirname(os.path.abspath(__file__)), "res", "templates"
     )
@@ -168,8 +167,8 @@ class TestFileSystemLoader(object):
     @pytest.mark.parametrize(
         ("encoding", "expect"),
         [
-            ("utf-8", u"文字化け"),
-            ("iso-8859-1", u"æ\x96\x87\xe5\xad\x97\xe5\x8c\x96\xe3\x81\x91"),
+            ("utf-8", "文字化け"),
+            ("iso-8859-1", "æ\x96\x87\xe5\xad\x97\xe5\x8c\x96\xe3\x81\x91"),
         ],
     )
     def test_uses_specified_encoding(self, encoding, expect):
@@ -181,7 +180,7 @@ class TestFileSystemLoader(object):
 
 @pytest.mark.loaders
 @pytest.mark.moduleloader
-class TestModuleLoader(object):
+class TestModuleLoader:
     archive = None
 
     def compile_down(self, prefix_loader, zip="deflated"):
@@ -348,7 +347,7 @@ def test_package_zip_source(package_zip_loader, template, expect):
 
 @pytest.mark.xfail(
     platform.python_implementation() == "PyPy",
-    reason="PyPy's zipimporter doesn't have a _files attribute.",
+    reason="PyPy's zipimporter doesn't have a '_files' attribute.",
     raises=TypeError,
 )
 def test_package_zip_list(package_zip_loader):

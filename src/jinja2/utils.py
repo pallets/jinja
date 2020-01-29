@@ -1,4 +1,3 @@
-# -*- coding: utf-8 -*-
 import json
 import os
 import re
@@ -13,12 +12,10 @@ from markupsafe import escape
 from markupsafe import Markup
 
 _word_split_re = re.compile(r"(\s+)")
+_lead_pattern = "|".join(map(re.escape, ("(", "<", "&lt;")))
+_trail_pattern = "|".join(map(re.escape, (".", ",", ")", ">", "\n", "&gt;")))
 _punctuation_re = re.compile(
-    "^(?P<lead>(?:%s)*)(?P<middle>.*?)(?P<trail>(?:%s)*)$"
-    % (
-        "|".join(map(re.escape, ("(", "<", "&lt;"))),
-        "|".join(map(re.escape, (".", ",", ")", ">", "\n", "&gt;"))),
-    )
+    fr"^(?P<lead>(?:{_lead_pattern})*)(?P<middle>.*?)(?P<trail>(?:{_trail_pattern})*)$"
 )
 _simple_email_re = re.compile(r"^\S+@[a-zA-Z0-9._-]+\.[a-zA-Z0-9._-]+$")
 _striptags_re = re.compile(r"(<!--.*?-->|<[^>]*>)")
@@ -32,7 +29,7 @@ missing = type("MissingType", (), {"__repr__": lambda x: "missing"})()
 # internal code
 internal_code = set()
 
-concat = u"".join
+concat = "".join
 
 _slash_escape = "\\/" not in json.dumps("/")
 
@@ -165,8 +162,8 @@ def object_type_repr(obj):
     if obj.__class__.__module__ in ("__builtin__", "builtins"):
         name = obj.__class__.__name__
     else:
-        name = obj.__class__.__module__ + "." + obj.__class__.__name__
-    return "%s object" % name
+        name = f"{obj.__class__.__module__}.{obj.__class__.__name__}"
+    return f"{name} object"
 
 
 def pformat(obj):
@@ -191,14 +188,16 @@ def urlize(text, trim_url_limit=None, rel=None, target=None):
 
     If target is not None, a target attribute will be added to the link.
     """
-    trim_url = (
-        lambda x, limit=trim_url_limit: limit is not None
-        and (x[:limit] + (len(x) >= limit and "..." or ""))
-        or x
-    )
+
+    def trim_url(x, limit=trim_url_limit):
+        if limit is not None:
+            return x[:limit] + ("..." if len(x) >= limit else "")
+
+        return x
+
     words = _word_split_re.split(str(escape(text)))
-    rel_attr = rel and ' rel="%s"' % str(escape(rel)) or ""
-    target_attr = target and ' target="%s"' % escape(target) or ""
+    rel_attr = f' rel="{escape(rel)}"' if rel else ""
+    target_attr = f' target="{escape(target)}"' if target else ""
 
     for i, word in enumerate(words):
         match = _punctuation_re.match(word)
@@ -216,18 +215,13 @@ def urlize(text, trim_url_limit=None, rel=None, target=None):
                     or middle.endswith(".com")
                 )
             ):
-                middle = '<a href="http://%s"%s%s>%s</a>' % (
-                    middle,
-                    rel_attr,
-                    target_attr,
-                    trim_url(middle),
+                middle = (
+                    f'<a href="http://{middle}"{rel_attr}{target_attr}>'
+                    f"{trim_url(middle)}</a>"
                 )
             if middle.startswith("http://") or middle.startswith("https://"):
-                middle = '<a href="%s"%s%s>%s</a>' % (
-                    middle,
-                    rel_attr,
-                    target_attr,
-                    trim_url(middle),
+                middle = (
+                    f'<a href="{middle}"{rel_attr}{target_attr}>{trim_url(middle)}</a>'
                 )
             if (
                 "@" in middle
@@ -235,10 +229,10 @@ def urlize(text, trim_url_limit=None, rel=None, target=None):
                 and ":" not in middle
                 and _simple_email_re.match(middle)
             ):
-                middle = '<a href="mailto:%s">%s</a>' % (middle, middle)
+                middle = f'<a href="mailto:{middle}">{middle}</a>'
             if lead + middle + trail != word:
                 words[i] = lead + middle + trail
-    return u"".join(words)
+    return "".join(words)
 
 
 def generate_lorem_ipsum(n=5, html=True, min=20, max=100):
@@ -278,7 +272,7 @@ def generate_lorem_ipsum(n=5, html=True, min=20, max=100):
             p.append(word)
 
         # ensure that the paragraph ends with a dot.
-        p = u" ".join(p)
+        p = " ".join(p)
         if p.endswith(","):
             p = p[:-1] + "."
         elif not p.endswith("."):
@@ -286,8 +280,8 @@ def generate_lorem_ipsum(n=5, html=True, min=20, max=100):
         result.append(p)
 
     if not html:
-        return u"\n\n".join(result)
-    return Markup(u"\n".join(u"<p>%s</p>" % escape(x) for x in result))
+        return "\n\n".join(result)
+    return Markup("\n".join(f"<p>{escape(x)}</p>" for x in result))
 
 
 def url_quote(obj, charset="utf-8", for_qs=False):
@@ -329,7 +323,7 @@ def unicode_urlencode(obj, charset="utf-8", for_qs=False):
 
 
 @abc.MutableMapping.register
-class LRUCache(object):
+class LRUCache:
     """A simple LRU Cache implementation."""
 
     # this is fast for small capacities (something below 1000) but doesn't
@@ -406,7 +400,7 @@ class LRUCache(object):
         return len(self._mapping)
 
     def __repr__(self):
-        return "<%s %r>" % (self.__class__.__name__, self._mapping)
+        return f"<{self.__class__.__name__} {self._mapping!r}>"
 
     def __getitem__(self, key):
         """Get an item from the cache. Moves the item up so that it has the
@@ -525,8 +519,8 @@ def select_autoescape(
 
     .. versionadded:: 2.9
     """
-    enabled_patterns = tuple("." + x.lstrip(".").lower() for x in enabled_extensions)
-    disabled_patterns = tuple("." + x.lstrip(".").lower() for x in disabled_extensions)
+    enabled_patterns = tuple(f".{x.lstrip('.').lower()}" for x in enabled_extensions)
+    disabled_patterns = tuple(f".{x.lstrip('.').lower()}" for x in disabled_extensions)
 
     def autoescape(template_name):
         if template_name is None:
@@ -563,15 +557,15 @@ def htmlsafe_json_dumps(obj, dumper=None, **kwargs):
         dumper = json.dumps
     rv = (
         dumper(obj, **kwargs)
-        .replace(u"<", u"\\u003c")
-        .replace(u">", u"\\u003e")
-        .replace(u"&", u"\\u0026")
-        .replace(u"'", u"\\u0027")
+        .replace("<", "\\u003c")
+        .replace(">", "\\u003e")
+        .replace("&", "\\u0026")
+        .replace("'", "\\u0027")
     )
     return Markup(rv)
 
 
-class Cycler(object):
+class Cycler:
     """Cycle through values by yield them one at a time, then restarting
     once the end is reached. Available as ``cycler`` in templates.
 
@@ -625,21 +619,21 @@ class Cycler(object):
     __next__ = next
 
 
-class Joiner(object):
+class Joiner:
     """A joining helper for templates."""
 
-    def __init__(self, sep=u", "):
+    def __init__(self, sep=", "):
         self.sep = sep
         self.used = False
 
     def __call__(self):
         if not self.used:
             self.used = True
-            return u""
+            return ""
         return self.sep
 
 
-class Namespace(object):
+class Namespace:
     """A namespace object that can hold arbitrary attributes.  It may be
     initialized from a dictionary or with keyword arguments."""
 
@@ -659,7 +653,7 @@ class Namespace(object):
         self.__attrs[name] = value
 
     def __repr__(self):
-        return "<Namespace %r>" % self.__attrs
+        return f"<Namespace {self.__attrs!r}>"
 
 
 # does this python version support async for in and async generators?

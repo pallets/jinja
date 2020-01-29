@@ -1,4 +1,3 @@
-# -*- coding: utf-8 -*-
 """The optional bytecode cache system. This is useful if you have very
 complex template situations and the compilation of all those templates
 slows down your application too much.
@@ -30,7 +29,7 @@ bc_magic = (
 )
 
 
-class Bucket(object):
+class Bucket:
     """Buckets are used to store the bytecode for one template.  It's created
     and initialized by the bytecode cache and passed to the loading functions.
 
@@ -87,7 +86,7 @@ class Bucket(object):
         return out.getvalue()
 
 
-class BytecodeCache(object):
+class BytecodeCache:
     """To implement your own bytecode cache you have to subclass this class
     and override :meth:`load_bytecode` and :meth:`dump_bytecode`.  Both of
     these methods are passed a :class:`~jinja2.bccache.Bucket`.
@@ -205,7 +204,7 @@ class FileSystemBytecodeCache(BytecodeCache):
         if not hasattr(os, "getuid"):
             _unsafe_dir()
 
-        dirname = "_jinja2-cache-%d" % os.getuid()
+        dirname = f"_jinja2-cache-{os.getuid()}"
         actual_dir = os.path.join(tmpdir, dirname)
 
         try:
@@ -237,7 +236,7 @@ class FileSystemBytecodeCache(BytecodeCache):
         return actual_dir
 
     def _get_cache_filename(self, bucket):
-        return os.path.join(self.directory, self.pattern % bucket.key)
+        return os.path.join(self.directory, self.pattern % (bucket.key,))
 
     def load_bytecode(self, bucket):
         f = open_if_exists(self._get_cache_filename(bucket), "rb")
@@ -260,7 +259,7 @@ class FileSystemBytecodeCache(BytecodeCache):
         # normally.
         from os import remove
 
-        files = fnmatch.filter(os.listdir(self.directory), self.pattern % "*")
+        files = fnmatch.filter(os.listdir(self.directory), self.pattern % ("*",))
         for filename in files:
             try:
                 remove(os.path.join(self.directory, filename))

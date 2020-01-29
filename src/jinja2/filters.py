@@ -1,4 +1,3 @@
-# -*- coding: utf-8 -*-
 """Built-in template filters used with the ``|`` operator."""
 import math
 import random
@@ -153,9 +152,8 @@ def do_urlencode(value):
     else:
         items = iter(value)
 
-    return u"&".join(
-        "%s=%s" % (url_quote(k, for_qs=True), url_quote(v, for_qs=True))
-        for k, v in items
+    return "&".join(
+        f"{url_quote(k, for_qs=True)}={url_quote(v, for_qs=True)}" for k, v in items
     )
 
 
@@ -224,13 +222,13 @@ def do_xmlattr(_eval_ctx, d, autospace=True):
     As you can see it automatically prepends a space in front of the item
     if the filter returned something unless the second parameter is false.
     """
-    rv = u" ".join(
-        u'%s="%s"' % (escape(key), escape(value))
+    rv = " ".join(
+        f'{escape(key)}="{escape(value)}"'
         for key, value in d.items()
         if value is not None and not isinstance(value, Undefined)
     )
     if autospace and rv:
-        rv = u" " + rv
+        rv = " " + rv
     if _eval_ctx.autoescape:
         rv = Markup(rv)
     return rv
@@ -415,7 +413,7 @@ def do_max(environment, value, case_sensitive=False, attribute=None):
     return _min_or_max(environment, value, max, case_sensitive, attribute)
 
 
-def do_default(value, default_value=u"", boolean=False):
+def do_default(value, default_value="", boolean=False):
     """If the value is undefined it will return the passed default value,
     otherwise the value of the variable:
 
@@ -444,7 +442,7 @@ def do_default(value, default_value=u"", boolean=False):
 
 
 @evalcontextfilter
-def do_join(eval_ctx, value, d=u"", attribute=None):
+def do_join(eval_ctx, value, d="", attribute=None):
     """Return a string which is the concatenation of the strings in the
     sequence. The separator between elements is an empty string per
     default, you can define it with the optional parameter:
@@ -541,27 +539,27 @@ def do_filesizeformat(value, binary=False):
     prefixes are used (Mebi, Gibi).
     """
     bytes = float(value)
-    base = binary and 1024 or 1000
+    base = 1024 if binary else 1000
     prefixes = [
-        (binary and "KiB" or "kB"),
-        (binary and "MiB" or "MB"),
-        (binary and "GiB" or "GB"),
-        (binary and "TiB" or "TB"),
-        (binary and "PiB" or "PB"),
-        (binary and "EiB" or "EB"),
-        (binary and "ZiB" or "ZB"),
-        (binary and "YiB" or "YB"),
+        ("KiB" if binary else "kB"),
+        ("MiB" if binary else "MB"),
+        ("GiB" if binary else "GB"),
+        ("TiB" if binary else "TB"),
+        ("PiB" if binary else "PB"),
+        ("EiB" if binary else "EB"),
+        ("ZiB" if binary else "ZB"),
+        ("YiB" if binary else "YB"),
     ]
     if bytes == 1:
         return "1 Byte"
     elif bytes < base:
-        return "%d Bytes" % bytes
+        return f"{int(bytes)} Bytes"
     else:
         for i, prefix in enumerate(prefixes):
             unit = base ** (i + 2)
             if bytes < unit:
-                return "%.1f %s" % ((base * bytes / unit), prefix)
-        return "%.1f %s" % ((base * bytes / unit), prefix)
+                return f"{base * bytes / unit:.1f} {prefix}"
+        return f"{base * bytes / unit:.1f} {prefix}"
 
 
 def do_pprint(value):
@@ -621,8 +619,8 @@ def do_indent(s, width=4, first=False, blank=False):
 
         Rename the ``indentfirst`` argument to ``first``.
     """
-    indention = u" " * width
-    newline = u"\n"
+    indention = " " * width
+    newline = "\n"
 
     if isinstance(s, Markup):
         indention = Markup(indention)
@@ -674,8 +672,8 @@ def do_truncate(env, s, length=255, killwords=False, end="...", leeway=None):
     """
     if leeway is None:
         leeway = env.policies["truncate.leeway"]
-    assert length >= len(end), "expected length >= %s, got %s" % (len(end), length)
-    assert leeway >= 0, "expected leeway >= 0, got %s" % leeway
+    assert length >= len(end), f"expected length >= {len(end)}, got {length}"
+    assert leeway >= 0, f"expected leeway >= 0, got {leeway}"
     if len(s) <= length + leeway:
         return s
     if killwords:
@@ -1245,14 +1243,13 @@ def do_tojson(eval_ctx, value, indent=None):
 def prepare_map(args, kwargs):
     context = args[0]
     seq = args[1]
-    default = None
 
     if len(args) == 2 and "attribute" in kwargs:
         attribute = kwargs.pop("attribute")
         default = kwargs.pop("default", None)
         if kwargs:
             raise FilterArgumentError(
-                "Unexpected keyword argument %r" % next(iter(kwargs))
+                f"Unexpected keyword argument {next(iter(kwargs))!r}"
             )
         func = make_attrgetter(context.environment, attribute, default=default)
     else:
