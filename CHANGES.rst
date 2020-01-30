@@ -1,5 +1,14 @@
 .. currentmodule:: jinja2
 
+Version 2.11.1
+--------------
+
+Unreleased
+
+-   Fix a bug that prevented looking up a key after an attribute
+    (``{{ data.items[1:] }}``) in an async template. :issue:`1141`
+
+
 Version 2.11.0
 --------------
 
