@@ -1,9 +1,20 @@
 .. currentmodule:: jinja2
 
+2.11.2
+------
+
+Unreleased
+
+-   Fix a bug that caused callable objects with ``__getattr__``, like
+    :class:`~unittest.mock.Mock` to be treated as a
+    :func:`contextfunction`. :issue:`1145`
+
+
+
 Version 2.11.1
 --------------
 
-Unreleased
+Released 2020-01-30
 
 -   Fix a bug that prevented looking up a key after an attribute
     (``{{ data.items[1:] }}``) in an async template. :issue:`1141`
