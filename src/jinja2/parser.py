@@ -1,7 +1,5 @@
-# -*- coding: utf-8 -*-
 """Parse tokens from the lexer into nodes for the compiler."""
 from . import nodes
-from ._compat import imap
 from .exceptions import TemplateAssertionError
 from .exceptions import TemplateSyntaxError
 from .lexer import describe_token
@@ -35,7 +33,7 @@ _math_nodes = {
 }
 
 
-class Parser(object):
+class Parser:
     """This is the central parsing class Jinja uses.  It's passed to
     extensions and can be used to parse expressions or statements.
     """
@@ -66,10 +64,10 @@ class Parser(object):
     def _fail_ut_eof(self, name, end_token_stack, lineno):
         expected = []
         for exprs in end_token_stack:
-            expected.extend(imap(describe_token_expr, exprs))
+            expected.extend(map(describe_token_expr, exprs))
         if end_token_stack:
             currently_looking = " or ".join(
-                "'%s'" % describe_token_expr(expr) for expr in end_token_stack[-1]
+                map(repr, map(describe_token_expr, end_token_stack[-1]))
             )
         else:
             currently_looking = None
@@ -77,25 +75,23 @@ class Parser(object):
         if name is None:
             message = ["Unexpected end of template."]
         else:
-            message = ["Encountered unknown tag '%s'." % name]
+            message = [f"Encountered unknown tag {name!r}."]
 
         if currently_looking:
             if name is not None and name in expected:
                 message.append(
-                    "You probably made a nesting mistake. Jinja "
-                    "is expecting this tag, but currently looking "
-                    "for %s." % currently_looking
+                    "You probably made a nesting mistake. Jinja is expecting this tag,"
+                    f" but currently looking for {currently_looking}."
                 )
             else:
                 message.append(
-                    "Jinja was looking for the following tags: "
-                    "%s." % currently_looking
+                    f"Jinja was looking for the following tags: {currently_looking}."
                 )
 
         if self._tag_stack:
             message.append(
-                "The innermost block that needs to be "
-                "closed is '%s'." % self._tag_stack[-1]
+                "The innermost block that needs to be closed is"
+                f" {self._tag_stack[-1]!r}."
             )
 
         self.fail(" ".join(message), lineno)
@@ -126,7 +122,7 @@ class Parser(object):
         """Return a new free identifier as :class:`~jinja2.nodes.InternalName`."""
         self._last_identifier += 1
         rv = object.__new__(nodes.InternalName)
-        nodes.Node.__init__(rv, "fi%d" % self._last_identifier, lineno=lineno)
+        nodes.Node.__init__(rv, f"fi{self._last_identifier}", lineno=lineno)
         return rv
 
     def parse_statement(self):
@@ -265,9 +261,8 @@ class Parser(object):
         # raise a nicer error message in that case.
         if self.stream.current.type == "sub":
             self.fail(
-                "Block names in Jinja have to be valid Python "
-                "identifiers and may not contain hyphens, use an "
-                "underscore instead."
+                "Block names in Jinja have to be valid Python identifiers and may not"
+                " contain hyphens, use an underscore instead."
             )
 
         node.body = self.parse_statements(("name:endblock",), drop_needle=True)
@@ -435,7 +430,7 @@ class Parser(object):
             target.set_ctx("store")
         if not target.can_assign():
             self.fail(
-                "can't assign to %r" % target.__class__.__name__.lower(), target.lineno
+                f"can't assign to {target.__class__.__name__.lower()!r}", target.lineno
             )
         return target
 
@@ -596,7 +591,7 @@ class Parser(object):
         elif token.type == "lbrace":
             node = self.parse_dict()
         else:
-            self.fail("unexpected '%s'" % describe_token(token), token.lineno)
+            self.fail(f"unexpected {describe_token(token)!r}", token.lineno)
         return node
 
     def parse_tuple(
@@ -658,8 +653,8 @@ class Parser(object):
             # tuple.
             if not explicit_parentheses:
                 self.fail(
-                    "Expected an expression, got '%s'"
-                    % describe_token(self.stream.current)
+                    "Expected an expression,"
+                    f" got {describe_token(self.stream.current)!r}"
                 )
 
         return nodes.Tuple(args, "load", lineno=lineno)

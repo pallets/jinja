@@ -1,4 +1,3 @@
-# -*- coding: utf-8 -*-
 import pytest
 
 from jinja2 import DictLoader
@@ -75,7 +74,7 @@ def env():
 
 
 @pytest.mark.inheritance
-class TestInheritance(object):
+class TestInheritance:
     def test_layout(self, env):
         tmpl = env.get_template("layout")
         assert tmpl.render() == (
@@ -158,7 +157,7 @@ class TestInheritance(object):
         )
         tmpl = env.get_template("child")
         for m in range(1, 3):
-            assert tmpl.render(master="master%d" % m) == "MASTER%dCHILD" % m
+            assert tmpl.render(master=f"master{m}") == f"MASTER{m}CHILD"
 
     def test_multi_inheritance(self, env):
         env = Environment(
@@ -234,7 +233,7 @@ class TestInheritance(object):
 
 
 @pytest.mark.inheritance
-class TestBugFix(object):
+class TestBugFix:
     def test_fixed_macro_scoping_bug(self, env):
         assert (
             Environment(
@@ -276,7 +275,7 @@ class TestBugFix(object):
             .get_template("test.html")
             .render()
             .split()
-            == [u"outer_box", u"my_macro"]
+            == ["outer_box", "my_macro"]
         )
 
     def test_double_extends(self, env):

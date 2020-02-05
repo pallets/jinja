@@ -1,4 +1,3 @@
-# -*- coding: utf-8 -*-
 """Classes for managing templates and their runtime and compile time
 options.
 """
@@ -11,15 +10,6 @@ from functools import reduce
 from markupsafe import Markup
 
 from . import nodes
-from ._compat import encode_filename
-from ._compat import implements_iterator
-from ._compat import implements_to_string
-from ._compat import iteritems
-from ._compat import PY2
-from ._compat import PYPY
-from ._compat import reraise
-from ._compat import string_types
-from ._compat import text_type
 from .compiler import CodeGenerator
 from .compiler import generate
 from .defaults import BLOCK_END_STRING
@@ -104,19 +94,20 @@ def load_extensions(environment, extensions):
     """
     result = {}
     for extension in extensions:
-        if isinstance(extension, string_types):
+        if isinstance(extension, str):
             extension = import_string(extension)
         result[extension.identifier] = extension(environment)
     return result
 
 
-def fail_for_missing_callable(string, name):
-    msg = string % name
+def fail_for_missing_callable(thing, name):
+    msg = f"no {thing} named {name!r}"
+
     if isinstance(name, Undefined):
         try:
             name._fail_with_undefined_error()
         except Exception as e:
-            msg = "%s (%s; did you forget to quote the callable name?)" % (msg, e)
+            msg = f"{msg} ({e}; did you forget to quote the callable name?)"
     raise TemplateRuntimeError(msg)
 
 
@@ -130,15 +121,15 @@ def _environment_sanity_check(environment):
         != environment.variable_start_string
         != environment.comment_start_string
     ), "block, variable and comment start strings must be different"
-    assert environment.newline_sequence in (
+    assert environment.newline_sequence in {
         "\r",
         "\r\n",
         "\n",
-    ), "newline_sequence set to unknown line ending string."
+    }, "newline_sequence set to unknown line ending string."
     return environment
 
 
-class Environment(object):
+class Environment:
     r"""The core component of Jinja is the `Environment`.  It contains
     important shared variables like configuration, filters, tests,
     globals and others.  Instances of this class may be modified if
@@ -256,9 +247,8 @@ class Environment(object):
             See :ref:`bytecode-cache` for more information.
 
         `enable_async`
-            If set to true this enables async template execution which allows
-            you to take advantage of newer Python features.  This requires
-            Python 3.6 or later.
+            If set to true this enables async template execution which
+            allows using async functions and generators.
     """
 
     #: if this environment is sandboxed.  Modifying this variable won't make
@@ -378,7 +368,7 @@ class Environment(object):
         yet.  This is used by :ref:`extensions <writing-extensions>` to register
         callbacks and configuration values without breaking inheritance.
         """
-        for key, value in iteritems(attributes):
+        for key, value in attributes.items():
             if not hasattr(self, key):
                 setattr(self, key, value)
 
@@ -423,7 +413,7 @@ class Environment(object):
         rv.overlayed = True
         rv.linked_to = self
 
-        for key, value in iteritems(args):
+        for key, value in args.items():
             if value is not missing:
                 setattr(rv, key, value)
 
@@ -433,7 +423,7 @@ class Environment(object):
             rv.cache = copy_cache(self.cache)
 
         rv.extensions = {}
-        for key, value in iteritems(self.extensions):
+        for key, value in self.extensions.items():
             rv.extensions[key] = value.bind(rv)
         if extensions is not missing:
             rv.extensions.update(load_extensions(rv, extensions))
@@ -451,7 +441,7 @@ class Environment(object):
         try:
             return obj[argument]
         except (AttributeError, TypeError, LookupError):
-            if isinstance(argument, string_types):
+            if isinstance(argument, str):
                 try:
                     attr = str(argument)
                 except Exception:
@@ -479,18 +469,17 @@ class Environment(object):
     def call_filter(
         self, name, value, args=None, kwargs=None, context=None, eval_ctx=None
     ):
-        """Invokes a filter on a value the same way the compiler does it.
+        """Invokes a filter on a value the same way the compiler does.
 
-        Note that on Python 3 this might return a coroutine in case the
-        filter is running from an environment in async mode and the filter
-        supports async execution.  It's your responsibility to await this
-        if needed.
+        This might return a coroutine if the filter is running from an
+        environment in async mode and the filter supports async
+        execution. It's your responsibility to await this if needed.
 
         .. versionadded:: 2.7
         """
         func = self.filters.get(name)
         if func is None:
-            fail_for_missing_callable("no filter named %r", name)
+            fail_for_missing_callable("filter", name)
         args = [value] + list(args or ())
         if getattr(func, "contextfilter", False) is True:
             if context is None:
@@ -516,7 +505,7 @@ class Environment(object):
         """
         func = self.tests.get(name)
         if func is None:
-            fail_for_missing_callable("no test named %r", name)
+            fail_for_missing_callable("test", name)
         return func(value, *(args or ()), **(kwargs or {}))
 
     @internalcode
@@ -536,7 +525,7 @@ class Environment(object):
 
     def _parse(self, source, name, filename):
         """Internal parsing function used by `parse` and `compile`."""
-        return Parser(self, source, name, encode_filename(filename)).parse()
+        return Parser(self, source, name, filename).parse()
 
     def lex(self, source, name=None, filename=None):
         """Lex the given sourcecode and return a generator that yields
@@ -548,7 +537,7 @@ class Environment(object):
         of the extensions to be applied you have to filter source through
         the :meth:`preprocess` method.
         """
-        source = text_type(source)
+        source = str(source)
         try:
             return self.lexer.tokeniter(source, name, filename)
         except TemplateSyntaxError:
@@ -562,7 +551,7 @@ class Environment(object):
         return reduce(
             lambda s, e: e.preprocess(s, name, filename),
             self.iter_extensions(),
-            text_type(source),
+            str(source),
         )
 
     def _tokenize(self, source, name, filename=None, state=None):
@@ -623,7 +612,7 @@ class Environment(object):
         """
         source_hint = None
         try:
-            if isinstance(source, string_types):
+            if isinstance(source, str):
                 source_hint = source
                 source = self._parse(source, name, filename)
             source = self._generate(source, name, filename, defer_init=defer_init)
@@ -631,8 +620,6 @@ class Environment(object):
                 return source
             if filename is None:
                 filename = "<template>"
-            else:
-                filename = encode_filename(filename)
             return self._compile(source, filename)
         except TemplateSyntaxError:
             self.handle_exception(source=source_hint)
@@ -689,7 +676,6 @@ class Environment(object):
         zip="deflated",
         log_function=None,
         ignore_errors=True,
-        py_compile=False,
     ):
         """Finds all the templates the loader can find, compiles them
         and stores them in `target`.  If `zip` is `None`, instead of in a
@@ -706,11 +692,6 @@ class Environment(object):
         syntax errors to abort the compilation you can set `ignore_errors`
         to `False` and you will get an exception on syntax errors.
 
-        If `py_compile` is set to `True` .pyc files will be written to the
-        target instead of standard .py files.  This flag does not do anything
-        on pypy and Python 3 where pyc files are not picked up by itself and
-        don't give much benefit.
-
         .. versionadded:: 2.4
         """
         from .loaders import ModuleLoader
@@ -720,34 +701,13 @@ class Environment(object):
             def log_function(x):
                 pass
 
-        if py_compile:
-            if not PY2 or PYPY:
-                import warnings
-
-                warnings.warn(
-                    "'py_compile=True' has no effect on PyPy or Python"
-                    " 3 and will be removed in version 3.0",
-                    DeprecationWarning,
-                    stacklevel=2,
-                )
-                py_compile = False
-            else:
-                import imp
-                import marshal
-
-                py_header = imp.get_magic() + u"\xff\xff\xff\xff".encode("iso-8859-15")
-
-                # Python 3.3 added a source filesize to the header
-                if sys.version_info >= (3, 3):
-                    py_header += u"\x00\x00\x00\x00".encode("iso-8859-15")
-
         def write_file(filename, data):
             if zip:
                 info = ZipInfo(filename)
                 info.external_attr = 0o755 << 16
                 zip_file.writestr(info, data)
             else:
-                if isinstance(data, text_type):
+                if isinstance(data, str):
                     data = data.encode("utf8")
 
                 with open(os.path.join(target, filename), "wb") as f:
@@ -759,11 +719,11 @@ class Environment(object):
             zip_file = ZipFile(
                 target, "w", dict(deflated=ZIP_DEFLATED, stored=ZIP_STORED)[zip]
             )
-            log_function('Compiling into Zip archive "%s"' % target)
+            log_function(f"Compiling into Zip archive {target!r}")
         else:
             if not os.path.isdir(target):
                 os.makedirs(target)
-            log_function('Compiling into folder "%s"' % target)
+            log_function(f"Compiling into folder {target!r}")
 
         try:
             for name in self.list_templates(extensions, filter_func):
@@ -773,18 +733,13 @@ class Environment(object):
                 except TemplateSyntaxError as e:
                     if not ignore_errors:
                         raise
-                    log_function('Could not compile "%s": %s' % (name, e))
+                    log_function(f'Could not compile "{name}": {e}')
                     continue
 
                 filename = ModuleLoader.get_module_filename(name)
 
-                if py_compile:
-                    c = self._compile(code, encode_filename(filename))
-                    write_file(filename + "c", py_header + marshal.dumps(c))
-                    log_function('Byte-compiled "%s" as %s' % (name, filename + "c"))
-                else:
-                    write_file(filename, code)
-                    log_function('Compiled "%s" as %s' % (name, filename))
+                write_file(filename, code)
+                log_function(f'Compiled "{name}" as {filename}')
         finally:
             if zip:
                 zip_file.close()
@@ -829,7 +784,7 @@ class Environment(object):
         """
         from .debug import rewrite_traceback_stack
 
-        reraise(*rewrite_traceback_stack(source=source))
+        raise rewrite_traceback_stack(source=source)
 
     def join_path(self, template, parent):
         """Join a template with the parent.  By default all the lookups are
@@ -904,7 +859,7 @@ class Environment(object):
 
         if not names:
             raise TemplatesNotFound(
-                message=u"Tried to select from an empty list " u"of templates."
+                message="Tried to select from an empty list of templates."
             )
         globals = self.make_globals(globals)
         for name in names:
@@ -926,7 +881,7 @@ class Environment(object):
 
         .. versionadded:: 2.3
         """
-        if isinstance(template_name_or_list, (string_types, Undefined)):
+        if isinstance(template_name_or_list, (str, Undefined)):
             return self.get_template(template_name_or_list, parent, globals)
         elif isinstance(template_name_or_list, Template):
             return template_name_or_list
@@ -947,7 +902,7 @@ class Environment(object):
         return dict(self.globals, **d)
 
 
-class Template(object):
+class Template:
     """The central template object.  This class represents a compiled template
     and is used to evaluate it.
 
@@ -1081,7 +1036,7 @@ class Template(object):
             template.render(knights='that say nih')
             template.render({'knights': 'that say nih'})
 
-        This will return the rendered template as unicode string.
+        This will return the rendered template as a string.
         """
         vars = dict(*args, **kwargs)
         try:
@@ -1113,14 +1068,13 @@ class Template(object):
         """For very large templates it can be useful to not render the whole
         template at once but evaluate each statement after another and yield
         piece for piece.  This method basically does exactly that and returns
-        a generator that yields one item after another as unicode strings.
+        a generator that yields one item after another as strings.
 
         It accepts the same arguments as :meth:`render`.
         """
         vars = dict(*args, **kwargs)
         try:
-            for event in self.root_render_func(self.new_context(vars)):
-                yield event
+            yield from self.root_render_func(self.new_context(vars))
         except Exception:
             yield self.environment.handle_exception()
 
@@ -1213,17 +1167,16 @@ class Template(object):
 
     def __repr__(self):
         if self.name is None:
-            name = "memory:%x" % id(self)
+            name = f"memory:{id(self):x}"
         else:
             name = repr(self.name)
-        return "<%s %s>" % (self.__class__.__name__, name)
+        return f"<{self.__class__.__name__} {name}>"
 
 
-@implements_to_string
-class TemplateModule(object):
+class TemplateModule:
     """Represents an imported template.  All the exported names of the
     template are available as attributes on this object.  Additionally
-    converting it into an unicode- or bytestrings renders the contents.
+    converting it into a string renders the contents.
     """
 
     def __init__(self, template, context, body_stream=None):
@@ -1248,13 +1201,13 @@ class TemplateModule(object):
 
     def __repr__(self):
         if self.__name__ is None:
-            name = "memory:%x" % id(self)
+            name = f"memory:{id(self):x}"
         else:
             name = repr(self.__name__)
-        return "<%s %s>" % (self.__class__.__name__, name)
+        return f"<{self.__class__.__name__} {name}>"
 
 
-class TemplateExpression(object):
+class TemplateExpression:
     """The :meth:`jinja2.Environment.compile_expression` method returns an
     instance of this object.  It encapsulates the expression-like access
     to the template with an expression it wraps.
@@ -1273,15 +1226,14 @@ class TemplateExpression(object):
         return rv
 
 
-@implements_iterator
-class TemplateStream(object):
+class TemplateStream:
     """A template stream works pretty much like an ordinary python generator
     but it can buffer multiple items to reduce the number of total iterations.
     Per default the output is unbuffered which means that for every unbuffered
-    instruction in the template one unicode string is yielded.
+    instruction in the template one string is yielded.
 
     If buffering is enabled with a buffer size of 5, five items are combined
-    into a new unicode string.  This is mainly useful if you are streaming
+    into a new string.  This is mainly useful if you are streaming
     big templates to a client via WSGI which flushes after each iteration.
     """
 
@@ -1291,7 +1243,7 @@ class TemplateStream(object):
 
     def dump(self, fp, encoding=None, errors="strict"):
         """Dump the complete stream into a file or file-like object.
-        Per default unicode strings are written, if you want to encode
+        Per default strings are written, if you want to encode
         before writing specify an `encoding`.
 
         Example usage::
@@ -1299,7 +1251,7 @@ class TemplateStream(object):
             Template('Hello {{ name }}!').stream(name='foo').dump('hello.html')
         """
         close = False
-        if isinstance(fp, string_types):
+        if isinstance(fp, str):
             if encoding is None:
                 encoding = "utf-8"
             fp = open(fp, "wb")

@@ -1,6 +1,3 @@
-# -*- coding: utf-8 -*-
-import sys
-
 import pytest
 
 from jinja2 import DictLoader
@@ -10,11 +7,10 @@ from jinja2 import Template
 from jinja2 import TemplateAssertionError
 from jinja2 import TemplateNotFound
 from jinja2 import TemplateSyntaxError
-from jinja2._compat import text_type
 
 
 @pytest.mark.regression
-class TestCorner(object):
+class TestCorner:
     def test_assigned_scoping(self, env):
         t = env.from_string(
             """
@@ -86,7 +82,7 @@ class TestCorner(object):
 
 
 @pytest.mark.regression
-class TestBug(object):
+class TestBug:
     def test_keyword_folding(self, env):
         env = Environment()
         env.filters["testing"] = lambda value, some: value + some
@@ -134,7 +130,7 @@ class TestBug(object):
         """
         )
 
-        assert tmpl.render().split() == [text_type(x) for x in range(1, 11)] * 5
+        assert tmpl.render().split() == [str(x) for x in range(1, 11)] * 5
 
     def test_weird_inline_comment(self, env):
         env = Environment(line_statement_prefix="%")
@@ -195,7 +191,7 @@ class TestBug(object):
         """
         )
         rv = t.render(foo=[1]).strip()
-        assert rv == u"1"
+        assert rv == "1"
 
     def test_call_with_args(self, env):
         t = Template(
@@ -229,13 +225,13 @@ class TestBug(object):
                 ]
             ).splitlines()
         ] == [
-            u"<ul><li><p>apo</p><dl>",
-            u"<dl>Realname</dl>",
-            u"<dd>something else</dd>",
-            u"<dl>Description</dl>",
-            u"<dd>test</dd>",
-            u"</dl>",
-            u"</li></ul>",
+            "<ul><li><p>apo</p><dl>",
+            "<dl>Realname</dl>",
+            "<dd>something else</dd>",
+            "<dl>Description</dl>",
+            "<dd>test</dd>",
+            "</dl>",
+            "</li></ul>",
         ]
 
     def test_empty_if_condition_fails(self, env):
@@ -297,7 +293,7 @@ class TestBug(object):
     def test_contextfunction_callable_classes(self, env):
         from jinja2.utils import contextfunction
 
-        class CallableClass(object):
+        class CallableClass:
             @contextfunction
             def __call__(self, ctx):
                 return ctx.resolve("hello")
@@ -307,13 +303,6 @@ class TestBug(object):
         expected = "TEST"
 
         assert output == expected
-
-    @pytest.mark.skipif(sys.version_info[0] > 2, reason="This only works on 2.x")
-    def test_old_style_attribute(self, env):
-        class Foo:
-            x = 42
-
-        assert env.getitem(Foo(), "x") == 42
 
     def test_block_set_with_extends(self):
         env = Environment(
@@ -605,7 +594,7 @@ class TestBug(object):
             def resolve(self, name):
                 if name == "foo":
                     return 42
-                return super(MyContext, self).resolve(name)
+                return super().resolve(name)
 
         x = MyContext(env, parent={"bar": 23}, name="foo", blocks={})
         assert x._legacy_resolve_mode

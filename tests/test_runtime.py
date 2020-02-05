@@ -62,7 +62,7 @@ def test_mock_not_contextfunction():
     as a ``contextfunction``.
     """
 
-    class Calc(object):
+    class Calc:
         def __getattr__(self, item):
             return object()
 

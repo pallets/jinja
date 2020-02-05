@@ -1,31 +1,25 @@
-# -*- coding: utf-8 -*-
 """Built-in template filters used with the ``|`` operator."""
 import math
 import random
 import re
-import warnings
+from collections import abc
 from collections import namedtuple
 from itertools import chain
 from itertools import groupby
 
 from markupsafe import escape
 from markupsafe import Markup
-from markupsafe import soft_unicode
+from markupsafe import soft_str
 
-from ._compat import abc
-from ._compat import imap
-from ._compat import iteritems
-from ._compat import string_types
-from ._compat import text_type
 from .exceptions import FilterArgumentError
 from .runtime import Undefined
 from .utils import htmlsafe_json_dumps
 from .utils import pformat
-from .utils import unicode_urlencode
+from .utils import url_quote
 from .utils import urlize
 
-_word_re = re.compile(r"\w+", re.UNICODE)
-_word_beginning_split_re = re.compile(r"([-\s\(\{\[\<]+)", re.UNICODE)
+_word_re = re.compile(r"\w+")
+_word_beginning_split_re = re.compile(r"([-\s({\[<]+)")
 
 
 def contextfilter(f):
@@ -58,7 +52,7 @@ def environmentfilter(f):
 def ignore_case(value):
     """For use as a postprocessor for :func:`make_attrgetter`. Converts strings
     to lowercase and returns other types as-is."""
-    return value.lower() if isinstance(value, string_types) else value
+    return value.lower() if isinstance(value, str) else value
 
 
 def make_attrgetter(environment, attribute, postprocess=None, default=None):
@@ -96,7 +90,7 @@ def make_multi_attrgetter(environment, attribute, postprocess=None):
     Examples of attribute: "attr1,attr2", "attr1.inner1.0,attr2.inner2.0", etc.
     """
     attribute_parts = (
-        attribute.split(",") if isinstance(attribute, string_types) else [attribute]
+        attribute.split(",") if isinstance(attribute, str) else [attribute]
     )
     attribute = [
         _prepare_attribute_parts(attribute_part) for attribute_part in attribute_parts
@@ -121,7 +115,7 @@ def make_multi_attrgetter(environment, attribute, postprocess=None):
 def _prepare_attribute_parts(attr):
     if attr is None:
         return []
-    elif isinstance(attr, string_types):
+    elif isinstance(attr, str):
         return [int(x) if x.isdigit() else x for x in attr.split(".")]
     else:
         return [attr]
@@ -131,7 +125,7 @@ def do_forceescape(value):
     """Enforce HTML escaping.  This will probably double escape variables."""
     if hasattr(value, "__html__"):
         value = value.__html__()
-    return escape(text_type(value))
+    return escape(str(value))
 
 
 def do_urlencode(value):
@@ -150,17 +144,16 @@ def do_urlencode(value):
 
     .. versionadded:: 2.7
     """
-    if isinstance(value, string_types) or not isinstance(value, abc.Iterable):
-        return unicode_urlencode(value)
+    if isinstance(value, str) or not isinstance(value, abc.Iterable):
+        return url_quote(value)
 
     if isinstance(value, dict):
-        items = iteritems(value)
+        items = value.items()
     else:
         items = iter(value)
 
-    return u"&".join(
-        "%s=%s" % (unicode_urlencode(k, for_qs=True), unicode_urlencode(v, for_qs=True))
-        for k, v in items
+    return "&".join(
+        f"{url_quote(k, for_qs=True)}={url_quote(v, for_qs=True)}" for k, v in items
     )
 
 
@@ -183,7 +176,7 @@ def do_replace(eval_ctx, s, old, new, count=None):
     if count is None:
         count = -1
     if not eval_ctx.autoescape:
-        return text_type(s).replace(text_type(old), text_type(new), count)
+        return str(s).replace(str(old), str(new), count)
     if (
         hasattr(old, "__html__")
         or hasattr(new, "__html__")
@@ -191,18 +184,18 @@ def do_replace(eval_ctx, s, old, new, count=None):
     ):
         s = escape(s)
     else:
-        s = soft_unicode(s)
-    return s.replace(soft_unicode(old), soft_unicode(new), count)
+        s = soft_str(s)
+    return s.replace(soft_str(old), soft_str(new), count)
 
 
 def do_upper(s):
     """Convert a value to uppercase."""
-    return soft_unicode(s).upper()
+    return soft_str(s).upper()
 
 
 def do_lower(s):
     """Convert a value to lowercase."""
-    return soft_unicode(s).lower()
+    return soft_str(s).lower()
 
 
 @evalcontextfilter
@@ -229,13 +222,13 @@ def do_xmlattr(_eval_ctx, d, autospace=True):
     As you can see it automatically prepends a space in front of the item
     if the filter returned something unless the second parameter is false.
     """
-    rv = u" ".join(
-        u'%s="%s"' % (escape(key), escape(value))
-        for key, value in iteritems(d)
+    rv = " ".join(
+        f'{escape(key)}="{escape(value)}"'
+        for key, value in d.items()
         if value is not None and not isinstance(value, Undefined)
     )
     if autospace and rv:
-        rv = u" " + rv
+        rv = " " + rv
     if _eval_ctx.autoescape:
         rv = Markup(rv)
     return rv
@@ -245,7 +238,7 @@ def do_capitalize(s):
     """Capitalize a value. The first character will be uppercase, all others
     lowercase.
     """
-    return soft_unicode(s).capitalize()
+    return soft_str(s).capitalize()
 
 
 def do_title(s):
@@ -255,7 +248,7 @@ def do_title(s):
     return "".join(
         [
             item[0].upper() + item[1:].lower()
-            for item in _word_beginning_split_re.split(soft_unicode(s))
+            for item in _word_beginning_split_re.split(soft_str(s))
             if item
         ]
     )
@@ -420,7 +413,7 @@ def do_max(environment, value, case_sensitive=False, attribute=None):
     return _min_or_max(environment, value, max, case_sensitive, attribute)
 
 
-def do_default(value, default_value=u"", boolean=False):
+def do_default(value, default_value="", boolean=False):
     """If the value is undefined it will return the passed default value,
     otherwise the value of the variable:
 
@@ -449,7 +442,7 @@ def do_default(value, default_value=u"", boolean=False):
 
 
 @evalcontextfilter
-def do_join(eval_ctx, value, d=u"", attribute=None):
+def do_join(eval_ctx, value, d="", attribute=None):
     """Return a string which is the concatenation of the strings in the
     sequence. The separator between elements is an empty string per
     default, you can define it with the optional parameter:
@@ -472,11 +465,11 @@ def do_join(eval_ctx, value, d=u"", attribute=None):
        The `attribute` parameter was added.
     """
     if attribute is not None:
-        value = imap(make_attrgetter(eval_ctx.environment, attribute), value)
+        value = map(make_attrgetter(eval_ctx.environment, attribute), value)
 
     # no automatic escaping?  joining is a lot easier then
     if not eval_ctx.autoescape:
-        return text_type(d).join(imap(text_type, value))
+        return str(d).join(map(str, value))
 
     # if the delimiter doesn't have an html representation we check
     # if any of the items has.  If yes we do a coercion to Markup
@@ -487,20 +480,20 @@ def do_join(eval_ctx, value, d=u"", attribute=None):
             if hasattr(item, "__html__"):
                 do_escape = True
             else:
-                value[idx] = text_type(item)
+                value[idx] = str(item)
         if do_escape:
             d = escape(d)
         else:
-            d = text_type(d)
+            d = str(d)
         return d.join(value)
 
     # no html involved, to normal joining
-    return soft_unicode(d).join(imap(soft_unicode, value))
+    return soft_str(d).join(map(soft_str, value))
 
 
 def do_center(value, width=80):
     """Centers the value in a field of a given width."""
-    return text_type(value).center(width)
+    return str(value).center(width)
 
 
 @environmentfilter
@@ -546,36 +539,32 @@ def do_filesizeformat(value, binary=False):
     prefixes are used (Mebi, Gibi).
     """
     bytes = float(value)
-    base = binary and 1024 or 1000
+    base = 1024 if binary else 1000
     prefixes = [
-        (binary and "KiB" or "kB"),
-        (binary and "MiB" or "MB"),
-        (binary and "GiB" or "GB"),
-        (binary and "TiB" or "TB"),
-        (binary and "PiB" or "PB"),
-        (binary and "EiB" or "EB"),
-        (binary and "ZiB" or "ZB"),
-        (binary and "YiB" or "YB"),
+        ("KiB" if binary else "kB"),
+        ("MiB" if binary else "MB"),
+        ("GiB" if binary else "GB"),
+        ("TiB" if binary else "TB"),
+        ("PiB" if binary else "PB"),
+        ("EiB" if binary else "EB"),
+        ("ZiB" if binary else "ZB"),
+        ("YiB" if binary else "YB"),
     ]
     if bytes == 1:
         return "1 Byte"
     elif bytes < base:
-        return "%d Bytes" % bytes
+        return f"{int(bytes)} Bytes"
     else:
         for i, prefix in enumerate(prefixes):
             unit = base ** (i + 2)
             if bytes < unit:
-                return "%.1f %s" % ((base * bytes / unit), prefix)
-        return "%.1f %s" % ((base * bytes / unit), prefix)
+                return f"{base * bytes / unit:.1f} {prefix}"
+        return f"{base * bytes / unit:.1f} {prefix}"
 
 
-def do_pprint(value, verbose=False):
-    """Pretty print a variable. Useful for debugging.
-
-    With Jinja 1.2 onwards you can pass it a parameter.  If this parameter
-    is truthy the output will be more verbose (this requires `pretty`)
-    """
-    return pformat(value, verbose=verbose)
+def do_pprint(value):
+    """Pretty print a variable. Useful for debugging."""
+    return pformat(value)
 
 
 @evalcontextfilter
@@ -600,8 +589,8 @@ def do_urlize(
 
        {{ mytext|urlize(40, target='_blank') }}
 
-    .. versionchanged:: 2.8+
-       The *target* parameter was added.
+    .. versionchanged:: 2.8
+       The ``target`` parameter was added.
     """
     policies = eval_ctx.environment.policies
     rel = set((rel or "").split() or [])
@@ -617,7 +606,7 @@ def do_urlize(
     return rv
 
 
-def do_indent(s, width=4, first=False, blank=False, indentfirst=None):
+def do_indent(s, width=4, first=False, blank=False):
     """Return a copy of the string with each line indented by 4 spaces. The
     first line and blank lines are not indented by default.
 
@@ -630,17 +619,8 @@ def do_indent(s, width=4, first=False, blank=False, indentfirst=None):
 
         Rename the ``indentfirst`` argument to ``first``.
     """
-    if indentfirst is not None:
-        warnings.warn(
-            "The 'indentfirst' argument is renamed to 'first' and will"
-            " be removed in version 3.0.",
-            DeprecationWarning,
-            stacklevel=2,
-        )
-        first = indentfirst
-
-    indention = u" " * width
-    newline = u"\n"
+    indention = " " * width
+    newline = "\n"
 
     if isinstance(s, Markup):
         indention = Markup(indention)
@@ -692,8 +672,8 @@ def do_truncate(env, s, length=255, killwords=False, end="...", leeway=None):
     """
     if leeway is None:
         leeway = env.policies["truncate.leeway"]
-    assert length >= len(end), "expected length >= %s, got %s" % (len(end), length)
-    assert leeway >= 0, "expected leeway >= 0, got %s" % leeway
+    assert length >= len(end), f"expected length >= {len(end)}, got {length}"
+    assert leeway >= 0, f"expected leeway >= 0, got {leeway}"
     if len(s) <= length + leeway:
         return s
     if killwords:
@@ -774,7 +754,7 @@ def do_int(value, default=0, base=10):
     The base is ignored for decimal numbers and non-string values.
     """
     try:
-        if isinstance(value, string_types):
+        if isinstance(value, str):
             return int(value, base)
         return int(value)
     except (TypeError, ValueError):
@@ -820,19 +800,19 @@ def do_format(value, *args, **kwargs):
         raise FilterArgumentError(
             "can't handle positional and keyword arguments at the same time"
         )
-    return soft_unicode(value) % (kwargs or args)
+    return soft_str(value) % (kwargs or args)
 
 
 def do_trim(value, chars=None):
     """Strip leading and trailing characters, by default whitespace."""
-    return soft_unicode(value).strip(chars)
+    return soft_str(value).strip(chars)
 
 
 def do_striptags(value):
     """Strip SGML/XML tags and replace adjacent whitespace by one space."""
     if hasattr(value, "__html__"):
         value = value.__html__()
-    return Markup(text_type(value)).striptags()
+    return Markup(str(value)).striptags()
 
 
 def do_slice(value, slices, fill_with=None):
@@ -1005,7 +985,7 @@ def do_sum(environment, iterable, attribute=None, start=0):
        attributes.  Also the `start` parameter was moved on to the right.
     """
     if attribute is not None:
-        iterable = imap(make_attrgetter(environment, attribute), iterable)
+        iterable = map(make_attrgetter(environment, attribute), iterable)
     return sum(iterable, start)
 
 
@@ -1025,14 +1005,14 @@ def do_mark_safe(value):
 
 def do_mark_unsafe(value):
     """Mark a value as unsafe.  This is the reverse operation for :func:`safe`."""
-    return text_type(value)
+    return str(value)
 
 
 def do_reverse(value):
     """Reverse the object or return an iterator that iterates over it the other
     way round.
     """
-    if isinstance(value, string_types):
+    if isinstance(value, str):
         return value[::-1]
     try:
         return reversed(value)
@@ -1263,14 +1243,13 @@ def do_tojson(eval_ctx, value, indent=None):
 def prepare_map(args, kwargs):
     context = args[0]
     seq = args[1]
-    default = None
 
     if len(args) == 2 and "attribute" in kwargs:
         attribute = kwargs.pop("attribute")
         default = kwargs.pop("default", None)
         if kwargs:
             raise FilterArgumentError(
-                "Unexpected keyword argument %r" % next(iter(kwargs))
+                f"Unexpected keyword argument {next(iter(kwargs))!r}"
             )
         func = make_attrgetter(context.environment, attribute, default=default)
     else:
@@ -1365,7 +1344,7 @@ FILTERS = {
     "selectattr": do_selectattr,
     "slice": do_slice,
     "sort": do_sort,
-    "string": soft_unicode,
+    "string": soft_str,
     "striptags": do_striptags,
     "sum": do_sum,
     "title": do_title,

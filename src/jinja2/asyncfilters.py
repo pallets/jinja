@@ -84,7 +84,7 @@ async def do_groupby(environment, value, attribute):
 
 
 @asyncfiltervariant(filters.do_join)
-async def do_join(eval_ctx, value, d=u"", attribute=None):
+async def do_join(eval_ctx, value, d="", attribute=None):
     return filters.do_join(eval_ctx, await auto_to_seq(value), d, attribute)
 
 
@@ -146,8 +146,7 @@ ASYNC_FILTERS = {
     "groupby": do_groupby,
     "join": do_join,
     "list": do_list,
-    # we intentionally do not support do_last because that would be
-    # ridiculous
+    # we intentionally do not support do_last because it may not be safe in async
     "reject": do_reject,
     "rejectattr": do_rejectattr,
     "map": do_map,

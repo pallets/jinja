@@ -1,4 +1,3 @@
-# -*- coding: utf-8 -*-
 import pickle
 import re
 from traceback import format_exception
@@ -18,17 +17,16 @@ def fs_env(filesystem_loader):
 
 
 @pytest.mark.debug
-class TestDebug(object):
+class TestDebug:
     def assert_traceback_matches(self, callback, expected_tb):
         with pytest.raises(Exception) as exc_info:
             callback()
 
         tb = format_exception(exc_info.type, exc_info.value, exc_info.tb)
         m = re.search(expected_tb.strip(), "".join(tb))
-        assert m is not None, "Traceback did not match:\n\n%s\nexpected:\n%s" % (
-            "".join(tb),
-            expected_tb,
-        )
+        assert (
+            m is not None
+        ), "Traceback did not match:\n\n{''.join(tb)}\nexpected:\n{expected_tb}"
 
     def test_runtime_error(self, fs_env):
         def test():

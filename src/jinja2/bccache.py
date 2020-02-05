@@ -1,4 +1,3 @@
-# -*- coding: utf-8 -*-
 """The optional bytecode cache system. This is useful if you have very
 complex template situations and the compilation of all those templates
 slows down your application too much.
@@ -8,22 +7,18 @@ are initialized on the first request.
 """
 import errno
 import fnmatch
+import marshal
 import os
+import pickle
 import stat
 import sys
 import tempfile
 from hashlib import sha1
-from os import listdir
-from os import path
+from io import BytesIO
 
-from ._compat import BytesIO
-from ._compat import marshal_dump
-from ._compat import marshal_load
-from ._compat import pickle
-from ._compat import text_type
 from .utils import open_if_exists
 
-bc_version = 4
+bc_version = 5
 # Magic bytes to identify Jinja bytecode cache files. Contains the
 # Python major and minor version to avoid loading incompatible bytecode
 # if a project upgrades its Python version.
@@ -34,7 +29,7 @@ bc_magic = (
 )
 
 
-class Bucket(object):
+class Bucket:
     """Buckets are used to store the bytecode for one template.  It's created
     and initialized by the bytecode cache and passed to the loading functions.
 
@@ -67,7 +62,7 @@ class Bucket(object):
             return
         # if marshal_load fails then we need to reload
         try:
-            self.code = marshal_load(f)
+            self.code = marshal.load(f)
         except (EOFError, ValueError, TypeError):
             self.reset()
             return
@@ -78,7 +73,7 @@ class Bucket(object):
             raise TypeError("can't write empty bucket")
         f.write(bc_magic)
         pickle.dump(self.checksum, f, 2)
-        marshal_dump(self.code, f)
+        marshal.dump(self.code, f)
 
     def bytecode_from_string(self, string):
         """Load bytecode from a string."""
@@ -91,7 +86,7 @@ class Bucket(object):
         return out.getvalue()
 
 
-class BytecodeCache(object):
+class BytecodeCache:
     """To implement your own bytecode cache you have to subclass this class
     and override :meth:`load_bytecode` and :meth:`dump_bytecode`.  Both of
     these methods are passed a :class:`~jinja2.bccache.Bucket`.
@@ -145,7 +140,7 @@ class BytecodeCache(object):
         hash = sha1(name.encode("utf-8"))
         if filename is not None:
             filename = "|" + filename
-            if isinstance(filename, text_type):
+            if isinstance(filename, str):
                 filename = filename.encode("utf-8")
             hash.update(filename)
         return hash.hexdigest()
@@ -209,7 +204,7 @@ class FileSystemBytecodeCache(BytecodeCache):
         if not hasattr(os, "getuid"):
             _unsafe_dir()
 
-        dirname = "_jinja2-cache-%d" % os.getuid()
+        dirname = f"_jinja2-cache-{os.getuid()}"
         actual_dir = os.path.join(tmpdir, dirname)
 
         try:
@@ -241,7 +236,7 @@ class FileSystemBytecodeCache(BytecodeCache):
         return actual_dir
 
     def _get_cache_filename(self, bucket):
-        return path.join(self.directory, self.pattern % bucket.key)
+        return os.path.join(self.directory, self.pattern % (bucket.key,))
 
     def load_bytecode(self, bucket):
         f = open_if_exists(self._get_cache_filename(bucket), "rb")
@@ -264,10 +259,10 @@ class FileSystemBytecodeCache(BytecodeCache):
         # normally.
         from os import remove
 
-        files = fnmatch.filter(listdir(self.directory), self.pattern % "*")
+        files = fnmatch.filter(os.listdir(self.directory), self.pattern % ("*",))
         for filename in files:
             try:
-                remove(path.join(self.directory, filename))
+                remove(os.path.join(self.directory, filename))
             except OSError:
                 pass
 
@@ -284,7 +279,7 @@ class MemcachedBytecodeCache(BytecodeCache):
     -   `python-memcached <https://pypi.org/project/python-memcached/>`_
 
     (Unfortunately the django cache interface is not compatible because it
-    does not support storing binary data, only unicode.  You can however pass
+    does not support storing binary data, only text. You can however pass
     the underlying cache client to the bytecode cache which is available
     as `django.core.cache.cache._client`.)
 

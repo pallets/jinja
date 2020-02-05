@@ -1,42 +1,27 @@
-# -*- coding: utf-8 -*-
 """A sandbox layer that ensures unsafe operations cannot be performed.
 Useful when the template itself comes from an untrusted source.
 """
 import operator
 import types
-import warnings
+from _string import formatter_field_name_split
+from collections import abc
 from collections import deque
 from string import Formatter
 
 from markupsafe import EscapeFormatter
 from markupsafe import Markup
 
-from ._compat import abc
-from ._compat import PY2
-from ._compat import range_type
-from ._compat import string_types
 from .environment import Environment
 from .exceptions import SecurityError
 
 #: maximum number of items a range may produce
 MAX_RANGE = 100000
 
-#: attributes of function objects that are considered unsafe.
-if PY2:
-    UNSAFE_FUNCTION_ATTRIBUTES = {
-        "func_closure",
-        "func_code",
-        "func_dict",
-        "func_defaults",
-        "func_globals",
-    }
-else:
-    # On versions > python 2 the special attributes on functions are gone,
-    # but they remain on methods and generators for whatever reason.
-    UNSAFE_FUNCTION_ATTRIBUTES = set()
+#: Unsafe function attributes.
+UNSAFE_FUNCTION_ATTRIBUTES = set()
 
-#: unsafe method attributes.  function attributes are unsafe for methods too
-UNSAFE_METHOD_ATTRIBUTES = {"im_class", "im_func", "im_self"}
+#: Unsafe method attributes. Function attributes are unsafe for methods too.
+UNSAFE_METHOD_ATTRIBUTES = set()
 
 #: unsafe generator attributes.
 UNSAFE_GENERATOR_ATTRIBUTES = {"gi_frame", "gi_code"}
@@ -47,41 +32,9 @@ UNSAFE_COROUTINE_ATTRIBUTES = {"cr_frame", "cr_code"}
 #: unsafe attributes on async generators
 UNSAFE_ASYNC_GENERATOR_ATTRIBUTES = {"ag_code", "ag_frame"}
 
-# make sure we don't warn in python 2.6 about stuff we don't care about
-warnings.filterwarnings(
-    "ignore", "the sets module", DeprecationWarning, module=__name__
-)
-
-_mutable_set_types = (set,)
-_mutable_mapping_types = (dict,)
-_mutable_sequence_types = (list,)
-
-# on python 2.x we can register the user collection types
-try:
-    from UserDict import UserDict, DictMixin
-    from UserList import UserList
-
-    _mutable_mapping_types += (UserDict, DictMixin)
-    _mutable_set_types += (UserList,)
-except ImportError:
-    pass
-
-# if sets is still available, register the mutable set from there as well
-try:
-    from sets import Set
-
-    _mutable_set_types += (Set,)
-except ImportError:
-    pass
-
-#: register Python 2.6 abstract base classes
-_mutable_set_types += (abc.MutableSet,)
-_mutable_mapping_types += (abc.MutableMapping,)
-_mutable_sequence_types += (abc.MutableSequence,)
-
 _mutable_spec = (
     (
-        _mutable_set_types,
+        abc.MutableSet,
         frozenset(
             [
                 "add",
@@ -96,11 +49,11 @@ _mutable_spec = (
         ),
     ),
     (
-        _mutable_mapping_types,
+        abc.MutableMapping,
         frozenset(["clear", "pop", "popitem", "setdefault", "update"]),
     ),
     (
-        _mutable_sequence_types,
+        abc.MutableSequence,
         frozenset(["append", "reverse", "insert", "sort", "extend", "remove"]),
     ),
     (
@@ -159,7 +112,7 @@ def inspect_format_method(callable):
     ) or callable.__name__ not in ("format", "format_map"):
         return None
     obj = callable.__self__
-    if isinstance(obj, string_types):
+    if isinstance(obj, str):
         return obj
 
 
@@ -167,12 +120,12 @@ def safe_range(*args):
     """A range that can't generate ranges with a length of more than
     MAX_RANGE items.
     """
-    rng = range_type(*args)
+    rng = range(*args)
 
     if len(rng) > MAX_RANGE:
         raise OverflowError(
             "Range too big. The sandbox blocks ranges larger than"
-            " MAX_RANGE (%d)." % MAX_RANGE
+            f" MAX_RANGE ({MAX_RANGE})."
         )
 
     return rng
@@ -181,7 +134,7 @@ def safe_range(*args):
 def unsafe(f):
     """Marks a function or method as unsafe.
 
-    ::
+    .. code-block: python
 
         @unsafe
         def delete(self):
@@ -230,10 +183,8 @@ def is_internal_attribute(obj, attr):
 
 def modifies_known_mutable(obj, attr):
     """This function checks if an attribute on a builtin mutable object
-    (list, dict, set or deque) would modify it if called.  It also supports
-    the "user"-versions of the objects (`sets.Set`, `UserDict.*` etc.) and
-    with Python 2.6 onwards the abstract base classes `MutableSet`,
-    `MutableMapping`, and `MutableSequence`.
+    (list, dict, set or deque) or the corresponding ABCs would modify it
+    if called.
 
     >>> modifies_known_mutable({}, "clear")
     True
@@ -244,8 +195,7 @@ def modifies_known_mutable(obj, attr):
     >>> modifies_known_mutable([], "index")
     False
 
-    If called with an unsupported object (such as unicode) `False` is
-    returned.
+    If called with an unsupported object, ``False`` is returned.
 
     >>> modifies_known_mutable("foo", "upper")
     False
@@ -383,7 +333,7 @@ class SandboxedEnvironment(Environment):
         try:
             return obj[argument]
         except (TypeError, LookupError):
-            if isinstance(argument, string_types):
+            if isinstance(argument, str):
                 try:
                     attr = str(argument)
                 except Exception:
@@ -419,8 +369,8 @@ class SandboxedEnvironment(Environment):
     def unsafe_undefined(self, obj, attribute):
         """Return an undefined object for unsafe attributes."""
         return self.undefined(
-            "access to attribute %r of %r "
-            "object is unsafe." % (attribute, obj.__class__.__name__),
+            f"access to attribute {attribute!r} of"
+            f" {obj.__class__.__name__!r} object is unsafe.",
             name=attribute,
             obj=obj,
             exc=SecurityError,
@@ -438,8 +388,8 @@ class SandboxedEnvironment(Environment):
         if format_func is not None and format_func.__name__ == "format_map":
             if len(args) != 1 or kwargs:
                 raise TypeError(
-                    "format_map() takes exactly one argument %d given"
-                    % (len(args) + (kwargs is not None))
+                    "format_map() takes exactly one argument"
+                    f" {len(args) + (kwargs is not None)} given"
                 )
 
             kwargs = args[0]
@@ -458,7 +408,7 @@ class SandboxedEnvironment(Environment):
         # the double prefixes are to avoid double keyword argument
         # errors when proxying the call.
         if not __self.is_safe_callable(__obj):
-            raise SecurityError("%r is not safely callable" % (__obj,))
+            raise SecurityError(f"{__obj!r} is not safely callable")
         return __context.call(__obj, *args, **kwargs)
 
 
@@ -474,16 +424,7 @@ class ImmutableSandboxedEnvironment(SandboxedEnvironment):
         return not modifies_known_mutable(obj, attr)
 
 
-# This really is not a public API apparently.
-try:
-    from _string import formatter_field_name_split
-except ImportError:
-
-    def formatter_field_name_split(field_name):
-        return field_name._formatter_field_name_split()
-
-
-class SandboxedFormatterMixin(object):
+class SandboxedFormatterMixin:
     def __init__(self, env):
         self._env = env
 

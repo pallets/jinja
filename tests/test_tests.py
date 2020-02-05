@@ -1,4 +1,3 @@
-# -*- coding: utf-8 -*-
 import pytest
 
 from jinja2 import Environment
@@ -10,7 +9,7 @@ class MyDict(dict):
 
 
 @pytest.mark.test_tests
-class TestTestsCase(object):
+class TestTestsCase:
     def test_defined(self, env):
         tmpl = env.from_string("{{ missing is defined }}|{{ true is defined }}")
         assert tmpl.render() == "False|True"
@@ -111,7 +110,7 @@ class TestTestsCase(object):
         ),
     )
     def test_types(self, env, op, expect):
-        t = env.from_string("{{{{ {op} }}}}".format(op=op))
+        t = env.from_string(f"{{{{ {op} }}}}")
         assert t.render(mydict=MyDict(), complex=complex(1, 2)) == str(expect)
 
     def test_upper(self, env):
@@ -152,7 +151,7 @@ class TestTestsCase(object):
         ),
     )
     def test_compare_aliases(self, env, op, expect):
-        t = env.from_string("{{{{ 2 is {op} }}}}".format(op=op))
+        t = env.from_string(f"{{{{ 2 is {op} }}}}")
         assert t.render() == str(expect)
 
     def test_sameas(self, env):

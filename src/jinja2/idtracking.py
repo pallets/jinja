@@ -1,4 +1,3 @@
-from ._compat import iteritems
 from .visitor import NodeVisitor
 
 VAR_LOAD_PARAMETER = "param"
@@ -21,7 +20,7 @@ def symbols_for_node(node, parent_symbols=None):
     return sym
 
 
-class Symbols(object):
+class Symbols:
     def __init__(self, parent=None, level=None):
         if level is None:
             if parent is None:
@@ -39,7 +38,7 @@ class Symbols(object):
         visitor.visit(node, **kwargs)
 
     def _define_ref(self, name, load=None):
-        ident = "l_%d_%s" % (self.level, name)
+        ident = f"l_{self.level}_{name}"
         self.refs[name] = ident
         if load is not None:
             self.loads[ident] = load
@@ -61,8 +60,8 @@ class Symbols(object):
         rv = self.find_ref(name)
         if rv is None:
             raise AssertionError(
-                "Tried to resolve a name to a reference that "
-                "was unknown to the frame (%r)" % name
+                "Tried to resolve a name to a reference that was"
+                f" unknown to the frame ({name!r})"
             )
         return rv
 
@@ -114,7 +113,7 @@ class Symbols(object):
             self.loads.update(sym.loads)
             self.stores.update(sym.stores)
 
-        for name, branch_count in iteritems(stores):
+        for name, branch_count in stores.items():
             if branch_count == len(branch_symbols):
                 continue
             target = self.find_ref(name)
@@ -141,7 +140,7 @@ class Symbols(object):
         rv = set()
         node = self
         while node is not None:
-            for target, (instr, _) in iteritems(self.loads):
+            for target, (instr, _) in self.loads.items():
                 if instr == VAR_LOAD_PARAMETER:
                     rv.add(target)
             node = node.parent
@@ -200,7 +199,7 @@ class RootVisitor(NodeVisitor):
 
     def generic_visit(self, node, *args, **kwargs):
         raise NotImplementedError(
-            "Cannot find symbols for %r" % node.__class__.__name__
+            f"Cannot find symbols for {node.__class__.__name__!r}"
         )
 
 

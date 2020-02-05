@@ -44,8 +44,7 @@ additional methods:
 .. method:: jinja2.Environment.install_gettext_translations(translations, newstyle=False)
 
     Installs a translation globally for the environment. The
-    ``translations`` object must implement ``gettext`` and ``ngettext``
-    (or ``ugettext`` and ``ungettext`` for Python 2).
+    ``translations`` object must implement ``gettext`` and ``ngettext``.
     :class:`gettext.NullTranslations`, :class:`gettext.GNUTranslations`,
     and `Babel`_\s ``Translations`` are supported.
 
@@ -63,8 +62,7 @@ additional methods:
 
     Install the given ``gettext`` and ``ngettext`` callables into the
     environment. They should behave exactly like
-    :func:`gettext.gettext` and :func:`gettext.ngettext` (or
-    ``ugettext`` and ``ungettext`` for Python 2).
+    :func:`gettext.gettext` and :func:`gettext.ngettext`.
 
     If ``newstyle`` is activated, the callables are wrapped to work like
     newstyle callables.  See :ref:`newstyle-gettext` for more information.
@@ -86,8 +84,8 @@ additional methods:
         found.
     -   ``function`` is the name of the ``gettext`` function used (if
         the string was extracted from embedded Python code).
-    -   ``message`` is the string itself (``unicode`` on Python 2), or a
-        tuple of strings for functions with multiple arguments.
+    -   ``message`` is the string itself, or a tuple of strings for
+        functions with multiple arguments.
 
     If `Babel`_ is installed, see :ref:`babel-integration` to extract
     the strings.
