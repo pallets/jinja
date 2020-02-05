@@ -5,8 +5,6 @@ Version 3.0.0
 
 Unreleased
 
-3.0.0a1 released 2020-02-05
-
 -   Drop support for Python 2.7 and 3.5.
 -   Bump MarkupSafe dependency to >=1.1.
 -   Bump Babel optional dependency to >=2.1.
