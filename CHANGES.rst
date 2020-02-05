@@ -5,11 +5,12 @@ Version 3.0.0
 
 Unreleased
 
+3.0.0a1 released 2020-02-05
+
 -   Drop support for Python 2.7 and 3.5.
 -   Bump MarkupSafe dependency to >=1.1.
 -   Bump Babel optional dependency to >=2.1.
 -   Remove code that was marked deprecated.
--
 
 
 2.11.2
@@ -20,7 +21,6 @@ Unreleased
 -   Fix a bug that caused callable objects with ``__getattr__``, like
     :class:`~unittest.mock.Mock` to be treated as a
     :func:`contextfunction`. :issue:`1145`
-
 
 
 Version 2.11.1
