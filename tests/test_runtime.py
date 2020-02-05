@@ -54,3 +54,22 @@ def test_iterator_not_advanced_early():
     # groupby groups depend on the current position of the iterator. If
     # it was advanced early, the lists would appear empty.
     assert out == "1 [(1, 'a'), (1, 'b')]\n2 [(2, 'c')]\n3 [(3, 'd')]\n"
+
+
+def test_mock_not_contextfunction():
+    """If a callable class has a ``__getattr__`` that returns True-like
+    values for arbitrary attrs, it should not be incorrectly identified
+    as a ``contextfunction``.
+    """
+
+    class Calc(object):
+        def __getattr__(self, item):
+            return object()
+
+        def __call__(self, *args, **kwargs):
+            return len(args) + len(kwargs)
+
+    t = Template("{{ calc() }}")
+    out = t.render(calc=Calc())
+    # Would be "1" if context argument was passed.
+    assert out == "0"
