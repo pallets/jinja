@@ -23,7 +23,6 @@ def test_env():
     return env
 
 
-@pytest.mark.imports
 class TestImports(object):
     def test_context_imports(self, test_env):
         t = test_env.from_string('{% import "module" as m %}{{ m.test() }}')
@@ -94,8 +93,6 @@ class TestImports(object):
         assert not hasattr(m, "notthere")
 
 
-@pytest.mark.imports
-@pytest.mark.includes
 class TestIncludes(object):
     def test_context_include(self, test_env):
         t = test_env.from_string('{% include "header" %}')

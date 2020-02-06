@@ -37,7 +37,6 @@ class PublicStuff(object):
         return "PublicStuff"
 
 
-@pytest.mark.sandbox
 class TestSandbox(object):
     def test_unsafe(self, env):
         env = SandboxedEnvironment()
@@ -167,7 +166,6 @@ class TestSandbox(object):
                 t.render(ctx)
 
 
-@pytest.mark.sandbox
 class TestStringFormat(object):
     def test_basic_format_safety(self):
         env = SandboxedEnvironment()
@@ -190,7 +188,6 @@ class TestStringFormat(object):
         assert t.render() == "a42b&lt;foo&gt;"
 
 
-@pytest.mark.sandbox
 @pytest.mark.skipif(
     not hasattr(str, "format_map"), reason="requires str.format_map method"
 )

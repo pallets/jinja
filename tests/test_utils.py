@@ -18,8 +18,6 @@ from jinja2.utils import select_autoescape
 from jinja2.utils import urlize
 
 
-@pytest.mark.utils
-@pytest.mark.lrucache
 class TestLRUCache(object):
     def test_simple(self):
         d = LRUCache(3)
@@ -120,8 +118,6 @@ class TestLRUCache(object):
         assert len(d) == 2
 
 
-@pytest.mark.utils
-@pytest.mark.helpers
 class TestHelpers(object):
     def test_object_type_repr(self):
         class X(object):
@@ -150,8 +146,6 @@ class TestHelpers(object):
         assert not func("FOO.TXT")
 
 
-@pytest.mark.utils
-@pytest.mark.escapeUrlizeTarget
 class TestEscapeUrlizeTarget(object):
     def test_escape_urlize_target(self):
         url = "http://example.org"
@@ -163,8 +157,6 @@ class TestEscapeUrlizeTarget(object):
         )
 
 
-@pytest.mark.utils
-@pytest.mark.loremIpsum
 class TestLoremIpsum(object):
     def test_lorem_ipsum_markup(self):
         """Test that output of lorem_ipsum is Markup by default."""

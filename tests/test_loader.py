@@ -17,7 +17,6 @@ from jinja2.exceptions import TemplateNotFound
 from jinja2.loaders import split_template_path
 
 
-@pytest.mark.loaders
 class TestLoaders(object):
     def test_dict_loader(self, dict_loader):
         env = Environment(loader=dict_loader)
@@ -117,8 +116,6 @@ class TestLoaders(object):
         pytest.raises(TemplateNotFound, split_template_path, "../foo")
 
 
-@pytest.mark.loaders
-@pytest.mark.filesystemloader
 class TestFileSystemLoader(object):
     searchpath = os.path.join(
         os.path.dirname(os.path.abspath(__file__)), "res", "templates"
@@ -186,8 +183,6 @@ class TestFileSystemLoader(object):
         assert t.render() == expect
 
 
-@pytest.mark.loaders
-@pytest.mark.moduleloader
 class TestModuleLoader(object):
     archive = None
 

@@ -9,7 +9,6 @@ class MyDict(dict):
     pass
 
 
-@pytest.mark.test_tests
 class TestTestsCase(object):
     def test_defined(self, env):
         tmpl = env.from_string("{{ missing is defined }}|{{ true is defined }}")

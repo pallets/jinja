@@ -14,7 +14,6 @@ def env(package_loader, tmp_path):
     return Environment(loader=package_loader, bytecode_cache=bytecode_cache)
 
 
-@pytest.mark.byte_code_cache
 class TestByteCodeCache(object):
     def test_simple(self, env):
         tmpl = env.get_template("test.html")

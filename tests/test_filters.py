@@ -29,7 +29,6 @@ class Magic2(object):
         return u"(%s,%s)" % (text_type(self.value1), text_type(self.value2))
 
 
-@pytest.mark.filter
 class TestFilter(object):
     def test_filter_calling(self, env):
         rv = env.call_filter("sum", [1, 2, 3])

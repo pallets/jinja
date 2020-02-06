@@ -130,7 +130,6 @@ def test_env_async():
     return env
 
 
-@pytest.mark.imports
 class TestAsyncImports(object):
     def test_context_imports(self, test_env_async):
         t = test_env_async.from_string('{% import "module" as m %}{{ m.test() }}')
@@ -180,8 +179,6 @@ class TestAsyncImports(object):
         assert not hasattr(m, "notthere")
 
 
-@pytest.mark.imports
-@pytest.mark.includes
 class TestAsyncIncludes(object):
     def test_context_include(self, test_env_async):
         t = test_env_async.from_string('{% include "header" %}')
@@ -279,8 +276,6 @@ class TestAsyncIncludes(object):
         assert t.render().strip() == "(FOO)"
 
 
-@pytest.mark.core_tags
-@pytest.mark.for_loop
 class TestAsyncForLoop(object):
     def test_simple(self, test_env_async):
         tmpl = test_env_async.from_string("{% for item in seq %}{{ item }}{% endfor %}")

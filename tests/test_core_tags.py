@@ -13,8 +13,6 @@ def env_trim():
     return Environment(trim_blocks=True)
 
 
-@pytest.mark.core_tags
-@pytest.mark.for_loop
 class TestForLoop(object):
     def test_simple(self, env):
         tmpl = env.from_string("{% for item in seq %}{{ item }}{% endfor %}")
@@ -305,8 +303,6 @@ class TestForLoop(object):
         assert tmpl.render(x=0, seq=[1, 2, 3]) == "919293"
 
 
-@pytest.mark.core_tags
-@pytest.mark.if_condition
 class TestIfCondition(object):
     def test_simple(self, env):
         tmpl = env.from_string("""{% if true %}...{% endif %}""")
@@ -349,8 +345,6 @@ class TestIfCondition(object):
         assert tmpl.render() == "1"
 
 
-@pytest.mark.core_tags
-@pytest.mark.macros
 class TestMacros(object):
     def test_simple(self, env_trim):
         tmpl = env_trim.from_string(
@@ -475,8 +469,6 @@ class TestMacros(object):
         assert tmpl.module.m(1, x=7) == "1|7|7"
 
 
-@pytest.mark.core_tags
-@pytest.mark.set
 class TestSet(object):
     def test_normal(self, env_trim):
         tmpl = env_trim.from_string("{% set foo = 1 %}{{ foo }}")
@@ -584,8 +576,6 @@ class TestSet(object):
         assert tmpl.module.foo == u"11"
 
 
-@pytest.mark.core_tags
-@pytest.mark.with_
 class TestWith(object):
     def test_with(self, env):
         tmpl = env.from_string(
