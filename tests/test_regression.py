@@ -9,7 +9,6 @@ from jinja2 import TemplateNotFound
 from jinja2 import TemplateSyntaxError
 
 
-@pytest.mark.regression
 class TestCorner:
     def test_assigned_scoping(self, env):
         t = env.from_string(
@@ -81,7 +80,6 @@ class TestCorner:
         assert t.render(wrapper=23) == "[1][2][3][4]23"
 
 
-@pytest.mark.regression
 class TestBug:
     def test_keyword_folding(self, env):
         env = Environment()

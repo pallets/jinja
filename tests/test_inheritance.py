@@ -73,7 +73,6 @@ def env():
     )
 
 
-@pytest.mark.inheritance
 class TestInheritance:
     def test_layout(self, env):
         tmpl = env.get_template("layout")
@@ -232,7 +231,6 @@ class TestInheritance:
         assert rv == ["43", "44", "45"]
 
 
-@pytest.mark.inheritance
 class TestBugFix:
     def test_fixed_macro_scoping_bug(self, env):
         assert (

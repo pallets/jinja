@@ -24,8 +24,6 @@ from jinja2.utils import environmentfunction
 from jinja2.utils import evalcontextfunction
 
 
-@pytest.mark.api
-@pytest.mark.extended
 class TestExtendedAPI:
     def test_item_and_attribute(self, env):
         from jinja2.sandbox import SandboxedEnvironment
@@ -161,8 +159,6 @@ class TestExtendedAPI:
             t.render(total=MAX_RANGE + 1)
 
 
-@pytest.mark.api
-@pytest.mark.meta
 class TestMeta:
     def test_find_undeclared_variables(self, env):
         ast = env.parse("{% set foo = 42 %}{{ bar + foo }}")
@@ -216,8 +212,6 @@ class TestMeta:
         assert list(i) == ["foo.html", "bar.html", None]
 
 
-@pytest.mark.api
-@pytest.mark.streaming
 class TestStreaming:
     def test_basic_streaming(self, env):
         t = env.from_string(
@@ -259,8 +253,6 @@ class TestStreaming:
             shutil.rmtree(tmp)
 
 
-@pytest.mark.api
-@pytest.mark.undefined
 class TestUndefined:
     def test_stopiteration_is_undefined(self):
         def test():
@@ -396,8 +388,6 @@ class TestUndefined:
             Undefined(obj=42, name="upper")()
 
 
-@pytest.mark.api
-@pytest.mark.lowlevel
 class TestLowLevel:
     def test_custom_code_generator(self):
         class CustomCodeGenerator(CodeGenerator):

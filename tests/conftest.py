@@ -13,50 +13,6 @@ def pytest_ignore_collect(path):
     return False
 
 
-def pytest_configure(config):
-    """Register custom marks for test categories."""
-    custom_markers = [
-        "api",
-        "byte_code_cache",
-        "core_tags",
-        "debug",
-        "escapeUrlizeTarget",
-        "ext",
-        "extended",
-        "filesystemloader",
-        "filter",
-        "for_loop",
-        "helpers",
-        "if_condition",
-        "imports",
-        "includes",
-        "inheritance",
-        "lexer",
-        "lexnparse",
-        "loaders",
-        "loremIpsum",
-        "lowlevel",
-        "lrucache",
-        "lstripblocks",
-        "macros",
-        "meta",
-        "moduleloader",
-        "parser",
-        "regression",
-        "sandbox",
-        "set",
-        "streaming",
-        "syntax",
-        "test_tests",
-        "tokenstream",
-        "undefined",
-        "utils",
-        "with_",
-    ]
-    for mark in custom_markers:
-        config.addinivalue_line("markers", mark + ": test category")
-
-
 @pytest.fixture
 def env():
     """returns a new environment."""

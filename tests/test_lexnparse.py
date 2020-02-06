@@ -12,8 +12,6 @@ from jinja2.lexer import TOKEN_EOF
 from jinja2.lexer import TokenStream
 
 
-@pytest.mark.lexnparse
-@pytest.mark.tokenstream
 class TestTokenStream:
     test_tokens = [
         Token(1, TOKEN_BLOCK_BEGIN, ""),
@@ -42,8 +40,6 @@ class TestTokenStream:
         ]
 
 
-@pytest.mark.lexnparse
-@pytest.mark.lexer
 class TestLexer:
     def test_raw1(self, env):
         tmpl = env.from_string(
@@ -168,8 +164,6 @@ class TestLexer:
             pytest.raises(TemplateSyntaxError, env.from_string, t)
 
 
-@pytest.mark.lexnparse
-@pytest.mark.parser
 class TestParser:
     def test_php_syntax(self, env):
         env = Environment("<?", "?>", "<?=", "?>", "<!--", "-->")
@@ -303,8 +297,6 @@ and bar comment #}
         assert_error("{% unknown_tag %}", "Encountered unknown tag 'unknown_tag'.")
 
 
-@pytest.mark.lexnparse
-@pytest.mark.syntax
 class TestSyntax:
     def test_call(self, env):
         env = Environment()
@@ -559,8 +551,6 @@ class TestSyntax:
         assert tmpl.render(foo={"bar": 42}) == "42"
 
 
-@pytest.mark.lexnparse
-@pytest.mark.lstripblocks
 class TestLstripBlocks:
     def test_lstrip(self, env):
         env = Environment(lstrip_blocks=True, trim_blocks=False)

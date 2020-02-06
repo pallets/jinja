@@ -160,7 +160,6 @@ class StreamFilterExtension(Extension):
             yield Token(lineno, "data", token.value[pos:])
 
 
-@pytest.mark.ext
 class TestExtensions:
     def test_extend_late(self):
         env = Environment()
@@ -260,7 +259,6 @@ class TestExtensions:
             assert f"'{value}'" in out
 
 
-@pytest.mark.ext
 class TestInternationalization:
     def test_trans(self):
         tmpl = i18n_env.get_template("child.html")
@@ -403,7 +401,6 @@ class TestInternationalization:
         ]
 
 
-@pytest.mark.ext
 class TestScope:
     def test_basic_scope_behavior(self):
         # This is what the old with statement compiled down to
@@ -437,7 +434,6 @@ class TestScope:
         assert tmpl.render(b=3, e=4) == "1|2|2|4|5"
 
 
-@pytest.mark.ext
 class TestNewstyleInternationalization:
     def test_trans(self):
         tmpl = newstyle_i18n_env.get_template("child.html")
@@ -529,7 +525,6 @@ class TestNewstyleInternationalization:
         assert t.render() == "%(foo)s"
 
 
-@pytest.mark.ext
 class TestAutoEscape:
     def test_scoped_setting(self):
         env = Environment(extensions=["jinja2.ext.autoescape"], autoescape=True)

@@ -34,7 +34,6 @@ class PublicStuff:
         return "PublicStuff"
 
 
-@pytest.mark.sandbox
 class TestSandbox:
     def test_unsafe(self, env):
         env = SandboxedEnvironment()
@@ -126,7 +125,6 @@ class TestSandbox:
                 t.render(ctx)
 
 
-@pytest.mark.sandbox
 class TestStringFormat:
     def test_basic_format_safety(self):
         env = SandboxedEnvironment()
@@ -149,7 +147,6 @@ class TestStringFormat:
         assert t.render() == "a42b&lt;foo&gt;"
 
 
-@pytest.mark.sandbox
 class TestStringFormatMap:
     def test_basic_format_safety(self):
         env = SandboxedEnvironment()

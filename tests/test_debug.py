@@ -16,7 +16,6 @@ def fs_env(filesystem_loader):
     return Environment(loader=filesystem_loader)
 
 
-@pytest.mark.debug
 class TestDebug:
     def assert_traceback_matches(self, callback, expected_tb):
         with pytest.raises(Exception) as exc_info:

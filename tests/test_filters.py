@@ -24,7 +24,6 @@ class Magic2:
         return f"({self.value1},{self.value2})"
 
 
-@pytest.mark.filter
 class TestFilter:
     def test_filter_calling(self, env):
         rv = env.call_filter("sum", [1, 2, 3])
