@@ -543,7 +543,7 @@ understand because it has some impact to what you are doing:
 *   template rendering will require an event loop to be set for the
     current thread (``asyncio.get_event_loop`` needs to return one)
 *   all template generation code internally runs async generators which
-    means that you will pay a performance penalty even if the non sync
+    means that you will pay a performance penalty even if the non async
     methods are used!
 *   The sync methods are based on async methods if the async mode is
     enabled which means that `render` for instance will internally invoke
