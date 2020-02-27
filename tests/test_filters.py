@@ -6,6 +6,8 @@ import pytest
 
 from jinja2 import Environment
 from jinja2 import Markup
+from jinja2 import StrictUndefined
+from jinja2 import UndefinedError
 from jinja2._compat import implements_to_string
 from jinja2._compat import text_type
 
@@ -368,6 +370,11 @@ class TestFilter(object):
     def test_wordcount(self, env):
         tmpl = env.from_string('{{ "foo bar baz"|wordcount }}')
         assert tmpl.render() == "3"
+
+        strict_env = Environment(undefined=StrictUndefined)
+        t = strict_env.from_string("{{ s|wordcount }}")
+        with pytest.raises(UndefinedError):
+            t.render()
 
     def test_block(self, env):
         tmpl = env.from_string("{% filter lower|escape %}<HEHE>{% endfilter %}")
