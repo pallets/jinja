@@ -19,7 +19,8 @@ Unreleased
 -   Fix a bug that caused callable objects with ``__getattr__``, like
     :class:`~unittest.mock.Mock` to be treated as a
     :func:`contextfunction`. :issue:`1145`
-
+-   Update ``wordcount`` filter to trigger :class:`Undefined` methods
+    by wrapping the input in :func:`soft_str`. :pr:`1160`
 
 Version 2.11.1
 --------------

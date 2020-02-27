@@ -477,37 +477,38 @@ Builtin bytecode caches:
 Async Support
 -------------
 
-Starting with version 2.9, Jinja also supports the Python `async` and
-`await` constructs.  As far as template designers go this feature is
-entirely opaque to them however as a developer you should be aware of how
-it's implemented as it influences what type of APIs you can safely expose
-to the template environment.
+.. versionadded:: 2.9
 
-First you need to be aware that by default async support is disabled as
-enabling it will generate different template code behind the scenes which
-passes everything through the asyncio event loop.  This is important to
-understand because it has some impact to what you are doing:
+Jinja supports the Python ``async`` and ``await`` syntax. For the
+template designer, this support (when enabled) is entirely transparent,
+templates continue to look exactly the same. However, developers should
+be aware of the implementation as it affects what types of APIs you can
+use.
 
-*   template rendering will require an event loop to be set for the
-    current thread (``asyncio.get_event_loop`` needs to return one)
-*   all template generation code internally runs async generators which
-    means that you will pay a performance penalty even if the non sync
-    methods are used!
-*   The sync methods are based on async methods if the async mode is
-    enabled which means that `render` for instance will internally invoke
-    `render_async` and run it as part of the current event loop until the
-    execution finished.
+By default, async support is disabled. Enabling it will cause the
+environment to compile different code behind the scenes in order to
+handle async and sync code in an asyncio event loop. This has the
+following implications:
+
+-   Template rendering requires an event loop to be available to the
+    current thread. :func:`asyncio.get_event_loop` must return an event
+    loop.
+-   The compiled code uses ``await`` for functions and attributes, and
+    uses ``async for`` loops. In order to support using both async and
+    sync functions in this context, a small wrapper is placed around
+    all calls and access, which add overhead compared to purely async
+    code.
+-   Sync methods and filters become wrappers around their corresponding
+    async implementations where needed. For example, ``render`` invokes
+    ``async_render``, and ``|map`` supports async iterables.
 
 Awaitable objects can be returned from functions in templates and any
-function call in a template will automatically await the result.  This
-means that you can provide a method that asynchronously loads data
-from a database if you so desire and from the template designer's point of
-view this is just another function they can call.  This means that the
-``await`` you would normally issue in Python is implied.  However this
-only applies to function calls.  If an attribute for instance would be an
-awaitable object then this would not result in the expected behavior.
+function call in a template will automatically await the result. The
+``await`` you would normally add in Python is implied. For example, you
+can provide a method that asynchronously loads data from a database, and
+from the template designer's point of view it can be called like any
+other function.
 
-Likewise iterations with a `for` loop support async iterators.
 
 .. _policies:
 
