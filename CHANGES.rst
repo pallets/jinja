@@ -10,6 +10,8 @@ Unreleased
     :func:`contextfunction`. :issue:`1145`
 -   Update ``wordcount`` filter to trigger :class:`Undefined` methods
     by wrapping the input in :func:`soft_unicode`. :pr:`1160`
+-   Fix a hang when displaying tracebacks on Python 32-bit.
+    :issue:`1162`
 
 
 Version 2.11.1
