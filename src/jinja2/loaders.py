@@ -1,10 +1,11 @@
 """API and implementations for loading templates from different data
 sources.
 """
+import importlib.util
 import os
-import pkgutil
 import sys
 import weakref
+import zipimport
 from collections import abc
 from hashlib import sha1
 from importlib import import_module
@@ -253,21 +254,19 @@ class PackageLoader(BaseLoader):
         # Make sure the package exists. This also makes namespace
         # packages work, otherwise get_loader returns None.
         import_module(package_name)
-        self._loader = loader = pkgutil.get_loader(package_name)
+        spec = importlib.util.find_spec(package_name)
+        self._loader = spec.loader
 
-        # Zip loader's archive attribute points at the zip.
-        self._archive = getattr(loader, "archive", None)
+        self._archive = None
         self._template_root = None
-
-        if hasattr(loader, "get_filename"):
-            # A standard directory package, or a zip package.
-            self._template_root = os.path.join(
-                os.path.dirname(loader.get_filename(package_name)), package_path
-            )
-        elif hasattr(loader, "_path"):
-            # A namespace package, limited support. Find the first
-            # contributor with the template directory.
-            for root in loader._path:
+        if isinstance(spec.loader, zipimport.zipimporter):
+            self._archive = spec.loader.archive
+            pkgdir = next(iter(spec.submodule_search_locations))
+            self._template_root = os.path.join(pkgdir, package_path)
+        elif spec.submodule_search_locations:
+            # this will be one element for "packages" and multiple for
+            # namespace packages
+            for root in spec.submodule_search_locations:
                 root = os.path.join(root, package_path)
 
                 if os.path.isdir(root):
