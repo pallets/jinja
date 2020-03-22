@@ -912,9 +912,9 @@ Here's an example of how a call block can be used with arguments::
 
     {% call(user) dump_users(list_of_user) %}
         <dl>
-            <dl>Realname</dl>
+            <dt>Realname</dt>
             <dd>{{ user.realname|e }}</dd>
-            <dl>Description</dl>
+            <dt>Description</dt>
             <dd>{{ user.description }}</dd>
         </dl>
     {% endcall %}
