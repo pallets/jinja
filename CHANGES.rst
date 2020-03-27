@@ -12,6 +12,9 @@ Unreleased
     by wrapping the input in :func:`soft_unicode`. :pr:`1160`
 -   Fix a hang when displaying tracebacks on Python 32-bit.
     :issue:`1162`
+-   Showing an undefined error for an object that raises
+    ``AttributeError`` on access doesn't cause a recursion error.
+    :issue:`1177`
 
 
 Version 2.11.1

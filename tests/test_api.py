@@ -269,6 +269,21 @@ class TestUndefined(object):
         with pytest.raises(AttributeError):
             Undefined("Foo").__dict__
 
+    def test_undefined_attribute_error(self):
+        # Django's LazyObject turns the __class__ attribute into a
+        # property that resolves the wrapped function. If that wrapped
+        # function raises an AttributeError, printing the repr of the
+        # object in the undefined message would cause a RecursionError.
+        class Error(object):
+            @property
+            def __class__(self):
+                raise AttributeError()
+
+        u = Undefined(obj=Error(), name="hello")
+
+        with pytest.raises(UndefinedError):
+            getattr(u, "recursion", None)
+
     def test_logging_undefined(self):
         _messages = []
 
