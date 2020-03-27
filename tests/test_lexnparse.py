@@ -178,6 +178,24 @@ class TestLexer(object):
         else:
             pytest.raises(TemplateSyntaxError, env.from_string, t)
 
+    def test_lineno_with_strip(self, env):
+        tokens = env.lex(
+            """\
+<html>
+    <body>
+    {%- block content -%}
+        <hr>
+        {{ item }}
+    {% endblock %}
+    </body>
+</html>"""
+        )
+        for tok in tokens:
+            lineno, token_type, value = tok
+            if token_type == "name" and value == "item":
+                assert lineno == 5
+                break
+
 
 class TestParser(object):
     def test_php_syntax(self, env):

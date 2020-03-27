@@ -681,6 +681,7 @@ class Lexer(object):
         source_length = len(source)
         balancing_stack = []
         lstrip_unless_re = self.lstrip_unless_re
+        newlines_stripped = 0
 
         while 1:
             # tokenizer loop
@@ -717,7 +718,9 @@ class Lexer(object):
 
                         if strip_sign == "-":
                             # Strip all whitespace between the text and the tag.
-                            groups = (text.rstrip(),) + groups[1:]
+                            stripped = text.rstrip()
+                            newlines_stripped = text[len(stripped) :].count("\n")
+                            groups = (stripped,) + groups[1:]
                         elif (
                             # Not marked for preserving whitespace.
                             strip_sign != "+"
@@ -758,7 +761,8 @@ class Lexer(object):
                             data = groups[idx]
                             if data or token not in ignore_if_empty:
                                 yield lineno, token, data
-                            lineno += data.count("\n")
+                            lineno += data.count("\n") + newlines_stripped
+                            newlines_stripped = 0
 
                 # strings as token just are yielded as it.
                 else:
