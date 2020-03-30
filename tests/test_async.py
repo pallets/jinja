@@ -577,3 +577,14 @@ class TestAsyncForLoop:
     def test_awaitable_property_slicing(self, test_env_async):
         t = test_env_async.from_string("{% for x in a.b[:1] %}{{ x }}{% endfor %}")
         assert t.render(a=dict(b=[1, 2, 3])) == "1"
+
+
+def test_namespace_awaitable(test_env_async):
+    async def _test():
+        t = test_env_async.from_string(
+            '{% set ns = namespace(foo="Bar") %}{{ ns.foo }}'
+        )
+        actual = await t.render_async()
+        assert actual == "Bar"
+
+    run(_test())
