@@ -158,12 +158,13 @@ def object_type_repr(obj):
         return "None"
     elif obj is Ellipsis:
         return "Ellipsis"
-    # __builtin__ in 2.x, builtins in 3.x
-    if obj.__class__.__module__ in ("__builtin__", "builtins"):
-        name = obj.__class__.__name__
-    else:
-        name = f"{obj.__class__.__module__}.{obj.__class__.__name__}"
-    return f"{name} object"
+
+    cls = type(obj)
+
+    if cls.__module__ == "builtins":
+        return f"{cls.__name__} object"
+
+    return f"{cls.__module__}.{cls.__name__} object"
 
 
 def pformat(obj):

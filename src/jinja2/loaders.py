@@ -232,10 +232,10 @@ class PackageLoader(BaseLoader):
     contributor. Zip files contributing to a namespace are not
     supported.
 
-    .. versionchanged:: 2.11.0
+    .. versionchanged:: 3.0
         No longer uses ``setuptools`` as a dependency.
 
-    .. versionchanged:: 2.11.0
+    .. versionchanged:: 3.0
         Limited PEP 420 namespace package support.
     """
 

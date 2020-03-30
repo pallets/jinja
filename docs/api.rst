@@ -5,9 +5,10 @@ API
     :noindex:
     :synopsis: public Jinja API
 
-This document describes the API to Jinja and not the template language.  It
-will be most useful as reference to those implementing the template interface
-to the application and not those who are creating Jinja templates.
+This document describes the API to Jinja and not the template language
+(for that, see :doc:`/templates`). It will be most useful as reference
+to those implementing the template interface to the application and not
+those who are creating Jinja templates.
 
 Basics
 ------

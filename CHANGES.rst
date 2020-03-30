@@ -21,6 +21,18 @@ Unreleased
     :func:`contextfunction`. :issue:`1145`
 -   Update ``wordcount`` filter to trigger :class:`Undefined` methods
     by wrapping the input in :func:`soft_str`. :pr:`1160`
+-   Fix a hang when displaying tracebacks on Python 32-bit.
+    :issue:`1162`
+-   Showing an undefined error for an object that raises
+    ``AttributeError`` on access doesn't cause a recursion error.
+    :issue:`1177`
+-   Revert changes to :class:`~loaders.PackageLoader` from 2.10 which
+    removed the dependency on setuptools and pkg_resources, and added
+    limited support for namespace packages. The changes caused issues
+    when using Pytest. Due to the difficulty in supporting Python 2 and
+    :pep:`451` simultaneously, the changes are reverted until 3.0.
+    :pr:`1182`
+
 
 Version 2.11.1
 --------------
