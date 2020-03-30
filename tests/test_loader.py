@@ -1,3 +1,6 @@
+import importlib.abc
+import importlib.machinery
+import importlib.util
 import os
 import platform
 import shutil
@@ -347,3 +350,34 @@ def test_package_zip_source(package_zip_loader, template, expect):
 )
 def test_package_zip_list(package_zip_loader):
     assert package_zip_loader.list_templates() == ["foo/test.html", "test.html"]
+
+
+def test_pep_451_import_hook():
+    class ImportHook(importlib.abc.MetaPathFinder, importlib.abc.Loader):
+        def find_spec(self, name, path=None, target=None):
+            if name != "res":
+                return None
+
+            spec = importlib.machinery.PathFinder.find_spec(name)
+            return importlib.util.spec_from_file_location(
+                name,
+                spec.origin,
+                loader=self,
+                submodule_search_locations=spec.submodule_search_locations,
+            )
+
+        def create_module(self, spec):
+            return None  # default behaviour is fine
+
+        def exec_module(self, module):
+            return None  # we need this to satisfy the interface, it's wrong
+
+    # ensure we restore `sys.meta_path` after putting in our loader
+    before = sys.meta_path[:]
+
+    try:
+        sys.meta_path.insert(0, ImportHook())
+        package_loader = PackageLoader("res")
+        assert "test.html" in package_loader.list_templates()
+    finally:
+        sys.meta_path[:] = before
