@@ -21,6 +21,8 @@ Unreleased
     when using Pytest. Due to the difficulty in supporting Python 2 and
     :pep:`451` simultaneously, the changes are reverted until 3.0.
     :pr:`1182`
+-   Fix line numbers in error messages when newlines are stripped.
+    :pr:`1178`
 
 
 Version 2.11.1
