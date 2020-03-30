@@ -352,21 +352,13 @@ def test_package_zip_list(package_zip_loader):
     assert package_zip_loader.list_templates() == ["foo/test.html", "test.html"]
 
 
-def test_pep_451_import_hook(tmp_path):
-    package_name = "_my_pep451_pkg"
-    pkg = tmp_path.joinpath(package_name)
-    pkg.mkdir()
-    pkg.joinpath("__init__.py").touch()
-    templates = pkg.joinpath("templates")
-    templates.mkdir()
-    templates.joinpath("foo.html").write_text("hello world")
-
+def test_pep_451_import_hook():
     class ImportHook(importlib.abc.MetaPathFinder, importlib.abc.Loader):
         def find_spec(self, name, path=None, target=None):
-            if name != package_name:
+            if name != "res":
                 return None
-            path = [str(tmp_path)]
-            spec = importlib.machinery.PathFinder.find_spec(name, path=path)
+
+            spec = importlib.machinery.PathFinder.find_spec(name)
             return importlib.util.spec_from_file_location(
                 name,
                 spec.origin,
@@ -382,9 +374,10 @@ def test_pep_451_import_hook(tmp_path):
 
     # ensure we restore `sys.meta_path` after putting in our loader
     before = sys.meta_path[:]
+
     try:
         sys.meta_path.insert(0, ImportHook())
-        package_loader = PackageLoader(package_name)
-        assert package_loader.list_templates() == ["foo.html"]
+        package_loader = PackageLoader("res")
+        assert "test.html" in package_loader.list_templates()
     finally:
         sys.meta_path[:] = before

@@ -255,17 +255,17 @@ class PackageLoader(BaseLoader):
         # packages work, otherwise get_loader returns None.
         import_module(package_name)
         spec = importlib.util.find_spec(package_name)
-        self._loader = spec.loader
-
+        self._loader = loader = spec.loader
         self._archive = None
         self._template_root = None
-        if isinstance(spec.loader, zipimport.zipimporter):
-            self._archive = spec.loader.archive
+
+        if isinstance(loader, zipimport.zipimporter):
+            self._archive = loader.archive
             pkgdir = next(iter(spec.submodule_search_locations))
             self._template_root = os.path.join(pkgdir, package_path)
         elif spec.submodule_search_locations:
-            # this will be one element for "packages" and multiple for
-            # namespace packages
+            # This will be one element for regular packages and multiple
+            # for namespace packages.
             for root in spec.submodule_search_locations:
                 root = os.path.join(root, package_path)
 

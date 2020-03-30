@@ -9,6 +9,8 @@ Unreleased
 -   Bump MarkupSafe dependency to >=1.1.
 -   Bump Babel optional dependency to >=2.1.
 -   Remove code that was marked deprecated.
+-   Use :pep:`451` API to load templates with
+    :class:`~loaders.PackageLoader`. :issue:`1168`
 
 
 2.11.2
