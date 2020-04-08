@@ -55,8 +55,8 @@ class BaseLoader:
                 if not exists(path):
                     raise TemplateNotFound(template)
                 mtime = getmtime(path)
-                with file(path) as f:
-                    source = f.read().decode('utf-8')
+                with open(path) as f:
+                    source = f.read()
                 return source, path, lambda: mtime == getmtime(path)
     """
 
