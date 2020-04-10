@@ -200,7 +200,7 @@ class TestConvertToBeHashable:
         for value in self.TEST_DATA:
             assert isinstance(hash(convert_value_to_be_hashable(value)), int)
 
-    def test_nexted_type_of_data(self):
+    def test_nested_type_of_data(self):
         """
         This tests the convert_value_to_be_hashable method could convert
         a value that list and dict are nested.
