@@ -7,7 +7,9 @@ import pytest
 from markupsafe import Markup
 
 from jinja2.utils import consume
+from jinja2.utils import convert_value_to_be_hashable
 from jinja2.utils import generate_lorem_ipsum
+from jinja2.utils import HashableDict
 from jinja2.utils import LRUCache
 from jinja2.utils import missing
 from jinja2.utils import object_type_repr
@@ -175,6 +177,50 @@ class TestLoremIpsum:
             m = random.randrange(21, 100)
             for _ in range(10):
                 assert generate_lorem_ipsum(n=1, max=m, html=False).count(" ") < m - 1
+
+
+class TestConvertToBeHashable:
+    TEST_DATA = [
+        "hoge",
+        -1,
+        -0.1,
+        False,
+        None,
+        (1, 2, 3,),
+        [1, 2, 3],
+        {1, 2, 3},
+        {"a": 1, "b": 2},
+    ]
+
+    def test_convert_data(self):
+        """
+        This tests the convert_value_to_be_hashable method could handle
+        variety of built-in types that jinja2 would accept.
+        """
+        for value in self.TEST_DATA:
+            assert isinstance(hash(convert_value_to_be_hashable(value)), int)
+
+    def test_nexted_type_of_data(self):
+        """
+        This tests the convert_value_to_be_hashable method could convert
+        a value that list and dict are nested.
+        """
+        hashed_value = convert_value_to_be_hashable([self.TEST_DATA])
+        assert isinstance(hash(convert_value_to_be_hashable(hashed_value)), int)
+        for nested_value in hashed_value:
+            assert isinstance(hash(convert_value_to_be_hashable(nested_value)), int)
+
+    def test_hashable_dict(self):
+        """
+        This tests a HashableDict object behaves as a dict value and returns
+        hash value by using the hash built-in function.
+        """
+        hashable_dict_value = HashableDict({"a": 1, "b": 2})
+        assert isinstance(hashable_dict_value, dict)
+        for attr in dir(dict):
+            assert hasattr(hashable_dict_value, attr)
+
+        assert isinstance(hash(hashable_dict_value), int)
 
 
 def test_missing():

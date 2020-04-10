@@ -503,6 +503,31 @@ class TestFilter:
         assert t.render(items=map(Magic, [3, 2, 4, 1, 2])) == "3241"
 
     @pytest.mark.parametrize(
+        "value,expect",
+        (
+            ([1, 2, 3, 1], "123"),
+            (["a", "b", "c", "a"], "abc"),
+            ([(1,), (2,), (3,), (1,)], "(1,)(2,)(3,)"),
+            ([[1], [2], [3], [1]], "[1][2][3]"),
+            ([{1}, {2}, {3}, {1}], "{1}{2}{3}"),
+            ([{"a": 1}, {"b": 2}, {"c": 3}, {"a": 1}], "{'a': 1}{'b': 2}{'c': 3}"),
+            (
+                [None, 1, 0.2, "a", False, (3,), {4}, [5], {"a": 6}],
+                "None10.2aFalse(3,){4}[5]{'a': 6}",
+            ),
+        ),
+    )
+    def test_unique_list_value(self, env, value, expect):
+        t = env.from_string(
+            """
+        {%- for val in value|unique -%}
+          {{ val }}
+        {%- endfor %}
+        """
+        )
+        assert t.render(value=value).strip() == expect
+
+    @pytest.mark.parametrize(
         "source,expect",
         (
             ('{{ ["a", "B"]|min }}', "a"),

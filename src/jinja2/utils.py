@@ -566,6 +566,17 @@ def htmlsafe_json_dumps(obj, dumper=None, **kwargs):
     return Markup(rv)
 
 
+def convert_value_to_be_hashable(value, rec=None):
+    if rec is None:
+        rec = convert_value_to_be_hashable
+    if isinstance(value, list) or isinstance(value, set):
+        return tuple(rec(x, rec) for x in value)
+    if isinstance(value, dict):
+        return HashableDict([(rec(k, rec), rec(v, rec)) for (k, v) in value.items()])
+    else:
+        return value
+
+
 class Cycler:
     """Cycle through values by yield them one at a time, then restarting
     once the end is reached. Available as ``cycler`` in templates.
@@ -656,6 +667,11 @@ class Namespace:
 
     def __repr__(self):
         return f"<Namespace {self.__attrs!r}>"
+
+
+class HashableDict(dict):
+    def __hash__(self):
+        return hash(tuple(sorted(self.items())))
 
 
 # does this python version support async for in and async generators?

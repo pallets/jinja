@@ -13,6 +13,7 @@ from markupsafe import soft_str
 
 from .exceptions import FilterArgumentError
 from .runtime import Undefined
+from .utils import convert_value_to_be_hashable
 from .utils import htmlsafe_json_dumps
 from .utils import pformat
 from .utils import url_quote
@@ -362,7 +363,7 @@ def do_unique(environment, value, case_sensitive=False, attribute=None):
     seen = set()
 
     for item in value:
-        key = getter(item)
+        key = getter(convert_value_to_be_hashable(item))
 
         if key not in seen:
             seen.add(key)
