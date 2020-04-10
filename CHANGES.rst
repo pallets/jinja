@@ -11,6 +11,8 @@ Unreleased
 -   Remove code that was marked deprecated.
 -   Use :pep:`451` API to load templates with
     :class:`~loaders.PackageLoader`. :issue:`1168`
+-   Fix a bug that 'unique' filter couldn't handle
+    'dict', 'list' and 'set' type variable.
 
 
 2.11.2
