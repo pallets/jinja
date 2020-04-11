@@ -522,8 +522,7 @@ class TestFilter:
             """
         {%- for val in value|unique -%}
           {{ val }}
-        {%- endfor %}
-        """
+        {%- endfor %}"""
         )
         assert t.render(value=value).strip() == expect
 
