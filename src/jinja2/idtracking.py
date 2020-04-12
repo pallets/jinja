@@ -117,7 +117,8 @@ class Symbols:
             if branch_count == len(branch_symbols):
                 continue
             target = self.find_ref(name)
-            assert target is not None, "should not happen"
+            if target is None:
+                raise AssertionError("should not happen")
 
             if self.parent is not None:
                 outer_target = self.parent.find_ref(name)

@@ -49,8 +49,10 @@ class NodeType(type):
             storage = []
             storage.extend(getattr(bases[0] if bases else object, attr, ()))
             storage.extend(d.get(attr, ()))
-            assert len(bases) <= 1, "multiple inheritance not allowed"
-            assert len(storage) == len(set(storage)), "layout conflict"
+            if len(bases) > 1:
+                raise AssertionError("multiple inheritance not allowed")
+            if len(storage) != len(set(storage)):
+                raise AssertionError("layout conflict")
             d[attr] = tuple(storage)
         d.setdefault("abstract", False)
         return type.__new__(mcs, name, bases, d)
@@ -392,7 +394,8 @@ class Expr(Node):
 
     abstract = True
 
-    def as_const(self, eval_ctx=None):
+    @staticmethod
+    def as_const(eval_ctx=None):
         """Return the value of the expression as constant or raise
         :exc:`Impossible` if this was not possible.
 
@@ -405,7 +408,8 @@ class Expr(Node):
         """
         raise Impossible()
 
-    def can_assign(self):
+    @staticmethod
+    def can_assign():
         """Check if it's possible to assign something to this node."""
         return False
 

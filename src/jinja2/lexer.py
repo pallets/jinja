@@ -120,7 +120,8 @@ operators = {
 }
 
 reverse_operators = {v: k for k, v in operators.items()}
-assert len(operators) == len(reverse_operators), "operators dropped"
+if len(operators) != len(reverse_operators):
+    raise AssertionError("operators dropped")
 operator_re = re.compile(
     f"({'|'.join(re.escape(x) for x in sorted(operators, key=lambda x: -len(x)))})"
 )
@@ -630,7 +631,8 @@ class Lexer:
         lineno = 1
         stack = ["root"]
         if state is not None and state != "root":
-            assert state in ("variable", "block"), "invalid state"
+            if state not in ("variable", "block"):
+                raise AssertionError("invalid state")
             stack.append(state + "_begin")
         statetokens = self.rules[stack[-1]]
         source_length = len(source)

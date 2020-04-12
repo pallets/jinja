@@ -14,7 +14,8 @@ def env(package_loader, tmp_path):
 
 
 class TestByteCodeCache:
-    def test_simple(self, env):
+    @staticmethod
+    def test_simple(env):
         tmpl = env.get_template("test.html")
         assert tmpl.render().strip() == "BAR"
         pytest.raises(TemplateNotFound, env.get_template, "missing.html")
@@ -44,7 +45,8 @@ class MockMemcached:
 
 
 class TestMemcachedBytecodeCache:
-    def test_dump_load(self):
+    @staticmethod
+    def test_dump_load():
         memcached = MockMemcached()
         m = MemcachedBytecodeCache(memcached)
 
@@ -57,7 +59,8 @@ class TestMemcachedBytecodeCache:
         m.load_bytecode(b)
         assert b.code == "code"
 
-    def test_exception(self):
+    @staticmethod
+    def test_exception():
         memcached = MockMemcached()
         memcached.get = memcached.get_side_effect
         memcached.set = memcached.set_side_effect

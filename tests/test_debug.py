@@ -17,7 +17,8 @@ def fs_env(filesystem_loader):
 
 
 class TestDebug:
-    def assert_traceback_matches(self, callback, expected_tb):
+    @staticmethod
+    def assert_traceback_matches(callback, expected_tb):
         with pytest.raises(Exception) as exc_info:
             callback()
 
@@ -71,13 +72,15 @@ to be closed is 'for'.
   line 42""",
         )
 
-    def test_pickleable_syntax_error(self, fs_env):
+    @staticmethod
+    def test_pickleable_syntax_error(fs_env):
         original = TemplateSyntaxError("bad template", 42, "test", "test.txt")
         unpickled = pickle.loads(pickle.dumps(original))
         assert str(original) == str(unpickled)
         assert original.name == unpickled.name
 
-    def test_include_syntax_error_source(self, filesystem_loader):
+    @staticmethod
+    def test_include_syntax_error_source(filesystem_loader):
         e = Environment(
             loader=ChoiceLoader(
                 [
@@ -93,7 +96,8 @@ to be closed is 'for'.
 
         assert exc_info.value.source is not None
 
-    def test_local_extraction(self):
+    @staticmethod
+    def test_local_extraction():
         from jinja2.debug import get_template_locals
         from jinja2.runtime import missing
 
@@ -109,6 +113,7 @@ to be closed is 'for'.
         )
         assert locals == {"foo": 13, "bar": 99}
 
-    def test_get_corresponding_lineno_traceback(self, fs_env):
+    @staticmethod
+    def test_get_corresponding_lineno_traceback(fs_env):
         tmpl = fs_env.get_template("test.html")
         assert tmpl.get_corresponding_lineno(1) == 1

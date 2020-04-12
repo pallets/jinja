@@ -268,7 +268,8 @@ class SandboxedEnvironment(Environment):
     #: .. versionadded:: 2.6
     intercepted_unops = frozenset()
 
-    def intercept_unop(self, operator):
+    @staticmethod
+    def intercept_unop(operator):
         """Called during template compilation with the name of a unary
         operator to check if it should be intercepted at runtime.  If this
         method returns `True`, :meth:`call_unop` is executed for this unary
@@ -291,7 +292,8 @@ class SandboxedEnvironment(Environment):
         self.binop_table = self.default_binop_table.copy()
         self.unop_table = self.default_unop_table.copy()
 
-    def is_safe_attribute(self, obj, attr, value):
+    @staticmethod
+    def is_safe_attribute(obj, attr, value):
         """The sandboxed environment will call this method to check if the
         attribute of an object is safe to access.  Per default all attributes
         starting with an underscore are considered private as well as the
@@ -300,7 +302,8 @@ class SandboxedEnvironment(Environment):
         """
         return not (attr.startswith("_") or is_internal_attribute(obj, attr))
 
-    def is_safe_callable(self, obj):
+    @staticmethod
+    def is_safe_callable(obj):
         """Check if an object is safely callable.  Per default a function is
         considered safe unless the `unsafe_callable` attribute exists and is
         True.  Override this method to alter the behavior, but this won't

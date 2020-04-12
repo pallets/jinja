@@ -25,7 +25,8 @@ from jinja2.utils import evalcontextfunction
 
 
 class TestExtendedAPI:
-    def test_item_and_attribute(self, env):
+    @staticmethod
+    def test_item_and_attribute(env):
         from jinja2.sandbox import SandboxedEnvironment
 
         for env in Environment(), SandboxedEnvironment():
@@ -36,23 +37,27 @@ class TestExtendedAPI:
             tmpl = env.from_string('{{ foo["items"] }}')
             assert tmpl.render(foo={"items": 42}) == "42"
 
-    def test_finalize(self):
+    @staticmethod
+    def test_finalize():
         e = Environment(finalize=lambda v: "" if v is None else v)
         t = e.from_string("{% for item in seq %}|{{ item }}{% endfor %}")
         assert t.render(seq=(None, 1, "foo")) == "||1|foo"
 
-    def test_finalize_constant_expression(self):
+    @staticmethod
+    def test_finalize_constant_expression():
         e = Environment(finalize=lambda v: "" if v is None else v)
         t = e.from_string("<{{ none }}>")
         assert t.render() == "<>"
 
-    def test_no_finalize_template_data(self):
+    @staticmethod
+    def test_no_finalize_template_data():
         e = Environment(finalize=lambda v: type(v).__name__)
         t = e.from_string("<{{ value }}>")
         # If template data was finalized, it would print "strintstr".
         assert t.render(value=123) == "<int>"
 
-    def test_context_finalize(self):
+    @staticmethod
+    def test_context_finalize():
         @contextfunction
         def finalize(context, value):
             return value * context["scale"]
@@ -61,7 +66,8 @@ class TestExtendedAPI:
         t = e.from_string("{{ value }}")
         assert t.render(value=5, scale=3) == "15"
 
-    def test_eval_finalize(self):
+    @staticmethod
+    def test_eval_finalize():
         @evalcontextfunction
         def finalize(eval_ctx, value):
             return str(eval_ctx.autoescape) + value
@@ -70,7 +76,8 @@ class TestExtendedAPI:
         t = e.from_string("{{ value }}")
         assert t.render(value="<script>") == "True&lt;script&gt;"
 
-    def test_env_autoescape(self):
+    @staticmethod
+    def test_env_autoescape():
         @environmentfunction
         def finalize(env, value):
             return " ".join(
@@ -81,7 +88,8 @@ class TestExtendedAPI:
         t = e.from_string("{{ value }}")
         assert t.render(value="hello") == "{{ 'hello' }}"
 
-    def test_cycler(self, env):
+    @staticmethod
+    def test_cycler(env):
         items = 1, 2, 3
         c = Cycler(*items)
         for item in items + items:
@@ -92,7 +100,8 @@ class TestExtendedAPI:
         c.reset()
         assert c.current == 1
 
-    def test_expressions(self, env):
+    @staticmethod
+    def test_expressions(env):
         expr = env.compile_expression("foo")
         assert expr() is None
         assert expr(foo=42) == 42
@@ -102,14 +111,16 @@ class TestExtendedAPI:
         expr = env.compile_expression("42 + foo")
         assert expr(foo=42) == 84
 
-    def test_template_passthrough(self, env):
+    @staticmethod
+    def test_template_passthrough(env):
         t = Template("Content")
         assert env.get_template(t) is t
         assert env.select_template([t]) is t
         assert env.get_or_select_template([t]) is t
         assert env.get_or_select_template(t) is t
 
-    def test_get_template_undefined(self, env):
+    @staticmethod
+    def test_get_template_undefined(env):
         """Passing Undefined to get/select_template raises an
         UndefinedError or shows the undefined message in the list.
         """
@@ -132,7 +143,8 @@ class TestExtendedAPI:
         assert "'no_name_1' is undefined" in exc_message
         assert "no_name_2" in exc_message
 
-    def test_autoescape_autoselect(self, env):
+    @staticmethod
+    def test_autoescape_autoselect(env):
         def select_autoescape(name):
             if name is None or "." not in name:
                 return False
@@ -149,7 +161,8 @@ class TestExtendedAPI:
         t = env.from_string("{{ foo }}")
         assert t.render(foo="<foo>") == "<foo>"
 
-    def test_sandbox_max_range(self, env):
+    @staticmethod
+    def test_sandbox_max_range(env):
         from jinja2.sandbox import SandboxedEnvironment, MAX_RANGE
 
         env = SandboxedEnvironment()
@@ -160,7 +173,8 @@ class TestExtendedAPI:
 
 
 class TestMeta:
-    def test_find_undeclared_variables(self, env):
+    @staticmethod
+    def test_find_undeclared_variables(env):
         ast = env.parse("{% set foo = 42 %}{{ bar + foo }}")
         x = meta.find_undeclared_variables(ast)
         assert x == {"bar"}
@@ -178,7 +192,8 @@ class TestMeta:
         x = meta.find_undeclared_variables(ast)
         assert x == {"foo"}
 
-    def test_find_refererenced_templates(self, env):
+    @staticmethod
+    def test_find_refererenced_templates(env):
         ast = env.parse('{% extends "layout.html" %}{% include helper %}')
         i = meta.find_referenced_templates(ast)
         assert next(i) == "layout.html"
@@ -194,7 +209,8 @@ class TestMeta:
         i = meta.find_referenced_templates(ast)
         assert list(i) == ["layout.html", "test.html", "meh.html", "muh.html"]
 
-    def test_find_included_templates(self, env):
+    @staticmethod
+    def test_find_included_templates(env):
         ast = env.parse('{% include ["foo.html", "bar.html"] %}')
         i = meta.find_referenced_templates(ast)
         assert list(i) == ["foo.html", "bar.html"]
@@ -213,7 +229,8 @@ class TestMeta:
 
 
 class TestStreaming:
-    def test_basic_streaming(self, env):
+    @staticmethod
+    def test_basic_streaming(env):
         t = env.from_string(
             "<ul>{% for item in seq %}<li>{{ loop.index }} - {{ item }}</li>"
             "{%- endfor %}</ul>"
@@ -222,7 +239,8 @@ class TestStreaming:
         assert next(stream) == "<ul>"
         assert "".join(stream) == "<li>1 - 0</li><li>2 - 1</li><li>3 - 2</li></ul>"
 
-    def test_buffered_streaming(self, env):
+    @staticmethod
+    def test_buffered_streaming(env):
         tmpl = env.from_string(
             "<ul>{% for item in seq %}<li>{{ loop.index }} - {{ item }}</li>"
             "{%- endfor %}</ul>"
@@ -232,7 +250,8 @@ class TestStreaming:
         assert next(stream) == "<ul><li>1"
         assert next(stream) == " - 0</li>"
 
-    def test_streaming_behavior(self, env):
+    @staticmethod
+    def test_streaming_behavior(env):
         tmpl = env.from_string("")
         stream = tmpl.stream()
         assert not stream.buffered
@@ -241,7 +260,8 @@ class TestStreaming:
         stream.disable_buffering()
         assert not stream.buffered
 
-    def test_dump_stream(self, env):
+    @staticmethod
+    def test_dump_stream(env):
         tmp = tempfile.mkdtemp()
         try:
             tmpl = env.from_string("\u2713")
@@ -254,7 +274,8 @@ class TestStreaming:
 
 
 class TestUndefined:
-    def test_stopiteration_is_undefined(self):
+    @staticmethod
+    def test_stopiteration_is_undefined():
         def test():
             raise StopIteration()
 
@@ -263,11 +284,13 @@ class TestUndefined:
         t = Template("A{{ test().missingattribute }}B")
         pytest.raises(UndefinedError, t.render, test=test)
 
-    def test_undefined_and_special_attributes(self):
+    @staticmethod
+    def test_undefined_and_special_attributes():
         with pytest.raises(AttributeError):
             Undefined("Foo").__dict__
 
-    def test_undefined_attribute_error(self):
+    @staticmethod
+    def test_undefined_attribute_error():
         # Django's LazyObject turns the __class__ attribute into a
         # property that resolves the wrapped function. If that wrapped
         # function raises an AttributeError, printing the repr of the
@@ -282,14 +305,17 @@ class TestUndefined:
         with pytest.raises(UndefinedError):
             getattr(u, "recursion", None)
 
-    def test_logging_undefined(self):
+    @staticmethod
+    def test_logging_undefined():
         _messages = []
 
         class DebugLogger:
-            def warning(self, msg, *args):
+            @staticmethod
+            def warning(msg, *args):
                 _messages.append("W:" + msg % args)
 
-            def error(self, msg, *args):
+            @staticmethod
+            def error(msg, *args):
                 _messages.append("E:" + msg % args)
 
         logging_undefined = make_logging_undefined(DebugLogger())
@@ -308,7 +334,8 @@ class TestUndefined:
             "W:Template variable warning: 'missing' is undefined",
         ]
 
-    def test_default_undefined(self):
+    @staticmethod
+    def test_default_undefined():
         env = Environment(undefined=Undefined)
         assert env.from_string("{{ missing }}").render() == ""
         pytest.raises(UndefinedError, env.from_string("{{ missing.attribute }}").render)
@@ -325,7 +352,8 @@ class TestUndefined:
         with pytest.raises(AttributeError):
             getattr(Undefined, "__slots__")  # noqa: B009
 
-    def test_chainable_undefined(self):
+    @staticmethod
+    def test_chainable_undefined():
         env = Environment(undefined=ChainableUndefined)
         # The following tests are copied from test_default_undefined
         assert env.from_string("{{ missing }}").render() == ""
@@ -351,7 +379,8 @@ class TestUndefined:
             == "baz"
         )
 
-    def test_debug_undefined(self):
+    @staticmethod
+    def test_debug_undefined():
         env = Environment(undefined=DebugUndefined)
         assert env.from_string("{{ missing }}").render() == "{{ missing }}"
         pytest.raises(UndefinedError, env.from_string("{{ missing.attribute }}").render)
@@ -370,7 +399,8 @@ class TestUndefined:
         with pytest.raises(AttributeError):
             getattr(DebugUndefined, "__slots__")  # noqa: B009
 
-    def test_strict_undefined(self):
+    @staticmethod
+    def test_strict_undefined():
         env = Environment(undefined=StrictUndefined)
         pytest.raises(UndefinedError, env.from_string("{{ missing }}").render)
         pytest.raises(UndefinedError, env.from_string("{{ missing.attribute }}").render)
@@ -388,15 +418,18 @@ class TestUndefined:
             getattr(StrictUndefined, "__slots__")  # noqa: B009
         assert env.from_string('{{ "foo" if false }}').render() == ""
 
-    def test_indexing_gives_undefined(self):
+    @staticmethod
+    def test_indexing_gives_undefined():
         t = Template("{{ var[42].foo }}")
         pytest.raises(UndefinedError, t.render, var=0)
 
-    def test_none_gives_proper_error(self):
+    @staticmethod
+    def test_none_gives_proper_error():
         with pytest.raises(UndefinedError, match="'None' has no attribute 'split'"):
             Environment().getattr(None, "split")()
 
-    def test_object_repr(self):
+    @staticmethod
+    def test_object_repr():
         with pytest.raises(
             UndefinedError, match="'int object' has no attribute 'upper'"
         ):
@@ -420,7 +453,8 @@ class TestLowLevel:
         tmpl = env.from_string('{% set foo = "foo" %}{{ foo }}')
         assert tmpl.render() == "bar"
 
-    def test_custom_context(self):
+    @staticmethod
+    def test_custom_context():
         class CustomContext(Context):
             def resolve_or_missing(self, key):
                 return "resolve-" + key

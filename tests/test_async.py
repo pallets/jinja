@@ -131,7 +131,8 @@ def test_env_async():
 
 
 class TestAsyncImports:
-    def test_context_imports(self, test_env_async):
+    @staticmethod
+    def test_context_imports(test_env_async):
         t = test_env_async.from_string('{% import "module" as m %}{{ m.test() }}')
         assert t.render(foo=42) == "[|23]"
         t = test_env_async.from_string(
@@ -153,14 +154,16 @@ class TestAsyncImports:
         )
         assert t.render(foo=42) == "[42|23]"
 
-    def test_trailing_comma(self, test_env_async):
+    @staticmethod
+    def test_trailing_comma(test_env_async):
         test_env_async.from_string('{% from "foo" import bar, baz with context %}')
         test_env_async.from_string('{% from "foo" import bar, baz, with context %}')
         test_env_async.from_string('{% from "foo" import bar, with context %}')
         test_env_async.from_string('{% from "foo" import bar, with, context %}')
         test_env_async.from_string('{% from "foo" import bar, with with context %}')
 
-    def test_exports(self, test_env_async):
+    @staticmethod
+    def test_exports(test_env_async):
         m = run(
             test_env_async.from_string(
                 """
@@ -180,7 +183,8 @@ class TestAsyncImports:
 
 
 class TestAsyncIncludes:
-    def test_context_include(self, test_env_async):
+    @staticmethod
+    def test_context_include(test_env_async):
         t = test_env_async.from_string('{% include "header" %}')
         assert t.render(foo=42) == "[42|23]"
         t = test_env_async.from_string('{% include "header" with context %}')
@@ -188,7 +192,8 @@ class TestAsyncIncludes:
         t = test_env_async.from_string('{% include "header" without context %}')
         assert t.render(foo=42) == "[|23]"
 
-    def test_choice_includes(self, test_env_async):
+    @staticmethod
+    def test_choice_includes(test_env_async):
         t = test_env_async.from_string('{% include ["missing", "header"] %}')
         assert t.render(foo=42) == "[42|23]"
 
@@ -222,7 +227,8 @@ class TestAsyncIncludes:
         t = test_env_async.from_string("{% include [x] %}")
         test_includes(t, x="header")
 
-    def test_include_ignoring_missing(self, test_env_async):
+    @staticmethod
+    def test_include_ignoring_missing(test_env_async):
         t = test_env_async.from_string('{% include "missing" %}')
         pytest.raises(TemplateNotFound, t.render)
         for extra in "", "with context", "without context":
@@ -231,7 +237,8 @@ class TestAsyncIncludes:
             )
             assert t.render() == ""
 
-    def test_context_include_with_overrides(self, test_env_async):
+    @staticmethod
+    def test_context_include_with_overrides(test_env_async):
         env = Environment(
             loader=DictLoader(
                 dict(
@@ -242,7 +249,8 @@ class TestAsyncIncludes:
         )
         assert env.get_template("main").render() == "123"
 
-    def test_unoptimized_scopes(self, test_env_async):
+    @staticmethod
+    def test_unoptimized_scopes(test_env_async):
         t = test_env_async.from_string(
             """
             {% macro outer(o) %}
@@ -256,7 +264,8 @@ class TestAsyncIncludes:
         )
         assert t.render().strip() == "(FOO)"
 
-    def test_unoptimized_scopes_autoescape(self):
+    @staticmethod
+    def test_unoptimized_scopes_autoescape():
         env = Environment(
             loader=DictLoader(dict(o_printer="({{ o }})",)),
             autoescape=True,
@@ -277,17 +286,20 @@ class TestAsyncIncludes:
 
 
 class TestAsyncForLoop:
-    def test_simple(self, test_env_async):
+    @staticmethod
+    def test_simple(test_env_async):
         tmpl = test_env_async.from_string("{% for item in seq %}{{ item }}{% endfor %}")
         assert tmpl.render(seq=list(range(10))) == "0123456789"
 
-    def test_else(self, test_env_async):
+    @staticmethod
+    def test_else(test_env_async):
         tmpl = test_env_async.from_string(
             "{% for item in seq %}XXX{% else %}...{% endfor %}"
         )
         assert tmpl.render() == "..."
 
-    def test_empty_blocks(self, test_env_async):
+    @staticmethod
+    def test_empty_blocks(test_env_async):
         tmpl = test_env_async.from_string(
             "<{% for item in seq %}{% else %}{% endfor %}>"
         )
@@ -305,7 +317,8 @@ class TestAsyncForLoop:
         out = t.render(seq=transform([42, 24]))
         assert out == "1|0|2|1|True|False|2\n2|1|1|0|False|True|2\n"
 
-    def test_cycling(self, test_env_async):
+    @staticmethod
+    def test_cycling(test_env_async):
         tmpl = test_env_async.from_string(
             """{% for item in seq %}{{
             loop.cycle('<1>', '<2>') }}{% endfor %}{%
@@ -314,7 +327,8 @@ class TestAsyncForLoop:
         output = tmpl.render(seq=list(range(4)), through=("<1>", "<2>"))
         assert output == "<1><2>" * 4
 
-    def test_lookaround(self, test_env_async):
+    @staticmethod
+    def test_lookaround(test_env_async):
         tmpl = test_env_async.from_string(
             """{% for item in seq -%}
             {{ loop.previtem|default('x') }}-{{ item }}-{{
@@ -324,7 +338,8 @@ class TestAsyncForLoop:
         output = tmpl.render(seq=list(range(4)))
         assert output == "x-0-1|0-1-2|1-2-3|2-3-x|"
 
-    def test_changed(self, test_env_async):
+    @staticmethod
+    def test_changed(test_env_async):
         tmpl = test_env_async.from_string(
             """{% for item in seq -%}
             {{ loop.changed(item) }},
@@ -333,12 +348,14 @@ class TestAsyncForLoop:
         output = tmpl.render(seq=[None, None, 1, 2, 2, 3, 4, 4, 4])
         assert output == "True,False,True,True,False,True,True,False,False,"
 
-    def test_scope(self, test_env_async):
+    @staticmethod
+    def test_scope(test_env_async):
         tmpl = test_env_async.from_string("{% for item in seq %}{% endfor %}{{ item }}")
         output = tmpl.render(seq=list(range(10)))
         assert not output
 
-    def test_varlen(self, test_env_async):
+    @staticmethod
+    def test_varlen(test_env_async):
         def inner():
             yield from range(5)
 
@@ -348,11 +365,13 @@ class TestAsyncForLoop:
         output = tmpl.render(iter=inner())
         assert output == "01234"
 
-    def test_noniter(self, test_env_async):
+    @staticmethod
+    def test_noniter(test_env_async):
         tmpl = test_env_async.from_string("{% for item in none %}...{% endfor %}")
         pytest.raises(TypeError, tmpl.render)
 
-    def test_recursive(self, test_env_async):
+    @staticmethod
+    def test_recursive(test_env_async):
         tmpl = test_env_async.from_string(
             """{% for item in seq recursive -%}
             [{{ item.a }}{% if item.b %}<{{ loop(item.b) }}>{% endif %}]
@@ -369,7 +388,8 @@ class TestAsyncForLoop:
             == "[1<[1][2]>][2<[1][2]>][3<[a]>]"
         )
 
-    def test_recursive_lookaround(self, test_env_async):
+    @staticmethod
+    def test_recursive_lookaround(test_env_async):
         tmpl = test_env_async.from_string(
             """{% for item in seq recursive -%}
             [{{ loop.previtem.a if loop.previtem is defined else 'x' }}.{{
@@ -388,7 +408,8 @@ class TestAsyncForLoop:
             == "[x.1.2<[x.1.2][1.2.x]>][1.2.3<[x.1.2][1.2.x]>][2.3.x<[x.a.x]>]"
         )
 
-    def test_recursive_depth0(self, test_env_async):
+    @staticmethod
+    def test_recursive_depth0(test_env_async):
         tmpl = test_env_async.from_string(
             "{% for item in seq recursive %}[{{ loop.depth0 }}:{{ item.a }}"
             "{% if item.b %}<{{ loop(item.b) }}>{% endif %}]{% endfor %}"
@@ -404,7 +425,8 @@ class TestAsyncForLoop:
             == "[0:1<[1:1][1:2]>][0:2<[1:1][1:2]>][0:3<[1:a]>]"
         )
 
-    def test_recursive_depth(self, test_env_async):
+    @staticmethod
+    def test_recursive_depth(test_env_async):
         tmpl = test_env_async.from_string(
             "{% for item in seq recursive %}[{{ loop.depth }}:{{ item.a }}"
             "{% if item.b %}<{{ loop(item.b) }}>{% endif %}]{% endfor %}"
@@ -420,7 +442,8 @@ class TestAsyncForLoop:
             == "[1:1<[2:1][2:2]>][1:2<[2:1][2:2]>][1:3<[2:a]>]"
         )
 
-    def test_looploop(self, test_env_async):
+    @staticmethod
+    def test_looploop(test_env_async):
         tmpl = test_env_async.from_string(
             """{% for row in table %}
             {%- set rowloop = loop -%}
@@ -431,7 +454,8 @@ class TestAsyncForLoop:
         )
         assert tmpl.render(table=["ab", "cd"]) == "[1|1][1|2][2|1][2|2]"
 
-    def test_reversed_bug(self, test_env_async):
+    @staticmethod
+    def test_reversed_bug(test_env_async):
         tmpl = test_env_async.from_string(
             "{% for i in items %}{{ i }}"
             "{% if not loop.last %}"
@@ -439,7 +463,8 @@ class TestAsyncForLoop:
         )
         assert tmpl.render(items=reversed([3, 2, 1])) == "1,2,3"
 
-    def test_loop_errors(self, test_env_async):
+    @staticmethod
+    def test_loop_errors(test_env_async):
         tmpl = test_env_async.from_string(
             """{% for item in [1] if loop.index
                                       == 0 %}...{% endfor %}"""
@@ -451,7 +476,8 @@ class TestAsyncForLoop:
         )
         assert tmpl.render() == ""
 
-    def test_loop_filter(self, test_env_async):
+    @staticmethod
+    def test_loop_filter(test_env_async):
         tmpl = test_env_async.from_string(
             "{% for item in range(10) if item is even %}[{{ item }}]{% endfor %}"
         )
@@ -463,14 +489,16 @@ class TestAsyncForLoop:
         )
         assert tmpl.render() == "[1:0][2:2][3:4][4:6][5:8]"
 
-    def test_scoped_special_var(self, test_env_async):
+    @staticmethod
+    def test_scoped_special_var(test_env_async):
         t = test_env_async.from_string(
             "{% for s in seq %}[{{ loop.first }}{% for c in s %}"
             "|{{ loop.first }}{% endfor %}]{% endfor %}"
         )
         assert t.render(seq=("ab", "cd")) == "[True|True|False][False|True|False]"
 
-    def test_scoped_loop_var(self, test_env_async):
+    @staticmethod
+    def test_scoped_loop_var(test_env_async):
         t = test_env_async.from_string(
             "{% for x in seq %}{{ loop.first }}"
             "{% for y in seq %}{% endfor %}{% endfor %}"
@@ -482,7 +510,8 @@ class TestAsyncForLoop:
         )
         assert t.render(seq="ab") == "TrueFalseTrueFalse"
 
-    def test_recursive_empty_loop_iter(self, test_env_async):
+    @staticmethod
+    def test_recursive_empty_loop_iter(test_env_async):
         t = test_env_async.from_string(
             """
         {%- for item in foo recursive -%}{%- endfor -%}
@@ -490,7 +519,8 @@ class TestAsyncForLoop:
         )
         assert t.render(dict(foo=[])) == ""
 
-    def test_call_in_loop(self, test_env_async):
+    @staticmethod
+    def test_call_in_loop(test_env_async):
         t = test_env_async.from_string(
             """
         {%- macro do_something() -%}
@@ -506,7 +536,8 @@ class TestAsyncForLoop:
         )
         assert t.render() == "[1][2][3]"
 
-    def test_scoping_bug(self, test_env_async):
+    @staticmethod
+    def test_scoping_bug(test_env_async):
         t = test_env_async.from_string(
             """
         {%- for item in foo %}...{{ item }}...{% endfor %}
@@ -516,13 +547,15 @@ class TestAsyncForLoop:
         )
         assert t.render(foo=(1,)) == "...1......2..."
 
-    def test_unpacking(self, test_env_async):
+    @staticmethod
+    def test_unpacking(test_env_async):
         tmpl = test_env_async.from_string(
             "{% for a, b, c in [[1, 2, 3]] %}{{ a }}|{{ b }}|{{ c }}{% endfor %}"
         )
         assert tmpl.render() == "1|2|3"
 
-    def test_recursive_loop_filter(self, test_env_async):
+    @staticmethod
+    def test_recursive_loop_filter(test_env_async):
         t = test_env_async.from_string(
             """
         <?xml version="1.0" encoding="UTF-8"?>
@@ -547,7 +580,8 @@ class TestAsyncForLoop:
             "</urlset>",
         ]
 
-    def test_nonrecursive_loop_filter(self, test_env_async):
+    @staticmethod
+    def test_nonrecursive_loop_filter(test_env_async):
         t = test_env_async.from_string(
             """
         <?xml version="1.0" encoding="UTF-8"?>
@@ -570,11 +604,13 @@ class TestAsyncForLoop:
             "</urlset>",
         ]
 
-    def test_bare_async(self, test_env_async):
+    @staticmethod
+    def test_bare_async(test_env_async):
         t = test_env_async.from_string('{% extends "header" %}')
         assert t.render(foo=42) == "[42|23]"
 
-    def test_awaitable_property_slicing(self, test_env_async):
+    @staticmethod
+    def test_awaitable_property_slicing(test_env_async):
         t = test_env_async.from_string("{% for x in a.b[:1] %}{{ x }}{% endfor %}")
         assert t.render(a=dict(b=[1, 2, 3])) == "1"
 

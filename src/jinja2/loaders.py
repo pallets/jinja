@@ -90,7 +90,8 @@ class BaseLoader:
             )
         raise TemplateNotFound(template)
 
-    def list_templates(self):
+    @staticmethod
+    def list_templates():
         """Iterates over all templates.  If the loader does not support that
         it should raise a :exc:`TypeError` which is the default behavior.
         """
