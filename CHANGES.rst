@@ -13,10 +13,10 @@ Unreleased
     :class:`~loaders.PackageLoader`. :issue:`1168`
 
 
-2.11.2
-------
+Version 2.11.2
+--------------
 
-Unreleased
+Released 2020-04-13
 
 -   Fix a bug that caused callable objects with ``__getattr__``, like
     :class:`~unittest.mock.Mock` to be treated as a
@@ -38,6 +38,12 @@ Unreleased
     :pr:`1178`
 -   The special ``namespace()`` assignment object in templates works in
     async environments. :issue:`1180`
+-   Fix whitespace being removed before tags in the middle of lines when
+    ``lstrip_blocks`` is enabled. :issue:`1138`
+-   :class:`~nativetypes.NativeEnvironment` doesn't evaluate
+    intermediate strings during rendering. This prevents early
+    evaluation which could change the value of an expression.
+    :issue:`1186`
 
 
 Version 2.11.1

@@ -713,6 +713,98 @@ ${item} ## the rest of the stuff
         )
         assert tmpl.render(seq=range(5)) == "".join(f"{x}\n" for x in range(5))
 
+    def test_lstrip_blocks_outside_with_new_line(self):
+        env = Environment(lstrip_blocks=True, trim_blocks=False)
+        tmpl = env.from_string(
+            "  {% if kvs %}(\n"
+            "   {% for k, v in kvs %}{{ k }}={{ v }} {% endfor %}\n"
+            "  ){% endif %}"
+        )
+        out = tmpl.render(kvs=[("a", 1), ("b", 2)])
+        assert out == "(\na=1 b=2 \n  )"
+
+    def test_lstrip_trim_blocks_outside_with_new_line(self):
+        env = Environment(lstrip_blocks=True, trim_blocks=True)
+        tmpl = env.from_string(
+            "  {% if kvs %}(\n"
+            "   {% for k, v in kvs %}{{ k }}={{ v }} {% endfor %}\n"
+            "  ){% endif %}"
+        )
+        out = tmpl.render(kvs=[("a", 1), ("b", 2)])
+        assert out == "(\na=1 b=2   )"
+
+    def test_lstrip_blocks_inside_with_new_line(self):
+        env = Environment(lstrip_blocks=True, trim_blocks=False)
+        tmpl = env.from_string(
+            "  ({% if kvs %}\n"
+            "   {% for k, v in kvs %}{{ k }}={{ v }} {% endfor %}\n"
+            "  {% endif %})"
+        )
+        out = tmpl.render(kvs=[("a", 1), ("b", 2)])
+        assert out == "  (\na=1 b=2 \n)"
+
+    def test_lstrip_trim_blocks_inside_with_new_line(self):
+        env = Environment(lstrip_blocks=True, trim_blocks=True)
+        tmpl = env.from_string(
+            "  ({% if kvs %}\n"
+            "   {% for k, v in kvs %}{{ k }}={{ v }} {% endfor %}\n"
+            "  {% endif %})"
+        )
+        out = tmpl.render(kvs=[("a", 1), ("b", 2)])
+        assert out == "  (a=1 b=2 )"
+
+    def test_lstrip_blocks_without_new_line(self):
+        env = Environment(lstrip_blocks=True, trim_blocks=False)
+        tmpl = env.from_string(
+            "  {% if kvs %}"
+            "   {% for k, v in kvs %}{{ k }}={{ v }} {% endfor %}"
+            "  {% endif %}"
+        )
+        out = tmpl.render(kvs=[("a", 1), ("b", 2)])
+        assert out == "   a=1 b=2   "
+
+    def test_lstrip_trim_blocks_without_new_line(self):
+        env = Environment(lstrip_blocks=True, trim_blocks=True)
+        tmpl = env.from_string(
+            "  {% if kvs %}"
+            "   {% for k, v in kvs %}{{ k }}={{ v }} {% endfor %}"
+            "  {% endif %}"
+        )
+        out = tmpl.render(kvs=[("a", 1), ("b", 2)])
+        assert out == "   a=1 b=2   "
+
+    def test_lstrip_blocks_consume_after_without_new_line(self):
+        env = Environment(lstrip_blocks=True, trim_blocks=False)
+        tmpl = env.from_string(
+            "  {% if kvs -%}"
+            "   {% for k, v in kvs %}{{ k }}={{ v }} {% endfor -%}"
+            "  {% endif -%}"
+        )
+        out = tmpl.render(kvs=[("a", 1), ("b", 2)])
+        assert out == "a=1 b=2 "
+
+    def test_lstrip_trim_blocks_consume_before_without_new_line(self):
+        env = Environment(lstrip_blocks=False, trim_blocks=False)
+        tmpl = env.from_string(
+            "  {%- if kvs %}"
+            "   {%- for k, v in kvs %}{{ k }}={{ v }} {% endfor -%}"
+            "  {%- endif %}"
+        )
+        out = tmpl.render(kvs=[("a", 1), ("b", 2)])
+        assert out == "a=1 b=2 "
+
+    def test_lstrip_trim_blocks_comment(self):
+        env = Environment(lstrip_blocks=True, trim_blocks=True)
+        tmpl = env.from_string(" {# 1 space #}\n  {# 2 spaces #}    {# 4 spaces #}")
+        out = tmpl.render()
+        assert out == " " * 4
+
+    def test_lstrip_trim_blocks_raw(self):
+        env = Environment(lstrip_blocks=True, trim_blocks=True)
+        tmpl = env.from_string("{{x}}\n{%- raw %} {% endraw -%}\n{{ y }}")
+        out = tmpl.render(x=1, y=2)
+        assert out == "1 2"
+
     def test_php_syntax_with_manual(self, env):
         env = Environment(
             "<?", "?>", "<?=", "?>", "<!--", "-->", lstrip_blocks=True, trim_blocks=True
