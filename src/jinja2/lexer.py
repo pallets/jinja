@@ -682,6 +682,7 @@ class Lexer(object):
         balancing_stack = []
         lstrip_unless_re = self.lstrip_unless_re
         newlines_stripped = 0
+        line_starting = True
 
         while 1:
             # tokenizer loop
@@ -731,11 +732,11 @@ class Lexer(object):
                         ):
                             # The start of text between the last newline and the tag.
                             l_pos = text.rfind("\n") + 1
-
-                            # If there's only whitespace between the newline and the
-                            # tag, strip it.
-                            if not lstrip_unless_re.search(text, l_pos):
-                                groups = (text[:l_pos],) + groups[1:]
+                            if l_pos > 0 or line_starting:
+                                # If there's only whitespace between the newline and the
+                                # tag, strip it.
+                                if not lstrip_unless_re.search(text, l_pos):
+                                    groups = (text[:l_pos],) + groups[1:]
 
                     for idx, token in enumerate(tokens):
                         # failure group
@@ -793,6 +794,8 @@ class Lexer(object):
                     if data or tokens not in ignore_if_empty:
                         yield lineno, tokens, data
                     lineno += data.count("\n")
+
+                line_starting = m.group()[-1:] == "\n"
 
                 # fetch new position into new variable so that we can check
                 # if there is a internal parsing error which would result

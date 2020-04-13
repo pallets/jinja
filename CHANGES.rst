@@ -25,6 +25,8 @@ Unreleased
     :pr:`1178`
 -   The special ``namespace()`` assignment object in templates works in
     async environments. :issue:`1180`
+-   Fix whitespace being removed before tags in the middle of lines when
+    ``lstrip_blocks`` is enabled. :issue:`1138`
 
 
 Version 2.11.1
