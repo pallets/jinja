@@ -1,7 +1,7 @@
 .. currentmodule:: jinja2
 
-2.11.2
-------
+Version 2.11.2
+--------------
 
 Released 2020-04-13
 
