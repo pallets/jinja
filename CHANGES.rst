@@ -3,7 +3,7 @@
 2.11.2
 ------
 
-Unreleased
+Released 2020-04-13
 
 -   Fix a bug that caused callable objects with ``__getattr__``, like
     :class:`~unittest.mock.Mock` to be treated as a
