@@ -27,6 +27,10 @@ Unreleased
     async environments. :issue:`1180`
 -   Fix whitespace being removed before tags in the middle of lines when
     ``lstrip_blocks`` is enabled. :issue:`1138`
+-   :class:`~nativetypes.NativeEnvironment` doesn't evaluate
+    intermediate strings during rendering. This prevents early
+    evaluation which could change the value of an expression.
+    :issue:`1186`
 
 
 Version 2.11.1

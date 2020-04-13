@@ -134,6 +134,15 @@ def test_concat_strings_with_quotes(env):
     assert result == "--host='localhost' --user \"Jinja\""
 
 
+def test_no_intermediate_eval(env):
+    t = env.from_string("0.000{{ a }}")
+    result = t.render(a=7)
+    assert isinstance(result, float)
+    # If intermediate eval happened, 0.000 would render 0.0, then 7
+    # would be appended, resulting in 0.07.
+    assert result < 0.007  # TODO use math.isclose in Python 3
+
+
 def test_spontaneous_env():
     t = NativeTemplate("{{ true }}")
     assert isinstance(t.environment, NativeEnvironment)
