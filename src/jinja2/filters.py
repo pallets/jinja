@@ -20,6 +20,7 @@ from .utils import urlize
 
 _word_re = re.compile(r"\w+")
 _word_beginning_split_re = re.compile(r"([-\s({\[<]+)")
+_uri_scheme_re = re.compile(r"^([\w\.\+-]{2,}:(/){0,2})$")
 
 
 def contextfilter(f):
@@ -569,7 +570,13 @@ def do_pprint(value):
 
 @evalcontextfilter
 def do_urlize(
-    eval_ctx, value, trim_url_limit=None, nofollow=False, target=None, rel=None
+    eval_ctx,
+    value,
+    trim_url_limit=None,
+    nofollow=False,
+    target=None,
+    rel=None,
+    extra_uri_schemes=None,
 ):
     """Converts URLs in plain text into clickable links.
 
@@ -589,18 +596,44 @@ def do_urlize(
 
        {{ mytext|urlize(40, target='_blank') }}
 
+    If *extra_uri_schemes* are added then links will be generated for those
+    in addition to http(s): and mailto: schemes.
+
+    .. sourcecode:: jinja
+
+        {{ mytext|urlize(extra_uri_schemes=['tel:', 'ftp://']) }}
+            links are generated for tel and ftp.
+
     .. versionchanged:: 2.8
        The ``target`` parameter was added.
+
+    .. versionchanged:: 3.0
+       The ``extra_uri_schemes`` parameter was added.
     """
     policies = eval_ctx.environment.policies
+
     rel = set((rel or "").split() or [])
     if nofollow:
         rel.add("nofollow")
     rel.update((policies["urlize.rel"] or "").split())
+    rel = " ".join(sorted(rel)) or None
+
     if target is None:
         target = policies["urlize.target"]
-    rel = " ".join(sorted(rel)) or None
-    rv = urlize(value, trim_url_limit, rel=rel, target=target)
+
+    if extra_uri_schemes is None:
+        extra_uri_schemes = policies["urlize.extra_uri_schemes"] or []
+    for uri_scheme in extra_uri_schemes:
+        if _uri_scheme_re.fullmatch(uri_scheme) is None:
+            raise FilterArgumentError(f"{uri_scheme} is not a valid URI scheme prefix.")
+
+    rv = urlize(
+        value,
+        trim_url_limit,
+        rel=rel,
+        target=target,
+        extra_uri_schemes=extra_uri_schemes,
+    )
     if eval_ctx.autoescape:
         rv = Markup(rv)
     return rv

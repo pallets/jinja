@@ -17,6 +17,14 @@ _trail_pattern = "|".join(map(re.escape, (".", ",", ")", ">", "\n", "&gt;")))
 _punctuation_re = re.compile(
     fr"^(?P<lead>(?:{_lead_pattern})*)(?P<middle>.*?)(?P<trail>(?:{_trail_pattern})*)$"
 )
+_simple_http_https_re = re.compile(
+    r"^((https?://|www\.)(([\w%-]+\.)+)?([a-z]{2,63}|xn--[\w%]{2,59})|"
+    r"([\w%-]{2,63}\.)+(com|net|int|edu|gov|org|info|mil)|"
+    r"(https?://)((([\d]{1,3})(\.[\d]{1,3}){3})|"
+    r"(\[([\da-f]{0,4}:){2}([\da-f]{0,4}:?){1,6}\])))"
+    r"(?::[\d]{1,5})?(?:[/?#]\S*)?$",
+    re.IGNORECASE,
+)
 _simple_email_re = re.compile(r"^\S+@[a-zA-Z0-9._-]+\.[a-zA-Z0-9._-]+$")
 _striptags_re = re.compile(r"(<!--.*?-->|<[^>]*>)")
 _entity_re = re.compile(r"&([^;]+);")
@@ -175,11 +183,11 @@ def pformat(obj):
     return pformat(obj)
 
 
-def urlize(text, trim_url_limit=None, rel=None, target=None):
+def urlize(text, trim_url_limit=None, rel=None, target=None, extra_uri_schemes=None):
     """Converts any URLs in text into clickable links. Works on http://,
-    https:// and www. links. Links can have trailing punctuation (periods,
-    commas, close-parens) and leading punctuation (opening parens) and
-    it'll still do the right thing.
+    https://, www., mailto:, and email links. Links can have trailing
+    punctuation (periods, commas, close-parens) and leading punctuation
+    (opening parens) and it'll still do the right thing.
 
     If trim_url_limit is not None, the URLs in link text will be limited
     to trim_url_limit characters.
@@ -188,6 +196,13 @@ def urlize(text, trim_url_limit=None, rel=None, target=None):
     attribute.
 
     If target is not None, a target attribute will be added to the link.
+
+    Known Limitations:
+    -   Will not urlize emails or mailto: links if they include header fields
+        (for example, mailto:address@example.com?cc=copy@example.com).
+
+    .. versionchanged:: 3.0
+        Adds limited support for mailto: links
     """
 
     def trim_url(x, limit=trim_url_limit):
@@ -204,26 +219,30 @@ def urlize(text, trim_url_limit=None, rel=None, target=None):
         match = _punctuation_re.match(word)
         if match:
             lead, middle, trail = match.groups()
-            if middle.startswith("www.") or (
-                "@" not in middle
-                and not middle.startswith("http://")
-                and not middle.startswith("https://")
-                and len(middle) > 0
-                and middle[0] in _letters + _digits
-                and (
-                    middle.endswith(".org")
-                    or middle.endswith(".net")
-                    or middle.endswith(".com")
-                )
-            ):
-                middle = (
-                    f'<a href="http://{middle}"{rel_attr}{target_attr}>'
-                    f"{trim_url(middle)}</a>"
-                )
-            if middle.startswith("http://") or middle.startswith("https://"):
-                middle = (
-                    f'<a href="{middle}"{rel_attr}{target_attr}>{trim_url(middle)}</a>'
-                )
+            # fix for mismatched opening and closing parentheses
+            pairs = [("(", ")"), ("<", ">"), ("&lt;", "&gt;")]
+            for start_char in re.findall(_lead_pattern, middle):
+                end_char = next(c for o, c in pairs if o == start_char)
+                while (
+                    middle.count(start_char) > middle.count(end_char)
+                    and end_char in trail
+                ):
+                    end_char_index = trail.index(end_char)
+                    middle = middle + trail[: end_char_index + len(end_char)]
+                    trail = trail[end_char_index + len(end_char) :]
+
+            if _simple_http_https_re.match(middle):
+                if middle.startswith("https://") or middle.startswith("http://"):
+                    middle = (
+                        f'<a href="{middle}"{rel_attr}{target_attr}>'
+                        f"{trim_url(middle)}</a>"
+                    )
+                else:
+                    middle = (
+                        f'<a href="https://{middle}"{rel_attr}{target_attr}>'
+                        f"{trim_url(middle)}</a>"
+                    )
+
             if (
                 "@" in middle
                 and not middle.startswith("www.")
@@ -231,8 +250,21 @@ def urlize(text, trim_url_limit=None, rel=None, target=None):
                 and _simple_email_re.match(middle)
             ):
                 middle = f'<a href="mailto:{middle}">{middle}</a>'
+            if middle.startswith("mailto:") and _simple_email_re.match(middle[7:]):
+                middle = f'<a href="{middle}">{middle[7:]}</a>'
+
+            if extra_uri_schemes is not None:
+                schemes = {x for x in extra_uri_schemes if middle.startswith(x)}
+                for uri_scheme in schemes:
+                    if len(middle) > len(uri_scheme):
+                        middle = (
+                            f'<a href="{middle}"{rel_attr}{target_attr}>'
+                            f"{middle}</a>"
+                        )
+
             if lead + middle + trail != word:
                 words[i] = lead + middle + trail
+
     return "".join(words)
 
 

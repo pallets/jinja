@@ -337,10 +337,22 @@ class TestFilter:
         assert tmpl.render() == "FOO"
 
     def test_urlize(self, env):
+        tmpl = env.from_string('{{ "foo example.org bar"|urlize }}')
+        assert tmpl.render() == (
+            'foo <a href="https://example.org" rel="noopener">' "example.org</a> bar"
+        )
         tmpl = env.from_string('{{ "foo http://www.example.com/ bar"|urlize }}')
         assert tmpl.render() == (
             'foo <a href="http://www.example.com/" rel="noopener">'
             "http://www.example.com/</a> bar"
+        )
+        tmpl = env.from_string('{{ "foo mailto:email@example.com bar"|urlize }}')
+        assert tmpl.render() == (
+            'foo <a href="mailto:email@example.com">email@example.com</a> bar'
+        )
+        tmpl = env.from_string('{{ "foo email@example.com bar"|urlize }}')
+        assert tmpl.render() == (
+            'foo <a href="mailto:email@example.com">email@example.com</a> bar'
         )
 
     def test_urlize_rel_policy(self):
@@ -359,6 +371,17 @@ class TestFilter:
             tmpl.render()
             == 'foo <a href="http://www.example.com/" rel="noopener" target="_blank">'
             "http://www.example.com/</a> bar"
+        )
+
+    def test_urlize_extra_uri_schemes_parameter(self, env):
+        tmpl = env.from_string(
+            '{{ "foo tel:+1-514-555-1234 ftp://localhost bar"|'
+            'urlize(extra_uri_schemes=["tel:", "ftp:"]) }}'
+        )
+        assert tmpl.render() == (
+            'foo <a href="tel:+1-514-555-1234" rel="noopener">'
+            'tel:+1-514-555-1234</a> <a href="ftp://localhost" rel="noopener">'
+            "ftp://localhost</a> bar"
         )
 
     def test_wordcount(self, env):
