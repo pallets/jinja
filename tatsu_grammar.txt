@@ -129,7 +129,7 @@ filter_parameter_separator
     =
     {SP}* "," {SP}*
     ;
-filter_parameter        = {!"," !")" CHAR}* ;
+filter_parameter        = variable_identifier ;
 
 comment_expression      = comment_open comment_content comment_close ;
 comment_open            = "{#" ;
