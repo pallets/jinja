@@ -12,3 +12,4 @@ across lines #}
     {% block %}fake content{{ fake vars }}
 {% endraw %}
 {{ '{{' }}
+{% trans user=user.username %}Hello, {{ user }}!{% endtrans %}

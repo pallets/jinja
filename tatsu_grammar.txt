@@ -58,12 +58,7 @@ block_close
 
 block_parameter
     =
-    {SP}+ @:(IDENTIFIER "=" block_parameter_value)
-    | {SP}+ @:block_parameter_value
-    ;
-block_parameter_value
-    =
-    variable_identifier
+    variable_accessor_call_parameter
     ;
 
 variable_expression
