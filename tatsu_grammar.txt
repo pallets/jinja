@@ -11,7 +11,7 @@ expressions
 
 expression
     =
-    content | raw_block_expression | block_expression | variable_expression | comment_expression
+    content | raw_block_expression | block_expression | line_block_expression | variable_expression | comment_expression
     ;
 
 raw_block_expression
@@ -54,6 +54,28 @@ block_open
 block_close
     =
     {SP}* @:"%}"
+    ;
+
+line_block_expression
+    =
+    line_block_start
+    expressions
+    line_block_end
+    ;
+
+line_block_start
+    =
+    line_block_open type:`blockstart` name:IDENTIFIER parameters:[ { block_parameter }* ] ":\n"
+    ;
+
+line_block_end
+    =
+    line_block_open type:`blockend` name:IDENTIFIER "\n"
+    ;
+
+line_block_open
+    =
+    "\n" @:"# " {SP}*
     ;
 
 implicit_identifier_tuple
@@ -200,7 +222,7 @@ comment_open            = "{#" ;
 comment_close           = "#}" ;
 comment_content         = {!comment_close CHAR}* ;
 
-content                 = !(block_open | variable_open | comment_open) CHAR ;
+content                 = !(line_block_open | block_open | variable_open | comment_open) CHAR ;
 
 LITERAL
     =

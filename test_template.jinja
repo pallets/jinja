@@ -35,3 +35,9 @@ across lines #}
     <textarea name="{{ name }}" rows="{{ rows }}" cols="{{ cols
         }}">{{ value|e }}</textarea>
 {% endmacro %}
+<ul>
+# for href, caption in [('index.html', 'Index'),
+                        ('about.html', 'About')]:
+    <li><a href="{{ href }}">{{ caption }}</a></li>
+# endfor
+</ul>
