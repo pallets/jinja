@@ -63,7 +63,7 @@ block_parameter
     ;
 block_parameter_value
     =
-    {ALPHA}+
+    variable_identifier
     ;
 
 variable_expression
