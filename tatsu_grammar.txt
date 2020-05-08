@@ -83,8 +83,26 @@ variable_filter
     =
     {SP}* "|" {SP}* @:filter
     ;
-filter                  = @+:IDENTIFIER [@+:filter_parameters];
-filter_parameters       = "(" [@+:filter_parameter {"," {SP}* @+:filter_parameter}*] ")";
+filter =
+    @+:IDENTIFIER
+    [@+:filter_parameters]
+    ;
+
+filter_parameters
+    =
+    "("
+        @:[filter_parameter_list]
+    ")"
+    ;
+filter_parameter_list
+    =
+    @+:filter_parameter {filter_parameter_separator ~ @+:filter_parameter}*
+    ;
+
+filter_parameter_separator
+    =
+    {SP}* "," {SP}*
+    ;
 filter_parameter        = {!"," !")" CHAR}* ;
 
 comment_expression      = comment_open comment_content comment_close ;
@@ -96,7 +114,7 @@ content                 = !(block_open | variable_open | comment_open) CHAR ;
 
 IDENTIFIER
     =
-    /[a-zA-Z]+/
+    /[a-zA-Z][a-zA-Z0-9]*/
     ;
 
 ALPHA

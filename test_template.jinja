@@ -1,8 +1,10 @@
 {% with key=val %}
-{{ kkk  |test(first,second, third)|filter}}
+{{ kkk  |test(first ,second, third)|filter | lastFilter}}
 {%block single key=val param=value %}
 test {{var}}
 {%endblock%}
 {# comment contents
 across lines #}
-{% raw %}{% block %}fake content{{ fake vars }}{% endraw %}
+{% raw %}
+    {% block %}fake content{{ fake vars }}
+{% endraw %}
