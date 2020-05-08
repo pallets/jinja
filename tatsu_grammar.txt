@@ -39,7 +39,7 @@ raw_block_end
 
 block_expression
     =
-    | ( block_start {SP}* expressions {SP}* block_end )
+    | ( block_start expressions block_end )
     | block_start
     ;
 
