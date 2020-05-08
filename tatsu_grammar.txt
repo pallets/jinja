@@ -1,17 +1,17 @@
 start
     =
-    expression
+    expressions
     $
+    ;
+
+expressions
+    =
+    {expression}*
     ;
 
 expression
     =
-    { !matching_expression CHAR }* &matching_expression
-    ;
-
-matching_expression
-    =
-    raw_block_expression | block_expression | variable_expression | comment_expression
+    content | raw_block_expression | block_expression | variable_expression | comment_expression
     ;
 
 raw_block_expression
@@ -28,8 +28,8 @@ raw_block_end
 
 block_expression
     =
-    block_start {SP}* expression {SP}* block_end
-    #| block_start
+    block_start {SP}* expressions {SP}* block_end
+    | block_start
     ;
 
 block_start
@@ -80,14 +80,14 @@ variable_filter
     ;
 filter                  = @+:IDENTIFIER [@+:filter_parameters];
 filter_parameters       = "(" [@+:filter_parameter {"," {SP}* @+:filter_parameter}*] ")";
-filter_parameter        = {CHAR}* ;
+filter_parameter        = {!"," !")" CHAR}* ;
 
 comment_expression      = comment_open comment comment_close ;
 comment_open            = "{#" ;
 comment_close           = "#}" ;
 comment                 = {!comment_close CHAR}* ;
 
-content                 = {CHAR}* ;
+content                 = !("{%" | "{{" | "{#") CHAR ;
 
 IDENTIFIER
     =
