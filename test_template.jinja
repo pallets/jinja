@@ -31,3 +31,7 @@ across lines #}
         The value will increase even more!
     {% endif %}
 {% endfor %}
+{% macro textarea(name, value='', rows=10, cols=40) %}
+    <textarea name="{{ name }}" rows="{{ rows }}" cols="{{ cols
+        }}">{{ value|e }}</textarea>
+{% endmacro %}
