@@ -14,4 +14,5 @@ across lines #}
 {% if False %}
 {{ '{{' }}
 {% endif %}
+{% for item in ['1', 2, 3.14] %}{{ item }}{% endfor %}
 {% trans user=user.username %}Hello, {{ user }}!{% endtrans %}
