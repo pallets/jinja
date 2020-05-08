@@ -23,7 +23,7 @@ expression
 raw_block_expression
     =
     raw_block_start
-    { !raw_block_end CHAR }*
+    raw:{ !raw_block_end CHAR }*
     raw_block_end
     ;
 
