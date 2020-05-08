@@ -125,7 +125,33 @@ variable_accessor_call_parameter_value_only
 
 variable_accessor_call_parameter_value
     =
-    {SP}* @:variable_identifier {SP}*
+    {SP}* @:( variable_tests | variable_identifier ) {SP}*
+    ;
+
+variable_tests
+    =
+    left:variable_identifier {SP}*
+    (
+        | ( "is" {SP}* test_function:variable_accessor_call_parameter_value )
+        | ( comparator:variable_tests_comparator right: variable_accessor_call_parameter_value )
+        | ( logical_operator:variable_tests_logical_operator right: variable_accessor_call_parameter_value )
+    )
+    ;
+
+variable_tests_comparator
+    =
+    | "=="
+    | "!="
+    | ">"
+    | ">="
+    | "<"
+    | "<="
+    ;
+
+variable_tests_logical_operator
+    =
+    | "and"
+    | "or"
     ;
 
 variable_accessor_dot

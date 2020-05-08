@@ -19,3 +19,14 @@ across lines #}
     <li><a href="{{ href }}">{{ caption }}</a></li>
 {% endfor %}
 {% trans user=user.username %}Hello, {{ user }}!{% endtrans %}
+{% set navigation = [('index.html', 'Index'), ('about.html', 'About')] %}
+{% set key, value = call_something() %}
+{% for value in values %}
+    {% if loop.previtem is defined and value > loop.previtem %}
+        The value just increased!
+    {% endif %}
+    {{ value }}
+    {% if loop.nextitem is defined and loop.nextitem > value %}
+        The value will increase even more!
+    {% endif %}
+{% endfor %}
