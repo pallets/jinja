@@ -17,6 +17,7 @@ expression
     | line_block_expression
     | variable_expression
     | comment_expression
+    | line_comment_expression
     ;
 
 raw_block_expression
@@ -229,7 +230,7 @@ filter_parameters
 
 comment_expression
     =
-    comment_open comment_content comment_close
+    comment_open comment:comment_content comment_close
     ;
 
 comment_open
@@ -247,6 +248,21 @@ comment_content
     { !comment_close CHAR }*
     ;
 
+line_comment_expression
+    =
+    line_comment_open comment:line_comment_content &"\n"
+    ;
+
+line_comment_open
+    =
+    "## "
+    ;
+
+line_comment_content
+    =
+    { !"\n" CHAR } *
+    ;
+
 content
     =
     !(
@@ -254,6 +270,7 @@ content
         | block_open
         | variable_open
         | comment_open
+        | line_comment_open
     ) CHAR ;
 
 LITERAL
