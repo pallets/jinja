@@ -102,8 +102,29 @@ variable_accessor_call
 
 variable_accessor_call_parameters
     =
-    {SP}* @+:variable_identifier {SP}*
-    { "," {SP}* @+:variable_identifier {SP}* }*
+    @+:variable_accessor_call_parameter
+    { "," @+:variable_accessor_call_parameter }*
+    ;
+
+variable_accessor_call_parameter
+    =
+    variable_accessor_call_parameter_key_value
+    | variable_accessor_call_parameter_value_only
+    ;
+
+variable_accessor_call_parameter_key_value
+    =
+    {SP}* key:IDENTIFIER {SP}* "=" value:variable_accessor_call_parameter_value {SP}*
+    ;
+
+variable_accessor_call_parameter_value_only
+    =
+    value:variable_accessor_call_parameter_value
+    ;
+
+variable_accessor_call_parameter_value
+    =
+    {SP}* @:variable_identifier {SP}*
     ;
 
 variable_accessor_dot
