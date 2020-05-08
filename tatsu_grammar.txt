@@ -39,18 +39,18 @@ raw_block_end
 
 block_expression
     =
-    | ( block_start expressions block_end )
-    | block_start
+    | ( start:block_start contents:expressions end:block_end )
+    | block:block_start
     ;
 
 block_start
     =
-    block_open type:`blockstart` !("end") name:IDENTIFIER {SP}* parameters:[ block_parameters ] {SP}* block_close
+    block_open !("end") name:IDENTIFIER {SP}* parameters:[ block_parameters ] {SP}* block_close
     ;
 
 block_end
     =
-    block_open type:`blockend` "end" name:IDENTIFIER block_close
+    block_open "end" name:IDENTIFIER block_close
     ;
 
 block_open
@@ -64,18 +64,18 @@ block_close
 
 line_block_expression
     =
-    | ( line_block_start expressions line_block_end )
-    | line_block_start
+    | ( start:line_block_start contents:expressions end:line_block_end )
+    | block:line_block_start
     ;
 
 line_block_start
     =
-    line_block_open type:`blockstart` !("end") name:IDENTIFIER {SP}* parameters:[ line_block_parameters ] { !"\n" SP }* [ ":" { !"\n" SP }* ] "\n"
+    line_block_open !("end") name:IDENTIFIER {SP}* parameters:[ line_block_parameters ] { !"\n" SP }* [ ":" { !"\n" SP }* ] "\n"
     ;
 
 line_block_end
     =
-    line_block_open type:`blockend` "end" name:IDENTIFIER "\n"
+    line_block_open "end" name:IDENTIFIER "\n"
     ;
 
 line_block_open
