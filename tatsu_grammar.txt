@@ -45,7 +45,7 @@ block_expression
 
 block_start
     =
-    block_open type:`blockstart` !("end") name:IDENTIFIER parameters:[ { block_parameter }* ] block_close
+    block_open type:`blockstart` !("end") name:IDENTIFIER {SP}* parameters:[ block_parameters ] {SP}* block_close
     ;
 
 block_end
@@ -70,7 +70,7 @@ line_block_expression
 
 line_block_start
     =
-    line_block_open type:`blockstart` !("end") name:IDENTIFIER parameters:[ { block_parameter }* ] ":\n"
+    line_block_open type:`blockstart` !("end") name:IDENTIFIER {SP}* parameters:[ block_parameters ] { !"\n" SP }* ":\n"
     ;
 
 line_block_end
@@ -85,7 +85,12 @@ line_block_open
 
 implicit_identifier_tuple
     =
-    {SP}* tuple+:IDENTIFIER {SP}* { "," {SP}* tuple+:IDENTIFIER {SP}* }+
+    tuple+:IDENTIFIER { {SP}* "," {SP}* tuple+:IDENTIFIER }+
+    ;
+
+block_parameters
+    =
+    @+:block_parameter { {SP}* @+:block_parameter }*
     ;
 
 block_parameter
@@ -96,7 +101,7 @@ block_parameter
 
 block_parameter_key_value
     =
-    key:block_parameter_key "=" value:variable_accessor_call_parameter_value
+    key:block_parameter_key {SP}* "=" {SP}* value:variable_accessor_call_parameter_value
     ;
 
 block_parameter_key
@@ -158,7 +163,7 @@ variable_accessor_dot
 variable_accessor_call_parameters
     =
     @+:variable_accessor_call_parameter
-    { "," @+:variable_accessor_call_parameter }*
+    { {SP}* "," {SP}* @+:variable_accessor_call_parameter }*
     ;
 
 variable_accessor_call_parameter
@@ -169,7 +174,7 @@ variable_accessor_call_parameter
 
 variable_accessor_call_parameter_key_value
     =
-    key:variable_accessor_call_parameter_key "=" value:variable_accessor_call_parameter_value {SP}*
+    key:variable_accessor_call_parameter_key {SP}* "=" {SP}* value:variable_accessor_call_parameter_value
     ;
 
 variable_accessor_call_parameter_value_only
@@ -179,12 +184,13 @@ variable_accessor_call_parameter_value_only
 
 variable_accessor_call_parameter_key
     =
-    {SP}* @:IDENTIFIER {SP}*
+    IDENTIFIER
     ;
 
 variable_accessor_call_parameter_value
     =
-    {SP}* @:( variable_tests | variable_identifier ) {SP}*
+    | variable_tests
+    | variable_identifier
     ;
 
 variable_tests
@@ -192,8 +198,8 @@ variable_tests
     left:variable_identifier {SP}*
     (
         | ( "is" {SP}* test_function:variable_accessor_call_parameter_value )
-        | ( comparator:variable_tests_comparator right: variable_accessor_call_parameter_value )
-        | ( logical_operator:variable_tests_logical_operator right: variable_accessor_call_parameter_value )
+        | ( comparator:variable_tests_comparator {SP}* right:variable_accessor_call_parameter_value )
+        | ( logical_operator:variable_tests_logical_operator {SP}* right:variable_accessor_call_parameter_value )
     )
     ;
 
