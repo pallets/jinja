@@ -39,12 +39,12 @@ block_expression
 
 block_start
     =
-    block_open !("end") IDENTIFIER {block_parameter}* block_close
+    block_open type:`blockstart` !("end") name:IDENTIFIER parameters:[{block_parameter}*] block_close
     ;
 
 block_end
     =
-    block_open "end" IDENTIFIER block_close
+    block_open type:`blockend` "end" name:IDENTIFIER block_close
     ;
 
 block_open
@@ -63,7 +63,7 @@ block_parameter
 
 variable_expression
     =
-    variable_open variable_identifier { !variable_close variable_filter }* variable_close
+    variable_open type:`variable` name:variable_identifier { !variable_close filters+:variable_filter }* variable_close
     ;
 variable_open
     =
