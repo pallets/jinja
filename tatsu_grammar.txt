@@ -81,7 +81,7 @@ line_block_end
 
 line_block_open
     =
-    "\n" @:"# " {SP}*
+    "\n" {SP}* @:"# " {SP}*
     ;
 
 implicit_identifier_tuple
@@ -255,7 +255,7 @@ line_comment_expression
 
 line_comment_open
     =
-    "## "
+    {SP}* "## "
     ;
 
 line_comment_content
