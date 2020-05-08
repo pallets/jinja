@@ -16,14 +16,19 @@ expression
 
 raw_block_expression
     =
-    "{% raw %}"
+    raw_block_start
     { !raw_block_end CHAR }*
     raw_block_end
     ;
 
+raw_block_start
+    =
+    block_open "raw" block_close
+    ;
+
 raw_block_end
     =
-    "{% endraw %}"
+    block_open "endraw" block_close
     ;
 
 block_expression
@@ -82,12 +87,12 @@ filter                  = @+:IDENTIFIER [@+:filter_parameters];
 filter_parameters       = "(" [@+:filter_parameter {"," {SP}* @+:filter_parameter}*] ")";
 filter_parameter        = {!"," !")" CHAR}* ;
 
-comment_expression      = comment_open comment comment_close ;
+comment_expression      = comment_open comment_content comment_close ;
 comment_open            = "{#" ;
 comment_close           = "#}" ;
-comment                 = {!comment_close CHAR}* ;
+comment_content         = {!comment_close CHAR}* ;
 
-content                 = !("{%" | "{{" | "{#") CHAR ;
+content                 = !(block_open | variable_open | comment_open) CHAR ;
 
 IDENTIFIER
     =
