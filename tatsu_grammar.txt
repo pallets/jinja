@@ -97,7 +97,13 @@ variable_accessor_brackets
 
 variable_accessor_call
     =
-    "(" [variable_identifier] ")"
+    "(" [variable_accessor_call_parameters] ")"
+    ;
+
+variable_accessor_call_parameters
+    =
+    {SP}* @+:variable_identifier {SP}*
+    { "," {SP}* @+:variable_identifier {SP}* }*
     ;
 
 variable_accessor_dot
@@ -116,20 +122,8 @@ filter =
 
 filter_parameters
     =
-    "("
-        @:[filter_parameter_list]
-    ")"
+    variable_accessor_call
     ;
-filter_parameter_list
-    =
-    @+:filter_parameter {filter_parameter_separator ~ @+:filter_parameter}*
-    ;
-
-filter_parameter_separator
-    =
-    {SP}* "," {SP}*
-    ;
-filter_parameter        = variable_identifier ;
 
 comment_expression      = comment_open comment_content comment_close ;
 comment_open            = "{#" ;
