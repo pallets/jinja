@@ -11,7 +11,7 @@ expressions
 
 expression
     =
-    content | raw_block_expression | functional_block_expression | variable_expression | comment_expression
+    content | raw_block_expression | block_expression | variable_expression | comment_expression
     ;
 
 raw_block_expression
@@ -31,32 +31,6 @@ raw_block_end
     block_open "endraw" block_close
     ;
 
-functional_block_expression
-    =
-    for_block_expression | block_expression
-    ;
-
-for_block_expression
-    =
-    for_block_start {SP}* expressions {SP}* for_block_end
-    ;
-
-for_block_start
-    =
-    block_open type:`blockstart` name:"for" {SP}* target:assignment_target {SP}* "in" {SP}* iter:variable_accessor_call_parameter_value [ {SP}* recursive:`True` "recursive" ] block_close
-    ;
-
-for_block_end
-    =
-    block_open "endfor" block_close
-    ;
-
-assignment_target
-    =
-    tuple+:block_parameter {"," {SP}* tuple+:block_parameter}+
-    | block_parameter
-    ;
-
 block_expression
     =
     block_start {SP}* expressions {SP}* block_end
@@ -65,7 +39,7 @@ block_expression
 
 block_start
     =
-    block_open type:`blockstart` !("end") name:IDENTIFIER parameters:[ { block_parameter }* ] block_close
+    block_open type:`blockstart` !("end") name:IDENTIFIER parameters:[ { assignment_target }* ] block_close
     ;
 
 block_end
@@ -80,6 +54,12 @@ block_open
 block_close
     =
     {SP}* @:"%}"
+    ;
+
+assignment_target
+    =
+    tuple+:block_parameter {"," {SP}* tuple+:block_parameter}+
+    | block_parameter
     ;
 
 block_parameter
