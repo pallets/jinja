@@ -3,8 +3,12 @@
 {%block single key=val param=value %}
 test {{var}}
 {%endblock%}
+{% for item in dict_var.values() %}
+    <li>{% block loop_item %}{{ item }}{% endblock %}</li>
+{% endfor %}
 {# comment contents
 across lines #}
 {% raw %}
     {% block %}fake content{{ fake vars }}
 {% endraw %}
+{{ '{{' }}
