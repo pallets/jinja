@@ -39,7 +39,7 @@ block_expression
 
 block_start
     =
-    block_open type:`blockstart` !("end") name:IDENTIFIER parameters:[ { assignment_target }* ] block_close
+    block_open type:`blockstart` !("end") name:IDENTIFIER parameters:[ { block_parameter }* ] block_close
     ;
 
 block_end
@@ -56,15 +56,29 @@ block_close
     {SP}* @:"%}"
     ;
 
-assignment_target
+implicit_identifier_tuple
     =
-    tuple+:block_parameter {"," {SP}* tuple+:block_parameter}+
-    | block_parameter
+    {SP}* tuple+:IDENTIFIER {SP}* { "," {SP}* tuple+:IDENTIFIER {SP}* }+
     ;
 
 block_parameter
     =
-    variable_accessor_call_parameter
+    block_parameter_key_value | block_parameter_value_only
+    ;
+
+block_parameter_key_value
+    =
+    key:block_parameter_key "=" value:variable_accessor_call_parameter_value
+    ;
+
+block_parameter_key
+    =
+    implicit_identifier_tuple | variable_accessor_call_parameter_key
+    ;
+
+block_parameter_value_only
+    =
+    value:implicit_identifier_tuple | value:variable_accessor_call_parameter_value
     ;
 
 variable_expression
@@ -115,12 +129,17 @@ variable_accessor_call_parameter
 
 variable_accessor_call_parameter_key_value
     =
-    {SP}* key:IDENTIFIER {SP}* "=" value:variable_accessor_call_parameter_value {SP}*
+    key:variable_accessor_call_parameter_key "=" value:variable_accessor_call_parameter_value {SP}*
     ;
 
 variable_accessor_call_parameter_value_only
     =
     value:variable_accessor_call_parameter_value
+    ;
+
+variable_accessor_call_parameter_key
+    =
+    {SP}* key:IDENTIFIER {SP}*
     ;
 
 variable_accessor_call_parameter_value
