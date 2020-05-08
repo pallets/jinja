@@ -1,3 +1,4 @@
+{% from 'forms.html' import input as input_field, textarea %}
 {% with key=val.test %}
 {{ dict_var['single']["double"].dot  |test("first" ,2_000, named=3.14)|filter | lastFilter}}
 {%block single key=val param=value %}
