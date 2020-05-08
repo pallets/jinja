@@ -87,7 +87,17 @@ variable_identifier
 
 variable_accessor
     =
+    variable_accessor_brackets | variable_accessor_dot
+    ;
+
+variable_accessor_brackets
+    =
     "[" variable_identifier "]"
+    ;
+
+variable_accessor_dot
+    =
+    "." variable_identifier
     ;
 
 variable_filter

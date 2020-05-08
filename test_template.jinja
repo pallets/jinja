@@ -1,5 +1,5 @@
 {% with key=val %}
-{{ dict_var['single']["double"]  |test(first ,second, third)|filter | lastFilter}}
+{{ dict_var['single']["double"].dot  |test(first ,second, third)|filter | lastFilter}}
 {%block single key=val param=value %}
 test {{var}}
 {%endblock%}
