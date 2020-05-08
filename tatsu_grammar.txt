@@ -132,13 +132,13 @@ variable_filter
     {SP}* "|" {SP}* @:filter
     ;
 filter =
-    @+:IDENTIFIER
-    [@+:filter_parameters]
+    name:IDENTIFIER
+    [arguments:filter_parameters]
     ;
 
 filter_parameters
     =
-    variable_accessor_call
+    "(" @:variable_accessor_call_parameters ")"
     ;
 
 comment_expression      = comment_open comment_content comment_close ;
