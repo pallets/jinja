@@ -96,8 +96,8 @@ variable_close
 
 variable_identifier
     =
-    ( LITERAL | IDENTIFIER )
-    { variable_accessor }*
+    variable:( LITERAL | IDENTIFIER )
+    accessors:{ variable_accessor }*
     ;
 
 variable_accessor
@@ -107,12 +107,20 @@ variable_accessor
 
 variable_accessor_brackets
     =
-    "[" variable_identifier "]"
+    accessor_type:`brackets`
+    "[" parameter:variable_identifier "]"
     ;
 
 variable_accessor_call
     =
-    "(" [variable_accessor_call_parameters] ")"
+    accessor_type:`call`
+    "(" parameters:[variable_accessor_call_parameters] ")"
+    ;
+
+variable_accessor_dot
+    =
+    accessor_type:`dot`
+    "." parameter:variable_identifier
     ;
 
 variable_accessor_call_parameters
@@ -139,7 +147,7 @@ variable_accessor_call_parameter_value_only
 
 variable_accessor_call_parameter_key
     =
-    {SP}* key:IDENTIFIER {SP}*
+    {SP}* @:IDENTIFIER {SP}*
     ;
 
 variable_accessor_call_parameter_value
@@ -173,11 +181,6 @@ variable_tests_logical_operator
     | "or"
     ;
 
-variable_accessor_dot
-    =
-    "." variable_identifier
-    ;
-
 variable_filter
     =
     {SP}* "|" {SP}* @:filter
@@ -206,14 +209,20 @@ LITERAL
 
 LIST_LITERAL
     =
-    "[" {SP}* list+:LITERAL {SP}* { "," {SP}* list+:LITERAL }* {SP}* "]"
-    | "[" {SP}* "]"
+    literal_type:`list`
+    (
+        | ( "[" {SP}* value+:LITERAL {SP}* { "," {SP}* value+:LITERAL }* {SP}* "]" )
+        | ( "[" {SP}* "]" )
+    )
     ;
 
 TUPLE_LITERAL
     =
-    "(" {SP}* tuple+:LITERAL {SP}* { "," {SP}* tuple+:LITERAL {SP}* } ")"
-    | "(" {SP}* tuple+:LITERAL {SP}* "," {SP}* ")"
+    literal_type:`tuple`
+    (
+        | ( "(" {SP}* value+:LITERAL {SP}* { "," {SP}* value+:LITERAL {SP}* } ")" )
+        | ( "(" {SP}* value+:LITERAL {SP}* "," {SP}* ")" )
+    )
     ;
 
 INTEGER_LITERAL
@@ -223,6 +232,7 @@ INTEGER_LITERAL
 
 NUMBER_LITERAL
     =
+    literal_type:`number`
     whole:INTEGER_LITERAL
     ["." fractional:INTEGER_LITERAL]
     [ "e" exponent:[ ( "+" | "-" ) ] INTEGER_LITERAL ]
@@ -235,17 +245,23 @@ STRING_LITERAL
 
 STRING_LITERAL_SINGLE_QUOTE
     =
-    "'" { !"'" /./ }* "'"
+    literal_type:`string`
+    "'" value:{ !"'" /./ }* "'"
     ;
 
 STRING_LITERAL_DOUBLE_QUOTE
     =
-    '"' { !'"' /./ }* '"'
+    literal_type:`string`
+    '"' value:{ !'"' /./ }* '"'
     ;
 
 BOOLEAN_LITERAL
     =
-    (("true" | "True") @:`True`) | (("false" | "False") @:`False`)
+    literal_type:`boolean`
+    (
+        | ( ("true" | "True") value:`True`)
+        | ( ("false" | "False") value:`False`)
+    )
     ;
 
 IDENTIFIER
