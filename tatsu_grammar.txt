@@ -1,0 +1,115 @@
+start
+    =
+    expression
+    $
+    ;
+
+expression
+    =
+    { !matching_expression CHAR }* &matching_expression
+    ;
+
+matching_expression
+    =
+    raw_block_expression | block_expression | variable_expression | comment_expression
+    ;
+
+raw_block_expression
+    =
+    "{% raw %}"
+    { !raw_block_end CHAR }*
+    raw_block_end
+    ;
+
+raw_block_end
+    =
+    "{% endraw %}"
+    ;
+
+block_expression
+    =
+    block_start {SP}* expression {SP}* block_end
+    #| block_start
+    ;
+
+block_start
+    =
+    block_open !("end") IDENTIFIER {block_parameter}* block_close
+    ;
+
+block_end
+    =
+    block_open "end" IDENTIFIER block_close
+    ;
+
+block_open
+    =
+    @:"{%" {SP}*
+    ;
+block_close
+    =
+    {SP}* @:"%}"
+    ;
+
+block_parameter
+    =
+    {SP}+ @:(IDENTIFIER "=" block_parameter_value)
+    | {SP}+ @:block_parameter_value
+    ;
+block_parameter_value
+    =
+    {ALPHA}+
+    ;
+
+variable_expression
+    =
+    variable_open IDENTIFIER { !variable_close variable_filter }* variable_close
+    ;
+variable_open
+    =
+    @:"{{" {SP}*
+    ;
+variable_close
+    =
+    {SP}* @:"}}"
+    ;
+
+variable_filter
+    =
+    {SP}* "|" {SP}* @:filter
+    ;
+filter                  = @+:IDENTIFIER [@+:filter_parameters];
+filter_parameters       = "(" [@+:filter_parameter {"," {SP}* @+:filter_parameter}*] ")";
+filter_parameter        = {CHAR}* ;
+
+comment_expression      = comment_open comment comment_close ;
+comment_open            = "{#" ;
+comment_close           = "#}" ;
+comment                 = {!comment_close CHAR}* ;
+
+content                 = {CHAR}* ;
+
+IDENTIFIER
+    =
+    /[a-zA-Z]+/
+    ;
+
+ALPHA
+    =
+    /[a-zA-Z]/
+    ;
+
+DIGIT
+    =
+    /[0-9]/
+    ;
+
+SP
+    =
+    /\s/
+    ;
+
+CHAR
+    =
+    ?'.' | ?'\s'
+    ;
