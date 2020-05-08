@@ -70,7 +70,7 @@ line_block_expression
 
 line_block_start
     =
-    line_block_open type:`blockstart` !("end") name:IDENTIFIER {SP}* parameters:[ block_parameters ] { !"\n" SP }* ":\n"
+    line_block_open type:`blockstart` !("end") name:IDENTIFIER {SP}* parameters:[ line_block_parameters ] { !"\n" SP }* [ ":" { !"\n" SP }* ] "\n"
     ;
 
 line_block_end
@@ -81,6 +81,11 @@ line_block_end
 line_block_open
     =
     "\n" {SP}* @:"# " {SP}*
+    ;
+
+line_block_parameters
+    =
+    @+:block_parameter { { !"\n" SP }* @+:block_parameter }*
     ;
 
 implicit_identifier_tuple
