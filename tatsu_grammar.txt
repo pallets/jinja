@@ -76,7 +76,7 @@ variable_close
 
 variable_identifier
     =
-    ( IDENTIFIER | STRING )
+    ( IDENTIFIER | LITERAL )
     { variable_accessor }*
     ;
 
@@ -148,19 +148,36 @@ comment_content         = {!comment_close CHAR}* ;
 
 content                 = !(block_open | variable_open | comment_open) CHAR ;
 
-STRING
+LITERAL
     =
-    SINGLE_QUOTE_STRING | DOUBLE_QUOTE_STRING
+    STRING_LITERAL | NUMBER_LITERAL
     ;
 
-SINGLE_QUOTE_STRING
+INTEGER_LITERAL
     =
-    "'" { !"'" ?'.' }* "'"
+    /[\d_]*\d+/
     ;
 
-DOUBLE_QUOTE_STRING
+NUMBER_LITERAL
     =
-    '"' { !'"' ?'.' }* '"'
+    whole:INTEGER_LITERAL
+    ["." fractional:INTEGER_LITERAL]
+    [ "e" exponent:[ ( "+" | "-" ) ] INTEGER_LITERAL ]
+    ;
+
+STRING_LITERAL
+    =
+    STRING_LITERAL_SINGLE_QUOTE | STRING_LITERAL_DOUBLE_QUOTE
+    ;
+
+STRING_LITERAL_SINGLE_QUOTE
+    =
+    "'" { !"'" /./ }* "'"
+    ;
+
+STRING_LITERAL_DOUBLE_QUOTE
+    =
+    '"' { !'"' /./ }* '"'
     ;
 
 IDENTIFIER
