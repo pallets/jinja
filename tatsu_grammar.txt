@@ -39,7 +39,7 @@ raw_block_end
 
 block_expression
     =
-    block_start {SP}* expressions {SP}* block_end
+    | ( block_start {SP}* expressions {SP}* block_end )
     | block_start
     ;
 
@@ -64,19 +64,18 @@ block_close
 
 line_block_expression
     =
-    line_block_start
-    expressions
-    line_block_end
+    | ( line_block_start expressions line_block_end )
+    | line_block_start
     ;
 
 line_block_start
     =
-    line_block_open type:`blockstart` name:IDENTIFIER parameters:[ { block_parameter }* ] ":\n"
+    line_block_open type:`blockstart` !("end") name:IDENTIFIER parameters:[ { block_parameter }* ] ":\n"
     ;
 
 line_block_end
     =
-    line_block_open type:`blockend` name:IDENTIFIER "\n"
+    line_block_open type:`blockend` "end" name:IDENTIFIER "\n"
     ;
 
 line_block_open
@@ -164,7 +163,7 @@ variable_accessor_call_parameters
 
 variable_accessor_call_parameter
     =
-    variable_accessor_call_parameter_key_value
+    | variable_accessor_call_parameter_key_value
     | variable_accessor_call_parameter_value_only
     ;
 
@@ -362,5 +361,6 @@ SP
 
 CHAR
     =
-    ?'.' | ?'\s'
+    | ?'.'
+    | ?'\s'
     ;
