@@ -29,12 +29,12 @@ raw_block_expression
 
 raw_block_start
     =
-    block_open "raw" block_close
+    block_open "raw" {SP}* block_close
     ;
 
 raw_block_end
     =
-    block_open "endraw" block_close
+    block_open "endraw" {SP}* block_close
     ;
 
 block_expression
@@ -50,16 +50,18 @@ block_start
 
 block_end
     =
-    block_open "end" name:IDENTIFIER block_close
+    block_open "end" name:IDENTIFIER {SP}* block_close
     ;
 
 block_open
     =
     @:"{%" {SP}*
     ;
+
 block_close
     =
-    {SP}* @:"%}"
+    | @:"%}"
+    | ( @:"-%}" {SP}* )
     ;
 
 line_block_expression
