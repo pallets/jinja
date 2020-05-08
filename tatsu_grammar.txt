@@ -150,13 +150,19 @@ content                 = !(block_open | variable_open | comment_open) CHAR ;
 
 LITERAL
     =
-    STRING_LITERAL | NUMBER_LITERAL | BOOLEAN_LITERAL | LIST_LITERAL
+    STRING_LITERAL | NUMBER_LITERAL | BOOLEAN_LITERAL | LIST_LITERAL | TUPLE_LITERAL
     ;
 
 LIST_LITERAL
     =
     "[" {SP}* list+:LITERAL {SP}* { "," {SP}* list+:LITERAL }* {SP}* "]"
     | "[" {SP}* "]"
+    ;
+
+TUPLE_LITERAL
+    =
+    "(" {SP}* tuple+:LITERAL {SP}* { "," {SP}* tuple+:LITERAL {SP}* } ")"
+    | "(" {SP}* tuple+:LITERAL {SP}* "," {SP}* ")"
     ;
 
 INTEGER_LITERAL

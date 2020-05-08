@@ -14,5 +14,8 @@ across lines #}
 {% if False %}
 {{ '{{' }}
 {% endif %}
-{% for item in ['1', 2, 3.14] %}{{ item }}{% endfor %}
+{% for href caption in [('index.html', 'Index'), ('about.html', 'About'),
+                         ('downloads.html', 'Downloads')] %}
+    <li><a href="{{ href }}">{{ caption }}</a></li>
+{% endfor %}
 {% trans user=user.username %}Hello, {{ user }}!{% endtrans %}
