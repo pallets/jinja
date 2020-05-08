@@ -76,7 +76,7 @@ variable_close
 
 variable_identifier
     =
-    ( IDENTIFIER | LITERAL )
+    ( LITERAL | IDENTIFIER )
     { variable_accessor }*
     ;
 
@@ -150,7 +150,7 @@ content                 = !(block_open | variable_open | comment_open) CHAR ;
 
 LITERAL
     =
-    STRING_LITERAL | NUMBER_LITERAL
+    STRING_LITERAL | NUMBER_LITERAL | BOOLEAN_LITERAL
     ;
 
 INTEGER_LITERAL
@@ -178,6 +178,11 @@ STRING_LITERAL_SINGLE_QUOTE
 STRING_LITERAL_DOUBLE_QUOTE
     =
     '"' { !'"' /./ }* '"'
+    ;
+
+BOOLEAN_LITERAL
+    =
+    (("true" | "True") @:`True`) | (("false" | "False") @:`False`)
     ;
 
 IDENTIFIER
