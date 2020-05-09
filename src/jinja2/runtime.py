@@ -755,7 +755,7 @@ class Undefined:
     __floordiv__ = __rfloordiv__ = _fail_with_undefined_error
     __mod__ = __rmod__ = _fail_with_undefined_error
     __pos__ = __neg__ = _fail_with_undefined_error
-    __call__ = __getitem__ = _fail_with_undefined_error
+    __call__ = __getitem__ = __contains__ = _fail_with_undefined_error
     __lt__ = __le__ = __gt__ = __ge__ = _fail_with_undefined_error
     __int__ = __float__ = __complex__ = _fail_with_undefined_error
     __pow__ = __rpow__ = _fail_with_undefined_error
