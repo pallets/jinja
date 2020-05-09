@@ -126,7 +126,7 @@ block_parameter_value_only
 
 variable_expression
     =
-    variable_open type:`variable` name:variable_identifier { !variable_close filters+:variable_filter }* variable_close
+    variable_open type:`variable` name:variable_identifier { !variable_close {SP}* filters+:variable_filter }* variable_close
     ;
 variable_open
     =
@@ -229,7 +229,7 @@ variable_tests_logical_operator
 
 variable_filter
     =
-    {SP}* "|" {SP}* @:filter
+    "|" {SP}* @:filter
     ;
 filter =
     name:IDENTIFIER

@@ -1,10 +1,24 @@
 from tatsu.util import asjson
 import json
 import tatsu
+from datetime import datetime
 
 
 with open('tatsu_grammar.txt', 'r') as tatsu_grammar:
     with open('test_template.jinja', 'r') as test_template:
-        ast = tatsu.parse(tatsu_grammar.read(), test_template.read(), whitespace='')
+        grammar_start = datetime.now()
 
-        print(json.dumps(asjson(ast), indent=4))
+        grammar = tatsu.compile(tatsu_grammar.read())
+
+        grammar_end = datetime.now()
+
+        parse_start = datetime.now()
+
+        ast = grammar.parse(test_template.read(), whitespace='')
+
+        parse_end = datetime.now()
+
+        print(json.dumps(asjson(ast), indent=2))
+
+        print("Grammar", grammar_end - grammar_start)
+        print("Parser", parse_end - parse_start)
