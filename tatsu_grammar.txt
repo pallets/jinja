@@ -55,7 +55,8 @@ block_end
 
 block_open
     =
-    @:"{%" {SP}*
+    | @:"{%" {SP}*
+    | {SP}* @:"{%-" {SP}*
     ;
 
 block_close
