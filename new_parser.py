@@ -62,7 +62,7 @@ def parse_block_with(ast):
             raise
 
         targets.append(parameter['key'])
-        values.append(parameter['value'])
+        values.append(parse_variable(parameter['value']))
 
     with_node.targets = targets
     with_node.values = values
