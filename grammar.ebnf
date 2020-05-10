@@ -212,17 +212,45 @@ variable_accessor_call_parameter_key
 
 variable_accessor_call_parameter_value
     =
-    | variable_tests
+    | conditional_expression
     | variable_identifier
+    ;
+
+conditional_expression
+    =
+    | conditional_expression_logical
+    | conditional_expression_comparator
+    | conditional_expression_test
+    ;
+
+conditional_expression_logical
+    =
+    left:conditional_expression
+    {SP}* logical_operator:variable_tests_logical_operator {SP}*
+    right:conditional_expression
+    ;
+
+conditional_expression_comparator
+    =
+    left:variable_identifier
+    {SP}* comparator:variable_tests_comparator {SP}*
+    right:variable_identifier
+    ;
+
+conditional_expression_test
+    =
+    test_variable:variable_identifier
+    {SP}* "is" {SP}*
+    test_function:variable_identifier
     ;
 
 variable_tests
     =
-    left:variable_identifier {SP}*
+    left:variable_tests {SP}*
     (
+        | ( logical_operator:variable_tests_logical_operator {SP}* right:variable_tests )
+        | ( comparator:variable_tests_comparator {SP}* right:variable_tests )
         | ( "is" {SP}* test_function:variable_accessor_call_parameter_value )
-        | ( comparator:variable_tests_comparator {SP}* right:variable_accessor_call_parameter_value )
-        | ( logical_operator:variable_tests_logical_operator {SP}* right:variable_accessor_call_parameter_value )
     )
     ;
 
