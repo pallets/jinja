@@ -110,6 +110,7 @@ block_parameter
 block_parameter_key_value
     =
     key:block_parameter_key {SP}* "=" {SP}* value:variable_accessor_call_parameter_value
+    [ {SP}* "," ]
     ;
 
 block_parameter_key
