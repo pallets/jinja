@@ -82,6 +82,25 @@ def parse_literal(ast):
             lineno=lineno_from_parseinfo(ast['parseinfo'])
         )
 
+    if literal_type == 'number':
+        if 'fractional' not in ast and 'exponent' not in ast:
+            const = int(ast['whole'])
+        else:
+            number = ast['whole']
+
+            if 'fractional' in ast:
+                number += '.' + ast['fractional']
+
+            if 'exponent' in ast:
+                number += 'e' + ast['exponent']
+
+            const = float(number)
+
+        return nodes.Const(
+            const,
+            lineno=lineno_from_parseinfo(ast['parseinfo'])
+        )
+
 def parse_output(ast):
     return nodes.Output(
         [nodes.TemplateData(ast)]
