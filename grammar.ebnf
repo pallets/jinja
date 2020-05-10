@@ -98,7 +98,13 @@ implicit_identifier_tuple
 
 block_parameters
     =
-    @+:block_parameter { {SP}* @+:block_parameter }*
+    @+:block_parameter
+    [ {SP}* "," ]
+    {
+        {SP}*
+        @+:block_parameter
+        [ {SP}* "," ]
+     }*
     ;
 
 block_parameter
@@ -110,7 +116,6 @@ block_parameter
 block_parameter_key_value
     =
     key:block_parameter_key {SP}* "=" {SP}* value:variable_accessor_call_parameter_value
-    [ {SP}* "," ]
     ;
 
 block_parameter_key
@@ -122,6 +127,7 @@ block_parameter_key
 block_parameter_value_only
     =
     | value:implicit_identifier_tuple
+    | value:variable_identifier_with_alias
     | value:variable_accessor_call_parameter_value
     ;
 
@@ -143,6 +149,13 @@ variable_identifier
     variable:( LITERAL | IDENTIFIER )
     accessors:{ variable_accessor }*
     { {SP}* filters+:variable_filter }*
+    ;
+
+variable_identifier_with_alias
+    =
+    variable:IDENTIFIER
+    {SP}* "as" {SP}*
+    alias:IDENTIFIER
     ;
 
 variable_accessor

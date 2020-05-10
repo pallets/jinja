@@ -105,7 +105,16 @@ def parse_block_from(ast):
     with_context = False
 
     if len(parameters) > 2:
-        names = []#parameters[2:]
+        for parameter in parameters[2:]:
+            if 'alias' in parameter['value']:
+                names.append(
+                    (
+                        parameter['value']['variable'],
+                        parameter['value']['alias']
+                    )
+                )
+            else:
+                names.append(parameter['value']['variable'])
 
     from_import = nodes.FromImport(
         template,
