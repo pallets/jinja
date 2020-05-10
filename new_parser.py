@@ -92,24 +92,31 @@ def parse_print(ast):
 
     node = parse_variable(variable)
 
-    for accessor_ast in variable['accessors']:
-        node = parse_variable_accessor(node, accessor_ast)
-
     return nodes.Output([node])
 
 def parse_template(ast):
     return nodes.Template(parse(ast), lineno=1)
 
-def parse_variable(ast):
-    ast = ast['variable']
+def parse_variable(ast, variable_context='load'):
+    name = ast['variable']
 
-    if 'literal_type' in ast:
-        return parse_literal(ast)
+    if 'literal_type' in name:
+        node = parse_literal(name)
+    else:
+        node = nodes.Name(
+            name,
+            variable_context,
+            lineno=lineno_from_parseinfo(ast['parseinfo'])
+        )
 
-    return nodes.Name(
-        ast,
-        'load'
-    )
+    for accessor_ast in ast['accessors']:
+        node = parse_variable_accessor(node, accessor_ast)
+
+    if ast['filters']:
+        for filter_ast in ast['filters']:
+            node = parse_variable_filter(node, filter_ast)
+
+    return node
 
 def parse_variable_accessor(node, ast):
     accessor_type = ast['accessor_type']
@@ -126,3 +133,30 @@ def parse_variable_accessor(node, ast):
     accessor_node.lineno = lineno_from_parseinfo(ast['parseinfo'])
 
     return accessor_node
+
+def parse_variable_filter(node, ast):
+    args = []
+    kwargs = []
+    dynamic_args = None
+    dynamic_kwargs = None
+
+    if 'arguments' in ast:
+        for argument in ast['arguments']:
+            value = parse_variable(argument['value'])
+
+            if 'key' in argument:
+                kwargs.append(
+                    nodes.Keyword(argument['key'], value)
+                )
+            else:
+                args.append(value)
+
+    return nodes.Filter(
+        node,
+        ast['name'],
+        args,
+        kwargs,
+        dynamic_args,
+        dynamic_kwargs,
+        lineno=lineno_from_parseinfo(ast['parseinfo'])
+    )
