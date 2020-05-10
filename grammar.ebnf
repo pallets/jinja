@@ -166,7 +166,7 @@ variable_accessor_call
 variable_accessor_dot
     =
     accessor_type:`dot`
-    "." parameter:variable_identifier
+    "." parameter:IDENTIFIER
     ;
 
 variable_accessor_call_parameters

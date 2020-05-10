@@ -119,7 +119,7 @@ def parse_variable_accessor(node, ast):
         accessor_node.arg = parse_variable(ast['parameter'])
     elif accessor_type == 'dot':
         accessor_node = nodes.Getattr()
-        accessor_node.attr = ast['parameter']['variable']
+        accessor_node.attr = ast['parameter']
 
     accessor_node.node = node
     accessor_node.ctx = "load"
