@@ -98,17 +98,21 @@ def parse_block_for(ast):
     )
 
 def parse_block_from(ast):
-    names = []
     parameters = ast['block']['parameters']
+
+    template = parse_variable(parameters[0]['value'])
+    names = []
+    with_context = False
 
     if len(parameters) > 2:
         names = []#parameters[2:]
 
     from_import = nodes.FromImport(
+        template,
+        names,
+        with_context,
         lineno=lineno_from_parseinfo(ast['parseinfo'])
     )
-    from_import.template = parse_variable(parameters[0]['value'])
-    from_import.names = names
 
     return from_import
 
