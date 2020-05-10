@@ -187,7 +187,7 @@ def parse_block_macro(ast):
 
     for kwarg in definition.kwargs:
         params.append(
-            nodes.Name(kwarg.key, "load")
+            nodes.Name(kwarg.key, "param")
         )
         defaults.append(kwarg.value)
 
