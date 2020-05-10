@@ -4,7 +4,7 @@ import tatsu
 from datetime import datetime
 
 
-with open('tatsu_grammar.txt', 'r') as tatsu_grammar:
+with open('grammar.ebnf', 'r') as tatsu_grammar:
     with open('test_template.jinja', 'r') as test_template:
         grammar_start = datetime.now()
 
