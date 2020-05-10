@@ -42,3 +42,7 @@ across lines #}
     <li>{{ item }}</li>     ## this comment is ignored
     # endfor
 </ul>
+{% set reply | wordwrap %}
+    You wrote:
+    {{ message }}
+{% endset %}

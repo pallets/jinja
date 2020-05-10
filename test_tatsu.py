@@ -1,7 +1,8 @@
+from datetime import datetime
 from tatsu.util import asjson
 import json
 import tatsu
-from datetime import datetime
+import sys
 
 
 with open('grammar.ebnf', 'r') as tatsu_grammar:
@@ -20,5 +21,5 @@ with open('grammar.ebnf', 'r') as tatsu_grammar:
 
         print(json.dumps(asjson(ast), indent=2))
 
-        print("Grammar", grammar_end - grammar_start)
-        print("Parser", parse_end - parse_start)
+        print("Grammar", grammar_end - grammar_start, file=sys.stderr)
+        print("Parser", parse_end - parse_start, file=sys.stderr)

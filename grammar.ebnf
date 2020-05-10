@@ -126,7 +126,7 @@ block_parameter_value_only
 
 variable_expression
     =
-    variable_open type:`variable` name:variable_identifier { !variable_close {SP}* filters+:variable_filter }* variable_close
+    variable_open type:`variable` name:variable_identifier variable_close
     ;
 variable_open
     =
@@ -141,6 +141,7 @@ variable_identifier
     =
     variable:( LITERAL | IDENTIFIER )
     accessors:{ variable_accessor }*
+    { {SP}* filters+:variable_filter }*
     ;
 
 variable_accessor
