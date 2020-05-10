@@ -36,7 +36,7 @@ with open('grammar.ebnf', 'r') as tatsu_grammar:
         with open('tatsu_jinja.py', 'w') as new_ast_file:
             pprint.pprint(new_ast, indent=2, stream=new_ast_file)
 
-        env = Environment()
+        env = Environment(line_statement_prefix='#', line_comment_prefix='##')
 
         jinja_parse_start = datetime.now()
 
