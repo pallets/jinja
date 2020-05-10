@@ -256,15 +256,38 @@ def parse_variable_accessor(node, ast):
         accessor_node = nodes.Getattr()
         accessor_node.attr = ast['parameter']
     elif accessor_type == 'call':
-        accessor_node = nodes.Call()
-        accessor_node.args = []
-        accessor_node.kwargs = []
+        accessor_node = parse_variable_accessor_call(ast)
 
     accessor_node.node = node
     accessor_node.ctx = "load"
     accessor_node.lineno = lineno_from_parseinfo(ast['parseinfo'])
 
     return accessor_node
+
+def parse_variable_accessor_call(ast):
+    args = []
+    kwargs = []
+    dynamic_args = None
+    dynamic_kwargs = None
+
+    if ast['parameters']:
+        for argument in ast['parameters']:
+            value = parse_variable(argument['value'])
+
+            if 'key' in argument:
+                kwargs.append(
+                    nodes.Keyword(argument['key'], value)
+                )
+            else:
+                args.append(value)
+
+    node = nodes.Call()
+    node.args = args
+    node.kwargs = kwargs
+    node.dyn_args = dynamic_args
+    node.dyn_kwargs = dynamic_kwargs
+
+    return node
 
 def parse_variable_filter(node, ast):
     args = []
