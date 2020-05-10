@@ -35,10 +35,36 @@ def parse_block(ast):
     return None
 
 def parse_block_pair(ast):
-    if ast['start']['name'] == 'with':
+    block_name = ast['start']['name']
+
+    if block_name == 'with':
         return parse_block_with(ast)
 
+    if block_name == 'for':
+        return parse_block_for(ast)
+
     return None
+
+def parse_block_for(ast):
+    target = None
+    iter = None
+    body = parse(ast['contents'])
+    else_ = []
+    test = None
+    recursive = False
+
+    block_parameters = ast['start']['parameters']
+
+    if block_parameters[1]['value']['variable'] != 'in':
+        raise
+
+    target = parse_variable(block_parameters[0]['value'], variable_context='store')
+    iter = parse_variable(block_parameters[2]['value'])
+
+    return nodes.For(
+        target, iter, body, else_, test, recursive,
+        lineno=lineno_from_parseinfo(ast['parseinfo'])
+    )
 
 def parse_block_from(ast):
     names = []
