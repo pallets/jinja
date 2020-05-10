@@ -34,6 +34,9 @@ def parse_block(ast):
     if block_name == 'from':
         return parse_block_from(ast)
 
+    if block_name == 'set':
+        return parse_block_set(ast)
+
     return None
 
 def parse_block_pair(ast):
@@ -116,6 +119,22 @@ def parse_block_if(ast):
         else_,
         lineno=lineno_from_parseinfo(ast['parseinfo'])
     )
+
+def parse_block_set(ast):
+    if 'block' in ast:
+        assignment = ast['block']['parameters'][0]
+
+        if isinstance(assignment['key'], str):
+            key = assignment['key']
+        else:
+            key = parse_variable(assignment['key'], variable_context="store")
+
+        return nodes.Assign(
+            key,
+            parse_variable(assignment['value']),
+            lineno=lineno_from_parseinfo(ast['parseinfo'])
+        )
+    return None
 
 def parse_block_with(ast):
     with_node = nodes.With(
