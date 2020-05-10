@@ -51,6 +51,9 @@ def parse_block_pair(ast):
     if block_name == 'if':
         return parse_block_if(ast)
 
+    if block_name == 'macro':
+        return parse_block_macro(ast)
+
     if block_name == 'set':
         return parse_block_set(ast)
 
@@ -120,6 +123,30 @@ def parse_block_if(ast):
         body,
         elif_,
         else_,
+        lineno=lineno_from_parseinfo(ast['parseinfo'])
+    )
+
+def parse_block_macro(ast):
+    definition = parse_variable(ast['start']['parameters'][0]['value'])
+    name = definition.node.name
+    params = []
+    defaults = []
+    body = parse(ast['contents'])
+
+    for arg in definition.args:
+        params.append(arg)
+
+    for kwarg in definition.kwargs:
+        params.append(
+            nodes.Name(kwarg.key, "load")
+        )
+        defaults.append(kwarg.value)
+
+    return nodes.Macro(
+        name,
+        params,
+        defaults,
+        body,
         lineno=lineno_from_parseinfo(ast['parseinfo'])
     )
 
