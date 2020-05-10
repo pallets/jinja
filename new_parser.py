@@ -214,7 +214,7 @@ def parse_block_set(ast):
             lineno=lineno_from_parseinfo(ast['parseinfo'])
         )
     elif 'start' in ast:
-        key = parse_variable(ast['start']['parameters'][0]['value'])
+        key = parse_variable(ast['start']['parameters'][0]['value'], variable_context="store")
         filter = None
 
         if isinstance(key, nodes.Filter):
