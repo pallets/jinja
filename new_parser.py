@@ -45,6 +45,9 @@ def parse_block_pair(ast):
     if block_name == 'for':
         return parse_block_for(ast)
 
+    if block_name == 'if':
+        return parse_block_if(ast)
+
     if block_name == 'with':
         return parse_block_with(ast)
 
@@ -100,6 +103,20 @@ def parse_block_from(ast):
 
     return from_import
 
+def parse_block_if(ast):
+    test = parse_conditional_expression(ast['start']['parameters'][0]['value'])
+    body = parse(ast['contents'])
+    elif_ = None
+    else_ = None
+
+    return nodes.If(
+        test,
+        body,
+        elif_,
+        else_,
+        lineno=lineno_from_parseinfo(ast['parseinfo'])
+    )
+
 def parse_block_with(ast):
     with_node = nodes.With(
         lineno=lineno_from_parseinfo(ast['parseinfo'])
@@ -122,6 +139,12 @@ def parse_block_with(ast):
     return with_node
 
 def parse_comment(ast):
+    return
+
+def parse_conditional_expression(ast):
+    if 'variable' in ast:
+        return parse_variable(ast)
+
     return None
 
 def parse_literal(ast):
