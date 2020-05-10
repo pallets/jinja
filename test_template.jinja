@@ -1,8 +1,6 @@
 {% from 'forms.html' import input as input_field, textarea %}
 {{ dict_var['single']["double"].dot  |test("first" ,2_000, named=3.14)|filter | lastFilter}}
-{%with key=val %}
-test {{var}}
-{%endwith%}
+{% with a='', b=a.attribute %}...{% endwith %}
 {% for item in dict_var.values() %}
     <li>{% block loop_item %}{{ item }}{% endblock %}</li>
 {% endfor %}

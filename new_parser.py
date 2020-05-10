@@ -197,7 +197,7 @@ def parse_block_with(ast):
         if 'key' not in parameter:
             raise
 
-        targets.append(parameter['key'])
+        targets.append(nodes.Name(parameter['key'], 'param'))
         values.append(parse_variable(parameter['value']))
 
     with_node.targets = targets
