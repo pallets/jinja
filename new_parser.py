@@ -183,11 +183,12 @@ def parse_block_macro(ast):
     body = parse(ast['contents'])
 
     for arg in definition.args:
+        arg.set_ctx('param')
         params.append(arg)
 
     for kwarg in definition.kwargs:
         params.append(
-            nodes.Name(kwarg.key, "param")
+            nodes.Name(kwarg.key, 'param')
         )
         defaults.append(kwarg.value)
 
