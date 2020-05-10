@@ -51,6 +51,9 @@ def parse_block_pair(ast):
     if block_name == 'if':
         return parse_block_if(ast)
 
+    if block_name == 'set':
+        return parse_block_set(ast)
+
     if block_name == 'with':
         return parse_block_with(ast)
 
@@ -132,6 +135,21 @@ def parse_block_set(ast):
         return nodes.Assign(
             key,
             parse_variable(assignment['value']),
+            lineno=lineno_from_parseinfo(ast['parseinfo'])
+        )
+    elif 'start' in ast:
+        key = parse_variable(ast['start']['parameters'][0]['value'])
+        filter = None
+
+        if isinstance(key, nodes.Filter):
+            filter = key
+            key = key.node
+            filter.node = None
+
+        return nodes.AssignBlock(
+            key,
+            filter,
+            parse(ast['contents']),
             lineno=lineno_from_parseinfo(ast['parseinfo'])
         )
     return None
