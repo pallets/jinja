@@ -164,8 +164,8 @@ def parse_block_from(ast):
 def parse_block_if(ast):
     test = parse_conditional_expression(ast['start']['parameters'][0]['value'])
     body = parse(ast['contents'])
-    elif_ = None
-    else_ = None
+    elif_ = []
+    else_ = []
 
     return nodes.If(
         test,
