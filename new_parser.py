@@ -6,7 +6,8 @@ def lineno_from_parseinfo(parseinfo):
 
 def parse(ast):
     if isinstance(ast, list):
-        return [parse(item) for item in ast]
+        nodes = (parse(item) for item in ast)
+        return [node for node in nodes if node is not None]
 
     if isinstance(ast, str):
         return parse_output(ast)
