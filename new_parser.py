@@ -29,7 +29,9 @@ def parse(ast):
     return None
 
 def parse_block(ast):
-    if ast['block']['name'] == 'from':
+    block_name = ast['block']['name']
+
+    if block_name == 'from':
         return parse_block_from(ast)
 
     return None
@@ -37,13 +39,27 @@ def parse_block(ast):
 def parse_block_pair(ast):
     block_name = ast['start']['name']
 
-    if block_name == 'with':
-        return parse_block_with(ast)
+    if block_name == 'block':
+        return parse_block_block(ast)
 
     if block_name == 'for':
         return parse_block_for(ast)
 
+    if block_name == 'with':
+        return parse_block_with(ast)
+
     return None
+
+def parse_block_block(ast):
+    name = parse_variable(ast['start']['parameters'][0]['value']).name
+    scoped = False
+
+    return nodes.Block(
+        name,
+        parse(ast['contents']),
+        scoped,
+        lineno=lineno_from_parseinfo(ast['parseinfo'])
+    )
 
 def parse_block_for(ast):
     target = None
