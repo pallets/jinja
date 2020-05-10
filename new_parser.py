@@ -130,7 +130,12 @@ def parse_literal(ast):
 
     literal_type = ast['literal_type']
 
-    if literal_type == 'string':
+    if literal_type == 'boolean':
+        return nodes.Const(
+            ast['value'],
+            lineno=lineno_from_parseinfo(ast['parseinfo'])
+        )
+    elif literal_type == 'string':
         return nodes.Const(
             ''.join(ast['value']),
             lineno=lineno_from_parseinfo(ast['parseinfo'])
