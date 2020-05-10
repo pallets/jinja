@@ -273,7 +273,7 @@ line_comment_open
 
 line_comment_content
     =
-    { !"\n" CHAR } *
+    { !"\n" CHAR }*
     ;
 
 content
@@ -323,7 +323,7 @@ NUMBER_LITERAL
     literal_type:`number`
     whole:INTEGER_LITERAL
     ["." fractional:INTEGER_LITERAL]
-    [ "e" exponent:[ ( "+" | "-" ) ] INTEGER_LITERAL ]
+    [ ( "e" | "E" ) exponent:[ ( "+" | "-" ) ] INTEGER_LITERAL ]
     ;
 
 STRING_LITERAL
