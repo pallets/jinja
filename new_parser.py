@@ -5,9 +5,44 @@ def lineno_from_parseinfo(parseinfo):
     return parseinfo.line + 1
 
 def parse(ast):
+    def merge_output(blocks):
+        if len(blocks) < 2:
+            return blocks
+
+        for idx in range(len(blocks) - 1, 0, -1):
+            block = blocks[idx]
+            previous_block = blocks[idx - 1]
+
+            if isinstance(block, nodes.Output) and isinstance(previous_block, nodes.Output):
+                previous_block.nodes += block.nodes
+                del blocks[idx]
+
+        return blocks
+
+    def merge_template_data(blocks):
+        for block in blocks:
+            if isinstance(block, nodes.Output):
+                if len(block.nodes) < 2:
+                    continue
+
+                outputs = block.nodes
+
+                for idx in range(len(outputs) - 1, 0, -1):
+                    output = outputs[idx]
+                    previous_output = outputs[idx - 1]
+
+                    if isinstance(output, nodes.TemplateData) and isinstance(previous_output, nodes.TemplateData):
+                        previous_output.data += output.data
+                        del outputs[idx]
+
+        return blocks
+
+    def remove_none(blocks):
+        return [block for block in blocks if block is not None]
+
     if isinstance(ast, list):
-        nodes = (parse(item) for item in ast)
-        return [node for node in nodes if node is not None]
+        blocks = [parse(item) for item in ast]
+        return merge_template_data(merge_output(remove_none(blocks)))
 
     if isinstance(ast, str):
         return parse_output(ast)
