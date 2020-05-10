@@ -95,7 +95,7 @@ def parse_print(ast):
     for accessor_ast in variable['accessors']:
         node = parse_variable_accessor(node, accessor_ast)
 
-    return nodes.Output(node)
+    return nodes.Output([node])
 
 def parse_template(ast):
     return nodes.Template(parse(ast), lineno=1)
