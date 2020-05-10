@@ -90,8 +90,7 @@ def parse_literal(ast):
             ''.join(ast['value']),
             lineno=lineno_from_parseinfo(ast['parseinfo'])
         )
-
-    if literal_type == 'number':
+    elif literal_type == 'number':
         if 'fractional' not in ast and 'exponent' not in ast:
             const = int(ast['whole'])
         else:
@@ -109,6 +108,26 @@ def parse_literal(ast):
             const,
             lineno=lineno_from_parseinfo(ast['parseinfo'])
         )
+    elif literal_type == 'list':
+        items = [
+            parse_literal(item) for item in ast['value']
+        ]
+
+        return nodes.List(
+            items,
+            lineno=lineno_from_parseinfo(ast['parseinfo'])
+        )
+    elif literal_type == 'tuple':
+        items = [
+            parse_literal(item) for item in ast['value']
+        ]
+
+        return nodes.Tuple(
+            items,
+            'load',
+            lineno=lineno_from_parseinfo(ast['parseinfo'])
+        )
+    return None
 
 def parse_output(ast):
     return nodes.Output(
