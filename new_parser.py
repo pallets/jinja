@@ -159,7 +159,7 @@ def parse_block_set(ast):
         assignment = ast['block']['parameters'][0]
 
         if isinstance(assignment['key'], str):
-            key = assignment['key']
+            key = nodes.Name(assignment['key'], 'store')
         else:
             key = parse_variable(assignment['key'], variable_context="store")
 
