@@ -259,7 +259,71 @@ def parse_conditional_expression(ast):
     if 'variable' in ast:
         return parse_variable(ast)
 
+    if 'comparator' in ast:
+        return parse_conditional_expression_comparator(ast)
+
+    if 'logical_operator' in ast:
+        return parse_conditional_expression_logical(ast)
+
+    if 'test_function' in ast:
+        return parse_conditional_expression_test(ast)
+
     return None
+
+def parse_conditional_expression_comparator(ast):
+    operand_map = {
+        '>': 'gt',
+        '>=': 'gteq',
+        '==': 'eq',
+        '!=': 'ne',
+        '<': 'lt',
+        '<=': 'lteq',
+    }
+
+    return nodes.Compare(
+        parse_variable(ast['left']),
+        [
+            nodes.Operand(
+                operand_map[ast['comparator']],
+                parse_variable(ast['right'])
+            )
+        ],
+        lineno=lineno_from_parseinfo(ast['parseinfo'])
+    )
+
+def parse_conditional_expression_logical(ast):
+    node_class_map = {
+        'and': nodes.And,
+        'or': nodes.Or,
+    }
+
+    node_class = node_class_map[ast['logical_operator']]
+
+    return node_class(
+        parse_conditional_expression(ast['left']),
+        parse_conditional_expression(ast['right']),
+        lineno=lineno_from_parseinfo(ast['parseinfo'])
+    )
+
+def parse_conditional_expression_test(ast):
+    node = parse_variable(ast['test_variable'])
+    test_function = parse_variable(ast['test_function'])
+
+    name = test_function.name
+    args = []
+    kwargs = []
+    dynamic_args = None
+    dynamic_kwargs = None
+
+    return nodes.Test(
+        node,
+        name,
+        args,
+        kwargs,
+        dynamic_args,
+        dynamic_kwargs,
+        lineno=lineno_from_parseinfo(ast['parseinfo'])
+    )
 
 def parse_literal(ast):
     if 'literal_type' not in ast:
