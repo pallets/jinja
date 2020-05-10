@@ -61,6 +61,9 @@ def parse_block_for(ast):
     target = parse_variable(block_parameters[0]['value'], variable_context='store')
     iter = parse_variable(block_parameters[2]['value'])
 
+    if len(block_parameters) > 3:
+        recursive = block_parameters[-1]['value']['variable'] == 'recursive'
+
     return nodes.For(
         target, iter, body, else_, test, recursive,
         lineno=lineno_from_parseinfo(ast['parseinfo'])
