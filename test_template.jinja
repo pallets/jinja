@@ -1,9 +1,8 @@
 {% from 'forms.html' import input as input_field, textarea %}
-{% with key=val.test %}
 {{ dict_var['single']["double"].dot  |test("first" ,2_000, named=3.14)|filter | lastFilter}}
-{%block single key=val param=value %}
+{%with key=val %}
 test {{var}}
-{%endblock%}
+{%endwith%}
 {% for item in dict_var.values() %}
     <li>{% block loop_item %}{{ item }}{% endblock %}</li>
 {% endfor %}
@@ -19,7 +18,6 @@ across lines #}
                          ('downloads.html', 'Downloads')] %}
     <li><a href="{{ href }}">{{ caption }}</a></li>
 {% endfor %}
-{% trans user=user.username %}Hello, {{ user }}!{% endtrans %}
 {% set navigation = [('index.html', 'Index'), ('about.html', 'About')] %}
 {% set key, value = call_something() %}
 {% for value in values %}
