@@ -66,6 +66,7 @@ def parse_block_with(ast):
 
     with_node.targets = targets
     with_node.values = values
+    with_node.body = parse(ast['contents'])
 
     return with_node
 
