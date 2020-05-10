@@ -20,6 +20,12 @@ def parse(ast):
     if 'start' in ast and 'end' in ast:
         return parse_block_pair(ast)
 
+    if 'raw' in ast:
+        return parse_raw(ast)
+
+    if 'comment' in ast:
+        return parse_comment(ast)
+
     return None
 
 def parse_block(ast):
@@ -70,6 +76,9 @@ def parse_block_with(ast):
 
     return with_node
 
+def parse_comment(ast):
+    return None
+
 def parse_literal(ast):
     if 'literal_type' not in ast:
         raise
@@ -112,6 +121,11 @@ def parse_print(ast):
     node = parse_variable(variable)
 
     return nodes.Output([node])
+
+def parse_raw(ast):
+    return parse_output(
+        ''.join(ast['raw'])
+    )
 
 def parse_template(ast):
     return nodes.Template(parse(ast), lineno=1)
