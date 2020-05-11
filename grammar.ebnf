@@ -244,16 +244,6 @@ conditional_expression_test
     test_function:variable_identifier
     ;
 
-variable_tests
-    =
-    left:variable_tests {SP}*
-    (
-        | ( logical_operator:variable_tests_logical_operator {SP}* right:variable_tests )
-        | ( comparator:variable_tests_comparator {SP}* right:variable_tests )
-        | ( "is" {SP}* test_function:variable_accessor_call_parameter_value )
-    )
-    ;
-
 variable_tests_comparator
     =
     | "=="
