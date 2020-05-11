@@ -50,3 +50,10 @@ across lines #}
     {%- endif %}</li>
 {%- endfor %}
 </ul>
+{% autoescape true %}
+    Autoescaping is active within this block
+{% endautoescape %}
+
+{% autoescape false %}
+    Autoescaping is inactive within this block
+{% endautoescape %}

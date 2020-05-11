@@ -78,6 +78,9 @@ def parse_block(ast):
 def parse_block_pair(ast):
     block_name = ast['start']['name']
 
+    if block_name == 'autoescape':
+        return parse_block_autoescape(ast)
+
     if block_name == 'block':
         return parse_block_block(ast)
 
@@ -97,6 +100,20 @@ def parse_block_pair(ast):
         return parse_block_with(ast)
 
     return None
+
+def parse_block_autoescape(ast):
+    return nodes.Scope(
+        [nodes.ScopedEvalContextModifier(
+            [nodes.Keyword(
+                'autoescape',
+                parse_variable(ast['start']['parameters'][0]['value']),
+                lineno=lineno_from_parseinfo(ast['start']['parameters'][0]['parseinfo'])
+            )],
+            parse(ast['contents']),
+            lineno=lineno_from_parseinfo(ast['parseinfo'])
+        )],
+        lineno=lineno_from_parseinfo(ast['parseinfo'])
+    )
 
 def parse_block_block(ast):
     name = parse_variable(ast['start']['parameters'][0]['value']).name
