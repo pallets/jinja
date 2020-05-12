@@ -381,6 +381,20 @@ def parse_literal(ast):
             const,
             lineno=lineno_from_parseinfo(ast['parseinfo'])
         )
+    elif literal_type == 'dictionary':
+        items = [
+            nodes.Pair(
+                parse_literal(item['key']),
+                parse_variable(item['value']),
+                lineno=lineno_from_parseinfo(item['parseinfo'])
+            )
+            for item in ast['value']
+        ]
+
+        return nodes.Dict(
+            items,
+            lineno=lineno_from_parseinfo(ast['parseinfo'])
+        )
     elif literal_type == 'list':
         items = [
             parse_literal(item) for item in ast['value']
