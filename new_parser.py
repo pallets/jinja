@@ -144,13 +144,28 @@ def parse_block_for(ast):
 
     block_parameters = ast['start']['parameters']
 
+    if block_parameters[0]['value']['operator'] == 'in':
+        block_parameters[0:1] = [
+            {
+                "value": block_parameters[0]['value']['left']
+            },
+            {
+                "value": {
+                    "variable": "in"
+                }
+            },
+            {
+                "value": block_parameters[0]['value']['right']
+            },
+        ]
+
     if block_parameters[1]['value']['variable'] != 'in':
         raise
 
     target = parse_variable(block_parameters[0]['value'], variable_context='store')
     iter = parse_variable(block_parameters[2]['value'])
 
-    if len(block_parameters) > 3:
+    if len(block_parameters) > 1:
         recursive = block_parameters[-1]['value']['variable'] == 'recursive'
 
     return nodes.For(
