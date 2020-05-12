@@ -332,6 +332,11 @@ def parse_conditional_expression_test(ast):
     dynamic_args = None
     dynamic_kwargs = None
 
+    if ast['test_function_parameter']:
+        args = [
+            parse_variable(ast['test_function_parameter'])
+        ]
+
     return nodes.Test(
         node,
         name,

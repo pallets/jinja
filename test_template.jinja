@@ -57,3 +57,6 @@ across lines #}
 {% autoescape false %}
     Autoescaping is inactive within this block
 {% endautoescape %}
+{% if foo.attribute is sameas false %}
+    the foo attribute really is the `False` singleton
+{% endif %}

@@ -242,6 +242,11 @@ conditional_expression_test
     test_variable:variable_identifier
     {SP}* "is" {SP}*
     test_function:variable_identifier
+    [
+        {SP}*
+        !( (variable_tests_logical_operator | "is") {SP}* )
+        test_function_parameter:variable_accessor_call_parameter_value
+    ]
     ;
 
 variable_tests_comparator
