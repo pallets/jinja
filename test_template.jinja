@@ -74,3 +74,7 @@ across lines #}
 {% from 'forms.html' import input with context %}
 {% include 'header.html' without context %}
 {% import 'forms.html' as forms %}
+{% include ['special_sidebar.html', 'sidebar.html'] ignore missing %}
+{% include "sidebar.html" ignore missing %}
+{% include "sidebar.html" ignore missing with context %}
+{% include "sidebar.html" ignore missing without context %}

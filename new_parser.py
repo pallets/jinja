@@ -254,6 +254,12 @@ def parse_block_include(ast):
     else:
         del block_parameters[-2:]
 
+    if len(block_parameters) == 3:
+        ignore_missing = True
+
+        if block_parameters[1]['value']['variable'] != 'ignore' and block_parameters[2]['value']['variable'] != 'missing':
+            raise
+
     return nodes.Include(
         template,
         with_context,
