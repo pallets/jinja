@@ -129,11 +129,12 @@ block_parameter_value_only
     | value:implicit_identifier_tuple
     | value:variable_identifier_with_alias
     | value:variable_accessor_call_parameter_value
+    | value:conditional_expression
     ;
 
 variable_expression
     =
-    variable_open type:`variable` name:variable_identifier variable_close
+    variable_open type:`variable` name:( conditional_expression | variable_identifier ) variable_close
     ;
 variable_open
     =
@@ -212,8 +213,7 @@ variable_accessor_call_parameter_key
 
 variable_accessor_call_parameter_value
     =
-    | conditional_expression
-    | variable_identifier
+    conditional_expression
     ;
 
 conditional_expression
