@@ -73,6 +73,9 @@ def parse_block(ast):
     if block_name == 'from':
         return parse_block_from(ast)
 
+    if block_name == 'include':
+        return parse_block_include(ast)
+
     if block_name == 'set':
         return parse_block_set(ast)
 
@@ -217,6 +220,25 @@ def parse_block_if(ast):
         body,
         elif_,
         else_,
+        lineno=lineno_from_parseinfo(ast['parseinfo'])
+    )
+
+def parse_block_include(ast):
+    block_parameters = ast['block']['parameters']
+
+    template = parse_conditional_expression(block_parameters[0]['value'])
+    with_context = _parse_import_context(block_parameters)
+    ignore_missing = False
+
+    if with_context is None:
+        with_context = False
+    else:
+        del block_parameters[-2:]
+
+    return nodes.Include(
+        template,
+        with_context,
+        ignore_missing,
         lineno=lineno_from_parseinfo(ast['parseinfo'])
     )
 
