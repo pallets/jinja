@@ -60,3 +60,7 @@ across lines #}
 {% if foo.attribute is sameas false %}
     the foo attribute really is the `False` singleton
 {% endif %}
+<ul{{ {'class': 'my_list', 'missing': none,
+        'id': 'list-%d'|format(variable)}|xmlattr }}>
+...
+</ul>

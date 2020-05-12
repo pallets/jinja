@@ -326,6 +326,7 @@ content
 
 LITERAL
     =
+    | NONE_LITERAL
     | STRING_LITERAL
     | NUMBER_LITERAL
     | BOOLEAN_LITERAL
@@ -404,6 +405,12 @@ BOOLEAN_LITERAL
         | ( ("true" | "True") value:`True`)
         | ( ("false" | "False") value:`False`)
     )
+    ;
+
+NONE_LITERAL
+    =
+    literal_type:`none`
+    ( "none" | "None" ) value:`None`
     ;
 
 IDENTIFIER

@@ -395,6 +395,11 @@ def parse_literal(ast):
             items,
             lineno=lineno_from_parseinfo(ast['parseinfo'])
         )
+    elif literal_type == 'none':
+        return nodes.Const(
+            None,
+            lineno=lineno_from_parseinfo(ast['parseinfo'])
+        )
     elif literal_type == 'list':
         items = [
             parse_literal(item) for item in ast['value']
