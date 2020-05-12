@@ -218,12 +218,18 @@ variable_accessor_call_parameter_value
 
 conditional_expression
     =
+    | conditional_expression_not
     | conditional_expression_if
     | conditional_expression_logical
     | conditional_expression_operator
     | conditional_expression_test
     | concatenate_expression
     | variable_identifier
+    ;
+
+conditional_expression_not
+    =
+    "not" {SP}* not:conditional_expression
     ;
 
 conditional_expression_if
