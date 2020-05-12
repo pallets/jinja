@@ -68,3 +68,6 @@ across lines #}
 {% extends layout_template if layout_template is defined else 'master.html' %}
 {{ "Hello " ~ name ~ "!" }}
 {{ 1 in [1, 2, 3] }}
+{{ foo is not bar }}
+{{ not (foo and bar) }}
+{{ foo not in bar }}

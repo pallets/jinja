@@ -309,43 +309,25 @@ def parse_conditional_expression(ast):
     if 'variable' in ast:
         return parse_variable(ast)
 
-    if 'operator' in ast:
-        return parse_conditional_expression_operator(ast)
-
     if 'concatenate' in ast:
         return parse_concatenate_expression(ast)
 
-    if 'test_expression' in ast:
-        return parse_conditional_expression_if(ast)
-
     if 'logical_operator' in ast:
         return parse_conditional_expression_logical(ast)
+
+    if 'not' in ast:
+        return parse_conditional_expression_not(ast)
+
+    if 'operator' in ast:
+        return parse_conditional_expression_operator(ast)
+
+    if 'test_expression' in ast:
+        return parse_conditional_expression_if(ast)
 
     if 'test_function' in ast:
         return parse_conditional_expression_test(ast)
 
     return None
-
-def parse_conditional_expression_operator(ast):
-    operand_map = {
-        '>': 'gt',
-        '>=': 'gteq',
-        '==': 'eq',
-        '!=': 'ne',
-        '<': 'lt',
-        '<=': 'lteq',
-    }
-
-    return nodes.Compare(
-        parse_variable(ast['left']),
-        [
-            nodes.Operand(
-                operand_map.get(ast['operator'], ast['operator']),
-                parse_variable(ast['right'])
-            )
-        ],
-        lineno=lineno_from_parseinfo(ast['parseinfo'])
-    )
 
 def parse_conditional_expression_if(ast):
     test = parse_conditional_expression(ast['test_expression'])
@@ -373,6 +355,33 @@ def parse_conditional_expression_logical(ast):
     return node_class(
         parse_conditional_expression(ast['left']),
         parse_conditional_expression(ast['right']),
+        lineno=lineno_from_parseinfo(ast['parseinfo'])
+    )
+
+def parse_conditional_expression_not(ast):
+    return nodes.Not(
+        parse_conditional_expression(ast['not']),
+        lineno=lineno_from_parseinfo(ast['parseinfo'])
+    )
+
+def parse_conditional_expression_operator(ast):
+    operand_map = {
+        '>': 'gt',
+        '>=': 'gteq',
+        '==': 'eq',
+        '!=': 'ne',
+        '<': 'lt',
+        '<=': 'lteq',
+    }
+
+    return nodes.Compare(
+        parse_variable(ast['left']),
+        [
+            nodes.Operand(
+                operand_map.get(ast['operator'], ast['operator']),
+                parse_variable(ast['right'])
+            )
+        ],
         lineno=lineno_from_parseinfo(ast['parseinfo'])
     )
 
