@@ -250,7 +250,7 @@ def parse_block_include(ast):
     ignore_missing = False
 
     if with_context is None:
-        with_context = False
+        with_context = True
     else:
         del block_parameters[-2:]
 
