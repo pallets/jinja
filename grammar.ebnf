@@ -222,6 +222,7 @@ conditional_expression
     | conditional_expression_logical
     | conditional_expression_comparator
     | conditional_expression_test
+    | concatenate_expression
     | variable_identifier
     ;
 
@@ -273,6 +274,12 @@ variable_tests_logical_operator
     =
     | "and"
     | "or"
+    ;
+
+concatenate_expression
+    =
+    concatenate+:variable_identifier
+    { {SP}* "~" {SP}* concatenate+:variable_identifier }+
     ;
 
 variable_filter

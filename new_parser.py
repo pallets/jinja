@@ -280,12 +280,25 @@ def parse_block_with(ast):
 def parse_comment(ast):
     return
 
+def parse_concatenate_expression(ast):
+    vars = [
+        parse_variable(var) for var in ast['concatenate']
+    ]
+
+    return nodes.Concat(
+        vars,
+        lineno=lineno_from_parseinfo(ast['parseinfo'])
+    )
+
 def parse_conditional_expression(ast):
     if 'variable' in ast:
         return parse_variable(ast)
 
     if 'comparator' in ast:
         return parse_conditional_expression_comparator(ast)
+
+    if 'concatenate' in ast:
+        return parse_concatenate_expression(ast)
 
     if 'test_expression' in ast:
         return parse_conditional_expression_if(ast)
