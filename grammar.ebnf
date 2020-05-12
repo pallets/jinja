@@ -243,6 +243,16 @@ conditional_expression_logical
 
 conditional_expression_operator
     =
+    conditional_expression_operator_in
+    | (
+        left:variable_identifier
+        {SP}* operator:conditional_expression_operator_operations {SP}*
+        right:variable_identifier
+    )
+    ;
+
+conditional_expression_operator_in
+    =
     | (
         "not"
         left:variable_identifier
@@ -251,7 +261,12 @@ conditional_expression_operator
     )
     | (
         left:variable_identifier
-        {SP}* operator:conditional_expression_operator_operations {SP}*
+        {SP}+
+        (
+            | ( "not" {SP}* "in" operator:`"notin"` )
+            | operator:"in"
+        )
+        {SP}+
         right:variable_identifier
     )
     ;
@@ -276,7 +291,6 @@ conditional_expression_operator_operations
     | ">="
     | "<"
     | "<="
-    | ( @:"in" SP )
     ;
 
 variable_tests_logical_operator
