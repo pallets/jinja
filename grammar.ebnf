@@ -329,8 +329,23 @@ LITERAL
     | STRING_LITERAL
     | NUMBER_LITERAL
     | BOOLEAN_LITERAL
+    | DICTIONARY_LITERAL
     | LIST_LITERAL
     | TUPLE_LITERAL
+    ;
+
+DICTIONARY_LITERAL
+    =
+    literal_type:`dictionary`
+    (
+        | ( "{" {SP}* value+:dictionary_key_value { {SP}* "," {SP}* value+:dictionary_key_value } {SP}* "}" )
+        | ( "{" {SP}* "}" )
+    )
+    ;
+
+dictionary_key_value
+    =
+    key:STRING_LITERAL {SP}* ":" {SP}* value:variable_identifier
     ;
 
 LIST_LITERAL
