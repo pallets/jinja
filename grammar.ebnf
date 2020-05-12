@@ -134,7 +134,7 @@ block_parameter_value_only
 
 variable_expression
     =
-    variable_open type:`variable` name:( conditional_expression | variable_identifier ) variable_close
+    variable_open type:`variable` name:conditional_expression variable_close
     ;
 variable_open
     =
