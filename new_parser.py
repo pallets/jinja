@@ -178,7 +178,12 @@ def parse_block_from(ast):
 
     template = parse_variable(parameters[0]['value'])
     names = []
-    with_context = False
+    with_context = _parse_import_context(parameters)
+
+    if with_context is None:
+        with_context = False
+    else:
+        del parameters[-2:]
 
     if len(parameters) > 2:
         for parameter in parameters[2:]:
@@ -617,3 +622,12 @@ def parse_variable_tuple(ast, variable_context):
         variable_context,
         lineno=lineno_from_parseinfo(ast['parseinfo'])
     )
+
+def _parse_import_context(block_parameters):
+    if block_parameters[-1]['value']['variable'] != 'context':
+        return None
+
+    if block_parameters[-2]['value']['variable'] not in ['with', 'without']:
+        return None
+
+    return block_parameters[-2]['value']['variable'] == 'with'
