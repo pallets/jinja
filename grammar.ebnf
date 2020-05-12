@@ -222,6 +222,7 @@ conditional_expression
     | conditional_expression_logical
     | conditional_expression_comparator
     | conditional_expression_test
+    | variable_identifier
     ;
 
 conditional_expression_if
