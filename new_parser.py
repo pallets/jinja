@@ -279,6 +279,9 @@ def parse_conditional_expression(ast):
     if 'comparator' in ast:
         return parse_conditional_expression_comparator(ast)
 
+    if 'test_expression' in ast:
+        return parse_conditional_expression_if(ast)
+
     if 'logical_operator' in ast:
         return parse_conditional_expression_logical(ast)
 
@@ -305,6 +308,21 @@ def parse_conditional_expression_comparator(ast):
                 parse_variable(ast['right'])
             )
         ],
+        lineno=lineno_from_parseinfo(ast['parseinfo'])
+    )
+
+def parse_conditional_expression_if(ast):
+    test = parse_conditional_expression(ast['test_expression'])
+    expr1 = parse_variable(ast['true_value'])
+    expr2 = None
+
+    if 'false_value' in ast:
+        expr2 = parse_variable(ast['false_value'])
+
+    return nodes.CondExpr(
+        test,
+        expr1,
+        expr2,
         lineno=lineno_from_parseinfo(ast['parseinfo'])
     )
 
@@ -429,7 +447,7 @@ def parse_output(ast):
 def parse_print(ast):
     variable = ast['name']
 
-    node = parse_variable(variable)
+    node = parse_conditional_expression(variable)
 
     return nodes.Output([node])
 
