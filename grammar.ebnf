@@ -280,7 +280,9 @@ conditional_expression_operator_in
 conditional_expression_test
     =
     test_variable:variable_identifier
-    {SP}* "is" {SP}*
+    {SP}* "is"
+    [ {SP}+ "not" {SP} negated:`True` ]
+    {SP}*
     test_function:variable_identifier
     [
         {SP}*

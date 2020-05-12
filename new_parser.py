@@ -391,7 +391,7 @@ def parse_conditional_expression_test(ast):
             parse_variable(ast['test_function_parameter'])
         ]
 
-    return nodes.Test(
+    test_node = nodes.Test(
         node,
         name,
         args,
@@ -400,6 +400,14 @@ def parse_conditional_expression_test(ast):
         dynamic_kwargs,
         lineno=lineno_from_parseinfo(ast['parseinfo'])
     )
+
+    if 'negated' in ast and ast['negated']:
+        test_node = nodes.Not(
+            test_node,
+            lineno=lineno_from_parseinfo(ast['parseinfo'])
+        )
+
+    return test_node
 
 def parse_literal(ast):
     if 'literal_type' not in ast:
