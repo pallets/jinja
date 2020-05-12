@@ -220,7 +220,7 @@ conditional_expression
     =
     | conditional_expression_if
     | conditional_expression_logical
-    | conditional_expression_comparator
+    | conditional_expression_operator
     | conditional_expression_test
     | concatenate_expression
     | variable_identifier
@@ -241,11 +241,19 @@ conditional_expression_logical
     right:conditional_expression
     ;
 
-conditional_expression_comparator
+conditional_expression_operator
     =
-    left:variable_identifier
-    {SP}* comparator:variable_tests_comparator {SP}*
-    right:variable_identifier
+    | (
+        "not"
+        left:variable_identifier
+        {SP}* operator:`"notin"` "in" {SP}*
+        right:variable_identifier
+    )
+    | (
+        left:variable_identifier
+        {SP}* operator:conditional_expression_operator_operations {SP}*
+        right:variable_identifier
+    )
     ;
 
 conditional_expression_test
@@ -260,7 +268,7 @@ conditional_expression_test
     ]
     ;
 
-variable_tests_comparator
+conditional_expression_operator_operations
     =
     | "=="
     | "!="
@@ -268,6 +276,7 @@ variable_tests_comparator
     | ">="
     | "<"
     | "<="
+    | ( @:"in" SP )
     ;
 
 variable_tests_logical_operator
