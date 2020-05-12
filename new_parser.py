@@ -294,8 +294,8 @@ def parse_conditional_expression(ast):
     if 'variable' in ast:
         return parse_variable(ast)
 
-    if 'comparator' in ast:
-        return parse_conditional_expression_comparator(ast)
+    if 'operator' in ast:
+        return parse_conditional_expression_operator(ast)
 
     if 'concatenate' in ast:
         return parse_concatenate_expression(ast)
@@ -311,7 +311,7 @@ def parse_conditional_expression(ast):
 
     return None
 
-def parse_conditional_expression_comparator(ast):
+def parse_conditional_expression_operator(ast):
     operand_map = {
         '>': 'gt',
         '>=': 'gteq',
@@ -325,7 +325,7 @@ def parse_conditional_expression_comparator(ast):
         parse_variable(ast['left']),
         [
             nodes.Operand(
-                operand_map[ast['comparator']],
+                operand_map.get(ast['operator'], ast['operator']),
                 parse_variable(ast['right'])
             )
         ],
