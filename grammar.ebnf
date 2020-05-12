@@ -218,9 +218,18 @@ variable_accessor_call_parameter_value
 
 conditional_expression
     =
+    | conditional_expression_if
     | conditional_expression_logical
     | conditional_expression_comparator
     | conditional_expression_test
+    ;
+
+conditional_expression_if
+    =
+    true_value:variable_identifier
+    {SP}* "if" {SP}*
+    test_expression:conditional_expression
+    [ {SP}* "else" {SP}* false_value:conditional_expression ]
     ;
 
 conditional_expression_logical
@@ -244,7 +253,7 @@ conditional_expression_test
     test_function:variable_identifier
     [
         {SP}*
-        !( (variable_tests_logical_operator | "is") {SP}* )
+        !( (variable_tests_logical_operator | "is" | "else" ) {SP}* )
         test_function_parameter:variable_accessor_call_parameter_value
     ]
     ;
