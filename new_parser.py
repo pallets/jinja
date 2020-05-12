@@ -67,6 +67,9 @@ def parse(ast):
 def parse_block(ast):
     block_name = ast['block']['name']
 
+    if block_name == 'extends':
+        return parse_block_extends(ast)
+
     if block_name == 'from':
         return parse_block_from(ast)
 
@@ -124,6 +127,11 @@ def parse_block_block(ast):
         parse(ast['contents']),
         scoped,
         lineno=lineno_from_parseinfo(ast['parseinfo'])
+    )
+
+def parse_block_extends(ast):
+    return nodes.Extends(
+        parse_conditional_expression(ast['block']['parameters'][0]['value'])
     )
 
 def parse_block_for(ast):
