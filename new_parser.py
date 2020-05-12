@@ -73,6 +73,9 @@ def parse_block(ast):
     if block_name == 'from':
         return parse_block_from(ast)
 
+    if block_name == 'import':
+        return parse_block_import(ast)
+
     if block_name == 'include':
         return parse_block_include(ast)
 
@@ -188,17 +191,16 @@ def parse_block_from(ast):
     else:
         del parameters[-2:]
 
-    if len(parameters) > 2:
-        for parameter in parameters[2:]:
-            if 'alias' in parameter['value']:
-                names.append(
-                    (
-                        parameter['value']['variable'],
-                        parameter['value']['alias']
-                    )
+    for parameter in parameters[2:]:
+        if 'alias' in parameter['value']:
+            names.append(
+                (
+                    parameter['value']['variable'],
+                    parameter['value']['alias']
                 )
-            else:
-                names.append(parameter['value']['variable'])
+            )
+        else:
+            names.append(parameter['value']['variable'])
 
     from_import = nodes.FromImport(
         template,
@@ -220,6 +222,23 @@ def parse_block_if(ast):
         body,
         elif_,
         else_,
+        lineno=lineno_from_parseinfo(ast['parseinfo'])
+    )
+
+def parse_block_import(ast):
+    block_parameters = ast['block']['parameters']
+
+    template = parse_variable(block_parameters[0]['value'])
+    target = None
+    with_context = _parse_import_context(block_parameters) or False
+
+    if len(block_parameters) > 2 and block_parameters[1]['value']['variable'] == 'as':
+        target = parse_variable(block_parameters[2]['value']).name
+
+    return nodes.Import(
+        template,
+        target,
+        with_context,
         lineno=lineno_from_parseinfo(ast['parseinfo'])
     )
 
