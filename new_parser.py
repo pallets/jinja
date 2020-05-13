@@ -242,15 +242,48 @@ def parse_block_from(ast):
 
 def parse_block_if(ast):
     test = parse_conditional_expression(ast['start']['parameters'][0]['value'])
-    body = parse(ast['contents'])
+    body = ast['contents']
     elif_ = []
-    else_ = []
+
+    else_ = _split_contents_at_block(body, 'else')
+
+    if else_ is not None:
+        body, _, else_ = else_
+    else:
+        else_ = []
+
+    elif_contents = _split_contents_at_block(body, 'elif')
+
+    if elif_contents is not None:
+        body, _, _ = elif_contents
+
+    while elif_contents is not None:
+        _, elif_condition, elif_contents = elif_contents
+
+        elif_parsed = _split_contents_at_block(elif_contents, 'elif')
+
+        if elif_parsed is not None:
+            elif_body, _, _ = elif_parsed
+        else:
+            elif_body = elif_contents
+
+        elif_.append(
+            nodes.If(
+                parse_conditional_expression(elif_condition['block']['parameters'][0]['value']),
+                parse(elif_body),
+                [],
+                [],
+                lineno=lineno_from_parseinfo(elif_condition['parseinfo'])
+            )
+        )
+
+        elif_contents = elif_parsed
 
     return nodes.If(
         test,
-        body,
+        parse(body),
         elif_,
-        else_,
+        parse(else_),
         lineno=lineno_from_parseinfo(ast['parseinfo'])
     )
 
@@ -711,9 +744,7 @@ def _parse_import_context(block_parameters):
 def _split_contents_at_block(contents, block_name):
     for index, expression in enumerate(contents):
         if 'block' in expression:
-            block = parse_block(expression)
-
             if expression['block']['name'] == block_name:
-                return (contents[:index], block, contents[index + 1:])
+                return (contents[:index], expression, contents[index + 1:])
 
     return None

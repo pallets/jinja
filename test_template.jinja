@@ -91,3 +91,10 @@ across lines #}
         <dd>{{ user.description }}</dd>
     </dl>
 {% endcall %}
+{% if kenny.sick %}
+    Kenny is sick.
+{% elif kenny.dead %}
+    You killed Kenny!  You bastard!!!
+{% else %}
+    Kenny looks okay --- so far
+{% endif %}
