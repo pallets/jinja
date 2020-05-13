@@ -143,7 +143,7 @@ def parse_block_extends(ast):
 def parse_block_for(ast):
     target = None
     iter = None
-    body = parse(ast['contents'])
+    body = ast['contents']
     else_ = []
     test = None
     recursive = False
@@ -174,8 +174,15 @@ def parse_block_for(ast):
     if len(block_parameters) > 1:
         recursive = block_parameters[-1]['value']['variable'] == 'recursive'
 
+    else_ = _split_contents_at_block(ast['contents'], 'else')
+
+    if else_ is not None:
+        body, _, else_ = else_
+    else:
+        else_ = []
+
     return nodes.For(
-        target, iter, body, else_, test, recursive,
+        target, iter, parse(body), parse(else_), test, recursive,
         lineno=lineno_from_parseinfo(ast['parseinfo'])
     )
 
@@ -678,3 +685,13 @@ def _parse_import_context(block_parameters):
         return None
 
     return block_parameters[-2]['value']['variable'] == 'with'
+
+def _split_contents_at_block(contents, block_name):
+    for index, expression in enumerate(contents):
+        if 'block' in expression:
+            block = parse_block(expression)
+
+            if expression['block']['name'] == block_name:
+                return (contents[:index], block, contents[index + 1:])
+
+    return None

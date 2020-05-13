@@ -78,3 +78,8 @@ across lines #}
 {% include "sidebar.html" ignore missing %}
 {% include "sidebar.html" ignore missing with context %}
 {% include "sidebar.html" ignore missing without context %}
+{% for item in seq %}
+    {{ item }}
+{% else %}
+    did not iterate
+{% endfor %}
