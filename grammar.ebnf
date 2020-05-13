@@ -39,8 +39,18 @@ raw_block_end
 
 block_expression
     =
-    | ( start:block_start contents:expressions end:block_end )
-    | block:block_start
+    | block_expression_pair
+    | block_expression_single
+    ;
+
+block_expression_pair
+    =
+    start:block_start contents:expressions end:block_end
+    ;
+
+block_expression_single
+    =
+    block:block_start
     ;
 
 block_start

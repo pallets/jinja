@@ -1,4 +1,5 @@
 from datetime import datetime
+from tatsu.exceptions import FailedSemantics
 from tatsu.util import asjson
 import json
 import pprint
@@ -6,6 +7,18 @@ import tatsu
 import sys
 from new_parser import parse_template
 from jinja2.environment import Environment
+
+
+class JinjaSemantics(object):
+
+    def block_expression_pair(self, ast):
+        start_block = ast['start']
+        end_block = ast['end']
+
+        if start_block['name'] != end_block['name']:
+            raise FailedSemantics()
+
+        return ast
 
 
 with open('grammar.ebnf', 'r') as tatsu_grammar:
@@ -20,7 +33,7 @@ with open('grammar.ebnf', 'r') as tatsu_grammar:
 
         parse_start = datetime.now()
 
-        ast = grammar.parse(template_string, whitespace='', parseinfo=True)
+        ast = grammar.parse(template_string, whitespace='', parseinfo=True, semantics=JinjaSemantics())
 
         parse_end = datetime.now()
 
