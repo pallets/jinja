@@ -93,6 +93,9 @@ def parse_block_pair(ast):
     if block_name == 'block':
         return parse_block_block(ast)
 
+    if block_name == 'call':
+        return parse_block_call(ast)
+
     if block_name == 'for':
         return parse_block_for(ast)
 
@@ -132,6 +135,25 @@ def parse_block_block(ast):
         name,
         parse(ast['contents']),
         scoped,
+        lineno=lineno_from_parseinfo(ast['parseinfo'])
+    )
+
+def parse_block_call(ast):
+    parameters = ast['start']['parameters']
+
+    call = parse_variable(parameters[-1]['value'])
+    args = []
+    defaults = []
+    body = parse(ast['contents'])
+
+    for arg in parameters[:-1]:
+        args.append(parse_variable(arg['value'], variable_context='param'))
+
+    return nodes.CallBlock(
+        call,
+        args,
+        defaults,
+        body,
         lineno=lineno_from_parseinfo(ast['parseinfo'])
     )
 

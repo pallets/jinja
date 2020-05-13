@@ -83,3 +83,11 @@ across lines #}
 {% else %}
     did not iterate
 {% endfor %}
+{% call(user) dump_users(list_of_user) %}
+    <dl>
+        <dl>Realname</dl>
+        <dd>{{ user.realname|e }}</dd>
+        <dl>Description</dl>
+        <dd>{{ user.description }}</dd>
+    </dl>
+{% endcall %}
