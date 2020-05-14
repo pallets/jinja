@@ -98,3 +98,6 @@ across lines #}
 {% else %}
     Kenny looks okay --- so far
 {% endif %}
+{% for user in users if not user.hidden %}
+    <li>{{ user.username|e }}</li>
+{% endfor %}

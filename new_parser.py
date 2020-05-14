@@ -193,7 +193,11 @@ def parse_block_for(ast):
     target = parse_variable(block_parameters[0]['value'], variable_context='store')
     iter = parse_variable(block_parameters[2]['value'])
 
-    if len(block_parameters) > 1:
+    if len(block_parameters) > 3:
+        if block_parameters[3]['value']['variable'] == 'if':
+            test = parse_conditional_expression(block_parameters[4]['value'])
+
+    if len(block_parameters) > 3:
         recursive = block_parameters[-1]['value']['variable'] == 'recursive'
 
     else_ = _split_contents_at_block(ast['contents'], 'else')
