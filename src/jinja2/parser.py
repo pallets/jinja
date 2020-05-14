@@ -945,12 +945,10 @@ class Parser:
 
         result = parse_template(
             grammar.parse(
-                self.source,
+                self.source.rstrip('\n'),
                 whitespace='',
                 parseinfo=True,
                 semantics=JinjaSemantics(),
-                trace=True,
-                colorize=True,
             )
         )
         result.set_environment(self.environment)

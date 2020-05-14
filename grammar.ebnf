@@ -157,6 +157,17 @@ variable_close
 
 variable_identifier
     =
+    | variable_identifier_parentheses
+    | variable_identifier_raw
+    ;
+
+variable_identifier_parentheses
+    =
+    "(" @:variable_identifier ")"
+    ;
+
+variable_identifier_raw
+    =
     variable:( LITERAL | IDENTIFIER )
     accessors:{ variable_accessor }*
     { {SP}* filters+:variable_filter }*
@@ -421,7 +432,7 @@ TUPLE_LITERAL
     =
     literal_type:`tuple`
     (
-        | ( "(" {SP}* value+:LITERAL {SP}* { "," {SP}* value+:LITERAL {SP}* } ")" )
+        | ( "(" {SP}* value+:LITERAL {SP}* { "," {SP}* value+:LITERAL {SP}* }+ ")" )
         | ( "(" {SP}* value+:LITERAL {SP}* "," {SP}* ")" )
     )
     ;
