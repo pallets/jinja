@@ -163,7 +163,7 @@ variable_identifier
 
 variable_identifier_parentheses
     =
-    "(" @:variable_identifier ")"
+    "(" @:conditional_expression ")"
     ;
 
 variable_identifier_raw
@@ -239,14 +239,50 @@ variable_accessor_call_parameter_value
 
 conditional_expression
     =
+    | complex_expression_powers
+    | complex_expression_math2
+    | concatenate_expression
+    | complex_expression_math1
     | conditional_expression_parentheses
     | conditional_expression_not
     | conditional_expression_if
     | conditional_expression_logical
     | conditional_expression_operator
     | conditional_expression_test
-    | concatenate_expression
     | variable_identifier
+    ;
+
+complex_expression_powers
+    =
+    left:variable_identifier {SP}* operator:"**" {SP}* right:variable_identifier
+    ;
+
+complex_expression_math2
+    =
+    left:variable_identifier
+    {SP}* math_operator:complex_expression_math2_operations {SP}*
+    right:variable_identifier
+    ;
+
+complex_expression_math2_operations
+    =
+    | "*"
+    | "/"
+    | "//"
+    | "%"
+    ;
+
+complex_expression_math1
+    =
+    left:variable_identifier
+    {SP}* math_operator:complex_expression_math1_operations {SP}*
+    right:variable_identifier
+    ;
+
+complex_expression_math1_operations
+    =
+    | "+"
+    | "-"
     ;
 
 conditional_expression_parentheses

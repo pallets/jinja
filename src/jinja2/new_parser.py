@@ -449,6 +449,9 @@ def parse_conditional_expression(ast):
     if 'logical_operator' in ast:
         return parse_conditional_expression_logical(ast)
 
+    if 'math_operator' in ast:
+        return parse_conditional_expression_math(ast)
+
     if 'not' in ast:
         return parse_conditional_expression_not(ast)
 
@@ -485,6 +488,24 @@ def parse_conditional_expression_logical(ast):
     }
 
     node_class = node_class_map[ast['logical_operator']]
+
+    return node_class(
+        parse_conditional_expression(ast['left']),
+        parse_conditional_expression(ast['right']),
+        lineno=lineno_from_parseinfo(ast['parseinfo'])
+    )
+
+def parse_conditional_expression_math(ast):
+    node_class_map = {
+        '+': nodes.Add,
+        '-': nodes.Sub,
+        '*': nodes.Mul,
+        '/': nodes.Div,
+        '//': nodes.FloorDiv,
+        '%': nodes.Mod,
+    }
+
+    node_class = node_class_map[ast['math_operator']]
 
     return node_class(
         parse_conditional_expression(ast['left']),
@@ -542,7 +563,7 @@ def parse_conditional_expression_test(ast):
 
     if ast['test_function_parameter']:
         args = [
-            parse_variable(ast['test_function_parameter'])
+            parse_conditional_expression(ast['test_function_parameter'])
         ]
 
     test_node = nodes.Test(
