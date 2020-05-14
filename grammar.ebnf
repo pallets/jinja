@@ -334,13 +334,8 @@ variable_filter
     "|" {SP}* @:filter
     ;
 filter =
-    name:IDENTIFIER
-    [arguments:filter_parameters]
-    ;
-
-filter_parameters
-    =
-    "(" @:variable_accessor_call_parameters ")"
+    variable:IDENTIFIER
+    accessors:{ variable_accessor_call }*
     ;
 
 comment_expression
