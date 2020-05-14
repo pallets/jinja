@@ -131,6 +131,9 @@ def parse_block_block(ast):
     name = parse_variable(ast['start']['parameters'][0]['value']).name
     scoped = False
 
+    if len(ast['start']['parameters']) > 1:
+        scoped = ast['start']['parameters'][-1]['value']['variable'] == 'scoped'
+
     return nodes.Block(
         name,
         parse(ast['contents']),

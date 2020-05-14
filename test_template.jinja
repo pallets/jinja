@@ -101,3 +101,6 @@ across lines #}
 {% for user in users if not user.hidden %}
     <li>{{ user.username|e }}</li>
 {% endfor %}
+{% for item in seq %}
+    <li>{% block loop_item scoped %}{{ item }}{% endblock %}</li>
+{% endfor %}
