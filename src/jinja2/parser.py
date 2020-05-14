@@ -943,11 +943,16 @@ class Parser:
         """Parse the whole template into a `Template` node."""
         from .new_parser import JinjaSemantics, parse_template
 
-        return parse_template(
+        result = parse_template(
             grammar.parse(
                 self.source,
                 whitespace='',
                 parseinfo=True,
                 semantics=JinjaSemantics(),
+                trace=True,
+                colorize=True,
             )
         )
+        result.set_environment(self.environment)
+
+        return result
