@@ -22,4 +22,4 @@ htmlcov
 tatsu_jinja.json
 tatsu_jinja.py
 parsed_jinja.py
-test_tatsu.jinja
+test_template.jinja

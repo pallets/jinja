@@ -303,7 +303,7 @@ conditional_expression_test
     [
         {SP}*
         !( (variable_tests_logical_operator | "is" | "else" ) {SP}* )
-        test_function_parameter:variable_accessor_call_parameter_value
+        test_function_parameter:variable_identifier
     ]
     ;
 
