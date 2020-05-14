@@ -1,4 +1,4 @@
-from jinja2 import nodes
+from . import nodes
 
 
 def lineno_from_parseinfo(parseinfo):
