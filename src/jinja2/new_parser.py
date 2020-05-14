@@ -1,3 +1,4 @@
+from tatsu.exceptions import FailedSemantics
 from . import nodes
 
 
