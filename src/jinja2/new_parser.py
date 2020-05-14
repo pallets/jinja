@@ -1,6 +1,18 @@
 from . import nodes
 
 
+class JinjaSemantics(object):
+
+    def block_expression_pair(self, ast):
+        start_block = ast['start']
+        end_block = ast['end']
+
+        if start_block['name'] != end_block['name']:
+            raise FailedSemantics()
+
+        return ast
+
+
 def lineno_from_parseinfo(parseinfo):
     return parseinfo.line + 1
 

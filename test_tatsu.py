@@ -9,18 +9,6 @@ from new_parser import parse_template
 from jinja2.environment import Environment
 
 
-class JinjaSemantics(object):
-
-    def block_expression_pair(self, ast):
-        start_block = ast['start']
-        end_block = ast['end']
-
-        if start_block['name'] != end_block['name']:
-            raise FailedSemantics()
-
-        return ast
-
-
 with open('grammar.ebnf', 'r') as tatsu_grammar:
     with open('test_template.jinja', 'r') as test_template:
         template_string = test_template.read()
