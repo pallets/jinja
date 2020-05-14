@@ -29,5 +29,5 @@ with open('grammar.ebnf', 'r') as tatsu_grammar:
         with open('parsed_jinja.py', 'w') as jinja_ast_file:
             pprint.pprint(jinja_ast, indent=2, stream=jinja_ast_file)
 
-        print("New Parser", new_parse_end - new_parse_start, file=sys.stderr)
-        print("Jinja Parser", jinja_parse_end - jinja_parse_start, file=sys.stderr)
+        print("New Parser", new_parse_end - new_parse_start)
+        print("Jinja Parser", jinja_parse_end - jinja_parse_start)

@@ -730,26 +730,39 @@ def parse_variable_filter(node, ast):
     dynamic_args = None
     dynamic_kwargs = None
 
-    if 'arguments' in ast:
-        for argument in ast['arguments']:
-            value = parse_variable(argument['value'])
+    variable = parse_variable(ast)
 
-            if 'key' in argument:
-                kwargs.append(
-                    nodes.Keyword(argument['key'], value)
-                )
-            else:
-                args.append(value)
+    filter_node = None
+    last_filter = None
+    start_variable = variable
 
-    return nodes.Filter(
+    while not isinstance(variable, nodes.Name):
+        if isinstance(variable, nodes.Call):
+            last_filter = filter_node
+            filter_node = variable
+
+        variable = variable.node
+
+    new_filter = nodes.Filter(
         node,
-        ast['name'],
+        variable.name,
         args,
         kwargs,
         dynamic_args,
         dynamic_kwargs,
         lineno=lineno_from_parseinfo(ast['parseinfo'])
     )
+
+    if filter_node is not None:
+        new_filter.args = filter_node.args
+        new_filter.kwargs = filter_node.kwargs
+
+    if last_filter is None:
+        return new_filter
+
+    last_filter.node = new_filter
+
+    return last_filter
 
 def parse_variable_tuple(ast, variable_context):
     identifiers = []
