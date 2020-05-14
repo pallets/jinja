@@ -104,3 +104,5 @@ across lines #}
 {% for item in seq %}
     <li>{% block loop_item scoped %}{{ item }}{% endblock %}</li>
 {% endfor %}
+{% if loop.index is divisibleby 3 %}{% endif %}
+{% if loop.index is divisibleby(3) %}{% endif %}

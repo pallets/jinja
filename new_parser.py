@@ -510,11 +510,22 @@ def parse_conditional_expression_test(ast):
     node = parse_variable(ast['test_variable'])
     test_function = parse_variable(ast['test_function'])
 
-    name = test_function.name
     args = []
     kwargs = []
     dynamic_args = None
     dynamic_kwargs = None
+
+    if isinstance(test_function, nodes.Call):
+        call = test_function
+
+        name = call.node.name
+        args = call.args
+        kwargs = call.kwargs
+        dynamic_args = call.dyn_args
+        dynamic_kwargs = call.dyn_kwargs
+    else:
+        name = test_function.name
+
 
     if ast['test_function_parameter']:
         args = [
