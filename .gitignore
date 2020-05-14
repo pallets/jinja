@@ -18,6 +18,8 @@ venv-*/
 htmlcov
 .pytest_cache/
 /.vscode/
+
 tatsu_jinja.json
 tatsu_jinja.py
 parsed_jinja.py
+test_tatsu.jinja
