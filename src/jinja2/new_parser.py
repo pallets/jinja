@@ -619,6 +619,10 @@ def parse_literal(ast):
             lineno=lineno_from_parseinfo(ast['parseinfo'])
         )
     elif literal_type == 'dictionary':
+        if not ast['value']:
+            ast['value'] = []
+
+
         items = [
             nodes.Pair(
                 parse_literal(item['key']),
@@ -638,6 +642,9 @@ def parse_literal(ast):
             lineno=lineno_from_parseinfo(ast['parseinfo'])
         )
     elif literal_type == 'list':
+        if not ast['value']:
+            ast['value'] = []
+
         items = [
             parse_literal(item) for item in ast['value']
         ]
@@ -647,6 +654,9 @@ def parse_literal(ast):
             lineno=lineno_from_parseinfo(ast['parseinfo'])
         )
     elif literal_type == 'tuple':
+        if not ast['value']:
+            ast['value'] = []
+
         items = [
             parse_literal(item) for item in ast['value']
         ]
