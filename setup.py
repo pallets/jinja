@@ -34,7 +34,7 @@ setup(
     package_dir={"": "src"},
     include_package_data=True,
     python_requires=">=3.6",
-    install_requires=["MarkupSafe>=1.1"],
+    install_requires=["MarkupSafe>=1.1", "TatSu"],
     extras_require={"i18n": ["Babel>=2.1"]},
     entry_points={"babel.extractors": ["jinja2 = jinja2.ext:babel_extract[i18n]"]},
 )
