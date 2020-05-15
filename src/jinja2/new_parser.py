@@ -500,6 +500,7 @@ def parse_conditional_expression_math(ast):
         '+': nodes.Add,
         '-': nodes.Sub,
         '*': nodes.Mul,
+        '**': nodes.Pow,
         '/': nodes.Div,
         '//': nodes.FloorDiv,
         '%': nodes.Mod,

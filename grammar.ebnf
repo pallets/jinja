@@ -254,7 +254,7 @@ conditional_expression
 
 complex_expression_powers
     =
-    left:variable_identifier {SP}* operator:"**" {SP}* right:variable_identifier
+    left:variable_identifier {SP}* math_operator:"**" {SP}* right:variable_identifier
     ;
 
 complex_expression_math2
