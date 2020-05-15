@@ -292,7 +292,7 @@ complex_expression_math1
     =
     left:variable_identifier
     {SP}* math_operator:complex_expression_math1_operations {SP}*
-    right:variable_identifier
+    right:conditional_expression
     ;
 
 complex_expression_math1_operations
