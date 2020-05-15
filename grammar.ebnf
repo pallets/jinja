@@ -65,14 +65,14 @@ block_end
 
 block_open
     =
+    | ( {SP}* @:"{%-" {SP}* )
     | @:"{%" {SP}*
-    | {SP}* @:"{%-" {SP}*
     ;
 
 block_close
     =
-    | @:"%}"
     | ( @:"-%}" {SP}* )
+    | @:"%}"
     ;
 
 line_block_expression
@@ -148,13 +148,13 @@ variable_expression
     ;
 variable_open
     =
-    | @:"{{" {SP}*
-    | {SP}* @:"{{-" {SP}*
+    | ( {SP}* @:"{{-" {SP}* )
+    | ( @:"{{" {SP}* )
     ;
 variable_close
     =
-    | {SP}* @:"}}"
-    | {SP}* @:"-}}" {SP}*
+    | ( {SP}* @:"-}}" {SP}* )
+    | ( {SP}* @:"}}" )
     ;
 
 variable_identifier
