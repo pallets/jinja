@@ -50,6 +50,7 @@ from .utils import missing
 
 # for direct template usage we have up to ten living environments
 _spontaneous_environments = LRUCache(10)
+_grammar_cache = LRUCache(10)
 
 
 def get_spontaneous_environment(cls, *args):
@@ -526,6 +527,69 @@ class Environment:
     def _parse(self, source, name, filename):
         """Internal parsing function used by `parse` and `compile`."""
         return Parser(self, source, name, filename).parse()
+
+    def get_grammar(self):
+        import tatsu
+
+        grammar_extensions = ''
+
+        with open('grammar.ebnf', 'r') as grammar_file:
+            base_grammar = grammar_file.read()
+
+        if self.block_start_string:
+            grammar_extensions += '''
+            @override
+            block_open_symbol = %r;
+            ''' % (self.block_start_string)
+
+        if self.block_end_string:
+            grammar_extensions += '''
+            @override
+            block_close_symbol = %r;
+            ''' % (self.block_end_string)
+
+        if self.variable_start_string:
+            grammar_extensions += '''
+            @override
+            variable_open_symbol = %r;
+            ''' % (self.variable_start_string)
+
+        if self.variable_end_string:
+            grammar_extensions += '''
+            @override
+            variable_close_symbol = %r;
+            ''' % (self.variable_end_string)
+
+        if self.comment_start_string:
+            grammar_extensions += '''
+            @override
+            comment_open_symbol = %r;
+            ''' % (self.comment_start_string)
+
+        if self.comment_end_string:
+            grammar_extensions += '''
+            @override
+            comment_close_symbol = %r;
+            ''' % (self.comment_end_string)
+
+        if self.line_statement_prefix:
+            grammar_extensions += '''
+            @override
+            line_block_open_symbol = %r;
+            ''' % (self.line_statement_prefix)
+
+        if self.line_comment_prefix:
+            grammar_extensions += '''
+            @override
+            line_comment_open_symbol = %r;
+            ''' % (self.line_comment_prefix)
+
+        final_grammar = base_grammar + grammar_extensions
+
+        if final_grammar not in _grammar_cache:
+            _grammar_cache[final_grammar] = tatsu.compile(final_grammar)
+
+        return _grammar_cache[final_grammar]
 
     def lex(self, source, name=None, filename=None):
         """Lex the given sourcecode and return a generator that yields

@@ -5,11 +5,6 @@ from .exceptions import TemplateSyntaxError
 from .lexer import describe_token
 from .lexer import describe_token_expr
 
-import tatsu
-
-with open('grammar.ebnf', 'r') as grammar_file:
-    grammar = tatsu.compile(grammar_file.read())
-
 
 _statement_keywords = frozenset(
     [
@@ -47,6 +42,7 @@ class Parser:
     def __init__(self, environment, source, name=None, filename=None, state=None):
         self.environment = environment
         self.source = source
+        self.grammar = environment.get_grammar()
         self.stream = environment._tokenize(source, name, filename, state)
         self.name = name
         self.filename = filename
@@ -944,7 +940,7 @@ class Parser:
         from .new_parser import JinjaSemantics, parse_template
 
         result = parse_template(
-            grammar.parse(
+            self.grammar.parse(
                 self.source.rstrip('\n'),
                 whitespace='',
                 parseinfo=True,

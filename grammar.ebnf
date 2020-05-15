@@ -67,14 +67,24 @@ block_end
 
 block_open
     =
-    | ( {SP}* @:"{%-" {SP}* )
-    | @:"{%" {SP}*
+    | ( {SP}* block_open_symbol "-" {SP}* )
+    | block_open_symbol {SP}*
+    ;
+
+block_open_symbol
+    =
+    "{%"
     ;
 
 block_close
     =
-    | ( @:"-%}" {SP}* )
-    | @:"%}"
+    | ( "-" block_close_symbol {SP}* )
+    | block_close_symbol
+    ;
+
+block_close_symbol
+    =
+    "%}"
     ;
 
 line_block_expression
@@ -90,12 +100,17 @@ line_block_start
 
 line_block_end
     =
-    line_block_open "end" name:IDENTIFIER "\n"
+    line_block_open "end" name:IDENTIFIER ("\n" | $)
     ;
 
 line_block_open
     =
-    "\n" {SP}* @:"# " {SP}*
+    "\n" {SP}* line_block_open_symbol {SP}*
+    ;
+
+line_block_open_symbol
+    =
+    "#"
     ;
 
 line_block_parameters
@@ -148,15 +163,27 @@ variable_expression
     =
     variable_open type:`variable` name:conditional_expression variable_close
     ;
+
 variable_open
     =
-    | ( {SP}* @:"{{-" {SP}* )
-    | ( @:"{{" {SP}* )
+    | ( {SP}* variable_open_symbol "-" {SP}* )
+    | ( variable_open_symbol {SP}* )
     ;
+
+variable_open_symbol
+    =
+    "{{"
+    ;
+
 variable_close
     =
-    | ( {SP}* @:"-}}" {SP}* )
-    | ( {SP}* @:"}}" )
+    | ( {SP}* "-" variable_close_symbol {SP}* )
+    | ( {SP}* variable_close_symbol )
+    ;
+
+variable_close_symbol
+    =
+    "}}"
     ;
 
 variable_identifier
@@ -406,12 +433,21 @@ comment_expression
     comment_open comment:comment_content comment_close
     ;
 
-comment_open
+comment_open =
+    comment_open_symbol
+    ;
+
+comment_open_symbol
     =
     "{#"
     ;
 
 comment_close
+    =
+    comment_close_symbol
+    ;
+
+comment_close_symbol
     =
     "#}"
     ;
@@ -428,7 +464,12 @@ line_comment_expression
 
 line_comment_open
     =
-    {SP}* "## "
+    {SP}* line_comment_open_symbol
+    ;
+
+line_comment_open_symbol
+    =
+    '##'
     ;
 
 line_comment_content
