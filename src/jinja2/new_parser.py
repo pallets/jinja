@@ -92,6 +92,9 @@ def parse_block(ast):
     if block_name == 'include':
         return parse_block_include(ast)
 
+    if block_name == 'print':
+        return parse_block_print(ast)
+
     if block_name == 'set':
         return parse_block_set(ast)
 
@@ -373,6 +376,11 @@ def parse_block_macro(ast):
         body,
         lineno=lineno_from_parseinfo(ast['parseinfo'])
     )
+
+def parse_block_print(ast):
+    node = parse_variable(ast['block']['parameters'][0])
+
+    return nodes.Output([node])
 
 def parse_block_set(ast):
     if 'block' in ast:
