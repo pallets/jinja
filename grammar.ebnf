@@ -243,12 +243,12 @@ conditional_expression
     | complex_expression_math2
     | concatenate_expression
     | complex_expression_math1
-    | conditional_expression_parentheses
     | conditional_expression_not
     | conditional_expression_if
     | conditional_expression_logical
     | conditional_expression_operator
     | conditional_expression_test
+    | conditional_expression_parentheses
     | variable_identifier
     ;
 

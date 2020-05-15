@@ -542,7 +542,7 @@ def parse_conditional_expression_operator(ast):
     )
 
 def parse_conditional_expression_test(ast):
-    node = parse_variable(ast['test_variable'])
+    node = parse_conditional_expression(ast['test_variable'])
     test_function = parse_variable(ast['test_function'])
 
     args = []
