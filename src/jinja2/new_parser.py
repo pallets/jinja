@@ -112,6 +112,9 @@ def parse_block_pair(ast):
     if block_name == 'call':
         return parse_block_call(ast)
 
+    if block_name == 'filter':
+        return parse_block_filter(ast)
+
     if block_name == 'for':
         return parse_block_for(ast)
 
@@ -180,6 +183,49 @@ def parse_block_call(ast):
 def parse_block_extends(ast):
     return nodes.Extends(
         parse_conditional_expression(ast['block']['parameters'][0]['value'])
+    )
+
+def parse_block_filter(ast):
+    body = parse(ast['contents'])
+    filter_parameter = ast['start']['parameters'][0]['value']
+
+    filter_base = parse_variable(filter_parameter)
+
+    if isinstance(filter_base, nodes.Filter):
+        filter = filter_base
+        while isinstance(filter.node, nodes.Filter):
+            filter = filter.node
+
+        args = []
+        kwargs = []
+        dynamic_args = None
+        dynamic_kwargs = None
+
+        inner_filter = filter.node
+
+        if isinstance(inner_filter, nodes.Call):
+            args = inner_filter.args
+            kwargs = inner_filter.kwargs
+            dynamic_args = inner_filter.dyn_args
+            dynamic_kwargs = inner_filter.dyn_kwargs
+
+            inner_filter = inner_filter.node
+
+        inner_filter = nodes.Filter(
+            None,
+            inner_filter.name,
+            args,
+            kwargs,
+            dynamic_args,
+            dynamic_kwargs,
+            lineno=inner_filter.lineno
+        )
+        filter.node = inner_filter
+
+    return nodes.FilterBlock(
+        body,
+        filter_base,
+        lineno=lineno_from_parseinfo(ast['parseinfo'])
     )
 
 def parse_block_for(ast):
