@@ -558,6 +558,14 @@ def parse_conditional_expression_test(ast):
         kwargs = call.kwargs
         dynamic_args = call.dyn_args
         dynamic_kwargs = call.dyn_kwargs
+    elif isinstance(test_function, nodes.Const):
+        const_map = {
+            None: 'none',
+            True: 'true',
+            False: 'false',
+        }
+
+        name = const_map[test_function.value]
     else:
         name = test_function.name
 
