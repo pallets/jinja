@@ -535,12 +535,17 @@ INTEGER_LITERAL
     /[\d_]*\d+/
     ;
 
+SIGNED_INTEGER_LITERAL
+    =
+    /[+-]?[\d_]*\d+/
+    ;
+
 NUMBER_LITERAL
     =
     literal_type:`number`
-    whole:INTEGER_LITERAL
-    ["." fractional:INTEGER_LITERAL]
-    [ ( "e" | "E" ) exponent:[ ( "+" | "-" ) ] INTEGER_LITERAL ]
+    whole:SIGNED_INTEGER_LITERAL
+    [ "." fractional:INTEGER_LITERAL ]
+    [ ( "e" | "E" ) exponent:SIGNED_INTEGER_LITERAL ]
     ;
 
 STRING_LITERAL
