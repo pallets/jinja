@@ -55,7 +55,9 @@ block_expression_single
 
 block_start
     =
-    block_open !("end") name:IDENTIFIER {SP}* parameters:[ block_parameters ] {SP}* block_close
+    block_open !("end") name:IDENTIFIER [ "(" name_call_parameters:variable_accessor_call_parameters ")" ]
+    [ {SP}+ parameters:block_parameters ]
+    {SP}* block_close
     ;
 
 block_end
