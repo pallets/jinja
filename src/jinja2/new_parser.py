@@ -1,5 +1,6 @@
 from tatsu.exceptions import FailedSemantics
 from . import nodes
+from .exceptions import TemplateSyntaxError
 
 
 class JinjaSemantics(object):
@@ -290,16 +291,36 @@ def parse_block_from(ast):
     else:
         del parameters[-2:]
 
-    for parameter in parameters[2:]:
-        if 'alias' in parameter['value']:
-            names.append(
-                (
-                    parameter['value']['variable'],
-                    parameter['value']['alias']
-                )
+    if len(parameters) > 1 and parameters[1]['value']['variable'] != 'import':
+        raise TemplateSyntaxError(
+            "Expecting 'import' but did not find it",
+            lineno=lineno_from_parseinfo(parameters[1]['parseinfo'])
+        )
+
+    if len(parameters) == 2:
+        raise TemplateSyntaxError(
+            "expected token 'name', got 'end of statement block'",
+            lineno=lineno_from_parseinfo(parameters[1]['parseinfo'])
+        )
+
+    def _variable_to_name(variable):
+        if isinstance(variable, str):
+            return variable
+
+        if 'alias' in variable:
+            return (
+                variable['variable'],
+                variable['alias']
             )
+
+        return variable['variable']
+
+    for parameter in parameters[2:]:
+        if 'tuple' in parameter['value']:
+            for variable in parameter['value']['tuple']:
+                names.append(_variable_to_name(variable))
         else:
-            names.append(parameter['value']['variable'])
+            names.append(_variable_to_name(parameter['value']))
 
     from_import = nodes.FromImport(
         template,
