@@ -755,6 +755,23 @@ def parse_variable_accessor_call(ast):
 
     if ast['parameters']:
         for argument in ast['parameters']:
+            if dynamic_kwargs is not None:
+                raise
+
+            if 'dynamic_keyword_argument' in argument:
+
+                dynamic_kwargs = parse_variable(argument['dynamic_keyword_argument'])
+
+                continue
+
+            if dynamic_args is not None:
+                raise
+
+            if 'dynamic_argument' in argument:
+                dynamic_args = parse_variable(argument['dynamic_argument'])
+
+                continue
+
             value = parse_variable(argument['value'])
 
             if 'key' in argument:

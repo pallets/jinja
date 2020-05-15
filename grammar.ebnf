@@ -219,6 +219,18 @@ variable_accessor_call_parameter
     =
     | variable_accessor_call_parameter_key_value
     | variable_accessor_call_parameter_value_only
+    | variable_accessor_call_parameter_vararg
+    | variable_accessor_call_parameter_varkwarg
+    ;
+
+variable_accessor_call_parameter_vararg
+    =
+    "*" dynamic_argument:variable_identifier
+    ;
+
+variable_accessor_call_parameter_varkwarg
+    =
+    "**" dynamic_keyword_argument:variable_identifier
     ;
 
 variable_accessor_call_parameter_key_value
