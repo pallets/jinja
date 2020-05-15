@@ -461,7 +461,7 @@ LIST_LITERAL
     =
     literal_type:`list`
     (
-        | ( "[" {SP}* value+:LITERAL {SP}* { "," {SP}* value+:LITERAL }* {SP}* "]" )
+        | ( "[" {SP}* value+:variable_identifier {SP}* { "," {SP}* value+:variable_identifier }* {SP}* "]" )
         | ( "[" {SP}* "]" )
     )
     ;

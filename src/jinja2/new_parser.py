@@ -655,7 +655,7 @@ def parse_literal(ast):
             ast['value'] = []
 
         items = [
-            parse_literal(item) for item in ast['value']
+            parse_variable(item) for item in ast['value']
         ]
 
         return nodes.List(
