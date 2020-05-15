@@ -233,7 +233,7 @@ variable_accessor_call
 variable_accessor_dot
     =
     accessor_type:`dot`
-    "." parameter:IDENTIFIER
+    "." parameter:( IDENTIFIER | NUMBER_LITERAL )
     ;
 
 variable_accessor_call_parameters

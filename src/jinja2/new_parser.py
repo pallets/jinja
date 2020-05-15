@@ -801,8 +801,12 @@ def parse_variable_accessor(node, ast):
         accessor_node = nodes.Getitem()
         accessor_node.arg = parse_variable(ast['parameter'])
     elif accessor_type == 'dot':
-        accessor_node = nodes.Getattr()
-        accessor_node.attr = ast['parameter']
+        if isinstance(ast['parameter'], str):
+            accessor_node = nodes.Getattr()
+            accessor_node.attr = ast['parameter']
+        else:
+            accessor_node = nodes.Getitem()
+            accessor_node.arg = parse_literal(ast['parameter'])
     elif accessor_type == 'call':
         accessor_node = parse_variable_accessor_call(ast)
 
