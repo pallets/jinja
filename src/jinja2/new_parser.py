@@ -539,14 +539,32 @@ def parse_conditional_expression_operator(ast):
         '<=': 'lteq',
     }
 
-    return nodes.Compare(
-        parse_variable(ast['left']),
-        [
+    expr = parse_variable(ast['left'])
+    operator = operand_map.get(ast['operator'], ast['operator'])
+    operands = []
+
+    right = parse_conditional_expression(ast['right'])
+
+    if isinstance(right, nodes.Compare):
+        operands.append(
             nodes.Operand(
-                operand_map.get(ast['operator'], ast['operator']),
-                parse_variable(ast['right'])
+                operator,
+                right.expr
             )
-        ],
+        )
+        operands.extend(right.ops)
+    else:
+
+        operands.append(
+            nodes.Operand(
+                operator,
+                right
+            )
+        )
+
+    return nodes.Compare(
+        expr,
+        operands,
         lineno=lineno_from_parseinfo(ast['parseinfo'])
     )
 

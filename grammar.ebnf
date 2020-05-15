@@ -332,7 +332,7 @@ conditional_expression_operator
     | (
         left:variable_identifier
         {SP}* operator:conditional_expression_operator_operations {SP}*
-        right:variable_identifier
+        right:conditional_expression
     )
     ;
 
