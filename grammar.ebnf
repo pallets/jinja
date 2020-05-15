@@ -335,7 +335,7 @@ conditional_expression_parentheses
 
 conditional_expression_not
     =
-    "not" {SP}* not:conditional_expression
+    "not" {SP}+ not:conditional_expression
     ;
 
 conditional_expression_if
