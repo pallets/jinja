@@ -160,13 +160,14 @@ def parse_block_block(ast):
 def parse_block_call(ast):
     parameters = ast['start']['parameters']
 
-    call = parse_variable(parameters[-1]['value'])
+    call = parse_variable(parameters[0]['value'])
     args = []
     defaults = []
     body = parse(ast['contents'])
 
-    for arg in parameters[:-1]:
-        args.append(parse_variable(arg['value'], variable_context='param'))
+    if 'name_call_parameters' in ast['start']:
+        for arg in ast['start']['name_call_parameters']:
+            args.append(parse_variable(arg['value'], variable_context='param'))
 
     return nodes.CallBlock(
         call,
