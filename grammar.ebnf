@@ -126,12 +126,16 @@ implicit_identifier_tuple
 block_parameters
     =
     @+:block_parameter
-    [ {SP}* "," ]
     {
-        {SP}*
+        block_parameter_separator
         @+:block_parameter
-        [ {SP}* "," ]
      }*
+    ;
+
+block_parameter_separator
+    =
+    | ( {SP}* "," {SP}* )
+    | ( {SP}+ )
     ;
 
 block_parameter
