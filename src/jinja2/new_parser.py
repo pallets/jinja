@@ -606,7 +606,7 @@ def parse_conditional_expression_operator(ast):
         '<=': 'lteq',
     }
 
-    expr = parse_variable(ast['left'])
+    expr = parse_conditional_expression(ast['left'])
     operator = operand_map.get(ast['operator'], ast['operator'])
     operands = []
 
