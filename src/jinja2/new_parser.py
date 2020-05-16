@@ -464,7 +464,7 @@ def parse_block_set(ast):
 
         return nodes.Assign(
             key,
-            parse_variable(assignment['value']),
+            parse_conditional_expression(assignment['value']),
             lineno=lineno_from_parseinfo(ast['parseinfo'])
         )
     elif 'start' in ast:
