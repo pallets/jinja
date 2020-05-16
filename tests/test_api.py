@@ -194,22 +194,19 @@ class TestMeta:
         i = meta.find_referenced_templates(ast)
         assert list(i) == ["layout.html", "test.html", "meh.html", "muh.html"]
 
-    def test_find_included_templates(self, env):
-        ast = env.parse('{% include ["foo.html", "bar.html"] %}')
+    @pytest.mark.parametrize(
+        "include,templates",
+        (
+            ('{% include ["foo.html", "bar.html"] %}', ["foo.html", "bar.html"]),
+            ('{% include ("foo.html", "bar.html") %}', ["foo.html", "bar.html"]),
+            ('{% include ["foo.html", "bar.html", foo] %}', ["foo.html", "bar.html", None]),
+            ('{% include ("foo.html", "bar.html", foo) %}', ["foo.html", "bar.html", None])
+        )
+    )
+    def test_find_included_templates(self, env, include, templates):
+        ast = env.parse(include)
         i = meta.find_referenced_templates(ast)
-        assert list(i) == ["foo.html", "bar.html"]
-
-        ast = env.parse('{% include ("foo.html", "bar.html") %}')
-        i = meta.find_referenced_templates(ast)
-        assert list(i) == ["foo.html", "bar.html"]
-
-        ast = env.parse('{% include ["foo.html", "bar.html", foo] %}')
-        i = meta.find_referenced_templates(ast)
-        assert list(i) == ["foo.html", "bar.html", None]
-
-        ast = env.parse('{% include ("foo.html", "bar.html", foo) %}')
-        i = meta.find_referenced_templates(ast)
-        assert list(i) == ["foo.html", "bar.html", None]
+        assert list(i) == templates
 
 
 class TestStreaming:
