@@ -89,8 +89,18 @@ block_close_symbol
 
 line_block_expression
     =
-    | ( start:line_block_start contents:expressions end:line_block_end )
-    | block:line_block_start
+    | line_block_expression_pair
+    | line_block_expression_single
+    ;
+
+line_block_expression_pair
+    =
+    start:line_block_start contents:expressions end:line_block_end
+    ;
+
+line_block_expression_single
+    =
+    block:line_block_start
     ;
 
 line_block_start
