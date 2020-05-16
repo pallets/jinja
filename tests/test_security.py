@@ -110,19 +110,25 @@ class TestSandbox:
             with pytest.raises(TemplateRuntimeError):
                 t.render(ctx)
 
-    def test_unary_operator_intercepting(self, env):
+    @pytest.mark.parametrize(
+        "expr,ctx,rv",
+        (
+            ("-1", {}, "-1"),
+            ("-a", {"a": 2}, "-2")
+        )
+    )
+    def test_unary_operator_intercepting(self, env, expr, ctx, rv):
         def disable_op(arg):
             raise TemplateRuntimeError("that operator so does not work")
 
-        for expr, ctx, rv in ("-1", {}, "-1"), ("-a", {"a": 2}, "-2"):
-            env = SandboxedEnvironment()
-            env.unop_table["-"] = disable_op
-            t = env.from_string(f"{{{{ {expr} }}}}")
-            assert t.render(ctx) == rv
-            env.intercepted_unops = frozenset(["-"])
-            t = env.from_string(f"{{{{ {expr} }}}}")
-            with pytest.raises(TemplateRuntimeError):
-                t.render(ctx)
+        env = SandboxedEnvironment()
+        env.unop_table["-"] = disable_op
+        t = env.from_string(f"{{{{ {expr} }}}}")
+        assert t.render(ctx) == rv
+        env.intercepted_unops = frozenset(["-"])
+        t = env.from_string(f"{{{{ {expr} }}}}")
+        with pytest.raises(TemplateRuntimeError):
+            t.render(ctx)
 
 
 class TestStringFormat:

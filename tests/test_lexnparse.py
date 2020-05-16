@@ -449,8 +449,9 @@ class TestSyntax:
         tmpl = env.from_string('{{ "foo"|upper + "bar"|upper }}')
         assert tmpl.render() == "FOOBAR"
 
-    def test_function_calls(self, env):
-        tests = [
+    @pytest.mark.parametrize(
+        "should_fail,sig",
+        (
             (True, "*foo, bar"),
             (True, "*foo, *bar"),
             (True, "**foo, *bar"),
@@ -466,16 +467,18 @@ class TestSyntax:
             (False, "*foo, **bar"),
             (False, "*foo, bar=42, **baz"),
             (False, "foo, *args, bar=23, **baz"),
-        ]
-        for should_fail, sig in tests:
-            if should_fail:
-                with pytest.raises(TemplateSyntaxError):
-                    env.from_string(f"{{{{ foo({sig}) }}}}")
-            else:
-                env.from_string(f"foo({sig})")
+        )
+    )
+    def test_function_calls(self, env, should_fail, sig):
+        if should_fail:
+            with pytest.raises(TemplateSyntaxError):
+                env.from_string(f"{{{{ foo({sig}) }}}}")
+        else:
+            env.from_string(f"foo({sig})")
 
-    def test_tuple_expr(self, env):
-        for tmpl in [
+    @pytest.mark.parametrize(
+        "tmpl",
+        (
             "{{ () }}",
             "{{ (1, 2) }}",
             "{{ (1, 2,) }}",
@@ -484,8 +487,10 @@ class TestSyntax:
             "{% for foo, bar in seq %}...{% endfor %}",
             "{% for x in foo, bar %}...{% endfor %}",
             "{% for x in foo, %}...{% endfor %}",
-        ]:
-            assert env.from_string(tmpl)
+        )
+    )
+    def test_tuple_expr(self, env, tmpl):
+        assert env.from_string(tmpl)
 
     def test_trailing_comma(self, env):
         tmpl = env.from_string("{{ (1, 2,) }}|{{ [1, 2,] }}|{{ {1: 2,} }}")
