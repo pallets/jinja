@@ -449,7 +449,7 @@ def parse_block_macro(ast):
     )
 
 def parse_block_print(ast):
-    node = parse_variable(ast['block']['parameters'][0])
+    node = parse_variable(ast['block']['parameters'][0]['value'])
 
     return nodes.Output([node])
 
