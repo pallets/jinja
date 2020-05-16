@@ -105,12 +105,12 @@ line_block_expression_single
 
 line_block_start
     =
-    line_block_open !("end") name:IDENTIFIER {SP}* parameters:[ line_block_parameters ] { !"\n" SP }* [ ":" { !"\n" SP }* ] "\n"
+    line_block_open !("end") name:IDENTIFIER { !"\n" SP}* parameters:[ line_block_parameters ] [ { !"\n" SP }* ":" ] line_block_close
     ;
 
 line_block_end
     =
-    line_block_open "end" name:IDENTIFIER ("\n" | $)
+    line_block_open "end" name:IDENTIFIER line_block_close
     ;
 
 line_block_open
@@ -121,6 +121,12 @@ line_block_open
 line_block_open_symbol
     =
     "#"
+    ;
+
+line_block_close
+    =
+    | ( {SP}* $ )
+    | ( { !"\n" SP }* "\n" )
     ;
 
 line_block_parameters
