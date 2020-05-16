@@ -115,7 +115,7 @@ line_block_end
 
 line_block_open
     =
-    "\n" {SP}* line_block_open_symbol {SP}*
+    { !"\n" SP }* line_block_open_symbol { !"\n" SP }*
     ;
 
 line_block_open_symbol
