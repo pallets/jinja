@@ -837,9 +837,6 @@ def parse_template(ast):
     return nodes.Template(parse(ast), lineno=1)
 
 def parse_variable(ast, variable_context='load'):
-    if 'tuple' in ast:
-        return parse_variable_tuple(ast, variable_context)
-
     name = ast['variable']
 
     if 'literal_type' in name:
@@ -979,18 +976,6 @@ def parse_variable_filter(node, ast):
     last_filter.node = new_filter
 
     return last_filter
-
-def parse_variable_tuple(ast, variable_context):
-    identifiers = []
-
-    for name in ast['tuple']:
-        identifiers.append(nodes.Name(name, variable_context))
-
-    return nodes.Tuple(
-        identifiers,
-        variable_context,
-        lineno=lineno_from_parseinfo(ast['parseinfo'])
-    )
 
 def _parse_import_context(block_parameters):
     if block_parameters[-1]['value']['variable'] != 'context':

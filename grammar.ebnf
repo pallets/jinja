@@ -134,11 +134,6 @@ line_block_parameters
     @+:block_parameter { { !"\n" SP }+ @+:block_parameter }*
     ;
 
-implicit_identifier_tuple
-    =
-    tuple+:IDENTIFIER { {SP}* "," {SP}* tuple+:IDENTIFIER }+
-    ;
-
 block_parameters
     =
     @+:block_parameter
@@ -167,13 +162,11 @@ block_parameter_key_value
 
 block_parameter_key
     =
-    | implicit_identifier_tuple
-    | variable_accessor_call_parameter_key
+    variable_accessor_call_parameter_key
     ;
 
 block_parameter_value_only
     =
-    | value:implicit_identifier_tuple
     | value:variable_identifier_with_alias
     | value:variable_accessor_call_parameter_value
     | value:conditional_expression
@@ -560,9 +553,27 @@ TUPLE_LITERAL
     =
     literal_type:`tuple`
     (
-        | ( "(" {SP}* value+:LITERAL {SP}* { "," {SP}* value+:LITERAL {SP}* }+ ")" )
-        | ( "(" {SP}* value+:LITERAL {SP}* "," {SP}* ")" )
+        | value:EXPLICIT_TUPLE_LITERAL
+        | value:IMPLICIT_TUPLE_LITERAL
+        | EMPTY_TUPLE_LITERAL
     )
+    ;
+
+EXPLICIT_TUPLE_LITERAL
+    =
+    | ( "(" {SP}* @+:LITERAL {SP}* { "," {SP}* @+:LITERAL {SP}* }+ ")" )
+    | ( "(" {SP}* @+:LITERAL {SP}* "," {SP}* ")" )
+    ;
+
+IMPLICIT_TUPLE_LITERAL
+    =
+    | ( @+:LITERAL {SP}* { "," {SP}* @+:LITERAL {SP}* }+ )
+    | ( @+:LITERAL {SP}* "," {SP}* )
+    ;
+
+EMPTY_TUPLE_LITERAL
+    =
+    "(" {SP}* ")"
     ;
 
 INTEGER_LITERAL
