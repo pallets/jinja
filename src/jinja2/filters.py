@@ -268,16 +268,16 @@ def do_dictsort(value, case_sensitive=False, by="key", reverse=False):
 
     .. sourcecode:: jinja
 
-        {% for item in mydict|dictsort %}
+        {% for key, value in mydict|dictsort %}
             sort the dict by key, case insensitive
 
-        {% for item in mydict|dictsort(reverse=true) %}
+        {% for key, value in mydict|dictsort(reverse=true) %}
             sort the dict by key, case insensitive, reverse order
 
-        {% for item in mydict|dictsort(true) %}
+        {% for key, value in mydict|dictsort(true) %}
             sort the dict by key, case sensitive
 
-        {% for item in mydict|dictsort(false, 'value') %}
+        {% for key, value in mydict|dictsort(false, 'value') %}
             sort the dict by value, case insensitive
     """
     if by == "key":
