@@ -865,7 +865,10 @@ def parse_variable_accessor_call(ast):
     if ast['parameters']:
         for argument in ast['parameters']:
             if dynamic_kwargs is not None:
-                raise
+                raise TemplateSyntaxError(
+                    'invalid syntax for function call expression',
+                    lineno=lineno_from_parseinfo(argument['parseinfo'])
+                )
 
             if 'dynamic_keyword_argument' in argument:
 
@@ -874,7 +877,10 @@ def parse_variable_accessor_call(ast):
                 continue
 
             if dynamic_args is not None:
-                raise
+                raise TemplateSyntaxError(
+                    'invalid syntax for function call expression',
+                    lineno=lineno_from_parseinfo(argument['parseinfo'])
+                )
 
             if 'dynamic_argument' in argument:
                 dynamic_args = parse_variable(argument['dynamic_argument'])
