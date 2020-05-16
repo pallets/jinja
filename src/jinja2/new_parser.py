@@ -14,6 +14,9 @@ class JinjaSemantics(object):
 
         return ast
 
+    def line_block_expression_pair(self, ast):
+        return self.block_expression_pair(ast)
+
 
 def lineno_from_parseinfo(parseinfo):
     return parseinfo.line + 1
