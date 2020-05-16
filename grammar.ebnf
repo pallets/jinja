@@ -131,7 +131,7 @@ line_block_close
 
 line_block_parameters
     =
-    @+:block_parameter { { !"\n" SP }* @+:block_parameter }*
+    @+:block_parameter { { !"\n" SP }+ @+:block_parameter }*
     ;
 
 implicit_identifier_tuple
