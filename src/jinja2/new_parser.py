@@ -263,6 +263,12 @@ def parse_block_for(ast):
     target = parse_variable(block_parameters[0]['value'], variable_context='store')
     iter = parse_variable(block_parameters[2]['value'])
 
+    if not isinstance(target, (nodes.Name, nodes.Tuple)):
+        raise TemplateSyntaxError(
+            "expected token 'in'",
+            lineno=target.lineno
+        )
+
     if len(block_parameters) > 3:
         if block_parameters[3]['value']['variable'] == 'if':
             test = parse_conditional_expression(block_parameters[4]['value'])
@@ -811,6 +817,16 @@ def parse_variable(ast, variable_context='load'):
 
     for accessor_ast in ast['accessors']:
         node = parse_variable_accessor(node, accessor_ast)
+
+    signed_node_map = {
+        '-': nodes.Neg,
+        '+': nodes.Pos,
+    }
+
+    if 'signed' in ast:
+        node_class = signed_node_map[ast['signed']]
+
+        node = node_class(node)
 
     if ast['filters']:
         for filter_ast in ast['filters']:
