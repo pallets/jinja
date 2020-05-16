@@ -2,6 +2,7 @@
 import operator
 import re
 from collections import abc
+from math import isnan
 from numbers import Number
 
 from .runtime import Undefined
@@ -120,7 +121,7 @@ def test_mapping(value):
 
 def test_number(value):
     """Return true if the variable is a number."""
-    return isinstance(value, Number)
+    return isinstance(value, Number) and not isnan(value)
 
 
 def test_sequence(value):
