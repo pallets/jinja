@@ -233,7 +233,6 @@ def parse_block_filter(ast):
     )
 
 def parse_block_for(ast):
-    target = None
     iter = None
     body = ast['contents']
     else_ = []
@@ -242,39 +241,76 @@ def parse_block_for(ast):
 
     block_parameters = ast['start']['parameters']
 
-    if block_parameters[0]['value']['operator'] == 'in':
-        block_parameters[0:1] = [
-            {
-                "value": block_parameters[0]['value']['left']
-            },
-            {
-                "value": {
-                    "variable": "in"
-                }
-            },
-            {
-                "value": block_parameters[0]['value']['right']
-            },
-        ]
+    target = []
+    for param_number, param in enumerate(block_parameters):
+        if param['value']['variable'] == 'in':
+            break
 
-    if block_parameters[1]['value']['variable'] != 'in':
-        raise
+        if param['value']['operator'] == 'in':
+            block_parameters[param_number:param_number + 1] = [
+                {
+                    "value": param['value']['left']
+                },
+                {
+                    "value": {
+                        "variable": "in"
+                    }
+                },
+                {
+                    "value": param['value']['right']
+                },
+            ]
 
-    target = parse_variable(block_parameters[0]['value'], variable_context='store')
-    iter = parse_variable(block_parameters[2]['value'])
+            target.append(
+                parse_variable(
+                    param['value']['left'],
+                    variable_context='store'
+                )
+            )
 
-    if not isinstance(target, (nodes.Name, nodes.Tuple)):
+            break
+
+        target.append(parse_variable(param['value'], variable_context='store'))
+
+    if len(target) == 0:
         raise TemplateSyntaxError(
             "expected token 'in'",
-            lineno=target.lineno
+            lineno=lineno_from_parseinfo(ast['start']['parseinfo'])
         )
 
-    if len(block_parameters) > 3:
-        if block_parameters[3]['value']['variable'] == 'if':
-            test = parse_conditional_expression(block_parameters[4]['value'])
+    if len(target) == len(block_parameters):
+        raise TemplateSyntaxError(
+            "expected token 'in'",
+            lineno=target[1].lineno
+        )
 
-    if len(block_parameters) > 3:
-        recursive = block_parameters[-1]['value']['variable'] == 'recursive'
+    if len(target) == 1:
+        target = target[0]
+    else:
+        target = nodes.Tuple(
+            target,
+            'store',
+            lineno=target[0].lineno
+        )
+    param_number += 2
+
+    iter = parse_variable(block_parameters[param_number]['value'])
+    param_number += 1
+
+    if len(block_parameters) > param_number + 1:
+        if block_parameters[param_number]['value']['variable'] == 'if':
+            param_number += 1
+
+            test = parse_conditional_expression(
+                block_parameters[param_number]['value']
+            )
+            param_number += 1
+
+    if len(block_parameters) > param_number + 2:
+        raise
+
+    if len(block_parameters) == param_number + 1:
+        recursive = block_parameters[param_number]['value']['variable'] == 'recursive'
 
     else_ = _split_contents_at_block(ast['contents'], 'else')
 
