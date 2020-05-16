@@ -564,6 +564,9 @@ def parse_conditional_expression(ast):
     if 'variable' in ast:
         return parse_variable(ast)
 
+    if 'literal_type' in ast:
+        return parse_literal(ast)
+
     if 'concatenate' in ast:
         return parse_concatenate_expression(ast)
 
@@ -806,7 +809,7 @@ def parse_literal(ast):
             ast['value'] = []
 
         items = [
-            parse_literal(item) for item in ast['value']
+            parse_variable(item) for item in ast['value']
         ]
 
         return nodes.Tuple(

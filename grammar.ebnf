@@ -174,7 +174,7 @@ block_parameter_value_only
 
 variable_expression
     =
-    variable_open type:`variable` name:conditional_expression variable_close
+    variable_open type:`variable` name:variable_expression_name variable_close
     ;
 
 variable_open
@@ -197,6 +197,12 @@ variable_close
 variable_close_symbol
     =
     "}}"
+    ;
+
+variable_expression_name
+    =
+    | TUPLE_LITERAL
+    | conditional_expression
     ;
 
 variable_identifier
@@ -523,7 +529,7 @@ LITERAL
     | BOOLEAN_LITERAL
     | DICTIONARY_LITERAL
     | LIST_LITERAL
-    | TUPLE_LITERAL
+    | EXPLICIT_TUPLE_LITERAL
     ;
 
 DICTIONARY_LITERAL
@@ -551,28 +557,32 @@ LIST_LITERAL
 
 TUPLE_LITERAL
     =
-    literal_type:`tuple`
-    (
-        | value:EXPLICIT_TUPLE_LITERAL
-        | value:IMPLICIT_TUPLE_LITERAL
-        | EMPTY_TUPLE_LITERAL
-    )
+    | EXPLICIT_TUPLE_LITERAL
+    | IMPLICIT_TUPLE_LITERAL
+    | EMPTY_TUPLE_LITERAL
     ;
 
 EXPLICIT_TUPLE_LITERAL
     =
-    | ( "(" {SP}* @+:LITERAL {SP}* { "," {SP}* @+:LITERAL {SP}* }+ ")" )
-    | ( "(" {SP}* @+:LITERAL {SP}* "," {SP}* ")" )
+    literal_type:`tuple`
+    "(" value:TUPLE_LITERAL_CONTENTS ")"
     ;
 
 IMPLICIT_TUPLE_LITERAL
     =
-    | ( @+:LITERAL {SP}* { "," {SP}* @+:LITERAL {SP}* }+ )
-    | ( @+:LITERAL {SP}* "," {SP}* )
+    literal_type:`tuple`
+    value:TUPLE_LITERAL_CONTENTS
+    ;
+
+TUPLE_LITERAL_CONTENTS
+    =
+    | ( @+:variable_identifier {SP}* { "," {SP}* @+:variable_identifier {SP}* }+ )
+    | ( @+:variable_identifier {SP}* "," {SP}* )
     ;
 
 EMPTY_TUPLE_LITERAL
     =
+    literal_type:`tuple`
     "(" {SP}* ")"
     ;
 
