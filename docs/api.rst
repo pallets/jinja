@@ -28,18 +28,18 @@ are in use.
 The simplest way to configure Jinja to load templates for your application
 looks roughly like this::
 
-    from jinja2 import Environment, PackageLoader, select_autoescape
+    from jinja2 import Environment, FileSystemLoader, select_autoescape
     env = Environment(
-        loader=PackageLoader('yourapplication', 'templates'),
+        loader=FileSystemLoader('path/to/templates'),
         autoescape=select_autoescape(['html', 'xml'])
     )
 
 This will create a template environment with the default settings and a
-loader that looks up the templates in the `templates` folder inside the
-`yourapplication` python package.  Different loaders are available
-and you can also write your own if you want to load templates from a
-database or other resources.  This also enables autoescaping for HTML and
-XML files.
+loader that looks up the templates in the `templates` folder.
+
+Different loaders are available and you can also write your own if you
+want to load templates from a database or other resources.  This also
+enables autoescaping for HTML and XML files.
 
 To load a template from this environment you just have to call the
 :meth:`get_template` method which then returns the loaded :class:`Template`::
