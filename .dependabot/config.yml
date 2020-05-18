@@ -5,4 +5,4 @@ update_configs:
     update_schedule: daily
     ignored_updates:
       - match:
-          dependency_name: "-e *"
+          dependency_name: "file:."
