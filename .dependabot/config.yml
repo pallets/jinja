@@ -4,4 +4,5 @@ update_configs:
     directory: /
     update_schedule: daily
     ignored_updates:
-      - dependency_name: "-e *"
+      - match:
+          dependency_name: "-e *"
