@@ -137,25 +137,30 @@ class BaseLoader:
 
 
 class FileSystemLoader(BaseLoader):
-    """Loads templates from the file system.  This loader can find templates
-    in folders on the file system and is the preferred way to load them.
+    """Load templates from a directory in the file system.
 
-    The loader takes the path to the templates as string, or if multiple
-    locations are wanted a list of them which is then looked up in the
-    given order::
+    The path can be relative or absolute. Relative paths are relative to
+    the current working directory.
 
-    >>> loader = FileSystemLoader('/path/to/templates')
-    >>> loader = FileSystemLoader(['/path/to/templates', '/other/path'])
+    .. code-block:: python
 
-    Per default the template encoding is ``'utf-8'`` which can be changed
-    by setting the `encoding` parameter to something else.
+        loader = FileSystemLoader("templates")
 
-    To follow symbolic links, set the *followlinks* parameter to ``True``::
+    A list of paths can be given. The directories will be searched in
+    order, stopping at the first matching template.
 
-    >>> loader = FileSystemLoader('/path/to/templates', followlinks=True)
+    .. code-block:: python
+
+        loader = FileSystemLoader(["/override/templates", "/default/templates"])
+
+    :param searchpath: A path, or list of paths, to the directory that
+        contains the templates.
+    :param encoding: Use this encoding to read the text from template
+        files.
+    :param followlinks: Follow symbolic links in the path.
 
     .. versionchanged:: 2.8
-       The ``followlinks`` parameter was added.
+        Added the ``followlinks`` parameter.
     """
 
     def __init__(self, searchpath, encoding="utf-8", followlinks=False):
