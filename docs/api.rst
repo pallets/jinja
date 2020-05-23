@@ -25,30 +25,40 @@ initialization and use that to load templates.  In some cases however, it's
 useful to have multiple environments side by side, if different configurations
 are in use.
 
-The simplest way to configure Jinja to load templates for your application
-looks roughly like this::
+The simplest way to configure Jinja to load templates for your
+application is to use :class:`~loaders.PackageLoader`.
+
+.. code-block:: python
 
     from jinja2 import Environment, PackageLoader, select_autoescape
     env = Environment(
-        loader=PackageLoader('yourapplication', 'templates'),
-        autoescape=select_autoescape(['html', 'xml'])
+        loader=PackageLoader("yourapp"),
+        autoescape=select_autoescape()
     )
 
-This will create a template environment with the default settings and a
-loader that looks up the templates in the `templates` folder inside the
-`yourapplication` python package.  Different loaders are available
-and you can also write your own if you want to load templates from a
-database or other resources.  This also enables autoescaping for HTML and
-XML files.
+This will create a template environment with a loader that looks up
+templates in the ``templates`` folder inside the ``yourapp`` Python
+package (or next to the ``yourapp.py`` Python module). It also enables
+autoescaping for HTML files. This loader only requires that ``yourapp``
+is importable, it figures out the absolute path to the folder for you.
 
-To load a template from this environment you just have to call the
-:meth:`get_template` method which then returns the loaded :class:`Template`::
+Different loaders are available to load templates in other ways or from
+other locations. They're listed in the `Loaders`_ section below. You can
+also write your own if you want to load templates from a source that's
+more specialized to your project.
 
-    template = env.get_template('mytemplate.html')
+To load a template from this environment, call the :meth:`get_template`
+method, which returns the loaded :class:`Template`.
 
-To render it with some variables, just call the :meth:`render` method::
+.. code-block:: python
 
-    print(template.render(the='variables', go='here'))
+    template = env.get_template("mytemplate.html")
+
+To render it with some variables, call the :meth:`render` method.
+
+.. code-block:: python
+
+    print(template.render(the="variables", go="here"))
 
 Using a template loader rather than passing strings to :class:`Template`
 or :meth:`Environment.from_string` has multiple advantages.  Besides being
