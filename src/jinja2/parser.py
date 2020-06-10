@@ -255,6 +255,7 @@ class Parser:
         node = nodes.Block(lineno=next(self.stream).lineno)
         node.name = self.stream.expect("name").value
         node.scoped = self.stream.skip_if("name:scoped")
+        node.required = self.stream.skip_if("name:required")
 
         # common problem people encounter when switching from django
         # to jinja.  we do not support hyphens in block names, so let's
@@ -266,6 +267,17 @@ class Parser:
             )
 
         node.body = self.parse_statements(("name:endblock",), drop_needle=True)
+
+        # enforce that required blocks only contain whitespace or comments
+        # by asserting that the body, if not empty, is just TemplateData nodes
+        # with whitespace data
+        if node.required and not all(
+            isinstance(child, nodes.TemplateData) and child.data.isspace()
+            for body in node.body
+            for child in body.nodes
+        ):
+            self.fail("Required blocks can only contain comments or whitespace")
+
         self.stream.skip_if("name:" + node.name)
         return node
 
@@ -924,7 +936,6 @@ class Parser:
         finally:
             if end_tokens is not None:
                 self._end_token_stack.pop()
-
         return body
 
     def parse(self):
