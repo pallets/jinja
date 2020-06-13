@@ -11,13 +11,16 @@ code into a reusable class like adding support for internationalization.
 Adding Extensions
 -----------------
 
-Extensions are added to the Jinja environment at creation time.  Once the
-environment is created additional extensions cannot be added.  To add an
+Extensions are added to the Jinja environment at creation time.  To add an
 extension pass a list of extension classes or import paths to the
 ``extensions`` parameter of the :class:`~jinja2.Environment` constructor.  The following
 example creates a Jinja environment with the i18n extension loaded::
 
     jinja_env = Environment(extensions=['jinja2.ext.i18n'])
+
+To add extensions after creation time, use the :meth:`~jinja2.Environment.add_extension` method::
+
+    jinja_env.add_extension('jinja2.ext.debug')
 
 
 .. _i18n-extension:
