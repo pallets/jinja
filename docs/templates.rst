@@ -688,9 +688,17 @@ iterate over containers like `dict`::
     {% endfor %}
     </dl>
 
-Note, however, that **Python dicts are not ordered**; so you might want to
-either pass a sorted ``list`` of ``tuple`` s -- or a
-``collections.OrderedDict`` -- to the template, or use the `dictsort` filter.
+Python dicts may not be in the order you want to display them in. If
+order matters, use the ``|dictsort`` filter.
+
+.. code-block:: jinja
+
+    <dl>
+    {% for key, value in my_dict | dictsort %}
+        <dt>{{ key|e }}</dt>
+        <dd>{{ value|e }}</dd>
+    {% endfor %}
+    </dl>
 
 Inside of a for-loop block, you can access some special variables:
 
