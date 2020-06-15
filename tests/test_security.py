@@ -146,6 +146,13 @@ class TestStringFormat:
         t = env.from_string('{{ ("a{0.foo}b{1}"|safe).format({"foo": 42}, "<foo>") }}')
         assert t.render() == "a42b&lt;foo&gt;"
 
+    def test_empty_braces_format(self):
+        env = SandboxedEnvironment()
+        t1 = env.from_string('{{ ("a{}b{}").format("foo", "42")}}')
+        t2 = env.from_string('{{ ("a{}b{}"|safe).format(42, "<foo>") }}')
+        assert t1.render() == "afoob42"
+        assert t2.render() == "a42b&lt;foo&gt;"
+
 
 class TestStringFormatMap:
     def test_basic_format_safety(self):
