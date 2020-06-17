@@ -509,8 +509,8 @@ class Lexer:
             TOKEN_COMMENT_BEGIN: [
                 (
                     c(
-                        fr"(.*?)((?:\-{comment_end_re}\s*"
-                        fr"|{comment_end_re}){block_suffix_re})"
+                        fr"(.*?)((?:\+{comment_end_re}|\-{comment_end_re}\s*"
+                        fr"|{comment_end_re}{block_suffix_re}))"
                     ),
                     (TOKEN_COMMENT, TOKEN_COMMENT_END),
                     "#pop",
@@ -520,7 +520,10 @@ class Lexer:
             # blocks
             TOKEN_BLOCK_BEGIN: [
                 (
-                    c(fr"(?:\-{block_end_re}\s*|{block_end_re}){block_suffix_re}"),
+                    c(
+                        fr"(?:\+{block_end_re}|\-{block_end_re}\s*"
+                        fr"|{block_end_re}{block_suffix_re})"
+                    ),
                     TOKEN_BLOCK_END,
                     "#pop",
                 ),
@@ -540,7 +543,8 @@ class Lexer:
                 (
                     c(
                         fr"(.*?)((?:{block_start_re}(\-|\+|))\s*endraw\s*"
-                        fr"(?:\-{block_end_re}\s*|{block_end_re}{block_suffix_re}))"
+                        fr"(?:\+{block_end_re}|\-{block_end_re}\s*"
+                        fr"|{block_end_re}{block_suffix_re}))"
                     ),
                     OptionalLStrip(TOKEN_DATA, TOKEN_RAW_END),
                     "#pop",

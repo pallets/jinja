@@ -903,3 +903,121 @@ ${item} ## the rest of the stuff
 <!--- endfor -->"""
         )
         assert tmpl.render(seq=range(5)) == "01234"
+
+
+class TestTrimBlocks:
+    def test_trim(self, env):
+        env = Environment(trim_blocks=True, lstrip_blocks=False)
+        tmpl = env.from_string("    {% if True %}\n    {% endif %}")
+        assert tmpl.render() == "        "
+
+    def test_no_trim(self, env):
+        env = Environment(trim_blocks=True, lstrip_blocks=False)
+        tmpl = env.from_string("    {% if True +%}\n    {% endif %}")
+        assert tmpl.render() == "    \n    "
+
+    def test_no_trim_outer(self, env):
+        env = Environment(trim_blocks=True, lstrip_blocks=False)
+        tmpl = env.from_string("{% if True %}X{% endif +%}\nmore things")
+        assert tmpl.render() == "X\nmore things"
+
+    def test_lstrip_no_trim(self, env):
+        env = Environment(trim_blocks=True, lstrip_blocks=True)
+        tmpl = env.from_string("    {% if True +%}\n    {% endif %}")
+        assert tmpl.render() == "\n"
+
+    def test_trim_blocks_false_with_no_trim(self, env):
+        # Test that + is a NOP (but does not cause an error) if trim_blocks=False
+        env = Environment(trim_blocks=False, lstrip_blocks=False)
+        tmpl = env.from_string("    {% if True %}\n    {% endif %}")
+        assert tmpl.render() == "    \n    "
+        tmpl = env.from_string("    {% if True +%}\n    {% endif %}")
+        assert tmpl.render() == "    \n    "
+
+        tmpl = env.from_string("    {# comment #}\n    ")
+        assert tmpl.render() == "    \n    "
+        tmpl = env.from_string("    {# comment +#}\n    ")
+        assert tmpl.render() == "    \n    "
+
+        tmpl = env.from_string("    {% raw %}{% endraw %}\n    ")
+        assert tmpl.render() == "    \n    "
+        tmpl = env.from_string("    {% raw %}{% endraw +%}\n    ")
+        assert tmpl.render() == "    \n    "
+
+    def test_trim_nested(self, env):
+        env = Environment(trim_blocks=True, lstrip_blocks=True)
+        tmpl = env.from_string(
+            "    {% if True %}\na {% if True %}\nb {% endif %}\nc {% endif %}"
+        )
+        assert tmpl.render() == "a b c "
+
+    def test_no_trim_nested(self, env):
+        env = Environment(trim_blocks=True, lstrip_blocks=True)
+        tmpl = env.from_string(
+            "    {% if True +%}\na {% if True +%}\nb {% endif +%}\nc {% endif %}"
+        )
+        assert tmpl.render() == "\na \nb \nc "
+
+    def test_comment_trim(self, env):
+        env = Environment(trim_blocks=True, lstrip_blocks=True)
+        tmpl = env.from_string("""    {# comment #}\n\n  """)
+        assert tmpl.render() == "\n  "
+
+    def test_comment_no_trim(self, env):
+        env = Environment(trim_blocks=True, lstrip_blocks=True)
+        tmpl = env.from_string("""    {# comment +#}\n\n  """)
+        assert tmpl.render() == "\n\n  "
+
+    def test_multiple_comment_trim_lstrip(self, env):
+        env = Environment(trim_blocks=True, lstrip_blocks=True)
+        tmpl = env.from_string(
+            "   {# comment #}\n\n{# comment2 #}\n   \n{# comment3 #}\n\n "
+        )
+        assert tmpl.render() == "\n   \n\n "
+
+    def test_multiple_comment_no_trim_lstrip(self, env):
+        env = Environment(trim_blocks=True, lstrip_blocks=True)
+        tmpl = env.from_string(
+            "   {# comment +#}\n\n{# comment2 +#}\n   \n{# comment3 +#}\n\n "
+        )
+        assert tmpl.render() == "\n\n\n   \n\n\n "
+
+    def test_raw_trim_lstrip(self, env):
+        env = Environment(trim_blocks=True, lstrip_blocks=True)
+        tmpl = env.from_string("{{x}}{% raw %}\n\n    {% endraw %}\n\n{{ y }}")
+        assert tmpl.render(x=1, y=2) == "1\n\n\n2"
+
+    def test_raw_no_trim_lstrip(self, env):
+        env = Environment(trim_blocks=False, lstrip_blocks=True)
+        tmpl = env.from_string("{{x}}{% raw %}\n\n      {% endraw +%}\n\n{{ y }}")
+        assert tmpl.render(x=1, y=2) == "1\n\n\n\n2"
+
+        # raw blocks do not process inner text, so start tag cannot ignore trim
+        with pytest.raises(TemplateSyntaxError):
+            tmpl = env.from_string("{{x}}{% raw +%}\n\n  {% endraw +%}\n\n{{ y }}")
+
+    def test_no_trim_angle_bracket(self, env):
+        env = Environment(
+            "<%", "%>", "${", "}", "<%#", "%>", lstrip_blocks=True, trim_blocks=True,
+        )
+        tmpl = env.from_string("    <% if True +%>\n\n    <% endif %>")
+        assert tmpl.render() == "\n\n"
+
+        tmpl = env.from_string("    <%# comment +%>\n\n   ")
+        assert tmpl.render() == "\n\n   "
+
+    def test_no_trim_php_syntax(self, env):
+        env = Environment(
+            "<?",
+            "?>",
+            "<?=",
+            "?>",
+            "<!--",
+            "-->",
+            lstrip_blocks=False,
+            trim_blocks=True,
+        )
+        tmpl = env.from_string("    <? if True +?>\n\n    <? endif ?>")
+        assert tmpl.render() == "    \n\n    "
+        tmpl = env.from_string("    <!-- comment +-->\n\n    ")
+        assert tmpl.render() == "    \n\n    "
