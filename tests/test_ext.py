@@ -165,7 +165,6 @@ class StreamFilterExtension(Extension):
 class TestExtensions:
     def test_extend_late(self):
         env = Environment()
-        env.add_extension("jinja2.ext.autoescape")
         t = env.from_string('{% autoescape true %}{{ "<test>" }}{% endautoescape %}')
         assert t.render() == "&lt;test&gt;"
 
@@ -468,7 +467,7 @@ class TestNewstyleInternationalization:
         assert tmpl.render(LANGUAGE="de", apples=5) == "5 Äpfel"
 
     def test_autoescape_support(self):
-        env = Environment(extensions=["jinja2.ext.autoescape", "jinja2.ext.i18n"])
+        env = Environment(extensions=["jinja2.ext.i18n"])
         env.install_gettext_callables(
             lambda x: "<strong>Wert: %(name)s</strong>",
             lambda s, p, n: s,
@@ -482,7 +481,7 @@ class TestNewstyleInternationalization:
         assert t.render(ae=False) == "<strong>Wert: <test></strong>"
 
     def test_autoescape_macros(self):
-        env = Environment(autoescape=False, extensions=["jinja2.ext.autoescape"])
+        env = Environment(autoescape=False)
         template = (
             "{% macro m() %}<html>{% endmacro %}"
             "{% autoescape true %}{{ m() }}{% endautoescape %}"
@@ -529,7 +528,7 @@ class TestNewstyleInternationalization:
 
 class TestAutoEscape:
     def test_scoped_setting(self):
-        env = Environment(extensions=["jinja2.ext.autoescape"], autoescape=True)
+        env = Environment(autoescape=True)
         tmpl = env.from_string(
             """
             {{ "<HelloWorld>" }}
@@ -545,7 +544,7 @@ class TestAutoEscape:
             "&lt;HelloWorld&gt;",
         ]
 
-        env = Environment(extensions=["jinja2.ext.autoescape"], autoescape=False)
+        env = Environment(autoescape=False)
         tmpl = env.from_string(
             """
             {{ "<HelloWorld>" }}
@@ -562,7 +561,7 @@ class TestAutoEscape:
         ]
 
     def test_nonvolatile(self):
-        env = Environment(extensions=["jinja2.ext.autoescape"], autoescape=True)
+        env = Environment(autoescape=True)
         tmpl = env.from_string('{{ {"foo": "<test>"}|xmlattr|escape }}')
         assert tmpl.render() == ' foo="&lt;test&gt;"'
         tmpl = env.from_string(
@@ -572,7 +571,7 @@ class TestAutoEscape:
         assert tmpl.render() == " foo=&#34;&amp;lt;test&amp;gt;&#34;"
 
     def test_volatile(self):
-        env = Environment(extensions=["jinja2.ext.autoescape"], autoescape=True)
+        env = Environment(autoescape=True)
         tmpl = env.from_string(
             '{% autoescape foo %}{{ {"foo": "<test>"}'
             "|xmlattr|escape }}{% endautoescape %}"
@@ -581,7 +580,7 @@ class TestAutoEscape:
         assert tmpl.render(foo=True) == ' foo="&lt;test&gt;"'
 
     def test_scoping(self):
-        env = Environment(extensions=["jinja2.ext.autoescape"])
+        env = Environment()
         tmpl = env.from_string(
             '{% autoescape true %}{% set x = "<x>" %}{{ x }}'
             '{% endautoescape %}{{ x }}{{ "<y>" }}'
@@ -589,7 +588,7 @@ class TestAutoEscape:
         assert tmpl.render(x=1) == "&lt;x&gt;1<y>"
 
     def test_volatile_scoping(self):
-        env = Environment(extensions=["jinja2.ext.autoescape"])
+        env = Environment()
         tmplsource = """
         {% autoescape val %}
             {% macro foo(x) %}
@@ -605,11 +604,11 @@ class TestAutoEscape:
 
         # looking at the source we should see <testing> there in raw
         # (and then escaped as well)
-        env = Environment(extensions=["jinja2.ext.autoescape"])
+        env = Environment()
         pysource = env.compile(tmplsource, raw=True)
         assert "<testing>\\n" in pysource
 
-        env = Environment(extensions=["jinja2.ext.autoescape"], autoescape=True)
+        env = Environment(autoescape=True)
         pysource = env.compile(tmplsource, raw=True)
         assert "&lt;testing&gt;\\n" in pysource
 
