@@ -98,6 +98,30 @@ class TestImports:
         with pytest.raises(UndefinedError, match="does not export the requested name"):
             t.render()
 
+    def test_import_with_globals(self, test_env):
+        env = Environment(
+            loader=DictLoader(
+                {
+                    "macros": "{% macro testing() %}foo: {{ foo }}{% endmacro %}",
+                    "test": "{% import 'macros' as m %}{{ m.testing() }}",
+                }
+            )
+        )
+        tmpl = env.get_template("test", globals={"foo": "bar"})
+        assert tmpl.render() == "foo: bar"
+
+    def test_from_import_with_globals(self, test_env):
+        env = Environment(
+            loader=DictLoader(
+                {
+                    "macros": "{% macro testing() %}foo: {{ foo }}{% endmacro %}",
+                    "test": "{% from 'macros' import testing %}{{ testing() }}",
+                }
+            )
+        )
+        tmpl = env.get_template("test", globals={"foo": "bar"})
+        assert tmpl.render() == "foo: bar"
+
 
 class TestIncludes:
     def test_context_include(self, test_env):
