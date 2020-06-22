@@ -1120,7 +1120,24 @@ class Template:
         )
 
     @internalcode
-    def _get_default_module(self):
+    def _get_default_module(self, ctx=None):
+        """If a context is passed in, this means that the template was
+        imported.  Imported templates have access to the current template's
+        globals by default, but they can only be accessed via the context
+        during runtime.
+
+        If there are new globals, we need to create a new
+        module because the cached module is already rendered and will not have
+        access to globals from the current context.  This new module is not
+        cached as :attr:`_module` because the template can be imported elsewhere,
+        and it should have access to only the current template's globals.
+        """
+        if ctx is not None:
+            globals = {
+                key: ctx.parent[key] for key in ctx.globals_keys - self.globals.keys()
+            }
+            if globals:
+                return self.make_module(globals)
         if self._module is not None:
             return self._module
         self._module = rv = self.make_module()
