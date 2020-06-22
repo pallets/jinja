@@ -1008,9 +1008,12 @@ class CodeGenerator(NodeVisitor):
 
         # try to figure out if we have an extended loop.  An extended loop
         # is necessary if the loop is in recursive mode if the special loop
-        # variable is accessed in the body.
-        extended_loop = node.recursive or "loop" in find_undeclared(
-            node.iter_child_nodes(only=("body",)), ("loop",)
+        # variable is accessed in the body if the body is a scoped block.
+        extended_loop = (
+            node.recursive
+            or "loop"
+            in find_undeclared(node.iter_child_nodes(only=("body",)), ("loop",))
+            or any(block.scoped for block in node.find_all(nodes.Block))
         )
 
         loop_ref = None
