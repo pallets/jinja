@@ -13,7 +13,7 @@ Unreleased
     :class:`~loaders.PackageLoader`. :issue:`1168`
 -   Fix a bug that caused imported macros to not have access to the
     current template's globals. :issue:`688`
-
+-   Add ability to ignore ``trim_blocks`` using ``+%}``. :issue:`1036`
 
 Version 2.11.2
 --------------
