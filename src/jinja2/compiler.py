@@ -925,7 +925,7 @@ class CodeGenerator(NodeVisitor):
         elif self.environment.is_async:
             self.write("_get_default_module_async()")
         else:
-            self.write("_get_default_module()")
+            self.write("_get_default_module(context)")
         if frame.toplevel and not node.target.startswith("_"):
             self.writeline(f"context.exported_vars.discard({node.target!r})")
 
@@ -944,7 +944,7 @@ class CodeGenerator(NodeVisitor):
         elif self.environment.is_async:
             self.write("_get_default_module_async()")
         else:
-            self.write("_get_default_module()")
+            self.write("_get_default_module(context)")
 
         var_names = []
         discarded_names = []

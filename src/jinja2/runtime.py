@@ -97,7 +97,9 @@ def new_context(
         for key, value in locals.items():
             if value is not missing:
                 parent[key] = value
-    return environment.context_class(environment, parent, template_name, blocks)
+    return environment.context_class(
+        environment, parent, template_name, blocks, globals=globals
+    )
 
 
 class TemplateReference:
@@ -179,13 +181,14 @@ class Context(metaclass=ContextMeta):
     _legacy_resolve_mode = False
     _fast_resolve_mode = False
 
-    def __init__(self, environment, parent, name, blocks):
+    def __init__(self, environment, parent, name, blocks, globals=None):
         self.parent = parent
         self.vars = {}
         self.environment = environment
         self.eval_ctx = EvalContext(self.environment, name)
         self.exported_vars = set()
         self.name = name
+        self.globals_keys = set() if globals is None else set(globals)
 
         # create the initial mapping of blocks.  Whenever template inheritance
         # takes place the runtime will update this mapping with the new blocks
