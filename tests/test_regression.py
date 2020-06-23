@@ -7,6 +7,7 @@ from jinja2 import Template
 from jinja2 import TemplateAssertionError
 from jinja2 import TemplateNotFound
 from jinja2 import TemplateSyntaxError
+from jinja2.utils import contextfunction
 
 
 class TestCorner:
@@ -618,3 +619,100 @@ class TestBug:
         from jinja2.runtime import ChainableUndefined
 
         assert str(Markup(ChainableUndefined())) == ""
+
+    def test_scoped_block_loop_vars(self, env):
+        tmpl = env.from_string(
+            """\
+Start
+{% for i in ["foo", "bar"] -%}
+{% block body scoped -%}
+{{ loop.index }}) {{ i }}{% if loop.last %} last{% endif -%}
+{%- endblock %}
+{% endfor -%}
+End"""
+        )
+        assert tmpl.render() == "Start\n1) foo\n2) bar last\nEnd"
+
+    def test_contextfunction_loop_vars(self, env):
+        @contextfunction
+        def test(ctx):
+            return f"{ctx['i']}{ctx['j']}"
+
+        tmpl = env.from_string(
+            """\
+{% set i = 42 %}
+{%- for idx in range(2) -%}
+{{ i }}{{ j }}
+{% set i = idx -%}
+{%- set j = loop.index -%}
+{{ test() }}
+{{ i }}{{ j }}
+{% endfor -%}
+{{ i }}{{ j }}"""
+        )
+        tmpl.globals["test"] = test
+        assert tmpl.render() == "42\n01\n01\n42\n12\n12\n42"
+
+    def test_contextfunction_scoped_loop_vars(self, env):
+        @contextfunction
+        def test(ctx):
+            return f"{ctx['i']}"
+
+        tmpl = env.from_string(
+            """\
+{% set i = 42 %}
+{%- for idx in range(2) -%}
+{{ i }}
+{%- set i = loop.index0 -%}
+{% block body scoped %}
+{{ test() }}
+{% endblock -%}
+{% endfor -%}
+{{ i }}"""
+        )
+        tmpl.globals["test"] = test
+        assert tmpl.render() == "42\n0\n42\n1\n42"
+
+    def test_contextfunction_in_blocks(self, env):
+        @contextfunction
+        def test(ctx):
+            return f"{ctx['i']}"
+
+        tmpl = env.from_string(
+            """\
+{%- set i = 42 -%}
+{{ i }}
+{% block body -%}
+{% set i = 24 -%}
+{{ test() }}
+{% endblock -%}
+{{ i }}"""
+        )
+        tmpl.globals["test"] = test
+        assert tmpl.render() == "42\n24\n42"
+
+    def test_contextfunction_block_and_loop(self, env):
+        @contextfunction
+        def test(ctx):
+            return f"{ctx['i']}"
+
+        tmpl = env.from_string(
+            """\
+{%- set i = 42 -%}
+{% for idx in range(2) -%}
+{{ test() }}
+{%- set i = idx -%}
+{% block body scoped %}
+{{ test() }}
+{% set i = 24 -%}
+{{ test() }}
+{% endblock -%}
+{{ test() }}
+{% endfor -%}
+{{ test() }}"""
+        )
+        tmpl.globals["test"] = test
+
+        # values set within a block or loop should not
+        # show up outside of it
+        assert tmpl.render() == "42\n0\n24\n0\n42\n1\n24\n1\n42"

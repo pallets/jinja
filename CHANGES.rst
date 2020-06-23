@@ -32,6 +32,10 @@ Unreleased
     :issue:`522, 827, 1172`, :pr:`1195`
 -   Filters that get attributes, such as ``map`` and ``groupby``, can
     use a false or empty value as a default. :issue:`1331`
+-   Fix a bug that prevented variables set in blocks or loops from
+    being accessed in custom context functions. :issue:`768`
+-   Fix a bug that caused scoped blocks from accessing special loop
+    variables. :issue:`1088`
 
 
 Version 2.11.3

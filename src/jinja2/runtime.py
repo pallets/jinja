@@ -284,11 +284,20 @@ class Context(metaclass=ContextMeta):
 
         if callable(__obj):
             if getattr(__obj, "contextfunction", False) is True:
+                # the active context should have access to variables set in
+                # loops and blocks without mutating the context itself
+                if kwargs.get("_loop_vars"):
+                    __self = __self.derived(kwargs["_loop_vars"])
+                if kwargs.get("_block_vars"):
+                    __self = __self.derived(kwargs["_block_vars"])
                 args = (__self,) + args
             elif getattr(__obj, "evalcontextfunction", False) is True:
                 args = (__self.eval_ctx,) + args
             elif getattr(__obj, "environmentfunction", False) is True:
                 args = (__self.environment,) + args
+
+        kwargs.pop("_block_vars", None)
+        kwargs.pop("_loop_vars", None)
         try:
             return __obj(*args, **kwargs)
         except StopIteration:
