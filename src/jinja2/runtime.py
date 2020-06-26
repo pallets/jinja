@@ -36,6 +36,7 @@ exported = [
     "TemplateNotFound",
     "Namespace",
     "Undefined",
+    "internalcode",
 ]
 
 

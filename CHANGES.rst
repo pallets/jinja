@@ -39,6 +39,8 @@ Unreleased
 -   Update the template globals when calling
     ``Environment.get_template(globals=...)`` even if the template was
     already loaded. :issue:`295`
+-   Do not raise an error for undefined filters in unexecuted
+    if-statements and conditional expressions. :issue:`842`
 
 
 Version 2.11.3
