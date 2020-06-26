@@ -922,8 +922,8 @@ def do_round(value, precision=0, method="common"):
 # people start to print this out in comments or something similar for
 # debugging.
 _GroupTuple = namedtuple("_GroupTuple", ["grouper", "list"])
-_GroupTuple.__repr__ = tuple.__repr__
-_GroupTuple.__str__ = tuple.__str__
+_GroupTuple.__repr__ = tuple.__repr__  # type: ignore
+_GroupTuple.__str__ = tuple.__str__  # type: ignore
 
 
 @environmentfilter

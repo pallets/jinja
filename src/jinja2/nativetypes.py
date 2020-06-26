@@ -1,6 +1,7 @@
 from ast import literal_eval
 from itertools import chain
 from itertools import islice
+from typing import Any
 
 from . import nodes
 from .compiler import CodeGenerator
@@ -70,6 +71,7 @@ class NativeEnvironment(Environment):
     """An environment that renders templates to native Python types."""
 
     code_generator_class = NativeCodeGenerator
+    template_class: Any
 
 
 class NativeTemplate(Template):

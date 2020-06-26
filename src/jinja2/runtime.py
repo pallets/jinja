@@ -308,6 +308,7 @@ class Context(metaclass=ContextMeta):
         context.blocks.update((k, list(v)) for k, v in self.blocks.items())
         return context
 
+    # ignore: true
     def _all(meth):  # noqa: B902
         def proxy(self):
             return getattr(self.get_all(), meth)()
@@ -316,9 +317,9 @@ class Context(metaclass=ContextMeta):
         proxy.__name__ = meth
         return proxy
 
-    keys = _all("keys")
-    values = _all("values")
-    items = _all("items")
+    keys = _all("keys")  # type:ignore
+    values = _all("values")  # type:ignore
+    items = _all("items")  # type:ignore
     del _all
 
     def __contains__(self, name):

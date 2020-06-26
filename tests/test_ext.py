@@ -90,7 +90,9 @@ i18n_env_trimmed.globals.update(
 newstyle_i18n_env = Environment(
     loader=DictLoader(newstyle_i18n_templates), extensions=["jinja2.ext.i18n"]
 )
-newstyle_i18n_env.install_gettext_callables(gettext, ngettext, newstyle=True)
+newstyle_i18n_env.install_gettext_callables(  # type: ignore
+    gettext, ngettext, newstyle=True
+)
 
 
 class ExampleExtension(Extension):
@@ -121,7 +123,7 @@ class ExampleExtension(Extension):
 
 
 class DerivedExampleExtension(ExampleExtension):
-    context_reference_node_cls = nodes.DerivedContextReference
+    context_reference_node_cls = nodes.DerivedContextReference  # type: ignore
 
 
 class PreprocessorExtension(Extension):

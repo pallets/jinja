@@ -6,6 +6,7 @@ import sys
 import weakref
 from functools import partial
 from functools import reduce
+from typing import Any
 
 from markupsafe import Markup
 
@@ -271,9 +272,11 @@ class Environment:
     #: :class:`~jinja2.compiler.CodeGenerator` for more information.
     code_generator_class = CodeGenerator
 
-    #: the context class thatis used for templates.  See
+    #: the context class that is used for templates.  See
     #: :class:`~jinja2.runtime.Context` for more information.
     context_class = Context
+
+    template_class = Any
 
     def __init__(
         self,

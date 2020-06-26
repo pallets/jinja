@@ -2,6 +2,7 @@
 import pprint
 import re
 from sys import version_info
+from typing import Set
 
 from markupsafe import Markup
 
@@ -61,7 +62,7 @@ class Extension(metaclass=ExtensionRegistry):
     """
 
     #: if this extension parses this is the list of tags it's listening to.
-    tags = set()
+    tags: Set[str] = set()
 
     #: the priority of that extension.  This is especially useful for
     #: extensions that preprocess values.  A lower value means higher

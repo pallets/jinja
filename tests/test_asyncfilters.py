@@ -142,7 +142,7 @@ def test_bool_select(env_async, items):
     assert tmpl.render(items=items) == "1|2|3|4|5"
 
 
-def make_users():
+def make_users():  # type: ignore
     User = namedtuple("User", "name,is_active")
     return [
         User("john", True),
