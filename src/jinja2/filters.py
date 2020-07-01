@@ -606,20 +606,21 @@ def do_urlize(
     return rv
 
 
-def do_indent(s, width=4, first=False, blank=False):
+def do_indent(s, width=4, first=False, blank=False, symbol=' '):
     """Return a copy of the string with each line indented by 4 spaces. The
     first line and blank lines are not indented by default.
 
     :param width: Number of spaces to indent by.
     :param first: Don't skip indenting the first line.
     :param blank: Don't skip indenting empty lines.
+    :param symbol: Symbol to indent with.
 
     .. versionchanged:: 2.10
         Blank lines are not indented by default.
 
         Rename the ``indentfirst`` argument to ``first``.
     """
-    indention = " " * width
+    indention = str(symbol) * width
     newline = "\n"
 
     if isinstance(s, Markup):
