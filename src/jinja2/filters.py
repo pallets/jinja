@@ -255,7 +255,9 @@ def do_title(s: str) -> str:
     )
 
 
-def do_dictsort(value: dict, case_sensitive: bool = False, by: str = "key", reverse: bool = False):
+def do_dictsort(
+    value: dict, case_sensitive: bool = False, by: str = "key", reverse: bool = False
+):
     """Sort a dict and yield (key, value) pairs. Because python dicts are
     unsorted you may want to use this function to order them by either
     key or value:
@@ -293,7 +295,13 @@ def do_dictsort(value: dict, case_sensitive: bool = False, by: str = "key", reve
 
 
 @environmentfilter
-def do_sort(environment, value: Iterable, reverse: bool = False, case_sensitive: bool = False, attribute: str = None):
+def do_sort(
+    environment,
+    value: Iterable,
+    reverse: bool = False,
+    case_sensitive: bool = False,
+    attribute: str = None,
+):
     """Sort an iterable using Python's :func:`sorted`.
 
     .. sourcecode:: jinja
@@ -343,7 +351,9 @@ def do_sort(environment, value: Iterable, reverse: bool = False, case_sensitive:
 
 
 @environmentfilter
-def do_unique(environment, value: Iterable, case_sensitive: bool = False, attribute: str = None):
+def do_unique(
+    environment, value: Iterable, case_sensitive: bool = False, attribute: str = None
+):
     """Returns a list of unique items from the given iterable.
 
     .. sourcecode:: jinja
@@ -385,7 +395,9 @@ def _min_or_max(environment, value, func, case_sensitive, attribute):
 
 
 @environmentfilter
-def do_min(environment, value: Sequence, case_sensitive: bool = False, attribute: str = None):
+def do_min(
+    environment, value: Sequence, case_sensitive: bool = False, attribute: str = None
+):
     """Return the smallest item from the sequence.
 
     .. sourcecode:: jinja
@@ -647,7 +659,14 @@ def do_indent(s: str, width: int = 4, first: bool = False, blank: bool = False):
 
 
 @environmentfilter
-def do_truncate(env, s: str, length: int = 255, killwords: bool = False, end: str = "...", leeway: int = None) -> str:
+def do_truncate(
+    env,
+    s: str,
+    length: int = 255,
+    killwords: bool = False,
+    end: str = "...",
+    leeway: int = None,
+) -> str:
     """Return a truncated copy of the string. The length is specified
     with the first parameter which defaults to ``255``. If the second
     parameter is ``true`` the filter will cut the text at length. Otherwise
@@ -816,7 +835,7 @@ def do_striptags(value):
     return Markup(str(value)).striptags()
 
 
-def do_slice(value: Iterable, slices: int, fill_with: str=None) -> Iterable:
+def do_slice(value: Iterable, slices: int, fill_with: str = None) -> Iterable:
     """Slice an iterator and return a list of lists containing
     those items. Useful if you want to create a div containing
     three ul tags that represent columns:
@@ -852,7 +871,7 @@ def do_slice(value: Iterable, slices: int, fill_with: str=None) -> Iterable:
         yield tmp
 
 
-def do_batch(value: Iterable, linecount: int, fill_with: str=None) -> Iterable:
+def do_batch(value: Iterable, linecount: int, fill_with: str = None) -> Iterable:
     """
     A filter that batches items. It works pretty much like `slice`
     just the other way round. It returns a list of lists with the
@@ -970,7 +989,9 @@ def do_groupby(environment, value: Sequence, attribute: str) -> list:
 
 
 @environmentfilter
-def do_sum(environment, iterable: Iterable, attribute: str = None, start: int = 0) -> int:
+def do_sum(
+    environment, iterable: Iterable, attribute: str = None, start: int = 0
+) -> int:
     """Returns the sum of a sequence of numbers plus the value of parameter
     'start' (which defaults to 0).  When the sequence is empty it returns
     start.
