@@ -6,7 +6,10 @@ from collections import abc
 from collections import namedtuple
 from itertools import chain
 from itertools import groupby
-from typing import Union, Any, Iterable, Sequence, ItemsView
+from typing import Any
+from typing import Iterable
+from typing import Sequence
+from typing import Union
 
 from markupsafe import escape
 from markupsafe import Markup
@@ -619,7 +622,7 @@ def do_urlize(
     return rv
 
 
-def do_indent(s: str, width: int = 4, first: bool = False, blank: bool = False):
+def do_indent(s: str, width: int = 4, first: bool = False, blank: bool = False) -> str:
     """Return a copy of the string with each line indented by 4 spaces. The
     first line and blank lines are not indented by default.
 
