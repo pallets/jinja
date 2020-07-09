@@ -6,6 +6,7 @@ from collections import abc
 from collections import namedtuple
 from itertools import chain
 from itertools import groupby
+from typing import Union, Any, Iterable, Sequence, ItemsView
 
 from markupsafe import escape
 from markupsafe import Markup
@@ -128,7 +129,7 @@ def do_forceescape(value):
     return escape(str(value))
 
 
-def do_urlencode(value):
+def do_urlencode(value: Union[str, Iterable, Sequence]):
     """Quote data for use in a URL path or query using UTF-8.
 
     Basic wrapper around :func:`urllib.parse.quote` when given a
@@ -158,7 +159,7 @@ def do_urlencode(value):
 
 
 @evalcontextfilter
-def do_replace(eval_ctx, s, old, new, count=None):
+def do_replace(eval_ctx, s: str, old: str, new: str, count: int = None):
     """Return a copy of the value with all occurrences of a substring
     replaced with a new one. The first argument is the substring
     that should be replaced, the second is the replacement string.
@@ -188,18 +189,18 @@ def do_replace(eval_ctx, s, old, new, count=None):
     return s.replace(soft_str(old), soft_str(new), count)
 
 
-def do_upper(s):
+def do_upper(s: str) -> str:
     """Convert a value to uppercase."""
     return soft_str(s).upper()
 
 
-def do_lower(s):
+def do_lower(s: str) -> str:
     """Convert a value to lowercase."""
     return soft_str(s).lower()
 
 
 @evalcontextfilter
-def do_xmlattr(_eval_ctx, d, autospace=True):
+def do_xmlattr(_eval_ctx, d: dict, autospace: bool = True):
     """Create an SGML/XML attribute string based on the items in a dict.
     All values that are neither `none` nor `undefined` are automatically
     escaped:
@@ -234,14 +235,14 @@ def do_xmlattr(_eval_ctx, d, autospace=True):
     return rv
 
 
-def do_capitalize(s):
+def do_capitalize(s: str) -> str:
     """Capitalize a value. The first character will be uppercase, all others
     lowercase.
     """
     return soft_str(s).capitalize()
 
 
-def do_title(s):
+def do_title(s: str) -> str:
     """Return a titlecased version of the value. I.e. words will start with
     uppercase letters, all remaining characters are lowercase.
     """
@@ -254,7 +255,7 @@ def do_title(s):
     )
 
 
-def do_dictsort(value, case_sensitive=False, by="key", reverse=False):
+def do_dictsort(value: dict, case_sensitive: bool = False, by: str = "key", reverse: bool = False):
     """Sort a dict and yield (key, value) pairs. Because python dicts are
     unsorted you may want to use this function to order them by either
     key or value:
@@ -292,7 +293,7 @@ def do_dictsort(value, case_sensitive=False, by="key", reverse=False):
 
 
 @environmentfilter
-def do_sort(environment, value, reverse=False, case_sensitive=False, attribute=None):
+def do_sort(environment, value: Iterable, reverse: bool = False, case_sensitive: bool = False, attribute: str = None):
     """Sort an iterable using Python's :func:`sorted`.
 
     .. sourcecode:: jinja
@@ -342,7 +343,7 @@ def do_sort(environment, value, reverse=False, case_sensitive=False, attribute=N
 
 
 @environmentfilter
-def do_unique(environment, value, case_sensitive=False, attribute=None):
+def do_unique(environment, value: Iterable, case_sensitive: bool = False, attribute: str = None):
     """Returns a list of unique items from the given iterable.
 
     .. sourcecode:: jinja
@@ -384,7 +385,7 @@ def _min_or_max(environment, value, func, case_sensitive, attribute):
 
 
 @environmentfilter
-def do_min(environment, value, case_sensitive=False, attribute=None):
+def do_min(environment, value: Sequence, case_sensitive: bool = False, attribute: str = None):
     """Return the smallest item from the sequence.
 
     .. sourcecode:: jinja
@@ -399,7 +400,7 @@ def do_min(environment, value, case_sensitive=False, attribute=None):
 
 
 @environmentfilter
-def do_max(environment, value, case_sensitive=False, attribute=None):
+def do_max(environment, value: Sequence, case_sensitive=False, attribute=None) -> int:
     """Return the largest item from the sequence.
 
     .. sourcecode:: jinja
@@ -413,7 +414,7 @@ def do_max(environment, value, case_sensitive=False, attribute=None):
     return _min_or_max(environment, value, max, case_sensitive, attribute)
 
 
-def do_default(value, default_value="", boolean=False):
+def do_default(value: Any, default_value: Any = "", boolean: bool = False):
     """If the value is undefined it will return the passed default value,
     otherwise the value of the variable:
 
@@ -442,7 +443,7 @@ def do_default(value, default_value="", boolean=False):
 
 
 @evalcontextfilter
-def do_join(eval_ctx, value, d="", attribute=None):
+def do_join(eval_ctx, value: Iterable, d: str = "", attribute: str = None) -> str:
     """Return a string which is the concatenation of the strings in the
     sequence. The separator between elements is an empty string per
     default, you can define it with the optional parameter:
@@ -491,13 +492,13 @@ def do_join(eval_ctx, value, d="", attribute=None):
     return soft_str(d).join(map(soft_str, value))
 
 
-def do_center(value, width=80):
+def do_center(value: str, width: int = 80) -> str:
     """Centers the value in a field of a given width."""
     return str(value).center(width)
 
 
 @environmentfilter
-def do_first(environment, seq):
+def do_first(environment, seq: Sequence) -> Any:
     """Return the first item of a sequence."""
     try:
         return next(iter(seq))
@@ -506,7 +507,7 @@ def do_first(environment, seq):
 
 
 @environmentfilter
-def do_last(environment, seq):
+def do_last(environment, seq: Sequence) -> Any:
     """
     Return the last item of a sequence.
 
@@ -524,7 +525,7 @@ def do_last(environment, seq):
 
 
 @contextfilter
-def do_random(context, seq):
+def do_random(context, seq: Sequence) -> Any:
     """Return a random item from the sequence."""
     try:
         return random.choice(seq)
@@ -532,7 +533,7 @@ def do_random(context, seq):
         return context.environment.undefined("No random item, sequence was empty.")
 
 
-def do_filesizeformat(value, binary=False):
+def do_filesizeformat(value: Union[str, int, float], binary: bool = False) -> str:
     """Format the value like a 'human-readable' file size (i.e. 13 kB,
     4.1 MB, 102 Bytes, etc).  Per default decimal prefixes are used (Mega,
     Giga, etc.), if the second parameter is set to `True` the binary
@@ -562,14 +563,14 @@ def do_filesizeformat(value, binary=False):
         return f"{base * bytes / unit:.1f} {prefix}"
 
 
-def do_pprint(value):
+def do_pprint(value) -> str:
     """Pretty print a variable. Useful for debugging."""
     return pformat(value)
 
 
 @evalcontextfilter
 def do_urlize(
-    eval_ctx, value, trim_url_limit=None, nofollow=False, target=None, rel=None
+    eval_ctx, value: str, trim_url_limit=None, nofollow=False, target=None, rel=None
 ):
     """Converts URLs in plain text into clickable links.
 
@@ -606,7 +607,7 @@ def do_urlize(
     return rv
 
 
-def do_indent(s, width=4, first=False, blank=False):
+def do_indent(s: str, width: int = 4, first: bool = False, blank: bool = False):
     """Return a copy of the string with each line indented by 4 spaces. The
     first line and blank lines are not indented by default.
 
@@ -646,7 +647,7 @@ def do_indent(s, width=4, first=False, blank=False):
 
 
 @environmentfilter
-def do_truncate(env, s, length=255, killwords=False, end="...", leeway=None):
+def do_truncate(env, s: str, length: int = 255, killwords: bool = False, end: str = "...", leeway: int = None) -> str:
     """Return a truncated copy of the string. The length is specified
     with the first parameter which defaults to ``255``. If the second
     parameter is ``true`` the filter will cut the text at length. Otherwise
@@ -685,12 +686,12 @@ def do_truncate(env, s, length=255, killwords=False, end="...", leeway=None):
 @environmentfilter
 def do_wordwrap(
     environment,
-    s,
-    width=79,
-    break_long_words=True,
-    wrapstring=None,
-    break_on_hyphens=True,
-):
+    s: str,
+    width: int = 79,
+    break_long_words: bool = True,
+    wrapstring: str = None,
+    break_on_hyphens: bool = True,
+) -> str:
     """Wrap a string to the given width. Existing newlines are treated
     as paragraphs to be wrapped separately.
 
@@ -739,12 +740,12 @@ def do_wordwrap(
     )
 
 
-def do_wordcount(s):
+def do_wordcount(s: str) -> int:
     """Count the words in that string."""
     return len(_word_re.findall(soft_str(s)))
 
 
-def do_int(value, default=0, base=10):
+def do_int(value: Any, default: int = 0, base: int = 10) -> int:
     """Convert the value into an integer. If the
     conversion doesn't work it will return ``0``. You can
     override this default using the first parameter. You
@@ -765,7 +766,7 @@ def do_int(value, default=0, base=10):
             return default
 
 
-def do_float(value, default=0.0):
+def do_float(value: Union[int, float, str], default=0.0) -> float:
     """Convert the value into a floating point number. If the
     conversion doesn't work it will return ``0.0``. You can
     override this default using the first parameter.
@@ -776,7 +777,7 @@ def do_float(value, default=0.0):
         return default
 
 
-def do_format(value, *args, **kwargs):
+def do_format(value: str, *args, **kwargs) -> str:
     """Apply the given values to a `printf-style`_ format string, like
     ``string % values``.
 
@@ -803,7 +804,7 @@ def do_format(value, *args, **kwargs):
     return soft_str(value) % (kwargs or args)
 
 
-def do_trim(value, chars=None):
+def do_trim(value: str, chars: str = None) -> str:
     """Strip leading and trailing characters, by default whitespace."""
     return soft_str(value).strip(chars)
 
@@ -815,7 +816,7 @@ def do_striptags(value):
     return Markup(str(value)).striptags()
 
 
-def do_slice(value, slices, fill_with=None):
+def do_slice(value: Iterable, slices: int, fill_with: str=None) -> Iterable:
     """Slice an iterator and return a list of lists containing
     those items. Useful if you want to create a div containing
     three ul tags that represent columns:
@@ -851,7 +852,7 @@ def do_slice(value, slices, fill_with=None):
         yield tmp
 
 
-def do_batch(value, linecount, fill_with=None):
+def do_batch(value: Iterable, linecount: int, fill_with: str=None) -> Iterable:
     """
     A filter that batches items. It works pretty much like `slice`
     just the other way round. It returns a list of lists with the
@@ -882,7 +883,7 @@ def do_batch(value, linecount, fill_with=None):
         yield tmp
 
 
-def do_round(value, precision=0, method="common"):
+def do_round(value: float, precision: int = 0, method: str = "common") -> float:
     """Round the number to a given precision. The first
     parameter specifies the precision (default is ``0``), the
     second the rounding method:
@@ -927,7 +928,7 @@ _GroupTuple.__str__ = tuple.__str__
 
 
 @environmentfilter
-def do_groupby(environment, value, attribute):
+def do_groupby(environment, value: Sequence, attribute: str) -> list:
     """Group a sequence of objects by an attribute using Python's
     :func:`itertools.groupby`. The attribute can use dot notation for
     nested access, like ``"address.city"``. Unlike Python's ``groupby``,
@@ -969,7 +970,7 @@ def do_groupby(environment, value, attribute):
 
 
 @environmentfilter
-def do_sum(environment, iterable, attribute=None, start=0):
+def do_sum(environment, iterable: Iterable, attribute: str = None, start: int = 0) -> int:
     """Returns the sum of a sequence of numbers plus the value of parameter
     'start' (which defaults to 0).  When the sequence is empty it returns
     start.
@@ -989,7 +990,7 @@ def do_sum(environment, iterable, attribute=None, start=0):
     return sum(iterable, start)
 
 
-def do_list(value):
+def do_list(value: Any) -> list:
     """Convert the value into a list.  If it was a string the returned list
     will be a list of characters.
     """
@@ -1008,7 +1009,7 @@ def do_mark_unsafe(value):
     return str(value)
 
 
-def do_reverse(value):
+def do_reverse(value: Union[str, Iterable]) -> Union[str, Iterable]:
     """Reverse the object or return an iterator that iterates over it the other
     way round.
     """
@@ -1026,7 +1027,7 @@ def do_reverse(value):
 
 
 @environmentfilter
-def do_attr(environment, obj, name):
+def do_attr(environment, obj: object, name: str) -> Any:
     """Get an attribute of an object.  ``foo|attr("bar")`` works like
     ``foo.bar`` just that always an attribute is returned and items are not
     looked up.
