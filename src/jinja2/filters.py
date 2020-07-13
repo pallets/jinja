@@ -260,7 +260,7 @@ def do_title(s: str) -> str:
 
 def do_dictsort(
     value: dict, case_sensitive: bool = False, by: str = "key", reverse: bool = False
-):
+) -> dict:
     """Sort a dict and yield (key, value) pairs. Because python dicts are
     unsorted you may want to use this function to order them by either
     key or value:
