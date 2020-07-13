@@ -304,7 +304,7 @@ def do_sort(
     reverse: bool = False,
     case_sensitive: bool = False,
     attribute: str = None,
-):
+) -> Iterable:
     """Sort an iterable using Python's :func:`sorted`.
 
     .. sourcecode:: jinja
