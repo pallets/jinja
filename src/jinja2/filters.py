@@ -132,7 +132,7 @@ def do_forceescape(value):
     return escape(str(value))
 
 
-def do_urlencode(value: Union[str, Iterable, Sequence]):
+def do_urlencode(value: Union[str, Iterable, Sequence]) -> str:
     """Quote data for use in a URL path or query using UTF-8.
 
     Basic wrapper around :func:`urllib.parse.quote` when given a
