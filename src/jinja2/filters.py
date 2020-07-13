@@ -429,7 +429,7 @@ def do_max(environment, value: Sequence, case_sensitive=False, attribute=None) -
     return _min_or_max(environment, value, max, case_sensitive, attribute)
 
 
-def do_default(value: Any, default_value: Any = "", boolean: bool = False):
+def do_default(value: Any, default_value: Any = "", boolean: bool = False) -> Any:
     """If the value is undefined it will return the passed default value,
     otherwise the value of the variable:
 
