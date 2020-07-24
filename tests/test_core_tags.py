@@ -1,11 +1,10 @@
-# -*- coding: utf-8 -*-
 import pytest
 
-from jinja import DictLoader
-from jinja import Environment
-from jinja import TemplateRuntimeError
-from jinja import TemplateSyntaxError
-from jinja import UndefinedError
+from jinja2 import DictLoader
+from jinja2 import Environment
+from jinja2 import TemplateRuntimeError
+from jinja2 import TemplateSyntaxError
+from jinja2 import UndefinedError
 
 
 @pytest.fixture
@@ -13,9 +12,7 @@ def env_trim():
     return Environment(trim_blocks=True)
 
 
-@pytest.mark.core_tags
-@pytest.mark.for_loop
-class TestForLoop(object):
+class TestForLoop:
     def test_simple(self, env):
         tmpl = env.from_string("{% for item in seq %}{{ item }}{% endfor %}")
         assert tmpl.render(seq=list(range(10))) == "0123456789"
@@ -103,12 +100,8 @@ class TestForLoop(object):
         assert not output
 
     def test_varlen(self, env):
-        def inner():
-            for item in range(5):
-                yield item
-
         tmpl = env.from_string("{% for item in iter %}{{ item }}{% endfor %}")
-        output = tmpl.render(iter=inner())
+        output = tmpl.render(iter=range(5))
         assert output == "01234"
 
     def test_noniter(self, env):
@@ -305,9 +298,7 @@ class TestForLoop(object):
         assert tmpl.render(x=0, seq=[1, 2, 3]) == "919293"
 
 
-@pytest.mark.core_tags
-@pytest.mark.if_condition
-class TestIfCondition(object):
+class TestIfCondition:
     def test_simple(self, env):
         tmpl = env.from_string("""{% if true %}...{% endif %}""")
         assert tmpl.render() == "..."
@@ -320,10 +311,8 @@ class TestIfCondition(object):
         assert tmpl.render() == "..."
 
     def test_elif_deep(self, env):
-        elifs = "\n".join("{{% elif a == {0} %}}{0}".format(i) for i in range(1, 1000))
-        tmpl = env.from_string(
-            "{{% if a == 0 %}}0{0}{{% else %}}x{{% endif %}}".format(elifs)
-        )
+        elifs = "\n".join(f"{{% elif a == {i} %}}{i}" for i in range(1, 1000))
+        tmpl = env.from_string(f"{{% if a == 0 %}}0{elifs}{{% else %}}x{{% endif %}}")
         for x in (0, 10, 999):
             assert tmpl.render(a=x).strip() == str(x)
         assert tmpl.render(a=1000).strip() == "x"
@@ -349,9 +338,7 @@ class TestIfCondition(object):
         assert tmpl.render() == "1"
 
 
-@pytest.mark.core_tags
-@pytest.mark.macros
-class TestMacros(object):
+class TestMacros:
     def test_simple(self, env_trim):
         tmpl = env_trim.from_string(
             """\
@@ -475,9 +462,7 @@ class TestMacros(object):
         assert tmpl.module.m(1, x=7) == "1|7|7"
 
 
-@pytest.mark.core_tags
-@pytest.mark.set
-class TestSet(object):
+class TestSet:
     def test_normal(self, env_trim):
         tmpl = env_trim.from_string("{% set foo = 1 %}{{ foo }}")
         assert tmpl.render() == "1"
@@ -486,7 +471,7 @@ class TestSet(object):
     def test_block(self, env_trim):
         tmpl = env_trim.from_string("{% set foo %}42{% endset %}{{ foo }}")
         assert tmpl.render() == "42"
-        assert tmpl.module.foo == u"42"
+        assert tmpl.module.foo == "42"
 
     def test_block_escaping(self):
         env = Environment(autoescape=True)
@@ -565,7 +550,7 @@ class TestSet(object):
             "{% set foo | trim | length | string %} 42    {% endset %}{{ foo }}"
         )
         assert tmpl.render() == "2"
-        assert tmpl.module.foo == u"2"
+        assert tmpl.module.foo == "2"
 
     def test_block_filtered_set(self, env_trim):
         def _myfilter(val, arg):
@@ -581,12 +566,10 @@ class TestSet(object):
             "{{ foo }}"
         )
         assert tmpl.render() == "11"
-        assert tmpl.module.foo == u"11"
+        assert tmpl.module.foo == "11"
 
 
-@pytest.mark.core_tags
-@pytest.mark.with_
-class TestWith(object):
+class TestWith:
     def test_with(self, env):
         tmpl = env.from_string(
             """\

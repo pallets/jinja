@@ -1,10 +1,9 @@
-# -*- coding: utf-8 -*-
 import re
 
-from jinja.exceptions import TemplateSyntaxError
-from jinja.ext import Extension
-from jinja.lexer import count_newlines
-from jinja.lexer import Token
+from jinja2.exceptions import TemplateSyntaxError
+from jinja2.ext import Extension
+from jinja2.lexer import count_newlines
+from jinja2.lexer import Token
 
 
 _outside_re = re.compile(r"\\?(gettext|_)\(")
@@ -54,7 +53,7 @@ class InlineGettext(Extension):
                 else:
                     if gtok == "(" or paren_stack > 1:
                         yield Token(lineno, "data", gtok)
-                    paren_stack += gtok == ")" and -1 or 1
+                    paren_stack += -1 if gtok == ")" else 1
                     if not paren_stack:
                         yield Token(lineno, "block_begin", None)
                         yield Token(lineno, "name", "endtrans")

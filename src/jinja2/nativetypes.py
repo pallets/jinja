@@ -4,7 +4,6 @@ from itertools import chain
 from itertools import islice
 
 from . import nodes
-from ._compat import text_type
 from .compiler import CodeGenerator
 from .compiler import has_safe_repr
 from .environment import Environment
@@ -33,7 +32,7 @@ def native_concat(nodes, preserve_quotes=True):
     else:
         if isinstance(nodes, types.GeneratorType):
             nodes = chain(head, nodes)
-        raw = u"".join([text_type(v) for v in nodes])
+        raw = "".join([str(v) for v in nodes])
 
     try:
         literal = literal_eval(raw)
@@ -45,14 +44,15 @@ def native_concat(nodes, preserve_quotes=True):
     # Without this, "'{{ a }}', '{{ b }}'" results in "a, b", but should
     # be ('a', 'b').
     if preserve_quotes and isinstance(literal, str):
-        return "{quote}{}{quote}".format(literal, quote=raw[0])
+        quote = raw[0]
+        return f"{quote}{literal}{quote}"
 
     return literal
 
 
 class NativeCodeGenerator(CodeGenerator):
     """A code generator which renders Python types by not adding
-    ``to_string()`` around output nodes, and using :func:`native_concat`
+    ``str()`` around output nodes, and using :func:`native_concat`
     to convert complex strings back to Python types if possible.
     """
 

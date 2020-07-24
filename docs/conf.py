@@ -6,7 +6,7 @@ from pallets_sphinx_themes import ProjectLink
 project = "Jinja"
 copyright = "2007 Pallets"
 author = "Pallets"
-release, version = get_version("Jinja")
+release, version = get_version("Jinja2")
 
 # General --------------------------------------------------------------
 
@@ -29,7 +29,7 @@ html_context = {
     "project_links": [
         ProjectLink("Donate to Pallets", "https://palletsprojects.com/donate"),
         ProjectLink("Jinja Website", "https://palletsprojects.com/p/jinja/"),
-        ProjectLink("PyPI releases", "https://pypi.org/project/Jinja/"),
+        ProjectLink("PyPI releases", "https://pypi.org/project/Jinja2/"),
         ProjectLink("Source Code", "https://github.com/pallets/jinja/"),
         ProjectLink("Issue Tracker", "https://github.com/pallets/jinja/issues/"),
     ]
@@ -42,11 +42,9 @@ singlehtml_sidebars = {"index": ["project.html", "localtoc.html"]}
 html_static_path = ["_static"]
 html_favicon = "_static/jinja-logo-sidebar.png"
 html_logo = "_static/jinja-logo-sidebar.png"
-html_title = "Jinja Documentation ({})".format(version)
+html_title = f"Jinja Documentation ({version})"
 html_show_sourcelink = False
 
 # LaTeX ----------------------------------------------------------------
 
-latex_documents = [
-    (master_doc, "Jinja-{}.tex".format(version), html_title, author, "manual")
-]
+latex_documents = [(master_doc, f"Jinja-{version}.tex", html_title, author, "manual")]

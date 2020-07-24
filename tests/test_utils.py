@@ -1,4 +1,3 @@
-# -*- coding: utf-8 -*-
 import pickle
 import random
 from collections import deque
@@ -7,20 +6,16 @@ from copy import copy as shallow_copy
 import pytest
 from markupsafe import Markup
 
-from jinja._compat import range_type
-from jinja._compat import string_types
-from jinja.utils import consume
-from jinja.utils import generate_lorem_ipsum
-from jinja.utils import LRUCache
-from jinja.utils import missing
-from jinja.utils import object_type_repr
-from jinja.utils import select_autoescape
-from jinja.utils import urlize
+from jinja2.utils import consume
+from jinja2.utils import generate_lorem_ipsum
+from jinja2.utils import LRUCache
+from jinja2.utils import missing
+from jinja2.utils import object_type_repr
+from jinja2.utils import select_autoescape
+from jinja2.utils import urlize
 
 
-@pytest.mark.utils
-@pytest.mark.lrucache
-class TestLRUCache(object):
+class TestLRUCache:
     def test_simple(self):
         d = LRUCache(3)
         d["a"] = 1
@@ -30,13 +25,6 @@ class TestLRUCache(object):
         d["d"] = 4
         assert len(d) == 3
         assert "a" in d and "c" in d and "d" in d and "b" not in d
-
-    def test_itervalue_deprecated(self):
-        cache = LRUCache(3)
-        cache["a"] = 1
-        cache["b"] = 2
-        with pytest.deprecated_call():
-            cache.itervalue()
 
     def test_itervalues(self):
         cache = LRUCache(3)
@@ -89,7 +77,7 @@ class TestLRUCache(object):
         d["b"] = 2
         d["c"] = 3
         # Sort the strings - mapping is unordered
-        assert sorted(repr(d)) == sorted(u"<LRUCache {'a': 1, 'b': 2, 'c': 3}>")
+        assert sorted(repr(d)) == sorted("<LRUCache {'a': 1, 'b': 2, 'c': 3}>")
 
     def test_items(self):
         """Test various items, keys, values and iterators of LRUCache."""
@@ -120,11 +108,9 @@ class TestLRUCache(object):
         assert len(d) == 2
 
 
-@pytest.mark.utils
-@pytest.mark.helpers
-class TestHelpers(object):
+class TestHelpers:
     def test_object_type_repr(self):
-        class X(object):
+        class X:
             pass
 
         assert object_type_repr(42) == "int object"
@@ -150,9 +136,7 @@ class TestHelpers(object):
         assert not func("FOO.TXT")
 
 
-@pytest.mark.utils
-@pytest.mark.escapeUrlizeTarget
-class TestEscapeUrlizeTarget(object):
+class TestEscapeUrlizeTarget:
     def test_escape_urlize_target(self):
         url = "http://example.org"
         target = "<script>"
@@ -163,41 +147,39 @@ class TestEscapeUrlizeTarget(object):
         )
 
 
-@pytest.mark.utils
-@pytest.mark.loremIpsum
-class TestLoremIpsum(object):
+class TestLoremIpsum:
     def test_lorem_ipsum_markup(self):
         """Test that output of lorem_ipsum is Markup by default."""
         assert isinstance(generate_lorem_ipsum(), Markup)
 
     def test_lorem_ipsum_html(self):
         """Test that output of lorem_ipsum is a string_type when not html."""
-        assert isinstance(generate_lorem_ipsum(html=False), string_types)
+        assert isinstance(generate_lorem_ipsum(html=False), str)
 
     def test_lorem_ipsum_n(self):
         """Test that the n (number of lines) works as expected."""
-        assert generate_lorem_ipsum(n=0, html=False) == u""
-        for n in range_type(1, 50):
+        assert generate_lorem_ipsum(n=0, html=False) == ""
+        for n in range(1, 50):
             assert generate_lorem_ipsum(n=n, html=False).count("\n") == (n - 1) * 2
 
     def test_lorem_ipsum_min(self):
         """Test that at least min words are in the output of each line"""
-        for _ in range_type(5):
+        for _ in range(5):
             m = random.randrange(20, 99)
-            for _ in range_type(10):
+            for _ in range(10):
                 assert generate_lorem_ipsum(n=1, min=m, html=False).count(" ") >= m - 1
 
     def test_lorem_ipsum_max(self):
         """Test that at least max words are in the output of each line"""
-        for _ in range_type(5):
+        for _ in range(5):
             m = random.randrange(21, 100)
-            for _ in range_type(10):
+            for _ in range(10):
                 assert generate_lorem_ipsum(n=1, max=m, html=False).count(" ") < m - 1
 
 
 def test_missing():
     """Test the repr of missing."""
-    assert repr(missing) == u"missing"
+    assert repr(missing) == "missing"
 
 
 def test_consume():

@@ -1,4 +1,5 @@
-include CHANGES.rst tox.ini
+include CHANGES.rst
+include tox.ini
 graft artwork
 graft docs
 prune docs/_build

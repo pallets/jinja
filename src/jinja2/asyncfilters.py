@@ -26,17 +26,16 @@ async def async_select_or_reject(args, kwargs, modfunc, lookup_attr):
 
 def dualfilter(normal_filter, async_filter):
     wrap_evalctx = False
-    if getattr(normal_filter, "environmentfilter", False):
+    if getattr(normal_filter, "environmentfilter", False) is True:
 
         def is_async(args):
             return args[0].is_async
 
         wrap_evalctx = False
     else:
-        if not getattr(normal_filter, "evalcontextfilter", False) and not getattr(
-            normal_filter, "contextfilter", False
-        ):
-            wrap_evalctx = True
+        has_evalctxfilter = getattr(normal_filter, "evalcontextfilter", False) is True
+        has_ctxfilter = getattr(normal_filter, "contextfilter", False) is True
+        wrap_evalctx = not has_evalctxfilter and not has_ctxfilter
 
         def is_async(args):
             return args[0].environment.is_async
@@ -85,7 +84,7 @@ async def do_groupby(environment, value, attribute):
 
 
 @asyncfiltervariant(filters.do_join)
-async def do_join(eval_ctx, value, d=u"", attribute=None):
+async def do_join(eval_ctx, value, d="", attribute=None):
     return filters.do_join(eval_ctx, await auto_to_seq(value), d, attribute)
 
 
@@ -147,8 +146,7 @@ ASYNC_FILTERS = {
     "groupby": do_groupby,
     "join": do_join,
     "list": do_list,
-    # we intentionally do not support do_last because that would be
-    # ridiculous
+    # we intentionally do not support do_last because it may not be safe in async
     "reject": do_reject,
     "rejectattr": do_rejectattr,
     "map": do_map,

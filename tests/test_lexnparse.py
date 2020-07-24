@@ -1,35 +1,18 @@
-# -*- coding: utf-8 -*-
 import pytest
 
-from jinja import Environment
-from jinja import nodes
-from jinja import Template
-from jinja import TemplateSyntaxError
-from jinja import UndefinedError
-from jinja._compat import iteritems
-from jinja._compat import PY2
-from jinja._compat import text_type
-from jinja.lexer import Token
-from jinja.lexer import TOKEN_BLOCK_BEGIN
-from jinja.lexer import TOKEN_BLOCK_END
-from jinja.lexer import TOKEN_EOF
-from jinja.lexer import TokenStream
+from jinja2 import Environment
+from jinja2 import nodes
+from jinja2 import Template
+from jinja2 import TemplateSyntaxError
+from jinja2 import UndefinedError
+from jinja2.lexer import Token
+from jinja2.lexer import TOKEN_BLOCK_BEGIN
+from jinja2.lexer import TOKEN_BLOCK_END
+from jinja2.lexer import TOKEN_EOF
+from jinja2.lexer import TokenStream
 
 
-# how does a string look like in jinja syntax?
-if PY2:
-
-    def jinja_string_repr(string):
-        return repr(string)[1:]
-
-
-else:
-    jinja_string_repr = repr
-
-
-@pytest.mark.lexnparse
-@pytest.mark.tokenstream
-class TestTokenStream(object):
+class TestTokenStream:
     test_tokens = [
         Token(1, TOKEN_BLOCK_BEGIN, ""),
         Token(2, TOKEN_BLOCK_END, ""),
@@ -57,9 +40,7 @@ class TestTokenStream(object):
         ]
 
 
-@pytest.mark.lexnparse
-@pytest.mark.lexer
-class TestLexer(object):
+class TestLexer:
     def test_raw1(self, env):
         tmpl = env.from_string(
             "{% raw %}foo{% endraw %}|"
@@ -110,24 +91,24 @@ class TestLexer(object):
         )
 
     def test_string_escapes(self, env):
-        for char in u"\0", u"\u2668", u"\xe4", u"\t", u"\r", u"\n":
-            tmpl = env.from_string("{{ %s }}" % jinja_string_repr(char))
+        for char in "\0", "\u2668", "\xe4", "\t", "\r", "\n":
+            tmpl = env.from_string(f"{{{{ {char!r} }}}}")
             assert tmpl.render() == char
-        assert env.from_string('{{ "\N{HOT SPRINGS}" }}').render() == u"\u2668"
+        assert env.from_string('{{ "\N{HOT SPRINGS}" }}').render() == "\u2668"
 
     def test_bytefallback(self, env):
         from pprint import pformat
 
-        tmpl = env.from_string(u"""{{ 'foo'|pprint }}|{{ 'bär'|pprint }}""")
-        assert tmpl.render() == pformat("foo") + "|" + pformat(u"bär")
+        tmpl = env.from_string("""{{ 'foo'|pprint }}|{{ 'bär'|pprint }}""")
+        assert tmpl.render() == pformat("foo") + "|" + pformat("bär")
 
     def test_operators(self, env):
-        from jinja.lexer import operators
+        from jinja2.lexer import operators
 
-        for test, expect in iteritems(operators):
+        for test, expect in operators.items():
             if test in "([{}])":
                 continue
-            stream = env.lexer.tokenize("{{ %s }}" % test)
+            stream = env.lexer.tokenize(f"{{{{ {test} }}}}")
             next(stream)
             assert stream.current.type == expect
 
@@ -153,39 +134,37 @@ class TestLexer(object):
                 assert result == expect, (keep, template, result, expect)
 
     @pytest.mark.parametrize(
-        "name,valid2,valid3",
-        (
-            (u"foo", True, True),
-            (u"föö", False, True),
-            (u"き", False, True),
-            (u"_", True, True),
-            (u"1a", False, False),  # invalid ascii start
-            (u"a-", False, False),  # invalid ascii continue
-            (u"🐍", False, False),  # invalid unicode start
-            (u"a🐍", False, False),  # invalid unicode continue
+        ("name", "valid"),
+        [
+            ("foo", True),
+            ("föö", True),
+            ("き", True),
+            ("_", True),
+            ("1a", False),  # invalid ascii start
+            ("a-", False),  # invalid ascii continue
+            ("\U0001f40da", False),  # invalid unicode start
+            ("a🐍\U0001f40d", False),  # invalid unicode continue
             # start characters not matched by \w
-            (u"\u1885", False, True),
-            (u"\u1886", False, True),
-            (u"\u2118", False, True),
-            (u"\u212e", False, True),
+            ("\u1885", True),
+            ("\u1886", True),
+            ("\u2118", True),
+            ("\u212e", True),
             # continue character not matched by \w
-            (u"\xb7", False, False),
-            (u"a\xb7", False, True),
-        ),
+            ("\xb7", False),
+            ("a\xb7", True),
+        ],
     )
-    def test_name(self, env, name, valid2, valid3):
-        t = u"{{ " + name + u" }}"
+    def test_name(self, env, name, valid):
+        t = "{{ " + name + " }}"
 
-        if (valid2 and PY2) or (valid3 and not PY2):
+        if valid:
             # valid for version being tested, shouldn't raise
             env.from_string(t)
         else:
             pytest.raises(TemplateSyntaxError, env.from_string, t)
 
 
-@pytest.mark.lexnparse
-@pytest.mark.parser
-class TestParser(object):
+class TestParser:
     def test_php_syntax(self, env):
         env = Environment("<?", "?>", "<?=", "?>", "<!--", "-->")
         tmpl = env.from_string(
@@ -318,9 +297,7 @@ and bar comment #}
         assert_error("{% unknown_tag %}", "Encountered unknown tag 'unknown_tag'.")
 
 
-@pytest.mark.lexnparse
-@pytest.mark.syntax
-class TestSyntax(object):
+class TestSyntax:
     def test_call(self, env):
         env = Environment()
         env.globals["foo"] = lambda a, b, c, e, g: a + b + c + e + g
@@ -371,7 +348,7 @@ class TestSyntax(object):
         ],
     )
     def test_compare(self, env, a, op, b):
-        t = env.from_string("{{ %d %s %d }}" % (a, op, b))
+        t = env.from_string(f"{{{{ {a} {op} {b} }}}}")
         assert t.render() == "True"
 
     def test_compare_parens(self, env):
@@ -399,7 +376,7 @@ class TestSyntax(object):
 
     @pytest.mark.parametrize("value", ("[]", "{}", "()"))
     def test_collection_literal(self, env, value):
-        t = env.from_string("{{ %s }}" % value)
+        t = env.from_string(f"{{{{ {value} }}}}")
         assert t.render() == value
 
     @pytest.mark.parametrize(
@@ -420,7 +397,7 @@ class TestSyntax(object):
         ),
     )
     def test_numeric_literal(self, env, value, expect):
-        t = env.from_string("{{ %s }}" % value)
+        t = env.from_string(f"{{{{ {value} }}}}")
         assert t.render() == expect
 
     def test_bool(self, env):
@@ -474,11 +451,10 @@ class TestSyntax(object):
         ]
         for should_fail, sig in tests:
             if should_fail:
-                pytest.raises(
-                    TemplateSyntaxError, env.from_string, "{{ foo(%s) }}" % sig
-                )
+                with pytest.raises(TemplateSyntaxError):
+                    env.from_string(f"{{{{ foo({sig}) }}}}")
             else:
-                env.from_string("foo(%s)" % sig)
+                env.from_string(f"foo({sig})")
 
     def test_tuple_expr(self, env):
         for tmpl in [
@@ -505,11 +481,11 @@ class TestSyntax(object):
 
     def test_constant_casing(self, env):
         for const in True, False, None:
+            const = str(const)
             tmpl = env.from_string(
-                "{{ %s }}|{{ %s }}|{{ %s }}"
-                % (str(const), str(const).lower(), str(const).upper())
+                f"{{{{ {const} }}}}|{{{{ {const.lower()} }}}}|{{{{ {const.upper()} }}}}"
             )
-            assert tmpl.render() == "%s|%s|" % (const, const)
+            assert tmpl.render() == f"{const}|{const}|"
 
     def test_test_chaining(self, env):
         pytest.raises(
@@ -528,15 +504,15 @@ class TestSyntax(object):
 
     def test_operator_precedence(self, env):
         tmpl = env.from_string("""{{ 2 * 3 + 4 % 2 + 1 - 2 }}""")
-        assert tmpl.render() == text_type(2 * 3 + 4 % 2 + 1 - 2)
+        assert tmpl.render() == "5"
 
     def test_implicit_subscribed_tuple(self, env):
-        class Foo(object):
+        class Foo:
             def __getitem__(self, x):
                 return x
 
         t = env.from_string("{{ foo[1, 2] }}")
-        assert t.render(foo=Foo()) == u"(1, 2)"
+        assert t.render(foo=Foo()) == "(1, 2)"
 
     def test_raw2(self, env):
         tmpl = env.from_string("{% raw %}{{ FOO }} and {% BAR %}{% endraw %}")
@@ -575,9 +551,7 @@ class TestSyntax(object):
         assert tmpl.render(foo={"bar": 42}) == "42"
 
 
-@pytest.mark.lexnparse
-@pytest.mark.lstripblocks
-class TestLstripBlocks(object):
+class TestLstripBlocks:
     def test_lstrip(self, env):
         env = Environment(lstrip_blocks=True, trim_blocks=False)
         tmpl = env.from_string("""    {% if True %}\n    {% endif %}""")
@@ -697,7 +671,7 @@ hello
 ${item} ## the rest of the stuff
    <% endfor %>"""
         )
-        assert tmpl.render(seq=range(5)) == "".join("%s\n" % x for x in range(5))
+        assert tmpl.render(seq=range(5)) == "".join(f"{x}\n" for x in range(5))
 
     def test_lstrip_angle_bracket_compact(self, env):
         env = Environment(
@@ -719,7 +693,7 @@ ${item} ## the rest of the stuff
 ${item} ## the rest of the stuff
    <%endfor%>"""
         )
-        assert tmpl.render(seq=range(5)) == "".join("%s\n" % x for x in range(5))
+        assert tmpl.render(seq=range(5)) == "".join(f"{x}\n" for x in range(5))
 
     def test_php_syntax_with_manual(self, env):
         env = Environment(
@@ -745,9 +719,7 @@ ${item} ## the rest of the stuff
         <?= item ?>
     <? endfor ?>"""
         )
-        assert tmpl.render(seq=range(5)) == "".join(
-            "        %s\n" % x for x in range(5)
-        )
+        assert tmpl.render(seq=range(5)) == "".join(f"        {x}\n" for x in range(5))
 
     def test_php_syntax_compact(self, env):
         env = Environment(
@@ -760,19 +732,12 @@ ${item} ## the rest of the stuff
         <?=item?>
     <?endfor?>"""
         )
-        assert tmpl.render(seq=range(5)) == "".join(
-            "        %s\n" % x for x in range(5)
-        )
+        assert tmpl.render(seq=range(5)) == "".join(f"        {x}\n" for x in range(5))
 
     def test_erb_syntax(self, env):
         env = Environment(
             "<%", "%>", "<%=", "%>", "<%#", "%>", lstrip_blocks=True, trim_blocks=True
         )
-        # env.from_string('')
-        # for n,r in env.lexer.rules.iteritems():
-        #    print n
-        # print env.lexer.rules['root'][0][0].pattern
-        # print "'%s'" % tmpl.render(seq=range(5))
         tmpl = env.from_string(
             """\
 <%# I'm a comment, I'm not interesting %>
@@ -781,7 +746,7 @@ ${item} ## the rest of the stuff
     <% endfor %>
 """
         )
-        assert tmpl.render(seq=range(5)) == "".join("    %s\n" % x for x in range(5))
+        assert tmpl.render(seq=range(5)) == "".join(f"    {x}\n" for x in range(5))
 
     def test_erb_syntax_with_manual(self, env):
         env = Environment(

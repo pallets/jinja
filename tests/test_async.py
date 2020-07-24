@@ -2,13 +2,13 @@ import asyncio
 
 import pytest
 
-from jinja import DictLoader
-from jinja import Environment
-from jinja import Template
-from jinja.asyncsupport import auto_aiter
-from jinja.exceptions import TemplateNotFound
-from jinja.exceptions import TemplatesNotFound
-from jinja.exceptions import UndefinedError
+from jinja2 import DictLoader
+from jinja2 import Environment
+from jinja2 import Template
+from jinja2.asyncsupport import auto_aiter
+from jinja2.exceptions import TemplateNotFound
+from jinja2.exceptions import TemplatesNotFound
+from jinja2.exceptions import UndefinedError
 
 
 def run(coro):
@@ -130,8 +130,7 @@ def test_env_async():
     return env
 
 
-@pytest.mark.imports
-class TestAsyncImports(object):
+class TestAsyncImports:
     def test_context_imports(self, test_env_async):
         t = test_env_async.from_string('{% import "module" as m %}{{ m.test() }}')
         assert t.render(foo=42) == "[|23]"
@@ -180,9 +179,7 @@ class TestAsyncImports(object):
         assert not hasattr(m, "notthere")
 
 
-@pytest.mark.imports
-@pytest.mark.includes
-class TestAsyncIncludes(object):
+class TestAsyncIncludes:
     def test_context_include(self, test_env_async):
         t = test_env_async.from_string('{% include "header" %}')
         assert t.render(foo=42) == "[42|23]"
@@ -279,9 +276,7 @@ class TestAsyncIncludes(object):
         assert t.render().strip() == "(FOO)"
 
 
-@pytest.mark.core_tags
-@pytest.mark.for_loop
-class TestAsyncForLoop(object):
+class TestAsyncForLoop:
     def test_simple(self, test_env_async):
         tmpl = test_env_async.from_string("{% for item in seq %}{{ item }}{% endfor %}")
         assert tmpl.render(seq=list(range(10))) == "0123456789"
@@ -345,8 +340,7 @@ class TestAsyncForLoop(object):
 
     def test_varlen(self, test_env_async):
         def inner():
-            for item in range(5):
-                yield item
+            yield from range(5)
 
         tmpl = test_env_async.from_string(
             "{% for item in iter %}{{ item }}{% endfor %}"
@@ -579,3 +573,7 @@ class TestAsyncForLoop(object):
     def test_bare_async(self, test_env_async):
         t = test_env_async.from_string('{% extends "header" %}')
         assert t.render(foo=42) == "[42|23]"
+
+    def test_awaitable_property_slicing(self, test_env_async):
+        t = test_env_async.from_string("{% for x in a.b[:1] %}{{ x }}{% endfor %}")
+        assert t.render(a=dict(b=[1, 2, 3])) == "1"

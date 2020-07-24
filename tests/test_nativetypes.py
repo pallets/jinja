@@ -1,10 +1,9 @@
 import pytest
 
-from jinja._compat import text_type
-from jinja.exceptions import UndefinedError
-from jinja.nativetypes import NativeEnvironment
-from jinja.nativetypes import NativeTemplate
-from jinja.runtime import Undefined
+from jinja2.exceptions import UndefinedError
+from jinja2.nativetypes import NativeEnvironment
+from jinja2.nativetypes import NativeTemplate
+from jinja2.runtime import Undefined
 
 
 @pytest.fixture
@@ -53,7 +52,7 @@ def test_multi_expression_add(env):
 def test_loops(env):
     t = env.from_string("{% for x in value %}{{ x }}{% endfor %}")
     result = t.render(value=["a", "b", "c", "d"])
-    assert isinstance(result, text_type)
+    assert isinstance(result, str)
     assert result == "abcd"
 
 
@@ -111,7 +110,7 @@ def test_constant_dunder_to_string(env):
 def test_string_literal_var(env):
     t = env.from_string("[{{ 'all' }}]")
     result = t.render()
-    assert isinstance(result, text_type)
+    assert isinstance(result, str)
     assert result == "[all]"
 
 

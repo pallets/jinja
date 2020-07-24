@@ -1,44 +1,15 @@
-# -*- coding: utf-8 -*-
-from ._compat import imap
-from ._compat import implements_to_string
-from ._compat import PY2
-from ._compat import text_type
-
-
 class TemplateError(Exception):
     """Baseclass for all template errors."""
 
-    if PY2:
+    def __init__(self, message=None):
+        super().__init__(message)
 
-        def __init__(self, message=None):
-            if message is not None:
-                message = text_type(message).encode("utf-8")
-            Exception.__init__(self, message)
-
-        @property
-        def message(self):
-            if self.args:
-                message = self.args[0]
-                if message is not None:
-                    return message.decode("utf-8", "replace")
-
-        def __unicode__(self):
-            return self.message or u""
-
-    else:
-
-        def __init__(self, message=None):
-            Exception.__init__(self, message)
-
-        @property
-        def message(self):
-            if self.args:
-                message = self.args[0]
-                if message is not None:
-                    return message
+    @property
+    def message(self):
+        if self.args:
+            return self.args[0]
 
 
-@implements_to_string
 class TemplateNotFound(IOError, LookupError, TemplateError):
     """Raised if a template does not exist.
 
@@ -47,8 +18,8 @@ class TemplateNotFound(IOError, LookupError, TemplateError):
         provided, an :exc:`UndefinedError` is raised.
     """
 
-    # looks weird, but removes the warning descriptor that just
-    # bogusly warns us about message being deprecated
+    # Silence the Python warning about message being deprecated since
+    # it's not valid here.
     message = None
 
     def __init__(self, name, message=None):
@@ -94,14 +65,13 @@ class TemplatesNotFound(TemplateNotFound):
                 else:
                     parts.append(name)
 
-            message = u"none of the templates given were found: " + u", ".join(
-                imap(text_type, parts)
+            message = "none of the templates given were found: " + ", ".join(
+                map(str, parts)
             )
-        TemplateNotFound.__init__(self, names and names[-1] or None, message)
+        TemplateNotFound.__init__(self, names[-1] if names else None, message)
         self.templates = list(names)
 
 
-@implements_to_string
 class TemplateSyntaxError(TemplateError):
     """Raised to tell the user that there is a problem with the template."""
 
@@ -122,10 +92,10 @@ class TemplateSyntaxError(TemplateError):
             return self.message
 
         # otherwise attach some stuff
-        location = "line %d" % self.lineno
+        location = f"line {self.lineno}"
         name = self.filename or self.name
         if name:
-            location = 'File "%s", %s' % (name, location)
+            location = f'File "{name}", {location}'
         lines = [self.message, "  " + location]
 
         # if the source is set, add the line to the output
@@ -137,7 +107,7 @@ class TemplateSyntaxError(TemplateError):
             if line:
                 lines.append("    " + line.strip())
 
-        return u"\n".join(lines)
+        return "\n".join(lines)
 
     def __reduce__(self):
         # https://bugs.python.org/issue1692335 Exceptions that take

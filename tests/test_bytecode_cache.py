@@ -1,11 +1,10 @@
-# -*- coding: utf-8 -*-
 import pytest
 
-from jinja import Environment
-from jinja.bccache import Bucket
-from jinja.bccache import FileSystemBytecodeCache
-from jinja.bccache import MemcachedBytecodeCache
-from jinja.exceptions import TemplateNotFound
+from jinja2 import Environment
+from jinja2.bccache import Bucket
+from jinja2.bccache import FileSystemBytecodeCache
+from jinja2.bccache import MemcachedBytecodeCache
+from jinja2.exceptions import TemplateNotFound
 
 
 @pytest.fixture
@@ -14,15 +13,14 @@ def env(package_loader, tmp_path):
     return Environment(loader=package_loader, bytecode_cache=bytecode_cache)
 
 
-@pytest.mark.byte_code_cache
-class TestByteCodeCache(object):
+class TestByteCodeCache:
     def test_simple(self, env):
         tmpl = env.get_template("test.html")
         assert tmpl.render().strip() == "BAR"
         pytest.raises(TemplateNotFound, env.get_template, "missing.html")
 
 
-class MockMemcached(object):
+class MockMemcached:
     class Error(Exception):
         pass
 
@@ -45,7 +43,7 @@ class MockMemcached(object):
         raise self.Error()
 
 
-class TestMemcachedBytecodeCache(object):
+class TestMemcachedBytecodeCache:
     def test_dump_load(self):
         memcached = MockMemcached()
         m = MemcachedBytecodeCache(memcached)
@@ -53,7 +51,7 @@ class TestMemcachedBytecodeCache(object):
         b = Bucket(None, "key", "")
         b.code = "code"
         m.dump_bytecode(b)
-        assert memcached.key == "jinja/bytecode/key"
+        assert memcached.key == "jinja2/bytecode/key"
 
         b = Bucket(None, "key", "")
         m.load_bytecode(b)

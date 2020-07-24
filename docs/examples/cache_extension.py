@@ -1,5 +1,5 @@
-from jinja import nodes
-from jinja.ext import Extension
+from jinja2 import nodes
+from jinja2.ext import Extension
 
 
 class FragmentCacheExtension(Extension):
@@ -7,7 +7,7 @@ class FragmentCacheExtension(Extension):
     tags = {"cache"}
 
     def __init__(self, environment):
-        super(FragmentCacheExtension, self).__init__(environment)
+        super().__init__(environment)
 
         # add the defaults to the environment
         environment.extend(fragment_cache_prefix="", fragment_cache=None)

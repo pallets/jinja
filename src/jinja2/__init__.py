@@ -1,8 +1,10 @@
-# -*- coding: utf-8 -*-
 """Jinja is a template engine written in pure Python. It provides a
 non-XML syntax that supports inline expressions and an optional
 sandboxed environment.
 """
+from markupsafe import escape
+from markupsafe import Markup
+
 from .bccache import BytecodeCache
 from .bccache import FileSystemBytecodeCache
 from .bccache import MemcachedBytecodeCache
@@ -34,10 +36,8 @@ from .runtime import Undefined
 from .utils import clear_caches
 from .utils import contextfunction
 from .utils import environmentfunction
-from .utils import escape
 from .utils import evalcontextfunction
 from .utils import is_undefined
-from .utils import Markup
 from .utils import select_autoescape
 
-__version__ = "2.11.0rc1"
+__version__ = "3.0.0a1"

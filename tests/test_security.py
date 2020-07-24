@@ -1,20 +1,17 @@
-# -*- coding: utf-8 -*-
 import pytest
 
-from jinja import Environment
-from jinja import escape
-from jinja import Markup
-from jinja._compat import text_type
-from jinja.exceptions import SecurityError
-from jinja.exceptions import TemplateRuntimeError
-from jinja.exceptions import TemplateSyntaxError
-from jinja.nodes import EvalContext
-from jinja.sandbox import ImmutableSandboxedEnvironment
-from jinja.sandbox import SandboxedEnvironment
-from jinja.sandbox import unsafe
+from jinja2 import Environment
+from jinja2 import escape
+from jinja2.exceptions import SecurityError
+from jinja2.exceptions import TemplateRuntimeError
+from jinja2.exceptions import TemplateSyntaxError
+from jinja2.nodes import EvalContext
+from jinja2.sandbox import ImmutableSandboxedEnvironment
+from jinja2.sandbox import SandboxedEnvironment
+from jinja2.sandbox import unsafe
 
 
-class PrivateStuff(object):
+class PrivateStuff:
     def bar(self):
         return 23
 
@@ -26,7 +23,7 @@ class PrivateStuff(object):
         return "PrivateStuff"
 
 
-class PublicStuff(object):
+class PublicStuff:
     def bar(self):
         return 23
 
@@ -37,8 +34,7 @@ class PublicStuff(object):
         return "PublicStuff"
 
 
-@pytest.mark.sandbox
-class TestSandbox(object):
+class TestSandbox:
     def test_unsafe(self, env):
         env = SandboxedEnvironment()
         pytest.raises(
@@ -77,44 +73,6 @@ class TestSandbox(object):
             "{% for foo, bar.baz in seq %}...{% endfor %}",
         )
 
-    def test_markup_operations(self, env):
-        # adding two strings should escape the unsafe one
-        unsafe = '<script type="application/x-some-script">alert("foo");</script>'
-        safe = Markup("<em>username</em>")
-        assert unsafe + safe == text_type(escape(unsafe)) + text_type(safe)
-
-        # string interpolations are safe to use too
-        assert Markup("<em>%s</em>") % "<bad user>" == "<em>&lt;bad user&gt;</em>"
-        assert (
-            Markup("<em>%(username)s</em>") % {"username": "<bad user>"}
-            == "<em>&lt;bad user&gt;</em>"
-        )
-
-        # an escaped object is markup too
-        assert type(Markup("foo") + "bar") is Markup
-
-        # and it implements __html__ by returning itself
-        x = Markup("foo")
-        assert x.__html__() is x
-
-        # it also knows how to treat __html__ objects
-        class Foo(object):
-            def __html__(self):
-                return "<em>awesome</em>"
-
-            def __unicode__(self):
-                return "awesome"
-
-        assert Markup(Foo()) == "<em>awesome</em>"
-        assert (
-            Markup("<strong>%s</strong>") % Foo() == "<strong><em>awesome</em></strong>"
-        )
-
-        # escaping and unescaping
-        assert escape("\"<>&'") == "&#34;&lt;&gt;&amp;&#39;"
-        assert Markup("<em>Foo &amp; Bar</em>").striptags() == "Foo & Bar"
-        assert Markup("&lt;test&gt;").unescape() == "<test>"
-
     def test_template_data(self, env):
         env = Environment(autoescape=True)
         t = env.from_string(
@@ -124,7 +82,7 @@ class TestSandbox(object):
         )
         escaped_out = "<p>Hello &lt;blink&gt;foo&lt;/blink&gt;!</p>"
         assert t.render() == escaped_out
-        assert text_type(t.module) == escaped_out
+        assert str(t.module) == escaped_out
         assert escape(t.module) == escaped_out
         assert t.module.say_hello("<blink>foo</blink>") == escaped_out
         assert (
@@ -145,10 +103,10 @@ class TestSandbox(object):
         for expr, ctx, rv in ("1 + 2", {}, "3"), ("a + 2", {"a": 2}, "4"):
             env = SandboxedEnvironment()
             env.binop_table["+"] = disable_op
-            t = env.from_string("{{ %s }}" % expr)
+            t = env.from_string(f"{{{{ {expr} }}}}")
             assert t.render(ctx) == rv
             env.intercepted_binops = frozenset(["+"])
-            t = env.from_string("{{ %s }}" % expr)
+            t = env.from_string(f"{{{{ {expr} }}}}")
             with pytest.raises(TemplateRuntimeError):
                 t.render(ctx)
 
@@ -159,16 +117,15 @@ class TestSandbox(object):
         for expr, ctx, rv in ("-1", {}, "-1"), ("-a", {"a": 2}, "-2"):
             env = SandboxedEnvironment()
             env.unop_table["-"] = disable_op
-            t = env.from_string("{{ %s }}" % expr)
+            t = env.from_string(f"{{{{ {expr} }}}}")
             assert t.render(ctx) == rv
             env.intercepted_unops = frozenset(["-"])
-            t = env.from_string("{{ %s }}" % expr)
+            t = env.from_string(f"{{{{ {expr} }}}}")
             with pytest.raises(TemplateRuntimeError):
                 t.render(ctx)
 
 
-@pytest.mark.sandbox
-class TestStringFormat(object):
+class TestStringFormat:
     def test_basic_format_safety(self):
         env = SandboxedEnvironment()
         t = env.from_string('{{ "a{0.__class__}b".format(42) }}')
@@ -190,11 +147,7 @@ class TestStringFormat(object):
         assert t.render() == "a42b&lt;foo&gt;"
 
 
-@pytest.mark.sandbox
-@pytest.mark.skipif(
-    not hasattr(str, "format_map"), reason="requires str.format_map method"
-)
-class TestStringFormatMap(object):
+class TestStringFormatMap:
     def test_basic_format_safety(self):
         env = SandboxedEnvironment()
         t = env.from_string('{{ "a{x.__class__}b".format_map({"x":42}) }}')

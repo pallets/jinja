@@ -1,11 +1,42 @@
 .. currentmodule:: jinja2
 
-Version 2.11.0
---------------
+Version 3.0.0
+-------------
 
 Unreleased
 
--   Python 2.6, 3.3, and 3.4 are not supported anymore.
+-   Drop support for Python 2.7 and 3.5.
+-   Bump MarkupSafe dependency to >=1.1.
+-   Bump Babel optional dependency to >=2.1.
+-   Remove code that was marked deprecated.
+
+
+2.11.2
+------
+
+Unreleased
+
+-   Fix a bug that caused callable objects with ``__getattr__``, like
+    :class:`~unittest.mock.Mock` to be treated as a
+    :func:`contextfunction`. :issue:`1145`
+
+
+Version 2.11.1
+--------------
+
+Released 2020-01-30
+
+-   Fix a bug that prevented looking up a key after an attribute
+    (``{{ data.items[1:] }}``) in an async template. :issue:`1141`
+
+
+Version 2.11.0
+--------------
+
+Released 2020-01-27
+
+-   Drop support for Python 2.6, 3.3, and 3.4. This will be the last
+    version to support Python 2.7 and 3.5.
 -   Added a new ``ChainableUndefined`` class to support getitem and
     getattr on an undefined object. :issue:`977`
 -   Allow ``{%+`` syntax (with NOP behavior) when ``lstrip_blocks`` is
@@ -20,7 +51,7 @@ Unreleased
 -   Fix a bug causing deadlocks in ``LRUCache.setdefault``. :pr:`1000`
 -   The ``trim`` filter takes an optional string of characters to trim.
     :pr:`828`
--   A new ``jinja.ext.debug`` extension adds a ``{% debug %}`` tag to
+-   A new ``jinja2.ext.debug`` extension adds a ``{% debug %}`` tag to
     quickly dump the current context and available filters and tests.
     :issue:`174`, :pr:`798, 983`
 -   Lexing templates with large amounts of whitespace is much faster.
@@ -39,7 +70,7 @@ Unreleased
     in a ``{{ 'foo' if bar }}`` expression, regardless of the
     environment's ``undefined`` class. Omitting the ``else`` clause is a
     valid shortcut and should not raise an error when using
-    :class:`StrictUndefined`). :issue:`710`, :pr:`1079`
+    :class:`StrictUndefined`. :issue:`710`, :pr:`1079`
 -   Fix behavior of ``loop`` control variables such as ``length`` and
     ``revindex0`` when looping over a generator. :issue:`459, 751, 794`,
     :pr:`993`
@@ -77,8 +108,8 @@ Unreleased
     lines. :issue:`175`
 -   Add ``break_on_hyphens`` parameter to ``|wordwrap`` filter.
     :issue:`550`
--   Use :func:`callable` to inject context at runtime for compatibility
-    with Cython compiled functions. :pr:`1108`
+-   Cython compiled functions decorated as context functions will be
+    passed the context. :pr:`1108`
 -   When chained comparisons of constants are evaluated at compile time,
     the result follows Python's behavior of returning ``False`` if any
     comparison returns ``False``, rather than only the last one.
@@ -351,7 +382,7 @@ Released 2015-07-26, codename Replacement
 -   Fixed loop length calculation for some iterators.
 -   Changed how Jinja enforces strings to be native strings in Python 2
     to work when people break their default encoding.
--   Added :func:`make_logging_undefined` which returns an undefined
+-   Added ``make_logging_undefined`` which returns an undefined
     object that logs failures into a logger.
 -   If unmarshalling of cached data fails the template will be reloaded
     now.
@@ -364,8 +395,9 @@ Released 2015-07-26, codename Replacement
     arguments. This change makes ``{% macro m(x, y=1, z) %}`` a syntax
     error. The previous behavior for this code was broken anyway
     (resulting in the default value being applied to ``y``).
--   Add ability to use custom subclasses of ``CodeGenerator`` and
-    ``Context`` by adding two new attributes to the environment
+-   Add ability to use custom subclasses of
+    ``jinja2.compiler.CodeGenerator`` and ``jinja2.runtime.Context`` by
+    adding two new attributes to the environment
     (``code_generator_class`` and ``context_class``). :pr:`404`
 -   Added support for context/environment/evalctx decorator functions on
     the finalize callback of the environment.
@@ -578,7 +610,7 @@ Released 2010-04-13, codename Correlation
     through a template object if it was passed to it. This makes it
     possible to import or extend from a template object that was passed
     to the template.
--   Added a :class:`ModuleLoader` that can load templates from
+-   Added a ``ModuleLoader`` that can load templates from
     precompiled sources. The environment now features a method to
     compile the templates from a configured loader into a zip file or
     folder.

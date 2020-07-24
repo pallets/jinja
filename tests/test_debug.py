@@ -1,14 +1,13 @@
-# -*- coding: utf-8 -*-
 import pickle
 import re
 from traceback import format_exception
 
 import pytest
 
-from jinja import ChoiceLoader
-from jinja import DictLoader
-from jinja import Environment
-from jinja import TemplateSyntaxError
+from jinja2 import ChoiceLoader
+from jinja2 import DictLoader
+from jinja2 import Environment
+from jinja2 import TemplateSyntaxError
 
 
 @pytest.fixture
@@ -17,18 +16,16 @@ def fs_env(filesystem_loader):
     return Environment(loader=filesystem_loader)
 
 
-@pytest.mark.debug
-class TestDebug(object):
+class TestDebug:
     def assert_traceback_matches(self, callback, expected_tb):
         with pytest.raises(Exception) as exc_info:
             callback()
 
         tb = format_exception(exc_info.type, exc_info.value, exc_info.tb)
         m = re.search(expected_tb.strip(), "".join(tb))
-        assert m is not None, "Traceback did not match:\n\n%s\nexpected:\n%s" % (
-            "".join(tb),
-            expected_tb,
-        )
+        assert (
+            m is not None
+        ), "Traceback did not match:\n\n{''.join(tb)}\nexpected:\n{expected_tb}"
 
     def test_runtime_error(self, fs_env):
         def test():
@@ -55,7 +52,7 @@ ZeroDivisionError: (int(eger)? )?division (or modulo )?by zero
             """(?sm)
   File ".*?syntaxerror.html", line 4, in (template|<module>)
     \\{% endif %\\}.*?
-(jinja\\.exceptions\\.)?TemplateSyntaxError: Encountered unknown tag 'endif'. Jinja \
+(jinja2\\.exceptions\\.)?TemplateSyntaxError: Encountered unknown tag 'endif'. Jinja \
 was looking for the following tags: 'endfor' or 'else'. The innermost block that needs \
 to be closed is 'for'.
     """,
@@ -70,7 +67,7 @@ to be closed is 'for'.
             r"""
   File ".*debug.pyc?", line \d+, in test
     raise TemplateSyntaxError\("wtf", 42\)
-(jinja\.exceptions\.)?TemplateSyntaxError: wtf
+(jinja2\.exceptions\.)?TemplateSyntaxError: wtf
   line 42""",
         )
 
@@ -97,8 +94,8 @@ to be closed is 'for'.
         assert exc_info.value.source is not None
 
     def test_local_extraction(self):
-        from jinja.debug import get_template_locals
-        from jinja.runtime import missing
+        from jinja2.debug import get_template_locals
+        from jinja2.runtime import missing
 
         locals = get_template_locals(
             {

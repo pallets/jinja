@@ -1,13 +1,11 @@
-# -*- coding: utf-8 -*-
 """Extension API for adding custom tags and behavior."""
 import pprint
 import re
 from sys import version_info
 
+from markupsafe import Markup
+
 from . import nodes
-from ._compat import iteritems
-from ._compat import string_types
-from ._compat import with_metaclass
 from .defaults import BLOCK_END_STRING
 from .defaults import BLOCK_START_STRING
 from .defaults import COMMENT_END_STRING
@@ -27,13 +25,10 @@ from .nodes import ContextReference
 from .runtime import concat
 from .utils import contextfunction
 from .utils import import_string
-from .utils import Markup
 
-# the only real useful gettext functions for a Jinja template.  Note
-# that ugettext must be assigned to gettext as Jinja doesn't support
-# non unicode strings.
+# I18N functions available in Jinja templates. If the I18N library
+# provides ugettext, it will be assigned to gettext.
 GETTEXT_FUNCTIONS = ("_", "gettext", "ngettext")
-
 _ws_re = re.compile(r"\s*\n\s*")
 
 
@@ -42,11 +37,11 @@ class ExtensionRegistry(type):
 
     def __new__(mcs, name, bases, d):
         rv = type.__new__(mcs, name, bases, d)
-        rv.identifier = rv.__module__ + "." + rv.__name__
+        rv.identifier = f"{rv.__module__}.{rv.__name__}"
         return rv
 
 
-class Extension(with_metaclass(ExtensionRegistry, object)):
+class Extension(metaclass=ExtensionRegistry):
     """Extensions can be used to add extra functionality to the Jinja template
     system at the parser level.  Custom extensions are bound to an environment
     but may not store environment specific data on `self`.  The reason for
@@ -93,10 +88,10 @@ class Extension(with_metaclass(ExtensionRegistry, object)):
         return source
 
     def filter_stream(self, stream):
-        """It's passed a :class:`~jinja.lexer.TokenStream` that can be used
+        """It's passed a :class:`~jinja2.lexer.TokenStream` that can be used
         to filter tokens returned.  This method has to return an iterable of
-        :class:`~jinja.lexer.Token`\\s, but it doesn't have to return a
-        :class:`~jinja.lexer.TokenStream`.
+        :class:`~jinja2.lexer.Token`\\s, but it doesn't have to return a
+        :class:`~jinja2.lexer.TokenStream`.
         """
         return stream
 
@@ -122,7 +117,7 @@ class Extension(with_metaclass(ExtensionRegistry, object)):
         self, name, args=None, kwargs=None, dyn_args=None, dyn_kwargs=None, lineno=None
     ):
         """Call a method of the extension.  This is a shortcut for
-        :meth:`attr` + :class:`jinja.nodes.Call`.
+        :meth:`attr` + :class:`jinja2.nodes.Call`.
         """
         if args is None:
             args = []
@@ -195,6 +190,8 @@ class InternationalizationExtension(Extension):
         )
 
     def _install(self, translations, newstyle=None):
+        # ugettext and ungettext are preferred in case the I18N library
+        # is providing compatibility with older Python versions.
         gettext = getattr(translations, "ugettext", None)
         if gettext is None:
             gettext = translations.gettext
@@ -205,7 +202,7 @@ class InternationalizationExtension(Extension):
 
     def _install_null(self, newstyle=None):
         self._install_callables(
-            lambda x: x, lambda s, p, n: (n != 1 and (p,) or (s,))[0], newstyle
+            lambda x: x, lambda s, p, n: s if n == 1 else p, newstyle
         )
 
     def _install_callables(self, gettext, ngettext, newstyle=None):
@@ -221,7 +218,7 @@ class InternationalizationExtension(Extension):
             self.environment.globals.pop(key, None)
 
     def _extract(self, source, gettext_functions=GETTEXT_FUNCTIONS):
-        if isinstance(source, string_types):
+        if isinstance(source, str):
             source = self.environment.parse(source)
         return extract_from_ast(source, gettext_functions)
 
@@ -248,7 +245,7 @@ class InternationalizationExtension(Extension):
             name = parser.stream.expect("name")
             if name.value in variables:
                 parser.fail(
-                    "translatable variable %r defined twice." % name.value,
+                    f"translatable variable {name.value!r} defined twice.",
                     name.lineno,
                     exc=TemplateAssertionError,
                 )
@@ -296,7 +293,7 @@ class InternationalizationExtension(Extension):
                 name = parser.stream.expect("name")
                 if name.value not in variables:
                     parser.fail(
-                        "unknown variable %r for pluralization" % name.value,
+                        f"unknown variable {name.value!r} for pluralization",
                         name.lineno,
                         exc=TemplateAssertionError,
                     )
@@ -355,7 +352,7 @@ class InternationalizationExtension(Extension):
                 next(parser.stream)
                 name = parser.stream.expect("name").value
                 referenced.append(name)
-                buf.append("%%(%s)s" % name)
+                buf.append(f"%({name})s")
                 parser.stream.expect("variable_end")
             elif parser.stream.current.type == "block_begin":
                 next(parser.stream)
@@ -408,7 +405,7 @@ class InternationalizationExtension(Extension):
         # enough to handle the variable expansion and autoescape
         # handling itself
         if self.environment.newstyle_gettext:
-            for key, value in iteritems(variables):
+            for key, value in variables.items():
                 # the function adds that later anyways in case num was
                 # called num, so just skip it.
                 if num_called_num and key == "num":
@@ -438,7 +435,7 @@ class ExprStmtExtension(Extension):
     that it doesn't print the return value.
     """
 
-    tags = set(["do"])
+    tags = {"do"}
 
     def parse(self, parser):
         node = nodes.ExprStmt(lineno=next(parser.stream).lineno)
@@ -449,7 +446,7 @@ class ExprStmtExtension(Extension):
 class LoopControlExtension(Extension):
     """Adds break and continue to the template engine."""
 
-    tags = set(["break", "continue"])
+    tags = {"break", "continue"}
 
     def parse(self, parser):
         token = next(parser.stream)
@@ -476,9 +473,9 @@ class DebugExtension(Extension):
 
     .. code-block:: text
 
-        {'context': {'cycler': <class 'jinja.utils.Cycler'>,
+        {'context': {'cycler': <class 'jinja2.utils.Cycler'>,
                      ...,
-                     'namespace': <class 'jinja.utils.Namespace'>},
+                     'namespace': <class 'jinja2.utils.Namespace'>},
          'filters': ['abs', 'attr', 'batch', 'capitalize', 'center', 'count', 'd',
                      ..., 'urlencode', 'urlize', 'wordcount', 'wordwrap', 'xmlattr'],
          'tests': ['!=', '<', '<=', '==', '>', '>=', 'callable', 'defined',
@@ -523,7 +520,7 @@ def extract_from_ast(node, gettext_functions=GETTEXT_FUNCTIONS, babel_style=True
 
     This example explains the behavior:
 
-    >>> from jinja import Environment
+    >>> from jinja2 import Environment
     >>> env = Environment()
     >>> node = env.parse('{{ (_("foo"), _(), ngettext("foo", "bar", 42)) }}')
     >>> list(extract_from_ast(node))
@@ -537,8 +534,8 @@ def extract_from_ast(node, gettext_functions=GETTEXT_FUNCTIONS, babel_style=True
     * ``lineno`` is the number of the line on which the string was found,
     * ``function`` is the name of the ``gettext`` function used (if the
       string was extracted from embedded Python code), and
-    *  ``message`` is the string itself (a ``unicode`` object, or a tuple
-       of ``unicode`` objects for functions with multiple string arguments).
+    *   ``message`` is the string, or a tuple of strings for functions
+         with multiple string arguments.
 
     This extraction function operates on the AST and is because of that unable
     to extract any comments.  For comment support you have to use the babel
@@ -553,7 +550,7 @@ def extract_from_ast(node, gettext_functions=GETTEXT_FUNCTIONS, babel_style=True
 
         strings = []
         for arg in node.args:
-            if isinstance(arg, nodes.Const) and isinstance(arg.value, string_types):
+            if isinstance(arg, nodes.Const) and isinstance(arg.value, str):
                 strings.append(arg.value)
             else:
                 strings.append(None)
@@ -577,7 +574,7 @@ def extract_from_ast(node, gettext_functions=GETTEXT_FUNCTIONS, babel_style=True
         yield node.lineno, node.node.name, strings
 
 
-class _CommentFinder(object):
+class _CommentFinder:
     """Helper class to find comments in a token stream.  Can only
     find comments for gettext calls forwards.  Once the comment
     from line 4 is found, a comment for line 1 will not return a
