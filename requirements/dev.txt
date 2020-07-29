@@ -11,21 +11,21 @@ click==7.1.2              # via pip-tools
 distlib==0.3.0            # via virtualenv
 filelock==3.0.12          # via tox, virtualenv
 identify==1.4.15          # via pre-commit
+iniconfig==1.0.0          # via pytest
 more-itertools==8.3.0     # via pytest
 nodeenv==1.3.5            # via pre-commit
 packaging==20.3           # via pytest, tox
 pip-tools==5.3.0          # via -r requirements/dev.in
 pluggy==0.13.1            # via pytest, tox
 pre-commit==2.6.0         # via -r requirements/dev.in
-py==1.8.1                 # via pytest, tox
+py==1.9.0                 # via pytest, tox
 pyparsing==2.4.7          # via packaging
-pytest==5.4.3             # via -r requirements/tests.in
+pytest==6.0.0             # via -r requirements/tests.in
 pyyaml==5.3.1             # via pre-commit
 six==1.14.0               # via packaging, pip-tools, tox, virtualenv
-toml==0.10.1              # via pre-commit, tox
+toml==0.10.1              # via pre-commit, pytest, tox
 tox==3.18.0               # via -r requirements/dev.in
 virtualenv==20.0.20       # via pre-commit, tox
-wcwidth==0.1.9            # via pytest
 
 # The following packages are considered to be unsafe in a requirements file:
 # pip
