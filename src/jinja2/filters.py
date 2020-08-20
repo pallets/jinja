@@ -162,7 +162,7 @@ def do_urlencode(value: Union[str, Iterable, Sequence]) -> str:
 
 
 @evalcontextfilter
-def do_replace(eval_ctx, s: str, old: str, new: str, count: int = None) -> str:
+def do_replace(eval_ctx, s: str, old: str, new: str, count: Optional[int] = None) -> str:
     """Return a copy of the value with all occurrences of a substring
     replaced with a new one. The first argument is the substring
     that should be replaced, the second is the replacement string.
