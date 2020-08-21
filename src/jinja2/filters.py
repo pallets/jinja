@@ -954,7 +954,7 @@ _GroupTuple.__str__ = tuple.__str__
 
 
 @environmentfilter
-def do_groupby(environment, value: Sequence, attribute: str) -> list:
+def do_groupby(environment, value: Sequence[T], attribute: str) -> List[T]:
     """Group a sequence of objects by an attribute using Python's
     :func:`itertools.groupby`. The attribute can use dot notation for
     nested access, like ``"address.city"``. Unlike Python's ``groupby``,
