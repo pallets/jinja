@@ -522,7 +522,7 @@ def do_first(environment, seq: Sequence) -> Any:
 
 
 @environmentfilter
-def do_last(environment, seq: Sequence) -> Any:
+def do_last(environment, seq: Sequence[T]) -> T:
     """
     Return the last item of a sequence.
 
