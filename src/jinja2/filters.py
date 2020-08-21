@@ -419,7 +419,7 @@ def do_min(
 
 
 @environmentfilter
-def do_max(environment, value: Sequence, case_sensitive=False, attribute=None) -> int:
+def do_max(environment, value: Sequence[T], case_sensitive=False, attribute=None) -> T:
     """Return the largest item from the sequence.
 
     .. sourcecode:: jinja
