@@ -304,11 +304,11 @@ def do_dictsort(
 @environmentfilter
 def do_sort(
     environment,
-    value: Iterable,
+    value: Iterable[T],
     reverse: bool = False,
     case_sensitive: bool = False,
     attribute: str = None,
-) -> Iterable:
+) -> Iterable[T]:
     """Sort an iterable using Python's :func:`sorted`.
 
     .. sourcecode:: jinja
@@ -792,7 +792,7 @@ def do_int(value: Any, default: int = 0, base: int = 10) -> int:
             return default
 
 
-def do_float(value: Union[int, float, str], default=0.0) -> float:
+def do_float(value: Union[int, float, str], default: float = 0.0) -> float:
     """Convert the value into a floating point number. If the
     conversion doesn't work it will return ``0.0``. You can
     override this default using the first parameter.
