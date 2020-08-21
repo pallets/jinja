@@ -540,7 +540,7 @@ def do_last(environment, seq: Sequence[T]) -> T:
 
 
 @contextfilter
-def do_random(context, seq: Sequence) -> Any:
+def do_random(context, seq: Sequence[T]) -> T:
     """Return a random item from the sequence."""
     try:
         return random.choice(seq)
