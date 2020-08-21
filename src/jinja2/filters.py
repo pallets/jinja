@@ -8,7 +8,9 @@ from itertools import chain
 from itertools import groupby
 from typing import Any
 from typing import Iterable
+from typing import Optional
 from typing import Sequence
+from typing import TypeVar
 from typing import Union
 
 from markupsafe import escape
@@ -24,6 +26,8 @@ from .utils import urlize
 
 _word_re = re.compile(r"\w+")
 _word_beginning_split_re = re.compile(r"([-\s({\[<]+)")
+
+T = TypeVar('T')
 
 
 def contextfilter(f):
