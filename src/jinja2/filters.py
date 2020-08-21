@@ -845,7 +845,7 @@ def do_striptags(value):
     return Markup(str(value)).striptags()
 
 
-def do_slice(value: Iterable, slices: int, fill_with: str = None) -> Iterable:
+def do_slice(value: Iterable[T], slices: int, fill_with: str = None) -> List[List[T]]:
     """Slice an iterator and return a list of lists containing
     those items. Useful if you want to create a div containing
     three ul tags that represent columns:
