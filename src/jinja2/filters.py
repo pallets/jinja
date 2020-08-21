@@ -878,7 +878,7 @@ def do_slice(value: Iterable, slices: int, fill_with: str = None) -> Iterable:
         yield tmp
 
 
-def do_batch(value: Iterable, linecount: int, fill_with: str = None) -> Iterable:
+def do_batch(value: Iterable[T], linecount: int, fill_with: str = None) -> List[List[T]]:
     """
     A filter that batches items. It works pretty much like `slice`
     just the other way round. It returns a list of lists with the
