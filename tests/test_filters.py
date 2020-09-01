@@ -528,11 +528,18 @@ class TestFilter:
         {%- for grouper, list in [{'foo': 1, 'bar': 2},
                                   {'foo': 2, 'bar': 3},
                                   {'foo': 1, 'bar': 1},
+                                  {'foo': None, 'bar': 5},
                                   {'foo': 3, 'bar': 4}]|groupby('foo') -%}
             {{ grouper }}{% for x in list %}: {{ x.foo }}, {{ x.bar }}{% endfor %}|
         {%- endfor %}"""
         )
-        assert tmpl.render().split("|") == ["1: 1, 2: 1, 1", "2: 2, 3", "3: 3, 4", ""]
+        assert tmpl.render().split("|") == [
+            "None: None, 5",
+            "1: 1, 2: 1, 1",
+            "2: 2, 3",
+            "3: 3, 4",
+            "",
+        ]
 
     def test_groupby_tuple_index(self, env):
         tmpl = env.from_string(

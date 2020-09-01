@@ -14,6 +14,7 @@ Unreleased
 -   Fix a bug that caused imported macros to not have access to the
     current template's globals. :issue:`688`
 -   Add ability to ignore ``trim_blocks`` using ``+%}``. :issue:`1036`
+-   Add ability to group iterables for ``None`` returned as ``key``
 
 Version 2.11.2
 --------------

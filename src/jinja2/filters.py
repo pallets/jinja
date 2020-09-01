@@ -961,10 +961,20 @@ def do_groupby(environment, value, attribute):
     .. versionchanged:: 2.6
         The attribute supports dot notation for nested access.
     """
+
+    class NoneStub:
+        def __lt__(self, other):
+            return True
+
     expr = make_attrgetter(environment, attribute)
+
+    def sortExpr(item):
+        retVal = expr(item)
+        return NoneStub() if retVal is None else retVal
+
     return [
         _GroupTuple(key, list(values))
-        for key, values in groupby(sorted(value, key=expr), expr)
+        for key, values in groupby(sorted(value, key=sortExpr), expr)
     ]
 
 
