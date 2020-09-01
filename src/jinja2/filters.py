@@ -103,6 +103,11 @@ def make_multi_attrgetter(environment, attribute, postprocess=None):
             for part in attribute_part:
                 item_i = environment.getitem(item_i, part)
 
+            try:
+                item_i < item_i
+            except TypeError:
+                item_i = str(item_i)
+
             if postprocess is not None:
                 item_i = postprocess(item_i)
 

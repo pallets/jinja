@@ -490,6 +490,24 @@ class TestFilter:
             == "([2],[1])([2],[2])([2],[5])([3],[1])"
         )
 
+    def test_sort9(self, env):
+        tmpl = env.from_string("""{{ items|sort }}""")
+        assert tmpl.render(
+            items=[
+                {"b": 4},
+                {"b": 3},
+                {"b": 2},
+                {"b": 1},
+                {"a": 4},
+                {"a": 3},
+                {"a": 2},
+                {"a": 1},
+            ]
+        ) == (
+            "[{'a': 1}, {'a': 2}, {'a': 3}, {'a': 4}, "
+            "{'b': 1}, {'b': 2}, {'b': 3}, {'b': 4}]"
+        )
+
     def test_unique(self, env):
         t = env.from_string('{{ "".join(["b", "A", "a", "b"]|unique) }}')
         assert t.render() == "bA"
