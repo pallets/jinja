@@ -54,6 +54,7 @@ Unreleased
     :issue:`1170`
 -   ``Undefined.__contains__`` (``in``) raises an ``UndefinedError``
     instead of a ``TypeError``. :issue:`1198`
+-   ``Undefined`` is iterable in an async environment. :issue:`1294`
 
 
 Version 2.11.3

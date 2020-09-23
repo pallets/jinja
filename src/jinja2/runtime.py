@@ -778,6 +778,10 @@ class Undefined:
     def __iter__(self):
         yield from ()
 
+    async def __aiter__(self):
+        for _ in ():
+            yield
+
     def __bool__(self):
         return False
 

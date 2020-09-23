@@ -2,6 +2,7 @@ import asyncio
 
 import pytest
 
+from jinja2 import ChainableUndefined
 from jinja2 import DictLoader
 from jinja2 import Environment
 from jinja2 import Template
@@ -586,5 +587,18 @@ def test_namespace_awaitable(test_env_async):
         )
         actual = await t.render_async()
         assert actual == "Bar"
+
+    run(_test())
+
+
+def test_chainable_undefined_aiter():
+    async def _test():
+        t = Template(
+            "{% for x in a['b']['c'] %}{{ x }}{% endfor %}",
+            enable_async=True,
+            undefined=ChainableUndefined,
+        )
+        rv = await t.render_async(a={})
+        assert rv == ""
 
     run(_test())
