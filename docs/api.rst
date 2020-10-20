@@ -5,9 +5,10 @@ API
     :noindex:
     :synopsis: public Jinja API
 
-This document describes the API to Jinja and not the template language.  It
-will be most useful as reference to those implementing the template interface
-to the application and not those who are creating Jinja templates.
+This document describes the API to Jinja and not the template language
+(for that, see :doc:`/templates`). It will be most useful as reference
+to those implementing the template interface to the application and not
+those who are creating Jinja templates.
 
 Basics
 ------
@@ -24,30 +25,40 @@ initialization and use that to load templates.  In some cases however, it's
 useful to have multiple environments side by side, if different configurations
 are in use.
 
-The simplest way to configure Jinja to load templates for your application
-looks roughly like this::
+The simplest way to configure Jinja to load templates for your
+application is to use :class:`~loaders.PackageLoader`.
+
+.. code-block:: python
 
     from jinja2 import Environment, PackageLoader, select_autoescape
     env = Environment(
-        loader=PackageLoader('yourapplication', 'templates'),
-        autoescape=select_autoescape(['html', 'xml'])
+        loader=PackageLoader("yourapp"),
+        autoescape=select_autoescape()
     )
 
-This will create a template environment with the default settings and a
-loader that looks up the templates in the `templates` folder inside the
-`yourapplication` python package.  Different loaders are available
-and you can also write your own if you want to load templates from a
-database or other resources.  This also enables autoescaping for HTML and
-XML files.
+This will create a template environment with a loader that looks up
+templates in the ``templates`` folder inside the ``yourapp`` Python
+package (or next to the ``yourapp.py`` Python module). It also enables
+autoescaping for HTML files. This loader only requires that ``yourapp``
+is importable, it figures out the absolute path to the folder for you.
 
-To load a template from this environment you just have to call the
-:meth:`get_template` method which then returns the loaded :class:`Template`::
+Different loaders are available to load templates in other ways or from
+other locations. They're listed in the `Loaders`_ section below. You can
+also write your own if you want to load templates from a source that's
+more specialized to your project.
 
-    template = env.get_template('mytemplate.html')
+To load a template from this environment, call the :meth:`get_template`
+method, which returns the loaded :class:`Template`.
 
-To render it with some variables, just call the :meth:`render` method::
+.. code-block:: python
 
-    print(template.render(the='variables', go='here'))
+    template = env.get_template("mytemplate.html")
+
+To render it with some variables, call the :meth:`render` method.
+
+.. code-block:: python
+
+    print(template.render(the="variables", go="here"))
 
 Using a template loader rather than passing strings to :class:`Template`
 or :meth:`Environment.from_string` has multiple advantages.  Besides being
@@ -477,37 +488,38 @@ Builtin bytecode caches:
 Async Support
 -------------
 
-Starting with version 2.9, Jinja also supports the Python `async` and
-`await` constructs.  As far as template designers go this feature is
-entirely opaque to them however as a developer you should be aware of how
-it's implemented as it influences what type of APIs you can safely expose
-to the template environment.
+.. versionadded:: 2.9
 
-First you need to be aware that by default async support is disabled as
-enabling it will generate different template code behind the scenes which
-passes everything through the asyncio event loop.  This is important to
-understand because it has some impact to what you are doing:
+Jinja supports the Python ``async`` and ``await`` syntax. For the
+template designer, this support (when enabled) is entirely transparent,
+templates continue to look exactly the same. However, developers should
+be aware of the implementation as it affects what types of APIs you can
+use.
 
-*   template rendering will require an event loop to be set for the
-    current thread (``asyncio.get_event_loop`` needs to return one)
-*   all template generation code internally runs async generators which
-    means that you will pay a performance penalty even if the non sync
-    methods are used!
-*   The sync methods are based on async methods if the async mode is
-    enabled which means that `render` for instance will internally invoke
-    `render_async` and run it as part of the current event loop until the
-    execution finished.
+By default, async support is disabled. Enabling it will cause the
+environment to compile different code behind the scenes in order to
+handle async and sync code in an asyncio event loop. This has the
+following implications:
+
+-   Template rendering requires an event loop to be available to the
+    current thread. :func:`asyncio.get_event_loop` must return an event
+    loop.
+-   The compiled code uses ``await`` for functions and attributes, and
+    uses ``async for`` loops. In order to support using both async and
+    sync functions in this context, a small wrapper is placed around
+    all calls and access, which add overhead compared to purely async
+    code.
+-   Sync methods and filters become wrappers around their corresponding
+    async implementations where needed. For example, ``render`` invokes
+    ``async_render``, and ``|map`` supports async iterables.
 
 Awaitable objects can be returned from functions in templates and any
-function call in a template will automatically await the result.  This
-means that you can provide a method that asynchronously loads data
-from a database if you so desire and from the template designer's point of
-view this is just another function they can call.  This means that the
-``await`` you would normally issue in Python is implied.  However this
-only applies to function calls.  If an attribute for instance would be an
-awaitable object then this would not result in the expected behavior.
+function call in a template will automatically await the result. The
+``await`` you would normally add in Python is implied. For example, you
+can provide a method that asynchronously loads data from a database, and
+from the template designer's point of view it can be called like any
+other function.
 
-Likewise iterations with a `for` loop support async iterators.
 
 .. _policies:
 

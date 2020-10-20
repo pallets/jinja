@@ -1,10 +1,11 @@
 """API and implementations for loading templates from different data
 sources.
 """
+import importlib.util
 import os
-import pkgutil
 import sys
 import weakref
+import zipimport
 from collections import abc
 from hashlib import sha1
 from importlib import import_module
@@ -54,8 +55,8 @@ class BaseLoader:
                 if not exists(path):
                     raise TemplateNotFound(template)
                 mtime = getmtime(path)
-                with file(path) as f:
-                    source = f.read().decode('utf-8')
+                with open(path) as f:
+                    source = f.read()
                 return source, path, lambda: mtime == getmtime(path)
     """
 
@@ -136,25 +137,30 @@ class BaseLoader:
 
 
 class FileSystemLoader(BaseLoader):
-    """Loads templates from the file system.  This loader can find templates
-    in folders on the file system and is the preferred way to load them.
+    """Load templates from a directory in the file system.
 
-    The loader takes the path to the templates as string, or if multiple
-    locations are wanted a list of them which is then looked up in the
-    given order::
+    The path can be relative or absolute. Relative paths are relative to
+    the current working directory.
 
-    >>> loader = FileSystemLoader('/path/to/templates')
-    >>> loader = FileSystemLoader(['/path/to/templates', '/other/path'])
+    .. code-block:: python
 
-    Per default the template encoding is ``'utf-8'`` which can be changed
-    by setting the `encoding` parameter to something else.
+        loader = FileSystemLoader("templates")
 
-    To follow symbolic links, set the *followlinks* parameter to ``True``::
+    A list of paths can be given. The directories will be searched in
+    order, stopping at the first matching template.
 
-    >>> loader = FileSystemLoader('/path/to/templates', followlinks=True)
+    .. code-block:: python
+
+        loader = FileSystemLoader(["/override/templates", "/default/templates"])
+
+    :param searchpath: A path, or list of paths, to the directory that
+        contains the templates.
+    :param encoding: Use this encoding to read the text from template
+        files.
+    :param followlinks: Follow symbolic links in the path.
 
     .. versionchanged:: 2.8
-       The ``followlinks`` parameter was added.
+        Added the ``followlinks`` parameter.
     """
 
     def __init__(self, searchpath, encoding="utf-8", followlinks=False):
@@ -232,10 +238,10 @@ class PackageLoader(BaseLoader):
     contributor. Zip files contributing to a namespace are not
     supported.
 
-    .. versionchanged:: 2.11.0
+    .. versionchanged:: 3.0
         No longer uses ``setuptools`` as a dependency.
 
-    .. versionchanged:: 2.11.0
+    .. versionchanged:: 3.0
         Limited PEP 420 namespace package support.
     """
 
@@ -253,21 +259,19 @@ class PackageLoader(BaseLoader):
         # Make sure the package exists. This also makes namespace
         # packages work, otherwise get_loader returns None.
         import_module(package_name)
-        self._loader = loader = pkgutil.get_loader(package_name)
-
-        # Zip loader's archive attribute points at the zip.
-        self._archive = getattr(loader, "archive", None)
+        spec = importlib.util.find_spec(package_name)
+        self._loader = loader = spec.loader
+        self._archive = None
         self._template_root = None
 
-        if hasattr(loader, "get_filename"):
-            # A standard directory package, or a zip package.
-            self._template_root = os.path.join(
-                os.path.dirname(loader.get_filename(package_name)), package_path
-            )
-        elif hasattr(loader, "_path"):
-            # A namespace package, limited support. Find the first
-            # contributor with the template directory.
-            for root in loader._path:
+        if isinstance(loader, zipimport.zipimporter):
+            self._archive = loader.archive
+            pkgdir = next(iter(spec.submodule_search_locations))
+            self._template_root = os.path.join(pkgdir, package_path)
+        elif spec.submodule_search_locations:
+            # This will be one element for regular packages and multiple
+            # for namespace packages.
+            for root in spec.submodule_search_locations:
                 root = os.path.join(root, package_path)
 
                 if os.path.isdir(root):

@@ -9,16 +9,43 @@ Unreleased
 -   Bump MarkupSafe dependency to >=1.1.
 -   Bump Babel optional dependency to >=2.1.
 -   Remove code that was marked deprecated.
+-   Use :pep:`451` API to load templates with
+    :class:`~loaders.PackageLoader`. :issue:`1168`
+-   Fix a bug that caused imported macros to not have access to the
+    current template's globals. :issue:`688`
+-   Add ability to ignore ``trim_blocks`` using ``+%}``. :issue:`1036`
 
+Version 2.11.2
+--------------
 
-2.11.2
-------
-
-Unreleased
+Released 2020-04-13
 
 -   Fix a bug that caused callable objects with ``__getattr__``, like
     :class:`~unittest.mock.Mock` to be treated as a
     :func:`contextfunction`. :issue:`1145`
+-   Update ``wordcount`` filter to trigger :class:`Undefined` methods
+    by wrapping the input in :func:`soft_str`. :pr:`1160`
+-   Fix a hang when displaying tracebacks on Python 32-bit.
+    :issue:`1162`
+-   Showing an undefined error for an object that raises
+    ``AttributeError`` on access doesn't cause a recursion error.
+    :issue:`1177`
+-   Revert changes to :class:`~loaders.PackageLoader` from 2.10 which
+    removed the dependency on setuptools and pkg_resources, and added
+    limited support for namespace packages. The changes caused issues
+    when using Pytest. Due to the difficulty in supporting Python 2 and
+    :pep:`451` simultaneously, the changes are reverted until 3.0.
+    :pr:`1182`
+-   Fix line numbers in error messages when newlines are stripped.
+    :pr:`1178`
+-   The special ``namespace()`` assignment object in templates works in
+    async environments. :issue:`1180`
+-   Fix whitespace being removed before tags in the middle of lines when
+    ``lstrip_blocks`` is enabled. :issue:`1138`
+-   :class:`~nativetypes.NativeEnvironment` doesn't evaluate
+    intermediate strings during rendering. This prevents early
+    evaluation which could change the value of an expression.
+    :issue:`1186`
 
 
 Version 2.11.1

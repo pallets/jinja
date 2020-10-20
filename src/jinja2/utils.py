@@ -158,12 +158,13 @@ def object_type_repr(obj):
         return "None"
     elif obj is Ellipsis:
         return "Ellipsis"
-    # __builtin__ in 2.x, builtins in 3.x
-    if obj.__class__.__module__ in ("__builtin__", "builtins"):
-        name = obj.__class__.__name__
-    else:
-        name = f"{obj.__class__.__module__}.{obj.__class__.__name__}"
-    return f"{name} object"
+
+    cls = type(obj)
+
+    if cls.__module__ == "builtins":
+        return f"{cls.__name__} object"
+
+    return f"{cls.__module__}.{cls.__name__} object"
 
 
 def pformat(obj):
@@ -642,7 +643,8 @@ class Namespace:
         self.__attrs = dict(*args, **kwargs)
 
     def __getattribute__(self, name):
-        if name == "_Namespace__attrs":
+        # __class__ is needed for the awaitable check in async mode
+        if name in {"_Namespace__attrs", "__class__"}:
             return object.__getattribute__(self, name)
         try:
             return self.__attrs[name]

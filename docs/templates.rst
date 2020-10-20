@@ -230,6 +230,15 @@ plus sign (``+``) at the start of a block::
             {%+ if something %}yay{% endif %}
     </div>
 
+Similarly, you can manually disable the ``trim_blocks`` behavior by
+putting a plus sign (``+``) at the end of a block::
+
+    <div>
+        {% if something +%}
+            yay
+        {% endif %}
+    </div>
+
 You can also strip whitespace in templates by hand.  If you add a minus
 sign (``-``) to the start or end of a block (e.g. a :ref:`for-loop` tag), a
 comment, or a variable expression, the whitespaces before or after
@@ -912,9 +921,9 @@ Here's an example of how a call block can be used with arguments::
 
     {% call(user) dump_users(list_of_user) %}
         <dl>
-            <dl>Realname</dl>
+            <dt>Realname</dt>
             <dd>{{ user.realname|e }}</dd>
-            <dl>Description</dl>
+            <dt>Description</dt>
             <dd>{{ user.description }}</dd>
         </dl>
     {% endcall %}

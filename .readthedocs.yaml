@@ -1,0 +1,8 @@
+version: 2
+python:
+  install:
+    - requirements: requirements/docs.txt
+    - method: pip
+      path: .
+sphinx:
+  builder: dirhtml

@@ -1,0 +1,5 @@
+# -r docs.in  # can't include due to Sphinx/Jinja mutual dependency
+-r tests.in
+pip-tools
+pre-commit
+tox

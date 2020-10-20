@@ -116,10 +116,10 @@ async def get_default_module_async(self):
 
 def wrap_default_module(original_default_module):
     @internalcode
-    def _get_default_module(self):
+    def _get_default_module(self, ctx=None):
         if self.environment.is_async:
             raise RuntimeError("Template module attribute is unavailable in async mode")
-        return original_default_module(self)
+        return original_default_module(self, ctx)
 
     return _get_default_module
 

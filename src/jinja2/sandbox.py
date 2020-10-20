@@ -75,37 +75,6 @@ _mutable_spec = (
 )
 
 
-class _MagicFormatMapping(abc.Mapping):
-    """This class implements a dummy wrapper to fix a bug in the Python
-    standard library for string formatting.
-
-    See https://bugs.python.org/issue13598 for information about why
-    this is necessary.
-    """
-
-    def __init__(self, args, kwargs):
-        self._args = args
-        self._kwargs = kwargs
-        self._last_index = 0
-
-    def __getitem__(self, key):
-        if key == "":
-            idx = self._last_index
-            self._last_index += 1
-            try:
-                return self._args[idx]
-            except LookupError:
-                pass
-            key = str(idx)
-        return self._kwargs[key]
-
-    def __iter__(self):
-        return iter(self._kwargs)
-
-    def __len__(self):
-        return len(self._kwargs)
-
-
 def inspect_format_method(callable):
     if not isinstance(
         callable, (types.MethodType, types.BuiltinMethodType)
@@ -395,7 +364,6 @@ class SandboxedEnvironment(Environment):
             kwargs = args[0]
             args = None
 
-        kwargs = _MagicFormatMapping(args, kwargs)
         rv = formatter.vformat(s, args, kwargs)
         return type(s)(rv)
 
