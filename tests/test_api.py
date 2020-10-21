@@ -273,7 +273,7 @@ class TestUndefined:
         # function raises an AttributeError, printing the repr of the
         # object in the undefined message would cause a RecursionError.
         class Error:
-            @property
+            @property  # type: ignore
             def __class__(self):
                 raise AttributeError()
 

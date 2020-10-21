@@ -3,10 +3,12 @@ Useful when the template itself comes from an untrusted source.
 """
 import operator
 import types
-from _string import formatter_field_name_split
+from _string import formatter_field_name_split  # type: ignore
 from collections import abc
 from collections import deque
 from string import Formatter
+from typing import FrozenSet
+from typing import Set
 
 from markupsafe import EscapeFormatter
 from markupsafe import Markup
@@ -18,10 +20,10 @@ from .exceptions import SecurityError
 MAX_RANGE = 100000
 
 #: Unsafe function attributes.
-UNSAFE_FUNCTION_ATTRIBUTES = set()
+UNSAFE_FUNCTION_ATTRIBUTES: Set = set()
 
 #: Unsafe method attributes. Function attributes are unsafe for methods too.
-UNSAFE_METHOD_ATTRIBUTES = set()
+UNSAFE_METHOD_ATTRIBUTES: Set = set()
 
 #: unsafe generator attributes.
 UNSAFE_GENERATOR_ATTRIBUTES = {"gi_frame", "gi_code"}
@@ -220,7 +222,7 @@ class SandboxedEnvironment(Environment):
     #: interested in.
     #:
     #: .. versionadded:: 2.6
-    intercepted_binops = frozenset()
+    intercepted_binops: FrozenSet = frozenset()
 
     #: a set of unary operators that should be intercepted.  Each operator
     #: that is added to this set (empty by default) is delegated to the
@@ -235,7 +237,7 @@ class SandboxedEnvironment(Environment):
     #: interested in.
     #:
     #: .. versionadded:: 2.6
-    intercepted_unops = frozenset()
+    intercepted_unops: FrozenSet = frozenset()
 
     def intercept_unop(self, operator):
         """Called during template compilation with the name of a unary

@@ -1512,18 +1512,18 @@ class CodeGenerator(NodeVisitor):
 
         return visitor
 
-    visit_Add = binop("+")
-    visit_Sub = binop("-")
-    visit_Mul = binop("*")
-    visit_Div = binop("/")
-    visit_FloorDiv = binop("//")
-    visit_Pow = binop("**")
-    visit_Mod = binop("%")
-    visit_And = binop("and", interceptable=False)
-    visit_Or = binop("or", interceptable=False)
-    visit_Pos = uaop("+")
-    visit_Neg = uaop("-")
-    visit_Not = uaop("not ", interceptable=False)
+    visit_Add = binop("+")  # type:ignore
+    visit_Sub = binop("-")  # type:ignore
+    visit_Mul = binop("*")  # type:ignore
+    visit_Div = binop("/")  # type:ignore
+    visit_FloorDiv = binop("//")  # type:ignore
+    visit_Pow = binop("**")  # type:ignore
+    visit_Mod = binop("%")  # type:ignore
+    visit_And = binop("and", interceptable=False)  # type:ignore
+    visit_Or = binop("or", interceptable=False)  # type:ignore
+    visit_Pos = uaop("+")  # type:ignore
+    visit_Neg = uaop("-")  # type:ignore
+    visit_Not = uaop("not ", interceptable=False)  # type:ignore
     del binop, uaop
 
     @optimizeconst

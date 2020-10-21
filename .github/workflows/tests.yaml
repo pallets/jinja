@@ -22,6 +22,7 @@ jobs:
           - {name: 'PyPy', python: pypy3, os: ubuntu-latest, tox: pypy3}
           - {name: Style, python: '3.8', os: ubuntu-latest, tox: style}
           - {name: Docs, python: '3.8', os: ubuntu-latest, tox: docs}
+          - {name: Typing, python: '3.8', os: ubuntu-latest, tox: mypy}
           - {name: Windows, python: '3.8', os: windows-latest, tox: py38}
           - {name: Mac, python: '3.8', os: macos-latest, tox: py38}
     steps:

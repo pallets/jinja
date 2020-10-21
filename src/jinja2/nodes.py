@@ -4,6 +4,8 @@ to normalize nodes.
 """
 import operator
 from collections import deque
+from typing import Any
+from typing import Tuple as TupleType
 
 from markupsafe import Markup
 
@@ -105,7 +107,7 @@ class Node(metaclass=NodeType):
     all nodes automatically.
     """
 
-    fields = ()
+    fields: TupleType = ()
     attributes = ("lineno", "environment")
     abstract = True
 
@@ -414,7 +416,7 @@ class BinExpr(Expr):
     """Baseclass for all binary expressions."""
 
     fields = ("left", "right")
-    operator = None
+    operator: Any = None
     abstract = True
 
     def as_const(self, eval_ctx=None):
@@ -436,7 +438,7 @@ class UnaryExpr(Expr):
     """Baseclass for all unary expressions."""
 
     fields = ("node",)
-    operator = None
+    operator: Any = None
     abstract = True
 
     def as_const(self, eval_ctx=None):
@@ -1048,5 +1050,5 @@ def _failing_new(*args, **kwargs):
     raise TypeError("can't create custom node types")
 
 
-NodeType.__new__ = staticmethod(_failing_new)
+NodeType.__new__ = staticmethod(_failing_new)  # type: ignore
 del _failing_new
