@@ -2,6 +2,7 @@
 some node tree helper functions used by the parser and compiler in order
 to normalize nodes.
 """
+import inspect
 import operator
 from collections import deque
 from typing import Any
@@ -649,10 +650,12 @@ class Filter(Expr):
         if filter_ is None or getattr(filter_, "contextfilter", False) is True:
             raise Impossible()
 
-        # We cannot constant handle async filters, so we need to make sure
-        # to not go down this path.
-        if eval_ctx.environment.is_async and getattr(
-            filter_, "asyncfiltervariant", False
+        # We cannot constant handle async filters, so we need to make
+        # sure to not go down this path. Account for both sync/async and
+        # pure-async filters.
+        if eval_ctx.environment.is_async and (
+            getattr(filter_, "asyncfiltervariant", False)
+            or inspect.iscoroutinefunction(filter_)
         ):
             raise Impossible()
 
