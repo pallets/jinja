@@ -1,6 +1,7 @@
 include CHANGES.rst
 include tox.ini
 include requirements/*.txt
+include src/jinja2/py.typed
 graft artwork
 graft docs
 prune docs/_build
