@@ -200,34 +200,34 @@ def do_lower(s):
 
 def do_lower_camel_case(s):
     """Convert to lower camel case:  foo bar baz ==> fooBarBaz"""
-    return re.sub(r'[\W]+(\w)', lambda p: p.group(1).upper(), s)
+    return re.sub(r"[\W]+(\w)", lambda p: p.group(1).upper(), s)
 
 
 def do_lower_snake_case(s):
     """Convert to lower snake case:  foo bar baz ==> foo_bar_baz"""
     lst = []
-    for i in re.split(r'[\W]+', s):
+    for i in re.split(r"[\W]+", s):
         if len(i) > 1:
             lst.append(i[0].lower() + i[1:])
         else:
             lst.append(i[0].lower())
-    return '_'.join(lst)
+    return "_".join(lst)
 
 
 def do_upper_snake_case(s):
     """Convert to upper snake case:  foo bar baz ==> Foo_Bar_Baz"""
     lst = []
-    for i in re.split(r'[\W]+', s):
+    for i in re.split(r"[\W]+", s):
         if len(i) > 1:
             lst.append(i[0].upper() + i[1:])
         else:
             lst.append(i[0].upper())
-    return '_'.join(lst)
+    return "_".join(lst)
 
 
 def do_upper_camel_case(s):
     """Convert to upper camel case: foo bar baz ==> FooBarBaz"""
-    return re.sub(r'^(\w)', lambda p: p.group(1).upper(), do_lower_camel_case(s))
+    return re.sub(r"^(\w)", lambda p: p.group(1).upper(), do_lower_camel_case(s))
 
 
 @evalcontextfilter
