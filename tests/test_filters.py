@@ -35,6 +35,22 @@ class TestFilter:
         tmpl = env.from_string('{{ "foo bar"|capitalize }}')
         assert tmpl.render() == "Foo bar"
 
+    def test_upper_camel_case(self, env):
+        tmpl = env.from_string('{{ "foo bar"|upper_camel_case}}')
+        assert tmpl.render() == "FooBar"
+
+    def test_lower_camel_case(self, env):
+        tmpl = env.from_string('{{ "foo bar"|lower_camel_case}}')
+        assert tmpl.render() == "fooBar"
+
+    def test_upper_snake_case(self, env):
+        tmpl = env.from_string('{{ "foo bar"|upper_snake_case}}')
+        assert tmpl.render() == "Foo_Bar"
+
+    def test_lower_snake_case(self, env):
+        tmpl = env.from_string('{{ "foo bar"|lower_snake_case}}')
+        assert tmpl.render() == "foo_bar"
+
     def test_center(self, env):
         tmpl = env.from_string('{{ "foo"|center(9) }}')
         assert tmpl.render() == "   foo   "
