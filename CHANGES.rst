@@ -16,6 +16,8 @@ Unreleased
 -   Add ability to ignore ``trim_blocks`` using ``+%}``. :issue:`1036`
 -   Fix a bug that caused custom async-only filters to fail with
     constant input. :issue:`1279`
+-   Added ``lower_snake_case``, ``upper_snake_case``,
+    ``lower_camel_case``, and ``upper_camel_case`` filters.
 
 
 Version 2.11.2
