@@ -9,6 +9,6 @@ with open("src/jinja2/__init__.py", "rt", encoding="utf8") as f:
 setup(
     name="Jinja2",
     version=version,
-    install_requires=["MarkupSafe>=1.1","TatSu>=4.4"],
+    install_requires=["MarkupSafe>=1.1", "TatSu>=4.4"],
     extras_require={"i18n": ["Babel>=2.1"]},
 )

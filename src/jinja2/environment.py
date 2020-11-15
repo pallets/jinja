@@ -36,12 +36,12 @@ from .exceptions import TemplateSyntaxError
 from .exceptions import UndefinedError
 from .lexer import get_lexer
 from .lexer import TokenStream
-from .tatsu import get_tatsu_lexer
 from .nodes import EvalContext
 from .parser import Parser
 from .runtime import Context
 from .runtime import new_context
 from .runtime import Undefined
+from .tatsu import get_tatsu_lexer
 from .utils import concat
 from .utils import consume
 from .utils import have_async_gen
@@ -441,7 +441,7 @@ class Environment:
             return get_tatsu_lexer(self)
         else:
             return get_lexer(self)
-    
+
     lexer = property(lexer_getter, doc="The lexer for this environment.")
 
     def iter_extensions(self):

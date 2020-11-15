@@ -1,5 +1,6 @@
-from tatsu import parse
 import pprint
+
+from tatsu import parse
 
 from .lexer import Lexer
 from .utils import LRUCache
@@ -32,7 +33,7 @@ def get_tatsu_lexer(environment):
     return tatsu_lexer
 
 
-GRAMMAR = r'''
+GRAMMAR = r"""
     @@grammar::CALC
 
     @@whitespace:://
@@ -50,10 +51,12 @@ GRAMMAR = r'''
         ;
 
     code
-        = block_begin:'{%' {code_content:code_content}+ block_end:'%}' ;
+        =
+        block_begin:'{%' {code_content:code_content}+ block_end:'%}'
+        ;
 
     code_content
-        = 
+        =
         | whitespace:/[\ \n]+/
         | name:/\w+/
         | operator:operator
@@ -65,38 +68,46 @@ GRAMMAR = r'''
         | '[' | ']' | '(' | ')' | '{' | '}'
         | '==' | '!=' | '>' | '>=' | '<' | '<=' | '='
         | '.' | ':' | '|' | ',' | ';'
-        ; 
+        ;
 
-    variable = variable_begin:'{{' {variable_content:variable_content}+ variable_end:'}}' ;
+    variable
+        =
+        variable_begin:'{{' {variable_content:variable_content}+ variable_end:'}}'
+        ;
 
     variable_content
-        = 
+        =
         | whitespace:/[\ \n]+/
         | name:/\w+/
         ;
 
-    comment = comment_begin:'<!--' ~ {comment_data:comment_content}+ comment_end:'-->' ;
+    comment
+        =
+        comment_begin:'<!--' ~ {comment_data:comment_content}+ comment_end:'-->'
+        ;
 
     comment_content = /([^-]|-(?!->)|\\n)/ ;
-'''
+"""
+
 
 def tatsu_tokenize(source):
-        # use print for debug
-        pprint.pprint(parse(GRAMMAR, source), indent=2, width=20)
-        return parse(GRAMMAR, source)
+    # use print for debug
+    pprint.pprint(parse(GRAMMAR, source), indent=2, width=20)
+    return parse(GRAMMAR, source)
+
 
 def get_ast_tokens(lineno, ast):
     for item in ast.items():
         if isinstance(item[1], list):
             for item_ast in item[1]:
-                for result in get_ast_tokens(lineno, item_ast):
-                    yield result
+                yield from get_ast_tokens(lineno, item_ast)
         else:
             yield lineno.get(), item[0], item[1]
             lineno.add(item[1].count("\n"))
 
-class Lineno():
-    def __init__(self, value = 1):
+
+class Lineno:
+    def __init__(self, value=1):
         self.value = value
 
     def get(self):
@@ -105,6 +116,7 @@ class Lineno():
     def add(self, number):
         self.value += number
 
+
 class TatsuLexer(Lexer):
     def tokeniter(self, source, name, filename=None, state=None):
         tatsu_tokens = tatsu_tokenize(source)
@@ -112,15 +124,14 @@ class TatsuLexer(Lexer):
         lineno = Lineno()
 
         for token in tatsu_tokens:
-            if token['data']:
-                data = (data or "") + token['data']
-            else:   # ast
+            if token["data"]:
+                data = (data or "") + token["data"]
+            else:  # ast
                 if data:
-                    yield lineno.get(), 'data', data
+                    yield lineno.get(), "data", data
                     lineno.add(data.count("\n"))
                     data = None
-                for result in get_ast_tokens(lineno, token):
-                    yield result
-        
+                yield from get_ast_tokens(lineno, token)
+
         if data:
-            yield lineno.get(), 'data', data
+            yield lineno.get(), "data", data

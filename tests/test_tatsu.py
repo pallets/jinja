@@ -1,6 +1,5 @@
-import pytest
-
 from jinja2 import Environment
+
 
 class TestTatsuLexer:
     def test_simple(self, env):
