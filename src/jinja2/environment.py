@@ -36,6 +36,7 @@ from .exceptions import TemplateSyntaxError
 from .exceptions import UndefinedError
 from .lexer import get_lexer
 from .lexer import TokenStream
+from .tatsu import get_tatsu_lexer
 from .nodes import EvalContext
 from .parser import Parser
 from .runtime import Context
@@ -292,6 +293,7 @@ class Environment:
         lstrip_blocks=LSTRIP_BLOCKS,
         newline_sequence=NEWLINE_SEQUENCE,
         keep_trailing_newline=KEEP_TRAILING_NEWLINE,
+        tatsu_lexer=False,
         extensions=(),
         optimized=True,
         undefined=Undefined,
@@ -327,6 +329,7 @@ class Environment:
         self.lstrip_blocks = lstrip_blocks
         self.newline_sequence = newline_sequence
         self.keep_trailing_newline = keep_trailing_newline
+        self.tatsu_lexer = tatsu_lexer
 
         # runtime information
         self.undefined = undefined
@@ -433,7 +436,13 @@ class Environment:
 
         return _environment_sanity_check(rv)
 
-    lexer = property(get_lexer, doc="The lexer for this environment.")
+    def lexer_getter(self):
+        if self.tatsu_lexer:
+            return get_tatsu_lexer(self)
+        else:
+            return get_lexer(self)
+    
+    lexer = property(lexer_getter, doc="The lexer for this environment.")
 
     def iter_extensions(self):
         """Iterates over the extensions by priority."""
