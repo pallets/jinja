@@ -293,7 +293,6 @@ class Environment:
         lstrip_blocks=LSTRIP_BLOCKS,
         newline_sequence=NEWLINE_SEQUENCE,
         keep_trailing_newline=KEEP_TRAILING_NEWLINE,
-        tatsu_lexer=False,
         extensions=(),
         optimized=True,
         undefined=Undefined,
@@ -304,6 +303,7 @@ class Environment:
         auto_reload=True,
         bytecode_cache=None,
         enable_async=False,
+        tatsu_lexer=False,
     ):
         # !!Important notice!!
         #   The constructor accepts quite a few arguments that should be
