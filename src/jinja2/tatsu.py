@@ -1,6 +1,6 @@
 import pprint
 
-from tatsu import parse
+import tatsu
 
 from .lexer import Lexer
 from .utils import LRUCache
@@ -33,7 +33,7 @@ def get_tatsu_lexer(environment):
     return tatsu_lexer
 
 
-GRAMMAR = r"""
+_GRAMMAR = r"""
     @@grammar::CALC
 
     @@whitespace:://
@@ -90,10 +90,11 @@ GRAMMAR = r"""
 """
 
 
-def tatsu_tokenize(source):
-    # use print for debug
-    pprint.pprint(parse(GRAMMAR, source), indent=2, width=20)
-    return parse(GRAMMAR, source)
+# temporary get_tatsu_model
+# this will take grammar rules as input
+# and returns corresponding tatsu model
+def get_tatsu_model():
+    return tatsu.compile(_GRAMMAR)
 
 
 def get_ast_tokens(lineno, ast):
@@ -119,7 +120,10 @@ class Lineno:
 
 class TatsuLexer(Lexer):
     def tokeniter(self, source, name, filename=None, state=None):
-        tatsu_tokens = tatsu_tokenize(source)
+        _TATSU_MODEL = get_tatsu_model()
+        tatsu_tokens = _TATSU_MODEL.parse(source)
+        # use print for debug
+        pprint.pprint(tatsu_tokens, indent=2, width=20)
         data = None
         lineno = Lineno()
 
