@@ -5,7 +5,7 @@
 #    pip-compile requirements/docs.in
 #
 alabaster==0.7.12         # via sphinx
-babel==2.8.0              # via sphinx
+babel==2.9.0              # via sphinx
 certifi==2020.4.5.1       # via requests
 chardet==3.0.4            # via requests
 docutils==0.16            # via sphinx
