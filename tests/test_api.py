@@ -402,6 +402,18 @@ class TestUndefined:
         ):
             Undefined(obj=42, name="upper")()
 
+    def test_property_error(self):
+        class TestClass:
+            @property
+            def test(self):
+                return self.doesnt_exist
+
+        test_env = Environment(undefined=StrictUndefined)
+        with pytest.raises(
+            AttributeError, match=f"'TestClass' object has no attribute 'doesnt_exist'"
+        ):
+            test_env.from_string("{{ obj.test }}").render(obj=TestClass())
+
 
 class TestLowLevel:
     def test_custom_code_generator(self):
