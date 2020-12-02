@@ -414,6 +414,20 @@ class TestUndefined:
         ):
             test_env.from_string("{{ obj.test }}").render(obj=TestClass())
 
+    def test_descriptor_error(self):
+        class Descriptor:
+            def __get__(self, obj, objtype=None):
+                return self.doesnt_exist
+
+        class TestClass:
+            test = Descriptor()
+
+        test_env = Environment(undefined=StrictUndefined)
+        with pytest.raises(
+            AttributeError, match=f"'Descriptor' object has no attribute 'doesnt_exist'"
+        ):
+            test_env.from_string("{{ obj.test }}").render(obj=TestClass())
+
 
 class TestLowLevel:
     def test_custom_code_generator(self):

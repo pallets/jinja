@@ -452,9 +452,9 @@ class Environment:
                 else:
                     try:
                         return getattr(obj, attr)
-                    except AttributeError as e:
-                        if isinstance(getattr(type(obj), attr, None), property):
-                            raise e
+                    except AttributeError:
+                        if attr in dir(obj):
+                            raise
             return self.undefined(obj=obj, name=argument)
 
     def getattr(self, obj, attribute):
@@ -463,9 +463,9 @@ class Environment:
         """
         try:
             return getattr(obj, attribute)
-        except AttributeError as e:
-            if isinstance(getattr(type(obj), attribute, None), property):
-                raise e
+        except AttributeError:
+            if attribute in dir(obj):
+                raise
         try:
             return obj[attribute]
         except (TypeError, LookupError, AttributeError):
