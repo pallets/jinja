@@ -163,7 +163,7 @@ class FileSystemLoader(BaseLoader):
         Added the ``followlinks`` parameter.
     """
 
-    def __init__(self, searchpath, encoding="utf-8", followlinks=False):
+    def __init__(self, searchpath='.', encoding="utf-8", followlinks=False):
         if not isinstance(searchpath, abc.Iterable) or isinstance(searchpath, str):
             searchpath = [searchpath]
 
