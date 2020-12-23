@@ -1397,7 +1397,7 @@ in the environment is set to):
 Python Methods
 ~~~~~~~~~~~~~~
 
-You can also use any of the methods of defined on a variable's type.
+You can also use any of the methods defined on a variable's type.
 The value returned from the method invocation is used as the value of the expression.
 Here is an example that uses methods defined on strings (where ``page.title`` is a string):
 
