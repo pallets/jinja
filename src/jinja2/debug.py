@@ -130,6 +130,7 @@ def fake_traceback(exc_value, tb, filename, lineno):
             "lnotab",
             "freevars",
             "cellvars",
+            "linetable",  # Python 3.10
         ):
             if isinstance(attr, tuple):
                 # Replace with given value.
