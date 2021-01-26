@@ -1387,7 +1387,7 @@ The `else` part is optional.  If not provided, the else block implicitly
 evaluates into an :class:`Undefined` object (regardless of what ``undefined``
 in the environment is set to):
 
-.. code-block:: tex
+.. code-block:: jinja
 
     {{ "[{}]".format(page.title) if page.title }}
 
