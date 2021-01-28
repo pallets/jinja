@@ -26,6 +26,8 @@ def native_concat(nodes):
 
     if len(head) == 1:
         raw = head[0]
+        if not isinstance(raw, str):
+            return raw
     else:
         raw = "".join([str(v) for v in chain(head, nodes)])
 
