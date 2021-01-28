@@ -16,6 +16,9 @@ Unreleased
 -   Add ability to ignore ``trim_blocks`` using ``+%}``. :issue:`1036`
 -   Fix a bug that caused custom async-only filters to fail with
     constant input. :issue:`1279`
+-   Fix UndefinedError incorrectly being thrown on an undefined variable
+    instead of ``Undefined`` being returned on
+    ``NativeEnvironment`` on Python 3.10. :issue:`1335`
 
 
 Version 2.11.2
