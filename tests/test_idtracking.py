@@ -38,7 +38,7 @@ def test_basics():
 
 def test_complex():
     title_block = nodes.Block(
-        "title", [nodes.Output([nodes.TemplateData("Page Title")])], False
+        "title", [nodes.Output([nodes.TemplateData("Page Title")])], False, False
     )
 
     render_title_macro = nodes.Macro(
@@ -136,6 +136,7 @@ def test_complex():
             for_loop,
             nodes.Output([nodes.TemplateData("\n  </ul>\n")]),
         ],
+        False,
         False,
     )
 

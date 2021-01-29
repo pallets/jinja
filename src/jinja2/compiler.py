@@ -797,6 +797,15 @@ class CodeGenerator(NodeVisitor):
         else:
             context = self.get_context_ref()
 
+        if node.required:
+            self.writeline(f"if len(context.blocks[{node.name!r}]) <= 1:", node)
+            self.indent()
+            self.writeline(
+                f'raise TemplateRuntimeError("Required block {node.name!r} not found")',
+                node,
+            )
+            self.outdent()
+
         if not self.environment.is_async and frame.buffer is None:
             self.writeline(
                 f"yield from context.blocks[{node.name!r}][0]({context})", node

@@ -3,6 +3,7 @@ import pytest
 from jinja2 import DictLoader
 from jinja2 import Environment
 from jinja2 import TemplateRuntimeError
+from jinja2 import TemplateSyntaxError
 
 LAYOUTTEMPLATE = """\
 |{% block block1 %}block 1 from layout{% endblock %}
@@ -229,6 +230,123 @@ class TestInheritance:
         )
         rv = env.get_template("index.html").render(the_foo=42).split()
         assert rv == ["43", "44", "45"]
+
+    def test_level1_required(self, env):
+        env = Environment(
+            loader=DictLoader(
+                {
+                    "master": "{% block x required %}{# comment #}\n {% endblock %}",
+                    "level1": "{% extends 'master' %}{% block x %}[1]{% endblock %}",
+                }
+            )
+        )
+        rv = env.get_template("level1").render()
+        assert rv == "[1]"
+
+    def test_level2_required(self, env):
+        env = Environment(
+            loader=DictLoader(
+                {
+                    "master": "{% block x required %}{% endblock %}",
+                    "level1": "{% extends 'master' %}{% block x %}[1]{% endblock %}",
+                    "level2": "{% extends 'master' %}{% block x %}[2]{% endblock %}",
+                }
+            )
+        )
+        rv1 = env.get_template("level1").render()
+        rv2 = env.get_template("level2").render()
+
+        assert rv1 == "[1]"
+        assert rv2 == "[2]"
+
+    def test_level3_required(self, env):
+        env = Environment(
+            loader=DictLoader(
+                {
+                    "master": "{% block x required %}{% endblock %}",
+                    "level1": "{% extends 'master' %}",
+                    "level2": "{% extends 'level1' %}{% block x %}[2]{% endblock %}",
+                    "level3": "{% extends 'level2' %}",
+                }
+            )
+        )
+        t1 = env.get_template("level1")
+        t2 = env.get_template("level2")
+        t3 = env.get_template("level3")
+
+        with pytest.raises(TemplateRuntimeError, match="Required block 'x' not found"):
+            assert t1.render()
+
+        assert t2.render() == "[2]"
+        assert t3.render() == "[2]"
+
+    def test_invalid_required(self, env):
+        env = Environment(
+            loader=DictLoader(
+                {
+                    "master": "{% block x required %}data {# #}{% endblock %}",
+                    "master1": "{% block x required %}{% block y %}"
+                    "{% endblock %}  {% endblock %}",
+                    "master2": "{% block x required %}{% if true %}"
+                    "{% endif %}  {% endblock %}",
+                    "level1": "{% if master %}{% extends master %}"
+                    "{% else %}{% extends 'master' %}{% endif %}"
+                    "{%- block x %}CHILD{% endblock %}",
+                }
+            )
+        )
+        t = env.get_template("level1")
+
+        with pytest.raises(
+            TemplateSyntaxError,
+            match="Required blocks can only contain comments or whitespace",
+        ):
+            assert t.render(master="master")
+            assert t.render(master="master2")
+            assert t.render(master="master3")
+
+    def test_required_with_scope(self, env):
+        env = Environment(
+            loader=DictLoader(
+                {
+                    "master1": "{% for item in seq %}[{% block item scoped required %}"
+                    "{% endblock %}]{% endfor %}",
+                    "child1": "{% extends 'master1' %}{% block item %}"
+                    "{{ item }}{% endblock %}",
+                    "master2": "{% for item in seq %}[{% block item required scoped %}"
+                    "{% endblock %}]{% endfor %}",
+                    "child2": "{% extends 'master2' %}{% block item %}"
+                    "{{ item }}{% endblock %}",
+                }
+            )
+        )
+        t1 = env.get_template("child1")
+        t2 = env.get_template("child2")
+
+        assert t1.render(seq=list(range(3))) == "[0][1][2]"
+
+        # scoped must come before required
+        with pytest.raises(TemplateSyntaxError):
+            t2.render(seq=list(range(3)))
+
+    def test_duplicate_required_or_scoped(self, env):
+        env = Environment(
+            loader=DictLoader(
+                {
+                    "master1": "{% for item in seq %}[{% block item "
+                    "scoped scoped %}}{{% endblock %}}]{{% endfor %}}",
+                    "master2": "{% for item in seq %}[{% block item "
+                    "required required %}}{{% endblock %}}]{{% endfor %}}",
+                    "child": "{% if master %}{% extends master %}{% else %}"
+                    "{% extends 'master1' %}{% endif %}{%- block x %}"
+                    "CHILD{% endblock %}",
+                }
+            )
+        )
+        tmpl = env.get_template("child")
+        with pytest.raises(TemplateSyntaxError):
+            tmpl.render(master="master1", seq=list(range(3)))
+            tmpl.render(master="master2", seq=list(range(3)))
 
 
 class TestBugFix:

@@ -19,6 +19,8 @@ Unreleased
 -   Fix UndefinedError incorrectly being thrown on an undefined variable
     instead of ``Undefined`` being returned on
     ``NativeEnvironment`` on Python 3.10. :issue:`1335`
+-   Add ``required`` attribute to blocks that must be overridden at some
+    point, but not necessarily by the direct child :issue:`1147`
 
 
 Version 2.11.2
