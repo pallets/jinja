@@ -541,33 +541,38 @@ When overriding a block, the `scoped` modifier does not have to be provided.
 
 
 Required Blocks
-~~~~~~~~~~~~~~~~~~~~~~~
+~~~~~~~~~~~~~~~
 
-Blocks can be marked as required. They must be overridden at some point,
-but not necessarily by the direct child template. Required blocks can
-only contain whitespace or comments, and they cannot be rendered directly.
+Blocks can be marked as ``required``. They must be overridden at some
+point, but not necessarily by the direct child template. Required blocks
+may only contain space and comments, and they cannot be rendered
+directly.
 
-For example::
+.. code-block:: jinja
+    :caption: ``page.txt``
 
-    # parent.tmpl
-    body: {% block body required %}{% endblock %}
+    {% block body required %}{% endblock %}
 
-    # child.tmpl
-    {% extends "parent.tmpl" %}
+.. code-block:: jinja
+    :caption: ``issue.txt``
 
-    # grandchild.tmpl
-    {% extends "child.tmpl" %}
-    {% block body %}Hi from grandchild.{% endblock %}
+    {% extends "page.txt" %}
 
+.. code-block:: jinja
+    :caption: ``bug_report.txt``
 
-Rendering ``child.tmpl`` will give
-``TemplateRuntimeError``
+    {% extends "issue.txt" %}
+    {% block body %}Provide steps to demonstrate the bug.{% endblock %}
 
-Rendering ``grandchild.tmpl`` will give
-``Hi from grandchild.``
+Rendering ``page.txt`` or ``issue.txt`` will raise
+``TemplateRuntimeError`` because they don't override the ``body`` block.
+Rendering ``bug_report.txt`` will succeed because it does override the
+block.
 
-When combined with ``scoped``, the ``required`` modifier must be placed `after`
-the scoped modifier.  Here are some valid examples::
+When combined with ``scoped``, the ``required`` modifier must be placed
+*after* the scoped modifier. Here are some valid examples:
+
+.. code-block:: jinja
 
     {% block body scoped %}{% endblock %}
     {% block body required %}{% endblock %}
