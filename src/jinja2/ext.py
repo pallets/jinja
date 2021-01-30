@@ -1,6 +1,7 @@
 """Extension API for adding custom tags and behavior."""
 import pprint
 import re
+import warnings
 from sys import version_info
 from typing import Set
 
@@ -457,11 +458,25 @@ class LoopControlExtension(Extension):
 
 
 class WithExtension(Extension):
-    pass
+    def __init__(self, environment):
+        super().__init__(environment)
+        warnings.warn(
+            "The 'with' extension is deprecated and will be removed in"
+            " version 3.1. This is built in now.",
+            DeprecationWarning,
+            stacklevel=2,
+        )
 
 
 class AutoEscapeExtension(Extension):
-    pass
+    def __init__(self, environment):
+        super().__init__(environment)
+        warnings.warn(
+            "The 'autoescape' extension is deprecated and will be removed in"
+            " version 3.1. This is built in now.",
+            DeprecationWarning,
+            stacklevel=2,
+        )
 
 
 class DebugExtension(Extension):

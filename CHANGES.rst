@@ -21,6 +21,7 @@ Unreleased
     ``NativeEnvironment`` on Python 3.10. :issue:`1335`
 -   Add ``required`` attribute to blocks that must be overridden at some
     point, but not necessarily by the direct child :issue:`1147`
+-   Deprecate ``autoescape`` and ``with`` extensions :issue:`1203`
 
 
 Version 2.11.2
