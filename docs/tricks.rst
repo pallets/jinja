@@ -46,7 +46,7 @@ list you can use the `cycle` method on the `loop` object::
     {% endfor %}
     </ul>
 
-`cycle` can take an unlimited amount of strings.  Each time this
+`cycle` can take an unlimited number of strings.  Each time this
 tag is encountered the next item from the list is rendered.
 
 
