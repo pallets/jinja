@@ -19,9 +19,10 @@ Unreleased
 -   Fix UndefinedError incorrectly being thrown on an undefined variable
     instead of ``Undefined`` being returned on
     ``NativeEnvironment`` on Python 3.10. :issue:`1335`
--   Add ``required`` attribute to blocks that must be overridden at some
-    point, but not necessarily by the direct child :issue:`1147`
--   Deprecate ``autoescape`` and ``with`` extensions :issue:`1203`
+-   Blocks can be marked as ``required``. They must be overridden at
+    some point, but not necessarily by the direct child. :issue:`1147`
+-   Deprecate the ``autoescape`` and ``with`` extensions, they are
+    built-in to the compiler. :issue:`1203`
 
 
 Version 2.11.2
