@@ -23,6 +23,12 @@ Unreleased
     some point, but not necessarily by the direct child. :issue:`1147`
 -   Deprecate the ``autoescape`` and ``with`` extensions, they are
     built-in to the compiler. :issue:`1203`
+-   The ``urlize`` filter recognizes ``mailto:`` links and takes
+    ``extra_schemes`` (or ``env.policies["urlize.extra_schemes"]``) to
+    recognize other schemes such as ``ftp://`` or ``tel:``. It ignores
+    parentheses around URLs. The URL parsing in general has been
+    updated. URLs without a scheme are linked as ``https://`` instead of
+    ``http://``. :issue:`522, 827, 1172`, :pr:`1195`
 
 
 Version 2.11.2

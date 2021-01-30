@@ -373,10 +373,10 @@ class TestFilter:
             "http://www.example.com/</a> bar"
         )
 
-    def test_urlize_extra_uri_schemes_parameter(self, env):
+    def test_urlize_extra_schemes_parameter(self, env):
         tmpl = env.from_string(
             '{{ "foo tel:+1-514-555-1234 ftp://localhost bar"|'
-            'urlize(extra_uri_schemes=["tel:", "ftp:"]) }}'
+            'urlize(extra_schemes=["tel:", "ftp:"]) }}'
         )
         assert tmpl.render() == (
             'foo <a href="tel:+1-514-555-1234" rel="noopener">'

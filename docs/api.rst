@@ -550,9 +550,9 @@ Example::
     The default target that is issued for links from the `urlize` filter
     if no other target is defined by the call explicitly.
 
-``urlize.additional_uri_schemes``:
-    Additional uri scheme prefixes that will generate links from the
-    `urlize` filter in addition to http://, https://, and mailto:.
+``urlize.extra_schemes``:
+    Recognize URLs that start with these schemes in addition to the
+    default ``http://``, ``https://``, and ``mailto:``.
 
 ``json.dumps_function``:
     If this is set to a value other than `None` then the `tojson` filter

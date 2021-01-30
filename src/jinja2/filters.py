@@ -20,7 +20,6 @@ from .utils import urlize
 
 _word_re = re.compile(r"\w+")
 _word_beginning_split_re = re.compile(r"([-\s({\[<]+)")
-_uri_scheme_re = re.compile(r"^([\w\.\+-]{2,}:(/){0,2})$")
 
 
 def contextfilter(f):
@@ -568,6 +567,9 @@ def do_pprint(value):
     return pformat(value)
 
 
+_uri_scheme_re = re.compile(r"^([\w.+-]{2,}:(/){0,2})$")
+
+
 @evalcontextfilter
 def do_urlize(
     eval_ctx,
@@ -576,66 +578,75 @@ def do_urlize(
     nofollow=False,
     target=None,
     rel=None,
-    extra_uri_schemes=None,
+    extra_schemes=None,
 ):
-    """Converts URLs in plain text into clickable links.
+    """Convert URLs in text into clickable links.
 
-    If you pass the filter an additional integer it will shorten the urls
-    to that number. Also a third argument exists that makes the urls
-    "nofollow":
+    This may not recognize links in some situations. Usually, a more
+    comprehensive formatter, such as a Markdown library, is a better
+    choice.
 
-    .. sourcecode:: jinja
+    Works on ``http://``, ``https://``, ``www.``, ``mailto:``, and email
+    addresses. Links with trailing punctuation (periods, commas, closing
+    parentheses) and leading punctuation (opening parentheses) are
+    recognized excluding the punctuation. Email addresses that include
+    header fields are not recognized (for example,
+    ``mailto:address@example.com?cc=copy@example.com``).
 
-        {{ mytext|urlize(40, true) }}
-            links are shortened to 40 chars and defined with rel="nofollow"
+    :param value: Original text containing URLs to link.
+    :param trim_url_limit: Shorten displayed URL values to this length.
+    :param nofollow: Add the ``rel=nofollow`` attribute to links.
+    :param target: Add the ``target`` attribute to links.
+    :param rel: Add the ``rel`` attribute to links.
+    :param extra_schemes: Recognize URLs that start with these schemes
+        in addition to the default behavior. Defaults to
+        ``env.policies["urlize.extra_schemes"]``, which defaults to no
+        extra schemes.
 
-    If *target* is specified, the ``target`` attribute will be added to the
-    ``<a>`` tag:
+    .. versionchanged:: 3.0
+        The ``extra_schemes`` parameter was added.
 
-    .. sourcecode:: jinja
+    .. versionchanged:: 3.0
+        Generate ``https://`` links for URLs without a scheme.
 
-       {{ mytext|urlize(40, target='_blank') }}
-
-    If *extra_uri_schemes* are added then links will be generated for those
-    in addition to http(s): and mailto: schemes.
-
-    .. sourcecode:: jinja
-
-        {{ mytext|urlize(extra_uri_schemes=['tel:', 'ftp://']) }}
-            links are generated for tel and ftp.
+    .. versionchanged:: 3.0
+        The parsing rules were updated. Recognize email addresses with
+        or without the ``mailto:`` scheme. Validate IP addresses. Ignore
+        parentheses and brackets in more cases.
 
     .. versionchanged:: 2.8
        The ``target`` parameter was added.
-
-    .. versionchanged:: 3.0
-       The ``extra_uri_schemes`` parameter was added.
     """
     policies = eval_ctx.environment.policies
+    rel_parts = set((rel or "").split())
 
-    rel = set((rel or "").split() or [])
     if nofollow:
-        rel.add("nofollow")
-    rel.update((policies["urlize.rel"] or "").split())
-    rel = " ".join(sorted(rel)) or None
+        rel_parts.add("nofollow")
+
+    rel_parts.update((policies["urlize.rel"] or "").split())
+    rel = " ".join(sorted(rel_parts)) or None
 
     if target is None:
         target = policies["urlize.target"]
 
-    if extra_uri_schemes is None:
-        extra_uri_schemes = policies["urlize.extra_uri_schemes"] or []
-    for uri_scheme in extra_uri_schemes:
-        if _uri_scheme_re.fullmatch(uri_scheme) is None:
-            raise FilterArgumentError(f"{uri_scheme} is not a valid URI scheme prefix.")
+    if extra_schemes is None:
+        extra_schemes = policies["urlize.extra_schemes"] or ()
+
+    for scheme in extra_schemes:
+        if _uri_scheme_re.fullmatch(scheme) is None:
+            raise FilterArgumentError(f"{scheme!r} is not a valid URI scheme prefix.")
 
     rv = urlize(
         value,
-        trim_url_limit,
+        trim_url_limit=trim_url_limit,
         rel=rel,
         target=target,
-        extra_uri_schemes=extra_uri_schemes,
+        extra_schemes=extra_schemes,
     )
+
     if eval_ctx.autoescape:
         rv = Markup(rv)
+
     return rv
 
 
