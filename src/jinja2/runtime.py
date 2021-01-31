@@ -808,7 +808,7 @@ def make_logging_undefined(logger=None, base=None):
             try:
                 return super()._fail_with_undefined_error(*args, **kwargs)
             except self._undefined_exception as e:
-                logger.error(f"Template variable error: %s", e)
+                logger.error("Template variable error: %s", e)
                 raise e
 
         def __str__(self):

@@ -258,7 +258,7 @@ class TestAsyncIncludes:
 
     def test_unoptimized_scopes_autoescape(self):
         env = Environment(
-            loader=DictLoader(dict(o_printer="({{ o }})",)),
+            loader=DictLoader({"o_printer": "({{ o }})"}),
             autoescape=True,
             enable_async=True,
         )
