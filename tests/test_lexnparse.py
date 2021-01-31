@@ -998,7 +998,7 @@ class TestTrimBlocks:
 
     def test_no_trim_angle_bracket(self, env):
         env = Environment(
-            "<%", "%>", "${", "}", "<%#", "%>", lstrip_blocks=True, trim_blocks=True,
+            "<%", "%>", "${", "}", "<%#", "%>", lstrip_blocks=True, trim_blocks=True
         )
         tmpl = env.from_string("    <% if True +%>\n\n    <% endif %>")
         assert tmpl.render() == "\n\n"

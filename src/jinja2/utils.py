@@ -161,8 +161,7 @@ def object_type_repr(obj):
 
 
 def pformat(obj):
-    """Format an object using :func:`pprint.pformat`.
-    """
+    """Format an object using :func:`pprint.pformat`."""
     from pprint import pformat
 
     return pformat(obj)

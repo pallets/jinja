@@ -198,7 +198,7 @@ class TestFilter:
 
     @pytest.mark.parametrize(
         ("value", "base", "expect"),
-        (("0x4d32", 16, "19762"), ("011", 8, "9"), ("0x33Z", 16, "0"),),
+        (("0x4d32", 16, "19762"), ("011", 8, "9"), ("0x33Z", 16, "0")),
     )
     def test_int_base(self, env, value, base, expect):
         t = env.from_string("{{ value|int(base=base) }}")
@@ -540,7 +540,7 @@ class TestFilter:
         t = env.from_string(source)
         assert t.render() == expect
 
-    @pytest.mark.parametrize("name,expect", (("min", "1"), ("max", "9"),))
+    @pytest.mark.parametrize(("name", "expect"), [("min", "1"), ("max", "9")])
     def test_min_max_attribute(self, env, name, expect):
         t = env.from_string("{{ items|" + name + '(attribute="value") }}')
         assert t.render(items=map(Magic, [5, 1, 9])) == expect
