@@ -1,5 +1,15 @@
 .. currentmodule:: jinja2
 
+Version 2.11.3
+--------------
+
+Unreleased
+
+-   Improve the speed of the ``urlize`` filter by reducing regex
+    backtracking. Email matching requires a word character at the start
+    of the domain part, and only word characters in the TLD. :pr:`1343`
+
+
 Version 2.11.2
 --------------
 
