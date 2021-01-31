@@ -11,11 +11,6 @@ from urllib.parse import quote_from_bytes
 from markupsafe import escape
 from markupsafe import Markup
 
-_striptags_re = re.compile(r"(<!--.*?-->|<[^>]*>)")
-_entity_re = re.compile(r"&([^;]+);")
-_letters = "abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ"
-_digits = "0123456789"
-
 # special singleton representing missing values for the runtime
 missing = type("MissingType", (), {"__repr__": lambda x: "missing"})()
 

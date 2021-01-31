@@ -228,7 +228,7 @@ in ``'.html'``, ``'.htm'`` and ``'.xml'`` and disabling it by default
 for all other extensions.  You can use the :func:`~jinja2.select_autoescape`
 function for this::
 
-    from jinja2 import Environment, select_autoescape
+    from jinja2 import Environment, PackageLoader, select_autoescape
     env = Environment(autoescape=select_autoescape(['html', 'htm', 'xml']),
                       loader=PackageLoader('mypackage'))
 
