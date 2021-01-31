@@ -3,7 +3,7 @@
 Version 2.11.3
 --------------
 
-Unreleased
+Released 2021-01-31
 
 -   Improve the speed of the ``urlize`` filter by reducing regex
     backtracking. Email matching requires a word character at the start
