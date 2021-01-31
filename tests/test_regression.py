@@ -109,6 +109,15 @@ class TestBug:
             "http://www.example.org/&lt;foo</a>"
         )
 
+    def test_urlize_filter_closing_punctuation(self, env):
+        tmpl = env.from_string(
+            '{{ "(see http://www.example.org/?page=subj_<desc.h>)"|urlize }}'
+        )
+        assert tmpl.render() == (
+            '(see <a href="http://www.example.org/?page=subj_&lt;desc.h&gt;" '
+            'rel="noopener">http://www.example.org/?page=subj_&lt;desc.h&gt;</a>)'
+        )
+
     def test_loop_call_loop(self, env):
         tmpl = env.from_string(
             """

@@ -35,6 +35,7 @@ DEFAULT_POLICIES = {
     "compiler.ascii_str": True,
     "urlize.rel": "noopener",
     "urlize.target": None,
+    "urlize.extra_schemes": None,
     "truncate.leeway": 5,
     "json.dumps_function": None,
     "json.dumps_kwargs": {"sort_keys": True},

@@ -550,6 +550,10 @@ Example::
     The default target that is issued for links from the `urlize` filter
     if no other target is defined by the call explicitly.
 
+``urlize.extra_schemes``:
+    Recognize URLs that start with these schemes in addition to the
+    default ``http://``, ``https://``, and ``mailto:``.
+
 ``json.dumps_function``:
     If this is set to a value other than `None` then the `tojson` filter
     will dump with this function instead of the default one.  Note that
