@@ -6,6 +6,8 @@ import warnings
 from collections import deque
 from random import choice
 from random import randrange
+from string import ascii_letters as _letters
+from string import digits as _digits
 from threading import Lock
 
 from markupsafe import escape
@@ -15,20 +17,6 @@ from ._compat import abc
 from ._compat import string_types
 from ._compat import text_type
 from ._compat import url_quote
-
-_word_split_re = re.compile(r"(\s+)")
-_punctuation_re = re.compile(
-    "^(?P<lead>(?:%s)*)(?P<middle>.*?)(?P<trail>(?:%s)*)$"
-    % (
-        "|".join(map(re.escape, ("(", "<", "&lt;"))),
-        "|".join(map(re.escape, (".", ",", ")", ">", "\n", "&gt;"))),
-    )
-)
-_simple_email_re = re.compile(r"^\S+@[a-zA-Z0-9._-]+\.[a-zA-Z0-9._-]+$")
-_striptags_re = re.compile(r"(<!--.*?-->|<[^>]*>)")
-_entity_re = re.compile(r"&([^;]+);")
-_letters = "abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ"
-_digits = "0123456789"
 
 # special singleton representing missing values for the runtime
 missing = type("MissingType", (), {"__repr__": lambda x: "missing"})()
@@ -210,48 +198,65 @@ def urlize(text, trim_url_limit=None, rel=None, target=None):
         and (x[:limit] + (len(x) >= limit and "..." or ""))
         or x
     )
-    words = _word_split_re.split(text_type(escape(text)))
+    words = re.split(r"(\s+)", text_type(escape(text)))
     rel_attr = rel and ' rel="%s"' % text_type(escape(rel)) or ""
     target_attr = target and ' target="%s"' % escape(target) or ""
 
     for i, word in enumerate(words):
-        match = _punctuation_re.match(word)
+        head, middle, tail = "", word, ""
+        match = re.match(r"^([(<]|&lt;)+", middle)
+
         if match:
-            lead, middle, trail = match.groups()
-            if middle.startswith("www.") or (
-                "@" not in middle
-                and not middle.startswith("http://")
-                and not middle.startswith("https://")
-                and len(middle) > 0
-                and middle[0] in _letters + _digits
-                and (
-                    middle.endswith(".org")
-                    or middle.endswith(".net")
-                    or middle.endswith(".com")
-                )
-            ):
-                middle = '<a href="http://%s"%s%s>%s</a>' % (
-                    middle,
-                    rel_attr,
-                    target_attr,
-                    trim_url(middle),
-                )
-            if middle.startswith("http://") or middle.startswith("https://"):
-                middle = '<a href="%s"%s%s>%s</a>' % (
-                    middle,
-                    rel_attr,
-                    target_attr,
-                    trim_url(middle),
-                )
-            if (
-                "@" in middle
-                and not middle.startswith("www.")
-                and ":" not in middle
-                and _simple_email_re.match(middle)
-            ):
-                middle = '<a href="mailto:%s">%s</a>' % (middle, middle)
-            if lead + middle + trail != word:
-                words[i] = lead + middle + trail
+            head = match.group()
+            middle = middle[match.end() :]
+
+        # Unlike lead, which is anchored to the start of the string,
+        # need to check that the string ends with any of the characters
+        # before trying to match all of them, to avoid backtracking.
+        if middle.endswith((")", ">", ".", ",", "\n", "&gt;")):
+            match = re.search(r"([)>.,\n]|&gt;)+$", middle)
+
+            if match:
+                tail = match.group()
+                middle = middle[: match.start()]
+
+        if middle.startswith("www.") or (
+            "@" not in middle
+            and not middle.startswith("http://")
+            and not middle.startswith("https://")
+            and len(middle) > 0
+            and middle[0] in _letters + _digits
+            and (
+                middle.endswith(".org")
+                or middle.endswith(".net")
+                or middle.endswith(".com")
+            )
+        ):
+            middle = '<a href="http://%s"%s%s>%s</a>' % (
+                middle,
+                rel_attr,
+                target_attr,
+                trim_url(middle),
+            )
+
+        if middle.startswith("http://") or middle.startswith("https://"):
+            middle = '<a href="%s"%s%s>%s</a>' % (
+                middle,
+                rel_attr,
+                target_attr,
+                trim_url(middle),
+            )
+
+        if (
+            "@" in middle
+            and not middle.startswith("www.")
+            and ":" not in middle
+            and re.match(r"^\S+@\w[\w.-]*\.\w+$", middle)
+        ):
+            middle = '<a href="mailto:%s">%s</a>' % (middle, middle)
+
+        words[i] = head + middle + tail
+
     return u"".join(words)
 
 
