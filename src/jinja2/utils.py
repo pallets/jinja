@@ -168,12 +168,6 @@ def pformat(obj):
     return pformat(obj)
 
 
-_word_split_re = re.compile(r"(\s+)")
-_lead_pattern = "|".join(map(re.escape, ("(", "<", "&lt;")))
-_trail_pattern = "|".join(map(re.escape, (".", ",", ")", ">", "\n", "&gt;")))
-_punctuation_re = re.compile(
-    fr"^(?P<lead>(?:{_lead_pattern})*)(?P<middle>.*?)(?P<trail>(?:{_trail_pattern})*)$"
-)
 _http_re = re.compile(
     r"""
     ^
@@ -202,7 +196,7 @@ _http_re = re.compile(
     """,
     re.IGNORECASE | re.VERBOSE,
 )
-_simple_email_re = re.compile(r"^\S+@[a-zA-Z0-9._-]+\.[a-zA-Z0-9._-]+$")
+_email_re = re.compile(r"^\S+@\w[\w.-]*\.\w+$")
 
 
 def urlize(text, trim_url_limit=None, rel=None, target=None, extra_schemes=None):
@@ -237,71 +231,85 @@ def urlize(text, trim_url_limit=None, rel=None, target=None, extra_schemes=None)
         or without the ``mailto:`` scheme. Validate IP addresses. Ignore
         parentheses and brackets in more cases.
     """
+    if trim_url_limit is not None:
 
-    def trim_url(x, limit=trim_url_limit):
-        if limit is not None:
-            return x[:limit] + ("..." if len(x) >= limit else "")
+        def trim_url(x):
+            if len(x) > trim_url_limit:
+                return f"{x[:trim_url_limit]}..."
 
-        return x
+            return x
 
-    words = _word_split_re.split(str(escape(text)))
+    else:
+
+        def trim_url(x):
+            return x
+
+    words = re.split(r"(\s+)", str(escape(text)))
     rel_attr = f' rel="{escape(rel)}"' if rel else ""
     target_attr = f' target="{escape(target)}"' if target else ""
 
     for i, word in enumerate(words):
-        match = _punctuation_re.match(word)
+        head, middle, tail = "", word, ""
+        match = re.match(r"^([(<]|&lt;)+", middle)
 
         if match:
-            lead, middle, trail = match.groups()
-            # fix for mismatched opening and closing parentheses
-            pairs = [("(", ")"), ("<", ">"), ("&lt;", "&gt;")]
+            head = match.group()
+            middle = middle[match.end() :]
 
-            for start_char in re.findall(_lead_pattern, middle):
-                end_char = next(c for o, c in pairs if o == start_char)
+        # Unlike lead, which is anchored to the start of the string,
+        # need to check that the string ends with any of the characters
+        # before trying to match all of them, to avoid backtracking.
+        if middle.endswith((")", ">", ".", ",", "\n", "&gt;")):
+            match = re.search(r"([)>.,\n]|&gt;)+$", middle)
 
-                while (
-                    middle.count(start_char) > middle.count(end_char)
-                    and end_char in trail
-                ):
-                    end_char_index = trail.index(end_char)
-                    middle = middle + trail[: end_char_index + len(end_char)]
-                    trail = trail[end_char_index + len(end_char) :]
+            if match:
+                tail = match.group()
+                middle = middle[: match.start()]
 
-            if _http_re.match(middle):
-                if middle.startswith("https://") or middle.startswith("http://"):
-                    middle = (
-                        f'<a href="{middle}"{rel_attr}{target_attr}>'
-                        f"{trim_url(middle)}</a>"
-                    )
-                else:
-                    middle = (
-                        f'<a href="https://{middle}"{rel_attr}{target_attr}>'
-                        f"{trim_url(middle)}</a>"
-                    )
+        # Prefer balancing parentheses in URLs instead of ignoring a
+        # trailing character.
+        for start_char, end_char in ("(", ")"), ("<", ">"), ("&lt;", "&gt;"):
+            start_count = middle.count(start_char)
 
-            if (
-                "@" in middle
-                and not middle.startswith("www.")
-                and ":" not in middle
-                and _simple_email_re.match(middle)
-            ):
-                middle = f'<a href="mailto:{middle}">{middle}</a>'
+            if start_count <= middle.count(end_char):
+                # Balanced, or lighter on the left
+                continue
 
-            if middle.startswith("mailto:") and _simple_email_re.match(middle[7:]):
-                middle = f'<a href="{middle}">{middle[7:]}</a>'
+            # Move as many as possible from the tail to balance
+            for _ in range(min(start_count, tail.count(end_char))):
+                end_index = tail.index(end_char) + len(end_char)
+                # Move anything in the tail before the end char too
+                middle += tail[:end_index]
+                tail = tail[end_index:]
 
-            if extra_schemes is not None:
-                schemes = {x for x in extra_schemes if middle.startswith(x)}
+        if _http_re.match(middle):
+            if middle.startswith("https://") or middle.startswith("http://"):
+                middle = (
+                    f'<a href="{middle}"{rel_attr}{target_attr}>{trim_url(middle)}</a>'
+                )
+            else:
+                middle = (
+                    f'<a href="https://{middle}"{rel_attr}{target_attr}>'
+                    f"{trim_url(middle)}</a>"
+                )
 
-                for uri_scheme in schemes:
-                    if len(middle) > len(uri_scheme):
-                        middle = (
-                            f'<a href="{middle}"{rel_attr}{target_attr}>'
-                            f"{middle}</a>"
-                        )
+        elif middle.startswith("mailto:") and _email_re.match(middle[7:]):
+            middle = f'<a href="{middle}">{middle[7:]}</a>'
 
-            if lead + middle + trail != word:
-                words[i] = lead + middle + trail
+        elif (
+            "@" in middle
+            and not middle.startswith("www.")
+            and ":" not in middle
+            and _email_re.match(middle)
+        ):
+            middle = f'<a href="mailto:{middle}">{middle}</a>'
+
+        elif extra_schemes is not None:
+            for scheme in extra_schemes:
+                if middle != scheme and middle.startswith(scheme):
+                    middle = f'<a href="{middle}"{rel_attr}{target_attr}>{middle}</a>'
+
+        words[i] = f"{head}{middle}{tail}"
 
     return "".join(words)
 
