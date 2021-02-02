@@ -186,6 +186,12 @@ The following Django template::
 
 There is no equivalent of ``{% cycle ... as variable %}``.
 
+Django Test Client
+~~~~~~~~~~~~~~~~~~
+
+The Django test client response object does not fully support the Jinja2
+backend.  See Django's Testing tools docs for details.
+
 
 Mako
 ----
