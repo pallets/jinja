@@ -261,16 +261,16 @@ def do_dictsort(value, case_sensitive=False, by="key", reverse=False):
 
     .. sourcecode:: jinja
 
-        {% for item in mydict|dictsort %}
+        {% for key, value in mydict|dictsort %}
             sort the dict by key, case insensitive
 
-        {% for item in mydict|dictsort(reverse=true) %}
+        {% for key, value in mydict|dictsort(reverse=true) %}
             sort the dict by key, case insensitive, reverse order
 
-        {% for item in mydict|dictsort(true) %}
+        {% for key, value in mydict|dictsort(true) %}
             sort the dict by key, case sensitive
 
-        {% for item in mydict|dictsort(false, 'value') %}
+        {% for key, value in mydict|dictsort(false, 'value') %}
             sort the dict by value, case insensitive
     """
     if by == "key":
@@ -567,42 +567,86 @@ def do_pprint(value):
     return pformat(value)
 
 
+_uri_scheme_re = re.compile(r"^([\w.+-]{2,}:(/){0,2})$")
+
+
 @evalcontextfilter
 def do_urlize(
-    eval_ctx, value, trim_url_limit=None, nofollow=False, target=None, rel=None
+    eval_ctx,
+    value,
+    trim_url_limit=None,
+    nofollow=False,
+    target=None,
+    rel=None,
+    extra_schemes=None,
 ):
-    """Converts URLs in plain text into clickable links.
+    """Convert URLs in text into clickable links.
 
-    If you pass the filter an additional integer it will shorten the urls
-    to that number. Also a third argument exists that makes the urls
-    "nofollow":
+    This may not recognize links in some situations. Usually, a more
+    comprehensive formatter, such as a Markdown library, is a better
+    choice.
 
-    .. sourcecode:: jinja
+    Works on ``http://``, ``https://``, ``www.``, ``mailto:``, and email
+    addresses. Links with trailing punctuation (periods, commas, closing
+    parentheses) and leading punctuation (opening parentheses) are
+    recognized excluding the punctuation. Email addresses that include
+    header fields are not recognized (for example,
+    ``mailto:address@example.com?cc=copy@example.com``).
 
-        {{ mytext|urlize(40, true) }}
-            links are shortened to 40 chars and defined with rel="nofollow"
+    :param value: Original text containing URLs to link.
+    :param trim_url_limit: Shorten displayed URL values to this length.
+    :param nofollow: Add the ``rel=nofollow`` attribute to links.
+    :param target: Add the ``target`` attribute to links.
+    :param rel: Add the ``rel`` attribute to links.
+    :param extra_schemes: Recognize URLs that start with these schemes
+        in addition to the default behavior. Defaults to
+        ``env.policies["urlize.extra_schemes"]``, which defaults to no
+        extra schemes.
 
-    If *target* is specified, the ``target`` attribute will be added to the
-    ``<a>`` tag:
+    .. versionchanged:: 3.0
+        The ``extra_schemes`` parameter was added.
 
-    .. sourcecode:: jinja
+    .. versionchanged:: 3.0
+        Generate ``https://`` links for URLs without a scheme.
 
-       {{ mytext|urlize(40, target='_blank') }}
+    .. versionchanged:: 3.0
+        The parsing rules were updated. Recognize email addresses with
+        or without the ``mailto:`` scheme. Validate IP addresses. Ignore
+        parentheses and brackets in more cases.
 
     .. versionchanged:: 2.8
        The ``target`` parameter was added.
     """
     policies = eval_ctx.environment.policies
-    rel = set((rel or "").split() or [])
+    rel_parts = set((rel or "").split())
+
     if nofollow:
-        rel.add("nofollow")
-    rel.update((policies["urlize.rel"] or "").split())
+        rel_parts.add("nofollow")
+
+    rel_parts.update((policies["urlize.rel"] or "").split())
+    rel = " ".join(sorted(rel_parts)) or None
+
     if target is None:
         target = policies["urlize.target"]
-    rel = " ".join(sorted(rel)) or None
-    rv = urlize(value, trim_url_limit, rel=rel, target=target)
+
+    if extra_schemes is None:
+        extra_schemes = policies["urlize.extra_schemes"] or ()
+
+    for scheme in extra_schemes:
+        if _uri_scheme_re.fullmatch(scheme) is None:
+            raise FilterArgumentError(f"{scheme!r} is not a valid URI scheme prefix.")
+
+    rv = urlize(
+        value,
+        trim_url_limit=trim_url_limit,
+        rel=rel,
+        target=target,
+        extra_schemes=extra_schemes,
+    )
+
     if eval_ctx.autoescape:
         rv = Markup(rv)
+
     return rv
 
 
@@ -1207,37 +1251,29 @@ def do_rejectattr(*args, **kwargs):
 
 @evalcontextfilter
 def do_tojson(eval_ctx, value, indent=None):
-    """Dumps a structure to JSON so that it's safe to use in ``<script>``
-    tags.  It accepts the same arguments and returns a JSON string.  Note that
-    this is available in templates through the ``|tojson`` filter which will
-    also mark the result as safe.  Due to how this function escapes certain
-    characters this is safe even if used outside of ``<script>`` tags.
+    """Serialize an object to a string of JSON, and mark it safe to
+    render in HTML. This filter is only for use in HTML documents.
 
-    The following characters are escaped in strings:
+    The returned string is safe to render in HTML documents and
+    ``<script>`` tags. The exception is in HTML attributes that are
+    double quoted; either use single quotes or the ``|forceescape``
+    filter.
 
-    -   ``<``
-    -   ``>``
-    -   ``&``
-    -   ``'``
-
-    This makes it safe to embed such strings in any place in HTML with the
-    notable exception of double quoted attributes.  In that case single
-    quote your attributes or HTML escape it in addition.
-
-    The indent parameter can be used to enable pretty printing.  Set it to
-    the number of spaces that the structures should be indented with.
-
-    Note that this filter is for use in HTML contexts only.
+    :param value: The object to serialize to JSON.
+    :param indent: The ``indent`` parameter passed to ``dumps``, for
+        pretty-printing the value.
 
     .. versionadded:: 2.9
     """
     policies = eval_ctx.environment.policies
-    dumper = policies["json.dumps_function"]
-    options = policies["json.dumps_kwargs"]
+    dumps = policies["json.dumps_function"]
+    kwargs = policies["json.dumps_kwargs"]
+
     if indent is not None:
-        options = dict(options)
-        options["indent"] = indent
-    return htmlsafe_json_dumps(value, dumper=dumper, **options)
+        kwargs = kwargs.copy()
+        kwargs["indent"] = indent
+
+    return htmlsafe_json_dumps(value, dumps=dumps, **kwargs)
 
 
 def prepare_map(args, kwargs):

@@ -11,18 +11,6 @@ from urllib.parse import quote_from_bytes
 from markupsafe import escape
 from markupsafe import Markup
 
-_word_split_re = re.compile(r"(\s+)")
-_lead_pattern = "|".join(map(re.escape, ("(", "<", "&lt;")))
-_trail_pattern = "|".join(map(re.escape, (".", ",", ")", ">", "\n", "&gt;")))
-_punctuation_re = re.compile(
-    fr"^(?P<lead>(?:{_lead_pattern})*)(?P<middle>.*?)(?P<trail>(?:{_trail_pattern})*)$"
-)
-_simple_email_re = re.compile(r"^\S+@[a-zA-Z0-9._-]+\.[a-zA-Z0-9._-]+$")
-_striptags_re = re.compile(r"(<!--.*?-->|<[^>]*>)")
-_entity_re = re.compile(r"&([^;]+);")
-_letters = "abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ"
-_digits = "0123456789"
-
 # special singleton representing missing values for the runtime
 missing = type("MissingType", (), {"__repr__": lambda x: "missing"})()
 
@@ -168,71 +156,155 @@ def object_type_repr(obj):
 
 
 def pformat(obj):
-    """Format an object using :func:`pprint.pformat`.
-    """
+    """Format an object using :func:`pprint.pformat`."""
     from pprint import pformat
 
     return pformat(obj)
 
 
-def urlize(text, trim_url_limit=None, rel=None, target=None):
-    """Converts any URLs in text into clickable links. Works on http://,
-    https:// and www. links. Links can have trailing punctuation (periods,
-    commas, close-parens) and leading punctuation (opening parens) and
-    it'll still do the right thing.
+_http_re = re.compile(
+    r"""
+    ^
+    (
+        (https?://|www\.)  # scheme or www
+        (([\w%-]+\.)+)?  # subdomain
+        (
+            [a-z]{2,63}  # basic tld
+        |
+            xn--[\w%]{2,59}  # idna tld
+        )
+    |
+        ([\w%-]{2,63}\.)+  # basic domain
+        (com|net|int|edu|gov|org|info|mil)  # basic tld
+    |
+        (https?://)  # scheme
+        (
+            (([\d]{1,3})(\.[\d]{1,3}){3})  # IPv4
+        |
+            (\[([\da-f]{0,4}:){2}([\da-f]{0,4}:?){1,6}])  # IPv6
+        )
+    )
+    (?::[\d]{1,5})?  # port
+    (?:[/?#]\S*)?  # path, query, and fragment
+    $
+    """,
+    re.IGNORECASE | re.VERBOSE,
+)
+_email_re = re.compile(r"^\S+@\w[\w.-]*\.\w+$")
 
-    If trim_url_limit is not None, the URLs in link text will be limited
-    to trim_url_limit characters.
 
-    If nofollow is True, the URLs in link text will get a rel="nofollow"
-    attribute.
+def urlize(text, trim_url_limit=None, rel=None, target=None, extra_schemes=None):
+    """Convert URLs in text into clickable links.
 
-    If target is not None, a target attribute will be added to the link.
+    This may not recognize links in some situations. Usually, a more
+    comprehensive formatter, such as a Markdown library, is a better
+    choice.
+
+    Works on ``http://``, ``https://``, ``www.``, ``mailto:``, and email
+    addresses. Links with trailing punctuation (periods, commas, closing
+    parentheses) and leading punctuation (opening parentheses) are
+    recognized excluding the punctuation. Email addresses that include
+    header fields are not recognized (for example,
+    ``mailto:address@example.com?cc=copy@example.com``).
+
+    :param text: Original text containing URLs to link.
+    :param trim_url_limit: Shorten displayed URL values to this length.
+    :param target: Add the ``target`` attribute to links.
+    :param rel: Add the ``rel`` attribute to links.
+    :param extra_schemes: Recognize URLs that start with these schemes
+        in addition to the default behavior.
+
+    .. versionchanged:: 3.0
+        The ``extra_schemes`` parameter was added.
+
+    .. versionchanged:: 3.0
+        Generate ``https://`` links for URLs without a scheme.
+
+    .. versionchanged:: 3.0
+        The parsing rules were updated. Recognize email addresses with
+        or without the ``mailto:`` scheme. Validate IP addresses. Ignore
+        parentheses and brackets in more cases.
     """
+    if trim_url_limit is not None:
 
-    def trim_url(x, limit=trim_url_limit):
-        if limit is not None:
-            return x[:limit] + ("..." if len(x) >= limit else "")
+        def trim_url(x):
+            if len(x) > trim_url_limit:
+                return f"{x[:trim_url_limit]}..."
 
-        return x
+            return x
 
-    words = _word_split_re.split(str(escape(text)))
+    else:
+
+        def trim_url(x):
+            return x
+
+    words = re.split(r"(\s+)", str(escape(text)))
     rel_attr = f' rel="{escape(rel)}"' if rel else ""
     target_attr = f' target="{escape(target)}"' if target else ""
 
     for i, word in enumerate(words):
-        match = _punctuation_re.match(word)
+        head, middle, tail = "", word, ""
+        match = re.match(r"^([(<]|&lt;)+", middle)
+
         if match:
-            lead, middle, trail = match.groups()
-            if middle.startswith("www.") or (
-                "@" not in middle
-                and not middle.startswith("http://")
-                and not middle.startswith("https://")
-                and len(middle) > 0
-                and middle[0] in _letters + _digits
-                and (
-                    middle.endswith(".org")
-                    or middle.endswith(".net")
-                    or middle.endswith(".com")
-                )
-            ):
-                middle = (
-                    f'<a href="http://{middle}"{rel_attr}{target_attr}>'
-                    f"{trim_url(middle)}</a>"
-                )
-            if middle.startswith("http://") or middle.startswith("https://"):
+            head = match.group()
+            middle = middle[match.end() :]
+
+        # Unlike lead, which is anchored to the start of the string,
+        # need to check that the string ends with any of the characters
+        # before trying to match all of them, to avoid backtracking.
+        if middle.endswith((")", ">", ".", ",", "\n", "&gt;")):
+            match = re.search(r"([)>.,\n]|&gt;)+$", middle)
+
+            if match:
+                tail = match.group()
+                middle = middle[: match.start()]
+
+        # Prefer balancing parentheses in URLs instead of ignoring a
+        # trailing character.
+        for start_char, end_char in ("(", ")"), ("<", ">"), ("&lt;", "&gt;"):
+            start_count = middle.count(start_char)
+
+            if start_count <= middle.count(end_char):
+                # Balanced, or lighter on the left
+                continue
+
+            # Move as many as possible from the tail to balance
+            for _ in range(min(start_count, tail.count(end_char))):
+                end_index = tail.index(end_char) + len(end_char)
+                # Move anything in the tail before the end char too
+                middle += tail[:end_index]
+                tail = tail[end_index:]
+
+        if _http_re.match(middle):
+            if middle.startswith("https://") or middle.startswith("http://"):
                 middle = (
                     f'<a href="{middle}"{rel_attr}{target_attr}>{trim_url(middle)}</a>'
                 )
-            if (
-                "@" in middle
-                and not middle.startswith("www.")
-                and ":" not in middle
-                and _simple_email_re.match(middle)
-            ):
-                middle = f'<a href="mailto:{middle}">{middle}</a>'
-            if lead + middle + trail != word:
-                words[i] = lead + middle + trail
+            else:
+                middle = (
+                    f'<a href="https://{middle}"{rel_attr}{target_attr}>'
+                    f"{trim_url(middle)}</a>"
+                )
+
+        elif middle.startswith("mailto:") and _email_re.match(middle[7:]):
+            middle = f'<a href="{middle}">{middle[7:]}</a>'
+
+        elif (
+            "@" in middle
+            and not middle.startswith("www.")
+            and ":" not in middle
+            and _email_re.match(middle)
+        ):
+            middle = f'<a href="mailto:{middle}">{middle}</a>'
+
+        elif extra_schemes is not None:
+            for scheme in extra_schemes:
+                if middle != scheme and middle.startswith(scheme):
+                    middle = f'<a href="{middle}"{rel_attr}{target_attr}>{middle}</a>'
+
+        words[i] = f"{head}{middle}{tail}"
+
     return "".join(words)
 
 
@@ -536,34 +608,42 @@ def select_autoescape(
     return autoescape
 
 
-def htmlsafe_json_dumps(obj, dumper=None, **kwargs):
-    """Works exactly like :func:`dumps` but is safe for use in ``<script>``
-    tags.  It accepts the same arguments and returns a JSON string.  Note that
-    this is available in templates through the ``|tojson`` filter which will
-    also mark the result as safe.  Due to how this function escapes certain
-    characters this is safe even if used outside of ``<script>`` tags.
+def htmlsafe_json_dumps(obj, dumps=None, **kwargs):
+    """Serialize an object to a string of JSON with :func:`json.dumps`,
+    then replace HTML-unsafe characters with Unicode escapes and mark
+    the result safe with :class:`~markupsafe.Markup`.
 
-    The following characters are escaped in strings:
+    This is available in templates as the ``|tojson`` filter.
 
-    -   ``<``
-    -   ``>``
-    -   ``&``
-    -   ``'``
+    The following characters are escaped: ``<``, ``>``, ``&``, ``'``.
 
-    This makes it safe to embed such strings in any place in HTML with the
-    notable exception of double quoted attributes.  In that case single
-    quote your attributes or HTML escape it in addition.
+    The returned string is safe to render in HTML documents and
+    ``<script>`` tags. The exception is in HTML attributes that are
+    double quoted; either use single quotes or the ``|forceescape``
+    filter.
+
+    :param obj: The object to serialize to JSON.
+    :param dumps: The ``dumps`` function to use. Defaults to
+        ``env.policies["json.dumps_function"]``, which defaults to
+        :func:`json.dumps`.
+    :param kwargs: Extra arguments to pass to ``dumps``. Merged onto
+        ``env.policies["json.dumps_kwargs"]``.
+
+    .. versionchanged:: 3.0
+        The ``dumper`` parameter is renamed to ``dumps``.
+
+    .. versionadded:: 2.9
     """
-    if dumper is None:
-        dumper = json.dumps
-    rv = (
-        dumper(obj, **kwargs)
+    if dumps is None:
+        dumps = json.dumps
+
+    return Markup(
+        dumps(obj, **kwargs)
         .replace("<", "\\u003c")
         .replace(">", "\\u003e")
         .replace("&", "\\u0026")
         .replace("'", "\\u0027")
     )
-    return Markup(rv)
 
 
 class Cycler:

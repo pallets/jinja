@@ -7,19 +7,19 @@ Thank you for considering contributing to Jinja!
 Support questions
 -----------------
 
-Please, don't use the issue tracker for this. The issue tracker is a
+Please don't use the issue tracker for this. The issue tracker is a
 tool to address bugs and feature requests in Jinja itself. Use one of
 the following resources for questions about using Jinja or issues with
 your own code:
 
 -   The ``#get-help`` channel on our Discord chat:
-    https://discord.gg/t6rrQZH
+    https://discord.gg/pallets
 -   The mailing list flask@python.org for long term discussion or larger
     issues.
 -   Ask on `Stack Overflow`_. Search with Google first using:
     ``site:stackoverflow.com jinja {search term, exception message, etc.}``
 
-.. _Stack Overflow: https://stackoverflow.com/questions/tagged/jinja?sort=linked
+.. _Stack Overflow: https://stackoverflow.com/questions/tagged/jinja?tab=Frequent
 
 
 Reporting issues
@@ -107,11 +107,15 @@ First time setup
 
         > env\Scripts\activate
 
--   Install Jinja in editable mode with development dependencies.
+-   Install the development dependencies, then install Jinja in editable
+    mode.
 
     .. code-block:: text
 
-        $ pip install -e . -r requirements/dev.txt
+        $ pip install -r requirements/dev.txt
+        $ pip install -e .
+        # or on one line:
+        $ pip install -r requirements/dev.txt && pip install -e .
 
 -   Install the pre-commit hooks.
 
@@ -120,11 +124,11 @@ First time setup
         $ pre-commit install
 
 .. _latest version of git: https://git-scm.com/downloads
-.. _username: https://help.github.com/en/articles/setting-your-username-in-git
-.. _email: https://help.github.com/en/articles/setting-your-commit-email-address-in-git
+.. _username: https://docs.github.com/en/github/using-git/setting-your-username-in-git
+.. _email: https://docs.github.com/en/github/setting-up-and-managing-your-github-user-account/setting-your-commit-email-address
 .. _GitHub account: https://github.com/join
 .. _Fork: https://github.com/pallets/jinja/fork
-.. _Clone: https://help.github.com/en/articles/fork-a-repo#step-2-create-a-local-clone-of-your-fork
+.. _Clone: https://docs.github.com/en/github/getting-started-with-github/fork-a-repo#step-2-create-a-local-clone-of-your-fork
 
 
 Start coding
@@ -160,7 +164,7 @@ Start coding
         $ git push --set-upstream fork your-branch-name
 
 .. _committing as you go: https://dont-be-afraid-to-commit.readthedocs.io/en/latest/git/commandlinegit.html#commit-your-changes
-.. _create a pull request: https://help.github.com/en/articles/creating-a-pull-request
+.. _create a pull request: https://docs.github.com/en/github/collaborating-with-issues-and-pull-requests/creating-a-pull-request
 
 
 Running the tests

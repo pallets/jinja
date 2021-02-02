@@ -198,7 +198,7 @@ class TestFilter:
 
     @pytest.mark.parametrize(
         ("value", "base", "expect"),
-        (("0x4d32", 16, "19762"), ("011", 8, "9"), ("0x33Z", 16, "0"),),
+        (("0x4d32", 16, "19762"), ("011", 8, "9"), ("0x33Z", 16, "0")),
     )
     def test_int_base(self, env, value, base, expect):
         t = env.from_string("{{ value|int(base=base) }}")
@@ -337,10 +337,22 @@ class TestFilter:
         assert tmpl.render() == "FOO"
 
     def test_urlize(self, env):
+        tmpl = env.from_string('{{ "foo example.org bar"|urlize }}')
+        assert tmpl.render() == (
+            'foo <a href="https://example.org" rel="noopener">' "example.org</a> bar"
+        )
         tmpl = env.from_string('{{ "foo http://www.example.com/ bar"|urlize }}')
         assert tmpl.render() == (
             'foo <a href="http://www.example.com/" rel="noopener">'
             "http://www.example.com/</a> bar"
+        )
+        tmpl = env.from_string('{{ "foo mailto:email@example.com bar"|urlize }}')
+        assert tmpl.render() == (
+            'foo <a href="mailto:email@example.com">email@example.com</a> bar'
+        )
+        tmpl = env.from_string('{{ "foo email@example.com bar"|urlize }}')
+        assert tmpl.render() == (
+            'foo <a href="mailto:email@example.com">email@example.com</a> bar'
         )
 
     def test_urlize_rel_policy(self):
@@ -359,6 +371,17 @@ class TestFilter:
             tmpl.render()
             == 'foo <a href="http://www.example.com/" rel="noopener" target="_blank">'
             "http://www.example.com/</a> bar"
+        )
+
+    def test_urlize_extra_schemes_parameter(self, env):
+        tmpl = env.from_string(
+            '{{ "foo tel:+1-514-555-1234 ftp://localhost bar"|'
+            'urlize(extra_schemes=["tel:", "ftp:"]) }}'
+        )
+        assert tmpl.render() == (
+            'foo <a href="tel:+1-514-555-1234" rel="noopener">'
+            'tel:+1-514-555-1234</a> <a href="ftp://localhost" rel="noopener">'
+            "ftp://localhost</a> bar"
         )
 
     def test_wordcount(self, env):
@@ -517,7 +540,7 @@ class TestFilter:
         t = env.from_string(source)
         assert t.render() == expect
 
-    @pytest.mark.parametrize("name,expect", (("min", "1"), ("max", "9"),))
+    @pytest.mark.parametrize(("name", "expect"), [("min", "1"), ("max", "9")])
     def test_min_max_attribute(self, env, name, expect):
         t = env.from_string("{{ items|" + name + '(attribute="value") }}')
         assert t.render(items=map(Magic, [5, 1, 9])) == expect
