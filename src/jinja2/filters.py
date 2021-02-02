@@ -1251,37 +1251,29 @@ def do_rejectattr(*args, **kwargs):
 
 @evalcontextfilter
 def do_tojson(eval_ctx, value, indent=None):
-    """Dumps a structure to JSON so that it's safe to use in ``<script>``
-    tags.  It accepts the same arguments and returns a JSON string.  Note that
-    this is available in templates through the ``|tojson`` filter which will
-    also mark the result as safe.  Due to how this function escapes certain
-    characters this is safe even if used outside of ``<script>`` tags.
+    """Serialize an object to a string of JSON, and mark it safe to
+    render in HTML. This filter is only for use in HTML documents.
 
-    The following characters are escaped in strings:
+    The returned string is safe to render in HTML documents and
+    ``<script>`` tags. The exception is in HTML attributes that are
+    double quoted; either use single quotes or the ``|forceescape``
+    filter.
 
-    -   ``<``
-    -   ``>``
-    -   ``&``
-    -   ``'``
-
-    This makes it safe to embed such strings in any place in HTML with the
-    notable exception of double quoted attributes.  In that case single
-    quote your attributes or HTML escape it in addition.
-
-    The indent parameter can be used to enable pretty printing.  Set it to
-    the number of spaces that the structures should be indented with.
-
-    Note that this filter is for use in HTML contexts only.
+    :param value: The object to serialize to JSON.
+    :param indent: The ``indent`` parameter passed to ``dumps``, for
+        pretty-printing the value.
 
     .. versionadded:: 2.9
     """
     policies = eval_ctx.environment.policies
-    dumper = policies["json.dumps_function"]
-    options = policies["json.dumps_kwargs"]
+    dumps = policies["json.dumps_function"]
+    kwargs = policies["json.dumps_kwargs"]
+
     if indent is not None:
-        options = dict(options)
-        options["indent"] = indent
-    return htmlsafe_json_dumps(value, dumper=dumper, **options)
+        kwargs = kwargs.copy()
+        kwargs["indent"] = indent
+
+    return htmlsafe_json_dumps(value, dumps=dumps, **kwargs)
 
 
 def prepare_map(args, kwargs):

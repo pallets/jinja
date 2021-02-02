@@ -608,34 +608,42 @@ def select_autoescape(
     return autoescape
 
 
-def htmlsafe_json_dumps(obj, dumper=None, **kwargs):
-    """Works exactly like :func:`dumps` but is safe for use in ``<script>``
-    tags.  It accepts the same arguments and returns a JSON string.  Note that
-    this is available in templates through the ``|tojson`` filter which will
-    also mark the result as safe.  Due to how this function escapes certain
-    characters this is safe even if used outside of ``<script>`` tags.
+def htmlsafe_json_dumps(obj, dumps=None, **kwargs):
+    """Serialize an object to a string of JSON with :func:`json.dumps`,
+    then replace HTML-unsafe characters with Unicode escapes and mark
+    the result safe with :class:`~markupsafe.Markup`.
 
-    The following characters are escaped in strings:
+    This is available in templates as the ``|tojson`` filter.
 
-    -   ``<``
-    -   ``>``
-    -   ``&``
-    -   ``'``
+    The following characters are escaped: ``<``, ``>``, ``&``, ``'``.
 
-    This makes it safe to embed such strings in any place in HTML with the
-    notable exception of double quoted attributes.  In that case single
-    quote your attributes or HTML escape it in addition.
+    The returned string is safe to render in HTML documents and
+    ``<script>`` tags. The exception is in HTML attributes that are
+    double quoted; either use single quotes or the ``|forceescape``
+    filter.
+
+    :param obj: The object to serialize to JSON.
+    :param dumps: The ``dumps`` function to use. Defaults to
+        ``env.policies["json.dumps_function"]``, which defaults to
+        :func:`json.dumps`.
+    :param kwargs: Extra arguments to pass to ``dumps``. Merged onto
+        ``env.policies["json.dumps_kwargs"]``.
+
+    .. versionchanged:: 3.0
+        The ``dumper`` parameter is renamed to ``dumps``.
+
+    .. versionadded:: 2.9
     """
-    if dumper is None:
-        dumper = json.dumps
-    rv = (
-        dumper(obj, **kwargs)
+    if dumps is None:
+        dumps = json.dumps
+
+    return Markup(
+        dumps(obj, **kwargs)
         .replace("<", "\\u003c")
         .replace(">", "\\u003e")
         .replace("&", "\\u0026")
         .replace("'", "\\u0027")
     )
-    return Markup(rv)
 
 
 class Cycler:
