@@ -207,12 +207,6 @@ Read more about `coverage <https://coverage.readthedocs.io>`__.
 Building the docs
 ~~~~~~~~~~~~~~~~~
 
-Install the documentation dependencies if you have not already done so.
-
-.. code-block:: text
-
-    $ pip install -r requirements/docs.txt
-
 Build the docs in the ``docs`` directory using Sphinx.
 
 .. code-block:: text
