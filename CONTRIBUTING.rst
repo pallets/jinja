@@ -112,9 +112,6 @@ First time setup
 
     .. code-block:: text
 
-        $ pip install -r requirements/dev.txt
-        $ pip install -e .
-        # or on one line:
         $ pip install -r requirements/dev.txt && pip install -e .
 
 -   Install the pre-commit hooks.
