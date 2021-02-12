@@ -103,9 +103,17 @@ First time setup
 
     On Windows, activating is different.
 
-    .. code-block:: text
+    1. If you are activating a virtualenv from the Windows CMD :
 
-        > env\Scripts\activate
+        .. code-block:: text
+
+            > env\Scripts\activate
+
+    2. If you are using Git Bash on Windows to activate a virtualenv :
+
+        .. code-block:: text
+
+            $ source env/Scripts/activate
 
 -   Install the development dependencies, then install Jinja in editable
     mode.
