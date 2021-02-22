@@ -30,6 +30,8 @@ Unreleased
     has been updated to be more efficient and match more cases. URLs
     without a scheme are linked as ``https://`` instead of ``http://``.
     :issue:`522, 827, 1172`, :pr:`1195`
+-   Filters that get attributes, such as ``map`` and ``groupby``, can
+    use a false or empty value as a default. :issue:`1331`
 
 
 Version 2.11.3

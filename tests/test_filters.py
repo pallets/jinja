@@ -666,6 +666,12 @@ class TestFilter:
         tmpl = env.from_string(
             '{{ users|map(attribute="lastname", default="smith")|join(", ") }}'
         )
+        test_list = env.from_string(
+            '{{ users|map(attribute="lastname", default=["smith","x"])|join(", ") }}'
+        )
+        test_str = env.from_string(
+            '{{ users|map(attribute="lastname", default="")|join(", ") }}'
+        )
         users = [
             Fullname("john", "lennon"),
             Fullname("jane", "edwards"),
@@ -673,6 +679,8 @@ class TestFilter:
             Firstname("mike"),
         ]
         assert tmpl.render(users=users) == "lennon, edwards, None, smith"
+        assert test_list.render(users=users) == "lennon, edwards, None, ['smith', 'x']"
+        assert test_str.render(users=users) == "lennon, edwards, None, "
 
     def test_simple_select(self, env):
         env = Environment()
