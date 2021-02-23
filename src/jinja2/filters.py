@@ -1116,7 +1116,10 @@ class _GroupTuple(t.NamedTuple):
 
 @environmentfilter
 def do_groupby(
-    environment: "Environment", value: "t.Iterable[V]", attribute: t.Union[str, int]
+    environment: "Environment",
+    value: "t.Iterable[V]",
+    attribute: t.Union[str, int],
+    default: t.Optional[t.Any] = None,
 ) -> "t.List[t.Tuple[t.Any, t.List[V]]]":
     """Group a sequence of objects by an attribute using Python's
     :func:`itertools.groupby`. The attribute can use dot notation for
@@ -1148,10 +1151,22 @@ def do_groupby(
           <li>{{ group.grouper }}: {{ group.list|join(", ") }}
         {% endfor %}</ul>
 
+    You can specify a ``default`` value to use if an object in the list
+    does not have the given attribute.
+
+    .. sourcecode:: jinja
+
+        <ul>{% for city, items in users|groupby("city", default="NY") %}
+          <li>{{ city }}: {{ items|map(attribute="name")|join(", ") }}</li>
+        {% endfor %}</ul>
+
+    .. versionchanged:: 3.0
+        Added the ``default`` parameter.
+
     .. versionchanged:: 2.6
         The attribute supports dot notation for nested access.
     """
-    expr = make_attrgetter(environment, attribute)
+    expr = make_attrgetter(environment, attribute, default=default)
     return [
         _GroupTuple(key, list(values))
         for key, values in groupby(sorted(value, key=expr), expr)
