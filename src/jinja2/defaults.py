@@ -1,3 +1,5 @@
+import typing as t
+
 from .filters import FILTERS as DEFAULT_FILTERS  # noqa: F401
 from .tests import TESTS as DEFAULT_TESTS  # noqa: F401
 from .utils import Cycler
@@ -12,8 +14,8 @@ VARIABLE_START_STRING = "{{"
 VARIABLE_END_STRING = "}}"
 COMMENT_START_STRING = "{#"
 COMMENT_END_STRING = "#}"
-LINE_STATEMENT_PREFIX = None
-LINE_COMMENT_PREFIX = None
+LINE_STATEMENT_PREFIX: t.Optional[str] = None
+LINE_COMMENT_PREFIX: t.Optional[str] = None
 TRIM_BLOCKS = False
 LSTRIP_BLOCKS = False
 NEWLINE_SEQUENCE = "\n"

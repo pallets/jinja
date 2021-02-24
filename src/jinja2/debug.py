@@ -212,7 +212,7 @@ if sys.version_info >= (3, 7):
 elif platform.python_implementation() == "PyPy":
     # PyPy might have special support, and won't work with ctypes.
     try:
-        import tputil
+        import tputil  # type: ignore
     except ImportError:
         # Without tproxy support, use the original traceback.
         def tb_set_next(tb, tb_next):

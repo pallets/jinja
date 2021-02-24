@@ -1,5 +1,6 @@
 """The runtime functions and state used by compiled templates."""
 import sys
+import typing as t
 from collections import abc
 from itertools import chain
 from types import MethodType
@@ -372,7 +373,7 @@ class LoopContext:
     #: Current iteration of the loop, starting at 0.
     index0 = -1
 
-    _length = None
+    _length: t.Optional[int] = None
     _after = missing
     _current = missing
     _before = missing
@@ -762,8 +763,7 @@ class Undefined:
         return 0
 
     def __iter__(self):
-        if 0:
-            yield None
+        yield from ()
 
     def __bool__(self):
         return False

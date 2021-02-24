@@ -3,10 +3,10 @@ options.
 """
 import os
 import sys
+import typing as t
 import weakref
 from functools import partial
 from functools import reduce
-from typing import Any
 
 from markupsafe import Markup
 
@@ -262,7 +262,7 @@ class Environment:
     overlayed = False
 
     #: the environment this environment is linked to if it is an overlay
-    linked_to = None
+    linked_to: t.Optional["Environment"] = None
 
     #: shared environments have this set to `True`.  A shared environment
     #: must not be modified
@@ -276,7 +276,7 @@ class Environment:
     #: :class:`~jinja2.runtime.Context` for more information.
     context_class = Context
 
-    template_class = Any
+    template_class: t.Type["Template"]
 
     def __init__(
         self,

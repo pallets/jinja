@@ -1,4 +1,5 @@
 """Compiles nodes from the parser into Python code."""
+import typing as t
 from collections import namedtuple
 from functools import update_wrapper
 from io import StringIO
@@ -1203,7 +1204,7 @@ class CodeGenerator(NodeVisitor):
     #: with one. Or if the environment has one, this is called on that
     #: function's output for constants.
     _default_finalize = str
-    _finalize = None
+    _finalize: t.Optional[_FinalizeInfo] = None
 
     def _make_finalize(self):
         """Build the finalize function to be used on constants and at

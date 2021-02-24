@@ -1,11 +1,13 @@
 import json
 import os
 import re
+import typing as t
 from collections import abc
 from collections import deque
 from random import choice
 from random import randrange
 from threading import Lock
+from types import CodeType
 from urllib.parse import quote_from_bytes
 
 from markupsafe import escape
@@ -15,7 +17,7 @@ from markupsafe import Markup
 missing = type("MissingType", (), {"__repr__": lambda x: "missing"})()
 
 # internal code
-internal_code = set()
+internal_code: t.MutableSet[CodeType] = set()
 
 concat = "".join
 
