@@ -25,4 +25,5 @@ syntax. Then the template is passed data to render the final document.
     switching
     tricks
     faq
-    changelog
+    license
+    changes
