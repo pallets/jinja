@@ -67,7 +67,7 @@ def make_attrgetter(environment, attribute, postprocess=None, default=None):
         for part in attribute:
             item = environment.getitem(item, part)
 
-            if default and isinstance(item, Undefined):
+            if default is not None and isinstance(item, Undefined):
                 item = default
 
         if postprocess is not None:
