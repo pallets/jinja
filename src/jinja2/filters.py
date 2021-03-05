@@ -1314,7 +1314,7 @@ def do_map(context, value, *args, **kwargs):
     .. code-block:: python
 
         (u.username for u in users)
-        (u.username or "Anonymous" for u in users)
+        (getattr(u, "username", "Anonymous") for u in users)
         (do_lower(x) for x in titles)
 
     .. versionchanged:: 2.11.0
