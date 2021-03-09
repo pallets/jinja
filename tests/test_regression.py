@@ -745,3 +745,10 @@ End"""
 
         tmpl = env.get_template("base")
         assert tmpl.render() == "42 y"
+
+
+@pytest.mark.parametrize("unicode_char", ["\N{FORM FEED}", "\x85"])
+def test_unicode_whitespace(env, unicode_char):
+    content = "Lorem ipsum\n" + unicode_char + "\nMore text"
+    tmpl = env.from_string(content)
+    assert tmpl.render() == content

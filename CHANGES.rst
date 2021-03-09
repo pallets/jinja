@@ -56,6 +56,8 @@ Unreleased
     instead of a ``TypeError``. :issue:`1198`
 -   ``Undefined`` is iterable in an async environment. :issue:`1294`
 -   ``NativeEnvironment`` supports async mode. :issue:`1362`
+-   Template rendering only treats ``\n``, ``\r\n`` and ``\r`` as line
+    breaks. Other characters are left unchanged. :issue:`769, 952, 1313`
 
 
 Version 2.11.3
