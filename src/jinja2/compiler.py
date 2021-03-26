@@ -131,6 +131,11 @@ class Frame:
         if parent is not None:
             self.buffer = parent.buffer
 
+        # variables set inside of loops and blocks should not affect outer frames,
+        # but they still needs to be kept track of as part of the active context.
+        self.loop_frame = False
+        self.block_frame = False
+
     def copy(self):
         """Create a copy of the current one."""
         rv = object.__new__(self.__class__)
@@ -639,22 +644,38 @@ class CodeGenerator(NodeVisitor):
         context variables if necessary.
         """
         vars = self._assign_stack.pop()
-        if not frame.toplevel or not vars:
+        if (
+            not frame.block_frame
+            and not frame.loop_frame
+            and not frame.toplevel
+            or not vars
+        ):
             return
         public_names = [x for x in vars if x[:1] != "_"]
         if len(vars) == 1:
             name = next(iter(vars))
             ref = frame.symbols.ref(name)
+            if frame.loop_frame:
+                self.writeline(f"_loop_vars[{name!r}] = {ref}")
+                return
+            if frame.block_frame:
+                self.writeline(f"_block_vars[{name!r}] = {ref}")
+                return
             self.writeline(f"context.vars[{name!r}] = {ref}")
         else:
-            self.writeline("context.vars.update({")
+            if frame.loop_frame:
+                self.writeline("_loop_vars.update({")
+            elif frame.block_frame:
+                self.writeline("_block_vars.update({")
+            else:
+                self.writeline("context.vars.update({")
             for idx, name in enumerate(vars):
                 if idx:
                     self.write(", ")
                 ref = frame.symbols.ref(name)
                 self.write(f"{name!r}: {ref}")
             self.write("})")
-        if public_names:
+        if not frame.block_frame and not frame.loop_frame and public_names:
             if len(public_names) == 1:
                 self.writeline(f"context.exported_vars.add({public_names[0]!r})")
             else:
@@ -760,6 +781,7 @@ class CodeGenerator(NodeVisitor):
             # toplevel template.  This would cause a variety of
             # interesting issues with identifier tracking.
             block_frame = Frame(eval_ctx)
+            block_frame.block_frame = True
             undeclared = find_undeclared(block.body, ("self", "super"))
             if "self" in undeclared:
                 ref = block_frame.symbols.declare_parameter("self")
@@ -769,6 +791,7 @@ class CodeGenerator(NodeVisitor):
                 self.writeline(f"{ref} = context.super({name!r}, block_{name})")
             block_frame.symbols.analyze_node(block)
             block_frame.block = name
+            self.writeline("_block_vars = {}")
             self.enter_frame(block_frame)
             self.pull_dependencies(block.body)
             self.blockvisit(block.body, block_frame)
@@ -1003,14 +1026,18 @@ class CodeGenerator(NodeVisitor):
 
     def visit_For(self, node, frame):
         loop_frame = frame.inner()
+        loop_frame.loop_frame = True
         test_frame = frame.inner()
         else_frame = frame.inner()
 
         # try to figure out if we have an extended loop.  An extended loop
         # is necessary if the loop is in recursive mode if the special loop
-        # variable is accessed in the body.
-        extended_loop = node.recursive or "loop" in find_undeclared(
-            node.iter_child_nodes(only=("body",)), ("loop",)
+        # variable is accessed in the body if the body is a scoped block.
+        extended_loop = (
+            node.recursive
+            or "loop"
+            in find_undeclared(node.iter_child_nodes(only=("body",)), ("loop",))
+            or any(block.scoped for block in node.find_all(nodes.Block))
         )
 
         loop_ref = None
@@ -1100,6 +1127,7 @@ class CodeGenerator(NodeVisitor):
         self.indent()
         self.enter_frame(loop_frame)
 
+        self.writeline("_loop_vars = {}")
         self.blockvisit(node.body, loop_frame)
         if node.else_:
             self.writeline(f"{iteration_indicator} = 0")
@@ -1408,7 +1436,9 @@ class CodeGenerator(NodeVisitor):
     # -- Expression Visitors
 
     def visit_Name(self, node, frame):
-        if node.ctx == "store" and frame.toplevel:
+        if node.ctx == "store" and (
+            frame.toplevel or frame.loop_frame or frame.block_frame
+        ):
             if self._assign_stack:
                 self._assign_stack[-1].add(node.name)
         ref = frame.symbols.ref(node.name)
@@ -1676,6 +1706,12 @@ class CodeGenerator(NodeVisitor):
             self.write("context.call(")
         self.visit(node.node, frame)
         extra_kwargs = {"caller": "caller"} if forward_caller else None
+        loop_kwargs = {"_loop_vars": "_loop_vars"} if frame.loop_frame else {}
+        block_kwargs = {"_block_vars": "_block_vars"} if frame.block_frame else {}
+        if extra_kwargs:
+            extra_kwargs.update(loop_kwargs, **block_kwargs)
+        elif loop_kwargs or block_kwargs:
+            extra_kwargs = dict(loop_kwargs, **block_kwargs)
         self.signature(node, frame, extra_kwargs)
         self.write(")")
         if self.environment.is_async:
