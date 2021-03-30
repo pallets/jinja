@@ -716,3 +716,37 @@ End"""
         # values set within a block or loop should not
         # show up outside of it
         assert tmpl.render() == "42\n0\n24\n0\n42\n1\n24\n1\n42"
+
+    def test_cached_extends(self):
+        env = Environment(
+            loader=DictLoader(
+                {"parent": "{{ foo }}", "child": "{% extends 'parent' %}"}
+            )
+        )
+        tmpl = env.get_template("child", globals={"foo": "bar"})
+        assert tmpl.render() == "bar"
+
+        tmpl = env.get_template("parent", globals={"foo": 42})
+        assert tmpl.render() == "42"
+
+        tmpl = env.get_template("child")
+        assert tmpl.render() == "bar"
+
+        tmpl = env.get_template("parent")
+        assert tmpl.render() == "42"
+
+    def test_cached_includes(self):
+        env = Environment(
+            loader=DictLoader({"base": "{{ foo }}", "main": "{% include 'base' %}"})
+        )
+        tmpl = env.get_template("main", globals={"foo": "bar"})
+        assert tmpl.render() == "bar"
+
+        tmpl = env.get_template("base", globals={"foo": 42})
+        assert tmpl.render() == "42"
+
+        tmpl = env.get_template("main")
+        assert tmpl.render() == "bar"
+
+        tmpl = env.get_template("base")
+        assert tmpl.render() == "42"

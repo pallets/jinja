@@ -811,6 +811,16 @@ class Environment:
             if template is not None and (
                 not self.auto_reload or template.is_up_to_date
             ):
+                # update globals if changed
+                new_globals = globals.items() - template.globals.items()
+                if new_globals:
+                    # it is possible for the template and environment to share
+                    # a globals object, in which case, a new copy should be
+                    # made to avoid affecting other templates
+                    if template.globals is self.globals:
+                        template.globals = dict(template.globals, **globals)
+                    else:
+                        template.globals.update(dict(new_globals))
                 return template
         template = self.loader.load(self, name, globals)
         if self.cache is not None:

@@ -36,6 +36,8 @@ Unreleased
     being accessed in custom context functions. :issue:`768`
 -   Fix a bug that caused scoped blocks from accessing special loop
     variables. :issue:`1088`
+-   Fix a bug that prevented cached templates from registering new globals.
+    :issue:`295`
 
 
 Version 2.11.3
