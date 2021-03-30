@@ -114,10 +114,10 @@ useful if you want to dig deeper into Jinja or :ref:`develop extensions
 
     .. attribute:: globals
 
-        A dict of global variables.  These variables are always available
-        in a template.  As long as no template was loaded it's safe
-        to modify this dict.  For more details see :ref:`global-namespace`.
-        For valid object names have a look at :ref:`identifier-naming`.
+        A dict of variables that are available in every template loaded
+        by the environment. As long as no template was loaded it's safe
+        to modify this. For more details see :ref:`global-namespace`.
+        For valid object names see :ref:`identifier-naming`.
 
     .. attribute:: policies
 
@@ -180,9 +180,20 @@ useful if you want to dig deeper into Jinja or :ref:`develop extensions
 
     .. attribute:: globals
 
-        The dict with the globals of that template.  It's unsafe to modify
-        this dict as it may be shared with other templates or the environment
-        that loaded the template.
+        A dict of variables that are available every time the template
+        is rendered, without needing to pass them during render. This
+        should not be modified, as depending on how the template was
+        loaded it may be shared with the environment and other
+        templates.
+
+        Defaults to :attr:`Environment.globals` unless extra values are
+        passed to :meth:`Environment.get_template`.
+
+        Globals are only intended for data that is common to every
+        render of the template. Specific data should be passed to
+        :meth:`render`.
+
+        See :ref:`global-namespace`.
 
     .. attribute:: name
 
@@ -814,12 +825,27 @@ A template designer can then use the test like this:
 The Global Namespace
 --------------------
 
-Variables stored in the :attr:`Environment.globals` dict are special as they
-are available for imported templates too, even if they are imported without
-context.  This is the place where you can put variables and functions
-that should be available all the time.  Additionally :attr:`Template.globals`
-exist that are variables available to a specific template that are available
-to all :meth:`~Template.render` calls.
+The global namespace stores variables and functions that should be
+available without needing to pass them to :meth:`Template.render`. They
+are also available to templates that are imported or included without
+context. Most applications should only use :attr:`Environment.globals`.
+
+:attr:`Environment.globals` are intended for data that is common to all
+templates loaded by that environment. :attr:`Template.globals` are
+intended for data that is common to all renders of that template, and
+default to :attr:`Environment.globals` unless they're given in
+:meth:`Environment.get_template`, etc. Data that is specific to a
+render should be passed as context to :meth:`Template.render`.
+
+Only one set of globals is used during any specific rendering. If
+templates A and B both have template globals, and B extends A, then
+only B's globals are used for both when using ``b.render()``.
+
+Environment globals should not be changed after loading any templates,
+and template globals should not be changed at any time after loading the
+template. Changing globals after loading a template will result in
+unexpected behavior as they may be shared between the environment and
+other templates.
 
 
 .. _low-level-api:
