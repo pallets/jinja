@@ -5,6 +5,7 @@ import os
 import sys
 import typing as t
 import weakref
+from collections import ChainMap
 from functools import partial
 from functools import reduce
 
@@ -811,59 +812,76 @@ class Environment:
             if template is not None and (
                 not self.auto_reload or template.is_up_to_date
             ):
-                # update globals if changed
-                new_globals = globals.items() - template.globals.items()
-                if new_globals:
-                    # it is possible for the template and environment to share
-                    # a globals object, in which case, a new copy should be
-                    # made to avoid affecting other templates
-                    if template.globals is self.globals:
-                        template.globals = dict(template.globals, **globals)
-                    else:
-                        template.globals.update(dict(new_globals))
+                # template.globals is a ChainMap, modifying it will only
+                # affect the template, not the environment globals.
+                if globals:
+                    template.globals.update(globals)
+
                 return template
-        template = self.loader.load(self, name, globals)
+
+        template = self.loader.load(self, name, self.make_globals(globals))
+
         if self.cache is not None:
             self.cache[cache_key] = template
         return template
 
     @internalcode
     def get_template(self, name, parent=None, globals=None):
-        """Load a template from the loader.  If a loader is configured this
-        method asks the loader for the template and returns a :class:`Template`.
-        If the `parent` parameter is not `None`, :meth:`join_path` is called
-        to get the real template name before loading.
+        """Load a template by name with :attr:`loader` and return a
+        :class:`Template`. If the template does not exist a
+        :exc:`TemplateNotFound` exception is raised.
 
-        The `globals` parameter can be used to provide template wide globals.
-        These variables are available in the context at render time.
+        :param name: Name of the template to load.
+        :param parent: The name of the parent template importing this
+            template. :meth:`join_path` can be used to implement name
+            transformations with this.
+        :param globals: Extend the environment :attr:`globals` with
+            these extra variables available for all renders of this
+            template. If the template has already been loaded and
+            cached, its globals are updated with any new items.
 
-        If the template does not exist a :exc:`TemplateNotFound` exception is
-        raised.
+        .. versionchanged:: 3.0
+            If a template is loaded from cache, ``globals`` will update
+            the template's globals instead of ignoring the new values.
 
         .. versionchanged:: 2.4
-           If `name` is a :class:`Template` object it is returned from the
-           function unchanged.
+            If ``name`` is a :class:`Template` object it is returned
+            unchanged.
         """
         if isinstance(name, Template):
             return name
         if parent is not None:
             name = self.join_path(name, parent)
-        return self._load_template(name, self.make_globals(globals))
+
+        return self._load_template(name, globals)
 
     @internalcode
     def select_template(self, names, parent=None, globals=None):
-        """Works like :meth:`get_template` but tries a number of templates
-        before it fails.  If it cannot find any of the templates, it will
-        raise a :exc:`TemplatesNotFound` exception.
+        """Like :meth:`get_template`, but tries loading multiple names.
+        If none of the names can be loaded a :exc:`TemplatesNotFound`
+        exception is raised.
+
+        :param names: List of template names to try loading in order.
+        :param parent: The name of the parent template importing this
+            template. :meth:`join_path` can be used to implement name
+            transformations with this.
+        :param globals: Extend the environment :attr:`globals` with
+            these extra variables available for all renders of this
+            template. If the template has already been loaded and
+            cached, its globals are updated with any new items.
+
+        .. versionchanged:: 3.0
+            If a template is loaded from cache, ``globals`` will update
+            the template's globals instead of ignoring the new values.
 
         .. versionchanged:: 2.11
-            If names is :class:`Undefined`, an :exc:`UndefinedError` is
-            raised instead. If no templates were found and names
+            If ``names`` is :class:`Undefined`, an :exc:`UndefinedError`
+            is raised instead. If no templates were found and ``names``
             contains :class:`Undefined`, the message is more helpful.
 
         .. versionchanged:: 2.4
-           If `names` contains a :class:`Template` object it is returned
-           from the function unchanged.
+            If ``names`` contains a :class:`Template` object it is
+            returned unchanged.
 
         .. versionadded:: 2.3
         """
@@ -874,7 +892,7 @@ class Environment:
             raise TemplatesNotFound(
                 message="Tried to select from an empty list of templates."
             )
-        globals = self.make_globals(globals)
+
         for name in names:
             if isinstance(name, Template):
                 return name
@@ -888,9 +906,8 @@ class Environment:
 
     @internalcode
     def get_or_select_template(self, template_name_or_list, parent=None, globals=None):
-        """Does a typecheck and dispatches to :meth:`select_template`
-        if an iterable of template names is given, otherwise to
-        :meth:`get_template`.
+        """Use :meth:`select_template` if an iterable of template names
+        is given, or :meth:`get_template` if one name is given.
 
         .. versionadded:: 2.3
         """
@@ -901,18 +918,40 @@ class Environment:
         return self.select_template(template_name_or_list, parent, globals)
 
     def from_string(self, source, globals=None, template_class=None):
-        """Load a template from a string.  This parses the source given and
-        returns a :class:`Template` object.
+        """Load a template from a source string without using
+        :attr:`loader`.
+
+        :param source: Jinja source to compile into a template.
+        :param globals: Extend the environment :attr:`globals` with
+            these extra variables available for all renders of this
+            template. If the template has already been loaded and
+            cached, its globals are updated with any new items.
+        :param template_class: Return an instance of this
+            :class:`Template` class.
         """
         globals = self.make_globals(globals)
         cls = template_class or self.template_class
         return cls.from_code(self, self.compile(source), globals, None)
 
     def make_globals(self, d):
-        """Return a dict for the globals."""
-        if not d:
-            return self.globals
-        return dict(self.globals, **d)
+        """Make the globals map for a template. Any given template
+        globals overlay the environment :attr:`globals`.
+
+        Returns a :class:`collections.ChainMap`. This allows any changes
+        to a template's globals to only affect that template, while
+        changes to the environment's globals are still reflected.
+        However, avoid modifying any globals after a template is loaded.
+
+        :param d: Dict of template-specific globals.
+
+        .. versionchanged:: 3.0
+            Use :class:`collections.ChainMap` to always prevent mutating
+            environment globals.
+        """
+        if d is None:
+            d = {}
+
+        return ChainMap(d, self.globals)
 
 
 class Template:

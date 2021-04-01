@@ -717,36 +717,31 @@ End"""
         # show up outside of it
         assert tmpl.render() == "42\n0\n24\n0\n42\n1\n24\n1\n42"
 
-    def test_cached_extends(self):
+    @pytest.mark.parametrize("op", ["extends", "include"])
+    def test_cached_extends(self, op):
         env = Environment(
             loader=DictLoader(
-                {"parent": "{{ foo }}", "child": "{% extends 'parent' %}"}
+                {"base": "{{ x }} {{ y }}", "main": f"{{% {op} 'base' %}}"}
             )
         )
-        tmpl = env.get_template("child", globals={"foo": "bar"})
-        assert tmpl.render() == "bar"
+        env.globals["x"] = "x"
+        env.globals["y"] = "y"
 
-        tmpl = env.get_template("parent", globals={"foo": 42})
-        assert tmpl.render() == "42"
+        # template globals overlay env globals
+        tmpl = env.get_template("main", globals={"x": "bar"})
+        assert tmpl.render() == "bar y"
 
-        tmpl = env.get_template("child")
-        assert tmpl.render() == "bar"
+        # base was loaded indirectly, it just has env globals
+        tmpl = env.get_template("base")
+        assert tmpl.render() == "x y"
 
-        tmpl = env.get_template("parent")
-        assert tmpl.render() == "42"
+        # set template globals for base, no longer uses env globals
+        tmpl = env.get_template("base", globals={"x": 42})
+        assert tmpl.render() == "42 y"
 
-    def test_cached_includes(self):
-        env = Environment(
-            loader=DictLoader({"base": "{{ foo }}", "main": "{% include 'base' %}"})
-        )
-        tmpl = env.get_template("main", globals={"foo": "bar"})
-        assert tmpl.render() == "bar"
-
-        tmpl = env.get_template("base", globals={"foo": 42})
-        assert tmpl.render() == "42"
-
+        # templates are cached, they keep template globals set earlier
         tmpl = env.get_template("main")
-        assert tmpl.render() == "bar"
+        assert tmpl.render() == "bar y"
 
         tmpl = env.get_template("base")
-        assert tmpl.render() == "42"
+        assert tmpl.render() == "42 y"
