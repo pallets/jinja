@@ -136,6 +136,11 @@ class Frame:
         self.loop_frame = False
         self.block_frame = False
 
+        # track whether the frame is being used in an if-statement or conditional
+        # expression as it determines which errors should be raised during runtime
+        # or compile time.
+        self.soft_frame = False
+
     def copy(self):
         """Create a copy of the current one."""
         rv = object.__new__(self.__class__)
@@ -154,10 +159,12 @@ class Frame:
         standalone thing as it shares the resources with the frame it
         was created of, but it's not a rootlevel frame any longer.
 
-        This is only used to implement if-statements.
+        This is only used to implement if-statements and conditional
+        expressions.
         """
         rv = self.copy()
         rv.rootlevel = False
+        rv.soft_frame = True
         return rv
 
     __copy__ = copy
@@ -442,7 +449,22 @@ class CodeGenerator(NodeVisitor):
             for name in getattr(visitor, dependency):
                 if name not in mapping:
                     mapping[name] = self.temporary_identifier()
+                # add check during runtime that dependencies used inside of executed
+                # blocks are defined, as this step may be skipped during compile time
+                self.writeline("try:")
+                self.indent()
                 self.writeline(f"{mapping[name]} = environment.{dependency}[{name!r}]")
+                self.outdent()
+                self.writeline("except KeyError:")
+                self.indent()
+                self.writeline("@internalcode")
+                self.writeline(f"def {mapping[name]}(*unused):")
+                self.indent()
+                self.writeline(
+                    f'raise TemplateRuntimeError("no filter named {name!r} found")'
+                )
+                self.outdent()
+                self.outdent()
 
     def enter_frame(self, frame):
         undefs = []
@@ -1641,7 +1663,7 @@ class CodeGenerator(NodeVisitor):
             self.write("await auto_await(")
         self.write(self.filters[node.name] + "(")
         func = self.environment.filters.get(node.name)
-        if func is None:
+        if func is None and not frame.soft_frame:
             self.fail(f"no filter named {node.name!r}", node.lineno)
         if getattr(func, "contextfilter", False) is True:
             self.write("context, ")
@@ -1679,6 +1701,8 @@ class CodeGenerator(NodeVisitor):
 
     @optimizeconst
     def visit_CondExpr(self, node, frame):
+        frame = frame.soft()
+
         def write_expr2():
             if node.expr2 is not None:
                 return self.visit(node.expr2, frame)
