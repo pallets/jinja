@@ -5,6 +5,7 @@ from collections import abc
 from numbers import Number
 
 from .runtime import Undefined
+from .utils import environmentfunction
 
 number_re = re.compile(r"^-?\d+(\.\d+)?$")
 regex_type = type(number_re)
@@ -46,6 +47,46 @@ def test_defined(value):
 def test_undefined(value):
     """Like :func:`defined` but the other way round."""
     return isinstance(value, Undefined)
+
+
+@environmentfunction
+def test_filter(env, value):
+    """Check if a filter exists by name. Useful if a filter may be
+    optionally available.
+
+    .. code-block:: jinja
+
+        {% if 'markdown' is filter %}
+            {{ value | markdown }}
+        {% else %}
+            {{ value }}
+        {% endif %}
+
+    .. versionadded:: 3.0
+    """
+    return value in env.filters
+
+
+@environmentfunction
+def test_test(env, value):
+    """Check if a test exists by name. Useful if a test may be
+    optionally available.
+
+    .. code-block:: jinja
+
+        {% if 'loud' is test %}
+            {% if value is loud %}
+                {{ value|upper }}
+            {% else %}
+                {{ value|lower }}
+            {% endif %}
+        {% else %}
+            {{ value }}
+        {% endif %}
+
+    .. versionadded:: 3.0
+    """
+    return value in env.tests
 
 
 def test_none(value):
@@ -176,6 +217,8 @@ TESTS = {
     "divisibleby": test_divisibleby,
     "defined": test_defined,
     "undefined": test_undefined,
+    "filter": test_filter,
+    "test": test_test,
     "none": test_none,
     "boolean": test_boolean,
     "false": test_false,
