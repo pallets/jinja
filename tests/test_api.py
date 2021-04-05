@@ -317,6 +317,7 @@ class TestUndefined:
         assert env.from_string("{{ foo.missing }}").render(foo=42) == ""
         assert env.from_string("{{ not missing }}").render() == "True"
         pytest.raises(UndefinedError, env.from_string("{{ missing - 1}}").render)
+        pytest.raises(UndefinedError, env.from_string("{{ 'foo' in missing }}").render)
         und1 = Undefined(name="x")
         und2 = Undefined(name="y")
         assert und1 == und2

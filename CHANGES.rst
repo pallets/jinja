@@ -52,6 +52,8 @@ Unreleased
     indent by. :pr:`1167`
 -   The parser understands hex, octal, and binary integer literals.
     :issue:`1170`
+-   ``Undefined.__contains__`` (``in``) raises an ``UndefinedError``
+    instead of a ``TypeError``. :issue:`1198`
 
 
 Version 2.11.3
