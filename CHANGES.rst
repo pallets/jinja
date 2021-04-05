@@ -50,6 +50,8 @@ Unreleased
     extension. :issue:`441`
 -   The ``|indent`` filter's ``width`` argument can be a string to
     indent by. :pr:`1167`
+-   The parser understands hex, octal, and binary integer literals.
+    :issue:`1170`
 
 
 Version 2.11.3

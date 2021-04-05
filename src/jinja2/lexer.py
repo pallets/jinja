@@ -23,7 +23,22 @@ newline_re = re.compile(r"(\r\n|\r|\n)")
 string_re = re.compile(
     r"('([^'\\]*(?:\\.[^'\\]*)*)'" r'|"([^"\\]*(?:\\.[^"\\]*)*)")', re.S
 )
-integer_re = re.compile(r"(\d+_)*\d+")
+integer_re = re.compile(
+    r"""
+    (
+        0b(_?[0-1])+ # binary
+    |
+        0o(_?[0-7])+ # octal
+    |
+        0x(_?[\da-f])+ # hex
+    |
+        [1-9](_?\d)* # decimal
+    |
+        0(_?0)* # decimal zero
+    )
+    """,
+    re.IGNORECASE | re.VERBOSE,
+)
 float_re = re.compile(
     r"""
     (?<!\.)  # doesn't start with a .
@@ -613,7 +628,7 @@ class Lexer:
                     msg = str(e).split(":")[-1].strip()
                     raise TemplateSyntaxError(msg, lineno, name, filename)
             elif token == TOKEN_INTEGER:
-                value = int(value.replace("_", ""))
+                value = int(value.replace("_", ""), 0)
             elif token == TOKEN_FLOAT:
                 # remove all "_" first to support more Python versions
                 value = literal_eval(value.replace("_", ""))
