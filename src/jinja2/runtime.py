@@ -20,6 +20,9 @@ from .utils import missing
 from .utils import Namespace  # noqa: F401
 from .utils import object_type_repr
 
+if t.TYPE_CHECKING:
+    from .environment import Environment
+
 # these variables are exported to the template runtime
 exported = [
     "LoopContext",
@@ -186,7 +189,7 @@ class Context(metaclass=ContextMeta):
     def __init__(self, environment, parent, name, blocks, globals=None):
         self.parent = parent
         self.vars = {}
-        self.environment = environment
+        self.environment: "Environment" = environment
         self.eval_ctx = EvalContext(self.environment, name)
         self.exported_vars = set()
         self.name = name
