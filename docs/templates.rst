@@ -54,7 +54,11 @@ configured as follows:
 * ``{% ... %}`` for :ref:`Statements <list-of-control-structures>`
 * ``{{ ... }}`` for :ref:`Expressions` to print to the template output
 * ``{# ... #}`` for :ref:`Comments` not included in the template output
-* ``#  ... ##`` for :ref:`Line Statements <line-statements>`
+
+:ref:`Line Statements and Comments <line-statements>` are also possible,
+though they don't have default prefix characters. To use them, set
+``line_statement_prefix`` and ``line_comment_prefix`` when creating the
+:class:`~jinja2.Environment`.
 
 
 Template File Extension
