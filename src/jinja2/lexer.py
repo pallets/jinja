@@ -638,12 +638,17 @@ class Lexer:
 
     def tokeniter(self, source, name, filename=None, state=None):
         """This method tokenizes the text and returns the tokens in a
-        generator.  Use this method if you just want to tokenize a template.
+        generator. Use this method if you just want to tokenize a template.
+
+        .. versionchanged:: 3.0
+            Only ``\\n``, ``\\r\\n`` and ``\\r`` are treated as line
+            breaks.
         """
-        lines = source.splitlines()
-        if self.keep_trailing_newline and source:
-            if source.endswith(("\r\n", "\r", "\n")):
-                lines.append("")
+        lines = newline_re.split(source)[::2]
+
+        if not self.keep_trailing_newline and lines[-1] == "":
+            del lines[-1]
+
         source = "\n".join(lines)
         pos = 0
         lineno = 1
