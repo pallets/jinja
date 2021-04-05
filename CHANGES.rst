@@ -48,6 +48,8 @@ Unreleased
     or ``@contextfunction``. :issue:`842`, :pr:`1248`
 -   Support ``pgettext`` and ``npgettext`` (message contexts) in i18n
     extension. :issue:`441`
+-   The ``|indent`` filter's ``width`` argument can be a string to
+    indent by. :pr:`1167`
 
 
 Version 2.11.3
