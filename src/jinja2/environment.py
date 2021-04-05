@@ -319,7 +319,7 @@ class Environment:
         self.keep_trailing_newline = keep_trailing_newline
 
         # runtime information
-        self.undefined = undefined
+        self.undefined: t.Type[Undefined] = undefined
         self.optimized = optimized
         self.finalize = finalize
         self.autoescape = autoescape

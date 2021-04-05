@@ -195,7 +195,13 @@ _http_re = re.compile(
 _email_re = re.compile(r"^\S+@\w[\w.-]*\.\w+$")
 
 
-def urlize(text, trim_url_limit=None, rel=None, target=None, extra_schemes=None):
+def urlize(
+    text: str,
+    trim_url_limit: t.Optional[int] = None,
+    rel: t.Optional[str] = None,
+    target: t.Optional[str] = None,
+    extra_schemes: t.Optional[t.Iterable[str]] = None,
+) -> str:
     """Convert URLs in text into clickable links.
 
     This may not recognize links in some situations. Usually, a more
@@ -359,11 +365,8 @@ def generate_lorem_ipsum(n=5, html=True, min=20, max=100):
     return Markup("\n".join(f"<p>{escape(x)}</p>" for x in result))
 
 
-def url_quote(obj, charset="utf-8", for_qs=False):
+def url_quote(obj: t.Any, charset: str = "utf-8", for_qs: bool = False) -> str:
     """Quote a string for use in a URL using the given charset.
-
-    This function is misnamed, it is a wrapper around
-    :func:`urllib.parse.quote`.
 
     :param obj: String or bytes to quote. Other types are converted to
         string then encoded to bytes using the given charset.
@@ -610,7 +613,9 @@ def select_autoescape(
     return autoescape
 
 
-def htmlsafe_json_dumps(obj, dumps=None, **kwargs):
+def htmlsafe_json_dumps(
+    obj: t.Any, dumps: t.Optional[t.Callable[..., str]] = None, **kwargs: t.Any
+) -> Markup:
     """Serialize an object to a string of JSON with :func:`json.dumps`,
     then replace HTML-unsafe characters with Unicode escapes and mark
     the result safe with :class:`~markupsafe.Markup`.
