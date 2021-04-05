@@ -1389,10 +1389,10 @@ two categories:
 ``is``
     Performs a :ref:`test <tests>`.
 
-``|``
+``|`` (pipe, vertical bar)
     Applies a :ref:`filter <filters>`.
 
-``~``
+``~`` (tilde)
     Converts all operands into strings and concatenates them.
 
     ``{{ "Hello " ~ name ~ "!" }}`` would return (assuming `name` is set
