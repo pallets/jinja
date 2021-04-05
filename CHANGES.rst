@@ -58,6 +58,8 @@ Unreleased
 -   ``NativeEnvironment`` supports async mode. :issue:`1362`
 -   Template rendering only treats ``\n``, ``\r\n`` and ``\r`` as line
     breaks. Other characters are left unchanged. :issue:`769, 952, 1313`
+-   ``|groupby`` filter takes an optional ``default`` argument.
+    :issue:`1359`
 
 
 Version 2.11.3

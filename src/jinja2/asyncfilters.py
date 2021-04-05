@@ -107,8 +107,9 @@ async def do_groupby(
     environment: "Environment",
     value: "t.Union[t.AsyncIterable[V], t.Iterable[V]]",
     attribute: t.Union[str, int],
+    default: t.Optional[t.Any] = None,
 ) -> "t.List[t.Tuple[t.Any, t.List[V]]]":
-    expr = filters.make_attrgetter(environment, attribute)
+    expr = filters.make_attrgetter(environment, attribute, default=default)
     return [
         filters._GroupTuple(key, await auto_to_seq(values))
         for key, values in groupby(sorted(await auto_to_seq(value), key=expr), expr)
