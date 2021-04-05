@@ -307,9 +307,8 @@ def do_dictsort(
     by: 'te.Literal["key", "value"]' = "key",
     reverse: bool = False,
 ) -> "t.List[t.Tuple[K, V]]":
-    """Sort a dict and yield (key, value) pairs. Because python dicts are
-    unsorted you may want to use this function to order them by either
-    key or value:
+    """Sort a dict and yield (key, value) pairs. Python dicts may not
+    be in the order you want to display them in, so sort them first.
 
     .. sourcecode:: jinja
 
