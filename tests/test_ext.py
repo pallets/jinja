@@ -40,6 +40,9 @@ newstyle_i18n_templates = {
     "ngettext.html": '{{ ngettext("%(num)s apple", "%(num)s apples", apples) }}',
     "ngettext_long.html": "{% trans num=apples %}{{ num }} apple{% pluralize %}"
     "{{ num }} apples{% endtrans %}",
+    "pgettext.html": '{{ pgettext("fruit", "Apple") }}',
+    "npgettext.html": '{{ npgettext("fruit", "%(num)s apple", "%(num)s apples",'
+    " apples) }}",
     "transvars1.html": "{% trans %}User: {{ num }}{% endtrans %}",
     "transvars2.html": "{% trans num=count %}User: {{ num }}{% endtrans %}",
     "transvars3.html": "{% trans count=num %}User: {{ count }}{% endtrans %}",
@@ -57,41 +60,88 @@ languages = {
         "%(user_count)s users online": "%(user_count)s Benutzer online",
         "User: %(num)s": "Benutzer: %(num)s",
         "User: %(count)s": "Benutzer: %(count)s",
-        "%(num)s apple": "%(num)s Apfel",
-        "%(num)s apples": "%(num)s Äpfel",
+        "Apple": {None: "Apfel", "fruit": "Apple"},
+        "%(num)s apple": {None: "%(num)s Apfel", "fruit": "%(num)s Apple"},
+        "%(num)s apples": {None: "%(num)s Äpfel", "fruit": "%(num)s Apples"},
     }
 }
+
+
+def _get_with_context(value, ctx=None):
+    if isinstance(value, dict):
+        return value.get(ctx, value)
+
+    return value
 
 
 @contextfunction
 def gettext(context, string):
     language = context.get("LANGUAGE", "en")
-    return languages.get(language, {}).get(string, string)
+    value = languages.get(language, {}).get(string, string)
+    return _get_with_context(value)
 
 
 @contextfunction
 def ngettext(context, s, p, n):
     language = context.get("LANGUAGE", "en")
+
     if n != 1:
-        return languages.get(language, {}).get(p, p)
-    return languages.get(language, {}).get(s, s)
+        value = languages.get(language, {}).get(p, p)
+        return _get_with_context(value)
+
+    value = languages.get(language, {}).get(s, s)
+    return _get_with_context(value)
+
+
+@contextfunction
+def pgettext(context, c, s):
+    language = context.get("LANGUAGE", "en")
+    value = languages.get(language, {}).get(s, s)
+    return _get_with_context(value, c)
+
+
+@contextfunction
+def npgettext(context, c, s, p, n):
+    language = context.get("LANGUAGE", "en")
+
+    if n != 1:
+        value = languages.get(language, {}).get(p, p)
+        return _get_with_context(value, c)
+
+    value = languages.get(language, {}).get(s, s)
+    return _get_with_context(value, c)
 
 
 i18n_env = Environment(
     loader=DictLoader(i18n_templates), extensions=["jinja2.ext.i18n"]
 )
-i18n_env.globals.update({"_": gettext, "gettext": gettext, "ngettext": ngettext})
+i18n_env.globals.update(
+    {
+        "_": gettext,
+        "gettext": gettext,
+        "ngettext": ngettext,
+        "pgettext": pgettext,
+        "npgettext": npgettext,
+    }
+)
 i18n_env_trimmed = Environment(extensions=["jinja2.ext.i18n"])
+
 i18n_env_trimmed.policies["ext.i18n.trimmed"] = True
 i18n_env_trimmed.globals.update(
-    {"_": gettext, "gettext": gettext, "ngettext": ngettext}
+    {
+        "_": gettext,
+        "gettext": gettext,
+        "ngettext": ngettext,
+        "pgettext": pgettext,
+        "npgettext": npgettext,
+    }
 )
 
 newstyle_i18n_env = Environment(
     loader=DictLoader(newstyle_i18n_templates), extensions=["jinja2.ext.i18n"]
 )
 newstyle_i18n_env.install_gettext_callables(  # type: ignore
-    gettext, ngettext, newstyle=True
+    gettext, ngettext, newstyle=True, pgettext=pgettext, npgettext=npgettext
 )
 
 
@@ -401,6 +451,20 @@ class TestInternationalization:
             (6, "ngettext", ("%(users)s user", "%(users)s users", None), ["third"]),
         ]
 
+    def test_extract_context(self):
+        from jinja2.ext import babel_extract
+
+        source = BytesIO(
+            b"""
+             {{ pgettext("babel", "Hello World") }}
+             {{ npgettext("babel", "%(users)s user", "%(users)s users", users) }}
+             """
+        )
+        assert list(babel_extract(source, ("pgettext", "npgettext", "_"), [], {})) == [
+            (2, "pgettext", ("babel", "Hello World"), []),
+            (3, "npgettext", ("babel", "%(users)s user", "%(users)s users", None), []),
+        ]
+
 
 class TestScope:
     def test_basic_scope_behavior(self):
@@ -524,6 +588,15 @@ class TestNewstyleInternationalization:
         assert t.render(foo="42") == "42%(foo)s"
         t = newstyle_i18n_env.get_template("explicitvars.html")
         assert t.render() == "%(foo)s"
+
+    def test_context(self):
+        tmpl = newstyle_i18n_env.get_template("pgettext.html")
+        assert tmpl.render(LANGUAGE="de") == "Apple"
+
+    def test_context_newstyle_plural(self):
+        tmpl = newstyle_i18n_env.get_template("npgettext.html")
+        assert tmpl.render(LANGUAGE="de", apples=1) == "1 Apple"
+        assert tmpl.render(LANGUAGE="de", apples=5) == "5 Apples"
 
 
 class TestAutoEscape:
