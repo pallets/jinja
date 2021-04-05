@@ -778,13 +778,13 @@ class TestFilter:
         assert result == "Hello!\nThis is Jinja saying\nsomething."
 
     def test_filter_undefined(self, env):
-        with pytest.raises(TemplateAssertionError, match="no filter named 'f'"):
+        with pytest.raises(TemplateAssertionError, match="No filter named 'f'"):
             env.from_string("{{ var|f }}")
 
     def test_filter_undefined_in_if(self, env):
         t = env.from_string("{%- if x is defined -%}{{ x|f }}{%- else -%}x{% endif %}")
         assert t.render() == "x"
-        with pytest.raises(TemplateRuntimeError, match="no filter named 'f'"):
+        with pytest.raises(TemplateRuntimeError, match="No filter named 'f'"):
             t.render(x=42)
 
     def test_filter_undefined_in_elif(self, env):
@@ -793,7 +793,7 @@ class TestFilter:
             "{{ y|f }}{%- else -%}foo{%- endif -%}"
         )
         assert t.render() == "foo"
-        with pytest.raises(TemplateRuntimeError, match="no filter named 'f'"):
+        with pytest.raises(TemplateRuntimeError, match="No filter named 'f'"):
             t.render(y=42)
 
     def test_filter_undefined_in_else(self, env):
@@ -801,7 +801,7 @@ class TestFilter:
             "{%- if x is not defined -%}foo{%- else -%}{{ x|f }}{%- endif -%}"
         )
         assert t.render() == "foo"
-        with pytest.raises(TemplateRuntimeError, match="no filter named 'f'"):
+        with pytest.raises(TemplateRuntimeError, match="No filter named 'f'"):
             t.render(x=42)
 
     def test_filter_undefined_in_nested_if(self, env):
@@ -811,7 +811,7 @@ class TestFilter:
         )
         assert t.render() == "foo"
         assert t.render(x=42) == "42"
-        with pytest.raises(TemplateRuntimeError, match="no filter named 'f'"):
+        with pytest.raises(TemplateRuntimeError, match="No filter named 'f'"):
             t.render(x=24, y=42)
 
     def test_filter_undefined_in_condexpr(self, env):
@@ -819,6 +819,6 @@ class TestFilter:
         t2 = env.from_string("{{ 'foo' if x is not defined else x|f }}")
         assert t1.render() == t2.render() == "foo"
 
-        with pytest.raises(TemplateRuntimeError, match="no filter named 'f'"):
+        with pytest.raises(TemplateRuntimeError, match="No filter named 'f'"):
             t1.render(x=42)
             t2.render(x=42)

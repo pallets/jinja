@@ -666,56 +666,119 @@ Exceptions
 Custom Filters
 --------------
 
-Custom filters are just regular Python functions that take the left side of
-the filter as first argument and the arguments passed to the filter as
-extra arguments or keyword arguments.
+Filters are Python functions that take the value to the left of the
+filter as the first argument and produce a new value. Arguments passed
+to the filter are passed after the value.
 
-For example in the filter ``{{ 42|myfilter(23) }}`` the function would be
-called with ``myfilter(42, 23)``.  Here for example a simple filter that can
-be applied to datetime objects to format them::
+For example, the filter ``{{ 42|myfilter(23) }}`` is called behind the
+scenes as ``myfilter(42, 23)``.
 
-    def datetimeformat(value, format='%H:%M / %d-%m-%Y'):
+Jinja comes with some :ref:`built-in filters <builtin-filters>`. To use
+a custom filter, write a function that takes at least a ``value``
+argument, then register it in :attr:`Environment.filters`.
+
+Here's a filter that formats datetime objects:
+
+.. code-block:: python
+
+    def datetime_format(value, format="%H:%M %d-%m-%y"):
         return value.strftime(format)
 
-You can register it on the template environment by updating the
-:attr:`~Environment.filters` dict on the environment::
+    environment.filters["datetime_format"] = datetime_format
 
-    environment.filters['datetimeformat'] = datetimeformat
-
-Inside the template it can then be used as follows:
+Now it can be used in templates:
 
 .. sourcecode:: jinja
 
-    written on: {{ article.pub_date|datetimeformat }}
-    publication date: {{ article.pub_date|datetimeformat('%d-%m-%Y') }}
+    {{ article.pub_date|datetimeformat }}
+    {{ article.pub_date|datetimeformat("%B %Y") }}
 
-Filters can also be passed the current template context or environment.  This
-is useful if a filter wants to return an undefined value or check the current
-:attr:`~Environment.autoescape` setting.  For this purpose three decorators
-exist: :func:`environmentfilter`, :func:`contextfilter` and
-:func:`evalcontextfilter`.
+Some decorators are available to tell Jinja to pass extra information to
+the filter. The object is passed as the first argument, making the value
+being filtered the second argument.
 
-Here a small example filter that breaks a text into HTML line breaks and
-paragraphs and marks the return value as safe HTML string if autoescaping is
-enabled::
+-   :func:`environmentfilter` passes the :class:`Environment`.
+-   :func:`evalcontextfilter` passes the :ref:`eval-context`.
+-   :func:`contextfilter` passes the current
+    :class:`~jinja2.runtime.Context`.
+
+Here's a filter that converts line breaks into HTML ``<br>`` and ``<p>``
+tags. It uses the eval context to check if autoescape is currently
+enabled before escaping the input and marking the output safe.
+
+.. code-block:: python
 
     import re
-    from jinja2 import evalcontextfilter, Markup, escape
-
-    _paragraph_re = re.compile(r"(?:\r\n|\r(?!\n)|\n){2,}")
+    from jinja2 import evalcontextfilter
+    from markupsafe import Markup, escape
 
     @evalcontextfilter
     def nl2br(eval_ctx, value):
-        result = "\n\n".join(
-            f"<p>{p.replace('\n', Markup('<br>\n'))}</p>"
-            for p in _paragraph_re.split(escape(value))
-        )
-        if eval_ctx.autoescape:
-            result = Markup(result)
-        return result
+        br = "<br>\n"
 
-Context filters work the same just that the first argument is the current
-active :class:`Context` rather than the environment.
+        if eval_ctx.autoescape:
+            value = escape(value)
+            br = Markup(br)
+
+        result = "\n\n".join(
+            f"<p>{br.join(p.splitlines())}<\p>"
+            for p in re.split(r"(?:\r\n|\r(?!\n)|\n){2,}", value)
+        )
+        return Markup(result) if autoescape else result
+
+
+.. _writing-tests:
+
+Custom Tests
+------------
+
+Test are Python functions that take the value to the left of the test as
+the first argument, and return ``True`` or ``False``. Arguments passed
+to the test are passed after the value.
+
+For example, the test ``{{ 42 is even }}`` is called behind the scenes
+as ``is_even(42)``.
+
+Jinja comes with some :ref:`built-in tests <builtin-tests>`. To use a
+custom tests, write a function that takes at least a ``value`` argument,
+then register it in :attr:`Environment.tests`.
+
+Here's a test that checks if a value is a prime number:
+
+.. code-block:: python
+
+    import math
+
+    def is_prime(n):
+        if n == 2:
+            return True
+
+        for i in range(2, int(math.ceil(math.sqrt(n))) + 1):
+            if n % i == 0:
+                return False
+
+        return True
+
+    environment.tests["prime"] = is_prime
+
+Now it can be used in templates:
+
+.. sourcecode:: jinja
+
+    {% if value is prime %}
+        {{ value }} is a prime number
+    {% else %}
+        {{ value }} is not a prime number
+    {% endif %}
+
+Some decorators are available to tell Jinja to pass extra information to
+the filter. The object is passed as the first argument, making the value
+being filtered the second argument.
+
+-   :func:`environmentfunction` passes the :class:`Environment`.
+-   :func:`evalcontextfunction` passes the :ref:`eval-context`.
+-   :func:`contextfunction` passes the current
+    :class:`~jinja2.runtime.Context`.
 
 
 .. _eval-context:
@@ -778,46 +841,6 @@ eval context object itself.
 
       `True` if the compiler cannot evaluate some expressions at compile
       time.  At runtime this should always be `False`.
-
-
-.. _writing-tests:
-
-Custom Tests
-------------
-
-Tests work like filters just that there is no way for a test to get access
-to the environment or context and that they can't be chained.  The return
-value of a test should be `True` or `False`.  The purpose of a test is to
-give the template designers the possibility to perform type and conformability
-checks.
-
-Here a simple test that checks if a variable is a prime number::
-
-    import math
-
-    def is_prime(n):
-        if n == 2:
-            return True
-        for i in range(2, int(math.ceil(math.sqrt(n))) + 1):
-            if n % i == 0:
-                return False
-        return True
-
-
-You can register it on the template environment by updating the
-:attr:`~Environment.tests` dict on the environment::
-
-    environment.tests['prime'] = is_prime
-
-A template designer can then use the test like this:
-
-.. sourcecode:: jinja
-
-    {% if 42 is prime %}
-        42 is a prime number
-    {% else %}
-        42 is not a prime number
-    {% endif %}
 
 
 .. _global-namespace:

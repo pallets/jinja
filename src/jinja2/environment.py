@@ -102,17 +102,6 @@ def load_extensions(environment, extensions):
     return result
 
 
-def fail_for_missing_callable(thing, name):
-    msg = f"no {thing} named {name!r}"
-
-    if isinstance(name, Undefined):
-        try:
-            name._fail_with_undefined_error()
-        except Exception as e:
-            msg = f"{msg} ({e}; did you forget to quote the callable name?)"
-    raise TemplateRuntimeError(msg)
-
-
 def _environment_sanity_check(environment):
     """Perform a sanity check on the environment."""
     assert issubclass(
@@ -470,10 +459,58 @@ class Environment:
         except (TypeError, LookupError, AttributeError):
             return self.undefined(obj=obj, name=attribute)
 
+    def _filter_test_common(
+        self, name, value, args, kwargs, context, eval_ctx, is_filter
+    ):
+        if is_filter:
+            env_map = self.filters
+            type_name = mark_name = "filter"
+        else:
+            env_map = self.tests
+            type_name = "test"
+            # Filters use "contextfilter", tests and calls use "contextfunction".
+            mark_name = "function"
+
+        func = env_map.get(name)
+
+        if func is None:
+            msg = f"No {type_name} named {name!r}."
+
+            if isinstance(name, Undefined):
+                try:
+                    name._fail_with_undefined_error()
+                except Exception as e:
+                    msg = f"{msg} ({e}; did you forget to quote the callable name?)"
+
+            raise TemplateRuntimeError(msg)
+
+        args = [value, *(args if args is not None else ())]
+        kwargs = kwargs if kwargs is not None else {}
+
+        if getattr(func, f"context{mark_name}", False) is True:
+            if context is None:
+                raise TemplateRuntimeError(
+                    f"Attempted to invoke a context {type_name} without context."
+                )
+
+            args.insert(0, context)
+        elif getattr(func, f"evalcontext{mark_name}", False) is True:
+            if eval_ctx is None:
+                if context is not None:
+                    eval_ctx = context.eval_ctx
+                else:
+                    eval_ctx = EvalContext(self)
+
+            args.insert(0, eval_ctx)
+        elif getattr(func, f"environment{mark_name}", False) is True:
+            args.insert(0, self)
+
+        return func(*args, **kwargs)
+
     def call_filter(
         self, name, value, args=None, kwargs=None, context=None, eval_ctx=None
     ):
-        """Invokes a filter on a value the same way the compiler does.
+        """Invoke a filter on a value the same way the compiler does.
 
         This might return a coroutine if the filter is running from an
         environment in async mode and the filter supports async
@@ -481,36 +518,28 @@ class Environment:
 
         .. versionadded:: 2.7
         """
-        func = self.filters.get(name)
-        if func is None:
-            fail_for_missing_callable("filter", name)
-        args = [value] + list(args or ())
-        if getattr(func, "contextfilter", False) is True:
-            if context is None:
-                raise TemplateRuntimeError(
-                    "Attempted to invoke context filter without context"
-                )
-            args.insert(0, context)
-        elif getattr(func, "evalcontextfilter", False) is True:
-            if eval_ctx is None:
-                if context is not None:
-                    eval_ctx = context.eval_ctx
-                else:
-                    eval_ctx = EvalContext(self)
-            args.insert(0, eval_ctx)
-        elif getattr(func, "environmentfilter", False) is True:
-            args.insert(0, self)
-        return func(*args, **(kwargs or {}))
+        return self._filter_test_common(
+            name, value, args, kwargs, context, eval_ctx, True
+        )
 
-    def call_test(self, name, value, args=None, kwargs=None):
-        """Invokes a test on a value the same way the compiler does it.
+    def call_test(
+        self, name, value, args=None, kwargs=None, context=None, eval_ctx=None
+    ):
+        """Invoke a test on a value the same way the compiler does.
+
+        This might return a coroutine if the test is running from an
+        environment in async mode and the test supports async execution.
+        It's your responsibility to await this if needed.
+
+        .. versionchanged:: 3.0
+            Tests support ``@contextfunction``, etc. decorators. Added
+            the ``context`` and ``eval_ctx`` parameters.
 
         .. versionadded:: 2.7
         """
-        func = self.tests.get(name)
-        if func is None:
-            fail_for_missing_callable("test", name)
-        return func(value, *(args or ()), **(kwargs or {}))
+        return self._filter_test_common(
+            name, value, args, kwargs, context, eval_ctx, False
+        )
 
     @internalcode
     def parse(self, source, name=None, filename=None):

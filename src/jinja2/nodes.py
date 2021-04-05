@@ -633,71 +633,76 @@ def args_as_const(node, eval_ctx):
     return args, kwargs
 
 
-class Filter(Expr):
-    """This node applies a filter on an expression.  `name` is the name of
-    the filter, the rest of the fields are the same as for :class:`Call`.
-
-    If the `node` of a filter is `None` the contents of the last buffer are
-    filtered.  Buffers are created by macros and filter blocks.
-    """
-
+class _FilterTestCommon(Expr):
     fields = ("node", "name", "args", "kwargs", "dyn_args", "dyn_kwargs")
+    abstract = True
+    _is_filter = True
 
     def as_const(self, eval_ctx=None):
         eval_ctx = get_eval_context(self, eval_ctx)
 
-        if eval_ctx.volatile or self.node is None:
+        if eval_ctx.volatile:
             raise Impossible()
 
-        filter_ = self.environment.filters.get(self.name)
+        if self._is_filter:
+            env_map = eval_ctx.environment.filters
+            mark_name = "filter"
+        else:
+            env_map = eval_ctx.environment.tests
+            # Filters use "contextfilter", tests and calls use "contextfunction".
+            mark_name = "function"
 
-        if filter_ is None or getattr(filter_, "contextfilter", False) is True:
+        func = env_map.get(self.name)
+
+        if func is None or getattr(func, f"context{mark_name}", False) is True:
             raise Impossible()
 
-        # We cannot constant handle async filters, so we need to make
-        # sure to not go down this path. Account for both sync/async and
-        # pure-async filters.
         if eval_ctx.environment.is_async and (
-            getattr(filter_, "asyncfiltervariant", False)
-            or inspect.iscoroutinefunction(filter_)
+            getattr(func, f"async{mark_name}variant", False)
+            or inspect.iscoroutinefunction(func)
         ):
             raise Impossible()
 
         args, kwargs = args_as_const(self, eval_ctx)
         args.insert(0, self.node.as_const(eval_ctx))
 
-        if getattr(filter_, "evalcontextfilter", False) is True:
+        if getattr(func, f"evalcontext{mark_name}", False) is True:
             args.insert(0, eval_ctx)
-        elif getattr(filter_, "environmentfilter", False) is True:
-            args.insert(0, self.environment)
+        elif getattr(func, f"environment{mark_name}", False) is True:
+            args.insert(0, eval_ctx.environment)
 
         try:
-            return filter_(*args, **kwargs)
+            return func(*args, **kwargs)
         except Exception:
             raise Impossible()
 
 
-class Test(Expr):
-    """Applies a test on an expression.  `name` is the name of the test, the
-    rest of the fields are the same as for :class:`Call`.
+class Filter(_FilterTestCommon):
+    """Apply a filter to an expression. ``name`` is the name of the
+    filter, the other fields are the same as :class:`Call`.
+
+    If ``node`` is ``None``, the filter is being used in a filter block
+    and is applied to the content of the block.
     """
 
-    fields = ("node", "name", "args", "kwargs", "dyn_args", "dyn_kwargs")
-
     def as_const(self, eval_ctx=None):
-        test = self.environment.tests.get(self.name)
-
-        if test is None:
+        if self.node is None:
             raise Impossible()
 
-        eval_ctx = get_eval_context(self, eval_ctx)
-        args, kwargs = args_as_const(self, eval_ctx)
-        args.insert(0, self.node.as_const(eval_ctx))
+        return super().as_const(eval_ctx=eval_ctx)
 
-        try:
-            return test(*args, **kwargs)
-        except Exception:
-            raise Impossible()
+
+class Test(_FilterTestCommon):
+    """Apply a test to an expression. ``name`` is the name of the test,
+    the other field are the same as :class:`Call`.
+
+    .. versionchanged:: 3.0
+        ``as_const`` shares the same logic for filters and tests. Tests
+        check for volatile, async, and ``@contextfunction`` etc.
+        decorators.
+    """
+
+    _is_filter = False
 
 
 class Call(Expr):
