@@ -93,5 +93,19 @@ class NativeTemplate(Template):
         except Exception:
             return self.environment.handle_exception()
 
+    async def render_async(self, *args, **kwargs):
+        if not self.environment.is_async:
+            raise RuntimeError(
+                "The environment was not created with async mode enabled."
+            )
+
+        vars = dict(*args, **kwargs)
+        ctx = self.new_context(vars)
+
+        try:
+            return native_concat([n async for n in self.root_render_func(ctx)])
+        except Exception:
+            return self.environment.handle_exception()
+
 
 NativeEnvironment.template_class = NativeTemplate

@@ -10,6 +10,7 @@ from jinja2.asyncsupport import auto_aiter
 from jinja2.exceptions import TemplateNotFound
 from jinja2.exceptions import TemplatesNotFound
 from jinja2.exceptions import UndefinedError
+from jinja2.nativetypes import NativeEnvironment
 
 
 def run(coro):
@@ -600,5 +601,28 @@ def test_chainable_undefined_aiter():
         )
         rv = await t.render_async(a={})
         assert rv == ""
+
+    run(_test())
+
+
+@pytest.fixture
+def async_native_env():
+    return NativeEnvironment(enable_async=True)
+
+
+def test_native_async(async_native_env):
+    async def _test():
+        t = async_native_env.from_string("{{ x }}")
+        rv = await t.render_async(x=23)
+        assert rv == 23
+
+    run(_test())
+
+
+def test_native_list_async(async_native_env):
+    async def _test():
+        t = async_native_env.from_string("{{ x }}")
+        rv = await t.render_async(x=list(range(3)))
+        assert rv == [0, 1, 2]
 
     run(_test())
