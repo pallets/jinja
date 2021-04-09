@@ -977,44 +977,37 @@ class CodeGenerator(NodeVisitor):
         if node.ignore_missing:
             self.outdent()
 
+    def _import_common(self, node, frame):
+        self.write(f"{self.choose_async('await ')}environment.get_template(")
+        self.visit(node.template, frame)
+        self.write(f", {self.name!r}).")
+
+        if node.with_context:
+            f_name = f"make_module{self.choose_async('_async')}"
+            self.write(
+                f"{f_name}(context.get_all(), True, {self.dump_local_context(frame)})"
+            )
+        elif self.environment.is_async:
+            self.write("_get_default_module_async()")
+        else:
+            self.write("_get_default_module(context)")
+
     def visit_Import(self, node, frame):
         """Visit regular imports."""
         self.writeline(f"{frame.symbols.ref(node.target)} = ", node)
         if frame.toplevel:
             self.write(f"context.vars[{node.target!r}] = ")
 
-        self.write(f"{self.choose_async('await ')}environment.get_template(")
-        self.visit(node.template, frame)
-        self.write(f", {self.name!r}).")
-        if node.with_context:
-            f_name = f"make_module{self.choose_async('_async')}"
-            self.write(
-                f"{f_name}(context.get_all(), True, {self.dump_local_context(frame)})"
-            )
-        elif self.environment.is_async:
-            self.write("_get_default_module_async()")
-        else:
-            self.write("_get_default_module(context)")
+        self._import_common(node, frame)
+
         if frame.toplevel and not node.target.startswith("_"):
             self.writeline(f"context.exported_vars.discard({node.target!r})")
 
     def visit_FromImport(self, node, frame):
         """Visit named imports."""
         self.newline(node)
-        prefix = self.choose_async("await ")
-        self.write(f"included_template = {prefix}environment.get_template(")
-        self.visit(node.template, frame)
-        self.write(f", {self.name!r}).")
-        if node.with_context:
-            f_name = f"make_module{self.choose_async('_async')}"
-            self.write(
-                f"{f_name}(context.get_all(), True, {self.dump_local_context(frame)})"
-            )
-        elif self.environment.is_async:
-            self.write("_get_default_module_async()")
-        else:
-            self.write("_get_default_module(context)")
-
+        self.write("included_template = ")
+        self._import_common(node, frame)
         var_names = []
         discarded_names = []
         for name in node.names:
