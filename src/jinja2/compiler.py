@@ -505,10 +505,11 @@ class CodeGenerator(NodeVisitor):
             if undefs:
                 self.writeline(f"{' = '.join(undefs)} = missing")
 
+    def choose_async(self, async_value="async ", sync_value=""):
+        return async_value if self.environment.is_async else sync_value
+
     def func(self, name):
-        if self.environment.is_async:
-            return f"async def {name}"
-        return f"def {name}"
+        return f"{self.choose_async()}def {name}"
 
     def macro_body(self, node, frame):
         """Dump the function def of a macro or call block."""
@@ -796,9 +797,8 @@ class CodeGenerator(NodeVisitor):
             if not self.environment.is_async:
                 self.writeline("yield from parent_template.root_render_func(context)")
             else:
-                loop = "async for" if self.environment.is_async else "for"
                 self.writeline(
-                    f"{loop} event in parent_template.root_render_func(context):"
+                    "async for event in parent_template.root_render_func(context):"
                 )
                 self.indent()
                 self.writeline("yield event")
@@ -872,9 +872,10 @@ class CodeGenerator(NodeVisitor):
                 f"yield from context.blocks[{node.name!r}][0]({context})", node
             )
         else:
-            loop = "async for" if self.environment.is_async else "for"
             self.writeline(
-                f"{loop} event in context.blocks[{node.name!r}][0]({context}):", node
+                f"{self.choose_async()}for event in"
+                f" context.blocks[{node.name!r}][0]({context}):",
+                node,
             )
             self.indent()
             self.simple_write("event", frame)
@@ -954,9 +955,8 @@ class CodeGenerator(NodeVisitor):
 
         skip_event_yield = False
         if node.with_context:
-            loop = "async for" if self.environment.is_async else "for"
             self.writeline(
-                f"{loop} event in template.root_render_func("
+                f"{self.choose_async()}for event in template.root_render_func("
                 "template.new_context(context.get_all(), True,"
                 f" {self.dump_local_context(frame)})):"
             )
@@ -982,15 +982,14 @@ class CodeGenerator(NodeVisitor):
         self.writeline(f"{frame.symbols.ref(node.target)} = ", node)
         if frame.toplevel:
             self.write(f"context.vars[{node.target!r}] = ")
-        if self.environment.is_async:
-            self.write("await ")
-        self.write("environment.get_template(")
+
+        self.write(f"{self.choose_async('await ')}environment.get_template(")
         self.visit(node.template, frame)
         self.write(f", {self.name!r}).")
         if node.with_context:
-            func = "make_module" + ("_async" if self.environment.is_async else "")
+            f_name = f"make_module{self.choose_async('_async')}"
             self.write(
-                f"{func}(context.get_all(), True, {self.dump_local_context(frame)})"
+                f"{f_name}(context.get_all(), True, {self.dump_local_context(frame)})"
             )
         elif self.environment.is_async:
             self.write("_get_default_module_async()")
@@ -1002,14 +1001,14 @@ class CodeGenerator(NodeVisitor):
     def visit_FromImport(self, node, frame):
         """Visit named imports."""
         self.newline(node)
-        prefix = "await " if self.environment.is_async else ""
+        prefix = self.choose_async("await ")
         self.write(f"included_template = {prefix}environment.get_template(")
         self.visit(node.template, frame)
         self.write(f", {self.name!r}).")
         if node.with_context:
-            func = "make_module" + ("_async" if self.environment.is_async else "")
+            f_name = f"make_module{self.choose_async('_async')}"
             self.write(
-                f"{func}(context.get_all(), True, {self.dump_local_context(frame)})"
+                f"{f_name}(context.get_all(), True, {self.dump_local_context(frame)})"
             )
         elif self.environment.is_async:
             self.write("_get_default_module_async()")
@@ -1091,10 +1090,10 @@ class CodeGenerator(NodeVisitor):
             self.writeline(f"{self.func(loop_filter_func)}(fiter):", node.test)
             self.indent()
             self.enter_frame(test_frame)
-            self.writeline("async for " if self.environment.is_async else "for ")
+            self.writeline(self.choose_async("async for ", "for "))
             self.visit(node.target, loop_frame)
             self.write(" in ")
-            self.write("auto_aiter(fiter)" if self.environment.is_async else "fiter")
+            self.write(self.choose_async("auto_aiter(fiter)", "fiter"))
             self.write(":")
             self.indent()
             self.writeline("if ", node.test)
@@ -1135,11 +1134,10 @@ class CodeGenerator(NodeVisitor):
             iteration_indicator = self.temporary_identifier()
             self.writeline(f"{iteration_indicator} = 1")
 
-        self.writeline("async for " if self.environment.is_async else "for ", node)
+        self.writeline(self.choose_async("async for ", "for "), node)
         self.visit(node.target, loop_frame)
         if extended_loop:
-            prefix = "Async" if self.environment.is_async else ""
-            self.write(f", {loop_ref} in {prefix}LoopContext(")
+            self.write(f", {loop_ref} in {self.choose_async('Async')}LoopContext(")
         else:
             self.write(" in ")
 
@@ -1187,9 +1185,7 @@ class CodeGenerator(NodeVisitor):
             self.return_buffer_contents(loop_frame)
             self.outdent()
             self.start_write(frame, node)
-            if self.environment.is_async:
-                self.write("await ")
-            self.write("loop(")
+            self.write(f"{self.choose_async('await ')}loop(")
             if self.environment.is_async:
                 self.write("auto_aiter(")
             self.visit(node.iter, frame)
