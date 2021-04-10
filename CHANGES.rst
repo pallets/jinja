@@ -44,8 +44,8 @@ Unreleased
 -   Add ``is filter`` and ``is test`` tests to test if a name is a
     registered filter or test. This allows checking if a filter is
     available in a template before using it. Test functions can be
-    decorated with ``@environmentfunction``, ``@evalcontextfunction``,
-    or ``@contextfunction``. :issue:`842`, :pr:`1248`
+    decorated with ``@pass_environment``, ``@pass_eval_context``,
+    or ``@pass_context``. :issue:`842`, :pr:`1248`
 -   Support ``pgettext`` and ``npgettext`` (message contexts) in i18n
     extension. :issue:`441`
 -   The ``|indent`` filter's ``width`` argument can be a string to
@@ -60,6 +60,15 @@ Unreleased
     breaks. Other characters are left unchanged. :issue:`769, 952, 1313`
 -   ``|groupby`` filter takes an optional ``default`` argument.
     :issue:`1359`
+-   The function and filter decorators have been renamed and unified.
+    The old names are deprecated. :issue:`1381`
+
+    -   ``pass_context`` replaces ``contextfunction`` and
+        ``contextfilter``.
+    -   ``pass_eval_context`` replaces ``evalcontextfunction`` and
+        ``evalcontextfilter``
+    -   ``pass_environment`` replaces ``environmentfunction`` and
+        ``environmentfilter``.
 
 
 Version 2.11.3

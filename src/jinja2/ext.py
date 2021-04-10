@@ -25,8 +25,8 @@ from .exceptions import TemplateAssertionError
 from .exceptions import TemplateSyntaxError
 from .nodes import ContextReference
 from .runtime import concat
-from .utils import contextfunction
 from .utils import import_string
+from .utils import pass_context
 
 # I18N functions available in Jinja templates. If the I18N library
 # provides ugettext, it will be assigned to gettext.
@@ -135,13 +135,13 @@ class Extension(metaclass=ExtensionRegistry):
         )
 
 
-@contextfunction
+@pass_context
 def _gettext_alias(__context, *args, **kwargs):
     return __context.call(__context.resolve("gettext"), *args, **kwargs)
 
 
 def _make_new_gettext(func):
-    @contextfunction
+    @pass_context
     def gettext(__context, __string, **variables):
         rv = __context.call(func, __string)
         if __context.eval_ctx.autoescape:
@@ -155,7 +155,7 @@ def _make_new_gettext(func):
 
 
 def _make_new_ngettext(func):
-    @contextfunction
+    @pass_context
     def ngettext(__context, __singular, __plural, __num, **variables):
         variables.setdefault("num", __num)
         rv = __context.call(func, __singular, __plural, __num)
@@ -168,7 +168,7 @@ def _make_new_ngettext(func):
 
 
 def _make_new_pgettext(func):
-    @contextfunction
+    @pass_context
     def pgettext(__context, __string_ctx, __string, **variables):
         variables.setdefault("context", __string_ctx)
         rv = __context.call(func, __string_ctx, __string)
@@ -183,7 +183,7 @@ def _make_new_pgettext(func):
 
 
 def _make_new_npgettext(func):
-    @contextfunction
+    @pass_context
     def npgettext(__context, __string_ctx, __singular, __plural, __num, **variables):
         variables.setdefault("context", __string_ctx)
         variables.setdefault("num", __num)

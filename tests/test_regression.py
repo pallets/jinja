@@ -7,7 +7,7 @@ from jinja2 import Template
 from jinja2 import TemplateAssertionError
 from jinja2 import TemplateNotFound
 from jinja2 import TemplateSyntaxError
-from jinja2.utils import contextfunction
+from jinja2.utils import pass_context
 
 
 class TestCorner:
@@ -298,11 +298,9 @@ class TestBug:
 
         assert e.value.name == "foo/bar.html"
 
-    def test_contextfunction_callable_classes(self, env):
-        from jinja2.utils import contextfunction
-
+    def test_pass_context_callable_class(self, env):
         class CallableClass:
-            @contextfunction
+            @pass_context
             def __call__(self, ctx):
                 return ctx.resolve("hello")
 
@@ -633,8 +631,8 @@ End"""
         )
         assert tmpl.render() == "Start\n1) foo\n2) bar last\nEnd"
 
-    def test_contextfunction_loop_vars(self, env):
-        @contextfunction
+    def test_pass_context_loop_vars(self, env):
+        @pass_context
         def test(ctx):
             return f"{ctx['i']}{ctx['j']}"
 
@@ -653,8 +651,8 @@ End"""
         tmpl.globals["test"] = test
         assert tmpl.render() == "42\n01\n01\n42\n12\n12\n42"
 
-    def test_contextfunction_scoped_loop_vars(self, env):
-        @contextfunction
+    def test_pass_context_scoped_loop_vars(self, env):
+        @pass_context
         def test(ctx):
             return f"{ctx['i']}"
 
@@ -673,8 +671,8 @@ End"""
         tmpl.globals["test"] = test
         assert tmpl.render() == "42\n0\n42\n1\n42"
 
-    def test_contextfunction_in_blocks(self, env):
-        @contextfunction
+    def test_pass_context_in_blocks(self, env):
+        @pass_context
         def test(ctx):
             return f"{ctx['i']}"
 
@@ -691,8 +689,8 @@ End"""
         tmpl.globals["test"] = test
         assert tmpl.render() == "42\n24\n42"
 
-    def test_contextfunction_block_and_loop(self, env):
-        @contextfunction
+    def test_pass_context_block_and_loop(self, env):
+        @pass_context
         def test(ctx):
             return f"{ctx['i']}"
 

@@ -13,12 +13,13 @@ from .exceptions import TemplateNotFound  # noqa: F401
 from .exceptions import TemplateRuntimeError  # noqa: F401
 from .exceptions import UndefinedError
 from .nodes import EvalContext
+from .utils import _PassArg
 from .utils import concat
-from .utils import evalcontextfunction
 from .utils import internalcode
 from .utils import missing
 from .utils import Namespace  # noqa: F401
 from .utils import object_type_repr
+from .utils import pass_eval_context
 
 if t.TYPE_CHECKING:
     from .environment import Environment
@@ -171,7 +172,7 @@ class Context(metaclass=ContextMeta):
     The context is immutable.  Modifications on :attr:`parent` **must not**
     happen and modifications on :attr:`vars` are allowed from generated
     template code only.  Template filters and global functions marked as
-    :func:`contextfunction`\\s get the active context passed as first argument
+    :func:`pass_context` get the active context passed as first argument
     and are allowed to access the context read-only.
 
     The template context supports read only dict operations (`get`,
@@ -268,26 +269,23 @@ class Context(metaclass=ContextMeta):
     def call(__self, __obj, *args, **kwargs):  # noqa: B902
         """Call the callable with the arguments and keyword arguments
         provided but inject the active context or environment as first
-        argument if the callable is a :func:`contextfunction` or
-        :func:`environmentfunction`.
+        argument if the callable has :func:`pass_context` or
+        :func:`pass_environment`.
         """
         if __debug__:
             __traceback_hide__ = True  # noqa
 
         # Allow callable classes to take a context
-        if hasattr(__obj, "__call__"):  # noqa: B004
-            fn = __obj.__call__
-            for fn_type in (
-                "contextfunction",
-                "evalcontextfunction",
-                "environmentfunction",
-            ):
-                if hasattr(fn, fn_type):
-                    __obj = fn
-                    break
+        if (
+            hasattr(__obj, "__call__")  # noqa: B004
+            and _PassArg.from_obj(__obj.__call__) is not None
+        ):
+            __obj = __obj.__call__
 
         if callable(__obj):
-            if getattr(__obj, "contextfunction", False) is True:
+            pass_arg = _PassArg.from_obj(__obj)
+
+            if pass_arg is _PassArg.context:
                 # the active context should have access to variables set in
                 # loops and blocks without mutating the context itself
                 if kwargs.get("_loop_vars"):
@@ -295,9 +293,9 @@ class Context(metaclass=ContextMeta):
                 if kwargs.get("_block_vars"):
                     __self = __self.derived(kwargs["_block_vars"])
                 args = (__self,) + args
-            elif getattr(__obj, "evalcontextfunction", False) is True:
+            elif pass_arg is _PassArg.eval_context:
                 args = (__self.eval_ctx,) + args
-            elif getattr(__obj, "environmentfunction", False) is True:
+            elif pass_arg is _PassArg.environment:
                 args = (__self.environment,) + args
 
         kwargs.pop("_block_vars", None)
@@ -597,7 +595,7 @@ class Macro:
         self._default_autoescape = default_autoescape
 
     @internalcode
-    @evalcontextfunction
+    @pass_eval_context
     def __call__(self, *args, **kwargs):
         # This requires a bit of explanation,  In the past we used to
         # decide largely based on compile-time information if a macro is

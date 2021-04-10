@@ -3,10 +3,10 @@ from io import BytesIO
 
 import pytest
 
-from jinja2 import contextfunction
 from jinja2 import DictLoader
 from jinja2 import Environment
 from jinja2 import nodes
+from jinja2 import pass_context
 from jinja2.exceptions import TemplateAssertionError
 from jinja2.ext import Extension
 from jinja2.lexer import count_newlines
@@ -74,14 +74,14 @@ def _get_with_context(value, ctx=None):
     return value
 
 
-@contextfunction
+@pass_context
 def gettext(context, string):
     language = context.get("LANGUAGE", "en")
     value = languages.get(language, {}).get(string, string)
     return _get_with_context(value)
 
 
-@contextfunction
+@pass_context
 def ngettext(context, s, p, n):
     language = context.get("LANGUAGE", "en")
 
@@ -93,14 +93,14 @@ def ngettext(context, s, p, n):
     return _get_with_context(value)
 
 
-@contextfunction
+@pass_context
 def pgettext(context, c, s):
     language = context.get("LANGUAGE", "en")
     value = languages.get(language, {}).get(s, s)
     return _get_with_context(value, c)
 
 
-@contextfunction
+@pass_context
 def npgettext(context, c, s, p, n):
     language = context.get("LANGUAGE", "en")
 

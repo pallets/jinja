@@ -591,17 +591,23 @@ Utilities
 These helper functions and classes are useful if you add custom filters or
 functions to a Jinja environment.
 
-.. autofunction:: jinja2.environmentfilter
+.. autofunction:: jinja2.pass_context
+
+.. autofunction:: jinja2.pass_eval_context
+
+.. autofunction:: jinja2.pass_environment
 
 .. autofunction:: jinja2.contextfilter
 
 .. autofunction:: jinja2.evalcontextfilter
 
-.. autofunction:: jinja2.environmentfunction
+.. autofunction:: jinja2.environmentfilter
 
 .. autofunction:: jinja2.contextfunction
 
 .. autofunction:: jinja2.evalcontextfunction
+
+.. autofunction:: jinja2.environmentfunction
 
 .. function:: escape(s)
 
@@ -697,9 +703,9 @@ Some decorators are available to tell Jinja to pass extra information to
 the filter. The object is passed as the first argument, making the value
 being filtered the second argument.
 
--   :func:`environmentfilter` passes the :class:`Environment`.
--   :func:`evalcontextfilter` passes the :ref:`eval-context`.
--   :func:`contextfilter` passes the current
+-   :func:`pass_environment` passes the :class:`Environment`.
+-   :func:`pass_eval_context` passes the :ref:`eval-context`.
+-   :func:`pass_context` passes the current
     :class:`~jinja2.runtime.Context`.
 
 Here's a filter that converts line breaks into HTML ``<br>`` and ``<p>``
@@ -709,10 +715,10 @@ enabled before escaping the input and marking the output safe.
 .. code-block:: python
 
     import re
-    from jinja2 import evalcontextfilter
+    from jinja2 import pass_eval_context
     from markupsafe import Markup, escape
 
-    @evalcontextfilter
+    @pass_eval_context
     def nl2br(eval_ctx, value):
         br = "<br>\n"
 
@@ -775,9 +781,9 @@ Some decorators are available to tell Jinja to pass extra information to
 the filter. The object is passed as the first argument, making the value
 being filtered the second argument.
 
--   :func:`environmentfunction` passes the :class:`Environment`.
--   :func:`evalcontextfunction` passes the :ref:`eval-context`.
--   :func:`contextfunction` passes the current
+-   :func:`pass_environment` passes the :class:`Environment`.
+-   :func:`pass_eval_context` passes the :ref:`eval-context`.
+-   :func:`pass_context` passes the current
     :class:`~jinja2.runtime.Context`.
 
 
@@ -786,44 +792,53 @@ being filtered the second argument.
 Evaluation Context
 ------------------
 
-The evaluation context (short eval context or eval ctx) is a new object
-introduced in Jinja 2.4 that makes it possible to activate and deactivate
-compiled features at runtime.
+The evaluation context (short eval context or eval ctx) makes it
+possible to activate and deactivate compiled features at runtime.
 
-Currently it is only used to enable and disable the automatic escaping but
-can be used for extensions as well.
+Currently it is only used to enable and disable automatic escaping, but
+it can be used by extensions as well.
 
-In previous Jinja versions filters and functions were marked as
-environment callables in order to check for the autoescape status from the
-environment.  In new versions it's encouraged to check the setting from the
-evaluation context instead.
+The ``autoescape`` setting should be checked on the evaluation context,
+not the environment. The evaluation context will have the computed value
+for the current template.
 
-Previous versions::
+Instead of ``pass_environment``:
 
-    @environmentfilter
+.. code-block:: python
+
+    @pass_environment
     def filter(env, value):
         result = do_something(value)
+
         if env.autoescape:
             result = Markup(result)
+
         return result
 
-In new versions you can either use a :func:`contextfilter` and access the
-evaluation context from the actual context, or use a
-:func:`evalcontextfilter` which directly passes the evaluation context to
-the function::
+Use ``pass_eval_context`` if you only need the setting:
 
-    @contextfilter
-    def filter(context, value):
-        result = do_something(value)
-        if context.eval_ctx.autoescape:
-            result = Markup(result)
-        return result
+.. code-block:: python
 
-    @evalcontextfilter
+    @pass_eval_context
     def filter(eval_ctx, value):
         result = do_something(value)
+
         if eval_ctx.autoescape:
             result = Markup(result)
+
+        return result
+
+Or use ``pass_context`` if you need other context behavior as well:
+
+.. code-block:: python
+
+    @pass_context
+    def filter(context, value):
+        result = do_something(value)
+
+        if context.eval_ctx.autoescape:
+            result = Markup(result)
+
         return result
 
 The evaluation context must not be modified at runtime.  Modifications

@@ -38,6 +38,9 @@ from .utils import contextfunction
 from .utils import environmentfunction
 from .utils import evalcontextfunction
 from .utils import is_undefined
+from .utils import pass_context
+from .utils import pass_environment
+from .utils import pass_eval_context
 from .utils import select_autoescape
 
 __version__ = "3.0.0a1"

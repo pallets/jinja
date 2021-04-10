@@ -5,7 +5,7 @@ from collections import abc
 from numbers import Number
 
 from .runtime import Undefined
-from .utils import environmentfunction
+from .utils import pass_environment
 
 if t.TYPE_CHECKING:
     from .environment import Environment
@@ -48,7 +48,7 @@ def test_undefined(value: t.Any) -> bool:
     return isinstance(value, Undefined)
 
 
-@environmentfunction
+@pass_environment
 def test_filter(env: "Environment", value: str) -> bool:
     """Check if a filter exists by name. Useful if a filter may be
     optionally available.
@@ -66,7 +66,7 @@ def test_filter(env: "Environment", value: str) -> bool:
     return value in env.filters
 
 
-@environmentfunction
+@pass_environment
 def test_test(env: "Environment", value: str) -> bool:
     """Check if a test exists by name. Useful if a test may be
     optionally available.

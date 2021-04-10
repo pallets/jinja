@@ -10,6 +10,8 @@ from typing import Tuple as TupleType
 
 from markupsafe import Markup
 
+from .utils import _PassArg
+
 _binop_to_func = {
     "*": operator.mul,
     "/": operator.truediv,
@@ -646,19 +648,17 @@ class _FilterTestCommon(Expr):
 
         if self._is_filter:
             env_map = eval_ctx.environment.filters
-            mark_name = "filter"
         else:
             env_map = eval_ctx.environment.tests
-            # Filters use "contextfilter", tests and calls use "contextfunction".
-            mark_name = "function"
 
         func = env_map.get(self.name)
+        pass_arg = _PassArg.from_obj(func)
 
-        if func is None or getattr(func, f"context{mark_name}", False) is True:
+        if func is None or pass_arg is _PassArg.context:
             raise Impossible()
 
         if eval_ctx.environment.is_async and (
-            getattr(func, f"async{mark_name}variant", False)
+            getattr(func, "jinja_async_variant", False) is True
             or inspect.iscoroutinefunction(func)
         ):
             raise Impossible()
@@ -666,9 +666,9 @@ class _FilterTestCommon(Expr):
         args, kwargs = args_as_const(self, eval_ctx)
         args.insert(0, self.node.as_const(eval_ctx))
 
-        if getattr(func, f"evalcontext{mark_name}", False) is True:
+        if pass_arg is _PassArg.eval_context:
             args.insert(0, eval_ctx)
-        elif getattr(func, f"environment{mark_name}", False) is True:
+        elif pass_arg is _PassArg.environment:
             args.insert(0, eval_ctx.environment)
 
         try:
@@ -698,7 +698,7 @@ class Test(_FilterTestCommon):
 
     .. versionchanged:: 3.0
         ``as_const`` shares the same logic for filters and tests. Tests
-        check for volatile, async, and ``@contextfunction`` etc.
+        check for volatile, async, and ``@pass_context`` etc.
         decorators.
     """
 
@@ -990,9 +990,9 @@ class ContextReference(Expr):
                Getattr(ContextReference(), 'name'))
 
     This is basically equivalent to using the
-    :func:`~jinja2.contextfunction` decorator when using the
-    high-level API, which causes a reference to the context to be passed
-    as the first argument to a function.
+    :func:`~jinja2.pass_context` decorator when using the high-level
+    API, which causes a reference to the context to be passed as the
+    first argument to a function.
     """
 
 

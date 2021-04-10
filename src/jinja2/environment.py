@@ -42,6 +42,7 @@ from .parser import Parser
 from .runtime import Context
 from .runtime import new_context
 from .runtime import Undefined
+from .utils import _PassArg
 from .utils import concat
 from .utils import consume
 from .utils import have_async_gen
@@ -464,12 +465,10 @@ class Environment:
     ):
         if is_filter:
             env_map = self.filters
-            type_name = mark_name = "filter"
+            type_name = "filter"
         else:
             env_map = self.tests
             type_name = "test"
-            # Filters use "contextfilter", tests and calls use "contextfunction".
-            mark_name = "function"
 
         func = env_map.get(name)
 
@@ -486,15 +485,16 @@ class Environment:
 
         args = [value, *(args if args is not None else ())]
         kwargs = kwargs if kwargs is not None else {}
+        pass_arg = _PassArg.from_obj(func)
 
-        if getattr(func, f"context{mark_name}", False) is True:
+        if pass_arg is _PassArg.context:
             if context is None:
                 raise TemplateRuntimeError(
                     f"Attempted to invoke a context {type_name} without context."
                 )
 
             args.insert(0, context)
-        elif getattr(func, f"evalcontext{mark_name}", False) is True:
+        elif pass_arg is _PassArg.eval_context:
             if eval_ctx is None:
                 if context is not None:
                     eval_ctx = context.eval_ctx
@@ -502,7 +502,7 @@ class Environment:
                     eval_ctx = EvalContext(self)
 
             args.insert(0, eval_ctx)
-        elif getattr(func, f"environment{mark_name}", False) is True:
+        elif pass_arg is _PassArg.environment:
             args.insert(0, self)
 
         return func(*args, **kwargs)
@@ -532,7 +532,7 @@ class Environment:
         It's your responsibility to await this if needed.
 
         .. versionchanged:: 3.0
-            Tests support ``@contextfunction``, etc. decorators. Added
+            Tests support ``@pass_context``, etc. decorators. Added
             the ``context`` and ``eval_ctx`` parameters.
 
         .. versionadded:: 2.7

@@ -56,10 +56,10 @@ def test_iterator_not_advanced_early():
     assert out == "1 [(1, 'a'), (1, 'b')]\n2 [(2, 'c')]\n3 [(3, 'd')]\n"
 
 
-def test_mock_not_contextfunction():
+def test_mock_not_pass_arg_marker():
     """If a callable class has a ``__getattr__`` that returns True-like
     values for arbitrary attrs, it should not be incorrectly identified
-    as a ``contextfunction``.
+    as a ``pass_context`` function.
     """
 
     class Calc:
