@@ -20,12 +20,9 @@ if t.TYPE_CHECKING:
 # special singleton representing missing values for the runtime
 missing = type("MissingType", (), {"__repr__": lambda x: "missing"})()
 
-# internal code
 internal_code: t.MutableSet[CodeType] = set()
 
 concat = "".join
-
-_slash_escape = "\\/" not in json.dumps("/")
 
 
 def pass_context(f: "F") -> "F":
@@ -830,14 +827,6 @@ class Namespace:
 
     def __repr__(self):
         return f"<Namespace {self.__attrs!r}>"
-
-
-# does this python version support async for in and async generators?
-try:
-    exec("async def _():\n async for _ in ():\n  yield _")
-    have_async_gen = True
-except SyntaxError:
-    have_async_gen = False
 
 
 class Markup(markupsafe.Markup):

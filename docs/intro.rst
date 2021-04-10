@@ -12,8 +12,8 @@ It includes:
 -   HTML templates can use autoescaping to prevent XSS from untrusted
     user input.
 -   A sandboxed environment can safely render untrusted templates.
--   AsyncIO support for generating templates and calling async
-    functions.
+-   Async support for generating templates that automatically handle
+    sync and async functions without extra syntax.
 -   I18N support with Babel.
 -   Templates are compiled to optimized Python code just-in-time and
     cached, or can be compiled ahead-of-time.

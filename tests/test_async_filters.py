@@ -4,7 +4,7 @@ import pytest
 from markupsafe import Markup
 
 from jinja2 import Environment
-from jinja2.asyncsupport import auto_aiter
+from jinja2.async_utils import auto_aiter
 
 
 async def make_aiter(iter):

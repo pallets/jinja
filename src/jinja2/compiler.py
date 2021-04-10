@@ -727,16 +727,15 @@ class CodeGenerator(NodeVisitor):
         assert frame is None, "no root frame allowed"
         eval_ctx = EvalContext(self.environment, self.name)
 
-        from .runtime import exported
-
-        self.writeline("from __future__ import generator_stop")  # Python < 3.7
-        self.writeline("from jinja2.runtime import " + ", ".join(exported))
+        from .runtime import exported, async_exported
 
         if self.environment.is_async:
-            self.writeline(
-                "from jinja2.asyncsupport import auto_await, "
-                "auto_aiter, AsyncLoopContext"
-            )
+            exported_names = sorted(exported + async_exported)
+        else:
+            exported_names = sorted(exported)
+
+        self.writeline("from __future__ import generator_stop")  # Python < 3.7
+        self.writeline("from jinja2.runtime import " + ", ".join(exported_names))
 
         # if we want a deferred initialization we cannot move the
         # environment into a local name

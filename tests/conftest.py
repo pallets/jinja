@@ -2,15 +2,8 @@ import os
 
 import pytest
 
-from jinja2 import Environment
 from jinja2 import loaders
-from jinja2.utils import have_async_gen
-
-
-def pytest_ignore_collect(path):
-    if "async" in path.basename and not have_async_gen:
-        return True
-    return False
+from jinja2.environment import Environment
 
 
 @pytest.fixture

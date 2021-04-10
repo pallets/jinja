@@ -45,7 +45,6 @@ from .runtime import Undefined
 from .utils import _PassArg
 from .utils import concat
 from .utils import consume
-from .utils import have_async_gen
 from .utils import import_string
 from .utils import internalcode
 from .utils import LRUCache
@@ -342,12 +341,7 @@ class Environment:
         # load extensions
         self.extensions = load_extensions(self, extensions)
 
-        self.enable_async = enable_async
-        self.is_async = self.enable_async and have_async_gen
-        if self.is_async:
-            # runs patch_all() to enable async support
-            from . import asyncsupport  # noqa: F401
-
+        self.is_async = enable_async
         _environment_sanity_check(self)
 
     def add_extension(self, extension):
@@ -1119,13 +1113,20 @@ class Template:
 
         This will return the rendered template as a string.
         """
-        vars = dict(*args, **kwargs)
+        if self.environment.is_async:
+            import asyncio
+
+            loop = asyncio.get_event_loop()
+            return loop.run_until_complete(self.render_async(*args, **kwargs))
+
+        ctx = self.new_context(dict(*args, **kwargs))
+
         try:
-            return concat(self.root_render_func(self.new_context(vars)))
+            return concat(self.root_render_func(ctx))
         except Exception:
             self.environment.handle_exception()
 
-    def render_async(self, *args, **kwargs):
+    async def render_async(self, *args, **kwargs):
         """This works similar to :meth:`render` but returns a coroutine
         that when awaited returns the entire rendered template string.  This
         requires the async feature to be enabled.
@@ -1134,10 +1135,17 @@ class Template:
 
             await template.render_async(knights='that say nih; asynchronously')
         """
-        # see asyncsupport for the actual implementation
-        raise NotImplementedError(
-            "This feature is not available for this version of Python"
-        )
+        if not self.environment.is_async:
+            raise RuntimeError(
+                "The environment was not created with async mode enabled."
+            )
+
+        ctx = self.new_context(dict(*args, **kwargs))
+
+        try:
+            return concat([n async for n in self.root_render_func(ctx)])
+        except Exception:
+            return self.environment.handle_exception()
 
     def stream(self, *args, **kwargs):
         """Works exactly like :meth:`generate` but returns a
@@ -1153,20 +1161,41 @@ class Template:
 
         It accepts the same arguments as :meth:`render`.
         """
-        vars = dict(*args, **kwargs)
+        if self.environment.is_async:
+            import asyncio
+
+            loop = asyncio.get_event_loop()
+            async_gen = self.generate_async(*args, **kwargs)
+
+            try:
+                while True:
+                    yield loop.run_until_complete(async_gen.__anext__())
+            except StopAsyncIteration:
+                return
+
+        ctx = self.new_context(dict(*args, **kwargs))
+
         try:
-            yield from self.root_render_func(self.new_context(vars))
+            yield from self.root_render_func(ctx)
         except Exception:
             yield self.environment.handle_exception()
 
-    def generate_async(self, *args, **kwargs):
+    async def generate_async(self, *args, **kwargs):
         """An async version of :meth:`generate`.  Works very similarly but
         returns an async iterator instead.
         """
-        # see asyncsupport for the actual implementation
-        raise NotImplementedError(
-            "This feature is not available for this version of Python"
-        )
+        if not self.environment.is_async:
+            raise RuntimeError(
+                "The environment was not created with async mode enabled."
+            )
+
+        ctx = self.new_context(dict(*args, **kwargs))
+
+        try:
+            async for event in self.root_render_func(ctx):
+                yield event
+        except Exception:
+            yield self.environment.handle_exception()
 
     def new_context(self, vars=None, shared=False, locals=None):
         """Create a new :class:`Context` for this template.  The vars
@@ -1187,42 +1216,56 @@ class Template:
         a dict which is then used as context.  The arguments are the same
         as for the :meth:`new_context` method.
         """
-        return TemplateModule(self, self.new_context(vars, shared, locals))
+        ctx = self.new_context(vars, shared, locals)
+        return TemplateModule(self, ctx)
 
-    def make_module_async(self, vars=None, shared=False, locals=None):
+    async def make_module_async(self, vars=None, shared=False, locals=None):
         """As template module creation can invoke template code for
         asynchronous executions this method must be used instead of the
         normal :meth:`make_module` one.  Likewise the module attribute
         becomes unavailable in async mode.
         """
-        # see asyncsupport for the actual implementation
-        raise NotImplementedError(
-            "This feature is not available for this version of Python"
-        )
+        ctx = self.new_context(vars, shared, locals)
+        return TemplateModule(self, ctx, [x async for x in self.root_render_func(ctx)])
 
     @internalcode
     def _get_default_module(self, ctx=None):
         """If a context is passed in, this means that the template was
-        imported.  Imported templates have access to the current template's
-        globals by default, but they can only be accessed via the context
-        during runtime.
+        imported. Imported templates have access to the current
+        template's globals by default, but they can only be accessed via
+        the context during runtime.
 
-        If there are new globals, we need to create a new
-        module because the cached module is already rendered and will not have
-        access to globals from the current context.  This new module is not
-        cached as :attr:`_module` because the template can be imported elsewhere,
-        and it should have access to only the current template's globals.
+        If there are new globals, we need to create a new module because
+        the cached module is already rendered and will not have access
+        to globals from the current context. This new module is not
+        cached because the template can be imported elsewhere, and it
+        should have access to only the current template's globals.
         """
+        if self.environment.is_async:
+            raise RuntimeError("Module is not available in async mode.")
+
         if ctx is not None:
-            globals = {
-                key: ctx.parent[key] for key in ctx.globals_keys - self.globals.keys()
-            }
-            if globals:
-                return self.make_module(globals)
-        if self._module is not None:
-            return self._module
-        self._module = rv = self.make_module()
-        return rv
+            keys = ctx.globals_keys - self.globals.keys()
+
+            if keys:
+                return self.make_module({k: ctx.parent[k] for k in keys})
+
+        if self._module is None:
+            self._module = self.make_module()
+
+        return self._module
+
+    async def _get_default_module_async(self, ctx=None):
+        if ctx is not None:
+            keys = ctx.globals_keys - self.globals.keys()
+
+            if keys:
+                return await self.make_module_async({k: ctx.parent[k] for k in keys})
+
+        if self._module is None:
+            self._module = await self.make_module_async()
+
+        return self._module
 
     @property
     def module(self):

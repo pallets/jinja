@@ -70,6 +70,10 @@ Unreleased
     -   ``pass_environment`` replaces ``environmentfunction`` and
         ``environmentfilter``.
 
+-   Async support no longer requires Jinja to patch itself. It must
+    still be enabled with ``Environment(enable_async=True)``.
+    :issue:`1390`
+
 
 Version 2.11.3
 --------------
