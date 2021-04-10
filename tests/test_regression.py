@@ -613,7 +613,7 @@ class TestBug:
         assert tmpl.render(values=[]) == "0"
 
     def test_markup_and_chainable_undefined(self):
-        from jinja2 import Markup
+        from markupsafe import Markup
         from jinja2.runtime import ChainableUndefined
 
         assert str(Markup(ChainableUndefined())) == ""
