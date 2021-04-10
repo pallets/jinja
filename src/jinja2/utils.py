@@ -1,7 +1,9 @@
+import enum
 import json
 import os
 import re
 import typing as t
+import warnings
 from collections import abc
 from collections import deque
 from random import choice
@@ -12,6 +14,9 @@ from urllib.parse import quote_from_bytes
 
 from markupsafe import escape
 from markupsafe import Markup
+
+if t.TYPE_CHECKING:
+    F = t.TypeVar("F", bound=t.Callable[..., t.Any])
 
 # special singleton representing missing values for the runtime
 missing = type("MissingType", (), {"__repr__": lambda x: "missing"})()
@@ -24,43 +29,124 @@ concat = "".join
 _slash_escape = "\\/" not in json.dumps("/")
 
 
-def contextfunction(f):
-    """This decorator can be used to mark a function or method context callable.
-    A context callable is passed the active :class:`Context` as first argument when
-    called from the template.  This is useful if a function wants to get access
-    to the context or functions provided on the context object.  For example
-    a function that returns a sorted list of template variables the current
-    template exports could look like this::
+def pass_context(f: "F") -> "F":
+    """Pass the :class:`~jinja2.runtime.Context` as the first argument
+    to the decorated function when called while rendering a template.
 
-        @contextfunction
-        def get_exported_names(context):
-            return sorted(context.exported_vars)
+    Can be used on functions, filters, and tests.
+
+    If only ``Context.eval_context`` is needed, use
+    :func:`pass_eval_context`. If only ``Context.environment`` is
+    needed, use :func:`pass_environment`.
+
+    .. versionadded:: 3.0.0
+        Replaces ``contextfunction`` and ``contextfilter``.
     """
-    f.contextfunction = True
+    f.jinja_pass_arg = _PassArg.context  # type: ignore
     return f
+
+
+def pass_eval_context(f: "F") -> "F":
+    """Pass the :class:`~jinja2.nodes.EvalContext` as the first argument
+    to the decorated function when called while rendering a template.
+    See :ref:`eval-context`.
+
+    Can be used on functions, filters, and tests.
+
+    If only ``EvalContext.environment`` is needed, use
+    :func:`pass_environment`.
+
+    .. versionadded:: 3.0.0
+        Replaces ``evalcontextfunction`` and ``evalcontextfilter``.
+    """
+    f.jinja_pass_arg = _PassArg.eval_context  # type: ignore
+    return f
+
+
+def pass_environment(f: "F") -> "F":
+    """Pass the :class:`~jinja2.Environment` as the first argument to
+    the decorated function when called while rendering a template.
+
+    Can be used on functions, filters, and tests.
+
+    .. versionadded:: 3.0.0
+        Replaces ``environmentfunction`` and ``environmentfilter``.
+    """
+    f.jinja_pass_arg = _PassArg.environment  # type: ignore
+    return f
+
+
+class _PassArg(enum.Enum):
+    context = enum.auto()
+    eval_context = enum.auto()
+    environment = enum.auto()
+
+    @classmethod
+    def from_obj(cls, obj):
+        if hasattr(obj, "jinja_pass_arg"):
+            return obj.jinja_pass_arg
+
+        for prefix in "context", "eval_context", "environment":
+            squashed = prefix.replace("_", "")
+
+            for name in f"{squashed}function", f"{squashed}filter":
+                if getattr(obj, name, False) is True:
+                    warnings.warn(
+                        f"{name!r} is deprecated and will stop working"
+                        f" in Jinja 3.1. Use 'pass_{prefix}' instead.",
+                        DeprecationWarning,
+                        stacklevel=2,
+                    )
+                    return cls[prefix]
+
+
+def contextfunction(f):
+    """Pass the context as the first argument to the decorated function.
+
+    .. deprecated:: 3.0.0
+        Use :func:`~jinja2.pass_context` instead.
+    """
+    warnings.warn(
+        "'contextfunction' is renamed to 'pass_context', the old name"
+        " will be removed in Jinja 3.1.",
+        DeprecationWarning,
+        stacklevel=2,
+    )
+    return pass_context(f)
 
 
 def evalcontextfunction(f):
-    """This decorator can be used to mark a function or method as an eval
-    context callable.  This is similar to the :func:`contextfunction`
-    but instead of passing the context, an evaluation context object is
-    passed.  For more information about the eval context, see
-    :ref:`eval-context`.
+    """Pass the eval context as the first argument to the decorated
+    function.
+
+    .. deprecated:: 3.0.0
+        Use :func:`~jinja2.pass_eval_context` instead.
 
     .. versionadded:: 2.4
     """
-    f.evalcontextfunction = True
-    return f
+    warnings.warn(
+        "'evalcontextfunction' is renamed to 'pass_eval_context', the"
+        " old name will be removed in Jinja 3.1.",
+        DeprecationWarning,
+        stacklevel=2,
+    )
+    return pass_eval_context(f)
 
 
 def environmentfunction(f):
-    """This decorator can be used to mark a function or method as environment
-    callable.  This decorator works exactly like the :func:`contextfunction`
-    decorator just that the first argument is the active :class:`Environment`
-    and not context.
+    """Pass the environment as the first argument to the decorated
+    function.
+
+    .. deprecated:: 3.0.0
+        Use :func:`~jinja2.pass_environment` instead.
     """
-    f.environmentfunction = True
-    return f
+    warnings.warn(
+        "'environmentfunction' is renamed to 'pass_environment', the"
+        " old name will be removed in Jinja 3.1.",
+        DeprecationWarning,
+        stacklevel=2,
+    )
+    return pass_environment(f)
 
 
 def internalcode(f):

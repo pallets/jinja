@@ -113,12 +113,12 @@ CSS, JavaScript, or configuration files.
 Why is the Context immutable?
 -----------------------------
 
-When writing a :func:`contextfunction` or something similar you may have
-noticed that the context tries to stop you from modifying it.  If you have
-managed to modify the context by using an internal context API you may
-have noticed that changes in the context don't seem to be visible in the
-template.  The reason for this is that Jinja uses the context only as
-primary data source for template variables for performance reasons.
+When writing a :func:`pass_context` function, you may have noticed that
+the context tries to stop you from modifying it. If you have managed to
+modify the context by using an internal context API you may have noticed
+that changes in the context don't seem to be visible in the template.
+The reason for this is that Jinja uses the context only as primary data
+source for template variables for performance reasons.
 
 If you want to modify the context write a function that returns a variable
 instead that one can assign to a variable by using set::

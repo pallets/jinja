@@ -4,6 +4,7 @@ import random
 import re
 import typing
 import typing as t
+import warnings
 from collections import abc
 from itertools import chain
 from itertools import groupby
@@ -15,6 +16,9 @@ from markupsafe import soft_str
 from .exceptions import FilterArgumentError
 from .runtime import Undefined
 from .utils import htmlsafe_json_dumps
+from .utils import pass_context
+from .utils import pass_environment
+from .utils import pass_eval_context
 from .utils import pformat
 from .utils import url_quote
 from .utils import urlize
@@ -28,38 +32,59 @@ if t.TYPE_CHECKING:
 
     K = t.TypeVar("K")
     V = t.TypeVar("V")
-    F = t.TypeVar("F", bound=t.Callable[..., t.Any])
 
     class HasHTML(te.Protocol):
         def __html__(self) -> str:
             pass
 
 
-def contextfilter(f: "F") -> "F":
-    """Decorator for marking context dependent filters. The current
-    :class:`Context` will be passed as first argument.
+def contextfilter(f):
+    """Pass the context as the first argument to the decorated function.
+
+    .. deprecated:: 3.0.0
+        Use :func:`~jinja2.pass_context` instead.
     """
-    f.contextfilter = True  # type: ignore
-    return f
+    warnings.warn(
+        "'contextfilter' is renamed to 'pass_context', the old name"
+        " will be removed in Jinja 3.1.",
+        DeprecationWarning,
+        stacklevel=2,
+    )
+    return pass_context(f)
 
 
-def evalcontextfilter(f: "F") -> "F":
-    """Decorator for marking eval-context dependent filters.  An eval
-    context object is passed as first argument.  For more information
-    about the eval context, see :ref:`eval-context`.
+def evalcontextfilter(f):
+    """Pass the eval context as the first argument to the decorated
+    function.
+
+    .. deprecated:: 3.0.0
+        Use :func:`~jinja2.pass_eval_context` instead.
 
     .. versionadded:: 2.4
     """
-    f.evalcontextfilter = True  # type: ignore
-    return f
+    warnings.warn(
+        "'evalcontextfilter' is renamed to 'pass_eval_context', the old"
+        " name will be removed in Jinja 3.1.",
+        DeprecationWarning,
+        stacklevel=2,
+    )
+    return pass_eval_context(f)
 
 
-def environmentfilter(f: "F") -> "F":
-    """Decorator for marking environment dependent filters.  The current
-    :class:`Environment` is passed to the filter as first argument.
+def environmentfilter(f):
+    """Pass the environment as the first argument to the decorated
+    function.
+
+    .. deprecated:: 3.0.0
+        Use :func:`~jinja2.pass_environment` instead.
     """
-    f.environmentfilter = True  # type: ignore
-    return f
+    warnings.warn(
+        "'environmentfilter' is renamed to 'pass_environment', the old"
+        " name will be removed in Jinja 3.1.",
+        DeprecationWarning,
+        stacklevel=2,
+    )
+    return pass_environment(f)
 
 
 def ignore_case(value: "V") -> "V":
@@ -191,7 +216,7 @@ def do_urlencode(
     )
 
 
-@evalcontextfilter
+@pass_eval_context
 def do_replace(
     eval_ctx: "EvalContext", s: str, old: str, new: str, count: t.Optional[int] = None
 ) -> str:
@@ -237,7 +262,7 @@ def do_lower(s: str) -> str:
     return soft_str(s).lower()
 
 
-@evalcontextfilter
+@pass_eval_context
 def do_xmlattr(
     eval_ctx: "EvalContext", d: t.Mapping[str, t.Any], autospace: bool = True
 ) -> str:
@@ -342,7 +367,7 @@ def do_dictsort(
     return sorted(value.items(), key=sort_func, reverse=reverse)
 
 
-@environmentfilter
+@pass_environment
 def do_sort(
     environment: "Environment",
     value: "t.Iterable[V]",
@@ -398,7 +423,7 @@ def do_sort(
     return sorted(value, key=key_func, reverse=reverse)
 
 
-@environmentfilter
+@pass_environment
 def do_unique(
     environment: "Environment",
     value: "t.Iterable[V]",
@@ -451,7 +476,7 @@ def _min_or_max(
     return func(chain([first], it), key=key_func)
 
 
-@environmentfilter
+@pass_environment
 def do_min(
     environment: "Environment",
     value: "t.Iterable[V]",
@@ -471,7 +496,7 @@ def do_min(
     return _min_or_max(environment, value, min, case_sensitive, attribute)
 
 
-@environmentfilter
+@pass_environment
 def do_max(
     environment: "Environment",
     value: "t.Iterable[V]",
@@ -524,7 +549,7 @@ def do_default(
     return value
 
 
-@evalcontextfilter
+@pass_eval_context
 def do_join(
     eval_ctx: "EvalContext",
     value: t.Iterable,
@@ -587,7 +612,7 @@ def do_center(value: str, width: int = 80) -> str:
     return soft_str(value).center(width)
 
 
-@environmentfilter
+@pass_environment
 def do_first(
     environment: "Environment", seq: "t.Iterable[V]"
 ) -> "t.Union[V, Undefined]":
@@ -598,7 +623,7 @@ def do_first(
         return environment.undefined("No first item, sequence was empty.")
 
 
-@environmentfilter
+@pass_environment
 def do_last(
     environment: "Environment", seq: "t.Reversible[V]"
 ) -> "t.Union[V, Undefined]":
@@ -617,7 +642,7 @@ def do_last(
         return environment.undefined("No last item, sequence was empty.")
 
 
-@contextfilter
+@pass_context
 def do_random(context: "Context", seq: "t.Sequence[V]") -> "t.Union[V, Undefined]":
     """Return a random item from the sequence."""
     try:
@@ -667,7 +692,7 @@ def do_pprint(value: t.Any) -> str:
 _uri_scheme_re = re.compile(r"^([\w.+-]{2,}:(/){0,2})$")
 
 
-@evalcontextfilter
+@pass_eval_context
 def do_urlize(
     eval_ctx: "EvalContext",
     value: str,
@@ -795,7 +820,7 @@ def do_indent(
     return rv
 
 
-@environmentfilter
+@pass_environment
 def do_truncate(
     env: "Environment",
     s: str,
@@ -843,7 +868,7 @@ def do_truncate(
     return result + end
 
 
-@environmentfilter
+@pass_environment
 def do_wordwrap(
     environment: "Environment",
     s: str,
@@ -1114,7 +1139,7 @@ class _GroupTuple(t.NamedTuple):
         return tuple.__str__(self)
 
 
-@environmentfilter
+@pass_environment
 def do_groupby(
     environment: "Environment",
     value: "t.Iterable[V]",
@@ -1173,7 +1198,7 @@ def do_groupby(
     ]
 
 
-@environmentfilter
+@pass_environment
 def do_sum(
     environment: "Environment",
     iterable: "t.Iterable[V]",
@@ -1247,7 +1272,7 @@ def do_reverse(value):
             raise FilterArgumentError("argument must be iterable")
 
 
-@environmentfilter
+@pass_environment
 def do_attr(
     environment: "Environment", obj: t.Any, name: str
 ) -> t.Union[Undefined, t.Any]:
@@ -1296,7 +1321,7 @@ def do_map(
     ...
 
 
-@contextfilter
+@pass_context
 def do_map(context, value, *args, **kwargs):
     """Applies a filter on a sequence of objects or looks up an attribute.
     This is useful when dealing with lists of objects but you are really
@@ -1344,7 +1369,7 @@ def do_map(context, value, *args, **kwargs):
             yield func(item)
 
 
-@contextfilter
+@pass_context
 def do_select(
     context: "Context", value: "t.Iterable[V]", *args: t.Any, **kwargs: t.Any
 ) -> "t.Iterator[V]":
@@ -1375,7 +1400,7 @@ def do_select(
     return select_or_reject(context, value, args, kwargs, lambda x: x, False)
 
 
-@contextfilter
+@pass_context
 def do_reject(
     context: "Context", value: "t.Iterable[V]", *args: t.Any, **kwargs: t.Any
 ) -> "t.Iterator[V]":
@@ -1401,7 +1426,7 @@ def do_reject(
     return select_or_reject(context, value, args, kwargs, lambda x: not x, False)
 
 
-@contextfilter
+@pass_context
 def do_selectattr(
     context: "Context", value: "t.Iterable[V]", *args: t.Any, **kwargs: t.Any
 ) -> "t.Iterator[V]":
@@ -1431,7 +1456,7 @@ def do_selectattr(
     return select_or_reject(context, value, args, kwargs, lambda x: x, True)
 
 
-@contextfilter
+@pass_context
 def do_rejectattr(
     context: "Context", value: "t.Iterable[V]", *args: t.Any, **kwargs: t.Any
 ) -> "t.Iterator[V]":
@@ -1459,7 +1484,7 @@ def do_rejectattr(
     return select_or_reject(context, value, args, kwargs, lambda x: not x, True)
 
 
-@evalcontextfilter
+@pass_eval_context
 def do_tojson(
     eval_ctx: "EvalContext", value: t.Any, indent: t.Optional[int] = None
 ) -> Markup:

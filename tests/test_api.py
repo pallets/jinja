@@ -18,10 +18,10 @@ from jinja2 import Undefined
 from jinja2 import UndefinedError
 from jinja2.compiler import CodeGenerator
 from jinja2.runtime import Context
-from jinja2.utils import contextfunction
 from jinja2.utils import Cycler
-from jinja2.utils import environmentfunction
-from jinja2.utils import evalcontextfunction
+from jinja2.utils import pass_context
+from jinja2.utils import pass_environment
+from jinja2.utils import pass_eval_context
 
 
 class TestExtendedAPI:
@@ -53,7 +53,7 @@ class TestExtendedAPI:
         assert t.render(value=123) == "<int>"
 
     def test_context_finalize(self):
-        @contextfunction
+        @pass_context
         def finalize(context, value):
             return value * context["scale"]
 
@@ -62,7 +62,7 @@ class TestExtendedAPI:
         assert t.render(value=5, scale=3) == "15"
 
     def test_eval_finalize(self):
-        @evalcontextfunction
+        @pass_eval_context
         def finalize(eval_ctx, value):
             return str(eval_ctx.autoescape) + value
 
@@ -71,7 +71,7 @@ class TestExtendedAPI:
         assert t.render(value="<script>") == "True&lt;script&gt;"
 
     def test_env_autoescape(self):
-        @environmentfunction
+        @pass_environment
         def finalize(env, value):
             return " ".join(
                 (env.variable_start_string, repr(value), env.variable_end_string)

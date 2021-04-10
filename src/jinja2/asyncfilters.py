@@ -1,11 +1,14 @@
 import typing
 import typing as t
+import warnings
 from functools import wraps
 from itertools import groupby
 
 from . import filters
 from .asyncsupport import auto_aiter
 from .asyncsupport import auto_await
+from .utils import _PassArg
+from .utils import pass_eval_context
 
 if t.TYPE_CHECKING:
     from .environment import Environment
@@ -49,50 +52,59 @@ async def async_select_or_reject(
                 yield item
 
 
-def dualfilter(normal_filter, async_filter):
-    wrap_evalctx = False
+def dual_filter(normal_func, async_func):
+    pass_arg = _PassArg.from_obj(normal_func)
+    wrapper_has_eval_context = False
 
-    if getattr(normal_filter, "environmentfilter", False) is True:
+    if pass_arg is _PassArg.environment:
+        wrapper_has_eval_context = False
 
         def is_async(args):
             return args[0].is_async
 
-        wrap_evalctx = False
     else:
-        has_evalctxfilter = getattr(normal_filter, "evalcontextfilter", False) is True
-        has_ctxfilter = getattr(normal_filter, "contextfilter", False) is True
-        wrap_evalctx = not has_evalctxfilter and not has_ctxfilter
+        wrapper_has_eval_context = pass_arg is None
 
         def is_async(args):
             return args[0].environment.is_async
 
-    @wraps(normal_filter)
+    @wraps(normal_func)
     def wrapper(*args, **kwargs):
         b = is_async(args)
 
-        if wrap_evalctx:
+        if wrapper_has_eval_context:
             args = args[1:]
 
         if b:
-            return async_filter(*args, **kwargs)
+            return async_func(*args, **kwargs)
 
-        return normal_filter(*args, **kwargs)
+        return normal_func(*args, **kwargs)
 
-    if wrap_evalctx:
-        wrapper.evalcontextfilter = True
+    if wrapper_has_eval_context:
+        wrapper = pass_eval_context(wrapper)
 
-    wrapper.asyncfiltervariant = True
+    wrapper.jinja_async_variant = True
     return wrapper
 
 
-def asyncfiltervariant(original):
+def async_variant(original):
     def decorator(f):
-        return dualfilter(original, f)
+        return dual_filter(original, f)
 
     return decorator
 
 
-@asyncfiltervariant(filters.do_first)
+def asyncfiltervariant(original):
+    warnings.warn(
+        "'asyncfiltervariant' is renamed to 'async_variant', the old"
+        " name will be removed in Jinja 3.1.",
+        DeprecationWarning,
+        stacklevel=2,
+    )
+    return async_variant(original)
+
+
+@async_variant(filters.do_first)
 async def do_first(
     environment: "Environment", seq: "t.Union[t.AsyncIterable[V], t.Iterable[V]]"
 ) -> "t.Union[V, Undefined]":
@@ -102,7 +114,7 @@ async def do_first(
         return environment.undefined("No first item, sequence was empty.")
 
 
-@asyncfiltervariant(filters.do_groupby)
+@async_variant(filters.do_groupby)
 async def do_groupby(
     environment: "Environment",
     value: "t.Union[t.AsyncIterable[V], t.Iterable[V]]",
@@ -116,7 +128,7 @@ async def do_groupby(
     ]
 
 
-@asyncfiltervariant(filters.do_join)
+@async_variant(filters.do_join)
 async def do_join(
     eval_ctx: "EvalContext",
     value: t.Union[t.AsyncIterable, t.Iterable],
@@ -126,12 +138,12 @@ async def do_join(
     return filters.do_join(eval_ctx, await auto_to_seq(value), d, attribute)
 
 
-@asyncfiltervariant(filters.do_list)
+@async_variant(filters.do_list)
 async def do_list(value: "t.Union[t.AsyncIterable[V], t.Iterable[V]]") -> "t.List[V]":
     return await auto_to_seq(value)
 
 
-@asyncfiltervariant(filters.do_reject)
+@async_variant(filters.do_reject)
 async def do_reject(
     context: "Context",
     value: "t.Union[t.AsyncIterable[V], t.Iterable[V]]",
@@ -141,7 +153,7 @@ async def do_reject(
     return async_select_or_reject(context, value, args, kwargs, lambda x: not x, False)
 
 
-@asyncfiltervariant(filters.do_rejectattr)
+@async_variant(filters.do_rejectattr)
 async def do_rejectattr(
     context: "Context",
     value: "t.Union[t.AsyncIterable[V], t.Iterable[V]]",
@@ -151,7 +163,7 @@ async def do_rejectattr(
     return async_select_or_reject(context, value, args, kwargs, lambda x: not x, True)
 
 
-@asyncfiltervariant(filters.do_select)
+@async_variant(filters.do_select)
 async def do_select(
     context: "Context",
     value: "t.Union[t.AsyncIterable[V], t.Iterable[V]]",
@@ -161,7 +173,7 @@ async def do_select(
     return async_select_or_reject(context, value, args, kwargs, lambda x: x, False)
 
 
-@asyncfiltervariant(filters.do_selectattr)
+@async_variant(filters.do_selectattr)
 async def do_selectattr(
     context: "Context",
     value: "t.Union[t.AsyncIterable[V], t.Iterable[V]]",
@@ -193,7 +205,7 @@ def do_map(
     ...
 
 
-@asyncfiltervariant(filters.do_map)
+@async_variant(filters.do_map)
 async def do_map(context, value, *args, **kwargs):
     if value:
         func = filters.prepare_map(context, args, kwargs)
@@ -202,7 +214,7 @@ async def do_map(context, value, *args, **kwargs):
             yield await auto_await(func(item))
 
 
-@asyncfiltervariant(filters.do_sum)
+@async_variant(filters.do_sum)
 async def do_sum(
     environment: "Environment",
     iterable: "t.Union[t.AsyncIterable[V], t.Iterable[V]]",
@@ -224,7 +236,7 @@ async def do_sum(
     return rv
 
 
-@asyncfiltervariant(filters.do_slice)
+@async_variant(filters.do_slice)
 async def do_slice(
     value: "t.Union[t.AsyncIterable[V], t.Iterable[V]]",
     slices: int,
