@@ -1,7 +1,7 @@
 import pytest
+from markupsafe import Markup
 
 from jinja2 import Environment
-from jinja2 import Markup
 from jinja2 import TemplateAssertionError
 from jinja2 import TemplateRuntimeError
 

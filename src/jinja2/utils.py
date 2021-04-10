@@ -12,8 +12,7 @@ from threading import Lock
 from types import CodeType
 from urllib.parse import quote_from_bytes
 
-from markupsafe import escape
-from markupsafe import Markup
+import markupsafe
 
 if t.TYPE_CHECKING:
     F = t.TypeVar("F", bound=t.Callable[..., t.Any])
@@ -332,9 +331,9 @@ def urlize(
         def trim_url(x):
             return x
 
-    words = re.split(r"(\s+)", str(escape(text)))
-    rel_attr = f' rel="{escape(rel)}"' if rel else ""
-    target_attr = f' target="{escape(target)}"' if target else ""
+    words = re.split(r"(\s+)", str(markupsafe.escape(text)))
+    rel_attr = f' rel="{markupsafe.escape(rel)}"' if rel else ""
+    target_attr = f' target="{markupsafe.escape(target)}"' if target else ""
 
     for i, word in enumerate(words):
         head, middle, tail = "", word, ""
@@ -448,7 +447,9 @@ def generate_lorem_ipsum(n=5, html=True, min=20, max=100):
 
     if not html:
         return "\n\n".join(result)
-    return Markup("\n".join(f"<p>{escape(x)}</p>" for x in result))
+    return markupsafe.Markup(
+        "\n".join(f"<p>{markupsafe.escape(x)}</p>" for x in result)
+    )
 
 
 def url_quote(obj: t.Any, charset: str = "utf-8", for_qs: bool = False) -> str:
@@ -701,7 +702,7 @@ def select_autoescape(
 
 def htmlsafe_json_dumps(
     obj: t.Any, dumps: t.Optional[t.Callable[..., str]] = None, **kwargs: t.Any
-) -> Markup:
+) -> markupsafe.Markup:
     """Serialize an object to a string of JSON with :func:`json.dumps`,
     then replace HTML-unsafe characters with Unicode escapes and mark
     the result safe with :class:`~markupsafe.Markup`.
@@ -730,7 +731,7 @@ def htmlsafe_json_dumps(
     if dumps is None:
         dumps = json.dumps
 
-    return Markup(
+    return markupsafe.Markup(
         dumps(obj, **kwargs)
         .replace("<", "\\u003c")
         .replace(">", "\\u003e")
@@ -837,3 +838,24 @@ try:
     have_async_gen = True
 except SyntaxError:
     have_async_gen = False
+
+
+class Markup(markupsafe.Markup):
+    def __init__(self, *args, **kwargs):
+        warnings.warn(
+            "'jinja2.Markup' is deprecated and will be removed in Jinja"
+            " 3.1. Import 'markupsafe.Markup' instead.",
+            DeprecationWarning,
+            stacklevel=2,
+        )
+        super().__init__(*args, **kwargs)
+
+
+def escape(s):
+    warnings.warn(
+        "'jinja2.escape' is deprecated and will be removed in Jinja"
+        " 3.1. Import 'markupsafe.escape' instead.",
+        DeprecationWarning,
+        stacklevel=2,
+    )
+    return markupsafe.escape(s)

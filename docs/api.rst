@@ -609,27 +609,9 @@ functions to a Jinja environment.
 
 .. autofunction:: jinja2.environmentfunction
 
-.. function:: escape(s)
-
-    Convert the characters ``&``, ``<``, ``>``, ``'``, and ``"`` in string `s`
-    to HTML-safe sequences.  Use this if you need to display text that might
-    contain such characters in HTML.  This function will not escaped objects
-    that do have an HTML representation such as already escaped data.
-
-    The return value is a :class:`Markup` string.
-
 .. autofunction:: jinja2.clear_caches
 
 .. autofunction:: jinja2.is_undefined
-
-.. autoclass:: jinja2.Markup([string])
-    :members: escape, unescape, striptags
-
-.. admonition:: Note
-
-    The Jinja :class:`Markup` class is compatible with at least Pylons and
-    Genshi.  It's expected that more template engines and framework will pick
-    up the `__html__` concept soon.
 
 
 Exceptions

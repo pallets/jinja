@@ -1,7 +1,7 @@
 import pytest
+from markupsafe import escape
 
 from jinja2 import Environment
-from jinja2 import escape
 from jinja2.exceptions import SecurityError
 from jinja2.exceptions import TemplateRuntimeError
 from jinja2.exceptions import TemplateSyntaxError
