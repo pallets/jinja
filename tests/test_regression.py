@@ -594,11 +594,13 @@ class TestBug:
     def test_legacy_custom_context(self, env):
         from jinja2.runtime import Context, missing
 
-        class MyContext(Context):
-            def resolve(self, name):
-                if name == "foo":
-                    return 42
-                return super().resolve(name)
+        with pytest.deprecated_call():
+
+            class MyContext(Context):
+                def resolve(self, name):
+                    if name == "foo":
+                        return 42
+                    return super().resolve(name)
 
         x = MyContext(env, parent={"bar": 23}, name="foo", blocks={})
         assert x._legacy_resolve_mode

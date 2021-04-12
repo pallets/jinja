@@ -364,7 +364,7 @@ The Context
 -----------
 
 .. autoclass:: jinja2.runtime.Context()
-    :members: resolve, get_exported, get_all
+    :members: get, resolve, resolve_or_missing, get_exported, get_all
 
     .. attribute:: parent
 
