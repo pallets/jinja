@@ -9,6 +9,8 @@ from markupsafe import escape  # noqa: F401
 from markupsafe import Markup
 from markupsafe import soft_str
 
+from .async_utils import auto_aiter
+from .async_utils import auto_await  # noqa: F401
 from .exceptions import TemplateNotFound  # noqa: F401
 from .exceptions import TemplateRuntimeError  # noqa: F401
 from .exceptions import UndefinedError
@@ -41,6 +43,11 @@ exported = [
     "Namespace",
     "Undefined",
     "internalcode",
+]
+async_exported = [
+    "AsyncLoopContext",
+    "auto_aiter",
+    "auto_await",
 ]
 
 
@@ -369,10 +376,24 @@ class BlockReference:
         return BlockReference(self.name, self._context, self._stack, self._depth + 1)
 
     @internalcode
-    def __call__(self):
-        rv = concat(self._stack[self._depth](self._context))
+    async def _async_call(self):
+        rv = concat([x async for x in self._stack[self._depth](self._context)])
+
         if self._context.eval_ctx.autoescape:
-            rv = Markup(rv)
+            return Markup(rv)
+
+        return rv
+
+    @internalcode
+    def __call__(self):
+        if self._context.environment.is_async:
+            return self._async_call()
+
+        rv = concat(self._stack[self._depth](self._context))
+
+        if self._context.eval_ctx.autoescape:
+            return Markup(rv)
+
         return rv
 
 
@@ -567,6 +588,73 @@ class LoopContext:
         return f"<{self.__class__.__name__} {self.index}/{self.length}>"
 
 
+class AsyncLoopContext(LoopContext):
+    @staticmethod
+    def _to_iterator(iterable):
+        return auto_aiter(iterable)
+
+    @property
+    async def length(self):
+        if self._length is not None:
+            return self._length
+
+        try:
+            self._length = len(self._iterable)
+        except TypeError:
+            iterable = [x async for x in self._iterator]
+            self._iterator = self._to_iterator(iterable)
+            self._length = len(iterable) + self.index + (self._after is not missing)
+
+        return self._length
+
+    @property
+    async def revindex0(self):
+        return await self.length - self.index
+
+    @property
+    async def revindex(self):
+        return await self.length - self.index0
+
+    async def _peek_next(self):
+        if self._after is not missing:
+            return self._after
+
+        try:
+            self._after = await self._iterator.__anext__()
+        except StopAsyncIteration:
+            self._after = missing
+
+        return self._after
+
+    @property
+    async def last(self):
+        return await self._peek_next() is missing
+
+    @property
+    async def nextitem(self):
+        rv = await self._peek_next()
+
+        if rv is missing:
+            return self._undefined("there is no next item")
+
+        return rv
+
+    def __aiter__(self):
+        return self
+
+    async def __anext__(self):
+        if self._after is not missing:
+            rv = self._after
+            self._after = missing
+        else:
+            rv = await self._iterator.__anext__()
+
+        self.index0 += 1
+        self._before = self._current
+        self._current = rv
+        return rv, self
+
+
 class Macro:
     """Wraps a macro function."""
 
@@ -672,11 +760,23 @@ class Macro:
 
         return self._invoke(arguments, autoescape)
 
+    async def _async_invoke(self, arguments, autoescape):
+        rv = await self._func(*arguments)
+
+        if autoescape:
+            return Markup(rv)
+
+        return rv
+
     def _invoke(self, arguments, autoescape):
-        """This method is being swapped out by the async implementation."""
+        if self._environment.is_async:
+            return self._async_invoke(arguments, autoescape)
+
         rv = self._func(*arguments)
+
         if autoescape:
             rv = Markup(rv)
+
         return rv
 
     def __repr__(self):
