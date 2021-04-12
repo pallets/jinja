@@ -3,7 +3,6 @@ import sys
 import typing as t
 from collections import abc
 from itertools import chain
-from types import MethodType
 
 from markupsafe import escape  # noqa: F401
 from markupsafe import Markup
@@ -129,43 +128,32 @@ class TemplateReference:
         return f"<{self.__class__.__name__} {self.__context.name!r}>"
 
 
-def _get_func(x):
-    return getattr(x, "__func__", x)
-
-
 class ContextMeta(type):
     def __new__(mcs, name, bases, d):
         rv = type.__new__(mcs, name, bases, d)
-        if bases == ():
+
+        if not bases:
             return rv
 
-        resolve = _get_func(rv.resolve)
-        default_resolve = _get_func(Context.resolve)
-        resolve_or_missing = _get_func(rv.resolve_or_missing)
-        default_resolve_or_missing = _get_func(Context.resolve_or_missing)
+        if "resolve_or_missing" in d:
+            # If the subclass overrides resolve_or_missing it opts in to
+            # modern mode no matter what.
+            rv._legacy_resolve_mode = False
+        elif "resolve" in d or rv._legacy_resolve_mode:
+            # If the subclass overrides resolve, or if its base is
+            # already in legacy mode, warn about legacy behavior.
+            import warnings
 
-        # If we have a changed resolve but no changed default or missing
-        # resolve we invert the call logic.
-        if (
-            resolve is not default_resolve
-            and resolve_or_missing is default_resolve_or_missing
-        ):
+            warnings.warn(
+                "Overriding 'resolve' is deprecated and will not have"
+                " the expected behavior in Jinja 3.1. Override"
+                " 'resolve_or_missing' instead ",
+                DeprecationWarning,
+                stacklevel=2,
+            )
             rv._legacy_resolve_mode = True
-        elif (
-            resolve is default_resolve
-            and resolve_or_missing is default_resolve_or_missing
-        ):
-            rv._fast_resolve_mode = True
 
         return rv
-
-
-def resolve_or_missing(context, key, missing=missing):
-    if key in context.vars:
-        return context.vars[key]
-    if key in context.parent:
-        return context.parent[key]
-    return missing
 
 
 @abc.Mapping.register
@@ -189,10 +177,7 @@ class Context(metaclass=ContextMeta):
     :class:`Undefined` object for missing variables.
     """
 
-    # XXX: we want to eventually make this be a deprecation warning and
-    # remove it.
     _legacy_resolve_mode = False
-    _fast_resolve_mode = False
 
     def __init__(self, environment, parent, name, blocks, globals=None):
         self.parent = parent
@@ -208,11 +193,6 @@ class Context(metaclass=ContextMeta):
         # from the template.
         self.blocks = {k: [v] for k, v in blocks.items()}
 
-        # In case we detect the fast resolve mode we can set up an alias
-        # here that bypasses the legacy code logic.
-        if self._fast_resolve_mode:
-            self.resolve_or_missing = MethodType(resolve_or_missing, self)
-
     def super(self, name, current):
         """Render a parent block."""
         try:
@@ -226,8 +206,11 @@ class Context(metaclass=ContextMeta):
         return BlockReference(name, self, blocks, index)
 
     def get(self, key, default=None):
-        """Returns an item from the template context, if it doesn't exist
-        `default` is returned.
+        """Look up a variable by name, or return a default if the key is
+        not found.
+
+        :param key: The variable name to look up.
+        :param default: The value to return if the key is not found.
         """
         try:
             return self[key]
@@ -235,27 +218,56 @@ class Context(metaclass=ContextMeta):
             return default
 
     def resolve(self, key):
-        """Looks up a variable like `__getitem__` or `get` but returns an
-        :class:`Undefined` object with the name of the name looked up.
+        """Look up a variable by name, or return an :class:`Undefined`
+        object if the key is not found.
+
+        If you need to add custom behavior, override
+        :meth:`resolve_or_missing`, not this method. The various lookup
+        functions use that method, not this one.
+
+        :param key: The variable name to look up.
         """
         if self._legacy_resolve_mode:
-            rv = resolve_or_missing(self, key)
-        else:
-            rv = self.resolve_or_missing(key)
+            if key in self.vars:
+                return self.vars[key]
+
+            if key in self.parent:
+                return self.parent[key]
+
+            return self.environment.undefined(name=key)
+
+        rv = self.resolve_or_missing(key)
+
         if rv is missing:
             return self.environment.undefined(name=key)
+
         return rv
 
     def resolve_or_missing(self, key):
-        """Resolves a variable like :meth:`resolve` but returns the
-        special `missing` value if it cannot be found.
+        """Look up a variable by name, or return a ``missing`` sentinel
+        if the key is not found.
+
+        Override this method to add custom lookup behavior.
+        :meth:`resolve`, :meth:`get`, and :meth:`__getitem__` use this
+        method. Don't call this method directly.
+
+        :param key: The variable name to look up.
         """
         if self._legacy_resolve_mode:
             rv = self.resolve(key)
+
             if isinstance(rv, Undefined):
-                rv = missing
+                return missing
+
             return rv
-        return resolve_or_missing(self, key)
+
+        if key in self.vars:
+            return self.vars[key]
+
+        if key in self.parent:
+            return self.parent[key]
+
+        return missing
 
     def get_exported(self):
         """Get a new dict with the exported variables."""
@@ -345,12 +357,14 @@ class Context(metaclass=ContextMeta):
         return name in self.vars or name in self.parent
 
     def __getitem__(self, key):
-        """Lookup a variable or raise `KeyError` if the variable is
-        undefined.
+        """Look up a variable by name with ``[]`` syntax, or raise a
+        ``KeyError`` if the key is not found.
         """
         item = self.resolve_or_missing(key)
+
         if item is missing:
             raise KeyError(key)
+
         return item
 
     def __repr__(self):
