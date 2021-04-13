@@ -1,7 +1,8 @@
+.. py:currentmodule:: jinja2
+.. highlight:: html+jinja
+
 Template Designer Documentation
 ===============================
-
-.. highlight:: html+jinja
 
 This document describes the syntax and semantics of the template engine and
 will be most useful as reference to those creating Jinja templates.  As the
@@ -1484,6 +1485,8 @@ is a bit contrived in the context of rendering a template):
 List of Builtin Filters
 -----------------------
 
+.. py:currentmodule:: jinja-filters
+
 .. jinja:filters:: jinja2.defaults.DEFAULT_FILTERS
 
 
@@ -1491,6 +1494,8 @@ List of Builtin Filters
 
 List of Builtin Tests
 ---------------------
+
+.. py:currentmodule:: jinja-tests
 
 .. jinja:tests:: jinja2.defaults.DEFAULT_TESTS
 
@@ -1501,6 +1506,8 @@ List of Global Functions
 ------------------------
 
 The following functions are available in the global scope by default:
+
+.. py:currentmodule:: jinja-globals
 
 .. function:: range([start,] stop[, step])
 
@@ -1624,6 +1631,8 @@ The following functions are available in the global scope by default:
 
 Extensions
 ----------
+
+.. py:currentmodule:: jinja2
 
 The following sections cover the built-in Jinja extensions that may be
 enabled by an application.  An application could also provide further

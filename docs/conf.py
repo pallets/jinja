@@ -18,6 +18,7 @@ extensions = [
     "sphinxcontrib.log_cabinet",
     "sphinx_issues",
 ]
+autodoc_typehints = "description"
 intersphinx_mapping = {"python": ("https://docs.python.org/3/", None)}
 issues_github_path = "pallets/jinja"
 
