@@ -78,7 +78,7 @@ def unicode_join(seq):
 
     warnings.warn(
         "This template must be recompiled with at least Jinja 3.0, or"
-        " it will fail in 3.1.",
+        " it will fail in Jinja 3.1.",
         DeprecationWarning,
         stacklevel=2,
     )

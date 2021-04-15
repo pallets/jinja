@@ -45,8 +45,9 @@ if t.TYPE_CHECKING:
 def contextfilter(f):
     """Pass the context as the first argument to the decorated function.
 
-    .. deprecated:: 3.0.0
-        Use :func:`~jinja2.pass_context` instead.
+    .. deprecated:: 3.0
+        Will be removed in Jinja 3.1. Use :func:`~jinja2.pass_context`
+        instead.
     """
     warnings.warn(
         "'contextfilter' is renamed to 'pass_context', the old name"
@@ -61,8 +62,9 @@ def evalcontextfilter(f):
     """Pass the eval context as the first argument to the decorated
     function.
 
-    .. deprecated:: 3.0.0
-        Use :func:`~jinja2.pass_eval_context` instead.
+    .. deprecated:: 3.0
+        Will be removed in Jinja 3.1. Use
+        :func:`~jinja2.pass_eval_context` instead.
 
     .. versionadded:: 2.4
     """
@@ -79,8 +81,9 @@ def environmentfilter(f):
     """Pass the environment as the first argument to the decorated
     function.
 
-    .. deprecated:: 3.0.0
-        Use :func:`~jinja2.pass_environment` instead.
+    .. deprecated:: 3.0
+        Will be removed in Jinja 3.1. Use
+        :func:`~jinja2.pass_environment` instead.
     """
     warnings.warn(
         "'environmentfilter' is renamed to 'pass_environment', the old"

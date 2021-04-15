@@ -99,8 +99,9 @@ class _PassArg(enum.Enum):
 def contextfunction(f):
     """Pass the context as the first argument to the decorated function.
 
-    .. deprecated:: 3.0.0
-        Use :func:`~jinja2.pass_context` instead.
+    .. deprecated:: 3.0
+        Will be removed in Jinja 3.1. Use :func:`~jinja2.pass_context`
+        instead.
     """
     warnings.warn(
         "'contextfunction' is renamed to 'pass_context', the old name"
@@ -115,8 +116,9 @@ def evalcontextfunction(f):
     """Pass the eval context as the first argument to the decorated
     function.
 
-    .. deprecated:: 3.0.0
-        Use :func:`~jinja2.pass_eval_context` instead.
+    .. deprecated:: 3.0
+        Will be removed in Jinja 3.1. Use
+        :func:`~jinja2.pass_eval_context` instead.
 
     .. versionadded:: 2.4
     """
@@ -133,8 +135,9 @@ def environmentfunction(f):
     """Pass the environment as the first argument to the decorated
     function.
 
-    .. deprecated:: 3.0.0
-        Use :func:`~jinja2.pass_environment` instead.
+    .. deprecated:: 3.0
+        Will be removed in Jinja 3.1. Use
+        :func:`~jinja2.pass_environment` instead.
     """
     warnings.warn(
         "'environmentfunction' is renamed to 'pass_environment', the"
@@ -477,7 +480,7 @@ def unicode_urlencode(obj, charset="utf-8", for_qs=False):
 
     warnings.warn(
         "'unicode_urlencode' has been renamed to 'url_quote'. The old"
-        " name will be removed in version 3.1.",
+        " name will be removed in Jinja 3.1.",
         DeprecationWarning,
         stacklevel=2,
     )

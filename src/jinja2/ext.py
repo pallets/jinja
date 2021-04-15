@@ -513,7 +513,7 @@ class WithExtension(Extension):
         super().__init__(environment)
         warnings.warn(
             "The 'with' extension is deprecated and will be removed in"
-            " version 3.1. This is built in now.",
+            " Jinja 3.1. This is built in now.",
             DeprecationWarning,
             stacklevel=2,
         )
@@ -523,8 +523,8 @@ class AutoEscapeExtension(Extension):
     def __init__(self, environment):
         super().__init__(environment)
         warnings.warn(
-            "The 'autoescape' extension is deprecated and will be removed in"
-            " version 3.1. This is built in now.",
+            "The 'autoescape' extension is deprecated and will be"
+            " removed in Jinja 3.1. This is built in now.",
             DeprecationWarning,
             stacklevel=2,
         )
