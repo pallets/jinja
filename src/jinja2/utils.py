@@ -833,14 +833,14 @@ class Namespace:
 
 
 class Markup(markupsafe.Markup):
-    def __init__(self, *args, **kwargs):
+    def __new__(cls, base, encoding=None, errors="strict"):
         warnings.warn(
             "'jinja2.Markup' is deprecated and will be removed in Jinja"
             " 3.1. Import 'markupsafe.Markup' instead.",
             DeprecationWarning,
             stacklevel=2,
         )
-        super().__init__(*args, **kwargs)
+        return super().__new__(cls, base, encoding, errors)
 
 
 def escape(s):
