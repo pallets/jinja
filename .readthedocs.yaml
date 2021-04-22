@@ -5,5 +5,5 @@ python:
     - method: pip
       path: .
 sphinx:
-  builder: dirhtml
+  builder: dirhtml 
   fail_on_warning: true
