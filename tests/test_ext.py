@@ -193,7 +193,7 @@ class StreamFilterExtension(Extension):
         pos = 0
         end = len(token.value)
         lineno = token.lineno
-        while 1:
+        while True:
             match = _gettext_re.search(token.value, pos)
             if match is None:
                 break

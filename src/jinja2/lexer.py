@@ -4,18 +4,21 @@ the bitshift operators we don't allow in templates. It separates
 template code and python code in expressions.
 """
 import re
+import typing as t
 from ast import literal_eval
 from collections import deque
-from operator import itemgetter
 from sys import intern
 
 from ._identifier import pattern as name_re
 from .exceptions import TemplateSyntaxError
 from .utils import LRUCache
 
+if t.TYPE_CHECKING:
+    from .environment import Environment
+
 # cache for the lexers. Exists in order to be able to have multiple
 # environments with the same lexer
-_lexer_cache = LRUCache(50)
+_lexer_cache: t.MutableMapping[t.Tuple, "Lexer"] = LRUCache(50)  # type: ignore
 
 # static regular expressions
 whitespace_re = re.compile(r"\s+")
@@ -156,9 +159,10 @@ ignore_if_empty = frozenset(
 )
 
 
-def _describe_token_type(token_type):
+def _describe_token_type(token_type: str) -> str:
     if token_type in reverse_operators:
         return reverse_operators[token_type]
+
     return {
         TOKEN_COMMENT_BEGIN: "begin of comment",
         TOKEN_COMMENT_END: "end of comment",
@@ -175,32 +179,35 @@ def _describe_token_type(token_type):
     }.get(token_type, token_type)
 
 
-def describe_token(token):
+def describe_token(token: "Token") -> str:
     """Returns a description of the token."""
     if token.type == TOKEN_NAME:
         return token.value
+
     return _describe_token_type(token.type)
 
 
-def describe_token_expr(expr):
+def describe_token_expr(expr: str) -> str:
     """Like `describe_token` but for token expressions."""
     if ":" in expr:
         type, value = expr.split(":", 1)
+
         if type == TOKEN_NAME:
             return value
     else:
         type = expr
+
     return _describe_token_type(type)
 
 
-def count_newlines(value):
+def count_newlines(value: str) -> int:
     """Count the number of newline characters in the string.  This is
     useful for extensions that filter a stream.
     """
     return len(newline_re.findall(value))
 
 
-def compile_rules(environment):
+def compile_rules(environment: "Environment") -> t.List[t.Tuple[str, str]]:
     """Compiles all the rules from the environment into a list of rules."""
     e = re.escape
     rules = [
@@ -246,31 +253,25 @@ class Failure:
     Used by the `Lexer` to specify known errors.
     """
 
-    def __init__(self, message, cls=TemplateSyntaxError):
+    def __init__(
+        self, message: str, cls: t.Type[TemplateSyntaxError] = TemplateSyntaxError
+    ) -> None:
         self.message = message
         self.error_class = cls
 
-    def __call__(self, lineno, filename):
+    def __call__(self, lineno: int, filename: str) -> t.NoReturn:
         raise self.error_class(self.message, lineno, filename)
 
 
-class Token(tuple):
-    """Token class."""
+class Token(t.NamedTuple):
+    lineno: int
+    type: str
+    value: str
 
-    __slots__ = ()
-    lineno, type, value = (property(itemgetter(x)) for x in range(3))
+    def __str__(self) -> str:
+        return describe_token(self)
 
-    def __new__(cls, lineno, type, value):
-        return tuple.__new__(cls, (lineno, intern(str(type)), value))
-
-    def __str__(self):
-        if self.type in reverse_operators:
-            return reverse_operators[self.type]
-        elif self.type == "name":
-            return self.value
-        return self.type
-
-    def test(self, expr):
+    def test(self, expr: str) -> bool:
         """Test a token against a token expression.  This can either be a
         token type or ``'token_type:token_value'``.  This can only test
         against string values and types.
@@ -279,19 +280,15 @@ class Token(tuple):
         # passed an iterable of not interned strings.
         if self.type == expr:
             return True
-        elif ":" in expr:
+
+        if ":" in expr:
             return expr.split(":", 1) == [self.type, self.value]
+
         return False
 
-    def test_any(self, *iterable):
+    def test_any(self, *iterable: str) -> bool:
         """Test against multiple token expressions."""
-        for expr in iterable:
-            if self.test(expr):
-                return True
-        return False
-
-    def __repr__(self):
-        return f"Token({self.lineno!r}, {self.type!r}, {self.value!r})"
+        return any(self.test(expr) for expr in iterable)
 
 
 class TokenStreamIterator:
@@ -299,17 +296,19 @@ class TokenStreamIterator:
     until the eof token is reached.
     """
 
-    def __init__(self, stream):
+    def __init__(self, stream: "TokenStream") -> None:
         self.stream = stream
 
-    def __iter__(self):
+    def __iter__(self) -> "TokenStreamIterator":
         return self
 
-    def __next__(self):
+    def __next__(self) -> Token:
         token = self.stream.current
+
         if token.type is TOKEN_EOF:
             self.stream.close()
-            raise StopIteration()
+            raise StopIteration
+
         next(self.stream)
         return token
 
@@ -320,33 +319,36 @@ class TokenStream:
     one token ahead.  The current active token is stored as :attr:`current`.
     """
 
-    def __init__(self, generator, name, filename):
+    def __init__(
+        self,
+        generator: t.Iterable[Token],
+        name: t.Optional[str],
+        filename: t.Optional[str],
+    ):
         self._iter = iter(generator)
-        self._pushed = deque()
+        self._pushed: t.Deque[Token] = deque()
         self.name = name
         self.filename = filename
         self.closed = False
         self.current = Token(1, TOKEN_INITIAL, "")
         next(self)
 
-    def __iter__(self):
+    def __iter__(self) -> TokenStreamIterator:
         return TokenStreamIterator(self)
 
-    def __bool__(self):
+    def __bool__(self) -> bool:
         return bool(self._pushed) or self.current.type is not TOKEN_EOF
 
-    __nonzero__ = __bool__  # py2
-
     @property
-    def eos(self):
+    def eos(self) -> bool:
         """Are we at the end of the stream?"""
         return not self
 
-    def push(self, token):
+    def push(self, token: Token) -> None:
         """Push a token back to the stream."""
         self._pushed.append(token)
 
-    def look(self):
+    def look(self) -> Token:
         """Look at the next token."""
         old_token = next(self)
         result = self.current
@@ -354,28 +356,31 @@ class TokenStream:
         self.current = old_token
         return result
 
-    def skip(self, n=1):
+    def skip(self, n: int = 1) -> None:
         """Got n tokens ahead."""
         for _ in range(n):
             next(self)
 
-    def next_if(self, expr):
+    def next_if(self, expr: str) -> t.Optional[Token]:
         """Perform the token test and return the token if it matched.
         Otherwise the return value is `None`.
         """
         if self.current.test(expr):
             return next(self)
 
-    def skip_if(self, expr):
+        return None
+
+    def skip_if(self, expr: str) -> bool:
         """Like :meth:`next_if` but only returns `True` or `False`."""
         return self.next_if(expr) is not None
 
-    def __next__(self):
+    def __next__(self) -> Token:
         """Go one token ahead and return the old one.
 
         Use the built-in :func:`next` instead of calling this directly.
         """
         rv = self.current
+
         if self._pushed:
             self.current = self._pushed.popleft()
         elif self.current.type is not TOKEN_EOF:
@@ -383,20 +388,22 @@ class TokenStream:
                 self.current = next(self._iter)
             except StopIteration:
                 self.close()
+
         return rv
 
-    def close(self):
+    def close(self) -> None:
         """Close the stream."""
         self.current = Token(self.current.lineno, TOKEN_EOF, "")
-        self._iter = None
+        self._iter = iter(())
         self.closed = True
 
-    def expect(self, expr):
+    def expect(self, expr: str) -> Token:
         """Expect a given token type and return it.  This accepts the same
         argument as :meth:`jinja2.lexer.Token.test`.
         """
         if not self.current.test(expr):
             expr = describe_token_expr(expr)
+
             if self.current.type is TOKEN_EOF:
                 raise TemplateSyntaxError(
                     f"unexpected end of template, expected {expr!r}.",
@@ -404,19 +411,18 @@ class TokenStream:
                     self.name,
                     self.filename,
                 )
+
             raise TemplateSyntaxError(
                 f"expected token {expr!r}, got {describe_token(self.current)!r}",
                 self.current.lineno,
                 self.name,
                 self.filename,
             )
-        try:
-            return self.current
-        finally:
-            next(self)
+
+        return next(self)
 
 
-def get_lexer(environment):
+def get_lexer(environment: "Environment") -> "Lexer":
     """Return a lexer which is probably cached."""
     key = (
         environment.block_start_string,
@@ -433,9 +439,10 @@ def get_lexer(environment):
         environment.keep_trailing_newline,
     )
     lexer = _lexer_cache.get(key)
+
     if lexer is None:
-        lexer = Lexer(environment)
-        _lexer_cache[key] = lexer
+        _lexer_cache[key] = lexer = Lexer(environment)
+
     return lexer
 
 
@@ -448,8 +455,14 @@ class OptionalLStrip(tuple):
 
     # Even though it looks like a no-op, creating instances fails
     # without this.
-    def __new__(cls, *members, **kwargs):
+    def __new__(cls, *members, **kwargs):  # type: ignore
         return super().__new__(cls, members)
+
+
+class _Rule(t.NamedTuple):
+    pattern: t.Pattern[str]
+    tokens: t.Union[str, t.Tuple[str, ...], t.Tuple[Failure]]
+    command: t.Optional[str]
 
 
 class Lexer:
@@ -460,21 +473,21 @@ class Lexer:
     Multiple environments can share the same lexer.
     """
 
-    def __init__(self, environment):
+    def __init__(self, environment: "Environment") -> None:
         # shortcuts
         e = re.escape
 
-        def c(x):
+        def c(x: str) -> t.Pattern[str]:
             return re.compile(x, re.M | re.S)
 
         # lexing rules for tags
-        tag_rules = [
-            (whitespace_re, TOKEN_WHITESPACE, None),
-            (float_re, TOKEN_FLOAT, None),
-            (integer_re, TOKEN_INTEGER, None),
-            (name_re, TOKEN_NAME, None),
-            (string_re, TOKEN_STRING, None),
-            (operator_re, TOKEN_OPERATOR, None),
+        tag_rules: t.List[_Rule] = [
+            _Rule(whitespace_re, TOKEN_WHITESPACE, None),
+            _Rule(float_re, TOKEN_FLOAT, None),
+            _Rule(integer_re, TOKEN_INTEGER, None),
+            _Rule(name_re, TOKEN_NAME, None),
+            _Rule(string_re, TOKEN_STRING, None),
+            _Rule(operator_re, TOKEN_OPERATOR, None),
         ]
 
         # assemble the root lexing rule. because "|" is ungreedy
@@ -509,20 +522,20 @@ class Lexer:
         )
 
         # global lexing rules
-        self.rules = {
+        self.rules: t.Dict[str, t.List[_Rule]] = {
             "root": [
                 # directives
-                (
+                _Rule(
                     c(fr"(.*?)(?:{root_parts_re})"),
-                    OptionalLStrip(TOKEN_DATA, "#bygroup"),
+                    OptionalLStrip(TOKEN_DATA, "#bygroup"),  # type: ignore
                     "#bygroup",
                 ),
                 # data
-                (c(".+"), TOKEN_DATA, None),
+                _Rule(c(".+"), TOKEN_DATA, None),
             ],
             # comments
             TOKEN_COMMENT_BEGIN: [
-                (
+                _Rule(
                     c(
                         fr"(.*?)((?:\+{comment_end_re}|\-{comment_end_re}\s*"
                         fr"|{comment_end_re}{block_suffix_re}))"
@@ -530,11 +543,11 @@ class Lexer:
                     (TOKEN_COMMENT, TOKEN_COMMENT_END),
                     "#pop",
                 ),
-                (c(r"(.)"), (Failure("Missing end of comment tag"),), None),
+                _Rule(c(r"(.)"), (Failure("Missing end of comment tag"),), None),
             ],
             # blocks
             TOKEN_BLOCK_BEGIN: [
-                (
+                _Rule(
                     c(
                         fr"(?:\+{block_end_re}|\-{block_end_re}\s*"
                         fr"|{block_end_re}{block_suffix_re})"
@@ -546,7 +559,7 @@ class Lexer:
             + tag_rules,
             # variables
             TOKEN_VARIABLE_BEGIN: [
-                (
+                _Rule(
                     c(fr"\-{variable_end_re}\s*|{variable_end_re}"),
                     TOKEN_VARIABLE_END,
                     "#pop",
@@ -555,25 +568,25 @@ class Lexer:
             + tag_rules,
             # raw block
             TOKEN_RAW_BEGIN: [
-                (
+                _Rule(
                     c(
                         fr"(.*?)((?:{block_start_re}(\-|\+|))\s*endraw\s*"
                         fr"(?:\+{block_end_re}|\-{block_end_re}\s*"
                         fr"|{block_end_re}{block_suffix_re}))"
                     ),
-                    OptionalLStrip(TOKEN_DATA, TOKEN_RAW_END),
+                    OptionalLStrip(TOKEN_DATA, TOKEN_RAW_END),  # type: ignore
                     "#pop",
                 ),
-                (c(r"(.)"), (Failure("Missing end of raw directive"),), None),
+                _Rule(c(r"(.)"), (Failure("Missing end of raw directive"),), None),
             ],
             # line statements
             TOKEN_LINESTATEMENT_BEGIN: [
-                (c(r"\s*(\n|$)"), TOKEN_LINESTATEMENT_END, "#pop")
+                _Rule(c(r"\s*(\n|$)"), TOKEN_LINESTATEMENT_END, "#pop")
             ]
             + tag_rules,
             # line comments
             TOKEN_LINECOMMENT_BEGIN: [
-                (
+                _Rule(
                     c(r"(.*?)()(?=\n|$)"),
                     (TOKEN_LINECOMMENT, TOKEN_LINECOMMENT_END),
                     "#pop",
@@ -581,25 +594,39 @@ class Lexer:
             ],
         }
 
-    def _normalize_newlines(self, value):
+    def _normalize_newlines(self, value: str) -> str:
         """Replace all newlines with the configured sequence in strings
         and template data.
         """
         return newline_re.sub(self.newline_sequence, value)
 
-    def tokenize(self, source, name=None, filename=None, state=None):
+    def tokenize(
+        self,
+        source: str,
+        name: t.Optional[str] = None,
+        filename: t.Optional[str] = None,
+        state: t.Optional[str] = None,
+    ) -> TokenStream:
         """Calls tokeniter + tokenize and wraps it in a token stream."""
         stream = self.tokeniter(source, name, filename, state)
         return TokenStream(self.wrap(stream, name, filename), name, filename)
 
-    def wrap(self, stream, name=None, filename=None):
+    def wrap(
+        self,
+        stream: t.Iterable[t.Tuple[int, str, str]],
+        name: t.Optional[str] = None,
+        filename: t.Optional[str] = None,
+    ) -> t.Iterator[Token]:
         """This is called with the stream as returned by `tokenize` and wraps
         every token in a :class:`Token` and converts the value.
         """
-        for lineno, token, value in stream:
+        for lineno, token, value_str in stream:
             if token in ignored_tokens:
                 continue
-            elif token == TOKEN_LINESTATEMENT_BEGIN:
+
+            value: t.Any = value_str
+
+            if token == TOKEN_LINESTATEMENT_BEGIN:
                 token = TOKEN_BLOCK_BEGIN
             elif token == TOKEN_LINESTATEMENT_END:
                 token = TOKEN_BLOCK_END
@@ -607,11 +634,12 @@ class Lexer:
             elif token in (TOKEN_RAW_BEGIN, TOKEN_RAW_END):
                 continue
             elif token == TOKEN_DATA:
-                value = self._normalize_newlines(value)
+                value = self._normalize_newlines(value_str)
             elif token == "keyword":
-                token = value
+                token = value_str
             elif token == TOKEN_NAME:
-                value = str(value)
+                value = value_str
+
                 if not value.isidentifier():
                     raise TemplateSyntaxError(
                         "Invalid character in identifier", lineno, name, filename
@@ -620,7 +648,7 @@ class Lexer:
                 # try to unescape string
                 try:
                     value = (
-                        self._normalize_newlines(value[1:-1])
+                        self._normalize_newlines(value_str[1:-1])
                         .encode("ascii", "backslashreplace")
                         .decode("unicode-escape")
                     )
@@ -628,15 +656,22 @@ class Lexer:
                     msg = str(e).split(":")[-1].strip()
                     raise TemplateSyntaxError(msg, lineno, name, filename)
             elif token == TOKEN_INTEGER:
-                value = int(value.replace("_", ""), 0)
+                value = int(value_str.replace("_", ""), 0)
             elif token == TOKEN_FLOAT:
                 # remove all "_" first to support more Python versions
-                value = literal_eval(value.replace("_", ""))
+                value = literal_eval(value_str.replace("_", ""))
             elif token == TOKEN_OPERATOR:
-                token = operators[value]
+                token = operators[value_str]
+
             yield Token(lineno, token, value)
 
-    def tokeniter(self, source, name, filename=None, state=None):
+    def tokeniter(
+        self,
+        source: str,
+        name: t.Optional[str],
+        filename: t.Optional[str] = None,
+        state: t.Optional[str] = None,
+    ) -> t.Iterator[t.Tuple[int, str, str]]:
         """This method tokenizes the text and returns the tokens in a
         generator. Use this method if you just want to tokenize a template.
 
@@ -653,20 +688,23 @@ class Lexer:
         pos = 0
         lineno = 1
         stack = ["root"]
+
         if state is not None and state != "root":
             assert state in ("variable", "block"), "invalid state"
             stack.append(state + "_begin")
+
         statetokens = self.rules[stack[-1]]
         source_length = len(source)
-        balancing_stack = []
+        balancing_stack: t.List[str] = []
         lstrip_unless_re = self.lstrip_unless_re
         newlines_stripped = 0
         line_starting = True
 
-        while 1:
+        while True:
             # tokenizer loop
             for regex, tokens, new_state in statetokens:
                 m = regex.match(source, pos)
+
                 # if no match we try again with the next rule
                 if m is None:
                     continue
@@ -690,7 +728,6 @@ class Lexer:
                         # Rule supports lstrip. Match will look like
                         # text, block type, whitespace control, type, control, ...
                         text = groups[0]
-
                         # Skipping the text and first type, every other group is the
                         # whitespace control for each type. One of the groups will be
                         # -, +, or empty string instead of None.
@@ -700,7 +737,7 @@ class Lexer:
                             # Strip all whitespace between the text and the tag.
                             stripped = text.rstrip()
                             newlines_stripped = text[len(stripped) :].count("\n")
-                            groups = (stripped,) + groups[1:]
+                            groups = [stripped, *groups[1:]]
                         elif (
                             # Not marked for preserving whitespace.
                             strip_sign != "+"
@@ -711,11 +748,12 @@ class Lexer:
                         ):
                             # The start of text between the last newline and the tag.
                             l_pos = text.rfind("\n") + 1
+
                             if l_pos > 0 or line_starting:
                                 # If there's only whitespace between the newline and the
                                 # tag, strip it.
                                 if not lstrip_unless_re.search(text, l_pos):
-                                    groups = (text[:l_pos],) + groups[1:]
+                                    groups = [text[:l_pos], *groups[1:]]
 
                     for idx, token in enumerate(tokens):
                         # failure group
@@ -738,14 +776,17 @@ class Lexer:
                         # normal group
                         else:
                             data = groups[idx]
+
                             if data or token not in ignore_if_empty:
                                 yield lineno, token, data
+
                             lineno += data.count("\n") + newlines_stripped
                             newlines_stripped = 0
 
                 # strings as token just are yielded as it.
                 else:
                     data = m.group()
+
                     # update brace/parentheses balance
                     if tokens == TOKEN_OPERATOR:
                         if data == "{":
@@ -759,7 +800,9 @@ class Lexer:
                                 raise TemplateSyntaxError(
                                     f"unexpected '{data}'", lineno, name, filename
                                 )
+
                             expected_op = balancing_stack.pop()
+
                             if expected_op != data:
                                 raise TemplateSyntaxError(
                                     f"unexpected '{data}', expected '{expected_op}'",
@@ -767,13 +810,14 @@ class Lexer:
                                     name,
                                     filename,
                                 )
+
                     # yield items
                     if data or tokens not in ignore_if_empty:
                         yield lineno, tokens, data
+
                     lineno += data.count("\n")
 
                 line_starting = m.group()[-1:] == "\n"
-
                 # fetch new position into new variable so that we can check
                 # if there is a internal parsing error which would result
                 # in an infinite loop
@@ -798,6 +842,7 @@ class Lexer:
                     # direct state name given
                     else:
                         stack.append(new_state)
+
                     statetokens = self.rules[stack[-1]]
                 # we are still at the same position and no stack change.
                 # this means a loop without break condition, avoid that and
@@ -806,6 +851,7 @@ class Lexer:
                     raise RuntimeError(
                         f"{regex!r} yielded empty string without stack change"
                     )
+
                 # publish new function and start again
                 pos = pos2
                 break
@@ -815,6 +861,7 @@ class Lexer:
                 # end of text
                 if pos >= source_length:
                     return
+
                 # something went wrong
                 raise TemplateSyntaxError(
                     f"unexpected char {source[pos]!r} at {pos}", lineno, name, filename

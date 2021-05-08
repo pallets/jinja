@@ -34,15 +34,17 @@ if t.TYPE_CHECKING:
     from .runtime import Context
     from .sandbox import SandboxedEnvironment  # noqa: F401
 
-    K = t.TypeVar("K")
-    V = t.TypeVar("V")
-
     class HasHTML(te.Protocol):
         def __html__(self) -> str:
             pass
 
 
-def contextfilter(f):
+F = t.TypeVar("F", bound=t.Callable[..., t.Any])
+K = t.TypeVar("K")
+V = t.TypeVar("V")
+
+
+def contextfilter(f: F) -> F:
     """Pass the context as the first argument to the decorated function.
 
     .. deprecated:: 3.0
@@ -58,7 +60,7 @@ def contextfilter(f):
     return pass_context(f)
 
 
-def evalcontextfilter(f):
+def evalcontextfilter(f: F) -> F:
     """Pass the eval context as the first argument to the decorated
     function.
 
@@ -77,7 +79,7 @@ def evalcontextfilter(f):
     return pass_eval_context(f)
 
 
-def environmentfilter(f):
+def environmentfilter(f: F) -> F:
     """Pass the environment as the first argument to the decorated
     function.
 
@@ -94,11 +96,11 @@ def environmentfilter(f):
     return pass_environment(f)
 
 
-def ignore_case(value: "V") -> "V":
+def ignore_case(value: V) -> V:
     """For use as a postprocessor for :func:`make_attrgetter`. Converts strings
     to lowercase and returns other types as-is."""
     if isinstance(value, str):
-        return t.cast("V", value.lower())
+        return t.cast(V, value.lower())
 
     return value
 
@@ -334,11 +336,11 @@ def do_title(s: str) -> str:
 
 
 def do_dictsort(
-    value: "t.Mapping[K, V]",
+    value: t.Mapping[K, V],
     case_sensitive: bool = False,
     by: 'te.Literal["key", "value"]' = "key",
     reverse: bool = False,
-) -> "t.List[t.Tuple[K, V]]":
+) -> t.List[t.Tuple[K, V]]:
     """Sort a dict and yield (key, value) pairs. Python dicts may not
     be in the order you want to display them in, so sort them first.
 
@@ -363,7 +365,7 @@ def do_dictsort(
     else:
         raise FilterArgumentError('You can only sort by either "key" or "value"')
 
-    def sort_func(item):
+    def sort_func(item: t.Tuple[t.Any, t.Any]) -> t.Any:
         value = item[pos]
 
         if not case_sensitive:
@@ -524,10 +526,10 @@ def do_max(
 
 
 def do_default(
-    value: "V",
-    default_value: "V" = "",  # type: ignore
+    value: V,
+    default_value: V = "",  # type: ignore
     boolean: bool = False,
-) -> "V":
+) -> V:
     """If the value is undefined it will return the passed default value,
     otherwise the value of the variable:
 
@@ -614,7 +616,7 @@ def sync_do_join(
     return soft_str(d).join(map(soft_str, value))
 
 
-@async_variant(sync_do_join)
+@async_variant(sync_do_join)  # type: ignore
 async def do_join(
     eval_ctx: "EvalContext",
     value: t.Union[t.AsyncIterable, t.Iterable],
@@ -640,12 +642,12 @@ def sync_do_first(
         return environment.undefined("No first item, sequence was empty.")
 
 
-@async_variant(sync_do_first)
+@async_variant(sync_do_first)  # type: ignore
 async def do_first(
     environment: "Environment", seq: "t.Union[t.AsyncIterable[V], t.Iterable[V]]"
 ) -> "t.Union[V, Undefined]":
     try:
-        return t.cast("V", await auto_aiter(seq).__anext__())
+        return await auto_aiter(seq).__anext__()
     except StopAsyncIteration:
         return environment.undefined("No first item, sequence was empty.")
 
@@ -716,7 +718,7 @@ def do_filesizeformat(value: t.Union[str, float, int], binary: bool = False) -> 
 
 def do_pprint(value: t.Any) -> str:
     """Pretty print a variable. Useful for debugging."""
-    return t.cast(str, pformat(value))
+    return pformat(value)
 
 
 _uri_scheme_re = re.compile(r"^([\w.+-]{2,}:(/){0,2})$")
@@ -1079,7 +1081,7 @@ def sync_do_slice(
         yield tmp
 
 
-@async_variant(sync_do_slice)
+@async_variant(sync_do_slice)  # type: ignore
 async def do_slice(
     value: "t.Union[t.AsyncIterable[V], t.Iterable[V]]",
     slices: int,
@@ -1171,10 +1173,10 @@ class _GroupTuple(t.NamedTuple):
 
     # Use the regular tuple repr to hide this subclass if users print
     # out the value during debugging.
-    def __repr__(self):
+    def __repr__(self) -> str:
         return tuple.__repr__(self)
 
-    def __str__(self):
+    def __str__(self) -> str:
         return tuple.__str__(self)
 
 
@@ -1237,7 +1239,7 @@ def sync_do_groupby(
     ]
 
 
-@async_variant(sync_do_groupby)
+@async_variant(sync_do_groupby)  # type: ignore
 async def do_groupby(
     environment: "Environment",
     value: "t.Union[t.AsyncIterable[V], t.Iterable[V]]",
@@ -1256,8 +1258,8 @@ def sync_do_sum(
     environment: "Environment",
     iterable: "t.Iterable[V]",
     attribute: t.Optional[t.Union[str, int]] = None,
-    start: "V" = 0,  # type: ignore
-) -> "V":
+    start: V = 0,  # type: ignore
+) -> V:
     """Returns the sum of a sequence of numbers plus the value of parameter
     'start' (which defaults to 0).  When the sequence is empty it returns
     start.
@@ -1278,20 +1280,20 @@ def sync_do_sum(
     return sum(iterable, start)
 
 
-@async_variant(sync_do_sum)
+@async_variant(sync_do_sum)  # type: ignore
 async def do_sum(
     environment: "Environment",
     iterable: "t.Union[t.AsyncIterable[V], t.Iterable[V]]",
     attribute: t.Optional[t.Union[str, int]] = None,
-    start: "V" = 0,  # type: ignore
-) -> "V":
+    start: V = 0,  # type: ignore
+) -> V:
     rv = start
 
     if attribute is not None:
         func = make_attrgetter(environment, attribute)
     else:
 
-        def func(x):
+        def func(x: V) -> V:
             return x
 
     async for item in auto_aiter(iterable):
@@ -1307,7 +1309,7 @@ def sync_do_list(value: "t.Iterable[V]") -> "t.List[V]":
     return list(value)
 
 
-@async_variant(sync_do_list)
+@async_variant(sync_do_list)  # type: ignore
 async def do_list(value: "t.Union[t.AsyncIterable[V], t.Iterable[V]]") -> "t.List[V]":
     return await auto_to_list(value)
 
@@ -1334,7 +1336,7 @@ def do_reverse(value: "t.Iterable[V]") -> "t.Iterable[V]":
     ...
 
 
-def do_reverse(value):
+def do_reverse(value: t.Union[str, t.Iterable[V]]) -> t.Union[str, t.Iterable[V]]:
     """Reverse the object or return an iterator that iterates over it the other
     way round.
     """
@@ -1342,7 +1344,7 @@ def do_reverse(value):
         return value[::-1]
 
     try:
-        return reversed(value)
+        return reversed(value)  # type: ignore
     except TypeError:
         try:
             rv = list(value)
@@ -1402,7 +1404,9 @@ def sync_do_map(
 
 
 @pass_context
-def sync_do_map(context, value, *args, **kwargs):
+def sync_do_map(
+    context: "Context", value: t.Iterable, *args: t.Any, **kwargs: t.Any
+) -> t.Iterable:
     """Applies a filter on a sequence of objects or looks up an attribute.
     This is useful when dealing with lists of objects but you are really
     only interested in a certain value of it.
@@ -1471,8 +1475,13 @@ def do_map(
     ...
 
 
-@async_variant(sync_do_map)
-async def do_map(context, value, *args, **kwargs):
+@async_variant(sync_do_map)  # type: ignore
+async def do_map(
+    context: "Context",
+    value: t.Union[t.AsyncIterable, t.Iterable],
+    *args: t.Any,
+    **kwargs: t.Any,
+) -> t.AsyncIterable:
     if value:
         func = prepare_map(context, args, kwargs)
 
@@ -1511,7 +1520,7 @@ def sync_do_select(
     return select_or_reject(context, value, args, kwargs, lambda x: x, False)
 
 
-@async_variant(sync_do_select)
+@async_variant(sync_do_select)  # type: ignore
 async def do_select(
     context: "Context",
     value: "t.Union[t.AsyncIterable[V], t.Iterable[V]]",
@@ -1547,7 +1556,7 @@ def sync_do_reject(
     return select_or_reject(context, value, args, kwargs, lambda x: not x, False)
 
 
-@async_variant(sync_do_reject)
+@async_variant(sync_do_reject)  # type: ignore
 async def do_reject(
     context: "Context",
     value: "t.Union[t.AsyncIterable[V], t.Iterable[V]]",
@@ -1587,7 +1596,7 @@ def sync_do_selectattr(
     return select_or_reject(context, value, args, kwargs, lambda x: x, True)
 
 
-@async_variant(sync_do_selectattr)
+@async_variant(sync_do_selectattr)  # type: ignore
 async def do_selectattr(
     context: "Context",
     value: "t.Union[t.AsyncIterable[V], t.Iterable[V]]",
@@ -1625,7 +1634,7 @@ def sync_do_rejectattr(
     return select_or_reject(context, value, args, kwargs, lambda x: not x, True)
 
 
-@async_variant(sync_do_rejectattr)
+@async_variant(sync_do_rejectattr)  # type: ignore
 async def do_rejectattr(
     context: "Context",
     value: "t.Union[t.AsyncIterable[V], t.Iterable[V]]",
@@ -1684,7 +1693,7 @@ def prepare_map(
         except LookupError:
             raise FilterArgumentError("map requires a filter argument")
 
-        def func(item):
+        def func(item: t.Any) -> t.Any:
             return context.environment.call_filter(
                 name, item, args, kwargs, context=context
             )
@@ -1710,18 +1719,18 @@ def prepare_select_or_reject(
     else:
         off = 0
 
-        def transfunc(x):
+        def transfunc(x: V) -> V:
             return x
 
     try:
         name = args[off]
         args = args[1 + off :]
 
-        def func(item):
+        def func(item: t.Any) -> t.Any:
             return context.environment.call_test(name, item, args, kwargs)
 
     except LookupError:
-        func = bool
+        func = bool  # type: ignore
 
     return lambda item: modfunc(func(transfunc(item)))
 

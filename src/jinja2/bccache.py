@@ -13,10 +13,22 @@ import pickle
 import stat
 import sys
 import tempfile
+import typing as t
 from hashlib import sha1
 from io import BytesIO
+from types import CodeType
 
-from .utils import open_if_exists
+if t.TYPE_CHECKING:
+    import typing_extensions as te
+    from .environment import Environment
+
+    class _MemcachedClient(te.Protocol):
+        def get(self, key: str) -> bytes:
+            ...
+
+        def set(self, key: str, value: bytes, timeout: t.Optional[int] = None) -> None:
+            ...
+
 
 bc_version = 5
 # Magic bytes to identify Jinja bytecode cache files. Contains the
@@ -38,17 +50,17 @@ class Bucket:
     cache subclasses don't have to care about cache invalidation.
     """
 
-    def __init__(self, environment, key, checksum):
+    def __init__(self, environment: "Environment", key: str, checksum: str) -> None:
         self.environment = environment
         self.key = key
         self.checksum = checksum
         self.reset()
 
-    def reset(self):
+    def reset(self) -> None:
         """Resets the bucket (unloads the bytecode)."""
-        self.code = None
+        self.code: t.Optional[CodeType] = None
 
-    def load_bytecode(self, f):
+    def load_bytecode(self, f: t.BinaryIO) -> None:
         """Loads bytecode from a file or file like object."""
         # make sure the magic header is correct
         magic = f.read(len(bc_magic))
@@ -67,7 +79,7 @@ class Bucket:
             self.reset()
             return
 
-    def write_bytecode(self, f):
+    def write_bytecode(self, f: t.BinaryIO) -> None:
         """Dump the bytecode into the file or file like object passed."""
         if self.code is None:
             raise TypeError("can't write empty bucket")
@@ -75,12 +87,12 @@ class Bucket:
         pickle.dump(self.checksum, f, 2)
         marshal.dump(self.code, f)
 
-    def bytecode_from_string(self, string):
-        """Load bytecode from a string."""
+    def bytecode_from_string(self, string: bytes) -> None:
+        """Load bytecode from bytes."""
         self.load_bytecode(BytesIO(string))
 
-    def bytecode_to_string(self):
-        """Return the bytecode as string."""
+    def bytecode_to_string(self) -> bytes:
+        """Return the bytecode as bytes."""
         out = BytesIO()
         self.write_bytecode(out)
         return out.getvalue()
@@ -115,41 +127,48 @@ class BytecodeCache:
     Jinja.
     """
 
-    def load_bytecode(self, bucket):
+    def load_bytecode(self, bucket: Bucket) -> None:
         """Subclasses have to override this method to load bytecode into a
         bucket.  If they are not able to find code in the cache for the
         bucket, it must not do anything.
         """
         raise NotImplementedError()
 
-    def dump_bytecode(self, bucket):
+    def dump_bytecode(self, bucket: Bucket) -> None:
         """Subclasses have to override this method to write the bytecode
         from a bucket back to the cache.  If it unable to do so it must not
         fail silently but raise an exception.
         """
         raise NotImplementedError()
 
-    def clear(self):
+    def clear(self) -> None:
         """Clears the cache.  This method is not used by Jinja but should be
         implemented to allow applications to clear the bytecode cache used
         by a particular environment.
         """
 
-    def get_cache_key(self, name, filename=None):
+    def get_cache_key(
+        self, name: str, filename: t.Optional[t.Union[str]] = None
+    ) -> str:
         """Returns the unique hash key for this template name."""
         hash = sha1(name.encode("utf-8"))
+
         if filename is not None:
-            filename = "|" + filename
-            if isinstance(filename, str):
-                filename = filename.encode("utf-8")
-            hash.update(filename)
+            hash.update(f"|{filename}".encode("utf-8"))
+
         return hash.hexdigest()
 
-    def get_source_checksum(self, source):
+    def get_source_checksum(self, source: str) -> str:
         """Returns a checksum for the source."""
         return sha1(source.encode("utf-8")).hexdigest()
 
-    def get_bucket(self, environment, name, filename, source):
+    def get_bucket(
+        self,
+        environment: "Environment",
+        name: str,
+        filename: t.Optional[str],
+        source: str,
+    ) -> Bucket:
         """Return a cache bucket for the given template.  All arguments are
         mandatory but filename may be `None`.
         """
@@ -159,7 +178,7 @@ class BytecodeCache:
         self.load_bytecode(bucket)
         return bucket
 
-    def set_bucket(self, bucket):
+    def set_bucket(self, bucket: Bucket) -> None:
         """Put the bucket into the cache."""
         self.dump_bytecode(bucket)
 
@@ -182,14 +201,16 @@ class FileSystemBytecodeCache(BytecodeCache):
     This bytecode cache supports clearing of the cache using the clear method.
     """
 
-    def __init__(self, directory=None, pattern="__jinja2_%s.cache"):
+    def __init__(
+        self, directory: t.Optional[str] = None, pattern: str = "__jinja2_%s.cache"
+    ) -> None:
         if directory is None:
             directory = self._get_default_cache_dir()
         self.directory = directory
         self.pattern = pattern
 
-    def _get_default_cache_dir(self):
-        def _unsafe_dir():
+    def _get_default_cache_dir(self) -> str:
+        def _unsafe_dir() -> t.NoReturn:
             raise RuntimeError(
                 "Cannot determine safe temp directory.  You "
                 "need to explicitly provide one."
@@ -235,25 +256,21 @@ class FileSystemBytecodeCache(BytecodeCache):
 
         return actual_dir
 
-    def _get_cache_filename(self, bucket):
+    def _get_cache_filename(self, bucket: Bucket) -> str:
         return os.path.join(self.directory, self.pattern % (bucket.key,))
 
-    def load_bytecode(self, bucket):
-        f = open_if_exists(self._get_cache_filename(bucket), "rb")
-        if f is not None:
-            try:
+    def load_bytecode(self, bucket: Bucket) -> None:
+        filename = self._get_cache_filename(bucket)
+
+        if os.path.exists(filename):
+            with open(filename, "rb") as f:
                 bucket.load_bytecode(f)
-            finally:
-                f.close()
 
-    def dump_bytecode(self, bucket):
-        f = open(self._get_cache_filename(bucket), "wb")
-        try:
+    def dump_bytecode(self, bucket: Bucket) -> None:
+        with open(self._get_cache_filename(bucket), "wb") as f:
             bucket.write_bytecode(f)
-        finally:
-            f.close()
 
-    def clear(self):
+    def clear(self) -> None:
         # imported lazily here because google app-engine doesn't support
         # write access on the file system and the function does not exist
         # normally.
@@ -314,32 +331,34 @@ class MemcachedBytecodeCache(BytecodeCache):
 
     def __init__(
         self,
-        client,
-        prefix="jinja2/bytecode/",
-        timeout=None,
-        ignore_memcache_errors=True,
+        client: "_MemcachedClient",
+        prefix: str = "jinja2/bytecode/",
+        timeout: t.Optional[int] = None,
+        ignore_memcache_errors: bool = True,
     ):
         self.client = client
         self.prefix = prefix
         self.timeout = timeout
         self.ignore_memcache_errors = ignore_memcache_errors
 
-    def load_bytecode(self, bucket):
+    def load_bytecode(self, bucket: Bucket) -> None:
         try:
             code = self.client.get(self.prefix + bucket.key)
         except Exception:
             if not self.ignore_memcache_errors:
                 raise
-            code = None
-        if code is not None:
+        else:
             bucket.bytecode_from_string(code)
 
-    def dump_bytecode(self, bucket):
-        args = (self.prefix + bucket.key, bucket.bytecode_to_string())
-        if self.timeout is not None:
-            args += (self.timeout,)
+    def dump_bytecode(self, bucket: Bucket) -> None:
+        key = self.prefix + bucket.key
+        value = bucket.bytecode_to_string()
+
         try:
-            self.client.set(*args)
+            if self.timeout is not None:
+                self.client.set(key, value, self.timeout)
+            else:
+                self.client.set(key, value)
         except Exception:
             if not self.ignore_memcache_errors:
                 raise

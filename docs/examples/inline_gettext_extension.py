@@ -30,7 +30,7 @@ class InlineGettext(Extension):
             pos = 0
             lineno = token.lineno
 
-            while 1:
+            while True:
                 if not paren_stack:
                     match = _outside_re.search(token.value, pos)
                 else:
