@@ -1,4 +1,5 @@
 """The runtime functions and state used by compiled templates."""
+import functools
 import sys
 import typing as t
 from collections import abc
@@ -22,8 +23,23 @@ from .utils import Namespace  # noqa: F401
 from .utils import object_type_repr
 from .utils import pass_eval_context
 
+V = t.TypeVar("V")
+F = t.TypeVar("F", bound=t.Callable[..., t.Any])
+
 if t.TYPE_CHECKING:
+    import logging
+    import typing_extensions as te
     from .environment import Environment
+
+    class LoopRenderFunc(te.Protocol):
+        def __call__(
+            self,
+            reciter: t.Iterable[V],
+            loop_render_func: "LoopRenderFunc",
+            depth: int = 0,
+        ) -> str:
+            ...
+
 
 # these variables are exported to the template runtime
 exported = [
@@ -50,14 +66,14 @@ async_exported = [
 ]
 
 
-def identity(x):
+def identity(x: V) -> V:
     """Returns its argument. Useful for certain things in the
     environment.
     """
     return x
 
 
-def markup_join(seq):
+def markup_join(seq: t.Iterable[t.Any]) -> str:
     """Concatenation that escapes if necessary and converts to string."""
     buf = []
     iterator = map(soft_str, seq)
@@ -68,12 +84,12 @@ def markup_join(seq):
     return concat(buf)
 
 
-def str_join(seq):
+def str_join(seq: t.Iterable[t.Any]) -> str:
     """Simple args to string conversion and concatenation."""
     return concat(map(str, seq))
 
 
-def unicode_join(seq):
+def unicode_join(seq: t.Iterable[t.Any]) -> str:
     import warnings
 
     warnings.warn(
@@ -86,14 +102,14 @@ def unicode_join(seq):
 
 
 def new_context(
-    environment,
-    template_name,
-    blocks,
-    vars=None,
-    shared=None,
-    globals=None,
-    locals=None,
-):
+    environment: "Environment",
+    template_name: t.Optional[str],
+    blocks: t.Dict[str, t.Callable[["Context"], t.Iterator[str]]],
+    vars: t.Optional[t.Dict[str, t.Any]] = None,
+    shared: bool = False,
+    globals: t.Optional[t.MutableMapping[str, t.Any]] = None,
+    locals: t.Optional[t.Mapping[str, t.Any]] = None,
+) -> "Context":
     """Internal helper for context creation."""
     if vars is None:
         vars = {}
@@ -117,47 +133,27 @@ def new_context(
 class TemplateReference:
     """The `self` in templates."""
 
-    def __init__(self, context):
+    def __init__(self, context: "Context") -> None:
         self.__context = context
 
-    def __getitem__(self, name):
+    def __getitem__(self, name: str) -> t.Any:
         blocks = self.__context.blocks[name]
         return BlockReference(name, self.__context, blocks, 0)
 
-    def __repr__(self):
-        return f"<{self.__class__.__name__} {self.__context.name!r}>"
+    def __repr__(self) -> str:
+        return f"<{type(self).__name__} {self.__context.name!r}>"
 
 
-class ContextMeta(type):
-    def __new__(mcs, name, bases, d):
-        rv = type.__new__(mcs, name, bases, d)
+def _dict_method_all(dict_method: F) -> F:
+    @functools.wraps(dict_method)
+    def f_all(self: "Context") -> t.Any:
+        return dict_method(self.get_all())
 
-        if not bases:
-            return rv
-
-        if "resolve_or_missing" in d:
-            # If the subclass overrides resolve_or_missing it opts in to
-            # modern mode no matter what.
-            rv._legacy_resolve_mode = False
-        elif "resolve" in d or rv._legacy_resolve_mode:
-            # If the subclass overrides resolve, or if its base is
-            # already in legacy mode, warn about legacy behavior.
-            import warnings
-
-            warnings.warn(
-                "Overriding 'resolve' is deprecated and will not have"
-                " the expected behavior in Jinja 3.1. Override"
-                " 'resolve_or_missing' instead ",
-                DeprecationWarning,
-                stacklevel=2,
-            )
-            rv._legacy_resolve_mode = True
-
-        return rv
+    return t.cast(F, f_all)
 
 
 @abc.Mapping.register
-class Context(metaclass=ContextMeta):
+class Context:
     """The template context holds the variables of a template.  It stores the
     values passed to the template and also the names the template exports.
     Creating instances is neither supported nor useful as it's created
@@ -177,14 +173,40 @@ class Context(metaclass=ContextMeta):
     :class:`Undefined` object for missing variables.
     """
 
-    _legacy_resolve_mode = False
+    _legacy_resolve_mode: t.ClassVar[bool] = False
 
-    def __init__(self, environment, parent, name, blocks, globals=None):
+    def __init_subclass__(cls) -> None:
+        if "resolve_or_missing" in cls.__dict__:
+            # If the subclass overrides resolve_or_missing it opts in to
+            # modern mode no matter what.
+            cls._legacy_resolve_mode = False
+        elif "resolve" in cls.__dict__ or cls._legacy_resolve_mode:
+            # If the subclass overrides resolve, or if its base is
+            # already in legacy mode, warn about legacy behavior.
+            import warnings
+
+            warnings.warn(
+                "Overriding 'resolve' is deprecated and will not have"
+                " the expected behavior in Jinja 3.1. Override"
+                " 'resolve_or_missing' instead ",
+                DeprecationWarning,
+                stacklevel=2,
+            )
+            cls._legacy_resolve_mode = True
+
+    def __init__(
+        self,
+        environment: "Environment",
+        parent: t.Dict[str, t.Any],
+        name: t.Optional[str],
+        blocks: t.Dict[str, t.Callable[["Context"], t.Iterator[str]]],
+        globals: t.Optional[t.MutableMapping[str, t.Any]] = None,
+    ):
         self.parent = parent
-        self.vars = {}
+        self.vars: t.Dict[str, t.Any] = {}
         self.environment: "Environment" = environment
         self.eval_ctx = EvalContext(self.environment, name)
-        self.exported_vars = set()
+        self.exported_vars: t.Set[str] = set()
         self.name = name
         self.globals_keys = set() if globals is None else set(globals)
 
@@ -193,7 +215,9 @@ class Context(metaclass=ContextMeta):
         # from the template.
         self.blocks = {k: [v] for k, v in blocks.items()}
 
-    def super(self, name, current):
+    def super(
+        self, name: str, current: t.Callable[["Context"], t.Iterator[str]]
+    ) -> t.Union["BlockReference", "Undefined"]:
         """Render a parent block."""
         try:
             blocks = self.blocks[name]
@@ -205,7 +229,7 @@ class Context(metaclass=ContextMeta):
             )
         return BlockReference(name, self, blocks, index)
 
-    def get(self, key, default=None):
+    def get(self, key: str, default: t.Any = None) -> t.Any:
         """Look up a variable by name, or return a default if the key is
         not found.
 
@@ -217,7 +241,7 @@ class Context(metaclass=ContextMeta):
         except KeyError:
             return default
 
-    def resolve(self, key):
+    def resolve(self, key: str) -> t.Union[t.Any, "Undefined"]:
         """Look up a variable by name, or return an :class:`Undefined`
         object if the key is not found.
 
@@ -243,7 +267,7 @@ class Context(metaclass=ContextMeta):
 
         return rv
 
-    def resolve_or_missing(self, key):
+    def resolve_or_missing(self, key: str) -> t.Any:
         """Look up a variable by name, or return a ``missing`` sentinel
         if the key is not found.
 
@@ -269,11 +293,11 @@ class Context(metaclass=ContextMeta):
 
         return missing
 
-    def get_exported(self):
+    def get_exported(self) -> t.Dict[str, t.Any]:
         """Get a new dict with the exported variables."""
         return {k: self.vars[k] for k in self.exported_vars}
 
-    def get_all(self):
+    def get_all(self) -> t.Dict[str, t.Any]:
         """Return the complete context as dict including the exported
         variables.  For optimizations reasons this might not return an
         actual copy so be careful with using it.
@@ -285,7 +309,9 @@ class Context(metaclass=ContextMeta):
         return dict(self.parent, **self.vars)
 
     @internalcode
-    def call(__self, __obj, *args, **kwargs):  # noqa: B902
+    def call(
+        __self, __obj: t.Callable, *args: t.Any, **kwargs: t.Any  # noqa: B902
+    ) -> t.Union[t.Any, "Undefined"]:
         """Call the callable with the arguments and keyword arguments
         provided but inject the active context or environment as first
         argument if the callable has :func:`pass_context` or
@@ -297,28 +323,28 @@ class Context(metaclass=ContextMeta):
         # Allow callable classes to take a context
         if (
             hasattr(__obj, "__call__")  # noqa: B004
-            and _PassArg.from_obj(__obj.__call__) is not None
+            and _PassArg.from_obj(__obj.__call__) is not None  # type: ignore
         ):
-            __obj = __obj.__call__
+            __obj = __obj.__call__  # type: ignore
 
-        if callable(__obj):
-            pass_arg = _PassArg.from_obj(__obj)
+        pass_arg = _PassArg.from_obj(__obj)
 
-            if pass_arg is _PassArg.context:
-                # the active context should have access to variables set in
-                # loops and blocks without mutating the context itself
-                if kwargs.get("_loop_vars"):
-                    __self = __self.derived(kwargs["_loop_vars"])
-                if kwargs.get("_block_vars"):
-                    __self = __self.derived(kwargs["_block_vars"])
-                args = (__self,) + args
-            elif pass_arg is _PassArg.eval_context:
-                args = (__self.eval_ctx,) + args
-            elif pass_arg is _PassArg.environment:
-                args = (__self.environment,) + args
+        if pass_arg is _PassArg.context:
+            # the active context should have access to variables set in
+            # loops and blocks without mutating the context itself
+            if kwargs.get("_loop_vars"):
+                __self = __self.derived(kwargs["_loop_vars"])
+            if kwargs.get("_block_vars"):
+                __self = __self.derived(kwargs["_block_vars"])
+            args = (__self,) + args
+        elif pass_arg is _PassArg.eval_context:
+            args = (__self.eval_ctx,) + args
+        elif pass_arg is _PassArg.environment:
+            args = (__self.environment,) + args
 
         kwargs.pop("_block_vars", None)
         kwargs.pop("_loop_vars", None)
+
         try:
             return __obj(*args, **kwargs)
         except StopIteration:
@@ -327,7 +353,7 @@ class Context(metaclass=ContextMeta):
                 " StopIteration exception"
             )
 
-    def derived(self, locals=None):
+    def derived(self, locals: t.Optional[t.Dict[str, t.Any]] = None) -> "Context":
         """Internal helper function to create a derived context.  This is
         used in situations where the system needs a new context in the same
         template that is independent.
@@ -339,24 +365,14 @@ class Context(metaclass=ContextMeta):
         context.blocks.update((k, list(v)) for k, v in self.blocks.items())
         return context
 
-    # ignore: true
-    def _all(meth):  # noqa: B902
-        def proxy(self):
-            return getattr(self.get_all(), meth)()
+    keys = _dict_method_all(dict.keys)
+    values = _dict_method_all(dict.values)
+    items = _dict_method_all(dict.items)
 
-        proxy.__doc__ = getattr(dict, meth).__doc__
-        proxy.__name__ = meth
-        return proxy
-
-    keys = _all("keys")  # type:ignore
-    values = _all("values")  # type:ignore
-    items = _all("items")  # type:ignore
-    del _all
-
-    def __contains__(self, name):
+    def __contains__(self, name: str) -> bool:
         return name in self.vars or name in self.parent
 
-    def __getitem__(self, key):
+    def __getitem__(self, key: str) -> t.Any:
         """Look up a variable by name with ``[]`` syntax, or raise a
         ``KeyError`` if the key is not found.
         """
@@ -367,21 +383,27 @@ class Context(metaclass=ContextMeta):
 
         return item
 
-    def __repr__(self):
-        return f"<{self.__class__.__name__} {self.get_all()!r} of {self.name!r}>"
+    def __repr__(self) -> str:
+        return f"<{type(self).__name__} {self.get_all()!r} of {self.name!r}>"
 
 
 class BlockReference:
     """One block on a template reference."""
 
-    def __init__(self, name, context, stack, depth):
+    def __init__(
+        self,
+        name: str,
+        context: "Context",
+        stack: t.List[t.Callable[["Context"], t.Iterator[str]]],
+        depth: int,
+    ) -> None:
         self.name = name
         self._context = context
         self._stack = stack
         self._depth = depth
 
     @property
-    def super(self):
+    def super(self) -> t.Union["BlockReference", "Undefined"]:
         """Super the block."""
         if self._depth + 1 >= len(self._stack):
             return self._context.environment.undefined(
@@ -390,8 +412,10 @@ class BlockReference:
         return BlockReference(self.name, self._context, self._stack, self._depth + 1)
 
     @internalcode
-    async def _async_call(self):
-        rv = concat([x async for x in self._stack[self._depth](self._context)])
+    async def _async_call(self) -> str:
+        rv = concat(
+            [x async for x in self._stack[self._depth](self._context)]  # type: ignore
+        )
 
         if self._context.eval_ctx.autoescape:
             return Markup(rv)
@@ -399,9 +423,9 @@ class BlockReference:
         return rv
 
     @internalcode
-    def __call__(self):
+    def __call__(self) -> str:
         if self._context.environment.is_async:
-            return self._async_call()
+            return self._async_call()  # type: ignore
 
         rv = concat(self._stack[self._depth](self._context))
 
@@ -420,12 +444,18 @@ class LoopContext:
     index0 = -1
 
     _length: t.Optional[int] = None
-    _after = missing
-    _current = missing
-    _before = missing
-    _last_changed_value = missing
+    _after: t.Any = missing
+    _current: t.Any = missing
+    _before: t.Any = missing
+    _last_changed_value: t.Any = missing
 
-    def __init__(self, iterable, undefined, recurse=None, depth0=0):
+    def __init__(
+        self,
+        iterable: t.Iterable[V],
+        undefined: t.Type["Undefined"],
+        recurse: t.Optional["LoopRenderFunc"] = None,
+        depth0: int = 0,
+    ) -> None:
         """
         :param iterable: Iterable to wrap.
         :param undefined: :class:`Undefined` class to use for next and
@@ -442,11 +472,11 @@ class LoopContext:
         self.depth0 = depth0
 
     @staticmethod
-    def _to_iterator(iterable):
+    def _to_iterator(iterable: t.Iterable[V]) -> t.Iterator[V]:
         return iter(iterable)
 
     @property
-    def length(self):
+    def length(self) -> int:
         """Length of the iterable.
 
         If the iterable is a generator or otherwise does not have a
@@ -456,7 +486,7 @@ class LoopContext:
             return self._length
 
         try:
-            self._length = len(self._iterable)
+            self._length = len(self._iterable)  # type: ignore
         except TypeError:
             iterable = list(self._iterator)
             self._iterator = self._to_iterator(iterable)
@@ -464,21 +494,21 @@ class LoopContext:
 
         return self._length
 
-    def __len__(self):
+    def __len__(self) -> int:
         return self.length
 
     @property
-    def depth(self):
+    def depth(self) -> int:
         """How many levels deep a recursive loop currently is, starting at 1."""
         return self.depth0 + 1
 
     @property
-    def index(self):
+    def index(self) -> int:
         """Current iteration of the loop, starting at 1."""
         return self.index0 + 1
 
     @property
-    def revindex0(self):
+    def revindex0(self) -> int:
         """Number of iterations from the end of the loop, ending at 0.
 
         Requires calculating :attr:`length`.
@@ -486,7 +516,7 @@ class LoopContext:
         return self.length - self.index
 
     @property
-    def revindex(self):
+    def revindex(self) -> int:
         """Number of iterations from the end of the loop, ending at 1.
 
         Requires calculating :attr:`length`.
@@ -494,11 +524,11 @@ class LoopContext:
         return self.length - self.index0
 
     @property
-    def first(self):
+    def first(self) -> bool:
         """Whether this is the first iteration of the loop."""
         return self.index0 == 0
 
-    def _peek_next(self):
+    def _peek_next(self) -> t.Any:
         """Return the next element in the iterable, or :data:`missing`
         if the iterable is exhausted. Only peeks one item ahead, caching
         the result in :attr:`_last` for use in subsequent checks. The
@@ -511,7 +541,7 @@ class LoopContext:
         return self._after
 
     @property
-    def last(self):
+    def last(self) -> bool:
         """Whether this is the last iteration of the loop.
 
         Causes the iterable to advance early. See
@@ -521,7 +551,7 @@ class LoopContext:
         return self._peek_next() is missing
 
     @property
-    def previtem(self):
+    def previtem(self) -> t.Union[t.Any, "Undefined"]:
         """The item in the previous iteration. Undefined during the
         first iteration.
         """
@@ -531,13 +561,13 @@ class LoopContext:
         return self._before
 
     @property
-    def nextitem(self):
+    def nextitem(self) -> t.Union[t.Any, "Undefined"]:
         """The item in the next iteration. Undefined during the last
         iteration.
 
         Causes the iterable to advance early. See
         :func:`itertools.groupby` for issues this can cause.
-        The :func:`groupby` filter avoids that issue.
+        The :func:`jinja-filters.groupby` filter avoids that issue.
         """
         rv = self._peek_next()
 
@@ -546,7 +576,7 @@ class LoopContext:
 
         return rv
 
-    def cycle(self, *args):
+    def cycle(self, *args: V) -> V:
         """Return a value from the given args, cycling through based on
         the current :attr:`index0`.
 
@@ -557,7 +587,7 @@ class LoopContext:
 
         return args[self.index0 % len(args)]
 
-    def changed(self, *value):
+    def changed(self, *value: t.Any) -> bool:
         """Return ``True`` if previously called with a different value
         (including when called for the first time).
 
@@ -569,10 +599,10 @@ class LoopContext:
 
         return False
 
-    def __iter__(self):
+    def __iter__(self) -> "LoopContext":
         return self
 
-    def __next__(self):
+    def __next__(self) -> t.Tuple[t.Any, "LoopContext"]:
         if self._after is not missing:
             rv = self._after
             self._after = missing
@@ -585,7 +615,7 @@ class LoopContext:
         return rv, self
 
     @internalcode
-    def __call__(self, iterable):
+    def __call__(self, iterable: t.Iterable[V]) -> str:
         """When iterating over nested data, render the body of the loop
         recursively with the given inner iterable data.
 
@@ -598,22 +628,26 @@ class LoopContext:
 
         return self._recurse(iterable, self._recurse, depth=self.depth)
 
-    def __repr__(self):
-        return f"<{self.__class__.__name__} {self.index}/{self.length}>"
+    def __repr__(self) -> str:
+        return f"<{type(self).__name__} {self.index}/{self.length}>"
 
 
 class AsyncLoopContext(LoopContext):
+    _iterator: t.AsyncIterator[t.Any]  # type: ignore
+
     @staticmethod
-    def _to_iterator(iterable):
+    def _to_iterator(  # type: ignore
+        iterable: t.Union[t.Iterable[V], t.AsyncIterable[V]]
+    ) -> t.AsyncIterator[V]:
         return auto_aiter(iterable)
 
     @property
-    async def length(self):
+    async def length(self) -> int:  # type: ignore
         if self._length is not None:
             return self._length
 
         try:
-            self._length = len(self._iterable)
+            self._length = len(self._iterable)  # type: ignore
         except TypeError:
             iterable = [x async for x in self._iterator]
             self._iterator = self._to_iterator(iterable)
@@ -622,14 +656,14 @@ class AsyncLoopContext(LoopContext):
         return self._length
 
     @property
-    async def revindex0(self):
+    async def revindex0(self) -> int:  # type: ignore
         return await self.length - self.index
 
     @property
-    async def revindex(self):
+    async def revindex(self) -> int:  # type: ignore
         return await self.length - self.index0
 
-    async def _peek_next(self):
+    async def _peek_next(self) -> t.Any:
         if self._after is not missing:
             return self._after
 
@@ -641,11 +675,11 @@ class AsyncLoopContext(LoopContext):
         return self._after
 
     @property
-    async def last(self):
+    async def last(self) -> bool:  # type: ignore
         return await self._peek_next() is missing
 
     @property
-    async def nextitem(self):
+    async def nextitem(self) -> t.Union[t.Any, "Undefined"]:
         rv = await self._peek_next()
 
         if rv is missing:
@@ -653,10 +687,10 @@ class AsyncLoopContext(LoopContext):
 
         return rv
 
-    def __aiter__(self):
+    def __aiter__(self) -> "AsyncLoopContext":
         return self
 
-    async def __anext__(self):
+    async def __anext__(self) -> t.Tuple[t.Any, "AsyncLoopContext"]:
         if self._after is not missing:
             rv = self._after
             self._after = missing
@@ -674,14 +708,14 @@ class Macro:
 
     def __init__(
         self,
-        environment,
-        func,
-        name,
-        arguments,
-        catch_kwargs,
-        catch_varargs,
-        caller,
-        default_autoescape=None,
+        environment: "Environment",
+        func: t.Callable[..., str],
+        name: str,
+        arguments: t.List[str],
+        catch_kwargs: bool,
+        catch_varargs: bool,
+        caller: bool,
+        default_autoescape: t.Optional[bool] = None,
     ):
         self._environment = environment
         self._func = func
@@ -692,13 +726,18 @@ class Macro:
         self.catch_varargs = catch_varargs
         self.caller = caller
         self.explicit_caller = "caller" in arguments
+
         if default_autoescape is None:
-            default_autoescape = environment.autoescape
+            if callable(environment.autoescape):
+                default_autoescape = environment.autoescape(None)
+            else:
+                default_autoescape = environment.autoescape
+
         self._default_autoescape = default_autoescape
 
     @internalcode
     @pass_eval_context
-    def __call__(self, *args, **kwargs):
+    def __call__(self, *args: t.Any, **kwargs: t.Any) -> str:
         # This requires a bit of explanation,  In the past we used to
         # decide largely based on compile-time information if a macro is
         # safe or unsafe.  While there was a volatile mode it was largely
@@ -774,17 +813,17 @@ class Macro:
 
         return self._invoke(arguments, autoescape)
 
-    async def _async_invoke(self, arguments, autoescape):
-        rv = await self._func(*arguments)
+    async def _async_invoke(self, arguments: t.List[t.Any], autoescape: bool) -> str:
+        rv = await self._func(*arguments)  # type: ignore
 
         if autoescape:
             return Markup(rv)
 
-        return rv
+        return rv  # type: ignore
 
-    def _invoke(self, arguments, autoescape):
+    def _invoke(self, arguments: t.List[t.Any], autoescape: bool) -> str:
         if self._environment.is_async:
-            return self._async_invoke(arguments, autoescape)
+            return self._async_invoke(arguments, autoescape)  # type: ignore
 
         rv = self._func(*arguments)
 
@@ -793,9 +832,9 @@ class Macro:
 
         return rv
 
-    def __repr__(self):
+    def __repr__(self) -> str:
         name = "anonymous" if self.name is None else repr(self.name)
-        return f"<{self.__class__.__name__} {name}>"
+        return f"<{type(self).__name__} {name}>"
 
 
 class Undefined:
@@ -820,14 +859,20 @@ class Undefined:
         "_undefined_exception",
     )
 
-    def __init__(self, hint=None, obj=missing, name=None, exc=UndefinedError):
+    def __init__(
+        self,
+        hint: t.Optional[str] = None,
+        obj: t.Any = missing,
+        name: t.Optional[str] = None,
+        exc: t.Type[TemplateRuntimeError] = UndefinedError,
+    ) -> None:
         self._undefined_hint = hint
         self._undefined_obj = obj
         self._undefined_name = name
         self._undefined_exception = exc
 
     @property
-    def _undefined_message(self):
+    def _undefined_message(self) -> str:
         """Build a message about the undefined value based on how it was
         accessed.
         """
@@ -849,16 +894,17 @@ class Undefined:
         )
 
     @internalcode
-    def _fail_with_undefined_error(self, *args, **kwargs):
+    def _fail_with_undefined_error(self, *args: t.Any, **kwargs: t.Any) -> t.NoReturn:
         """Raise an :exc:`UndefinedError` when operations are performed
         on the undefined value.
         """
         raise self._undefined_exception(self._undefined_message)
 
     @internalcode
-    def __getattr__(self, name):
+    def __getattr__(self, name: str) -> t.Any:
         if name[:2] == "__":
             raise AttributeError(name)
+
         return self._fail_with_undefined_error()
 
     __add__ = __radd__ = __sub__ = __rsub__ = _fail_with_undefined_error
@@ -872,36 +918,38 @@ class Undefined:
     __int__ = __float__ = __complex__ = _fail_with_undefined_error
     __pow__ = __rpow__ = _fail_with_undefined_error
 
-    def __eq__(self, other):
+    def __eq__(self, other: t.Any) -> bool:
         return type(self) is type(other)
 
-    def __ne__(self, other):
+    def __ne__(self, other: t.Any) -> bool:
         return not self.__eq__(other)
 
-    def __hash__(self):
+    def __hash__(self) -> int:
         return id(type(self))
 
-    def __str__(self):
+    def __str__(self) -> str:
         return ""
 
-    def __len__(self):
+    def __len__(self) -> int:
         return 0
 
-    def __iter__(self):
+    def __iter__(self) -> t.Iterator[t.Any]:
         yield from ()
 
-    async def __aiter__(self):
+    async def __aiter__(self) -> t.AsyncIterator[t.Any]:
         for _ in ():
             yield
 
-    def __bool__(self):
+    def __bool__(self) -> bool:
         return False
 
-    def __repr__(self):
+    def __repr__(self) -> str:
         return "Undefined"
 
 
-def make_logging_undefined(logger=None, base=None):
+def make_logging_undefined(
+    logger: t.Optional["logging.Logger"] = None, base: t.Type[Undefined] = Undefined
+) -> t.Type[Undefined]:
     """Given a logger object this returns a new undefined class that will
     log certain failures.  It will log iterations and printing.  If no
     logger is given a default logger is created.
@@ -926,31 +974,35 @@ def make_logging_undefined(logger=None, base=None):
 
         logger = logging.getLogger(__name__)
         logger.addHandler(logging.StreamHandler(sys.stderr))
-    if base is None:
-        base = Undefined
 
-    def _log_message(undef):
-        logger.warning("Template variable warning: %s", undef._undefined_message)
+    def _log_message(undef: Undefined) -> None:
+        logger.warning(  # type: ignore
+            "Template variable warning: %s", undef._undefined_message
+        )
 
-    class LoggingUndefined(base):
-        def _fail_with_undefined_error(self, *args, **kwargs):
+    class LoggingUndefined(base):  # type: ignore
+        __slots__ = ()
+
+        def _fail_with_undefined_error(  # type: ignore
+            self, *args: t.Any, **kwargs: t.Any
+        ) -> t.NoReturn:
             try:
-                return super()._fail_with_undefined_error(*args, **kwargs)
+                super()._fail_with_undefined_error(*args, **kwargs)
             except self._undefined_exception as e:
-                logger.error("Template variable error: %s", e)
+                logger.error("Template variable error: %s", e)  # type: ignore
                 raise e
 
-        def __str__(self):
+        def __str__(self) -> str:
             _log_message(self)
-            return super().__str__()
+            return super().__str__()  # type: ignore
 
-        def __iter__(self):
+        def __iter__(self) -> t.Iterator[t.Any]:
             _log_message(self)
-            return super().__iter__()
+            return super().__iter__()  # type: ignore
 
-        def __bool__(self):
+        def __bool__(self) -> bool:
             _log_message(self)
-            return super().__bool__()
+            return super().__bool__()  # type: ignore
 
     return LoggingUndefined
 
@@ -973,13 +1025,13 @@ class ChainableUndefined(Undefined):
 
     __slots__ = ()
 
-    def __html__(self):
-        return self.__str__()
+    def __html__(self) -> str:
+        return str(self)
 
-    def __getattr__(self, _):
+    def __getattr__(self, _: str) -> "ChainableUndefined":
         return self
 
-    __getitem__ = __getattr__
+    __getitem__ = __getattr__  # type: ignore
 
 
 class DebugUndefined(Undefined):
@@ -998,12 +1050,12 @@ class DebugUndefined(Undefined):
 
     __slots__ = ()
 
-    def __str__(self):
+    def __str__(self) -> str:
         if self._undefined_hint:
             message = f"undefined value printed: {self._undefined_hint}"
 
         elif self._undefined_obj is missing:
-            message = self._undefined_name
+            message = self._undefined_name  # type: ignore
 
         else:
             message = (

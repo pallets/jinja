@@ -7,6 +7,9 @@ from .utils import generate_lorem_ipsum
 from .utils import Joiner
 from .utils import Namespace
 
+if t.TYPE_CHECKING:
+    import typing_extensions as te
+
 # defaults for the parser / lexer
 BLOCK_START_STRING = "{%"
 BLOCK_END_STRING = "%}"
@@ -18,7 +21,7 @@ LINE_STATEMENT_PREFIX: t.Optional[str] = None
 LINE_COMMENT_PREFIX: t.Optional[str] = None
 TRIM_BLOCKS = False
 LSTRIP_BLOCKS = False
-NEWLINE_SEQUENCE = "\n"
+NEWLINE_SEQUENCE: "te.Literal['\\n', '\\r\\n', '\\r']" = "\n"
 KEEP_TRAILING_NEWLINE = False
 
 # default filters, tests and namespace
@@ -33,7 +36,7 @@ DEFAULT_NAMESPACE = {
 }
 
 # default policies
-DEFAULT_POLICIES = {
+DEFAULT_POLICIES: t.Dict[str, t.Any] = {
     "compiler.ascii_str": True,
     "urlize.rel": "noopener",
     "urlize.target": None,

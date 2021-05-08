@@ -1,6 +1,5 @@
 """Compiles nodes from the parser into Python code."""
 import typing as t
-from collections import namedtuple
 from contextlib import contextmanager
 from functools import update_wrapper
 from io import StringIO
@@ -23,6 +22,11 @@ from .utils import _PassArg
 from .utils import concat
 from .visitor import NodeVisitor
 
+if t.TYPE_CHECKING:
+    from .environment import Environment
+
+F = t.TypeVar("F", bound=t.Callable[..., t.Any])
+
 operators = {
     "eq": "==",
     "ne": "!=",
@@ -35,33 +39,89 @@ operators = {
 }
 
 
-def optimizeconst(f):
-    def new_func(self, node, frame, **kwargs):
+def optimizeconst(f: F) -> F:
+    def new_func(
+        self: "CodeGenerator", node: nodes.Expr, frame: "Frame", **kwargs: t.Any
+    ) -> t.Any:
         # Only optimize if the frame is not volatile
-        if self.optimized and not frame.eval_ctx.volatile:
+        if self.optimizer is not None and not frame.eval_ctx.volatile:
             new_node = self.optimizer.visit(node, frame.eval_ctx)
+
             if new_node != node:
                 return self.visit(new_node, frame)
+
         return f(self, node, frame, **kwargs)
 
-    return update_wrapper(new_func, f)
+    return update_wrapper(t.cast(F, new_func), f)
+
+
+def _make_binop(op: str) -> t.Callable[["CodeGenerator", nodes.BinExpr, "Frame"], None]:
+    @optimizeconst
+    def visitor(self: "CodeGenerator", node: nodes.BinExpr, frame: Frame) -> None:
+        if (
+            self.environment.sandboxed
+            and op in self.environment.intercepted_binops  # type: ignore
+        ):
+            self.write(f"environment.call_binop(context, {op!r}, ")
+            self.visit(node.left, frame)
+            self.write(", ")
+            self.visit(node.right, frame)
+        else:
+            self.write("(")
+            self.visit(node.left, frame)
+            self.write(f" {op} ")
+            self.visit(node.right, frame)
+
+        self.write(")")
+
+    return visitor
+
+
+def _make_unop(
+    op: str,
+) -> t.Callable[["CodeGenerator", nodes.UnaryExpr, "Frame"], None]:
+    @optimizeconst
+    def visitor(self: "CodeGenerator", node: nodes.UnaryExpr, frame: Frame) -> None:
+        if (
+            self.environment.sandboxed
+            and op in self.environment.intercepted_unops  # type: ignore
+        ):
+            self.write(f"environment.call_unop(context, {op!r}, ")
+            self.visit(node.node, frame)
+        else:
+            self.write("(" + op)
+            self.visit(node.node, frame)
+
+        self.write(")")
+
+    return visitor
 
 
 def generate(
-    node, environment, name, filename, stream=None, defer_init=False, optimized=True
-):
+    node: nodes.Template,
+    environment: "Environment",
+    name: t.Optional[str],
+    filename: t.Optional[str],
+    stream: t.Optional[t.TextIO] = None,
+    defer_init: bool = False,
+    optimized: bool = True,
+) -> t.Optional[str]:
     """Generate the python source for a node tree."""
     if not isinstance(node, nodes.Template):
         raise TypeError("Can't compile non template nodes")
+
     generator = environment.code_generator_class(
         environment, name, filename, stream, defer_init, optimized
     )
     generator.visit(node)
+
     if stream is None:
-        return generator.stream.getvalue()
+        return generator.stream.getvalue()  # type: ignore
+
+    return None
 
 
-def has_safe_repr(value):
+def has_safe_repr(value: t.Any) -> bool:
     """Does the node have a safe representation?"""
     if value is None or value is NotImplemented or value is Ellipsis:
         return True
@@ -78,7 +138,9 @@ def has_safe_repr(value):
     return False
 
 
-def find_undeclared(nodes, names):
+def find_undeclared(
+    nodes: t.Iterable[nodes.Node], names: t.Iterable[str]
+) -> t.Set[str]:
     """Check if the names passed are accessed undeclared.  The return value
     is a set of all the undeclared names from the sequence of names found.
     """
@@ -92,7 +154,7 @@ def find_undeclared(nodes, names):
 
 
 class MacroRef:
-    def __init__(self, node):
+    def __init__(self, node: t.Union[nodes.Macro, nodes.CallBlock]) -> None:
         self.node = node
         self.accesses_caller = False
         self.accesses_kwargs = False
@@ -102,9 +164,38 @@ class MacroRef:
 class Frame:
     """Holds compile time information for us."""
 
-    def __init__(self, eval_ctx, parent=None, level=None):
+    def __init__(
+        self,
+        eval_ctx: EvalContext,
+        parent: t.Optional["Frame"] = None,
+        level: t.Optional[int] = None,
+    ) -> None:
         self.eval_ctx = eval_ctx
-        self.symbols = Symbols(parent.symbols if parent else None, level=level)
+
+        # the parent of this frame
+        self.parent = parent
+
+        if parent is None:
+            self.symbols = Symbols(level=level)
+
+            # in some dynamic inheritance situations the compiler needs to add
+            # write tests around output statements.
+            self.require_output_check = False
+
+            # inside some tags we are using a buffer rather than yield statements.
+            # this for example affects {% filter %} or {% macro %}.  If a frame
+            # is buffered this variable points to the name of the list used as
+            # buffer.
+            self.buffer: t.Optional[str] = None
+
+            # the name of the block we're in, otherwise None.
+            self.block: t.Optional[str] = None
+
+        else:
+            self.symbols = Symbols(parent.symbols, level=level)
+            self.require_output_check = parent.require_output_check
+            self.buffer = parent.buffer
+            self.block = parent.block
 
         # a toplevel frame is the root + soft frames such as if conditions.
         self.toplevel = False
@@ -113,25 +204,6 @@ class Frame:
         # conditions.  This information is used to optimize inheritance
         # situations.
         self.rootlevel = False
-
-        # in some dynamic inheritance situations the compiler needs to add
-        # write tests around output statements.
-        self.require_output_check = parent and parent.require_output_check
-
-        # inside some tags we are using a buffer rather than yield statements.
-        # this for example affects {% filter %} or {% macro %}.  If a frame
-        # is buffered this variable points to the name of the list used as
-        # buffer.
-        self.buffer = None
-
-        # the name of the block we're in, otherwise None.
-        self.block = parent.block if parent else None
-
-        # the parent of this frame
-        self.parent = parent
-
-        if parent is not None:
-            self.buffer = parent.buffer
 
         # variables set inside of loops and blocks should not affect outer frames,
         # but they still needs to be kept track of as part of the active context.
@@ -143,20 +215,20 @@ class Frame:
         # or compile time.
         self.soft_frame = False
 
-    def copy(self):
+    def copy(self) -> "Frame":
         """Create a copy of the current one."""
-        rv = object.__new__(self.__class__)
+        rv = t.cast(Frame, object.__new__(self.__class__))
         rv.__dict__.update(self.__dict__)
         rv.symbols = self.symbols.copy()
         return rv
 
-    def inner(self, isolated=False):
+    def inner(self, isolated: bool = False) -> "Frame":
         """Return an inner frame."""
         if isolated:
             return Frame(self.eval_ctx, level=self.symbols.level + 1)
         return Frame(self.eval_ctx, self)
 
-    def soft(self):
+    def soft(self) -> "Frame":
         """Return a soft frame.  A soft frame may not be modified as
         standalone thing as it shares the resources with the frame it
         was created of, but it's not a rootlevel frame any longer.
@@ -179,19 +251,19 @@ class VisitorExit(RuntimeError):
 class DependencyFinderVisitor(NodeVisitor):
     """A visitor that collects filter and test calls."""
 
-    def __init__(self):
-        self.filters = set()
-        self.tests = set()
+    def __init__(self) -> None:
+        self.filters: t.Set[str] = set()
+        self.tests: t.Set[str] = set()
 
-    def visit_Filter(self, node):
+    def visit_Filter(self, node: nodes.Filter) -> None:
         self.generic_visit(node)
         self.filters.add(node.name)
 
-    def visit_Test(self, node):
+    def visit_Test(self, node: nodes.Test) -> None:
         self.generic_visit(node)
         self.tests.add(node.name)
 
-    def visit_Block(self, node):
+    def visit_Block(self, node: nodes.Block) -> None:
         """Stop visiting at blocks."""
 
 
@@ -201,11 +273,11 @@ class UndeclaredNameVisitor(NodeVisitor):
     not stop at closure frames.
     """
 
-    def __init__(self, names):
+    def __init__(self, names: t.Iterable[str]) -> None:
         self.names = set(names)
-        self.undeclared = set()
+        self.undeclared: t.Set[str] = set()
 
-    def visit_Name(self, node):
+    def visit_Name(self, node: nodes.Name) -> None:
         if node.ctx == "load" and node.name in self.names:
             self.undeclared.add(node.name)
             if self.undeclared == self.names:
@@ -213,7 +285,7 @@ class UndeclaredNameVisitor(NodeVisitor):
         else:
             self.names.discard(node.name)
 
-    def visit_Block(self, node):
+    def visit_Block(self, node: nodes.Block) -> None:
         """Stop visiting a blocks."""
 
 
@@ -226,8 +298,14 @@ class CompilerExit(Exception):
 
 class CodeGenerator(NodeVisitor):
     def __init__(
-        self, environment, name, filename, stream=None, defer_init=False, optimized=True
-    ):
+        self,
+        environment: "Environment",
+        name: t.Optional[str],
+        filename: t.Optional[str],
+        stream: t.Optional[t.TextIO] = None,
+        defer_init: bool = False,
+        optimized: bool = True,
+    ) -> None:
         if stream is None:
             stream = StringIO()
         self.environment = environment
@@ -236,16 +314,17 @@ class CodeGenerator(NodeVisitor):
         self.stream = stream
         self.created_block_context = False
         self.defer_init = defer_init
-        self.optimized = optimized
+        self.optimizer: t.Optional[Optimizer] = None
+
         if optimized:
             self.optimizer = Optimizer(environment)
 
         # aliases for imports
-        self.import_aliases = {}
+        self.import_aliases: t.Dict[str, str] = {}
 
         # a registry for all blocks.  Because blocks are moved out
         # into the global python scope they are registered here
-        self.blocks = {}
+        self.blocks: t.Dict[str, nodes.Block] = {}
 
         # the number of extends statements so far
         self.extends_so_far = 0
@@ -259,12 +338,12 @@ class CodeGenerator(NodeVisitor):
         self.code_lineno = 1
 
         # registry of all filters and tests (global, not block local)
-        self.tests = {}
-        self.filters = {}
+        self.tests: t.Dict[str, str] = {}
+        self.filters: t.Dict[str, str] = {}
 
         # the debug information
-        self.debug_info = []
-        self._write_debug_info = None
+        self.debug_info: t.List[t.Tuple[int, int]] = []
+        self._write_debug_info: t.Optional[int] = None
 
         # the number of new lines before the next write()
         self._new_lines = 0
@@ -283,31 +362,37 @@ class CodeGenerator(NodeVisitor):
         self._indentation = 0
 
         # Tracks toplevel assignments
-        self._assign_stack = []
+        self._assign_stack: t.List[t.Set[str]] = []
 
         # Tracks parameter definition blocks
-        self._param_def_block = []
+        self._param_def_block: t.List[t.Set[str]] = []
 
         # Tracks the current context.
         self._context_reference_stack = ["context"]
 
+    @property
+    def optimized(self) -> bool:
+        return self.optimizer is not None
+
     # -- Various compilation helpers
 
-    def fail(self, msg, lineno):
+    def fail(self, msg: str, lineno: int) -> t.NoReturn:
         """Fail with a :exc:`TemplateAssertionError`."""
         raise TemplateAssertionError(msg, lineno, self.name, self.filename)
 
-    def temporary_identifier(self):
+    def temporary_identifier(self) -> str:
         """Get a new unique identifier."""
         self._last_identifier += 1
         return f"t_{self._last_identifier}"
 
-    def buffer(self, frame):
+    def buffer(self, frame: Frame) -> None:
         """Enable buffering for the frame from that point onwards."""
         frame.buffer = self.temporary_identifier()
         self.writeline(f"{frame.buffer} = []")
 
-    def return_buffer_contents(self, frame, force_unescaped=False):
+    def return_buffer_contents(
+        self, frame: Frame, force_unescaped: bool = False
+    ) -> None:
         """Return the buffer contents of the frame."""
         if not force_unescaped:
             if frame.eval_ctx.volatile:
@@ -325,33 +410,35 @@ class CodeGenerator(NodeVisitor):
                 return
         self.writeline(f"return concat({frame.buffer})")
 
-    def indent(self):
+    def indent(self) -> None:
         """Indent by one."""
         self._indentation += 1
 
-    def outdent(self, step=1):
+    def outdent(self, step: int = 1) -> None:
         """Outdent by step."""
         self._indentation -= step
 
-    def start_write(self, frame, node=None):
+    def start_write(self, frame: Frame, node: t.Optional[nodes.Node] = None) -> None:
         """Yield or write into the frame buffer."""
         if frame.buffer is None:
             self.writeline("yield ", node)
         else:
             self.writeline(f"{frame.buffer}.append(", node)
 
-    def end_write(self, frame):
+    def end_write(self, frame: Frame) -> None:
         """End the writing process started by `start_write`."""
         if frame.buffer is not None:
             self.write(")")
 
-    def simple_write(self, s, frame, node=None):
+    def simple_write(
+        self, s: str, frame: Frame, node: t.Optional[nodes.Node] = None
+    ) -> None:
         """Simple shortcut for start_write + write + end_write."""
         self.start_write(frame, node)
         self.write(s)
         self.end_write(frame)
 
-    def blockvisit(self, nodes, frame):
+    def blockvisit(self, nodes: t.Iterable[nodes.Node], frame: Frame) -> None:
         """Visit a list of nodes as block in a frame.  If the current frame
         is no buffer a dummy ``if 0: yield None`` is written automatically.
         """
@@ -362,7 +449,7 @@ class CodeGenerator(NodeVisitor):
         except CompilerExit:
             pass
 
-    def write(self, x):
+    def write(self, x: str) -> None:
         """Write a string into the output stream."""
         if self._new_lines:
             if not self._first_write:
@@ -376,19 +463,26 @@ class CodeGenerator(NodeVisitor):
             self._new_lines = 0
         self.stream.write(x)
 
-    def writeline(self, x, node=None, extra=0):
+    def writeline(
+        self, x: str, node: t.Optional[nodes.Node] = None, extra: int = 0
+    ) -> None:
         """Combination of newline and write."""
         self.newline(node, extra)
         self.write(x)
 
-    def newline(self, node=None, extra=0):
+    def newline(self, node: t.Optional[nodes.Node] = None, extra: int = 0) -> None:
         """Add one or more newlines before the next write."""
         self._new_lines = max(self._new_lines, 1 + extra)
         if node is not None and node.lineno != self._last_line:
             self._write_debug_info = node.lineno
             self._last_line = node.lineno
 
-    def signature(self, node, frame, extra_kwargs=None):
+    def signature(
+        self,
+        node: t.Union[nodes.Call, nodes.Filter, nodes.Test],
+        frame: Frame,
+        extra_kwargs: t.Optional[t.Mapping[str, t.Any]] = None,
+    ) -> None:
         """Writes a function call to the stream for the current node.
         A leading comma is added automatically.  The extra keyword
         arguments may not include python keywords otherwise a syntax
@@ -397,11 +491,10 @@ class CodeGenerator(NodeVisitor):
         """
         # if any of the given keyword arguments is a python keyword
         # we have to make sure that no invalid call is created.
-        kwarg_workaround = False
-        for kwarg in chain((x.key for x in node.kwargs), extra_kwargs or ()):
-            if is_python_keyword(kwarg):
-                kwarg_workaround = True
-                break
+        kwarg_workaround = any(
+            is_python_keyword(t.cast(str, k))
+            for k in chain((x.key for x in node.kwargs), extra_kwargs or ())
+        )
 
         for arg in node.args:
             self.write(", ")
@@ -441,7 +534,7 @@ class CodeGenerator(NodeVisitor):
             self.write(", **")
             self.visit(node.dyn_kwargs, frame)
 
-    def pull_dependencies(self, nodes):
+    def pull_dependencies(self, nodes: t.Iterable[nodes.Node]) -> None:
         """Find all filter and test names used in the template and
         assign them to variables in the compiled namespace. Checking
         that the names are registered with the environment is done when
@@ -457,23 +550,25 @@ class CodeGenerator(NodeVisitor):
         for node in nodes:
             visitor.visit(node)
 
-        for dependency in "filters", "tests":
-            mapping = getattr(self, dependency)
-
-            for name in getattr(visitor, dependency):
-                if name not in mapping:
-                    mapping[name] = self.temporary_identifier()
+        for id_map, names, dependency in (self.filters, visitor.filters, "filters"), (
+            self.tests,
+            visitor.tests,
+            "tests",
+        ):
+            for name in names:
+                if name not in id_map:
+                    id_map[name] = self.temporary_identifier()
 
                 # add check during runtime that dependencies used inside of executed
                 # blocks are defined, as this step may be skipped during compile time
                 self.writeline("try:")
                 self.indent()
-                self.writeline(f"{mapping[name]} = environment.{dependency}[{name!r}]")
+                self.writeline(f"{id_map[name]} = environment.{dependency}[{name!r}]")
                 self.outdent()
                 self.writeline("except KeyError:")
                 self.indent()
                 self.writeline("@internalcode")
-                self.writeline(f"def {mapping[name]}(*unused):")
+                self.writeline(f"def {id_map[name]}(*unused):")
                 self.indent()
                 self.writeline(
                     f'raise TemplateRuntimeError("No {dependency[:-1]}'
@@ -482,7 +577,7 @@ class CodeGenerator(NodeVisitor):
                 self.outdent()
                 self.outdent()
 
-    def enter_frame(self, frame):
+    def enter_frame(self, frame: Frame) -> None:
         undefs = []
         for target, (action, param) in frame.symbols.loads.items():
             if action == VAR_LOAD_PARAMETER:
@@ -498,7 +593,7 @@ class CodeGenerator(NodeVisitor):
         if undefs:
             self.writeline(f"{' = '.join(undefs)} = missing")
 
-    def leave_frame(self, frame, with_python_scope=False):
+    def leave_frame(self, frame: Frame, with_python_scope: bool = False) -> None:
         if not with_python_scope:
             undefs = []
             for target in frame.symbols.loads:
@@ -506,13 +601,15 @@ class CodeGenerator(NodeVisitor):
             if undefs:
                 self.writeline(f"{' = '.join(undefs)} = missing")
 
-    def choose_async(self, async_value="async ", sync_value=""):
+    def choose_async(self, async_value: str = "async ", sync_value: str = "") -> str:
         return async_value if self.environment.is_async else sync_value
 
-    def func(self, name):
+    def func(self, name: str) -> str:
         return f"{self.choose_async()}def {name}"
 
-    def macro_body(self, node, frame):
+    def macro_body(
+        self, node: t.Union[nodes.Macro, nodes.CallBlock], frame: Frame
+    ) -> t.Tuple[Frame, MacroRef]:
         """Dump the function def of a macro or call block."""
         frame = frame.inner()
         frame.symbols.analyze_node(node)
@@ -521,6 +618,7 @@ class CodeGenerator(NodeVisitor):
         explicit_caller = None
         skip_special_params = set()
         args = []
+
         for idx, arg in enumerate(node.args):
             if arg.name == "caller":
                 explicit_caller = idx
@@ -592,7 +690,7 @@ class CodeGenerator(NodeVisitor):
 
         return frame, macro_ref
 
-    def macro_def(self, macro_ref, frame):
+    def macro_def(self, macro_ref: MacroRef, frame: Frame) -> None:
         """Dump the macro definition for the def created by macro_body."""
         arg_tuple = ", ".join(repr(x.name) for x in macro_ref.node.args)
         name = getattr(macro_ref.node, "name", None)
@@ -604,21 +702,21 @@ class CodeGenerator(NodeVisitor):
             f" {macro_ref.accesses_caller!r}, context.eval_ctx.autoescape)"
         )
 
-    def position(self, node):
+    def position(self, node: nodes.Node) -> str:
         """Return a human readable position for the node."""
         rv = f"line {node.lineno}"
         if self.name is not None:
             rv = f"{rv} in {self.name!r}"
         return rv
 
-    def dump_local_context(self, frame):
+    def dump_local_context(self, frame: Frame) -> str:
         items_kv = ", ".join(
             f"{name!r}: {target}"
             for name, target in frame.symbols.dump_stores().items()
         )
         return f"{{{items_kv}}}"
 
-    def write_commons(self):
+    def write_commons(self) -> None:
         """Writes a common preamble that is used by root and block functions.
         Primarily this sets up common local helpers and enforces a generator
         through a dead branch.
@@ -630,7 +728,7 @@ class CodeGenerator(NodeVisitor):
         self.writeline("cond_expr_undefined = Undefined")
         self.writeline("if 0: yield None")
 
-    def push_parameter_definitions(self, frame):
+    def push_parameter_definitions(self, frame: Frame) -> None:
         """Pushes all parameter targets from the given frame into a local
         stack that permits tracking of yet to be assigned parameters.  In
         particular this enables the optimization from `visit_Name` to skip
@@ -639,46 +737,46 @@ class CodeGenerator(NodeVisitor):
         """
         self._param_def_block.append(frame.symbols.dump_param_targets())
 
-    def pop_parameter_definitions(self):
+    def pop_parameter_definitions(self) -> None:
         """Pops the current parameter definitions set."""
         self._param_def_block.pop()
 
-    def mark_parameter_stored(self, target):
+    def mark_parameter_stored(self, target: str) -> None:
         """Marks a parameter in the current parameter definitions as stored.
         This will skip the enforced undefined checks.
         """
         if self._param_def_block:
             self._param_def_block[-1].discard(target)
 
-    def push_context_reference(self, target):
+    def push_context_reference(self, target: str) -> None:
         self._context_reference_stack.append(target)
 
-    def pop_context_reference(self):
+    def pop_context_reference(self) -> None:
         self._context_reference_stack.pop()
 
-    def get_context_ref(self):
+    def get_context_ref(self) -> str:
         return self._context_reference_stack[-1]
 
-    def get_resolve_func(self):
+    def get_resolve_func(self) -> str:
         target = self._context_reference_stack[-1]
         if target == "context":
             return "resolve"
         return f"{target}.resolve"
 
-    def derive_context(self, frame):
+    def derive_context(self, frame: Frame) -> str:
         return f"{self.get_context_ref()}.derived({self.dump_local_context(frame)})"
 
-    def parameter_is_undeclared(self, target):
+    def parameter_is_undeclared(self, target: str) -> bool:
         """Checks if a given target is an undeclared parameter."""
         if not self._param_def_block:
             return False
         return target in self._param_def_block[-1]
 
-    def push_assign_tracking(self):
+    def push_assign_tracking(self) -> None:
         """Pushes a new layer for assignment tracking."""
         self._assign_stack.append(set())
 
-    def pop_assign_tracking(self, frame):
+    def pop_assign_tracking(self, frame: Frame) -> None:
         """Pops the topmost level for assignment tracking and updates the
         context variables if necessary.
         """
@@ -723,7 +821,9 @@ class CodeGenerator(NodeVisitor):
 
     # -- Statement Visitors
 
-    def visit_Template(self, node, frame=None):
+    def visit_Template(
+        self, node: nodes.Template, frame: t.Optional[Frame] = None
+    ) -> None:
         assert frame is None, "no root frame allowed"
         eval_ctx = EvalContext(self.environment, self.name)
 
@@ -840,7 +940,7 @@ class CodeGenerator(NodeVisitor):
         debug_kv_str = "&".join(f"{k}={v}" for k, v in self.debug_info)
         self.writeline(f"debug_info = {debug_kv_str!r}")
 
-    def visit_Block(self, node, frame):
+    def visit_Block(self, node: nodes.Block, frame: Frame) -> None:
         """Call a block and register it for the template."""
         level = 0
         if frame.toplevel:
@@ -883,7 +983,7 @@ class CodeGenerator(NodeVisitor):
 
         self.outdent(level)
 
-    def visit_Extends(self, node, frame):
+    def visit_Extends(self, node: nodes.Extends, frame: Frame) -> None:
         """Calls the extender."""
         if not frame.toplevel:
             self.fail("cannot use extend from a non top-level scope", node.lineno)
@@ -926,7 +1026,7 @@ class CodeGenerator(NodeVisitor):
         # and now we have one more
         self.extends_so_far += 1
 
-    def visit_Include(self, node, frame):
+    def visit_Include(self, node: nodes.Include, frame: Frame) -> None:
         """Handles includes."""
         if node.ignore_missing:
             self.writeline("try:")
@@ -977,7 +1077,9 @@ class CodeGenerator(NodeVisitor):
         if node.ignore_missing:
             self.outdent()
 
-    def _import_common(self, node, frame):
+    def _import_common(
+        self, node: t.Union[nodes.Import, nodes.FromImport], frame: Frame
+    ) -> None:
         self.write(f"{self.choose_async('await ')}environment.get_template(")
         self.visit(node.template, frame)
         self.write(f", {self.name!r}).")
@@ -992,7 +1094,7 @@ class CodeGenerator(NodeVisitor):
         else:
             self.write("_get_default_module(context)")
 
-    def visit_Import(self, node, frame):
+    def visit_Import(self, node: nodes.Import, frame: Frame) -> None:
         """Visit regular imports."""
         self.writeline(f"{frame.symbols.ref(node.target)} = ", node)
         if frame.toplevel:
@@ -1003,7 +1105,7 @@ class CodeGenerator(NodeVisitor):
         if frame.toplevel and not node.target.startswith("_"):
             self.writeline(f"context.exported_vars.discard({node.target!r})")
 
-    def visit_FromImport(self, node, frame):
+    def visit_FromImport(self, node: nodes.FromImport, frame: Frame) -> None:
         """Visit named imports."""
         self.newline(node)
         self.write("included_template = ")
@@ -1053,7 +1155,7 @@ class CodeGenerator(NodeVisitor):
                     f"context.exported_vars.difference_update(({names_str}))"
                 )
 
-    def visit_For(self, node, frame):
+    def visit_For(self, node: nodes.For, frame: Frame) -> None:
         loop_frame = frame.inner()
         loop_frame.loop_frame = True
         test_frame = frame.inner()
@@ -1187,7 +1289,7 @@ class CodeGenerator(NodeVisitor):
             self.write(", loop)")
             self.end_write(frame)
 
-    def visit_If(self, node, frame):
+    def visit_If(self, node: nodes.If, frame: Frame) -> None:
         if_frame = frame.soft()
         self.writeline("if ", node)
         self.visit(node.test, if_frame)
@@ -1208,7 +1310,7 @@ class CodeGenerator(NodeVisitor):
             self.blockvisit(node.else_, if_frame)
             self.outdent()
 
-    def visit_Macro(self, node, frame):
+    def visit_Macro(self, node: nodes.Macro, frame: Frame) -> None:
         macro_frame, macro_ref = self.macro_body(node, frame)
         self.newline()
         if frame.toplevel:
@@ -1218,7 +1320,7 @@ class CodeGenerator(NodeVisitor):
         self.write(f"{frame.symbols.ref(node.name)} = ")
         self.macro_def(macro_ref, macro_frame)
 
-    def visit_CallBlock(self, node, frame):
+    def visit_CallBlock(self, node: nodes.CallBlock, frame: Frame) -> None:
         call_frame, macro_ref = self.macro_body(node, frame)
         self.writeline("caller = ")
         self.macro_def(macro_ref, call_frame)
@@ -1226,7 +1328,7 @@ class CodeGenerator(NodeVisitor):
         self.visit_Call(node.call, frame, forward_caller=True)
         self.end_write(frame)
 
-    def visit_FilterBlock(self, node, frame):
+    def visit_FilterBlock(self, node: nodes.FilterBlock, frame: Frame) -> None:
         filter_frame = frame.inner()
         filter_frame.symbols.analyze_node(node)
         self.enter_frame(filter_frame)
@@ -1237,7 +1339,7 @@ class CodeGenerator(NodeVisitor):
         self.end_write(frame)
         self.leave_frame(filter_frame)
 
-    def visit_With(self, node, frame):
+    def visit_With(self, node: nodes.With, frame: Frame) -> None:
         with_frame = frame.inner()
         with_frame.symbols.analyze_node(node)
         self.enter_frame(with_frame)
@@ -1249,18 +1351,25 @@ class CodeGenerator(NodeVisitor):
         self.blockvisit(node.body, with_frame)
         self.leave_frame(with_frame)
 
-    def visit_ExprStmt(self, node, frame):
+    def visit_ExprStmt(self, node: nodes.ExprStmt, frame: Frame) -> None:
         self.newline(node)
         self.visit(node.node, frame)
 
-    _FinalizeInfo = namedtuple("_FinalizeInfo", ("const", "src"))
-    #: The default finalize function if the environment isn't configured
-    #: with one. Or if the environment has one, this is called on that
-    #: function's output for constants.
-    _default_finalize = str
+    class _FinalizeInfo(t.NamedTuple):
+        const: t.Optional[t.Callable[..., str]]
+        src: t.Optional[str]
+
+    @staticmethod
+    def _default_finalize(value: t.Any) -> t.Any:
+        """The default finalize function if the environment isn't
+        configured with one. Or, if the environment has one, this is
+        called on that function's output for constants.
+        """
+        return str(value)
+
     _finalize: t.Optional[_FinalizeInfo] = None
 
-    def _make_finalize(self):
+    def _make_finalize(self) -> _FinalizeInfo:
         """Build the finalize function to be used on constants and at
         runtime. Cached so it's only created once for all output nodes.
 
@@ -1276,6 +1385,7 @@ class CodeGenerator(NodeVisitor):
         if self._finalize is not None:
             return self._finalize
 
+        finalize: t.Optional[t.Callable[..., t.Any]]
         finalize = default = self._default_finalize
         src = None
 
@@ -1286,12 +1396,14 @@ class CodeGenerator(NodeVisitor):
                 _PassArg.context: "context",
                 _PassArg.eval_context: "context.eval_ctx",
                 _PassArg.environment: "environment",
-            }.get(_PassArg.from_obj(env_finalize))
+            }.get(
+                _PassArg.from_obj(env_finalize)  # type: ignore
+            )
             finalize = None
 
             if pass_arg is None:
 
-                def finalize(value):
+                def finalize(value: t.Any) -> t.Any:
                     return default(env_finalize(value))
 
             else:
@@ -1299,20 +1411,22 @@ class CodeGenerator(NodeVisitor):
 
                 if pass_arg == "environment":
 
-                    def finalize(value):
+                    def finalize(value: t.Any) -> t.Any:
                         return default(env_finalize(self.environment, value))
 
         self._finalize = self._FinalizeInfo(finalize, src)
         return self._finalize
 
-    def _output_const_repr(self, group):
+    def _output_const_repr(self, group: t.Iterable[t.Any]) -> str:
         """Given a group of constant values converted from ``Output``
         child nodes, produce a string to write to the template module
         source.
         """
         return repr(concat(group))
 
-    def _output_child_to_const(self, node, frame, finalize):
+    def _output_child_to_const(
+        self, node: nodes.Expr, frame: Frame, finalize: _FinalizeInfo
+    ) -> str:
         """Try to optimize a child of an ``Output`` node by trying to
         convert it to constant, finalized data at compile time.
 
@@ -1329,9 +1443,11 @@ class CodeGenerator(NodeVisitor):
         if isinstance(node, nodes.TemplateData):
             return str(const)
 
-        return finalize.const(const)
+        return finalize.const(const)  # type: ignore
 
-    def _output_child_pre(self, node, frame, finalize):
+    def _output_child_pre(
+        self, node: nodes.Expr, frame: Frame, finalize: _FinalizeInfo
+    ) -> None:
         """Output extra source code before visiting a child of an
         ``Output`` node.
         """
@@ -1345,7 +1461,9 @@ class CodeGenerator(NodeVisitor):
         if finalize.src is not None:
             self.write(finalize.src)
 
-    def _output_child_post(self, node, frame, finalize):
+    def _output_child_post(
+        self, node: nodes.Expr, frame: Frame, finalize: _FinalizeInfo
+    ) -> None:
         """Output extra source code after visiting a child of an
         ``Output`` node.
         """
@@ -1354,7 +1472,7 @@ class CodeGenerator(NodeVisitor):
         if finalize.src is not None:
             self.write(")")
 
-    def visit_Output(self, node, frame):
+    def visit_Output(self, node: nodes.Output, frame: Frame) -> None:
         # If an extends is active, don't render outside a block.
         if frame.require_output_check:
             # A top-level extends is known to exist at compile time.
@@ -1365,7 +1483,7 @@ class CodeGenerator(NodeVisitor):
             self.indent()
 
         finalize = self._make_finalize()
-        body = []
+        body: t.List[t.Union[t.List[t.Any], nodes.Expr]] = []
 
         # Evaluate constants at compile time if possible. Each item in
         # body will be either a list of static data or a node to be
@@ -1433,7 +1551,7 @@ class CodeGenerator(NodeVisitor):
         if frame.require_output_check:
             self.outdent()
 
-    def visit_Assign(self, node, frame):
+    def visit_Assign(self, node: nodes.Assign, frame: Frame) -> None:
         self.push_assign_tracking()
         self.newline(node)
         self.visit(node.target, frame)
@@ -1441,7 +1559,7 @@ class CodeGenerator(NodeVisitor):
         self.visit(node.node, frame)
         self.pop_assign_tracking(frame)
 
-    def visit_AssignBlock(self, node, frame):
+    def visit_AssignBlock(self, node: nodes.AssignBlock, frame: Frame) -> None:
         self.push_assign_tracking()
         block_frame = frame.inner()
         # This is a special case.  Since a set block always captures we
@@ -1465,7 +1583,7 @@ class CodeGenerator(NodeVisitor):
 
     # -- Expression Visitors
 
-    def visit_Name(self, node, frame):
+    def visit_Name(self, node: nodes.Name, frame: Frame) -> None:
         if node.ctx == "store" and (
             frame.toplevel or frame.loop_frame or frame.block_frame
         ):
@@ -1490,7 +1608,7 @@ class CodeGenerator(NodeVisitor):
 
         self.write(ref)
 
-    def visit_NSRef(self, node, frame):
+    def visit_NSRef(self, node: nodes.NSRef, frame: Frame) -> None:
         # NSRefs can only be used to store values; since they use the normal
         # `foo.bar` notation they will be parsed as a normal attribute access
         # when used anywhere but in a `set` context
@@ -1504,14 +1622,14 @@ class CodeGenerator(NodeVisitor):
         self.outdent()
         self.writeline(f"{ref}[{node.attr!r}]")
 
-    def visit_Const(self, node, frame):
+    def visit_Const(self, node: nodes.Const, frame: Frame) -> None:
         val = node.as_const(frame.eval_ctx)
         if isinstance(val, float):
             self.write(str(val))
         else:
             self.write(repr(val))
 
-    def visit_TemplateData(self, node, frame):
+    def visit_TemplateData(self, node: nodes.TemplateData, frame: Frame) -> None:
         try:
             self.write(repr(node.as_const(frame.eval_ctx)))
         except nodes.Impossible:
@@ -1519,7 +1637,7 @@ class CodeGenerator(NodeVisitor):
                 f"(Markup if context.eval_ctx.autoescape else identity)({node.data!r})"
             )
 
-    def visit_Tuple(self, node, frame):
+    def visit_Tuple(self, node: nodes.Tuple, frame: Frame) -> None:
         self.write("(")
         idx = -1
         for idx, item in enumerate(node.items):
@@ -1528,7 +1646,7 @@ class CodeGenerator(NodeVisitor):
             self.visit(item, frame)
         self.write(",)" if idx == 0 else ")")
 
-    def visit_List(self, node, frame):
+    def visit_List(self, node: nodes.List, frame: Frame) -> None:
         self.write("[")
         for idx, item in enumerate(node.items):
             if idx:
@@ -1536,7 +1654,7 @@ class CodeGenerator(NodeVisitor):
             self.visit(item, frame)
         self.write("]")
 
-    def visit_Dict(self, node, frame):
+    def visit_Dict(self, node: nodes.Dict, frame: Frame) -> None:
         self.write("{")
         for idx, item in enumerate(node.items):
             if idx:
@@ -1546,58 +1664,21 @@ class CodeGenerator(NodeVisitor):
             self.visit(item.value, frame)
         self.write("}")
 
-    def binop(operator, interceptable=True):  # noqa: B902
-        @optimizeconst
-        def visitor(self, node, frame):
-            if (
-                self.environment.sandboxed
-                and operator in self.environment.intercepted_binops
-            ):
-                self.write(f"environment.call_binop(context, {operator!r}, ")
-                self.visit(node.left, frame)
-                self.write(", ")
-                self.visit(node.right, frame)
-            else:
-                self.write("(")
-                self.visit(node.left, frame)
-                self.write(f" {operator} ")
-                self.visit(node.right, frame)
-            self.write(")")
-
-        return visitor
-
-    def uaop(operator, interceptable=True):  # noqa: B902
-        @optimizeconst
-        def visitor(self, node, frame):
-            if (
-                self.environment.sandboxed
-                and operator in self.environment.intercepted_unops
-            ):
-                self.write(f"environment.call_unop(context, {operator!r}, ")
-                self.visit(node.node, frame)
-            else:
-                self.write("(" + operator)
-                self.visit(node.node, frame)
-            self.write(")")
-
-        return visitor
-
-    visit_Add = binop("+")  # type:ignore
-    visit_Sub = binop("-")  # type:ignore
-    visit_Mul = binop("*")  # type:ignore
-    visit_Div = binop("/")  # type:ignore
-    visit_FloorDiv = binop("//")  # type:ignore
-    visit_Pow = binop("**")  # type:ignore
-    visit_Mod = binop("%")  # type:ignore
-    visit_And = binop("and", interceptable=False)  # type:ignore
-    visit_Or = binop("or", interceptable=False)  # type:ignore
-    visit_Pos = uaop("+")  # type:ignore
-    visit_Neg = uaop("-")  # type:ignore
-    visit_Not = uaop("not ", interceptable=False)  # type:ignore
-    del binop, uaop
+    visit_Add = _make_binop("+")
+    visit_Sub = _make_binop("-")
+    visit_Mul = _make_binop("*")
+    visit_Div = _make_binop("/")
+    visit_FloorDiv = _make_binop("//")
+    visit_Pow = _make_binop("**")
+    visit_Mod = _make_binop("%")
+    visit_And = _make_binop("and")
+    visit_Or = _make_binop("or")
+    visit_Pos = _make_unop("+")
+    visit_Neg = _make_unop("-")
+    visit_Not = _make_unop("not ")
 
     @optimizeconst
-    def visit_Concat(self, node, frame):
+    def visit_Concat(self, node: nodes.Concat, frame: Frame) -> None:
         if frame.eval_ctx.volatile:
             func_name = "(markup_join if context.eval_ctx.volatile else str_join)"
         elif frame.eval_ctx.autoescape:
@@ -1611,19 +1692,19 @@ class CodeGenerator(NodeVisitor):
         self.write("))")
 
     @optimizeconst
-    def visit_Compare(self, node, frame):
+    def visit_Compare(self, node: nodes.Compare, frame: Frame) -> None:
         self.write("(")
         self.visit(node.expr, frame)
         for op in node.ops:
             self.visit(op, frame)
         self.write(")")
 
-    def visit_Operand(self, node, frame):
+    def visit_Operand(self, node: nodes.Operand, frame: Frame) -> None:
         self.write(f" {operators[node.op]} ")
         self.visit(node.expr, frame)
 
     @optimizeconst
-    def visit_Getattr(self, node, frame):
+    def visit_Getattr(self, node: nodes.Getattr, frame: Frame) -> None:
         if self.environment.is_async:
             self.write("(await auto_await(")
 
@@ -1635,7 +1716,7 @@ class CodeGenerator(NodeVisitor):
             self.write("))")
 
     @optimizeconst
-    def visit_Getitem(self, node, frame):
+    def visit_Getitem(self, node: nodes.Getitem, frame: Frame) -> None:
         # slices bypass the environment getitem method.
         if isinstance(node.arg, nodes.Slice):
             self.visit(node.node, frame)
@@ -1655,7 +1736,7 @@ class CodeGenerator(NodeVisitor):
             if self.environment.is_async:
                 self.write("))")
 
-    def visit_Slice(self, node, frame):
+    def visit_Slice(self, node: nodes.Slice, frame: Frame) -> None:
         if node.start is not None:
             self.visit(node.start, frame)
         self.write(":")
@@ -1666,33 +1747,33 @@ class CodeGenerator(NodeVisitor):
             self.visit(node.step, frame)
 
     @contextmanager
-    def _filter_test_common(self, node, frame, is_filter):
-        if is_filter:
-            compiler_map = self.filters
-            env_map = self.environment.filters
-            type_name = "filter"
-        else:
-            compiler_map = self.tests
-            env_map = self.environment.tests
-            type_name = "test"
-
+    def _filter_test_common(
+        self, node: t.Union[nodes.Filter, nodes.Test], frame: Frame, is_filter: bool
+    ) -> t.Iterator[None]:
         if self.environment.is_async:
             self.write("await auto_await(")
 
-        self.write(compiler_map[node.name] + "(")
-        func = env_map.get(node.name)
+        if is_filter:
+            self.write(f"{self.filters[node.name]}(")
+            func = self.environment.filters.get(node.name)
+        else:
+            self.write(f"{self.tests[node.name]}(")
+            func = self.environment.tests.get(node.name)
 
         # When inside an If or CondExpr frame, allow the filter to be
         # undefined at compile time and only raise an error if it's
         # actually called at runtime. See pull_dependencies.
         if func is None and not frame.soft_frame:
+            type_name = "filter" if is_filter else "test"
             self.fail(f"No {type_name} named {node.name!r}.", node.lineno)
 
         pass_arg = {
             _PassArg.context: "context",
             _PassArg.eval_context: "context.eval_ctx",
             _PassArg.environment: "environment",
-        }.get(_PassArg.from_obj(func))
+        }.get(
+            _PassArg.from_obj(func)  # type: ignore
+        )
 
         if pass_arg is not None:
             self.write(f"{pass_arg}, ")
@@ -1708,7 +1789,7 @@ class CodeGenerator(NodeVisitor):
             self.write(")")
 
     @optimizeconst
-    def visit_Filter(self, node, frame):
+    def visit_Filter(self, node: nodes.Filter, frame: Frame) -> None:
         with self._filter_test_common(node, frame, True):
             # if the filter node is None we are inside a filter block
             # and want to write to the current buffer
@@ -1725,17 +1806,19 @@ class CodeGenerator(NodeVisitor):
                 self.write(f"concat({frame.buffer})")
 
     @optimizeconst
-    def visit_Test(self, node, frame):
+    def visit_Test(self, node: nodes.Test, frame: Frame) -> None:
         with self._filter_test_common(node, frame, False):
             self.visit(node.node, frame)
 
     @optimizeconst
-    def visit_CondExpr(self, node, frame):
+    def visit_CondExpr(self, node: nodes.CondExpr, frame: Frame) -> None:
         frame = frame.soft()
 
-        def write_expr2():
+        def write_expr2() -> None:
             if node.expr2 is not None:
-                return self.visit(node.expr2, frame)
+                self.visit(node.expr2, frame)
+                return
+
             self.write(
                 f'cond_expr_undefined("the inline if-expression on'
                 f" {self.position(node)} evaluated to false and no else"
@@ -1751,7 +1834,9 @@ class CodeGenerator(NodeVisitor):
         self.write(")")
 
     @optimizeconst
-    def visit_Call(self, node, frame, forward_caller=False):
+    def visit_Call(
+        self, node: nodes.Call, frame: Frame, forward_caller: bool = False
+    ) -> None:
         if self.environment.is_async:
             self.write("await auto_await(")
         if self.environment.sandboxed:
@@ -1771,54 +1856,64 @@ class CodeGenerator(NodeVisitor):
         if self.environment.is_async:
             self.write(")")
 
-    def visit_Keyword(self, node, frame):
+    def visit_Keyword(self, node: nodes.Keyword, frame: Frame) -> None:
         self.write(node.key + "=")
         self.visit(node.value, frame)
 
     # -- Unused nodes for extensions
 
-    def visit_MarkSafe(self, node, frame):
+    def visit_MarkSafe(self, node: nodes.MarkSafe, frame: Frame) -> None:
         self.write("Markup(")
         self.visit(node.expr, frame)
         self.write(")")
 
-    def visit_MarkSafeIfAutoescape(self, node, frame):
+    def visit_MarkSafeIfAutoescape(
+        self, node: nodes.MarkSafeIfAutoescape, frame: Frame
+    ) -> None:
         self.write("(Markup if context.eval_ctx.autoescape else identity)(")
         self.visit(node.expr, frame)
         self.write(")")
 
-    def visit_EnvironmentAttribute(self, node, frame):
+    def visit_EnvironmentAttribute(
+        self, node: nodes.EnvironmentAttribute, frame: Frame
+    ) -> None:
         self.write("environment." + node.name)
 
-    def visit_ExtensionAttribute(self, node, frame):
+    def visit_ExtensionAttribute(
+        self, node: nodes.ExtensionAttribute, frame: Frame
+    ) -> None:
         self.write(f"environment.extensions[{node.identifier!r}].{node.name}")
 
-    def visit_ImportedName(self, node, frame):
+    def visit_ImportedName(self, node: nodes.ImportedName, frame: Frame) -> None:
         self.write(self.import_aliases[node.importname])
 
-    def visit_InternalName(self, node, frame):
+    def visit_InternalName(self, node: nodes.InternalName, frame: Frame) -> None:
         self.write(node.name)
 
-    def visit_ContextReference(self, node, frame):
+    def visit_ContextReference(
+        self, node: nodes.ContextReference, frame: Frame
+    ) -> None:
         self.write("context")
 
-    def visit_DerivedContextReference(self, node, frame):
+    def visit_DerivedContextReference(
+        self, node: nodes.DerivedContextReference, frame: Frame
+    ) -> None:
         self.write(self.derive_context(frame))
 
-    def visit_Continue(self, node, frame):
+    def visit_Continue(self, node: nodes.Continue, frame: Frame) -> None:
         self.writeline("continue", node)
 
-    def visit_Break(self, node, frame):
+    def visit_Break(self, node: nodes.Break, frame: Frame) -> None:
         self.writeline("break", node)
 
-    def visit_Scope(self, node, frame):
+    def visit_Scope(self, node: nodes.Scope, frame: Frame) -> None:
         scope_frame = frame.inner()
         scope_frame.symbols.analyze_node(node)
         self.enter_frame(scope_frame)
         self.blockvisit(node.body, scope_frame)
         self.leave_frame(scope_frame)
 
-    def visit_OverlayScope(self, node, frame):
+    def visit_OverlayScope(self, node: nodes.OverlayScope, frame: Frame) -> None:
         ctx = self.temporary_identifier()
         self.writeline(f"{ctx} = {self.derive_context(frame)}")
         self.writeline(f"{ctx}.vars = ")
@@ -1832,7 +1927,9 @@ class CodeGenerator(NodeVisitor):
         self.leave_frame(scope_frame)
         self.pop_context_reference()
 
-    def visit_EvalContextModifier(self, node, frame):
+    def visit_EvalContextModifier(
+        self, node: nodes.EvalContextModifier, frame: Frame
+    ) -> None:
         for keyword in node.options:
             self.writeline(f"context.eval_ctx.{keyword.key} = ")
             self.visit(keyword.value, frame)
@@ -1843,7 +1940,9 @@ class CodeGenerator(NodeVisitor):
             else:
                 setattr(frame.eval_ctx, keyword.key, val)
 
-    def visit_ScopedEvalContextModifier(self, node, frame):
+    def visit_ScopedEvalContextModifier(
+        self, node: nodes.ScopedEvalContextModifier, frame: Frame
+    ) -> None:
         old_ctx_name = self.temporary_identifier()
         saved_ctx = frame.eval_ctx.save()
         self.writeline(f"{old_ctx_name} = context.eval_ctx.save()")
