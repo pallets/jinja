@@ -4,7 +4,7 @@
 #
 #    pip-compile requirements/tests.in
 #
-attrs==20.3.0
+attrs==21.2.0
     # via pytest
 iniconfig==1.1.1
     # via pytest
@@ -16,7 +16,7 @@ py==1.10.0
     # via pytest
 pyparsing==2.4.7
     # via packaging
-pytest==6.2.3
+pytest==6.2.4
     # via -r requirements/tests.in
 toml==0.10.2
     # via pytest
