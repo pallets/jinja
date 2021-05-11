@@ -427,7 +427,7 @@ this template "extends" another template.  When the template system evaluates
 this template, it first locates the parent.  The extends tag should be the
 first tag in the template.  Everything before it is printed out normally and
 may cause confusion.  For details about this behavior and how to take
-advantage of it, see :ref:`null-master-fallback`. Also a block will always be
+advantage of it, see :ref:`null-default-fallback`. Also a block will always be
 filled in regardless of whether the surrounding condition is evaluated to be true
 or false.
 
@@ -1430,7 +1430,7 @@ It is also possible to use inline `if` expressions.  These are useful in some
 situations.  For example, you can use this to extend from one template if a
 variable is defined, otherwise from the default layout template::
 
-    {% extends layout_template if layout_template is defined else 'master.html' %}
+    {% extends layout_template if layout_template is defined else 'default.html' %}
 
 The general syntax is ``<do something> if <something is true> else <do
 something else>``.
