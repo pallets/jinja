@@ -18,9 +18,9 @@ _gettext_re = re.compile(r"_\((.*?)\)", re.DOTALL)
 
 
 i18n_templates = {
-    "master.html": '<title>{{ page_title|default(_("missing")) }}</title>'
+    "default.html": '<title>{{ page_title|default(_("missing")) }}</title>'
     "{% block body %}{% endblock %}",
-    "child.html": '{% extends "master.html" %}{% block body %}'
+    "child.html": '{% extends "default.html" %}{% block body %}'
     "{% trans %}watch out{% endtrans %}{% endblock %}",
     "plural.html": "{% trans user_count %}One user online{% pluralize %}"
     "{{ user_count }} users online{% endtrans %}",
@@ -30,9 +30,9 @@ i18n_templates = {
 }
 
 newstyle_i18n_templates = {
-    "master.html": '<title>{{ page_title|default(_("missing")) }}</title>'
+    "default.html": '<title>{{ page_title|default(_("missing")) }}</title>'
     "{% block body %}{% endblock %}",
-    "child.html": '{% extends "master.html" %}{% block body %}'
+    "child.html": '{% extends "default.html" %}{% block body %}'
     "{% trans %}watch out{% endtrans %}{% endblock %}",
     "plural.html": "{% trans user_count %}One user online{% pluralize %}"
     "{{ user_count }} users online{% endtrans %}",

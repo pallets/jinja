@@ -149,43 +149,46 @@ class TestInheritance:
         env = Environment(
             loader=DictLoader(
                 {
-                    "master1": "MASTER1{% block x %}{% endblock %}",
-                    "master2": "MASTER2{% block x %}{% endblock %}",
-                    "child": "{% extends master %}{% block x %}CHILD{% endblock %}",
+                    "default1": "DEFAULT1{% block x %}{% endblock %}",
+                    "default2": "DEFAULT2{% block x %}{% endblock %}",
+                    "child": "{% extends default %}{% block x %}CHILD{% endblock %}",
                 }
             )
         )
         tmpl = env.get_template("child")
         for m in range(1, 3):
-            assert tmpl.render(master=f"master{m}") == f"MASTER{m}CHILD"
+            assert tmpl.render(default=f"default{m}") == f"DEFAULT{m}CHILD"
 
     def test_multi_inheritance(self, env):
         env = Environment(
             loader=DictLoader(
                 {
-                    "master1": "MASTER1{% block x %}{% endblock %}",
-                    "master2": "MASTER2{% block x %}{% endblock %}",
-                    "child": """{% if master %}{% extends master %}{% else %}{% extends
-                'master1' %}{% endif %}{% block x %}CHILD{% endblock %}""",
+                    "default1": "DEFAULT1{% block x %}{% endblock %}",
+                    "default2": "DEFAULT2{% block x %}{% endblock %}",
+                    "child": (
+                        "{% if default %}{% extends default %}{% else %}"
+                        "{% extends 'default1' %}{% endif %}"
+                        "{% block x %}CHILD{% endblock %}"
+                    ),
                 }
             )
         )
         tmpl = env.get_template("child")
-        assert tmpl.render(master="master2") == "MASTER2CHILD"
-        assert tmpl.render(master="master1") == "MASTER1CHILD"
-        assert tmpl.render() == "MASTER1CHILD"
+        assert tmpl.render(default="default2") == "DEFAULT2CHILD"
+        assert tmpl.render(default="default1") == "DEFAULT1CHILD"
+        assert tmpl.render() == "DEFAULT1CHILD"
 
     def test_scoped_block(self, env):
         env = Environment(
             loader=DictLoader(
                 {
-                    "master.html": "{% for item in seq %}[{% block item scoped %}"
+                    "default.html": "{% for item in seq %}[{% block item scoped %}"
                     "{% endblock %}]{% endfor %}"
                 }
             )
         )
         t = env.from_string(
-            "{% extends 'master.html' %}{% block item %}{{ item }}{% endblock %}"
+            "{% extends 'default.html' %}{% block item %}{{ item }}{% endblock %}"
         )
         assert t.render(seq=list(range(5))) == "[0][1][2][3][4]"
 
@@ -193,13 +196,13 @@ class TestInheritance:
         env = Environment(
             loader=DictLoader(
                 {
-                    "master.html": "{% for item in seq %}[{% block item scoped %}"
+                    "default.html": "{% for item in seq %}[{% block item scoped %}"
                     "{{ item }}{% endblock %}]{% endfor %}"
                 }
             )
         )
         t = env.from_string(
-            '{% extends "master.html" %}{% block item %}'
+            '{% extends "default.html" %}{% block item %}'
             "{{ super() }}|{{ item * 2 }}{% endblock %}"
         )
         assert t.render(seq=list(range(5))) == "[0|0][1|2][2|4][3|6][4|8]"
@@ -235,8 +238,8 @@ class TestInheritance:
         env = Environment(
             loader=DictLoader(
                 {
-                    "master": "{% block x required %}{# comment #}\n {% endblock %}",
-                    "level1": "{% extends 'master' %}{% block x %}[1]{% endblock %}",
+                    "default": "{% block x required %}{# comment #}\n {% endblock %}",
+                    "level1": "{% extends 'default' %}{% block x %}[1]{% endblock %}",
                 }
             )
         )
@@ -247,9 +250,9 @@ class TestInheritance:
         env = Environment(
             loader=DictLoader(
                 {
-                    "master": "{% block x required %}{% endblock %}",
-                    "level1": "{% extends 'master' %}{% block x %}[1]{% endblock %}",
-                    "level2": "{% extends 'master' %}{% block x %}[2]{% endblock %}",
+                    "default": "{% block x required %}{% endblock %}",
+                    "level1": "{% extends 'default' %}{% block x %}[1]{% endblock %}",
+                    "level2": "{% extends 'default' %}{% block x %}[2]{% endblock %}",
                 }
             )
         )
@@ -263,8 +266,8 @@ class TestInheritance:
         env = Environment(
             loader=DictLoader(
                 {
-                    "master": "{% block x required %}{% endblock %}",
-                    "level1": "{% extends 'master' %}",
+                    "default": "{% block x required %}{% endblock %}",
+                    "level1": "{% extends 'default' %}",
                     "level2": "{% extends 'level1' %}{% block x %}[2]{% endblock %}",
                     "level3": "{% extends 'level2' %}",
                 }
@@ -284,13 +287,13 @@ class TestInheritance:
         env = Environment(
             loader=DictLoader(
                 {
-                    "master": "{% block x required %}data {# #}{% endblock %}",
-                    "master1": "{% block x required %}{% block y %}"
+                    "default": "{% block x required %}data {# #}{% endblock %}",
+                    "default1": "{% block x required %}{% block y %}"
                     "{% endblock %}  {% endblock %}",
-                    "master2": "{% block x required %}{% if true %}"
+                    "default2": "{% block x required %}{% if true %}"
                     "{% endif %}  {% endblock %}",
-                    "level1": "{% if master %}{% extends master %}"
-                    "{% else %}{% extends 'master' %}{% endif %}"
+                    "level1": "{% if default %}{% extends default %}"
+                    "{% else %}{% extends 'default' %}{% endif %}"
                     "{%- block x %}CHILD{% endblock %}",
                 }
             )
@@ -301,21 +304,21 @@ class TestInheritance:
             TemplateSyntaxError,
             match="Required blocks can only contain comments or whitespace",
         ):
-            assert t.render(master="master")
-            assert t.render(master="master2")
-            assert t.render(master="master3")
+            assert t.render(default="default")
+            assert t.render(default="default2")
+            assert t.render(default="default3")
 
     def test_required_with_scope(self, env):
         env = Environment(
             loader=DictLoader(
                 {
-                    "master1": "{% for item in seq %}[{% block item scoped required %}"
+                    "default1": "{% for item in seq %}[{% block item scoped required %}"
                     "{% endblock %}]{% endfor %}",
-                    "child1": "{% extends 'master1' %}{% block item %}"
+                    "child1": "{% extends 'default1' %}{% block item %}"
                     "{{ item }}{% endblock %}",
-                    "master2": "{% for item in seq %}[{% block item required scoped %}"
+                    "default2": "{% for item in seq %}[{% block item required scoped %}"
                     "{% endblock %}]{% endfor %}",
-                    "child2": "{% extends 'master2' %}{% block item %}"
+                    "child2": "{% extends 'default2' %}{% block item %}"
                     "{{ item }}{% endblock %}",
                 }
             )
@@ -333,20 +336,20 @@ class TestInheritance:
         env = Environment(
             loader=DictLoader(
                 {
-                    "master1": "{% for item in seq %}[{% block item "
+                    "default1": "{% for item in seq %}[{% block item "
                     "scoped scoped %}}{{% endblock %}}]{{% endfor %}}",
-                    "master2": "{% for item in seq %}[{% block item "
+                    "default2": "{% for item in seq %}[{% block item "
                     "required required %}}{{% endblock %}}]{{% endfor %}}",
-                    "child": "{% if master %}{% extends master %}{% else %}"
-                    "{% extends 'master1' %}{% endif %}{%- block x %}"
+                    "child": "{% if default %}{% extends default %}{% else %}"
+                    "{% extends 'default1' %}{% endif %}{%- block x %}"
                     "CHILD{% endblock %}",
                 }
             )
         )
         tmpl = env.get_template("child")
         with pytest.raises(TemplateSyntaxError):
-            tmpl.render(master="master1", seq=list(range(3)))
-            tmpl.render(master="master2", seq=list(range(3)))
+            tmpl.render(default="default1", seq=list(range(3)))
+            tmpl.render(default="default2", seq=list(range(3)))
 
 
 class TestBugFix:
