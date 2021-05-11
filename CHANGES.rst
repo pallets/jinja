@@ -5,6 +5,8 @@ Version 3.0.1
 
 Unreleased
 
+-   Update MarkupSafe dependency to >= 2.0.
+
 
 Version 3.0.0
 -------------
