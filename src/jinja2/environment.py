@@ -1178,7 +1178,7 @@ class Template:
         finalize: t.Optional[t.Callable[..., t.Any]] = None,
         autoescape: t.Union[bool, t.Callable[[t.Optional[str]], bool]] = False,
         enable_async: bool = False,
-    ) -> "Template":
+    ) -> t.Any:  # it returns a `Template`, but this breaks the sphinx build...
         env = get_spontaneous_environment(
             cls.environment_class,  # type: ignore
             block_start_string,
