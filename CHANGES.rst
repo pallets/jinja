@@ -3,7 +3,7 @@
 Version 3.0.0
 -------------
 
-Unreleased
+Released 2021-05-11
 
 -   Drop support for Python 2.7 and 3.5.
 -   Bump MarkupSafe dependency to >=1.1.
