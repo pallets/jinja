@@ -5,7 +5,7 @@ env = Environment(
     loader=DictLoader(
         {
             "child.html": """\
-{% extends master_layout or 'master.html' %}
+{% extends default_layout or 'default.html' %}
 {% include helpers = 'helpers.html' %}
 {% macro get_the_answer() %}42{% endmacro %}
 {% title = 'Hello World' %}
@@ -14,7 +14,7 @@ env = Environment(
     {{ helpers.conspirate() }}
 {% endblock %}
 """,
-            "master.html": """\
+            "default.html": """\
 <!doctype html>
 <title>{{ title }}</title>
 {% block body %}{% endblock %}
