@@ -425,6 +425,7 @@ Version 2.9
 
 Released 2017-01-07, codename Derivation
 
+-   BREAKING - Behavior for variables set inside a loop have changed. See issue:`641`
 -   Change cache key definition in environment. This fixes a performance
     regression introduced in 2.8.
 -   Added support for ``generator_stop`` on supported Python versions
