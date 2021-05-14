@@ -210,7 +210,7 @@ class FileSystemBytecodeCache(BytecodeCache):
         self.pattern = pattern
 
     def _get_default_cache_dir(self) -> str:
-        def _unsafe_dir() -> t.NoReturn:
+        def _unsafe_dir() -> "te.NoReturn":
             raise RuntimeError(
                 "Cannot determine safe temp directory.  You "
                 "need to explicitly provide one."

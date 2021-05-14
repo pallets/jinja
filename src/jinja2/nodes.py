@@ -12,6 +12,7 @@ from markupsafe import Markup
 from .utils import _PassArg
 
 if t.TYPE_CHECKING:
+    import typing_extensions as te
     from .environment import Environment
 
 _NodeBound = t.TypeVar("_NodeBound", bound="Node")
@@ -1196,7 +1197,7 @@ class ScopedEvalContextModifier(EvalContextModifier):
 
 
 # make sure nobody creates custom nodes
-def _failing_new(*args: t.Any, **kwargs: t.Any) -> t.NoReturn:
+def _failing_new(*args: t.Any, **kwargs: t.Any) -> "te.NoReturn":
     raise TypeError("can't create custom node types")
 
 

@@ -76,7 +76,7 @@ class Parser:
         msg: str,
         lineno: t.Optional[int] = None,
         exc: t.Type[TemplateSyntaxError] = TemplateSyntaxError,
-    ) -> t.NoReturn:
+    ) -> "te.NoReturn":
         """Convenience method that raises `exc` with the message, passed
         line number or last line number as well as the current name and
         filename.
@@ -90,7 +90,7 @@ class Parser:
         name: t.Optional[str],
         end_token_stack: t.List[t.Tuple[str, ...]],
         lineno: t.Optional[int],
-    ) -> t.NoReturn:
+    ) -> "te.NoReturn":
         expected: t.Set[str] = set()
         for exprs in end_token_stack:
             expected.update(map(describe_token_expr, exprs))
@@ -125,7 +125,9 @@ class Parser:
 
         self.fail(" ".join(message), lineno)
 
-    def fail_unknown_tag(self, name: str, lineno: t.Optional[int] = None) -> t.NoReturn:
+    def fail_unknown_tag(
+        self, name: str, lineno: t.Optional[int] = None
+    ) -> "te.NoReturn":
         """Called if the parser encounters an unknown tag.  Tries to fail
         with a human readable error message that could help to identify
         the problem.
@@ -136,7 +138,7 @@ class Parser:
         self,
         end_tokens: t.Optional[t.Tuple[str, ...]] = None,
         lineno: t.Optional[int] = None,
-    ) -> t.NoReturn:
+    ) -> "te.NoReturn":
         """Like fail_unknown_tag but for end of template situations."""
         stack = list(self._end_token_stack)
         if end_tokens is not None:

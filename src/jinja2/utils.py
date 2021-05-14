@@ -14,6 +14,9 @@ from urllib.parse import quote_from_bytes
 
 import markupsafe
 
+if t.TYPE_CHECKING:
+    import typing_extensions as te
+
 F = t.TypeVar("F", bound=t.Callable[..., t.Any])
 
 # special singleton representing missing values for the runtime
@@ -503,7 +506,7 @@ class LRUCache:
     def __init__(self, capacity: int) -> None:
         self.capacity = capacity
         self._mapping: t.Dict[t.Any, t.Any] = {}
-        self._queue: t.Deque[t.Any] = deque()
+        self._queue: "te.Deque[t.Any]" = deque()
         self._postinit()
 
     def _postinit(self) -> None:
