@@ -23,6 +23,7 @@ from .utils import concat
 from .visitor import NodeVisitor
 
 if t.TYPE_CHECKING:
+    import typing_extensions as te
     from .environment import Environment
 
 F = t.TypeVar("F", bound=t.Callable[..., t.Any])
@@ -376,7 +377,7 @@ class CodeGenerator(NodeVisitor):
 
     # -- Various compilation helpers
 
-    def fail(self, msg: str, lineno: int) -> t.NoReturn:
+    def fail(self, msg: str, lineno: int) -> "te.NoReturn":
         """Fail with a :exc:`TemplateAssertionError`."""
         raise TemplateAssertionError(msg, lineno, self.name, self.filename)
 
