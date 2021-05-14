@@ -14,6 +14,7 @@ from .exceptions import TemplateSyntaxError
 from .utils import LRUCache
 
 if t.TYPE_CHECKING:
+    import typing_extensions as te
     from .environment import Environment
 
 # cache for the lexers. Exists in order to be able to have multiple
@@ -259,7 +260,7 @@ class Failure:
         self.message = message
         self.error_class = cls
 
-    def __call__(self, lineno: int, filename: str) -> t.NoReturn:
+    def __call__(self, lineno: int, filename: str) -> "te.NoReturn":
         raise self.error_class(self.message, lineno, filename)
 
 
@@ -326,7 +327,7 @@ class TokenStream:
         filename: t.Optional[str],
     ):
         self._iter = iter(generator)
-        self._pushed: t.Deque[Token] = deque()
+        self._pushed: "te.Deque[Token]" = deque()
         self.name = name
         self.filename = filename
         self.closed = False

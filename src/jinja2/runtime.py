@@ -894,7 +894,9 @@ class Undefined:
         )
 
     @internalcode
-    def _fail_with_undefined_error(self, *args: t.Any, **kwargs: t.Any) -> t.NoReturn:
+    def _fail_with_undefined_error(
+        self, *args: t.Any, **kwargs: t.Any
+    ) -> "te.NoReturn":
         """Raise an :exc:`UndefinedError` when operations are performed
         on the undefined value.
         """
@@ -985,7 +987,7 @@ def make_logging_undefined(
 
         def _fail_with_undefined_error(  # type: ignore
             self, *args: t.Any, **kwargs: t.Any
-        ) -> t.NoReturn:
+        ) -> "te.NoReturn":
             try:
                 super()._fail_with_undefined_error(*args, **kwargs)
             except self._undefined_exception as e:

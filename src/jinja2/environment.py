@@ -915,7 +915,7 @@ class Environment:
 
         return names
 
-    def handle_exception(self, source: t.Optional[str] = None) -> t.NoReturn:
+    def handle_exception(self, source: t.Optional[str] = None) -> "te.NoReturn":
         """Exception handling helper.  This is used internally to either raise
         rewritten exceptions or return a rendered traceback for the template.
         """
