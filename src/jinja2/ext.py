@@ -604,7 +604,7 @@ class WithExtension(Extension):
             "The 'with' extension is deprecated and will be removed in"
             " Jinja 3.1. This is built in now.",
             DeprecationWarning,
-            stacklevel=2,
+            stacklevel=3,
         )
 
 
@@ -615,7 +615,7 @@ class AutoEscapeExtension(Extension):
             "The 'autoescape' extension is deprecated and will be"
             " removed in Jinja 3.1. This is built in now.",
             DeprecationWarning,
-            stacklevel=2,
+            stacklevel=3,
         )
 
 
