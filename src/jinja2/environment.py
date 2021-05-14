@@ -9,8 +9,10 @@ from collections import ChainMap
 from functools import lru_cache
 from functools import partial
 from functools import reduce
+from inspect import isclass
 from types import CodeType
 
+from markupsafe import escape as html_escape
 from markupsafe import Markup
 
 from . import nodes
@@ -32,6 +34,7 @@ from .defaults import NEWLINE_SEQUENCE
 from .defaults import TRIM_BLOCKS
 from .defaults import VARIABLE_END_STRING
 from .defaults import VARIABLE_START_STRING
+from .exceptions import TemplateConfigurationError
 from .exceptions import TemplateNotFound
 from .exceptions import TemplateRuntimeError
 from .exceptions import TemplatesNotFound
@@ -48,6 +51,8 @@ from .runtime import Undefined
 from .utils import _PassArg
 from .utils import concat
 from .utils import consume
+from .utils import EscapeFunc
+from .utils import get_wrapped_escape_class
 from .utils import import_string
 from .utils import internalcode
 from .utils import LRUCache
@@ -218,15 +223,71 @@ class Environment:
             ``None`` implicitly into an empty string here.
 
         `autoescape`
-            If set to ``True`` the XML/HTML autoescaping feature is enabled by
-            default.  For more details about autoescaping see
-            :class:`~markupsafe.Markup`.  As of Jinja 2.4 this can also
+            If set to ``True`` the autoescaping feature is enabled by
+            default.
+
+            As of Jinja 2.4 this can also
             be a callable that is passed the template name and has to
             return ``True`` or ``False`` depending on autoescape should be
             enabled by default.
 
+            As of Jinja 3.1 the autoescape can be even smarter.
+            If the given function does not return a boolean but a
+            function again, this function is considered to be the
+            escape function that shall be used. So you can use the
+            same environment to autoescape LaTeX and HTML files.
+
+            Use this with care.
+            Not all functions within Jinja get the context
+            that is required to determine the correct escape function.
+            If you run in trouble simply use different environments
+            with custom ``default_escape`` (see below) for
+            each file type.
+
+            See :ref:`escaping` and :ref:`autoescaping` for details.
+
+            .. versionchanged:: 3.1
+                if the `autoescape` function doesn't return True or False but a
+                callable, it is assumed to be a custom escape function
+
             .. versionchanged:: 2.4
                `autoescape` can now be a function
+
+        `allow_mixed_escape_extends`
+            Allow that templates that extend each other can have different
+            escape functions / Markup classes.
+
+            Note still only the escape function from the most parent
+            template will be used!
+
+            See :ref:`autoescaping` for details.
+
+            Defaults to False
+
+            .. versionadded:: 3.1
+
+        `default_escape`
+            define a custom escape function or class.
+
+            If a class is given it is assumed to be a subclass of
+            :class:`markupsafe.Markup`.
+
+            If a function is given, it is assumed that this is an escape
+            function. The :func:`~jinja2.utils.get_wrapped_escape_class`
+            function will be used to generate a subclass of
+            :func:`markupsafe.escape` from the given escape function.
+            It also takes care that no already escaped strings are
+            escaped again. See :ref:`autoescaping` and :ref:`escaping`.
+
+            Defaults to HTML based escape by :class:`markupsafe.Markup`
+
+            The default value can be overwritten also by the ``autoescape``
+            parameter if the result of ``autoescape(None)`` is a function.
+
+            This setting will also overwrite the filter ``{{ var | safe }}``,
+            ``{{ var | e }}`` and ``{{ var | escape }}`` accordingly.
+
+            .. versionadded:: 3.1
 
         `loader`
             The template loader for this environment.
@@ -288,6 +349,7 @@ class Environment:
     context_class: t.Type[Context] = Context
 
     template_class: t.Type["Template"]
+    default_markup_class: t.Type[Markup]
 
     def __init__(
         self,
@@ -313,6 +375,8 @@ class Environment:
         auto_reload: bool = True,
         bytecode_cache: t.Optional["BytecodeCache"] = None,
         enable_async: bool = False,
+        default_escape: t.Union[EscapeFunc, t.Type[Markup]] = html_escape,
+        allow_mixed_escape_extends: bool = False,
     ):
         # !!Important notice!!
         #   The constructor accepts quite a few arguments that should be
@@ -344,7 +408,16 @@ class Environment:
         self.optimized = optimized
         self.finalize = finalize
         self.autoescape = autoescape
-
+        if isclass(default_escape):
+            default_escape = t.cast(t.Type[Markup], default_escape)
+            self.default_markup_class = default_escape
+        elif default_escape != html_escape:
+            self.default_markup_class = get_wrapped_escape_class(default_escape)
+        elif callable(self.autoescape) and callable(self.autoescape(None)):
+            self.default_markup_class = get_wrapped_escape_class(self.autoescape(None))
+        else:
+            self.default_markup_class = Markup
+        self._allow_mixed_escape_extends: bool = allow_mixed_escape_extends
         # defaults
         self.filters = DEFAULT_FILTERS.copy()
         self.tests = DEFAULT_TESTS.copy()
@@ -364,6 +437,25 @@ class Environment:
 
         self.is_async = enable_async
         _environment_config_check(self)
+
+    def get_markup_class(self, template_name: t.Optional[str] = None) -> t.Type[Markup]:
+        """
+        Get the correct :class:`Markup` for the given template name.
+
+        Use this instead of the default :class:`Markup` to mark a string as
+        safe, especially when using custom escaping.
+
+        See :ref:`autoescaping` for an usage example.
+
+        :param template_name: the name of the template that is checked
+                              for special escpaing in the autoescape
+                              settings
+
+        .. versionadded:: 3.1
+        """
+        if callable(self.autoescape) and callable(self.autoescape(template_name)):
+            return get_wrapped_escape_class(self.autoescape(template_name))
+        return self.default_markup_class
 
     def add_extension(self, extension: t.Union[str, t.Type["Extension"]]) -> None:
         """Adds an extension after the environment was created.
@@ -963,11 +1055,55 @@ class Environment:
         return template
 
     @internalcode
+    def _check_multi_template_autoescape(
+        self,
+        name: t.Union[None, str, "Template"],
+        parent: t.Optional[str],
+        caller: t.Optional[str],
+    ) -> None:
+        """
+        Raise an Error if we expect different custom escape functions
+        or Markup classes used in a way that a user could get
+        unexpected results.
+
+        :param name: The name of first template if known
+        :param parent: the name or names of the templates that
+        :param caller: the name of the function the
+
+        :raise: TemplateConfigurationError
+        """
+        # Currently we check only for extends and mixed auto escape,
+        # so we can exit early
+        if self._allow_mixed_escape_extends or caller != "extends":
+            return
+
+        if isinstance(name, Template):
+            name = None
+        elif not isinstance(name, str):
+            raise ValueError(
+                f"Parameter name is not Template nor string. "
+                f"Given was '{name}' (Type: {type(name)})."
+            )
+        base_class = self.get_markup_class(name)
+        parent_class = self.get_markup_class(parent)
+
+        # The Simplest case it is exactly the same class
+        # We do not check for subclasses because a subclass could have
+        # altered the escape behavior already
+        if base_class != parent_class:
+            raise TemplateConfigurationError(
+                "You tried to extend a template with a different escape "
+                "function or Markup class as the base template. This has to be enabled"
+                "explicitly using Environment(allow_mixed_escape_extends=True)."
+            )
+
+    @internalcode
     def get_template(
         self,
         name: t.Union[str, "Template"],
         parent: t.Optional[str] = None,
         globals: t.Optional[t.MutableMapping[str, t.Any]] = None,
+        caller: t.Optional[str] = None,
     ) -> "Template":
         """Load a template by name with :attr:`loader` and return a
         :class:`Template`. If the template does not exist a
@@ -983,6 +1119,14 @@ class Environment:
             these extra variables available for all renders of this
             template. If the template has already been loaded and
             cached, its globals are updated with any new items.
+        :param caller: Tells get template which
+            function was calling it, i.e. 'extends' or 'include'.
+            Required to define behavior for custom autoescape.
+
+        .. versionchanged:: 3.1
+            Added caller parameter and a check if we need to raise an
+            error due to usage different autoescape function within
+            extends
 
         .. versionchanged:: 3.0
             If a template is loaded from cache, ``globals`` will update
@@ -992,6 +1136,7 @@ class Environment:
             If ``name`` is a :class:`Template` object it is returned
             unchanged.
         """
+        self._check_multi_template_autoescape(name, parent, caller)
         if isinstance(name, Template):
             return name
         if parent is not None:
@@ -1005,6 +1150,7 @@ class Environment:
         names: t.Iterable[t.Union[str, "Template"]],
         parent: t.Optional[str] = None,
         globals: t.Optional[t.MutableMapping[str, t.Any]] = None,
+        caller: t.Optional[str] = None,
     ) -> "Template":
         """Like :meth:`get_template`, but tries loading multiple names.
         If none of the names can be loaded a :exc:`TemplatesNotFound`
@@ -1018,6 +1164,12 @@ class Environment:
             these extra variables available for all renders of this
             template. If the template has already been loaded and
             cached, its globals are updated with any new items.
+        :param caller: t.Optional[str] Tells get template which
+            function was calling it, i.e. 'extends' or 'include'.
+            Required to define behavior for custom autoescape.
+
+        .. versionchanged:: 3.1
+            Added caller parameter
 
         .. versionchanged:: 3.0
             If a template is loaded from cache, ``globals`` will update
@@ -1034,6 +1186,7 @@ class Environment:
 
         .. versionadded:: 2.3
         """
+        parent_template = parent
         if isinstance(names, Undefined):
             names._fail_with_undefined_error()
 
@@ -1044,11 +1197,15 @@ class Environment:
 
         for name in names:
             if isinstance(name, Template):
+                self._check_multi_template_autoescape(name, parent_template, caller)
                 return name
             if parent is not None:
                 name = self.join_path(name, parent)
             try:
-                return self._load_template(name, globals)
+                template = self._load_template(name, globals)
+                # Only check autoescape if template can be loaded
+                self._check_multi_template_autoescape(name, parent_template, caller)
+                return template
             except (TemplateNotFound, UndefinedError):
                 pass
         raise TemplatesNotFound(names)  # type: ignore
@@ -1061,17 +1218,35 @@ class Environment:
         ],
         parent: t.Optional[str] = None,
         globals: t.Optional[t.MutableMapping[str, t.Any]] = None,
+        caller: t.Optional[str] = None,
     ) -> "Template":
         """Use :meth:`select_template` if an iterable of template names
         is given, or :meth:`get_template` if one name is given.
 
+        :param template_name_or_list: List of template names to
+            try loading in order or Name of the template to load.
+        :param parent: The name of the parent template importing this
+            template. :meth:`join_path` can be used to implement name
+            transformations with this.
+        :param globals: Extend the environment :attr:`globals` with
+            these extra variables available for all renders of this
+            template. If the template has already been loaded and
+            cached, its globals are updated with any new items.
+        :param caller: t.Optional[str] Tells get template which
+            function was calling it, i.e. 'extends' or 'include'.
+            Required to define behavior for custom autoescape.
+
+        .. versionchanged:: 3.1
+            Added caller parameter
+
         .. versionadded:: 2.3
         """
         if isinstance(template_name_or_list, (str, Undefined)):
-            return self.get_template(template_name_or_list, parent, globals)
+            return self.get_template(template_name_or_list, parent, globals, caller)
         elif isinstance(template_name_or_list, Template):
+            self._check_multi_template_autoescape(template_name_or_list, parent, caller)
             return template_name_or_list
-        return self.select_template(template_name_or_list, parent, globals)
+        return self.select_template(template_name_or_list, parent, globals, caller)
 
     def from_string(
         self,
@@ -1521,15 +1696,15 @@ class TemplateModule:
                     " a template module. Use the async methods of the"
                     " API you are using."
                 )
-
             body_stream = list(template.root_render_func(context))  # type: ignore
+        self._context = context
 
         self._body_stream = body_stream
         self.__dict__.update(context.get_exported())
         self.__name__ = template.name
 
     def __html__(self) -> Markup:
-        return Markup(concat(self._body_stream))
+        return self._context.eval_ctx.mark_safe(concat(self._body_stream))
 
     def __str__(self) -> str:
         return concat(self._body_stream)

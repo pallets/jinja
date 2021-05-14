@@ -647,8 +647,9 @@ When automatic escaping is enabled, everything is escaped by default except
 for values explicitly marked as safe.  Variables and expressions
 can be marked as safe either in:
 
-a.  The context dictionary by the application with
-    :class:`markupsafe.Markup`
+a.  The context dictionary by the application (see
+    ``Markup`` in :ref:`escaping`)
+
 b.  The template, with the ``|safe`` filter.
 
 If a string that you marked safe is passed through other Python code

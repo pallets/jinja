@@ -3,8 +3,6 @@ import pprint
 import re
 import typing as t
 
-from markupsafe import Markup
-
 from . import defaults
 from . import nodes
 from .environment import Environment
@@ -172,7 +170,8 @@ def _make_new_gettext(func: t.Callable[[str], str]) -> t.Callable[..., str]:
     def gettext(__context: Context, __string: str, **variables: t.Any) -> str:
         rv = __context.call(func, __string)
         if __context.eval_ctx.autoescape:
-            rv = Markup(rv)
+            rv = t.cast(str, rv)
+            rv = __context.eval_ctx.mark_safe(rv)
         # Always treat as a format string, even if there are no
         # variables. This makes translation strings more consistent
         # and predictable. This requires escaping
@@ -193,7 +192,8 @@ def _make_new_ngettext(func: t.Callable[[str, str, int], str]) -> t.Callable[...
         variables.setdefault("num", __num)
         rv = __context.call(func, __singular, __plural, __num)
         if __context.eval_ctx.autoescape:
-            rv = Markup(rv)
+            rv = t.cast(str, rv)
+            rv = __context.eval_ctx.mark_safe(rv)
         # Always treat as a format string, see gettext comment above.
         return rv % variables  # type: ignore
 
@@ -209,7 +209,8 @@ def _make_new_pgettext(func: t.Callable[[str, str], str]) -> t.Callable[..., str
         rv = __context.call(func, __string_ctx, __string)
 
         if __context.eval_ctx.autoescape:
-            rv = Markup(rv)
+            rv = t.cast(str, rv)
+            rv = __context.eval_ctx.mark_safe(rv)
 
         # Always treat as a format string, see gettext comment above.
         return rv % variables  # type: ignore
@@ -234,7 +235,8 @@ def _make_new_npgettext(
         rv = __context.call(func, __string_ctx, __singular, __plural, __num)
 
         if __context.eval_ctx.autoescape:
-            rv = Markup(rv)
+            rv = t.cast(str, rv)
+            rv = __context.eval_ctx.mark_safe(rv)
 
         # Always treat as a format string, see gettext comment above.
         return rv % variables  # type: ignore

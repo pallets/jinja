@@ -69,17 +69,52 @@ class NodeType(type):
 class EvalContext:
     """Holds evaluation time information.  Custom attributes can be attached
     to it in extensions.
+
+    .. versionchanged:: 3.1
+
+        - Added ``get_escape_function`` and ``mark_safe`` functions
+        - allow autoescape to be not only boolean but also an
+          escape function
     """
 
     def __init__(
         self, environment: "Environment", template_name: t.Optional[str] = None
     ) -> None:
         self.environment = environment
+
         if callable(environment.autoescape):
-            self.autoescape = environment.autoescape(template_name)
+            self.autoescape = bool(environment.autoescape(template_name))
         else:
-            self.autoescape = environment.autoescape
+            self.autoescape = bool(environment.autoescape)
         self.volatile = False
+
+        # We need to keep Markup Class if existing as autoescape can be
+        # overwritten by {% autoescape %} environment.
+        self._markup_class: t.Type["Markup"] = self.environment.get_markup_class(
+            template_name
+        )
+
+    def get_escape_function(self) -> t.Callable[[t.Any], "Markup"]:
+        """
+        return the currently valid escape function
+
+        .. versionadded:: 3.1
+
+        """
+        return self._markup_class.escape
+
+    def mark_safe(self, input: str) -> "Markup":
+        """
+        Mark a string as safe by creating a Markup class
+
+        use this function instead of direct calls to Markup
+        if possible so custom escape functions
+        are correctly handled by the Markup class.
+
+        .. versionadded:: 3.1
+
+        """
+        return self._markup_class(input)
 
     def save(self) -> t.Mapping[str, t.Any]:
         return self.__dict__.copy()
@@ -614,7 +649,7 @@ class TemplateData(Literal):
         if eval_ctx.volatile:
             raise Impossible()
         if eval_ctx.autoescape:
-            return Markup(self.data)
+            return eval_ctx.mark_safe(self.data)
         return self.data
 
 
@@ -1086,7 +1121,7 @@ class MarkSafe(Expr):
 
     def as_const(self, eval_ctx: t.Optional[EvalContext] = None) -> Markup:
         eval_ctx = get_eval_context(self, eval_ctx)
-        return Markup(self.expr.as_const(eval_ctx))
+        return eval_ctx.mark_safe(self.expr.as_const(eval_ctx))
 
 
 class MarkSafeIfAutoescape(Expr):
@@ -1107,7 +1142,7 @@ class MarkSafeIfAutoescape(Expr):
             raise Impossible()
         expr = self.expr.as_const(eval_ctx)
         if eval_ctx.autoescape:
-            return Markup(expr)
+            return eval_ctx.mark_safe(expr)
         return expr
 
 

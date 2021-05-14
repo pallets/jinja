@@ -19,7 +19,10 @@ extensions = [
     "sphinx_issues",
 ]
 autodoc_typehints = "description"
-intersphinx_mapping = {"python": ("https://docs.python.org/3/", None)}
+intersphinx_mapping = {
+    "python": ("https://docs.python.org/3/", None),
+    "markupsafe": ("https://markupsafe.palletsprojects.com/", None),
+}
 issues_github_path = "pallets/jinja"
 
 # HTML -----------------------------------------------------------------

@@ -82,7 +82,7 @@ useful if you want to dig deeper into Jinja or :ref:`develop extensions
 .. autoclass:: Environment([options])
     :members: from_string, get_template, select_template,
               get_or_select_template, join_path, extend, compile_expression,
-              compile_templates, list_templates, add_extension
+              compile_templates, list_templates, add_extension, get_markup_class
 
     .. attribute:: shared
 
@@ -220,6 +220,98 @@ useful if you want to dig deeper into Jinja or :ref:`develop extensions
     :members: disable_buffering, enable_buffering, dump
 
 
+.. _escaping:
+
+Safe Strings and Escaping
+-------------------------
+.. versionchanged:: 3.1
+
+To handle untrusted input when rendering templates to
+avoid injection attacks Jinja uses a combination of trusted strings
+and escape functions.
+
+The general idea that values that can be trusted will passed as special
+string subclass. Doing so it can be prevent that an input is escaped
+multiple times and at the same time make sure, that using string
+operation like ``%`` the original escaped string stays escaped, even
+when unescaped string are thrown at it.
+
+Before Jinja 3.1 this was done by the hardcoded
+:class:`markupsafe.Markup` class and
+:func:`markupsafe.escape` function from the `MarkupSafe`_  package.
+The ``escape(s: str)`` function converts the characters
+``&``, ``<``, ``>``, ``'``, and ``"`` in string `s`
+to HTML-safe sequences.  It is intended to be used  if you need to
+display text that might contain such characters in HTML.
+
+The result of a call of the ``escape(s: str)`` function is a
+``Markup`` class.
+This class provides an ``.__html__()`` method, which is used internally
+as an indicator that the string returned by this method is safe.
+This way of defining a save/HTML string is also used by other Template
+System or things like widget in Jupter Notebook.
+
+The class also overwrites a bunch of string methods and operators like:
+``str.join()``, ``str.split()``, ``str.__add__()``, ``str.__mod__()`` etc.
+This is done in a way so that the result of these operations
+in combination with an raw strings is always an escaped ``Markup``
+class by using the ``escape`` method of the ``Markup`` class.
+
+With version 3.1 this hardcoded relation to the `MarkupSafe`_ and it's
+HTML based escaping was removed, as Jinja is intended to be a Language
+independent template system.
+It is still the default but now you are able to provide a custom escape
+function i.e. as parameter *default_escape* of :class:`Environment` or
+as result of an *autoescape* call.
+
+So now you can write autoescaped templates for LaTeX or other languages.
+See :ref:`autoescaping` for examples.
+Please note that a safe string is still defined through the existence of
+the ``__html__()`` method, no matter which extension or language is used!
+
+
+.. admonition:: Attention
+
+    Especially when using a custom escape function *never* use the
+    :class:`markupsafe.Markup` or :func:`markupsafe.escape` directly
+    to mark a string as safe or to escape it.
+    Instead use :meth:`Environment.get_markup_class` to get the
+    correct class.
+
+    Usage::
+
+        Markup = env.get_markup_class("mytemplate.ext")
+        safe_str = Markup.escape("<unsafe\%string>")
+
+    If you write extensions, filters, etc., use the functions provided
+    by the :ref:`eval-context`.
+
+
+This is required as the ``Markup`` class implements calls for its
+``Markup.escape`` method i.e. when using the ``join`` or
+the modulo ``%`` operator.
+So it is important that the correct ``Markup``  subclass is used
+always. If you hardcode the :class:`markupsafe.Markup` class or
+:func:`markupsafe.escape` function either in
+your application, :ref:`an extension <writing-extensions>`,
+:ref:`custom filter<writing-filters>` or
+:ref:`custom test <writing-tests>`,
+it could have unintended side effects once custom escape functions are used!
+
+
+The correct Markup class from a custom escape function is generated
+using the helper class:
+
+..
+    comment:: Somehow using the lru_cache wrapper the autodoc does not get the correct parameters
+              See also https://github.com/sphinx-doc/sphinx/issues/7650
+
+.. autofunction:: jinja2.utils.get_wrapped_escape_class
+
+.. _MarkupSafe: https://markupsafe.palletsprojects.com/
+
+.. _autoescaping:
+
 Autoescaping
 ------------
 
@@ -231,6 +323,11 @@ not yet enabled by default though this will most likely change in the
 future.  It's recommended to configure a sensible default for
 autoescaping.  This makes it possible to enable and disable autoescaping
 on a per-template basis (HTML versus text for instance).
+
+.. versionchanged:: 3.1
+
+Jinja now also allows the usage of different escape functions selected
+by template suffix.
 
 .. autofunction:: jinja2.select_autoescape
 
@@ -250,6 +347,8 @@ works roughly like this::
         if template_name is None:
             return False
         if template_name.endswith(('.html', '.htm', '.xml'))
+            return True
+        return False
 
 When implementing a guessing autoescape function, make sure you also
 accept `None` as valid template name.  This will be passed when generating
@@ -258,6 +357,74 @@ defaults in the future might change.
 
 Inside the templates the behaviour can be temporarily changed by using
 the `autoescape` block (see :ref:`autoescape-overrides`).
+
+Note that :func:`~jinja2.select_autoescape` offers also a parameter
+`special_extensions` that allows you to define a custom escape function,
+i.e. if you work with LaTeX files
+(see description of :func:`~jinja.select_autoescape` above for example).
+
+To use your own custom escape function for one template extension
+(i.e. ``*.tex``) you have to make sure that calling
+``autoescape(<your_template>)`` returns
+the desired custom escape function.
+For instance if you are fan of peace in the world::
+
+    def escape_to_peace(s):
+        """
+        Your custom escape function. You only have to take care
+        that your escaping is done properly, everything else like
+        preventing multiple escapes and marking the string as safe
+        is done by Jinja itself.
+        """
+        return s.replace("war", "peace")
+
+    env = Environment(
+        autoescape=select_autoescape(special_extensions={".world": escape_to_peace}),
+        loader=PackageLoader("mypackage"),
+    )
+
+
+Note that for ``.world`` files the ``{{ var|e }}`` and ``{{ var | escape }}``
+filters are replaced with the custom escape function.
+
+To mark a string as safe please use the :meth:`Environment.get_markup_class`
+instead of direct :class:`markupsafe.Markup` calls::
+
+
+    template = env.get_template("message_to_the.world")
+    # the content of the template is simply assumed to by
+    """
+    <h1>My Message to the world</h1>
+    {{ my_msg }}
+    I was replied with {{ reply }}
+    """
+    # We know that everything that ends on world will use the special
+    # escape function
+    mark_safe = env.get_markup_class(".world")
+    my_msg = mark_safe("Make love not war!")
+    reply = "We want war!"
+    template.render(my_msg=my_msg, reply=reply)
+
+
+.. admonition:: A word of caution
+
+    Be aware that mixing files that use different custom escape
+    functions set by autoescape within of one render command,
+    can lead to unexpected behavior.
+    In general the ``{% include %}`` directive works fine but especially
+    ``{% extends %}`` commands can have unexpected outcomes as main template
+    overwrites the context of the included one.
+    That's why Jinja will raise an exception if ``{% extends %}`` is used
+    with different escape functions / Markup classes unless explicitly
+    allowed through the ``Environment(allow_mixed_escape_extends=True)``
+    parameter.
+
+    If possible always use the ``default_escape`` of the
+    :class:`~jinja2.Environment` class to define the mainly used escape
+    function / Markup class and use different environments
+    for different file types. Especially using ``{% extends %}``
+    if you have to mix files with otherwise conflicting custom escape
+    settings.
 
 
 .. _identifier-naming:
@@ -636,6 +803,82 @@ Exceptions
 
 .. autoexception:: jinja2.TemplateAssertionError
 
+.. _eval-context:
+
+Evaluation Context
+------------------
+
+The evaluation context (short eval context or eval ctx) makes it
+possible to activate and deactivate compiled features at runtime.
+
+Currently it is only used to enable and disable automatic escaping, but
+it can be used by extensions as well.
+
+The ``autoescape`` setting should be checked on the evaluation context,
+not the environment. The evaluation context will have the computed value
+for the current template. It also has the computed value for the
+correct ``escape`` function and ``Markup`` class.
+
+Instead of ``pass_environment``:
+
+.. code-block:: python
+
+    @pass_environment
+    def filter(env, value):
+        result = do_something(value)
+
+        if env.autoescape:
+            result = env.get_markup_class()(result)
+
+        return result
+
+Use ``pass_eval_context`` if you only need the setting:
+
+.. code-block:: python
+
+    @pass_eval_context
+    def filter(eval_ctx, value):
+        result = do_something(value)
+
+        if eval_ctx.autoescape:
+            result = eval_ctx.mark_safe(result)
+
+        return result
+
+Or use ``pass_context`` if you need other context behavior as well:
+
+.. code-block:: python
+
+    @pass_context
+    def filter(context, value):
+        result = do_something(value)
+
+        if context.eval_ctx.autoescape:
+            result = context.eval_ctx.mark_safe(result)
+
+        return result
+
+The evaluation context must not be modified at runtime.  Modifications
+must only happen with a :class:`nodes.EvalContextModifier` and
+:class:`nodes.ScopedEvalContextModifier` from an extension, not on the
+eval context object itself.
+
+.. autoclass:: jinja2.nodes.EvalContext
+
+   .. attribute:: autoescape
+
+      `True` or `False` depending on if autoescaping is active or not.
+
+   .. attribute:: volatile
+
+      `True` if the compiler cannot evaluate some expressions at compile
+      time.  At runtime this should always be `False`.
+
+    .. automethod:: get_escape_function
+
+    .. automethod:: mark_safe
+
+
 
 .. _writing-filters:
 
@@ -686,21 +929,20 @@ enabled before escaping the input and marking the output safe.
 
     import re
     from jinja2 import pass_eval_context
-    from markupsafe import Markup, escape
 
     @pass_eval_context
     def nl2br(eval_ctx, value):
         br = "<br>\n"
 
         if eval_ctx.autoescape:
-            value = escape(value)
-            br = Markup(br)
+            value = eval_ctx.get_escape_function()(value)
+            br = eval_ctx.mark_safe(br)
 
         result = "\n\n".join(
             f"<p>{br.join(p.splitlines())}<\p>"
             for p in re.split(r"(?:\r\n|\r(?!\n)|\n){2,}", value)
         )
-        return Markup(result) if autoescape else result
+        return eval_ctx.mark_safe(result) if autoescape else result
 
 
 .. _writing-tests:
@@ -755,77 +997,6 @@ being filtered the second argument.
 -   :func:`pass_eval_context` passes the :ref:`eval-context`.
 -   :func:`pass_context` passes the current
     :class:`~jinja2.runtime.Context`.
-
-
-.. _eval-context:
-
-Evaluation Context
-------------------
-
-The evaluation context (short eval context or eval ctx) makes it
-possible to activate and deactivate compiled features at runtime.
-
-Currently it is only used to enable and disable automatic escaping, but
-it can be used by extensions as well.
-
-The ``autoescape`` setting should be checked on the evaluation context,
-not the environment. The evaluation context will have the computed value
-for the current template.
-
-Instead of ``pass_environment``:
-
-.. code-block:: python
-
-    @pass_environment
-    def filter(env, value):
-        result = do_something(value)
-
-        if env.autoescape:
-            result = Markup(result)
-
-        return result
-
-Use ``pass_eval_context`` if you only need the setting:
-
-.. code-block:: python
-
-    @pass_eval_context
-    def filter(eval_ctx, value):
-        result = do_something(value)
-
-        if eval_ctx.autoescape:
-            result = Markup(result)
-
-        return result
-
-Or use ``pass_context`` if you need other context behavior as well:
-
-.. code-block:: python
-
-    @pass_context
-    def filter(context, value):
-        result = do_something(value)
-
-        if context.eval_ctx.autoescape:
-            result = Markup(result)
-
-        return result
-
-The evaluation context must not be modified at runtime.  Modifications
-must only happen with a :class:`nodes.EvalContextModifier` and
-:class:`nodes.ScopedEvalContextModifier` from an extension, not on the
-eval context object itself.
-
-.. autoclass:: jinja2.nodes.EvalContext
-
-   .. attribute:: autoescape
-
-      `True` or `False` depending on if autoescaping is active or not.
-
-   .. attribute:: volatile
-
-      `True` if the compiler cannot evaluate some expressions at compile
-      time.  At runtime this should always be `False`.
 
 
 .. _global-namespace:
