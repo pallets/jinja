@@ -5,7 +5,9 @@ Version 3.0.1
 
 Unreleased
 
--   Update MarkupSafe dependency to >= 2.0.
+-   Update MarkupSafe dependency to >= 2.0. :pr:`1418`
+-   Mark top-level names as exported so type checking understands
+    imports in user projects. :issue:`1426`
 
 
 Version 3.0.0
