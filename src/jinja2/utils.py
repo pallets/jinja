@@ -834,7 +834,7 @@ class Namespace:
 
 
 class Markup(markupsafe.Markup):
-    def __new__(cls, base, encoding=None, errors="strict"):  # type: ignore
+    def __new__(cls, base="", encoding=None, errors="strict"):  # type: ignore
         warnings.warn(
             "'jinja2.Markup' is deprecated and will be removed in Jinja"
             " 3.1. Import 'markupsafe.Markup' instead.",
