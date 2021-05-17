@@ -17,6 +17,8 @@ Unreleased
 -   Fix some types that weren't available in Python 3.6.0. :issue:`1433`
 -   The deprecation warning for unneeded ``autoescape`` and ``with_``
     extensions shows more relevant context. :issue:`1429`
+-   Fixed calling deprecated ``jinja2.Markup`` without an argument.
+    Use ``markupsafe.Markup`` instead. :issue:`1438`
 
 
 Version 3.0.0
