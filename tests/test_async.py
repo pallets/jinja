@@ -1,4 +1,5 @@
 import asyncio
+import sys
 
 import pytest
 
@@ -13,9 +14,17 @@ from jinja2.exceptions import UndefinedError
 from jinja2.nativetypes import NativeEnvironment
 
 
-def run(coro):
-    loop = asyncio.get_event_loop()
-    return loop.run_until_complete(coro)
+if sys.version_info < (3, 7):
+
+    def run(coro):
+        loop = asyncio.get_event_loop()
+        return loop.run_until_complete(coro)
+
+
+else:
+
+    def run(coro):
+        return asyncio.run(coro)
 
 
 def test_basic_async():

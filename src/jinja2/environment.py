@@ -2,6 +2,7 @@
 options.
 """
 import os
+import sys
 import typing
 import typing as t
 import weakref
@@ -1278,8 +1279,22 @@ class Template:
         if self.environment.is_async:
             import asyncio
 
-            loop = asyncio.get_event_loop()
-            return loop.run_until_complete(self.render_async(*args, **kwargs))
+            close = False
+
+            if sys.version_info < (3, 7):
+                loop = asyncio.get_event_loop()
+            else:
+                try:
+                    loop = asyncio.get_running_loop()
+                except RuntimeError:
+                    loop = asyncio.new_event_loop()
+                    close = True
+
+            try:
+                return loop.run_until_complete(self.render_async(*args, **kwargs))
+            finally:
+                if close:
+                    loop.close()
 
         ctx = self.new_context(dict(*args, **kwargs))
 
@@ -1326,14 +1341,17 @@ class Template:
         if self.environment.is_async:
             import asyncio
 
-            loop = asyncio.get_event_loop()
-            async_gen = self.generate_async(*args, **kwargs)
+            async def to_list() -> t.List[str]:
+                return [x async for x in self.generate_async(*args, **kwargs)]
 
-            try:
-                while True:
-                    yield loop.run_until_complete(async_gen.__anext__())
-            except StopAsyncIteration:
-                return
+            if sys.version_info < (3, 7):
+                loop = asyncio.get_event_loop()
+                out = loop.run_until_complete(to_list())
+            else:
+                out = asyncio.run(to_list())
+
+            yield from out
+            return
 
         ctx = self.new_context(dict(*args, **kwargs))
 

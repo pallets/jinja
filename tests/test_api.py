@@ -1,6 +1,6 @@
-import os
 import shutil
 import tempfile
+from pathlib import Path
 
 import pytest
 
@@ -242,13 +242,12 @@ class TestStreaming:
         assert not stream.buffered
 
     def test_dump_stream(self, env):
-        tmp = tempfile.mkdtemp()
+        tmp = Path(tempfile.mkdtemp())
         try:
             tmpl = env.from_string("\u2713")
             stream = tmpl.stream()
-            stream.dump(os.path.join(tmp, "dump.txt"), "utf-8")
-            with open(os.path.join(tmp, "dump.txt"), "rb") as f:
-                assert f.read() == b"\xe2\x9c\x93"
+            stream.dump(str(tmp / "dump.txt"), "utf-8")
+            assert (tmp / "dump.txt").read_bytes() == b"\xe2\x9c\x93"
         finally:
             shutil.rmtree(tmp)
 

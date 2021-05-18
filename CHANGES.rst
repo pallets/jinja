@@ -6,10 +6,16 @@ Version 3.1.0
 Unreleased
 
 
-Version 3.0.1
+Version 3.0.2
 -------------
 
 Unreleased
+
+
+Version 3.0.1
+-------------
+
+Released 2021-05-18
 
 -   Update MarkupSafe dependency to >= 2.0. :pr:`1418`
 -   Mark top-level names as exported so type checking understands
@@ -19,6 +25,9 @@ Unreleased
     extensions shows more relevant context. :issue:`1429`
 -   Fixed calling deprecated ``jinja2.Markup`` without an argument.
     Use ``markupsafe.Markup`` instead. :issue:`1438`
+-   Calling sync ``render`` for an async template uses ``asyncio.run``
+    on Python >= 3.7. This fixes a deprecation that Python 3.10
+    introduces. :issue:`1443`
 
 
 Version 3.0.0
