@@ -13,6 +13,9 @@ Unreleased
     extensions shows more relevant context. :issue:`1429`
 -   Fixed calling deprecated ``jinja2.Markup`` without an argument.
     Use ``markupsafe.Markup`` instead. :issue:`1438`
+-   Calling sync ``render`` for an async template uses ``asyncio.run``
+    on Python >= 3.7. This fixes a deprecation that Python 3.10
+    introduces. :issue:`1443`
 
 
 Version 3.0.0
