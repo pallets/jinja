@@ -1,5 +1,11 @@
 .. currentmodule:: jinja2
 
+Version 3.0.2
+-------------
+
+Unreleased
+
+
 Version 3.0.1
 -------------
 
