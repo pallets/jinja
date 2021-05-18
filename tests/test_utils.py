@@ -23,22 +23,17 @@ class TestLRUCache:
         d["c"] = 3
         d["a"]
         d["d"] = 4
-        assert len(d) == 3
-        assert "a" in d and "c" in d and "d" in d and "b" not in d
+        assert d.keys() == ["d", "a", "c"]
 
-    def test_itervalues(self):
+    def test_values(self):
         cache = LRUCache(3)
         cache["b"] = 1
         cache["a"] = 2
-        values = [v for v in cache.values()]
-        assert len(values) == 2
-        assert 1 in values
-        assert 2 in values
+        assert cache.values() == [2, 1]
 
-    def test_itervalues_empty(self):
+    def test_values_empty(self):
         cache = LRUCache(2)
-        values = [v for v in cache.values()]
-        assert len(values) == 0
+        assert cache.values() == []
 
     def test_pickleable(self):
         cache = LRUCache(2)
@@ -61,7 +56,7 @@ class TestLRUCache:
         assert copy._queue == cache._queue
         copy["c"] = 3
         assert copy._queue != cache._queue
-        assert "a" not in copy and "b" in copy and "c" in copy
+        assert copy.keys() == ["c", "b"]
 
     def test_clear(self):
         d = LRUCache(3)

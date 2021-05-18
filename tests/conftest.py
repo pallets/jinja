@@ -1,4 +1,4 @@
-import os
+from pathlib import Path
 
 import pytest
 
@@ -27,8 +27,8 @@ def package_loader():
 @pytest.fixture
 def filesystem_loader():
     """returns FileSystemLoader initialized to res/templates directory"""
-    here = os.path.dirname(os.path.abspath(__file__))
-    return loaders.FileSystemLoader(here + "/res/templates")
+    here = Path(__file__).parent.resolve()
+    return loaders.FileSystemLoader(here / "res" / "templates")
 
 
 @pytest.fixture
