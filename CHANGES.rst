@@ -3,7 +3,7 @@
 Version 3.0.1
 -------------
 
-Unreleased
+Released 2021-05-18
 
 -   Update MarkupSafe dependency to >= 2.0. :pr:`1418`
 -   Mark top-level names as exported so type checking understands
