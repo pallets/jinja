@@ -1,4 +1,4 @@
 Pallets-Sphinx-Themes
-git+https://github.com/sphinx-doc/sphinx.git@96dbe5e3  # https://github.com/sphinx-doc/sphinx/issues/9216
+Sphinx
 sphinx-issues
 sphinxcontrib-log-cabinet
