@@ -5,6 +5,9 @@ Version 3.0.2
 
 Unreleased
 
+-   Fix a loop scoping bug that caused assignments in nested loops
+    to still be referenced outside of it. :issue:`1427`
+
 
 Version 3.0.1
 -------------

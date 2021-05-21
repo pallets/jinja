@@ -746,6 +746,13 @@ End"""
         tmpl = env.get_template("base")
         assert tmpl.render() == "42 y"
 
+    def test_nested_loop_scoping(self, env):
+        tmpl = env.from_string(
+            "{% set output %}{% for x in [1,2,3] %}hello{% endfor %}"
+            "{% endset %}{{ output }}"
+        )
+        assert tmpl.render() == "hellohellohello"
+
 
 @pytest.mark.parametrize("unicode_char", ["\N{FORM FEED}", "\x85"])
 def test_unicode_whitespace(env, unicode_char):
