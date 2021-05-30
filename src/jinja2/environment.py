@@ -25,11 +25,11 @@ from .defaults import DEFAULT_FILTERS
 from .defaults import DEFAULT_NAMESPACE
 from .defaults import DEFAULT_POLICIES
 from .defaults import DEFAULT_TESTS
+from .defaults import INDENT_BLOCKS
 from .defaults import KEEP_TRAILING_NEWLINE
 from .defaults import LINE_COMMENT_PREFIX
 from .defaults import LINE_STATEMENT_PREFIX
 from .defaults import LSTRIP_BLOCKS
-from .defaults import INDENT_BLOCKS
 from .defaults import NEWLINE_SEQUENCE
 from .defaults import TRIM_BLOCKS
 from .defaults import VARIABLE_END_STRING

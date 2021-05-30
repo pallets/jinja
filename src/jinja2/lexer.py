@@ -11,7 +11,8 @@ from sys import intern
 
 from ._identifier import pattern as name_re
 from .exceptions import TemplateSyntaxError
-from .utils import LRUCache, indent_to
+from .utils import indent_to
+from .utils import LRUCache
 
 if t.TYPE_CHECKING:
     import typing_extensions as te
@@ -728,8 +729,8 @@ class Lexer:
                 if (
                     self.indent_blocks
                     and indent  # TODO: this is not really correct for inline blocks
-                    and tokens == 'name'
-                    and m.group().startswith('end')
+                    and tokens == "name"
+                    and m.group().startswith("end")
                 ):
                     indent.pop()
 

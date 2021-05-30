@@ -1033,28 +1033,28 @@ class TestTrimBlocks:
 class TestIndentBlocks:
     def test_no_indent(self):
         env = Environment(trim_blocks=True, lstrip_blocks=True, indent_blocks=False)
-        tmpl = env.from_string('a\n{% if True %}\n  b\n  c\n{% endif %}\nd')
-        assert tmpl.render() == 'a\n  b\n  c\nd'
+        tmpl = env.from_string("a\n{% if True %}\n  b\n  c\n{% endif %}\nd")
+        assert tmpl.render() == "a\n  b\n  c\nd"
 
     def test_dedent_with_empty_line(self):
         env = Environment(trim_blocks=True, lstrip_blocks=True, indent_blocks=True)
-        tmpl = env.from_string('  a\n  {% if True %}\n    b\n    c\n  {% endif %}\n  d')
-        assert tmpl.render() == '  a\n  b\n  c\n  d'
+        tmpl = env.from_string("  a\n  {% if True %}\n    b\n    c\n  {% endif %}\n  d")
+        assert tmpl.render() == "  a\n  b\n  c\n  d"
 
     def test_dedent_to_zero(self):
         env = Environment(trim_blocks=True, lstrip_blocks=True, indent_blocks=True)
-        tmpl = env.from_string('a\n{% if True %}\n  b\n  c\n{% endif %}\nd')
-        assert tmpl.render() == 'a\nb\nc\nd'
+        tmpl = env.from_string("a\n{% if True %}\n  b\n  c\n{% endif %}\nd")
+        assert tmpl.render() == "a\nb\nc\nd"
 
     def test_dedent_indented(self):
         env = Environment(trim_blocks=True, lstrip_blocks=True, indent_blocks=True)
-        tmpl = env.from_string('a\n  {% if True %}\n    b\n    c\n  {% endif %}\nd')
-        assert tmpl.render() == 'a\n  b\n  c\nd'
+        tmpl = env.from_string("a\n  {% if True %}\n    b\n    c\n  {% endif %}\nd")
+        assert tmpl.render() == "a\n  b\n  c\nd"
 
     def test_indent_dedented(self):
         env = Environment(trim_blocks=True, lstrip_blocks=True, indent_blocks=True)
-        tmpl = env.from_string('a\n  {% if True %}\nb\nc\n  {% endif %}\nd')
-        assert tmpl.render() == 'a\n  b\n  c\nd'
+        tmpl = env.from_string("a\n  {% if True %}\nb\nc\n  {% endif %}\nd")
+        assert tmpl.render() == "a\n  b\n  c\nd"
 
     def test_inline_dedent(self):
         env = Environment(trim_blocks=True, lstrip_blocks=True, indent_blocks=True)
@@ -1072,11 +1072,12 @@ class TestIndentBlocks:
   {% endif %}
   f"""
         )
-        assert tmpl.render() == '  a\n  b\n  c\n  x\n  d\n  e\n  f'
+        assert tmpl.render() == "  a\n  b\n  c\n  x\n  d\n  e\n  f"
 
     def test_nested_indent(self):
         env = Environment(trim_blocks=True, lstrip_blocks=True, indent_blocks=True)
-        tmpl = env.from_string("""\
+        tmpl = env.from_string(
+            """\
   before
   {% if True %}
     before nested
@@ -1092,8 +1093,11 @@ class TestIndentBlocks:
   {% elif True %}
     second block
   {% endif %}
-  after""")
-        assert tmpl.render() == """\
+  after"""
+        )
+        assert (
+            tmpl.render()
+            == """\
   before
   before nested
   nested
@@ -1102,3 +1106,4 @@ class TestIndentBlocks:
   between
   second block
   after"""
+        )
