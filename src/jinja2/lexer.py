@@ -703,7 +703,7 @@ class Lexer:
         lstrip_unless_re = self.lstrip_unless_re
         newlines_stripped = 0
         line_starting = True
-        indent: List[int] = []
+        indent: t.List[int] = []
 
         while True:
             # tokenizer loop
