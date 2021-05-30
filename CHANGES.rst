@@ -5,6 +5,8 @@ Version 3.1.0
 
 Unreleased
 
+-   Add the `indent_blocks` environment parameter. :issue:`178`
+
 
 Version 3.0.2
 -------------

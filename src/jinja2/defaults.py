@@ -21,6 +21,7 @@ LINE_STATEMENT_PREFIX: t.Optional[str] = None
 LINE_COMMENT_PREFIX: t.Optional[str] = None
 TRIM_BLOCKS = False
 LSTRIP_BLOCKS = False
+INDENT_BLOCKS = False
 NEWLINE_SEQUENCE: "te.Literal['\\n', '\\r\\n', '\\r']" = "\n"
 KEEP_TRAILING_NEWLINE = False
 

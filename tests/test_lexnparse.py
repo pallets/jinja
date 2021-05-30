@@ -1028,3 +1028,77 @@ class TestTrimBlocks:
         assert tmpl.render() == "    \n\n    "
         tmpl = env.from_string("    <!-- comment +-->\n\n    ")
         assert tmpl.render() == "    \n\n    "
+
+
+class TestIndentBlocks:
+    def test_no_indent(self):
+        env = Environment(trim_blocks=True, lstrip_blocks=True, indent_blocks=False)
+        tmpl = env.from_string('a\n{% if True %}\n  b\n  c\n{% endif %}\nd')
+        assert tmpl.render() == 'a\n  b\n  c\nd'
+
+    def test_dedent_with_empty_line(self):
+        env = Environment(trim_blocks=True, lstrip_blocks=True, indent_blocks=True)
+        tmpl = env.from_string('  a\n  {% if True %}\n    b\n    c\n  {% endif %}\n  d')
+        assert tmpl.render() == '  a\n  b\n  c\n  d'
+
+    def test_dedent_to_zero(self):
+        env = Environment(trim_blocks=True, lstrip_blocks=True, indent_blocks=True)
+        tmpl = env.from_string('a\n{% if True %}\n  b\n  c\n{% endif %}\nd')
+        assert tmpl.render() == 'a\nb\nc\nd'
+
+    def test_dedent_indented(self):
+        env = Environment(trim_blocks=True, lstrip_blocks=True, indent_blocks=True)
+        tmpl = env.from_string('a\n  {% if True %}\n    b\n    c\n  {% endif %}\nd')
+        assert tmpl.render() == 'a\n  b\n  c\nd'
+
+    def test_indent_dedented(self):
+        env = Environment(trim_blocks=True, lstrip_blocks=True, indent_blocks=True)
+        tmpl = env.from_string('a\n  {% if True %}\nb\nc\n  {% endif %}\nd')
+        assert tmpl.render() == 'a\n  b\n  c\nd'
+
+    def test_inline_dedent(self):
+        env = Environment(trim_blocks=True, lstrip_blocks=True, indent_blocks=True)
+        tmpl = env.from_string(
+            """\
+  a
+  {% if True %}
+    b
+    {% if True %}
+      c
+      {% if True %}x{% endif %}
+      d
+    {% endif %}
+    e
+  {% endif %}
+  f"""
+        )
+        assert tmpl.render() == '  a\n  b\n  c\n  x\n  d\n  e\n  f'
+
+    def test_nested_indent(self):
+        env = Environment(trim_blocks=True, lstrip_blocks=True, indent_blocks=True)
+        tmpl = env.from_string("""\
+  before
+  {% if True %}
+    before nested
+    {% if True %}
+      nested
+      text
+    {% endif %}
+    after nested
+  {% endif %}
+  between
+  {% if False %}
+    invisible
+  {% elif True %}
+    second block
+  {% endif %}
+  after""")
+        assert tmpl.render() == """\
+  before
+  before nested
+  nested
+  text
+  after nested
+  between
+  second block
+  after"""
