@@ -33,6 +33,9 @@ Unreleased
 -   Add ``items`` filter. :issue:`1561`
 -   Subscriptions (``[0]``, etc.) can be used after filters, tests, and
     calls when the environment is in async mode. :issue:`1573`
+-   The ``groupby`` filter is case-insensitive by default, matching
+    other comparison filters. Added the ``case_sensitive`` parameter to
+    control this. :issue:`1463`
 
 
 Version 3.0.3
