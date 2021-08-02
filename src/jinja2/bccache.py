@@ -154,7 +154,7 @@ class BytecodeCache:
         hash = sha1(name.encode("utf-8"))
 
         if filename is not None:
-            hash.update(f"|{filename}".encode("utf-8"))
+            hash.update(f"|{filename}".encode())
 
         return hash.hexdigest()
 
