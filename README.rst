@@ -35,7 +35,7 @@ Install and update using `pip`_:
 
     $ pip install -U Jinja2
 
-.. _pip: https://pip.pypa.io/en/stable/quickstart/
+.. _pip: https://pip.pypa.io/en/stable/getting-started/
 
 
 In A Nutshell
