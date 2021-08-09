@@ -1290,6 +1290,11 @@ class CodeGenerator(NodeVisitor):
             self.write(", loop)")
             self.end_write(frame)
 
+        # at the end of the iteration, clear any assignments made in the
+        # loop from the top level
+        if self._assign_stack:
+            self._assign_stack[-1].difference_update(loop_frame.symbols.stores)
+
     def visit_If(self, node: nodes.If, frame: Frame) -> None:
         if_frame = frame.soft()
         self.writeline("if ", node)
