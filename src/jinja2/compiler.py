@@ -556,7 +556,7 @@ class CodeGenerator(NodeVisitor):
             visitor.tests,
             "tests",
         ):
-            for name in names:
+            for name in sorted(names):
                 if name not in id_map:
                     id_map[name] = self.temporary_identifier()
 

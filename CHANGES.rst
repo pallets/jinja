@@ -7,6 +7,8 @@ Unreleased
 
 -   Fix a loop scoping bug that caused assignments in nested loops
     to still be referenced outside of it. :issue:`1427`
+-   Make ``compile_templates`` deterministic for filter and import
+    names. :issue:`1452, 1453`
 
 
 Version 3.0.1
