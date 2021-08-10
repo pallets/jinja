@@ -9,7 +9,12 @@ Unreleased
 Version 3.0.2
 -------------
 
-Unreleased
+-   Fix a loop scoping bug that caused assignments in nested loops
+    to still be referenced outside of it. :issue:`1427`
+-   Make ``compile_templates`` deterministic for filter and import
+    names. :issue:`1452, 1453`
+-   Revert an unintended change that caused ``Undefined`` to act like
+    ``StrictUndefined`` for the ``in`` operator. :issue:`1448`
 
 
 Version 3.0.1

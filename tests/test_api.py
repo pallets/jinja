@@ -316,7 +316,7 @@ class TestUndefined:
         assert env.from_string("{{ foo.missing }}").render(foo=42) == ""
         assert env.from_string("{{ not missing }}").render() == "True"
         pytest.raises(UndefinedError, env.from_string("{{ missing - 1}}").render)
-        pytest.raises(UndefinedError, env.from_string("{{ 'foo' in missing }}").render)
+        assert env.from_string("{{ 'foo' in missing }}").render() == "False"
         und1 = Undefined(name="x")
         und2 = Undefined(name="y")
         assert und1 == und2
@@ -375,6 +375,7 @@ class TestUndefined:
         pytest.raises(UndefinedError, env.from_string("{{ missing }}").render)
         pytest.raises(UndefinedError, env.from_string("{{ missing.attribute }}").render)
         pytest.raises(UndefinedError, env.from_string("{{ missing|list }}").render)
+        pytest.raises(UndefinedError, env.from_string("{{ 'foo' in missing }}").render)
         assert env.from_string("{{ missing is not defined }}").render() == "True"
         pytest.raises(
             UndefinedError, env.from_string("{{ foo.missing }}").render, foo=42

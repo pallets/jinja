@@ -556,7 +556,7 @@ class CodeGenerator(NodeVisitor):
             visitor.tests,
             "tests",
         ):
-            for name in names:
+            for name in sorted(names):
                 if name not in id_map:
                     id_map[name] = self.temporary_identifier()
 
@@ -1289,6 +1289,11 @@ class CodeGenerator(NodeVisitor):
                 self.write(")")
             self.write(", loop)")
             self.end_write(frame)
+
+        # at the end of the iteration, clear any assignments made in the
+        # loop from the top level
+        if self._assign_stack:
+            self._assign_stack[-1].difference_update(loop_frame.symbols.stores)
 
     def visit_If(self, node: nodes.If, frame: Frame) -> None:
         if_frame = frame.soft()

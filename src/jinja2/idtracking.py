@@ -149,7 +149,7 @@ class Symbols:
         node: t.Optional["Symbols"] = self
 
         while node is not None:
-            for name in node.stores:
+            for name in sorted(node.stores):
                 if name not in rv:
                     rv[name] = self.find_ref(name)  # type: ignore
 

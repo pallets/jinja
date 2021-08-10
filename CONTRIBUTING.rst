@@ -92,7 +92,7 @@ First time setup
 
     .. code-block:: text
 
-        git remote add fork https://github.com/{username}/jinja
+        $ git remote add fork https://github.com/{username}/jinja
 
 -   Create a virtualenv.
 
@@ -106,6 +106,12 @@ First time setup
     .. code-block:: text
 
         > env\Scripts\activate
+
+-   Upgrade pip and setuptools.
+
+    .. code-block:: text
+
+        $ python -m pip install --upgrade pip setuptools
 
 -   Install the development dependencies, then install Jinja in editable
     mode.
@@ -138,7 +144,7 @@ Start coding
     .. code-block:: text
 
         $ git fetch origin
-        $ git checkout -b your-branch-name origin/1.1.x
+        $ git checkout -b your-branch-name origin/3.0.x
 
     If you're submitting a feature addition or change, branch off of the
     "main" branch.
