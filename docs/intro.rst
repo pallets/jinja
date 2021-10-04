@@ -60,4 +60,4 @@ These distributions will not be installed automatically.
 
 -   `Babel`_ provides translation support in templates.
 
-.. _Babel: http://babel.pocoo.org/
+.. _Babel: https://babel.pocoo.org/

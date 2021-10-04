@@ -336,8 +336,8 @@ class PackageLoader(BaseLoader):
             # Package is a zip file.
             try:
                 source = self._loader.get_data(p)  # type: ignore
-            except OSError:
-                raise TemplateNotFound(template)
+            except OSError as e:
+                raise TemplateNotFound(template) from e
 
             # Could use the zip's mtime for all template mtimes, but
             # would need to safely reload the module if it's out of
@@ -476,8 +476,8 @@ class PrefixLoader(BaseLoader):
         try:
             prefix, name = template.split(self.delimiter, 1)
             loader = self.mapping[prefix]
-        except (ValueError, KeyError):
-            raise TemplateNotFound(template)
+        except (ValueError, KeyError) as e:
+            raise TemplateNotFound(template) from e
         return loader, name
 
     def get_source(
@@ -486,10 +486,10 @@ class PrefixLoader(BaseLoader):
         loader, name = self.get_loader(template)
         try:
             return loader.get_source(environment, name)
-        except TemplateNotFound:
+        except TemplateNotFound as e:
             # re-raise the exception with the correct filename here.
             # (the one that includes the prefix)
-            raise TemplateNotFound(template)
+            raise TemplateNotFound(template) from e
 
     @internalcode
     def load(
@@ -501,10 +501,10 @@ class PrefixLoader(BaseLoader):
         loader, local_name = self.get_loader(name)
         try:
             return loader.load(environment, local_name, globals)
-        except TemplateNotFound:
+        except TemplateNotFound as e:
             # re-raise the exception with the correct filename here.
             # (the one that includes the prefix)
-            raise TemplateNotFound(name)
+            raise TemplateNotFound(name) from e
 
     def list_templates(self) -> t.List[str]:
         result = []
@@ -627,8 +627,8 @@ class ModuleLoader(BaseLoader):
         if mod is None:
             try:
                 mod = __import__(module, None, None, ["root"])
-            except ImportError:
-                raise TemplateNotFound(name)
+            except ImportError as e:
+                raise TemplateNotFound(name) from e
 
             # remove the entry from sys.modules, we only want the attribute
             # on the module object we have stored on the loader.

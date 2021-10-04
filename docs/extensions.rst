@@ -123,7 +123,7 @@ The usage of the ``i18n`` extension for template designers is covered in
 :ref:`the template documentation <i18n-in-templates>`.
 
 .. _gettext: https://docs.python.org/3/library/gettext.html
-.. _Babel: http://babel.pocoo.org/
+.. _Babel: https://babel.pocoo.org/
 
 
 Whitespace Trimming
