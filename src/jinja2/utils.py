@@ -824,7 +824,7 @@ class Namespace:
         try:
             return self.__attrs[name]
         except KeyError:
-            raise AttributeError(name)
+            raise AttributeError(name) from None
 
     def __setitem__(self, name: str, value: t.Any) -> None:
         self.__attrs[name] = value

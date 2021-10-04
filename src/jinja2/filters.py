@@ -1350,8 +1350,8 @@ def do_reverse(value: t.Union[str, t.Iterable[V]]) -> t.Union[str, t.Iterable[V]
             rv = list(value)
             rv.reverse()
             return rv
-        except TypeError:
-            raise FilterArgumentError("argument must be iterable")
+        except TypeError as e:
+            raise FilterArgumentError("argument must be iterable") from e
 
 
 @pass_environment
@@ -1691,7 +1691,7 @@ def prepare_map(
             name = args[0]
             args = args[1:]
         except LookupError:
-            raise FilterArgumentError("map requires a filter argument")
+            raise FilterArgumentError("map requires a filter argument") from None
 
         def func(item: t.Any) -> t.Any:
             return context.environment.call_filter(
@@ -1712,7 +1712,7 @@ def prepare_select_or_reject(
         try:
             attr = args[0]
         except LookupError:
-            raise FilterArgumentError("Missing parameter for attribute name")
+            raise FilterArgumentError("Missing parameter for attribute name") from None
 
         transfunc = make_attrgetter(context.environment, attr)
         off = 1

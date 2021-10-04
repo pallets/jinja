@@ -655,7 +655,7 @@ class Lexer:
                     )
                 except Exception as e:
                     msg = str(e).split(":")[-1].strip()
-                    raise TemplateSyntaxError(msg, lineno, name, filename)
+                    raise TemplateSyntaxError(msg, lineno, name, filename) from e
             elif token == TOKEN_INTEGER:
                 value = int(value_str.replace("_", ""), 0)
             elif token == TOKEN_FLOAT:

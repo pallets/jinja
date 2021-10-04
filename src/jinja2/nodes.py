@@ -507,8 +507,8 @@ class BinExpr(Expr):
         f = _binop_to_func[self.operator]
         try:
             return f(self.left.as_const(eval_ctx), self.right.as_const(eval_ctx))
-        except Exception:
-            raise Impossible()
+        except Exception as e:
+            raise Impossible() from e
 
 
 class UnaryExpr(Expr):
@@ -531,8 +531,8 @@ class UnaryExpr(Expr):
         f = _uaop_to_func[self.operator]
         try:
             return f(self.node.as_const(eval_ctx))
-        except Exception:
-            raise Impossible()
+        except Exception as e:
+            raise Impossible() from e
 
 
 class Name(Expr):
@@ -723,14 +723,14 @@ def args_as_const(
     if node.dyn_args is not None:
         try:
             args.extend(node.dyn_args.as_const(eval_ctx))
-        except Exception:
-            raise Impossible()
+        except Exception as e:
+            raise Impossible() from e
 
     if node.dyn_kwargs is not None:
         try:
             kwargs.update(node.dyn_kwargs.as_const(eval_ctx))
-        except Exception:
-            raise Impossible()
+        except Exception as e:
+            raise Impossible() from e
 
     return args, kwargs
 
@@ -779,8 +779,8 @@ class _FilterTestCommon(Expr):
 
         try:
             return func(*args, **kwargs)
-        except Exception:
-            raise Impossible()
+        except Exception as e:
+            raise Impossible() from e
 
 
 class Filter(_FilterTestCommon):
@@ -847,8 +847,8 @@ class Getitem(Expr):
             return eval_ctx.environment.getitem(
                 self.node.as_const(eval_ctx), self.arg.as_const(eval_ctx)
             )
-        except Exception:
-            raise Impossible()
+        except Exception as e:
+            raise Impossible() from e
 
 
 class Getattr(Expr):
@@ -869,8 +869,8 @@ class Getattr(Expr):
 
         try:
             return eval_ctx.environment.getattr(self.node.as_const(eval_ctx), self.attr)
-        except Exception:
-            raise Impossible()
+        except Exception as e:
+            raise Impossible() from e
 
 
 class Slice(Expr):
@@ -929,8 +929,8 @@ class Compare(Expr):
                     return False
 
                 value = new_value
-        except Exception:
-            raise Impossible()
+        except Exception as e:
+            raise Impossible() from e
 
         return result
 
