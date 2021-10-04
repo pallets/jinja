@@ -9,6 +9,8 @@ Version 3.0.2
     names. :issue:`1452, 1453`
 -   Revert an unintended change that caused ``Undefined`` to act like
     ``StrictUndefined`` for the ``in`` operator. :issue:`1448`
+-   Imported macros have access to the current template globals in async
+    environments. :issue:`1494`
 
 
 Version 3.0.1

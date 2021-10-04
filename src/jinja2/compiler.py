@@ -1090,10 +1090,8 @@ class CodeGenerator(NodeVisitor):
             self.write(
                 f"{f_name}(context.get_all(), True, {self.dump_local_context(frame)})"
             )
-        elif self.environment.is_async:
-            self.write("_get_default_module_async()")
         else:
-            self.write("_get_default_module(context)")
+            self.write(f"_get_default_module{self.choose_async('_async')}(context)")
 
     def visit_Import(self, node: nodes.Import, frame: Frame) -> None:
         """Visit regular imports."""

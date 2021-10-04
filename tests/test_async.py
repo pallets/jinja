@@ -189,6 +189,29 @@ class TestAsyncImports:
         assert m.variable == 42
         assert not hasattr(m, "notthere")
 
+    def test_import_with_globals(self, test_env_async):
+        t = test_env_async.from_string(
+            '{% import "module" as m %}{{ m.test() }}', globals={"foo": 42}
+        )
+        assert t.render() == "[42|23]"
+
+        t = test_env_async.from_string('{% import "module" as m %}{{ m.test() }}')
+        assert t.render() == "[|23]"
+
+    def test_import_with_globals_override(self, test_env_async):
+        t = test_env_async.from_string(
+            '{% set foo = 41 %}{% import "module" as m %}{{ m.test() }}',
+            globals={"foo": 42},
+        )
+        assert t.render() == "[42|23]"
+
+    def test_from_import_with_globals(self, test_env_async):
+        t = test_env_async.from_string(
+            '{% from "module" import test %}{{ test() }}',
+            globals={"foo": 42},
+        )
+        assert t.render() == "[42|23]"
+
 
 class TestAsyncIncludes:
     def test_context_include(self, test_env_async):
