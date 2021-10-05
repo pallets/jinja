@@ -270,12 +270,14 @@ class PackageLoader(BaseLoader):
         package_path: "str" = "templates",
         encoding: str = "utf-8",
     ) -> None:
+        package_path = os.path.normpath(package_path).rstrip(os.path.sep)
+
+        # normpath preserves ".", which isn't valid in zip paths.
         if package_path == os.path.curdir:
             package_path = ""
         elif package_path[:2] == os.path.curdir + os.path.sep:
             package_path = package_path[2:]
 
-        package_path = os.path.normpath(package_path).rstrip(os.path.sep)
         self.package_path = package_path
         self.package_name = package_name
         self.encoding = encoding

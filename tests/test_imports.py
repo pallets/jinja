@@ -99,45 +99,27 @@ class TestImports:
             t.render()
 
     def test_import_with_globals(self, test_env):
-        env = Environment(
-            loader=DictLoader(
-                {
-                    "macros": "{% macro test() %}foo: {{ foo }}{% endmacro %}",
-                    "test": "{% import 'macros' as m %}{{ m.test() }}",
-                    "test1": "{% import 'macros' as m %}{{ m.test() }}",
-                }
-            )
+        t = test_env.from_string(
+            '{% import "module" as m %}{{ m.test() }}', globals={"foo": 42}
         )
-        tmpl = env.get_template("test", globals={"foo": "bar"})
-        assert tmpl.render() == "foo: bar"
+        assert t.render() == "[42|23]"
 
-        tmpl = env.get_template("test1")
-        assert tmpl.render() == "foo: "
+        t = test_env.from_string('{% import "module" as m %}{{ m.test() }}')
+        assert t.render() == "[|23]"
 
     def test_import_with_globals_override(self, test_env):
-        env = Environment(
-            loader=DictLoader(
-                {
-                    "macros": "{% set foo = '42' %}{% macro test() %}"
-                    "foo: {{ foo }}{% endmacro %}",
-                    "test": "{% from 'macros' import test %}{{ test() }}",
-                }
-            )
+        t = test_env.from_string(
+            '{% set foo = 41 %}{% import "module" as m %}{{ m.test() }}',
+            globals={"foo": 42},
         )
-        tmpl = env.get_template("test", globals={"foo": "bar"})
-        assert tmpl.render() == "foo: 42"
+        assert t.render() == "[42|23]"
 
     def test_from_import_with_globals(self, test_env):
-        env = Environment(
-            loader=DictLoader(
-                {
-                    "macros": "{% macro testing() %}foo: {{ foo }}{% endmacro %}",
-                    "test": "{% from 'macros' import testing %}{{ testing() }}",
-                }
-            )
+        t = test_env.from_string(
+            '{% from "module" import test %}{{ test() }}',
+            globals={"foo": 42},
         )
-        tmpl = env.get_template("test", globals={"foo": "bar"})
-        assert tmpl.render() == "foo: bar"
+        assert t.render() == "[42|23]"
 
 
 class TestIncludes:

@@ -9,12 +9,19 @@ Unreleased
 Version 3.0.2
 -------------
 
+Released 2021-10-04
+
 -   Fix a loop scoping bug that caused assignments in nested loops
     to still be referenced outside of it. :issue:`1427`
 -   Make ``compile_templates`` deterministic for filter and import
     names. :issue:`1452, 1453`
 -   Revert an unintended change that caused ``Undefined`` to act like
     ``StrictUndefined`` for the ``in`` operator. :issue:`1448`
+-   Imported macros have access to the current template globals in async
+    environments. :issue:`1494`
+-   ``PackageLoader`` will not include a current directory (.) path
+    segment. This allows loading templates from the root of a zip
+    import. :issue:`1467`
 
 
 Version 3.0.1
