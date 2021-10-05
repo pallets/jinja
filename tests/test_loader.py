@@ -339,6 +339,17 @@ def test_package_zip_list(package_zip_loader):
     assert package_zip_loader.list_templates() == ["foo/test.html", "test.html"]
 
 
+@pytest.mark.parametrize("package_path", ["", ".", "./"])
+def test_package_zip_omit_curdir(package_zip_loader, package_path):
+    """PackageLoader should not add or include "." or "./" in the root
+    path, it is invalid in zip paths.
+    """
+    loader = PackageLoader("t_pack", package_path)
+    assert loader.package_path == ""
+    source, _, _ = loader.get_source(None, "templates/foo/test.html")
+    assert source.rstrip() == "FOO"
+
+
 def test_pep_451_import_hook():
     class ImportHook(importlib.abc.MetaPathFinder, importlib.abc.Loader):
         def find_spec(self, name, path=None, target=None):
