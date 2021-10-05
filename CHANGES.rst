@@ -11,6 +11,9 @@ Version 3.0.2
     ``StrictUndefined`` for the ``in`` operator. :issue:`1448`
 -   Imported macros have access to the current template globals in async
     environments. :issue:`1494`
+-   ``PackageLoader`` will not include a current directory (.) path
+    segment. This allows loading templates from the root of a zip
+    import. :issue:`1467`
 
 
 Version 3.0.1
