@@ -3,6 +3,8 @@
 Version 3.0.2
 -------------
 
+Released 2021-10-04
+
 -   Fix a loop scoping bug that caused assignments in nested loops
     to still be referenced outside of it. :issue:`1427`
 -   Make ``compile_templates`` deterministic for filter and import
