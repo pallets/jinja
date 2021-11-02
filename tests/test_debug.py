@@ -25,7 +25,7 @@ class TestDebug:
         m = re.search(expected_tb.strip(), "".join(tb))
         assert (
             m is not None
-        ), "Traceback did not match:\n\n{''.join(tb)}\nexpected:\n{expected_tb}"
+        ), f"Traceback did not match:\n\n{''.join(tb)}\nexpected:\n{expected_tb}"
 
     def test_runtime_error(self, fs_env):
         def test():
