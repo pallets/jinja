@@ -1,5 +1,4 @@
 import asyncio
-import sys
 
 import pytest
 
@@ -14,19 +13,6 @@ from jinja2.exceptions import UndefinedError
 from jinja2.nativetypes import NativeEnvironment
 
 
-if sys.version_info < (3, 7):
-
-    def run(coro):
-        loop = asyncio.get_event_loop()
-        return loop.run_until_complete(coro)
-
-
-else:
-
-    def run(coro):
-        return asyncio.run(coro)
-
-
 def test_basic_async():
     t = Template(
         "{% for item in [1, 2, 3] %}[{{ item }}]{% endfor %}", enable_async=True
@@ -35,7 +21,7 @@ def test_basic_async():
     async def func():
         return await t.render_async()
 
-    rv = run(func())
+    rv = asyncio.run(func())
     assert rv == "[1][2][3]"
 
 
@@ -51,7 +37,7 @@ def test_await_on_calls():
     async def func():
         return await t.render_async(async_func=async_func, normal_func=normal_func)
 
-    rv = run(func())
+    rv = asyncio.run(func())
     assert rv == "65"
 
 
@@ -65,7 +51,6 @@ def test_await_on_calls_normal_render():
         return 23
 
     rv = t.render(async_func=async_func, normal_func=normal_func)
-
     assert rv == "65"
 
 
@@ -81,7 +66,7 @@ def test_await_and_macros():
     async def func():
         return await t.render_async(async_func=async_func)
 
-    rv = run(func())
+    rv = asyncio.run(func())
     assert rv == "[42][42]"
 
 
@@ -95,7 +80,7 @@ def test_async_blocks():
     async def func():
         return await t.render_async()
 
-    rv = run(func())
+    rv = asyncio.run(func())
     assert rv == "<Test><Test>"
 
 
@@ -172,19 +157,18 @@ class TestAsyncImports:
         test_env_async.from_string('{% from "foo" import bar, with with context %}')
 
     def test_exports(self, test_env_async):
-        m = run(
-            test_env_async.from_string(
-                """
+        coro = test_env_async.from_string(
+            """
             {% macro toplevel() %}...{% endmacro %}
             {% macro __private() %}...{% endmacro %}
             {% set variable = 42 %}
             {% for item in [1] %}
                 {% macro notthere() %}{% endmacro %}
             {% endfor %}
-        """
-            )._get_default_module_async()
-        )
-        assert run(m.toplevel()) == "..."
+            """
+        )._get_default_module_async()
+        m = asyncio.run(coro)
+        assert asyncio.run(m.toplevel()) == "..."
         assert not hasattr(m, "__missing")
         assert m.variable == 42
         assert not hasattr(m, "notthere")
@@ -621,7 +605,7 @@ def test_namespace_awaitable(test_env_async):
         actual = await t.render_async()
         assert actual == "Bar"
 
-    run(_test())
+    asyncio.run(_test())
 
 
 def test_chainable_undefined_aiter():
@@ -634,7 +618,7 @@ def test_chainable_undefined_aiter():
         rv = await t.render_async(a={})
         assert rv == ""
 
-    run(_test())
+    asyncio.run(_test())
 
 
 @pytest.fixture
@@ -648,7 +632,7 @@ def test_native_async(async_native_env):
         rv = await t.render_async(x=23)
         assert rv == 23
 
-    run(_test())
+    asyncio.run(_test())
 
 
 def test_native_list_async(async_native_env):
@@ -657,4 +641,4 @@ def test_native_list_async(async_native_env):
         rv = await t.render_async(x=list(range(3)))
         assert rv == [0, 1, 2]
 
-    run(_test())
+    asyncio.run(_test())

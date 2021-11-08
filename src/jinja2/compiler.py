@@ -835,7 +835,6 @@ class CodeGenerator(NodeVisitor):
         else:
             exported_names = sorted(exported)
 
-        self.writeline("from __future__ import generator_stop")  # Python < 3.7
         self.writeline("from jinja2.runtime import " + ", ".join(exported_names))
 
         # if we want a deferred initialization we cannot move the

@@ -125,26 +125,6 @@ instead that one can assign to a variable by using set::
 
     {% set comments = get_latest_comments() %}
 
-My tracebacks look weird. What's happening?
--------------------------------------------
-
-Jinja can rewrite tracebacks so they show the template lines numbers and
-source rather than the underlying compiled code, but this requires
-special Python support. CPython <3.7 requires ``ctypes``, and PyPy
-requires transparent proxy support.
-
-If you are using Google App Engine, ``ctypes`` is not available. You can
-make it available in development, but not in production.
-
-.. code-block:: python
-
-    import os
-    if os.environ.get('SERVER_SOFTWARE', '').startswith('Dev'):
-        from google.appengine.tools.devappserver2.python import sandbox
-        sandbox._WHITE_LIST_C_MODULES += ['_ctypes', 'gestalt']
-
-Credit for this snippet goes to `Thomas Johansson
-<https://stackoverflow.com/questions/3086091/debug-jinja2-in-google-app-engine/3694434#3694434>`_
 
 My Macros are overridden by something
 -------------------------------------
