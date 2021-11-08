@@ -1,4 +1,3 @@
-import platform
 import sys
 import typing as t
 from types import CodeType
@@ -68,7 +67,8 @@ def rewrite_traceback_stack(source: t.Optional[str] = None) -> BaseException:
 
     # Assign tb_next in reverse to avoid circular references.
     for tb in reversed(stack):
-        tb_next = tb_set_next(tb, tb_next)
+        tb.tb_next = tb_next
+        tb_next = tb
 
     return exc_value.with_traceback(tb_next)
 
@@ -209,71 +209,3 @@ def get_template_locals(real_locals: t.Mapping[str, t.Any]) -> t.Dict[str, t.Any
             data[name] = value
 
     return data
-
-
-if sys.version_info >= (3, 7):
-    # tb_next is directly assignable as of Python 3.7
-    def tb_set_next(
-        tb: TracebackType, tb_next: t.Optional[TracebackType]
-    ) -> TracebackType:
-        tb.tb_next = tb_next
-        return tb
-
-
-elif platform.python_implementation() == "PyPy":
-    # PyPy might have special support, and won't work with ctypes.
-    try:
-        import tputil  # type: ignore
-    except ImportError:
-        # Without tproxy support, use the original traceback.
-        def tb_set_next(
-            tb: TracebackType, tb_next: t.Optional[TracebackType]
-        ) -> TracebackType:
-            return tb
-
-    else:
-        # With tproxy support, create a proxy around the traceback that
-        # returns the new tb_next.
-        def tb_set_next(
-            tb: TracebackType, tb_next: t.Optional[TracebackType]
-        ) -> TracebackType:
-            def controller(op):  # type: ignore
-                if op.opname == "__getattribute__" and op.args[0] == "tb_next":
-                    return tb_next
-
-                return op.delegate()
-
-            return tputil.make_proxy(controller, obj=tb)  # type: ignore
-
-
-else:
-    # Use ctypes to assign tb_next at the C level since it's read-only
-    # from Python.
-    import ctypes
-
-    class _CTraceback(ctypes.Structure):
-        _fields_ = [
-            # Extra PyObject slots when compiled with Py_TRACE_REFS.
-            ("PyObject_HEAD", ctypes.c_byte * object().__sizeof__()),
-            # Only care about tb_next as an object, not a traceback.
-            ("tb_next", ctypes.py_object),
-        ]
-
-    def tb_set_next(
-        tb: TracebackType, tb_next: t.Optional[TracebackType]
-    ) -> TracebackType:
-        c_tb = _CTraceback.from_address(id(tb))
-
-        # Clear out the old tb_next.
-        if tb.tb_next is not None:
-            c_tb_next = ctypes.py_object(tb.tb_next)
-            c_tb.tb_next = ctypes.py_object()
-            ctypes.pythonapi.Py_DecRef(c_tb_next)
-
-        # Assign the new tb_next.
-        if tb_next is not None:
-            c_tb_next = ctypes.py_object(tb_next)
-            ctypes.pythonapi.Py_IncRef(c_tb_next)
-            c_tb.tb_next = c_tb_next
-
-        return tb
