@@ -1344,8 +1344,19 @@ but exists for completeness' sake.  The following operators are supported:
     ``{{ '=' * 80 }}`` would print a bar of 80 equal signs.
 
 ``**``
-    Raise the left operand to the power of the right operand.  ``{{ 2**3 }}``
-    would return ``8``.
+    Raise the left operand to the power of the right operand.
+    ``{{ 2**3 }}`` would return ``8``.
+
+    Unlike Python, chained pow is evaluated left to right.
+    ``{{ 3**3**3 }}`` is evaluated as ``(3**3)**3`` in Jinja, but would
+    be evaluated as ``3**(3**3)`` in Python. Use parentheses in Jinja
+    to be explicit about what order you want. It is usually preferable
+    to do extended math in Python and pass the results to ``render``
+    rather than doing it in the template.
+
+    This behavior may be changed in the future to match Python, if it's
+    possible to introduce an upgrade path.
+
 
 Comparisons
 ~~~~~~~~~~~
