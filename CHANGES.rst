@@ -11,6 +11,8 @@ Unreleased
     when parsing values on Python 3.10. :pr:`1537`
 -   Improve async performance by avoiding checks for common types.
     :issue:`1514`
+-   Revert change to ``hash(Node)`` behavior. Nodes are hashed by id
+    again :issue:`1521`
 
 
 Version 3.0.2

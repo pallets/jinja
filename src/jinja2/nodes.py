@@ -241,8 +241,7 @@ class Node(metaclass=NodeType):
 
         return tuple(self.iter_fields()) == tuple(other.iter_fields())
 
-    def __hash__(self) -> int:
-        return hash(tuple(self.iter_fields()))
+    __hash__ = object.__hash__
 
     def __repr__(self) -> str:
         args_str = ", ".join(f"{a}={getattr(self, a, None)!r}" for a in self.fields)
