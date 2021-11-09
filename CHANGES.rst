@@ -1,5 +1,14 @@
 .. currentmodule:: jinja2
 
+Version 3.0.3
+-------------
+
+Unreleased
+
+-   Fix traceback rewriting internals for Python 3.10 and 3.11.
+    :issue:`1535`
+
+
 Version 3.0.2
 -------------
 
