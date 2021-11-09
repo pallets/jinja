@@ -89,18 +89,6 @@ def str_join(seq: t.Iterable[t.Any]) -> str:
     return concat(map(str, seq))
 
 
-def unicode_join(seq: t.Iterable[t.Any]) -> str:
-    import warnings
-
-    warnings.warn(
-        "This template must be recompiled with at least Jinja 3.0, or"
-        " it will fail in Jinja 3.1.",
-        DeprecationWarning,
-        stacklevel=2,
-    )
-    return str_join(seq)
-
-
 def new_context(
     environment: "Environment",
     template_name: t.Optional[str],
