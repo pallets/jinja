@@ -14,6 +14,7 @@ Unreleased
         ``evalcontextfunction`` are replaced by ``pass_eval_context``.
         ``environmentfilter`` and ``environmentfunction`` are replaced
         by ``pass_environment``.
+    -   ``Markup`` and ``escape`` should be imported from MarkupSafe.
 
 
 Version 3.0.3

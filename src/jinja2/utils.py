@@ -3,7 +3,6 @@ import json
 import os
 import re
 import typing as t
-import warnings
 from collections import abc
 from collections import deque
 from random import choice
@@ -766,24 +765,3 @@ class Namespace:
 
     def __repr__(self) -> str:
         return f"<Namespace {self.__attrs!r}>"
-
-
-class Markup(markupsafe.Markup):
-    def __new__(cls, base="", encoding=None, errors="strict"):  # type: ignore
-        warnings.warn(
-            "'jinja2.Markup' is deprecated and will be removed in Jinja"
-            " 3.1. Import 'markupsafe.Markup' instead.",
-            DeprecationWarning,
-            stacklevel=2,
-        )
-        return super().__new__(cls, base, encoding, errors)
-
-
-def escape(s: t.Any) -> str:
-    warnings.warn(
-        "'jinja2.escape' is deprecated and will be removed in Jinja"
-        " 3.1. Import 'markupsafe.escape' instead.",
-        DeprecationWarning,
-        stacklevel=2,
-    )
-    return markupsafe.escape(s)
