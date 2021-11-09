@@ -587,17 +587,26 @@ When combined with ``scoped``, the ``required`` modifier must be placed
 Template Objects
 ~~~~~~~~~~~~~~~~
 
-.. versionchanged:: 2.4
+``extends``, ``include``, and ``import`` can take a template object
+instead of the name of a template to load. This could be useful in some
+advanced situations, since you can use Python code to load a template
+first and pass it in to ``render``.
 
-If a template object was passed in the template context, you can
-extend from that object as well.  Assuming the calling code passes
-a layout template as `layout_template` to the environment, this
-code works::
+.. code-block:: python
 
-    {% extends layout_template %}
+    if debug_mode:
+        layout = env.get_template("debug_layout.html")
+    else:
+        layout = env.get_template("layout.html")
 
-Previously, the `layout_template` variable had to be a string with
-the layout template's filename for this to work.
+    user_detail = env.get_template("user/detail.html", layout=layout)
+
+.. code-block:: jinja
+
+    {% extends layout %}
+
+Note how ``extends`` is passed the variable with the template object
+that was passed to ``render``, instead of a string.
 
 
 HTML Escaping
