@@ -147,3 +147,9 @@ def test_no_intermediate_eval(env):
 def test_spontaneous_env():
     t = NativeTemplate("{{ true }}")
     assert isinstance(t.environment, NativeEnvironment)
+
+
+def test_leading_spaces(env):
+    t = env.from_string(" {{ True }}")
+    result = t.render()
+    assert result == " True"

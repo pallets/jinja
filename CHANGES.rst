@@ -7,6 +7,8 @@ Unreleased
 
 -   Fix traceback rewriting internals for Python 3.10 and 3.11.
     :issue:`1535`
+-   Fix how the native environment treats leading and trailing spaces
+    when parsing values on Python 3.10. :pr:`1537`
 
 
 Version 3.0.2
