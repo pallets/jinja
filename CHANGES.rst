@@ -3,7 +3,7 @@
 Version 3.0.3
 -------------
 
-Unreleased
+Released 2021-11-09
 
 -   Fix traceback rewriting internals for Python 3.10 and 3.11.
     :issue:`1535`
