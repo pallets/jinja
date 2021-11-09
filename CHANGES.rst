@@ -5,6 +5,11 @@ Version 3.1.0
 
 Unreleased
 
+-   Drop support for Python 3.6. :pr:`1534`
+-   Remove previously deprecated code. :pr:`1544`
+
+    -   ``WithExtension`` and ``AutoEscapeExtension`` are built-in now.
+
 
 Version 3.0.3
 -------------
