@@ -84,72 +84,7 @@ class _PassArg(enum.Enum):
         if hasattr(obj, "jinja_pass_arg"):
             return obj.jinja_pass_arg  # type: ignore
 
-        for prefix in "context", "eval_context", "environment":
-            squashed = prefix.replace("_", "")
-
-            for name in f"{squashed}function", f"{squashed}filter":
-                if getattr(obj, name, False) is True:
-                    warnings.warn(
-                        f"{name!r} is deprecated and will stop working"
-                        f" in Jinja 3.1. Use 'pass_{prefix}' instead.",
-                        DeprecationWarning,
-                        stacklevel=2,
-                    )
-                    return cls[prefix]
-
         return None
-
-
-def contextfunction(f: F) -> F:
-    """Pass the context as the first argument to the decorated function.
-
-    .. deprecated:: 3.0
-        Will be removed in Jinja 3.1. Use :func:`~jinja2.pass_context`
-        instead.
-    """
-    warnings.warn(
-        "'contextfunction' is renamed to 'pass_context', the old name"
-        " will be removed in Jinja 3.1.",
-        DeprecationWarning,
-        stacklevel=2,
-    )
-    return pass_context(f)
-
-
-def evalcontextfunction(f: F) -> F:
-    """Pass the eval context as the first argument to the decorated
-    function.
-
-    .. deprecated:: 3.0
-        Will be removed in Jinja 3.1. Use
-        :func:`~jinja2.pass_eval_context` instead.
-
-    .. versionadded:: 2.4
-    """
-    warnings.warn(
-        "'evalcontextfunction' is renamed to 'pass_eval_context', the"
-        " old name will be removed in Jinja 3.1.",
-        DeprecationWarning,
-        stacklevel=2,
-    )
-    return pass_eval_context(f)
-
-
-def environmentfunction(f: F) -> F:
-    """Pass the environment as the first argument to the decorated
-    function.
-
-    .. deprecated:: 3.0
-        Will be removed in Jinja 3.1. Use
-        :func:`~jinja2.pass_environment` instead.
-    """
-    warnings.warn(
-        "'environmentfunction' is renamed to 'pass_environment', the"
-        " old name will be removed in Jinja 3.1.",
-        DeprecationWarning,
-        stacklevel=2,
-    )
-    return pass_environment(f)
 
 
 def internalcode(f: F) -> F:

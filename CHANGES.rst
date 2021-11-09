@@ -9,6 +9,11 @@ Unreleased
 -   Remove previously deprecated code. :pr:`1544`
 
     -   ``WithExtension`` and ``AutoEscapeExtension`` are built-in now.
+    -   ``contextfilter`` and ``contextfunction`` are replaced by
+        ``pass_context``. ``evalcontextfilter`` and
+        ``evalcontextfunction`` are replaced by ``pass_eval_context``.
+        ``environmentfilter`` and ``environmentfunction`` are replaced
+        by ``pass_environment``.
 
 
 Version 3.0.3

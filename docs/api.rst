@@ -597,18 +597,6 @@ functions to a Jinja environment.
 
 .. autofunction:: jinja2.pass_environment
 
-.. autofunction:: jinja2.contextfilter
-
-.. autofunction:: jinja2.evalcontextfilter
-
-.. autofunction:: jinja2.environmentfilter
-
-.. autofunction:: jinja2.contextfunction
-
-.. autofunction:: jinja2.evalcontextfunction
-
-.. autofunction:: jinja2.environmentfunction
-
 .. autofunction:: jinja2.clear_caches
 
 .. autofunction:: jinja2.is_undefined

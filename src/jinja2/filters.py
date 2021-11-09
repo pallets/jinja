@@ -4,7 +4,6 @@ import random
 import re
 import typing
 import typing as t
-import warnings
 from collections import abc
 from itertools import chain
 from itertools import groupby
@@ -42,58 +41,6 @@ if t.TYPE_CHECKING:
 F = t.TypeVar("F", bound=t.Callable[..., t.Any])
 K = t.TypeVar("K")
 V = t.TypeVar("V")
-
-
-def contextfilter(f: F) -> F:
-    """Pass the context as the first argument to the decorated function.
-
-    .. deprecated:: 3.0
-        Will be removed in Jinja 3.1. Use :func:`~jinja2.pass_context`
-        instead.
-    """
-    warnings.warn(
-        "'contextfilter' is renamed to 'pass_context', the old name"
-        " will be removed in Jinja 3.1.",
-        DeprecationWarning,
-        stacklevel=2,
-    )
-    return pass_context(f)
-
-
-def evalcontextfilter(f: F) -> F:
-    """Pass the eval context as the first argument to the decorated
-    function.
-
-    .. deprecated:: 3.0
-        Will be removed in Jinja 3.1. Use
-        :func:`~jinja2.pass_eval_context` instead.
-
-    .. versionadded:: 2.4
-    """
-    warnings.warn(
-        "'evalcontextfilter' is renamed to 'pass_eval_context', the old"
-        " name will be removed in Jinja 3.1.",
-        DeprecationWarning,
-        stacklevel=2,
-    )
-    return pass_eval_context(f)
-
-
-def environmentfilter(f: F) -> F:
-    """Pass the environment as the first argument to the decorated
-    function.
-
-    .. deprecated:: 3.0
-        Will be removed in Jinja 3.1. Use
-        :func:`~jinja2.pass_environment` instead.
-    """
-    warnings.warn(
-        "'environmentfilter' is renamed to 'pass_environment', the old"
-        " name will be removed in Jinja 3.1.",
-        DeprecationWarning,
-        stacklevel=2,
-    )
-    return pass_environment(f)
 
 
 def ignore_case(value: V) -> V:
