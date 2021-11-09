@@ -914,9 +914,6 @@ are available on a macro object:
 `arguments`
     A tuple of the names of arguments the macro accepts.
 
-`defaults`
-    A tuple of default values.
-
 `catch_kwargs`
     This is `true` if the macro accepts extra keyword arguments (i.e.: accesses
     the special `kwargs` variable).
