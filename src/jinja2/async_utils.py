@@ -44,7 +44,14 @@ def async_variant(normal_func):  # type: ignore
     return decorator
 
 
+_common_primitives = {int, float, bool, str, list, dict, tuple, type(None)}
+
+
 async def auto_await(value: t.Union[t.Awaitable["V"], "V"]) -> "V":
+    # Avoid a costly call to isawaitable
+    if type(value) in _common_primitives:
+        return t.cast("V", value)
+
     if inspect.isawaitable(value):
         return await t.cast("t.Awaitable[V]", value)
 

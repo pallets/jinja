@@ -37,7 +37,7 @@ WORKINGTEMPLATE = """\
 {% block block1 %}
   {% if false %}
     {% block block2 %}
-      this should workd
+      this should work
     {% endblock %}
   {% endif %}
 {% endblock %}
@@ -49,7 +49,7 @@ DOUBLEEXTENDS = """\
 {% block block1 %}
   {% if false %}
     {% block block2 %}
-      this should workd
+      this should work
     {% endblock %}
   {% endif %}
 {% endblock %}

@@ -102,62 +102,42 @@ def fake_traceback(  # type: ignore
         "__jinja_exception__": exc_value,
     }
     # Raise an exception at the correct line number.
-    code = compile("\n" * (lineno - 1) + "raise __jinja_exception__", filename, "exec")
+    code: CodeType = compile(
+        "\n" * (lineno - 1) + "raise __jinja_exception__", filename, "exec"
+    )
 
     # Build a new code object that points to the template file and
     # replaces the location with a block name.
-    try:
-        location = "template"
+    location = "template"
 
-        if tb is not None:
-            function = tb.tb_frame.f_code.co_name
+    if tb is not None:
+        function = tb.tb_frame.f_code.co_name
 
-            if function == "root":
-                location = "top-level template code"
-            elif function.startswith("block_"):
-                location = f"block {function[6:]!r}"
+        if function == "root":
+            location = "top-level template code"
+        elif function.startswith("block_"):
+            location = f"block {function[6:]!r}"
 
-        # Collect arguments for the new code object. CodeType only
-        # accepts positional arguments, and arguments were inserted in
-        # new Python versions.
-        code_args = []
-
-        for attr in (
-            "argcount",
-            "posonlyargcount",  # Python 3.8
-            "kwonlyargcount",
-            "nlocals",
-            "stacksize",
-            "flags",
-            "code",  # codestring
-            "consts",  # constants
-            "names",
-            "varnames",
-            ("filename", filename),
-            ("name", location),
-            "firstlineno",
-            "lnotab",
-            "freevars",
-            "cellvars",
-            "linetable",  # Python 3.10
-        ):
-            if isinstance(attr, tuple):
-                # Replace with given value.
-                code_args.append(attr[1])
-                continue
-
-            try:
-                # Copy original value if it exists.
-                code_args.append(getattr(code, "co_" + t.cast(str, attr)))
-            except AttributeError:
-                # Some arguments were added later.
-                continue
-
-        code = CodeType(*code_args)
-    except Exception:
-        # Some environments such as Google App Engine don't support
-        # modifying code objects.
-        pass
+    if sys.version_info >= (3, 8):
+        code = code.replace(co_name=location)
+    else:
+        code = CodeType(
+            code.co_argcount,
+            code.co_kwonlyargcount,
+            code.co_nlocals,
+            code.co_stacksize,
+            code.co_flags,
+            code.co_code,
+            code.co_consts,
+            code.co_names,
+            code.co_varnames,
+            code.co_filename,
+            location,
+            code.co_firstlineno,
+            code.co_lnotab,
+            code.co_freevars,
+            code.co_cellvars,
+        )
 
     # Execute the new code, which is guaranteed to raise, and return
     # the new traceback without this frame.

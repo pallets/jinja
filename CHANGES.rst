@@ -6,6 +6,23 @@ Version 3.1.0
 Unreleased
 
 
+Version 3.0.3
+-------------
+
+Released 2021-11-09
+
+-   Fix traceback rewriting internals for Python 3.10 and 3.11.
+    :issue:`1535`
+-   Fix how the native environment treats leading and trailing spaces
+    when parsing values on Python 3.10. :pr:`1537`
+-   Improve async performance by avoiding checks for common types.
+    :issue:`1514`
+-   Revert change to ``hash(Node)`` behavior. Nodes are hashed by id
+    again :issue:`1521`
+-   ``PackageLoader`` works when the package is a single module file.
+    :issue:`1512`
+
+
 Version 3.0.2
 -------------
 
@@ -414,7 +431,7 @@ Released 2017-01-08
     possible. For more information and a discussion see :issue:`641`
 -   Resolved an issue where ``block scoped`` would not take advantage of
     the new scoping rules. In some more exotic cases a variable
-    overriden in a local scope would not make it into a block.
+    overridden in a local scope would not make it into a block.
 -   Change the code generation of the ``with`` statement to be in line
     with the new scoping rules. This resolves some unlikely bugs in edge
     cases. This also introduces a new internal ``With`` node that can be
