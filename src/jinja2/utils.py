@@ -417,18 +417,6 @@ def url_quote(obj: t.Any, charset: str = "utf-8", for_qs: bool = False) -> str:
     return rv
 
 
-def unicode_urlencode(obj: t.Any, charset: str = "utf-8", for_qs: bool = False) -> str:
-    import warnings
-
-    warnings.warn(
-        "'unicode_urlencode' has been renamed to 'url_quote'. The old"
-        " name will be removed in Jinja 3.1.",
-        DeprecationWarning,
-        stacklevel=2,
-    )
-    return url_quote(obj, charset=charset, for_qs=for_qs)
-
-
 @abc.MutableMapping.register
 class LRUCache:
     """A simple LRU Cache implementation."""

@@ -20,6 +20,7 @@ Unreleased
     -   Legacy resolve mode for ``Context`` subclasses is no longer
         supported. Override ``resolve_or_missing`` instead of
         ``resolve``.
+    -   ``unicode_urlencode`` is renamed to ``url_quote``.
 
 
 Version 3.0.3
