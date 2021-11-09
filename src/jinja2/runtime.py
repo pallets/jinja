@@ -161,27 +161,6 @@ class Context:
     :class:`Undefined` object for missing variables.
     """
 
-    _legacy_resolve_mode: t.ClassVar[bool] = False
-
-    def __init_subclass__(cls) -> None:
-        if "resolve_or_missing" in cls.__dict__:
-            # If the subclass overrides resolve_or_missing it opts in to
-            # modern mode no matter what.
-            cls._legacy_resolve_mode = False
-        elif "resolve" in cls.__dict__ or cls._legacy_resolve_mode:
-            # If the subclass overrides resolve, or if its base is
-            # already in legacy mode, warn about legacy behavior.
-            import warnings
-
-            warnings.warn(
-                "Overriding 'resolve' is deprecated and will not have"
-                " the expected behavior in Jinja 3.1. Override"
-                " 'resolve_or_missing' instead ",
-                DeprecationWarning,
-                stacklevel=2,
-            )
-            cls._legacy_resolve_mode = True
-
     def __init__(
         self,
         environment: "Environment",
@@ -239,15 +218,6 @@ class Context:
 
         :param key: The variable name to look up.
         """
-        if self._legacy_resolve_mode:
-            if key in self.vars:
-                return self.vars[key]
-
-            if key in self.parent:
-                return self.parent[key]
-
-            return self.environment.undefined(name=key)
-
         rv = self.resolve_or_missing(key)
 
         if rv is missing:
@@ -265,14 +235,6 @@ class Context:
 
         :param key: The variable name to look up.
         """
-        if self._legacy_resolve_mode:
-            rv = self.resolve(key)
-
-            if isinstance(rv, Undefined):
-                return missing
-
-            return rv
-
         if key in self.vars:
             return self.vars[key]
 

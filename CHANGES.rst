@@ -17,6 +17,9 @@ Unreleased
     -   ``Markup`` and ``escape`` should be imported from MarkupSafe.
     -   Compiled templates from very old Jinja versions may need to be
         recompiled.
+    -   Legacy resolve mode for ``Context`` subclasses is no longer
+        supported. Override ``resolve_or_missing`` instead of
+        ``resolve``.
 
 
 Version 3.0.3
