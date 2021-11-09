@@ -297,10 +297,18 @@ class PackageLoader(BaseLoader):
             self._archive = loader.archive
             pkgdir = next(iter(spec.submodule_search_locations))  # type: ignore
             template_root = os.path.join(pkgdir, package_path)
-        elif spec.submodule_search_locations:
-            # This will be one element for regular packages and multiple
-            # for namespace packages.
-            for root in spec.submodule_search_locations:
+        else:
+            roots: t.List[str] = []
+
+            # One element for regular packages, multiple for namespace
+            # packages, or None for single module file.
+            if spec.submodule_search_locations:
+                roots.extend(spec.submodule_search_locations)
+            # A single module file, use the parent directory instead.
+            elif spec.origin is not None:
+                roots.append(os.path.dirname(spec.origin))
+
+            for root in roots:
                 root = os.path.join(root, package_path)
 
                 if os.path.isdir(root):

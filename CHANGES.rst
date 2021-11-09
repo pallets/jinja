@@ -13,6 +13,8 @@ Unreleased
     :issue:`1514`
 -   Revert change to ``hash(Node)`` behavior. Nodes are hashed by id
     again :issue:`1521`
+-   ``PackageLoader`` works when the package is a single module file.
+    :issue:`1512`
 
 
 Version 3.0.2
