@@ -852,3 +852,16 @@ def escape(s: t.Any) -> str:
         stacklevel=2,
     )
     return markupsafe.escape(s)
+
+
+def indent_to(text: str, indent: int) -> str:
+    """Indent or dedent a text to match the given indentation level
+    (excluding empty lines and spaces at the end of the text)."""
+    current_indent = re.match(" +", text)
+    change = indent - (current_indent.end() if current_indent else 0)
+    if not change:
+        return text
+    if change > 0:
+        return re.sub("(^|\n)(?!\n| *$)", f'\\1{" " * change}', text)
+    else:
+        return re.sub(f"(^|\n) {{0,{-change}}}", "\\1", text)

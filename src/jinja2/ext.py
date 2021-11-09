@@ -846,6 +846,7 @@ def babel_extract(
         defaults.NEWLINE_SEQUENCE,
         getbool(options, "keep_trailing_newline", defaults.KEEP_TRAILING_NEWLINE),
         tuple(extensions),
+        indent_blocks=getbool(options, "indent_blocks", defaults.INDENT_BLOCKS),
         cache_size=0,
         auto_reload=False,
     )

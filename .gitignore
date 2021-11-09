@@ -4,6 +4,7 @@ docs/_build/
 *.pyo
 *.egg-info/
 *.egg
+*.swp
 build/
 dist/
 .DS_Store

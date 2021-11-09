@@ -24,6 +24,7 @@ from .defaults import DEFAULT_FILTERS
 from .defaults import DEFAULT_NAMESPACE
 from .defaults import DEFAULT_POLICIES
 from .defaults import DEFAULT_TESTS
+from .defaults import INDENT_BLOCKS
 from .defaults import KEEP_TRAILING_NEWLINE
 from .defaults import LINE_COMMENT_PREFIX
 from .defaults import LINE_STATEMENT_PREFIX
@@ -259,6 +260,13 @@ class Environment:
         `enable_async`
             If set to true this enables async template execution which
             allows using async functions and generators.
+
+        `indent_blocks`
+            If this is set to ``True`` block contents are automatically
+            indented so that the first line of the content aligns with the
+            indentation level of the starting block. Defaults to ``False``.
+
+            .. versionadded:: 3.1
     """
 
     #: if this environment is sandboxed.  Modifying this variable won't make
@@ -311,6 +319,7 @@ class Environment:
         auto_reload: bool = True,
         bytecode_cache: t.Optional["BytecodeCache"] = None,
         enable_async: bool = False,
+        indent_blocks: bool = INDENT_BLOCKS,
     ):
         # !!Important notice!!
         #   The constructor accepts quite a few arguments that should be
@@ -334,6 +343,7 @@ class Environment:
         self.line_comment_prefix = line_comment_prefix
         self.trim_blocks = trim_blocks
         self.lstrip_blocks = lstrip_blocks
+        self.indent_blocks = indent_blocks
         self.newline_sequence = newline_sequence
         self.keep_trailing_newline = keep_trailing_newline
 
@@ -400,6 +410,7 @@ class Environment:
         cache_size: int = missing,
         auto_reload: bool = missing,
         bytecode_cache: t.Optional["BytecodeCache"] = missing,
+        indent_blocks: bool = missing,
     ) -> "Environment":
         """Create a new overlay environment that shares all the data with the
         current environment except for cache and the overridden attributes.
@@ -1178,6 +1189,7 @@ class Template:
         finalize: t.Optional[t.Callable[..., t.Any]] = None,
         autoescape: t.Union[bool, t.Callable[[t.Optional[str]], bool]] = False,
         enable_async: bool = False,
+        indent_blocks: bool = INDENT_BLOCKS,
     ) -> t.Any:  # it returns a `Template`, but this breaks the sphinx build...
         env = get_spontaneous_environment(
             cls.environment_class,  # type: ignore
@@ -1203,6 +1215,7 @@ class Template:
             False,
             None,
             enable_async,
+            indent_blocks,
         )
         return env.from_string(source, template_class=cls)
 

@@ -11,6 +11,7 @@ from sys import intern
 
 from ._identifier import pattern as name_re
 from .exceptions import TemplateSyntaxError
+from .utils import indent_to
 from .utils import LRUCache
 
 if t.TYPE_CHECKING:
@@ -436,6 +437,7 @@ def get_lexer(environment: "Environment") -> "Lexer":
         environment.line_comment_prefix,
         environment.trim_blocks,
         environment.lstrip_blocks,
+        environment.indent_blocks,
         environment.newline_sequence,
         environment.keep_trailing_newline,
     )
@@ -511,6 +513,7 @@ class Lexer:
         # non-whitespace between the newline and block.
         self.lstrip_unless_re = c(r"[^ \t]") if environment.lstrip_blocks else None
 
+        self.indent_blocks = environment.indent_blocks
         self.newline_sequence = environment.newline_sequence
         self.keep_trailing_newline = environment.keep_trailing_newline
 
@@ -700,6 +703,7 @@ class Lexer:
         lstrip_unless_re = self.lstrip_unless_re
         newlines_stripped = 0
         line_starting = True
+        indent: t.List[int] = []
 
         while True:
             # tokenizer loop
@@ -720,6 +724,15 @@ class Lexer:
                     TOKEN_LINESTATEMENT_END,
                 ):
                     continue
+
+                # dedent at block ending
+                if (
+                    self.indent_blocks
+                    and indent  # TODO: this is not really correct for inline blocks
+                    and tokens == "name"
+                    and m.group().startswith("end")
+                ):
+                    indent.pop()
 
                 # tuples support more options
                 if isinstance(tokens, tuple):
@@ -749,12 +762,17 @@ class Lexer:
                         ):
                             # The start of text between the last newline and the tag.
                             l_pos = text.rfind("\n") + 1
-
                             if l_pos > 0 or line_starting:
                                 # If there's only whitespace between the newline and the
                                 # tag, strip it.
                                 if not lstrip_unless_re.search(text, l_pos):
-                                    groups = [text[:l_pos], *groups[1:]]
+                                    stripped = text[:l_pos]
+                                    # Indent lines if necessary.
+                                    if self.indent_blocks:
+                                        if indent:
+                                            stripped = indent_to(stripped, indent[0])
+                                        indent.append(len(text) - l_pos)
+                                    groups = [stripped, *groups[1:]]
 
                     for idx, token in enumerate(tokens):
                         # failure group
