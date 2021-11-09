@@ -955,7 +955,7 @@ class Div(BinExpr):
 
 
 class FloorDiv(BinExpr):
-    """Divides the left by the right node and truncates conver the
+    """Divides the left by the right node and converts the
     result into an integer by truncating.
     """
 

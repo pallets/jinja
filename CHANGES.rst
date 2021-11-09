@@ -423,7 +423,7 @@ Released 2017-01-08
     possible. For more information and a discussion see :issue:`641`
 -   Resolved an issue where ``block scoped`` would not take advantage of
     the new scoping rules. In some more exotic cases a variable
-    overriden in a local scope would not make it into a block.
+    overridden in a local scope would not make it into a block.
 -   Change the code generation of the ``with`` statement to be in line
     with the new scoping rules. This resolves some unlikely bugs in edge
     cases. This also introduces a new internal ``With`` node that can be
