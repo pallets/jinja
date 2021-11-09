@@ -1,5 +1,6 @@
 import typing as t
 from ast import literal_eval
+from ast import parse
 from itertools import chain
 from itertools import islice
 
@@ -33,7 +34,12 @@ def native_concat(values: t.Iterable[t.Any]) -> t.Optional[t.Any]:
         raw = "".join([str(v) for v in chain(head, values)])
 
     try:
-        return literal_eval(raw)
+        return literal_eval(
+            # In Python 3.10+ ast.literal_eval removes leading spaces/tabs
+            # from the given string. For backwards compatibility we need to
+            # parse the string ourselves without removing leading spaces/tabs.
+            parse(raw, mode="eval")
+        )
     except (ValueError, SyntaxError, MemoryError):
         return raw
 
