@@ -2,7 +2,6 @@
 import pprint
 import re
 import typing as t
-import warnings
 
 from markupsafe import Markup
 
@@ -597,28 +596,6 @@ class LoopControlExtension(Extension):
         return nodes.Continue(lineno=token.lineno)
 
 
-class WithExtension(Extension):
-    def __init__(self, environment: Environment) -> None:
-        super().__init__(environment)
-        warnings.warn(
-            "The 'with' extension is deprecated and will be removed in"
-            " Jinja 3.1. This is built in now.",
-            DeprecationWarning,
-            stacklevel=3,
-        )
-
-
-class AutoEscapeExtension(Extension):
-    def __init__(self, environment: Environment) -> None:
-        super().__init__(environment)
-        warnings.warn(
-            "The 'autoescape' extension is deprecated and will be"
-            " removed in Jinja 3.1. This is built in now.",
-            DeprecationWarning,
-            stacklevel=3,
-        )
-
-
 class DebugExtension(Extension):
     """A ``{% debug %}`` tag that dumps the available variables,
     filters, and tests.
@@ -874,6 +851,4 @@ def babel_extract(
 i18n = InternationalizationExtension
 do = ExprStmtExtension
 loopcontrols = LoopControlExtension
-with_ = WithExtension
-autoescape = AutoEscapeExtension
 debug = DebugExtension

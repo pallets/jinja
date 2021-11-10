@@ -5,6 +5,23 @@ Version 3.1.0
 
 Unreleased
 
+-   Drop support for Python 3.6. :pr:`1534`
+-   Remove previously deprecated code. :pr:`1544`
+
+    -   ``WithExtension`` and ``AutoEscapeExtension`` are built-in now.
+    -   ``contextfilter`` and ``contextfunction`` are replaced by
+        ``pass_context``. ``evalcontextfilter`` and
+        ``evalcontextfunction`` are replaced by ``pass_eval_context``.
+        ``environmentfilter`` and ``environmentfunction`` are replaced
+        by ``pass_environment``.
+    -   ``Markup`` and ``escape`` should be imported from MarkupSafe.
+    -   Compiled templates from very old Jinja versions may need to be
+        recompiled.
+    -   Legacy resolve mode for ``Context`` subclasses is no longer
+        supported. Override ``resolve_or_missing`` instead of
+        ``resolve``.
+    -   ``unicode_urlencode`` is renamed to ``url_quote``.
+
 
 Version 3.0.3
 -------------

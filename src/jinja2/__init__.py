@@ -14,9 +14,6 @@ from .exceptions import TemplateRuntimeError as TemplateRuntimeError
 from .exceptions import TemplatesNotFound as TemplatesNotFound
 from .exceptions import TemplateSyntaxError as TemplateSyntaxError
 from .exceptions import UndefinedError as UndefinedError
-from .filters import contextfilter
-from .filters import environmentfilter
-from .filters import evalcontextfilter
 from .loaders import BaseLoader as BaseLoader
 from .loaders import ChoiceLoader as ChoiceLoader
 from .loaders import DictLoader as DictLoader
@@ -31,12 +28,7 @@ from .runtime import make_logging_undefined as make_logging_undefined
 from .runtime import StrictUndefined as StrictUndefined
 from .runtime import Undefined as Undefined
 from .utils import clear_caches as clear_caches
-from .utils import contextfunction
-from .utils import environmentfunction
-from .utils import escape
-from .utils import evalcontextfunction
 from .utils import is_undefined as is_undefined
-from .utils import Markup
 from .utils import pass_context as pass_context
 from .utils import pass_environment as pass_environment
 from .utils import pass_eval_context as pass_eval_context
