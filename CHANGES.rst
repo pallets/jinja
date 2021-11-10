@@ -22,6 +22,8 @@ Unreleased
         ``resolve``.
     -   ``unicode_urlencode`` is renamed to ``url_quote``.
 
+-   Add support for native types in macros. :issue:`1510`
+
 
 Version 3.0.3
 -------------

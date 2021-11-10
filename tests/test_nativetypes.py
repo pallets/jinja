@@ -153,3 +153,10 @@ def test_leading_spaces(env):
     t = env.from_string(" {{ True }}")
     result = t.render()
     assert result == " True"
+
+
+def test_macro(env):
+    t = env.from_string("{%- macro x() -%}{{- [1,2] -}}{%- endmacro -%}{{- x()[1] -}}")
+    result = t.render()
+    assert result == 2
+    assert isinstance(result, int)
