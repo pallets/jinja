@@ -938,7 +938,7 @@ class Environment:
 
     @internalcode
     def _load_template(
-        self, name: str, globals: t.Optional[t.Mapping[str, t.Any]]
+        self, name: str, globals: t.Optional[t.MutableMapping[str, t.Any]]
     ) -> "Template":
         if self.loader is None:
             raise TypeError("no loader for this environment specified")
@@ -966,7 +966,7 @@ class Environment:
         self,
         name: t.Union[str, "Template"],
         parent: t.Optional[str] = None,
-        globals: t.Optional[t.Mapping[str, t.Any]] = None,
+        globals: t.Optional[t.MutableMapping[str, t.Any]] = None,
     ) -> "Template":
         """Load a template by name with :attr:`loader` and return a
         :class:`Template`. If the template does not exist a
@@ -1001,7 +1001,7 @@ class Environment:
         self,
         names: t.Iterable[t.Union[str, "Template"]],
         parent: t.Optional[str] = None,
-        globals: t.Optional[t.Mapping[str, t.Any]] = None,
+        globals: t.Optional[t.MutableMapping[str, t.Any]] = None,
     ) -> "Template":
         """Like :meth:`get_template`, but tries loading multiple names.
         If none of the names can be loaded a :exc:`TemplatesNotFound`
@@ -1057,7 +1057,7 @@ class Environment:
             str, "Template", t.List[t.Union[str, "Template"]]
         ],
         parent: t.Optional[str] = None,
-        globals: t.Optional[t.Mapping[str, t.Any]] = None,
+        globals: t.Optional[t.MutableMapping[str, t.Any]] = None,
     ) -> "Template":
         """Use :meth:`select_template` if an iterable of template names
         is given, or :meth:`get_template` if one name is given.
@@ -1073,7 +1073,7 @@ class Environment:
     def from_string(
         self,
         source: t.Union[str, nodes.Template],
-        globals: t.Optional[t.Mapping[str, t.Any]] = None,
+        globals: t.Optional[t.MutableMapping[str, t.Any]] = None,
         template_class: t.Optional[t.Type["Template"]] = None,
     ) -> "Template":
         """Load a template from a source string without using
@@ -1092,7 +1092,7 @@ class Environment:
         return cls.from_code(self, self.compile(source), gs, None)
 
     def make_globals(
-        self, d: t.Optional[t.Mapping[str, t.Any]]
+        self, d: t.Optional[t.MutableMapping[str, t.Any]]
     ) -> t.MutableMapping[str, t.Any]:
         """Make the globals map for a template. Any given template
         globals overlay the environment :attr:`globals`.

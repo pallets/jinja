@@ -723,7 +723,7 @@ class Lexer:
 
                 # tuples support more options
                 if isinstance(tokens, tuple):
-                    groups = m.groups()
+                    groups: t.Sequence[str] = m.groups()
 
                     if isinstance(tokens, OptionalLStrip):
                         # Rule supports lstrip. Match will look like

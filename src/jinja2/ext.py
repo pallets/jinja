@@ -91,7 +91,7 @@ class Extension:
 
     def bind(self, environment: Environment) -> "Extension":
         """Create a copy of this extension bound to another environment."""
-        rv = t.cast(Extension, object.__new__(self.__class__))
+        rv = object.__new__(self.__class__)
         rv.__dict__.update(self.__dict__)
         rv.environment = environment
         return rv

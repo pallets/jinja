@@ -160,7 +160,7 @@ class Parser:
         self._last_identifier += 1
         rv = object.__new__(nodes.InternalName)
         nodes.Node.__init__(rv, f"fi{self._last_identifier}", lineno=lineno)
-        return rv  # type: ignore
+        return rv
 
     def parse_statement(self) -> t.Union[nodes.Node, t.List[nodes.Node]]:
         """Parse a single statement."""
