@@ -354,13 +354,19 @@ class InternationalizationExtension(Extension):
     def parse(self, parser: "Parser") -> t.Union[nodes.Node, t.List[nodes.Node]]:
         """Parse a translatable tag."""
         lineno = next(parser.stream).lineno
-        num_called_num = False
+
+        context = None
+        context_token = parser.stream.next_if("string")
+
+        if context_token is not None:
+            context = context_token.value
 
         # find all the variables referenced.  Additionally a variable can be
         # defined in the body of the trans block too, but this is checked at
         # a later state.
         plural_expr: t.Optional[nodes.Expr] = None
         plural_expr_assignment: t.Optional[nodes.Assign] = None
+        num_called_num = False
         variables: t.Dict[str, nodes.Expr] = {}
         trimmed = None
         while parser.stream.current.type != "block_end":
@@ -455,6 +461,7 @@ class InternationalizationExtension(Extension):
         node = self._make_node(
             singular,
             plural,
+            context,
             variables,
             plural_expr,
             bool(referenced),
@@ -510,6 +517,7 @@ class InternationalizationExtension(Extension):
         self,
         singular: str,
         plural: t.Optional[str],
+        context: t.Optional[str],
         variables: t.Dict[str, nodes.Expr],
         plural_expr: t.Optional[nodes.Expr],
         vars_referenced: bool,
@@ -526,21 +534,18 @@ class InternationalizationExtension(Extension):
             if plural:
                 plural = plural.replace("%%", "%")
 
-        # singular only:
-        if plural_expr is None:
-            gettext = nodes.Name("gettext", "load")
-            node = nodes.Call(gettext, [nodes.Const(singular)], [], None, None)
+        func_name = "gettext"
+        func_args: t.List[nodes.Expr] = [nodes.Const(singular)]
 
-        # singular and plural
-        else:
-            ngettext = nodes.Name("ngettext", "load")
-            node = nodes.Call(
-                ngettext,
-                [nodes.Const(singular), nodes.Const(plural), plural_expr],
-                [],
-                None,
-                None,
-            )
+        if context is not None:
+            func_args.insert(0, nodes.Const(context))
+            func_name = f"p{func_name}"
+
+        if plural_expr is not None:
+            func_name = f"n{func_name}"
+            func_args.extend((nodes.Const(plural), plural_expr))
+
+        node = nodes.Call(nodes.Name(func_name, "load"), func_args, [], None, None)
 
         # in case newstyle gettext is used, the method is powerful
         # enough to handle the variable expansion and autoescape

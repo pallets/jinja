@@ -23,6 +23,9 @@ Unreleased
     -   ``unicode_urlencode`` is renamed to ``url_quote``.
 
 -   Add support for native types in macros. :issue:`1510`
+-   The ``{% trans %}`` tag can use ``pgettext`` and ``npgettext`` by
+    passing a context string as the first token in the tag, like
+    ``{% trans "title" %}``. :issue:`1430`
 
 
 Version 3.0.3

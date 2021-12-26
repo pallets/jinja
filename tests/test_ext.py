@@ -43,6 +43,9 @@ newstyle_i18n_templates = {
     "pgettext.html": '{{ pgettext("fruit", "Apple") }}',
     "npgettext.html": '{{ npgettext("fruit", "%(num)s apple", "%(num)s apples",'
     " apples) }}",
+    "pgettext_block": "{% trans 'fruit' num=apples %}Apple{% endtrans %}",
+    "npgettext_block": "{% trans 'fruit' num=apples %}{{ num }} apple"
+    "{% pluralize %}{{ num }} apples{% endtrans %}",
     "transvars1.html": "{% trans %}User: {{ num }}{% endtrans %}",
     "transvars2.html": "{% trans num=count %}User: {{ num }}{% endtrans %}",
     "transvars3.html": "{% trans count=num %}User: {{ count }}{% endtrans %}",
@@ -593,8 +596,17 @@ class TestNewstyleInternationalization:
         tmpl = newstyle_i18n_env.get_template("pgettext.html")
         assert tmpl.render(LANGUAGE="de") == "Apple"
 
-    def test_context_newstyle_plural(self):
+    def test_context_plural(self):
         tmpl = newstyle_i18n_env.get_template("npgettext.html")
+        assert tmpl.render(LANGUAGE="de", apples=1) == "1 Apple"
+        assert tmpl.render(LANGUAGE="de", apples=5) == "5 Apples"
+
+    def test_context_block(self):
+        tmpl = newstyle_i18n_env.get_template("pgettext_block")
+        assert tmpl.render(LANGUAGE="de") == "Apple"
+
+    def test_context_plural_block(self):
+        tmpl = newstyle_i18n_env.get_template("npgettext_block")
         assert tmpl.render(LANGUAGE="de", apples=1) == "1 Apple"
         assert tmpl.render(LANGUAGE="de", apples=5) == "5 Apples"
 

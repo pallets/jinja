@@ -1732,11 +1732,35 @@ to disable it for a block.
 .. versionadded:: 2.10
    The ``trimmed`` and ``notrimmed`` modifiers have been added.
 
+If the translation depends on the context that the message appears in,
+the ``pgettext`` and ``npgettext`` functions take a ``context`` string
+as the first argument, which is used to select the appropriate
+translation. To specify a context with the ``{% trans %}`` tag, provide
+a string as the first token after ``trans``.
+
+.. code-block:: jinja
+
+    {% trans "fruit" %}apple{% endtrans %}
+    {% trans "fruit" trimmed count -%}
+        1 apple
+    {%- pluralize -%}
+        {{ count }} apples
+    {%- endtrans %}
+
+.. versionadded:: 3.1
+    A context can be passed to the ``trans`` tag to use ``pgettext`` and
+    ``npgettext``.
+
 It's possible to translate strings in expressions with these functions:
 
--   ``gettext``: translate a single string
--   ``ngettext``: translate a pluralizable string
--   ``_``: alias for ``gettext``
+-   ``_(message)``: Alias for ``gettext``.
+-   ``gettext(message)``: Translate a message.
+-   ``ngettext(singluar, plural, n)``: Translate a singular or plural
+    message based on a count variable.
+-   ``pgettext(context, message)``: Like ``gettext()``, but picks the
+    translation based on the context string.
+-   ``npgettext(context, singular, plural, n)``: Like ``npgettext()``,
+    but picks the translation based on the context string.
 
 You can print a translated string like this:
 
