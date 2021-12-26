@@ -218,7 +218,7 @@ class Frame:
 
     def copy(self) -> "Frame":
         """Create a copy of the current one."""
-        rv = t.cast(Frame, object.__new__(self.__class__))
+        rv = object.__new__(self.__class__)
         rv.__dict__.update(self.__dict__)
         rv.symbols = self.symbols.copy()
         return rv

@@ -603,7 +603,7 @@ class ModuleLoader(BaseLoader):
         if not isinstance(path, abc.Iterable) or isinstance(path, str):
             path = [path]
 
-        mod.__path__ = [os.fspath(p) for p in path]  # type: ignore
+        mod.__path__ = [os.fspath(p) for p in path]
 
         sys.modules[package_name] = weakref.proxy(
             mod, lambda x: sys.modules.pop(package_name, None)

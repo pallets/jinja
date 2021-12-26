@@ -273,7 +273,7 @@ modified identifier syntax.  Filters and tests may contain dots to group
 filters and tests by topic.  For example it's perfectly valid to add a
 function into the filter dict and call it `to.str`.  The regular
 expression for filter and test identifiers is
-``[a-zA-Z_][a-zA-Z0-9_]*(\.[a-zA-Z_][a-zA-Z0-9_]*)*```.
+``[a-zA-Z_][a-zA-Z0-9_]*(\.[a-zA-Z_][a-zA-Z0-9_]*)*``.
 
 
 Undefined Types

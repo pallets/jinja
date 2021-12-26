@@ -409,7 +409,7 @@ class ImmutableSandboxedEnvironment(SandboxedEnvironment):
 class SandboxedFormatter(Formatter):
     def __init__(self, env: Environment, **kwargs: t.Any) -> None:
         self._env = env
-        super().__init__(**kwargs)  # type: ignore
+        super().__init__(**kwargs)
 
     def get_field(
         self, field_name: str, args: t.Sequence[t.Any], kwargs: t.Mapping[str, t.Any]

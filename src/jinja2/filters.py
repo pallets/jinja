@@ -362,7 +362,7 @@ def do_sort(
 
     .. sourcecode:: jinja
 
-        {% for user users|sort(attribute="age,name") %}
+        {% for user in users|sort(attribute="age,name") %}
             ...
         {% endfor %}
 
