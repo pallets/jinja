@@ -794,7 +794,7 @@ loop **did not** `break`.  Since Jinja loops cannot `break` anyway,
 a slightly different behavior of the `else` keyword was chosen.
 
 It is also possible to use loops recursively.  This is useful if you are
-dealing with recursive data such as sitemaps or RDFa.
+dealing with recursive data such as sitemaps or RDFs.
 To use loops recursively, you basically have to add the `recursive` modifier
 to the loop definition and call the `loop` variable with the new iterable
 where you want to recurse.
