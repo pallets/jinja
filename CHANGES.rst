@@ -26,6 +26,8 @@ Unreleased
 -   The ``{% trans %}`` tag can use ``pgettext`` and ``npgettext`` by
     passing a context string as the first token in the tag, like
     ``{% trans "title" %}``. :issue:`1430`
+-   Update valid identifier characters from Python 3.6 to 3.7.
+    :pr:`1571`
 
 
 Version 3.0.3
