@@ -364,14 +364,10 @@ class Parser:
         node.names = []
 
         def parse_context() -> bool:
-            if (
-                self.stream.current.value
-                in {
-                    "with",
-                    "without",
-                }
-                and self.stream.look().test("name:context")
-            ):
+            if self.stream.current.value in {
+                "with",
+                "without",
+            } and self.stream.look().test("name:context"):
                 node.with_context = next(self.stream).value == "with"
                 self.stream.skip()
                 return True
@@ -957,19 +953,15 @@ class Parser:
         kwargs = []
         if self.stream.current.type == "lparen":
             args, kwargs, dyn_args, dyn_kwargs = self.parse_call_args()
-        elif (
-            self.stream.current.type
-            in {
-                "name",
-                "string",
-                "integer",
-                "float",
-                "lparen",
-                "lbracket",
-                "lbrace",
-            }
-            and not self.stream.current.test_any("name:else", "name:or", "name:and")
-        ):
+        elif self.stream.current.type in {
+            "name",
+            "string",
+            "integer",
+            "float",
+            "lparen",
+            "lbracket",
+            "lbrace",
+        } and not self.stream.current.test_any("name:else", "name:or", "name:and"):
             if self.stream.current.test("name:is"):
                 self.fail("You cannot chain multiple tests with is")
             arg_node = self.parse_primary()
