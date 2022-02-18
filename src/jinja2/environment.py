@@ -973,7 +973,9 @@ class Environment:
         :class:`Template`. If the template does not exist a
         :exc:`TemplateNotFound` exception is raised.
 
-        :param name: Name of the template to load.
+        :param name: Name of the template to load. When loading
+            templates from the filesystem, "/" is used as the path
+            separator, even on Windows.
         :param parent: The name of the parent template importing this
             template. :meth:`join_path` can be used to implement name
             transformations with this.
