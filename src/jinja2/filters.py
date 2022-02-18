@@ -1164,7 +1164,7 @@ def do_round(
         return round(value, precision)
 
     func = getattr(math, method)
-    return t.cast(float, func(value * (10 ** precision)) / (10 ** precision))
+    return t.cast(float, func(value * (10**precision)) / (10**precision))
 
 
 class _GroupTuple(t.NamedTuple):
