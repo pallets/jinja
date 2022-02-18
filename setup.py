@@ -50,7 +50,7 @@ setup(
     package_dir={"": "src"},
     include_package_data=True,
     python_requires=">=2.7, !=3.0.*, !=3.1.*, !=3.2.*, !=3.3.*, !=3.4.*",
-    install_requires=["MarkupSafe>=0.23"],
+    install_requires=["MarkupSafe >= 0.23, < 2.1"],
     extras_require={"i18n": ["Babel>=0.8"]},
     entry_points={"babel.extractors": ["jinja2 = jinja2.ext:babel_extract[i18n]"]},
 )
