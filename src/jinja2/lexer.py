@@ -515,11 +515,11 @@ class Lexer:
         self.keep_trailing_newline = environment.keep_trailing_newline
 
         root_raw_re = (
-            fr"(?P<raw_begin>{block_start_re}(\-|\+|)\s*raw\s*"
-            fr"(?:\-{block_end_re}\s*|{block_end_re}))"
+            rf"(?P<raw_begin>{block_start_re}(\-|\+|)\s*raw\s*"
+            rf"(?:\-{block_end_re}\s*|{block_end_re}))"
         )
         root_parts_re = "|".join(
-            [root_raw_re] + [fr"(?P<{n}>{r}(\-|\+|))" for n, r in root_tag_rules]
+            [root_raw_re] + [rf"(?P<{n}>{r}(\-|\+|))" for n, r in root_tag_rules]
         )
 
         # global lexing rules
@@ -527,7 +527,7 @@ class Lexer:
             "root": [
                 # directives
                 _Rule(
-                    c(fr"(.*?)(?:{root_parts_re})"),
+                    c(rf"(.*?)(?:{root_parts_re})"),
                     OptionalLStrip(TOKEN_DATA, "#bygroup"),  # type: ignore
                     "#bygroup",
                 ),
@@ -538,8 +538,8 @@ class Lexer:
             TOKEN_COMMENT_BEGIN: [
                 _Rule(
                     c(
-                        fr"(.*?)((?:\+{comment_end_re}|\-{comment_end_re}\s*"
-                        fr"|{comment_end_re}{block_suffix_re}))"
+                        rf"(.*?)((?:\+{comment_end_re}|\-{comment_end_re}\s*"
+                        rf"|{comment_end_re}{block_suffix_re}))"
                     ),
                     (TOKEN_COMMENT, TOKEN_COMMENT_END),
                     "#pop",
@@ -550,8 +550,8 @@ class Lexer:
             TOKEN_BLOCK_BEGIN: [
                 _Rule(
                     c(
-                        fr"(?:\+{block_end_re}|\-{block_end_re}\s*"
-                        fr"|{block_end_re}{block_suffix_re})"
+                        rf"(?:\+{block_end_re}|\-{block_end_re}\s*"
+                        rf"|{block_end_re}{block_suffix_re})"
                     ),
                     TOKEN_BLOCK_END,
                     "#pop",
@@ -561,7 +561,7 @@ class Lexer:
             # variables
             TOKEN_VARIABLE_BEGIN: [
                 _Rule(
-                    c(fr"\-{variable_end_re}\s*|{variable_end_re}"),
+                    c(rf"\-{variable_end_re}\s*|{variable_end_re}"),
                     TOKEN_VARIABLE_END,
                     "#pop",
                 )
@@ -571,9 +571,9 @@ class Lexer:
             TOKEN_RAW_BEGIN: [
                 _Rule(
                     c(
-                        fr"(.*?)((?:{block_start_re}(\-|\+|))\s*endraw\s*"
-                        fr"(?:\+{block_end_re}|\-{block_end_re}\s*"
-                        fr"|{block_end_re}{block_suffix_re}))"
+                        rf"(.*?)((?:{block_start_re}(\-|\+|))\s*endraw\s*"
+                        rf"(?:\+{block_end_re}|\-{block_end_re}\s*"
+                        rf"|{block_end_re}{block_suffix_re}))"
                     ),
                     OptionalLStrip(TOKEN_DATA, TOKEN_RAW_END),  # type: ignore
                     "#pop",
