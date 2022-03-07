@@ -30,6 +30,7 @@ Unreleased
     :pr:`1571`
 -   Filters and tests decorated with ``@async_variant`` are pickleable.
     :pr:`1612`
+-   Add ``items`` filter. :issue:`1561`
 
 
 Version 3.0.3
