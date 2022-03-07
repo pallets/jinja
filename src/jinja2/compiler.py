@@ -1755,7 +1755,7 @@ class CodeGenerator(NodeVisitor):
         self, node: t.Union[nodes.Filter, nodes.Test], frame: Frame, is_filter: bool
     ) -> t.Iterator[None]:
         if self.environment.is_async:
-            self.write("await auto_await(")
+            self.write("(await auto_await(")
 
         if is_filter:
             self.write(f"{self.filters[node.name]}(")
@@ -1790,7 +1790,7 @@ class CodeGenerator(NodeVisitor):
         self.write(")")
 
         if self.environment.is_async:
-            self.write(")")
+            self.write("))")
 
     @optimizeconst
     def visit_Filter(self, node: nodes.Filter, frame: Frame) -> None:
@@ -1842,7 +1842,7 @@ class CodeGenerator(NodeVisitor):
         self, node: nodes.Call, frame: Frame, forward_caller: bool = False
     ) -> None:
         if self.environment.is_async:
-            self.write("await auto_await(")
+            self.write("(await auto_await(")
         if self.environment.sandboxed:
             self.write("environment.call(context, ")
         else:
@@ -1858,7 +1858,7 @@ class CodeGenerator(NodeVisitor):
         self.signature(node, frame, extra_kwargs)
         self.write(")")
         if self.environment.is_async:
-            self.write(")")
+            self.write("))")
 
     def visit_Keyword(self, node: nodes.Keyword, frame: Frame) -> None:
         self.write(node.key + "=")

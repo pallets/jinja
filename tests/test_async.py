@@ -642,3 +642,19 @@ def test_native_list_async(async_native_env):
         assert rv == [0, 1, 2]
 
     asyncio.run(_test())
+
+
+def test_getitem_after_filter():
+    env = Environment(enable_async=True)
+    env.filters["add_each"] = lambda v, x: [i + x for i in v]
+    t = env.from_string("{{ (a|add_each(2))[1:] }}")
+    out = t.render(a=range(3))
+    assert out == "[3, 4]"
+
+
+def test_getitem_after_call():
+    env = Environment(enable_async=True)
+    env.globals["add_each"] = lambda v, x: [i + x for i in v]
+    t = env.from_string("{{ add_each(a, 2)[1:] }}")
+    out = t.render(a=range(3))
+    assert out == "[3, 4]"
