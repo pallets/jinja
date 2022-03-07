@@ -31,6 +31,8 @@ Unreleased
 -   Filters and tests decorated with ``@async_variant`` are pickleable.
     :pr:`1612`
 -   Add ``items`` filter. :issue:`1561`
+-   Subscriptions (``[0]``, etc.) can be used after filters, tests, and
+    calls when the environment is in async mode. :issue:`1573`
 
 
 Version 3.0.3
