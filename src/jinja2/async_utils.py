@@ -1,5 +1,6 @@
 import inspect
 import typing as t
+from functools import WRAPPER_ASSIGNMENTS
 from functools import wraps
 
 from .utils import _PassArg
@@ -23,7 +24,15 @@ def async_variant(normal_func):  # type: ignore
             def is_async(args: t.Any) -> bool:
                 return t.cast(bool, args[0].environment.is_async)
 
-        @wraps(normal_func)
+        # Take the doc and annotations from the sync function, but the
+        # name from the async function. Pallets-Sphinx-Themes
+        # build_function_directive expects __wrapped__ to point to the
+        # sync function.
+        async_func_attrs = ("__module__", "__name__", "__qualname__")
+        normal_func_attrs = tuple(set(WRAPPER_ASSIGNMENTS).difference(async_func_attrs))
+
+        @wraps(normal_func, assigned=normal_func_attrs)
+        @wraps(async_func, assigned=async_func_attrs, updated=())
         def wrapper(*args, **kwargs):  # type: ignore
             b = is_async(args)
 

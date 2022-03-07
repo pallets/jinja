@@ -28,6 +28,8 @@ Unreleased
     ``{% trans "title" %}``. :issue:`1430`
 -   Update valid identifier characters from Python 3.6 to 3.7.
     :pr:`1571`
+-   Filters and tests decorated with ``@async_variant`` are pickleable.
+    :pr:`1612`
 
 
 Version 3.0.3
