@@ -507,9 +507,7 @@ class Lexer:
         # block suffix if trimming is enabled
         block_suffix_re = "\\n?" if environment.trim_blocks else ""
 
-        # If lstrip is enabled, it should not be applied if there is any
-        # non-whitespace between the newline and block.
-        self.lstrip_unless_re = c(r"[^ \t]") if environment.lstrip_blocks else None
+        self.lstrip_blocks = environment.lstrip_blocks
 
         self.newline_sequence = environment.newline_sequence
         self.keep_trailing_newline = environment.keep_trailing_newline
@@ -697,7 +695,6 @@ class Lexer:
         statetokens = self.rules[stack[-1]]
         source_length = len(source)
         balancing_stack: t.List[str] = []
-        lstrip_unless_re = self.lstrip_unless_re
         newlines_stripped = 0
         line_starting = True
 
@@ -743,7 +740,7 @@ class Lexer:
                             # Not marked for preserving whitespace.
                             strip_sign != "+"
                             # lstrip is enabled.
-                            and lstrip_unless_re is not None
+                            and self.lstrip_blocks
                             # Not a variable expression.
                             and not m.groupdict().get(TOKEN_VARIABLE_BEGIN)
                         ):
@@ -753,7 +750,7 @@ class Lexer:
                             if l_pos > 0 or line_starting:
                                 # If there's only whitespace between the newline and the
                                 # tag, strip it.
-                                if not lstrip_unless_re.search(text, l_pos):
+                                if whitespace_re.fullmatch(text, l_pos):
                                     groups = [text[:l_pos], *groups[1:]]
 
                     for idx, token in enumerate(tokens):
