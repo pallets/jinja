@@ -6,7 +6,6 @@ from io import StringIO
 from itertools import chain
 from keyword import iskeyword as is_python_keyword
 
-from markupsafe import escape
 from markupsafe import Markup
 
 from . import nodes
@@ -127,7 +126,12 @@ def has_safe_repr(value: t.Any) -> bool:
     if value is None or value is NotImplemented or value is Ellipsis:
         return True
 
-    if type(value) in {bool, int, float, complex, range, str, Markup}:
+    if isinstance(value, Markup):
+        # If a custom Markup class is used,
+        # the value is a subclass of Markup
+        return True
+
+    if type(value) in {bool, int, float, complex, range, str}:
         return True
 
     if type(value) in {tuple, list, set, frozenset}:
@@ -725,6 +729,10 @@ class CodeGenerator(NodeVisitor):
         self.writeline("resolve = context.resolve_or_missing")
         self.writeline("undefined = environment.undefined")
         self.writeline("concat = environment.concat")
+        self.writeline("escape = context.eval_ctx.get_escape_function()")
+        self.writeline("Markup = context.eval_ctx.mark_safe")
+        # Custom Wrappers have a different naming
+        self.writeline("MarkupWrapper = context.eval_ctx.mark_safe")
         # always use the standard Undefined class for the implicit else of
         # conditional expressions
         self.writeline("cond_expr_undefined = Undefined")
@@ -872,7 +880,6 @@ class CodeGenerator(NodeVisitor):
         )
         self.indent()
         self.write_commons()
-
         # process the root
         frame = Frame(eval_ctx)
         if "self" in find_undeclared(node.body, ("self",)):
@@ -996,7 +1003,7 @@ class CodeGenerator(NodeVisitor):
 
             # if we have a known extends we just add a template runtime
             # error into the generated code.  We could catch that at compile
-            # time too, but i welcome it not to confuse users by throwing the
+            # time too, but I welcome it not to confuse users by throwing the
             # same error at different times just "because we can".
             if not self.has_known_extends:
                 self.writeline("if parent_template is not None:")
@@ -1012,7 +1019,7 @@ class CodeGenerator(NodeVisitor):
 
         self.writeline("parent_template = environment.get_template(", node)
         self.visit(node.template, frame)
-        self.write(f", {self.name!r})")
+        self.write(f", {self.name!r}, caller='extends')")
         self.writeline("for name, parent_block in parent_template.blocks.items():")
         self.indent()
         self.writeline("context.blocks.setdefault(name, []).append(parent_block)")
@@ -1044,7 +1051,7 @@ class CodeGenerator(NodeVisitor):
 
         self.writeline(f"template = environment.{func_name}(", node)
         self.visit(node.template, frame)
-        self.write(f", {self.name!r})")
+        self.write(f", {self.name!r}, caller='include')")
         if node.ignore_missing:
             self.outdent()
             self.writeline("except TemplateNotFound:")
@@ -1441,7 +1448,7 @@ class CodeGenerator(NodeVisitor):
         const = node.as_const(frame.eval_ctx)
 
         if frame.eval_ctx.autoescape:
-            const = escape(const)
+            const = frame.eval_ctx.get_escape_function()(const)
 
         # Template data doesn't go through finalize.
         if isinstance(node, nodes.TemplateData):
@@ -1693,7 +1700,9 @@ class CodeGenerator(NodeVisitor):
         for arg in node.nodes:
             self.visit(arg, frame)
             self.write(", ")
-        self.write("))")
+        self.write(")")
+        self.write(", mark_safe=context.eval_ctx.mark_safe")
+        self.write(")")
 
     @optimizeconst
     def visit_Compare(self, node: nodes.Compare, frame: Frame) -> None:

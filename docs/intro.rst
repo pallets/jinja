@@ -48,7 +48,7 @@ Dependencies
 These will be installed automatically when installing Jinja.
 
 -   `MarkupSafe`_ escapes untrusted input when rendering templates to
-    avoid injection attacks.
+    avoid injection attacks (see :ref:`escaping`).
 
 .. _MarkupSafe: https://markupsafe.palletsprojects.com/
 

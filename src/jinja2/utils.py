@@ -5,10 +5,14 @@ import re
 import typing as t
 from collections import abc
 from collections import deque
+from functools import lru_cache
 from random import choice
 from random import randrange
 from threading import Lock
 from types import CodeType
+from typing import Any
+from typing import Callable
+from typing import Type
 from urllib.parse import quote_from_bytes
 
 import markupsafe
@@ -17,6 +21,8 @@ if t.TYPE_CHECKING:
     import typing_extensions as te
 
 F = t.TypeVar("F", bound=t.Callable[..., t.Any])
+# Typing definition of the Escape function
+EscapeFunc = t.Callable[[t.Any], markupsafe.Markup]
 
 # special singleton representing missing values for the runtime
 missing: t.Any = type("MissingType", (), {"__repr__": lambda x: "missing"})()
@@ -224,6 +230,7 @@ def urlize(
     rel: t.Optional[str] = None,
     target: t.Optional[str] = None,
     extra_schemes: t.Optional[t.Iterable[str]] = None,
+    do_escape: t.Callable[[Any], markupsafe.Markup] = markupsafe.escape,
 ) -> str:
     """Convert URLs in text into clickable links.
 
@@ -244,6 +251,9 @@ def urlize(
     :param rel: Add the ``rel`` attribute to links.
     :param extra_schemes: Recognize URLs that start with these schemes
         in addition to the default behavior.
+
+    .. versionchanged:: 3.1
+        The ``do_escape`` parameter was added.
 
     .. versionchanged:: 3.0
         The ``extra_schemes`` parameter was added.
@@ -269,9 +279,9 @@ def urlize(
         def trim_url(x: str) -> str:
             return x
 
-    words = re.split(r"(\s+)", str(markupsafe.escape(text)))
-    rel_attr = f' rel="{markupsafe.escape(rel)}"' if rel else ""
-    target_attr = f' target="{markupsafe.escape(target)}"' if target else ""
+    words = re.split(r"(\s+)", str(do_escape(text)))
+    rel_attr = f' rel="{do_escape(rel)}"' if rel else ""
+    target_attr = f' target="{do_escape(target)}"' if target else ""
 
     for i, word in enumerate(words):
         head, middle, tail = "", word, ""
@@ -340,9 +350,18 @@ def urlize(
 
 
 def generate_lorem_ipsum(
-    n: int = 5, html: bool = True, min: int = 20, max: int = 100
-) -> str:
-    """Generate some lorem ipsum for the template."""
+    n: int = 5,
+    html: bool = True,
+    min: int = 20,
+    max: int = 100,
+    mark_safe: t.Callable[[t.Any], markupsafe.Markup] = markupsafe.Markup,
+    do_escape: t.Callable[[t.Any], markupsafe.Markup] = markupsafe.escape,
+) -> t.Union[markupsafe.Markup, str]:
+    """Generate some lorem ipsum for the template.
+
+    .. versionchanged:: 3.1
+        added mark_safe and do_escape parameter
+    """
     from .constants import LOREM_IPSUM_WORDS
 
     words = LOREM_IPSUM_WORDS.split()
@@ -389,9 +408,7 @@ def generate_lorem_ipsum(
 
     if not html:
         return "\n\n".join(result)
-    return markupsafe.Markup(
-        "\n".join(f"<p>{markupsafe.escape(x)}</p>" for x in result)
-    )
+    return mark_safe("\n".join(f"<p>{do_escape(x)}</p>" for x in result))
 
 
 def url_quote(obj: t.Any, charset: str = "utf-8", for_qs: bool = False) -> str:
@@ -570,9 +587,10 @@ class LRUCache:
 def select_autoescape(
     enabled_extensions: t.Collection[str] = ("html", "htm", "xml"),
     disabled_extensions: t.Collection[str] = (),
+    special_extensions: t.Optional[t.Dict[str, EscapeFunc]] = None,
     default_for_string: bool = True,
     default: bool = False,
-) -> t.Callable[[t.Optional[str]], bool]:
+) -> t.Callable[[t.Optional[str]], t.Union[bool, EscapeFunc]]:
     """Intelligently sets the initial value of autoescaping based on the
     filename of the template.  This is the recommended way to configure
     autoescaping if you do not want to write a custom function yourself.
@@ -603,17 +621,54 @@ def select_autoescape(
     If nothing matches then the initial value of autoescaping is set to the
     value of `default`.
 
+    The `special_extensions` is a dictionary which keys are the extensions
+    to be considered and the values are the escape function to be used
+    to escape this kind of files.
+
+    I.e. if you use the `latex package <https://pypi.org/project/latex/>`_,
+    you can create an environment that escapes all LaTeX files
+    with the correct escaper but still handle HTML files correctly::
+
+        from jinja2 import Environment, select_autoescape
+        from latex import escape as latex_escape
+        env = Environment(autoescape=select_autoescape(
+            special_extensions={'tex': latex_escape}
+        ))
+
     For security reasons this function operates case insensitive.
 
     .. versionadded:: 2.9
+        created function
+    .. versionchanged:: 3.1
+        parameter ``special_extensions`` was added
     """
-    enabled_patterns = tuple(f".{x.lstrip('.').lower()}" for x in enabled_extensions)
-    disabled_patterns = tuple(f".{x.lstrip('.').lower()}" for x in disabled_extensions)
 
-    def autoescape(template_name: t.Optional[str]) -> bool:
+    def extension_str(x: str) -> str:
+        """return a lower case extension always starting with point"""
+        return f".{x.lstrip('.').lower()}"
+
+    enabled_patterns = tuple(extension_str(x) for x in enabled_extensions)
+    disabled_patterns = tuple(extension_str(x) for x in disabled_extensions)
+
+    if special_extensions is None:
+        special_extensions = {}
+    special_extensions = {
+        extension_str(key): func for key, func in special_extensions.items()
+    }
+
+    def autoescape(template_name: t.Optional[str]) -> t.Union[bool, EscapeFunc]:
         if template_name is None:
             return default_for_string
         template_name = template_name.lower()
+        # Lookup autoescape function using the longest matching suffix
+
+        for key, func in sorted(
+            special_extensions.items(),  # type: ignore
+            key=lambda x: len(x[0]),
+            reverse=True,
+        ):
+            if template_name.endswith(key):
+                return t.cast(EscapeFunc, func)
         if template_name.endswith(enabled_patterns):
             return True
         if template_name.endswith(disabled_patterns):
@@ -624,11 +679,14 @@ def select_autoescape(
 
 
 def htmlsafe_json_dumps(
-    obj: t.Any, dumps: t.Optional[t.Callable[..., str]] = None, **kwargs: t.Any
+    obj: t.Any,
+    mark_safe: t.Callable[[t.Any], markupsafe.Markup],
+    dumps: t.Optional[t.Callable[..., str]] = None,
+    **kwargs: t.Any,
 ) -> markupsafe.Markup:
     """Serialize an object to a string of JSON with :func:`json.dumps`,
     then replace HTML-unsafe characters with Unicode escapes and mark
-    the result safe with :class:`~markupsafe.Markup`.
+    the result safe with given mark_safe function.
 
     This is available in templates as the ``|tojson`` filter.
 
@@ -640,21 +698,26 @@ def htmlsafe_json_dumps(
     filter.
 
     :param obj: The object to serialize to JSON.
+    :param mark_safe: Class/Function that marks a string as safe
     :param dumps: The ``dumps`` function to use. Defaults to
         ``env.policies["json.dumps_function"]``, which defaults to
         :func:`json.dumps`.
     :param kwargs: Extra arguments to pass to ``dumps``. Merged onto
         ``env.policies["json.dumps_kwargs"]``.
 
+    .. versionchanged:: 3.1
+        Added required mark_safe parameter
+
     .. versionchanged:: 3.0
         The ``dumper`` parameter is renamed to ``dumps``.
+
 
     .. versionadded:: 2.9
     """
     if dumps is None:
         dumps = json.dumps
 
-    return markupsafe.Markup(
+    return mark_safe(
         dumps(obj, **kwargs)
         .replace("<", "\\u003c")
         .replace(">", "\\u003e")
@@ -663,8 +726,64 @@ def htmlsafe_json_dumps(
     )
 
 
+# We are comparing the resulting markup classes  so have to make sure
+# that the same custom_escape function returns always the very same
+# Markup class. This is only possible using the cache
+@lru_cache(500)
+def get_wrapped_escape_class(
+    custom_escape: Callable[[Any], str]
+) -> Type[markupsafe.Markup]:
+    """
+    Use a simple escape function to generate a wrapped Markup class
+
+    This class uses the given ``custom_escape`` function to escape
+    the value and at the same time makes sure that no already escaped
+    string is escaped again.
+
+    The returned class is a subclass of :class:`markupsafe.Markup`,
+    so it represents a complete ``str`` subclass that is marked as
+    safe
+
+    :param custom_escape: The function that escapes the objects to a str
+
+    :return: a Markup class using this escape function
+
+    .. versionadded:: 3.1
+    """
+
+    class MarkupWrapper(markupsafe.Markup):
+        """
+        Make sure that the custom escape function is used
+        """
+
+        @classmethod
+        def get_unwrapped_escape(cls) -> t.Callable[[Any], str]:
+            # Needed for test
+            return custom_escape
+
+        @classmethod
+        def escape(cls, s: Any) -> markupsafe.Markup:
+            """
+            Make sure the custom escape function does not escape
+            already escaped strings
+            Also make sure the escaped string is marked as escaped
+            with the correct class
+
+            If the object has an ``__html__`` method, it is called,
+            and the return value is assumed to already be safe for HTML
+            / resp. what ever is escaped currently.
+            The HTML attribute shall be understood simply as
+                "it is a safe string"
+            """
+            if hasattr(s, "__html__"):
+                return cls(s.__html__())
+            return cls(custom_escape(s))  # noqa: B902
+
+    return MarkupWrapper
+
+
 class Cycler:
-    """Cycle through values by yield them one at a time, then restarting
+    """Cycle through values by yielding them one at a time, then restarting
     once the end is reached. Available as ``cycler`` in templates.
 
     Similar to ``loop.cycle``, but can be used outside loops or across

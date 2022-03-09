@@ -150,6 +150,12 @@ class TemplateRuntimeError(TemplateError):
     """
 
 
+class TemplateConfigurationError(TemplateError):
+    """An error to show that the environment was no configured correctly,
+    i.e. different escape function were used during extend
+    """
+
+
 class UndefinedError(TemplateRuntimeError):
     """Raised if a template tries to operate on :class:`Undefined`."""
 

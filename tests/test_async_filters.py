@@ -128,6 +128,13 @@ def test_join_string_list(string_items):
     assert tmpl.render(items=string_items) == "&lt;foo&gt;<span>foo</span>"
 
 
+@mark_dualiter("string_items", lambda: ["$foo$", Markup("$span$foo$/span$")])
+def test_join_string_list_custom_autoescape(string_items, return_custom_autoescape):
+    env2 = Environment(autoescape=return_custom_autoescape, enable_async=True)
+    tmpl = env2.from_string('{{ ["$foo$", "$span$foo$/span$"|safe]|join }}')
+    assert tmpl.render(items=string_items) == "€foo€$span$foo$/span$"
+
+
 def make_users():
     User = namedtuple("User", "username")
     return map(User, ["foo", "bar"])

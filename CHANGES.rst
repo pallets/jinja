@@ -36,6 +36,9 @@ Unreleased
 -   The ``groupby`` filter is case-insensitive by default, matching
     other comparison filters. Added the ``case_sensitive`` parameter to
     control this. :issue:`1463`
+-   Autoescape can select different ``escape`` functions for different
+    templates. This allows escaping other types besides HTML.
+    :issue:`1377`
 
 
 Version 3.0.3

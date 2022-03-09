@@ -91,6 +91,31 @@ class TestSandbox:
         )
         assert escape(t.module.say_hello("<blink>foo</blink>")) == escaped_out
 
+    def test_template_data_custom_escape(self, env_custom_autoescape):
+        env = env_custom_autoescape
+        t = env.from_string(
+            "{% macro say_hello(name) %}"
+            "$<p>Hello {{ name }}!</p>${% endmacro %}"
+            '{{ say_hello("<$$foo$$>") }}'
+        )
+        my_escape = env.default_markup_class.escape
+        escaped_out = "$<p>Hello <€€foo€€>!</p>$"
+        assert t.render() == escaped_out
+        # Make sure that the same Markup class is used everywhere
+        # somehow even different instances of the escape class are used
+        # therefore we compare only the names
+        assert (
+            t.module.__html__().__class__.get_unwrapped_escape().__name__
+            == env.default_markup_class.get_unwrapped_escape().__name__
+        )
+        assert str(t.module) == escaped_out
+        assert my_escape(t.module) == escaped_out
+        assert t.module.say_hello("<$$foo$$>") == escaped_out
+        assert (
+            my_escape(t.module.say_hello(EvalContext(env), "<$$foo$$>")) == escaped_out
+        )
+        assert my_escape(t.module.say_hello("<$$foo$$>")) == escaped_out
+
     def test_attr_filter(self, env):
         env = SandboxedEnvironment()
         tmpl = env.from_string('{{ cls|attr("__subclasses__")() }}')
@@ -138,20 +163,37 @@ class TestStringFormat:
 
     def test_safe_format_safety(self):
         env = SandboxedEnvironment()
-        t = env.from_string('{{ ("a{0.__class__}b{1}"|safe).format(42, "<foo>") }}')
-        assert t.render() == "ab&lt;foo&gt;"
+        t = env.from_string('{{ ("a{0.__class__}b{1}"|safe).format(42, "<foo$>") }}')
+        assert t.render() == "ab&lt;foo$&gt;"
+
+    def test_safe_format_safety_custom_escape(self, custom_escape_func):
+        env = SandboxedEnvironment(default_escape=custom_escape_func)
+        t = env.from_string('{{ ("a{0.__class__}b{1}"|safe).format(42, "<foo$>") }}')
+        assert t.render() == "ab<foo€>"
 
     def test_safe_format_all_okay(self):
         env = SandboxedEnvironment()
-        t = env.from_string('{{ ("a{0.foo}b{1}"|safe).format({"foo": 42}, "<foo>") }}')
-        assert t.render() == "a42b&lt;foo&gt;"
+        t = env.from_string('{{ ("a{0.foo}b{1}"|safe).format({"foo": 42}, "<foo$>") }}')
+        assert t.render() == "a42b&lt;foo$&gt;"
+
+    def test_safe_format_all_okay_custom_escape(self, custom_escape_func):
+        env = SandboxedEnvironment(default_escape=custom_escape_func)
+        t = env.from_string('{{ ("a{0.foo}b{1}"|safe).format({"foo": 42}, "<foo$>") }}')
+        assert t.render() == "a42b<foo€>"
 
     def test_empty_braces_format(self):
         env = SandboxedEnvironment()
         t1 = env.from_string('{{ ("a{}b{}").format("foo", "42")}}')
-        t2 = env.from_string('{{ ("a{}b{}"|safe).format(42, "<foo>") }}')
+        t2 = env.from_string('{{ ("a{}b{}"|safe).format(42, "<foo$>") }}')
         assert t1.render() == "afoob42"
-        assert t2.render() == "a42b&lt;foo&gt;"
+        assert t2.render() == "a42b&lt;foo$&gt;"
+
+    def test_empty_braces_format_custom_escape(self, custom_escape_func):
+        env = SandboxedEnvironment(default_escape=custom_escape_func)
+        t1 = env.from_string('{{ ("a{}b{}").format("foo", "42")}}')
+        t2 = env.from_string('{{ ("a{}b{}"|safe).format(42, "<foo$>") }}')
+        assert t1.render() == "afoob42"
+        assert t2.render() == "a42b<foo€>"
 
 
 class TestStringFormatMap:
@@ -168,6 +210,13 @@ class TestStringFormatMap:
     def test_safe_format_all_okay(self):
         env = SandboxedEnvironment()
         t = env.from_string(
-            '{{ ("a{x.foo}b{y}"|safe).format_map({"x":{"foo": 42}, "y":"<foo>"}) }}'
+            '{{ ("a{x.foo}b{y}"|safe).format_map({"x":{"foo": 42}, "y":"<foo$>"}) }}'
         )
-        assert t.render() == "a42b&lt;foo&gt;"
+        assert t.render() == "a42b&lt;foo$&gt;"
+
+    def test_safe_format_all_okay_custom_escape(self, custom_escape_func):
+        env = SandboxedEnvironment(default_escape=custom_escape_func)
+        t = env.from_string(
+            '{{ ("a{x.foo}b{y}"|safe).format_map({"x":{"foo": 42}, "y":"<foo$>"}) }}'
+        )
+        assert t.render() == "a42b<foo€>"
