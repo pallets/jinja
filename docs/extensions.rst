@@ -132,7 +132,7 @@ extraction tools in case you are not using Babel's.
 
 What's the big difference between standard and newstyle gettext calls?  In
 general they are less to type and less error prone.  Also if they are used
-in an :ref:`autescaping` environment they better support automatic escaping.
+in an :ref:`autoescaping` environment they better support automatic escaping.
 Here are some common differences between old and new calls:
 
 standard gettext:
