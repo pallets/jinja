@@ -938,6 +938,23 @@ are available on a macro object:
 If a macro name starts with an underscore, it's not exported and can't
 be imported.
 
+Due to how scopes work in Jinja, a macro in a child template does not
+override a macro in a parent template. The following will output
+"LAYOUT", not "CHILD".
+
+.. code-block:: jinja
+    :caption: ``layout.txt``
+
+    {% macro foo() %}LAYOUT{% endmacro %}
+    {% block body %}{% endblock %}
+
+.. code-block:: jinja
+    :caption: ``child.txt``
+
+    {% extends 'layout.txt' %}
+    {% macro foo() %}CHILD{% endmacro %}
+    {% block body %}{{ foo() }}{% endblock %}
+
 
 .. _call:
 
@@ -1113,42 +1130,45 @@ at the same time.  They are documented in detail in the
 Include
 ~~~~~~~
 
-The `include` tag is useful to include a template and return the
-rendered contents of that file into the current namespace::
+The ``include`` tag renders another template and outputs the result into
+the current template.
+
+.. code-block:: jinja
 
     {% include 'header.html' %}
-        Body
+    Body goes here.
     {% include 'footer.html' %}
 
-Included templates have access to the variables of the active context by
-default.  For more details about context behavior of imports and includes,
-see :ref:`import-visibility`.
+The included template has access to context of the current template by
+default. Use ``without context`` to use a separate context instead.
+``with context`` is also valid, but is the default behavior. See
+:ref:`import-visibility`.
 
-From Jinja 2.2 onwards, you can mark an include with ``ignore missing``; in
-which case Jinja will ignore the statement if the template to be included
-does not exist.  When combined with ``with`` or ``without context``, it must
-be placed *before* the context visibility statement.  Here are some valid
-examples::
+The included template can ``extend`` another template and override
+blocks in that template. However, the current template cannot override
+any blocks that the included template outputs.
 
+Use ``ignore missing`` to ignore the statement if the template does not
+exist. It must be placed *before* a context visibility statement.
+
+.. code-block:: jinja
+
+    {% include "sidebar.html" without context %}
     {% include "sidebar.html" ignore missing %}
     {% include "sidebar.html" ignore missing with context %}
     {% include "sidebar.html" ignore missing without context %}
 
-.. versionadded:: 2.2
+If a list of templates is given, each will be tried in order until one
+is not missing. This can be used with ``ignore missing`` to ignore if
+none of the templates exist.
 
-You can also provide a list of templates that are checked for existence
-before inclusion.  The first template that exists will be included.  If
-`ignore missing` is given, it will fall back to rendering nothing if
-none of the templates exist, otherwise it will raise an exception.
-
-Example::
+.. code-block:: jinja
 
     {% include ['page_detailed.html', 'page.html'] %}
     {% include ['special_sidebar.html', 'sidebar.html'] ignore missing %}
 
-.. versionchanged:: 2.4
-   If a template object was passed to the template context, you can
-   include that object using `include`.
+A variable, with either a template name or template object, can also be
+passed to the statment.
 
 .. _import:
 

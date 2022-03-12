@@ -410,16 +410,19 @@ The Context
     .. automethod:: jinja2.runtime.Context.call(callable, \*args, \**kwargs)
 
 
-.. admonition:: Implementation
+The context is immutable, it prevents modifications, and if it is
+modified somehow despite that those changes may not show up. For
+performance, Jinja does not use the context as data storage for, only as
+a primary data source. Variables that the template does not define are
+looked up in the context, but variables the template does define are
+stored locally.
 
-    Context is immutable for the same reason Python's frame locals are
-    immutable inside functions.  Both Jinja and Python are not using the
-    context / frame locals as data storage for variables but only as primary
-    data source.
+Instead of modifying the context directly, a function should return
+a value that can be assigned to a variable within the template itself.
 
-    When a template accesses a variable the template does not define, Jinja
-    looks up the variable in the context, after that the variable is treated
-    as if it was defined in the template.
+.. code-block:: jinja
+
+    {% set comments = get_latest_comments() %}
 
 
 .. _loaders:

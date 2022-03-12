@@ -1,141 +1,73 @@
-Switching from other Template Engines
+Switching From Other Template Engines
 =====================================
 
-.. highlight:: html+jinja
-
-If you have used a different template engine in the past and want to switch
-to Jinja here is a small guide that shows the basic syntactic and semantic
-changes between some common, similar text template engines for Python.
-
-Jinja 1
--------
-
-Jinja 2 is mostly compatible with Jinja 1 in terms of API usage and template
-syntax.  The differences between Jinja 1 and 2 are explained in the following
-list.
-
-API
-~~~
-
-Loaders
-    Jinja 2 uses a different loader API.  Because the internal representation
-    of templates changed there is no longer support for external caching
-    systems such as memcached.  The memory consumed by templates is comparable
-    with regular Python modules now and external caching doesn't give any
-    advantage.  If you have used a custom loader in the past have a look at
-    the new :ref:`loader API <loaders>`.
-
-Loading templates from strings
-    In the past it was possible to generate templates from a string with the
-    default environment configuration by using `jinja.from_string`.  Jinja 2
-    provides a :class:`Template` class that can be used to do the same, but
-    with optional additional configuration.
-
-Automatic unicode conversion
-    Jinja 1 performed automatic conversion of bytes in a given encoding
-    into unicode objects. This conversion is no longer implemented as it
-    was inconsistent as most libraries are using the regular Python
-    ASCII bytes to Unicode conversion. An application powered by Jinja 2
-    *has to* use unicode internally everywhere or make sure that Jinja 2
-    only gets unicode strings passed.
-
-i18n
-    Jinja 1 used custom translators for internationalization.  i18n is now
-    available as Jinja 2 extension and uses a simpler, more gettext friendly
-    interface and has support for babel.  For more details see
-    :ref:`i18n-extension`.
-
-Internal methods
-    Jinja 1 exposed a few internal methods on the environment object such
-    as `call_function`, `get_attribute` and others.  While they were marked
-    as being an internal method it was possible to override them.  Jinja 2
-    doesn't have equivalent methods.
-
-Sandbox
-    Jinja 1 was running sandbox mode by default.  Few applications actually
-    used that feature so it became optional in Jinja 2.  For more details
-    about the sandboxed execution see :class:`SandboxedEnvironment`.
-
-Context
-    Jinja 1 had a stacked context as storage for variables passed to the
-    environment.  In Jinja 2 a similar object exists but it doesn't allow
-    modifications nor is it a singleton.  As inheritance is dynamic now
-    multiple context objects may exist during template evaluation.
-
-Filters and Tests
-    Filters and tests are regular functions now.  It's no longer necessary
-    and allowed to use factory functions.
-
-
-Templates
-~~~~~~~~~
-
-Jinja 2 has mostly the same syntax as Jinja 1.  What's different is that
-macros require parentheses around the argument list now.
-
-Additionally Jinja 2 allows dynamic inheritance now and dynamic includes.
-The old helper function `rendertemplate` is gone now, `include` can be used
-instead.  Includes no longer import macros and variable assignments, for
-that the new `import` tag is used.  This concept is explained in the
-:ref:`import` documentation.
-
-Another small change happened in the `for`-tag.  The special loop variable
-doesn't have a `parent` attribute, instead you have to alias the loop
-yourself.  See :ref:`accessing-the-parent-loop` for more details.
+This is a brief guide on some of the differences between Jinja syntax
+and other template languages. See :doc:`/templates` for a comprehensive
+guide to Jinja syntax and features.
 
 
 Django
 ------
 
 If you have previously worked with Django templates, you should find
-Jinja very familiar.  In fact, most of the syntax elements look and
-work the same.
+Jinja very familiar. Many of the syntax elements look and work the same.
+However, Jinja provides some more syntax elements, and some work a bit
+differently.
 
-However, Jinja provides some more syntax elements covered in the
-documentation and some work a bit different.
+This section covers the template changes. The API, including extension
+support, is fundamentally different so it won't be covered here.
 
-This section covers the template changes.  As the API is fundamentally
-different we won't cover it here.
+Django supports using Jinja as its template engine, see
+https://docs.djangoproject.com/en/stable/topics/templates/#support-for-template-engines.
+
 
 Method Calls
 ~~~~~~~~~~~~
 
-In Django method calls work implicitly, while Jinja requires the explicit
-Python syntax. Thus this Django code::
+In Django, methods are called implicitly, without parentheses.
+
+.. code-block:: django
 
     {% for page in user.get_created_pages %}
         ...
     {% endfor %}
 
-...looks like this in Jinja::
+In Jinja, using parentheses is required for calls, like in Python. This
+allows you to pass variables to the method, which is not possible
+in Django. This syntax is also used for calling macros.
+
+.. code-block:: jinja
 
     {% for page in user.get_created_pages() %}
         ...
     {% endfor %}
 
-This allows you to pass variables to the method, which is not possible in
-Django. This syntax is also used for macros.
 
 Filter Arguments
 ~~~~~~~~~~~~~~~~
 
-Jinja provides more than one argument for filters.  Also the syntax for
-argument passing is different.  A template that looks like this in Django::
+In Django, one literal value can be passed to a filter after a colon.
+
+.. code-block:: django
 
     {{ items|join:", " }}
 
-looks like this in Jinja::
+In Jinja, filters can take any number of positional and keyword
+arguments in parentheses, like function calls. Arguments can also be
+variables instead of literal values.
 
-    {{ items|join(', ') }}
+.. code-block:: jinja
 
-It is a bit more verbose, but it allows different types of arguments -
-including variables - and more than one of them.
+    {{ items|join(", ") }}
+
 
 Tests
 ~~~~~
 
-In addition to filters there also are tests you can perform using the is
-operator.  Here are some examples::
+In addition to filters, Jinja also has "tests" used with the ``is``
+operator. This operator is not the same as the Python operator.
+
+.. code-block:: jinja
 
     {% if user.user_id is odd %}
         {{ user.username|e }} is odd
@@ -146,11 +78,10 @@ operator.  Here are some examples::
 Loops
 ~~~~~
 
-For loops work very similarly to Django, but notably the Jinja special
-variable for the loop context is called `loop`, not `forloop` as in Django.
+In Django, the special variable for the loop context is called
+``forloop``, and the ``empty`` is used for no loop items.
 
-In addition, the Django `empty` argument is called `else` in Jinja. For
-example, the Django template::
+.. code-block:: django
 
     {% for item in items %}
         {{ item }}
@@ -158,52 +89,74 @@ example, the Django template::
         No items!
     {% endfor %}
 
-...looks like this in Jinja::
+In Jinja, the special variable for the loop context is called ``loop``,
+and the ``else`` block is used for no loop items.
+
+.. code-block:: jinja
 
     {% for item in items %}
-        {{ item }}
+        {{ loop.index}}. {{ item }}
     {% else %}
         No items!
     {% endfor %}
 
+
 Cycle
 ~~~~~
 
-The ``{% cycle %}`` tag does not exist in Jinja; however, you can achieve the
-same output by using the `cycle` method on the loop context special variable.
+In Django, the ``{% cycle %}`` can be used in a for loop to alternate
+between values per loop.
 
-The following Django template::
+.. code-block:: django
 
     {% for user in users %}
         <li class="{% cycle 'odd' 'even' %}">{{ user }}</li>
     {% endfor %}
 
-...looks like this in Jinja::
+In Jinja, the ``loop`` context has a ``cycle`` method.
+
+.. code-block:: jinja
 
     {% for user in users %}
         <li class="{{ loop.cycle('odd', 'even') }}">{{ user }}</li>
     {% endfor %}
 
-There is no equivalent of ``{% cycle ... as variable %}``.
+A cycler can also be assigned to a variable and used outside or across
+loops with the ``cycle()`` global function.
 
 
 Mako
 ----
 
-.. highlight:: html+mako
+You can configure Jinja to look more like Mako:
 
-If you have used Mako so far and want to switch to Jinja you can configure
-Jinja to look more like Mako:
+.. code-block:: python
 
-.. sourcecode:: python
+    env = Environment(
+        block_start_string="<%",
+        block_end_string="%>",
+        variable_start_string="${",
+        variable_end_string="}",
+        comment_start_string="<%doc>",
+        commend_end_string="</%doc>",
+        line_statement_prefix="%",
+        line_comment_prefix="##",
+    )
 
-    env = Environment('<%', '%>', '${', '}', '<%doc>', '</%doc>', '%', '##')
+With an environment configured like that, Jinja should be able to
+interpret a small subset of Mako templates without any changes.
 
-With an environment configured like that, Jinja should be able to interpret
-a small subset of Mako templates.  Jinja does not support embedded Python
-code, so you would have to move that out of the template.  The syntax for defs
-(which are called macros in Jinja) and template inheritance is different too.
-The following Mako template::
+Jinja does not support embedded Python code, so you would have to move
+that out of the template. You could either process the data with the
+same code before rendering, or add a global function or filter to the
+Jinja environment.
+
+The syntax for defs (which are called macros in Jinja) and template
+inheritance is different too.
+
+The following Mako template:
+
+.. code-block:: mako
 
     <%inherit file="layout.html" />
     <%def name="title()">Page Title</%def>
@@ -213,7 +166,9 @@ The following Mako template::
     % endfor
     </ul>
 
-Looks like this in Jinja with the above configuration::
+Looks like this in Jinja with the above configuration:
+
+.. code-block:: jinja
 
     <% extends "layout.html" %>
     <% block title %>Page Title<% endblock %>
