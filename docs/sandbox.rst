@@ -1,18 +1,56 @@
 Sandbox
 =======
 
-The Jinja sandbox can be used to evaluate untrusted code.  Access to unsafe
-attributes and methods is prohibited.
+The Jinja sandbox can be used to render untrusted templates. Access to
+attributes, method calls, operators, mutating data structures, and
+string formatting can be intercepted and prohibited.
 
-Assuming `env` is a :class:`SandboxedEnvironment` in the default configuration
-the following piece of code shows how it works:
+.. code-block:: pycon
 
->>> env.from_string("{{ func.func_code }}").render(func=lambda:None)
-u''
->>> env.from_string("{{ func.func_code.do_something }}").render(func=lambda:None)
-Traceback (most recent call last):
-  ...
-SecurityError: access to attribute 'func_code' of 'function' object is unsafe.
+    >>> from jinja2.sandbox import SandboxedEnvironment
+    >>> env = SandboxedEnvironment()
+    >>> func = lambda: "Hello, Sandbox!"
+    >>> env.from_string("{{ func() }}").render(func=func)
+    'Hello, Sandbox!'
+    >>> env.from_string("{{ func.__code__.co_code }}").render(func=func)
+    Traceback (most recent call last):
+      ...
+    SecurityError: access to attribute '__code__' of 'function' object is unsafe.
+
+A sandboxed environment can be useful, for example, to allow users of an
+internal reporting system to create custom emails. You would document
+what data is available in the templates, then the user would write a
+template using that information. Your code would generate the report
+data and pass it to the user's sandboxed template to render.
+
+
+Security Considerations
+-----------------------
+
+The sandbox alone is not a solution for perfect security. Keep these
+things in mind when using the sandbox.
+
+Templates can still raise errors when compiled or rendered. Your code
+should attempt to catch errors instead of crashing.
+
+It is possible to construct a relatively small template that renders to
+a very large amount of output, which could correspond to a high use of
+CPU or memory. You should run your application with limits on resources
+such as CPU and memory to mitigate this.
+
+Jinja only renders text, it does not understand, for example, JavaScript
+code. Depending on how the rendered template will be used, you may need
+to do other postprocessing to restrict the output.
+
+Pass only the data that is relevant to the template. Avoid passing
+global data, or objects with methods that have side effects. By default
+the sandbox prevents private and internal attribute access. You can
+override :meth:`~SandboxedEnvironment.is_safe_attribute` to further
+restrict attributes access. Decorate methods with :func:`unsafe` to
+prevent calling them from templates when passing objects as data. Use
+:class:`ImmutableSandboxedEnvironment` to prevent modifying lists and
+dictionaries.
+
 
 API
 ---
@@ -34,61 +72,40 @@ API
 
 .. autofunction:: modifies_known_mutable
 
-.. admonition:: Note
-
-    The Jinja sandbox alone is no solution for perfect security.  Especially
-    for web applications you have to keep in mind that users may create
-    templates with arbitrary HTML in so it's crucial to ensure that (if you
-    are running multiple users on the same server) they can't harm each other
-    via JavaScript insertions and much more.
-
-    Also the sandbox is only as good as the configuration.  We strongly
-    recommend only passing non-shared resources to the template and use
-    some sort of whitelisting for attributes.
-
-    Also keep in mind that templates may raise runtime or compile time errors,
-    so make sure to catch them.
 
 Operator Intercepting
 ---------------------
 
-.. versionadded:: 2.6
+For performance, Jinja outputs operators directly when compiling. This
+means it's not possible to intercept operator behavior by overriding
+:meth:`SandboxEnvironment.call <Environment.call>` by default, because
+operator special methods are handled by the Python interpreter, and
+might not correspond with exactly one method depending on the operator's
+use.
 
-For maximum performance Jinja will let operators call directly the type
-specific callback methods.  This means that it's not possible to have this
-intercepted by overriding :meth:`Environment.call`.  Furthermore a
-conversion from operator to special method is not always directly possible
-due to how operators work.  For instance for divisions more than one
-special method exist.
+The sandbox can instruct the compiler to output a function to intercept
+certain operators instead. Override
+:attr:`SandboxedEnvironment.intercepted_binops` and
+:attr:`SandboxedEnvironment.intercepted_unops` with the operator symbols
+you want to intercept. The compiler will replace the symbols with calls
+to :meth:`SandboxedEnvironment.call_binop` and
+:meth:`SandboxedEnvironment.call_unop` instead. The default
+implementation of those methods will use
+:attr:`SandboxedEnvironment.binop_table` and
+:attr:`SandboxedEnvironment.unop_table` to translate operator symbols
+into :mod:`operator` functions.
 
-With Jinja 2.6 there is now support for explicit operator intercepting.
-This can be used to customize specific operators as necessary.  In order
-to intercept an operator one has to override the
-:attr:`SandboxedEnvironment.intercepted_binops` attribute.  Once the
-operator that needs to be intercepted is added to that set Jinja will
-generate bytecode that calls the :meth:`SandboxedEnvironment.call_binop`
-function.  For unary operators the `unary` attributes and methods have to
-be used instead.
+For example, the power (``**``) operator can be disabled:
 
-The default implementation of :attr:`SandboxedEnvironment.call_binop`
-will use the :attr:`SandboxedEnvironment.binop_table` to translate
-operator symbols into callbacks performing the default operator behavior.
-
-This example shows how the power (``**``) operator can be disabled in
-Jinja::
+.. code-block:: python
 
     from jinja2.sandbox import SandboxedEnvironment
 
-
     class MyEnvironment(SandboxedEnvironment):
-        intercepted_binops = frozenset(['**'])
+        intercepted_binops = frozenset(["**"])
 
         def call_binop(self, context, operator, left, right):
-            if operator == '**':
-                return self.undefined('the power operator is unavailable')
-            return SandboxedEnvironment.call_binop(self, context,
-                                                   operator, left, right)
+            if operator == "**":
+                return self.undefined("The power (**) operator is unavailable.")
 
-Make sure to always call into the super method, even if you are not
-intercepting the call.  Jinja might internally call the method to
-evaluate expressions.
+            return super().call_binop(self, context, operator, left, right)
