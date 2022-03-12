@@ -1,6 +1,25 @@
 Integration
 ===========
 
+
+Flask
+-----
+
+The `Flask`_ web application framework, also maintained by Pallets, uses
+Jinja templates by default. Flask sets up a Jinja environment and
+template loader for you, and provides functions to easily render
+templates from view functions.
+
+.. _Flask: https://flask.palletsprojects.com
+
+
+Django
+------
+
+Django supports using Jinja as its template engine, see
+https://docs.djangoproject.com/en/stable/topics/templates/#support-for-template-engines.
+
+
 .. _babel-integration:
 
 Babel
