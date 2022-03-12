@@ -938,6 +938,23 @@ are available on a macro object:
 If a macro name starts with an underscore, it's not exported and can't
 be imported.
 
+Due to how scopes work in Jinja, a macro in a child template does not
+override a macro in a parent template. The following will output
+"LAYOUT", not "CHILD".
+
+.. code-block:: jinja
+    :caption: ``layout.txt``
+
+    {% macro foo() %}LAYOUT{% endmacro %}
+    {% block body %}{% endblock %}
+
+.. code-block:: jinja
+    :caption: ``child.txt``
+
+    {% extends 'layout.txt' %}
+    {% macro foo() %}CHILD{% endmacro %}
+    {% block body %}{{ foo() }}{% endblock %}
+
 
 .. _call:
 
