@@ -36,6 +36,9 @@ Unreleased
 -   The ``groupby`` filter is case-insensitive by default, matching
     other comparison filters. Added the ``case_sensitive`` parameter to
     control this. :issue:`1463`
+-   Windows drive-relative path segments in template names will not
+    result in ``FileSystemLoader`` and ``PackageLoader`` loading from
+    drive-relative paths. :pr:`1621`
 
 
 Version 3.0.3
