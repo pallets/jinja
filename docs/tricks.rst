@@ -74,8 +74,8 @@ sense to define a default for that variable::
     ...
     <ul id="navigation">
     {% for href, id, caption in navigation_bar %}
-      <li{% if id == active_page %} class="active"{% endif
-      %}><a href="{{ href|e }}">{{ caption|e }}</a></li>
+      <li{% if id == active_page %} class="active"{% endif %}>
+      <a href="{{ href|e }}">{{ caption|e }}</a></li>
     {% endfor %}
     </ul>
     ...
