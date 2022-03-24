@@ -3,7 +3,7 @@
 Version 3.1.0
 -------------
 
-Unreleased
+Released 2022-03-24
 
 -   Drop support for Python 3.6. :pr:`1534`
 -   Remove previously deprecated code. :pr:`1544`
