@@ -3,7 +3,6 @@ import importlib.machinery
 import importlib.util
 import os
 import platform
-import posixpath
 import shutil
 import sys
 import tempfile
@@ -172,6 +171,15 @@ class TestFileSystemLoader:
         t = e.get_template("mojibake.txt")
         assert t.render() == expect
 
+    def test_filename_normpath(self):
+        """Nested template names should only contain ``os.sep`` in the
+        loaded filename.
+        """
+        loader = loaders.FileSystemLoader(self.searchpath)
+        e = Environment(loader=loader)
+        t = e.get_template("foo/test.html")
+        assert t.filename == str(self.searchpath / "foo" / "test.html")
+
 
 class TestModuleLoader:
     archive = None
@@ -304,7 +312,7 @@ def package_dir_loader(monkeypatch):
 def test_package_dir_source(package_dir_loader, template, expect):
     source, name, up_to_date = package_dir_loader.get_source(None, template)
     assert source.rstrip() == expect
-    assert name.endswith(posixpath.join(*split_template_path(template)))
+    assert name.endswith(os.path.join(*split_template_path(template)))
     assert up_to_date()
 
 
@@ -326,7 +334,7 @@ def package_file_loader(monkeypatch):
 def test_package_file_source(package_file_loader, template, expect):
     source, name, up_to_date = package_file_loader.get_source(None, template)
     assert source.rstrip() == expect
-    assert name.endswith(posixpath.join(*split_template_path(template)))
+    assert name.endswith(os.path.join(*split_template_path(template)))
     assert up_to_date()
 
 
@@ -349,7 +357,7 @@ def package_zip_loader(monkeypatch):
 def test_package_zip_source(package_zip_loader, template, expect):
     source, name, up_to_date = package_zip_loader.get_source(None, template)
     assert source.rstrip() == expect
-    assert name.endswith(posixpath.join(*split_template_path(template)))
+    assert name.endswith(os.path.join(*split_template_path(template)))
     assert up_to_date is None
 
 
