@@ -213,7 +213,8 @@ class FileSystemLoader(BaseLoader):
                 except OSError:
                     return False
 
-            return contents, filename, uptodate
+            # Use normpath to convert Windows altsep to sep.
+            return contents, os.path.normpath(filename), uptodate
         raise TemplateNotFound(template)
 
     def list_templates(self) -> t.List[str]:
@@ -330,8 +331,11 @@ class PackageLoader(BaseLoader):
         self, environment: "Environment", template: str
     ) -> t.Tuple[str, str, t.Optional[t.Callable[[], bool]]]:
         # Use posixpath even on Windows to avoid "drive:" or UNC
-        # segments breaking out of the search directory.
-        p = posixpath.join(self._template_root, *split_template_path(template))
+        # segments breaking out of the search directory. Use normpath to
+        # convert Windows altsep to sep.
+        p = os.path.normpath(
+            posixpath.join(self._template_root, *split_template_path(template))
+        )
         up_to_date: t.Optional[t.Callable[[], bool]]
 
         if self._archive is None:

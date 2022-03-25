@@ -5,6 +5,9 @@ Version 3.1.1
 
 Unreleased
 
+-   The template filename on Windows uses the primary path separator.
+    :issue:`1637`
+
 
 Version 3.1.0
 -------------
