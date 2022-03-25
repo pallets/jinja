@@ -3,7 +3,7 @@
 Version 3.1.1
 -------------
 
-Unreleased
+Released 2022-03-25
 
 -   The template filename on Windows uses the primary path separator.
     :issue:`1637`
