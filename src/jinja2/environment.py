@@ -393,6 +393,8 @@ class Environment:
         line_comment_prefix: t.Optional[str] = missing,
         trim_blocks: bool = missing,
         lstrip_blocks: bool = missing,
+        newline_sequence: "te.Literal['\\n', '\\r\\n', '\\r']" = missing,
+        keep_trailing_newline: bool = missing,
         extensions: t.Sequence[t.Union[str, t.Type["Extension"]]] = missing,
         optimized: bool = missing,
         undefined: t.Type[Undefined] = missing,
@@ -402,6 +404,7 @@ class Environment:
         cache_size: int = missing,
         auto_reload: bool = missing,
         bytecode_cache: t.Optional["BytecodeCache"] = missing,
+        enable_async: bool = False,
     ) -> "Environment":
         """Create a new overlay environment that shares all the data with the
         current environment except for cache and the overridden attributes.
@@ -413,9 +416,13 @@ class Environment:
         up completely.  Not all attributes are truly linked, some are just
         copied over so modifications on the original environment may not shine
         through.
+
+        .. versionchanged:: 3.1.2
+            Added the ``newline_sequence``,, ``keep_trailing_newline``,
+            and ``enable_async`` parameters to match ``__init__``.
         """
         args = dict(locals())
-        del args["self"], args["cache_size"], args["extensions"]
+        del args["self"], args["cache_size"], args["extensions"], args["enable_async"]
 
         rv = object.__new__(self.__class__)
         rv.__dict__.update(self.__dict__)
@@ -436,6 +443,9 @@ class Environment:
             rv.extensions[key] = value.bind(rv)
         if extensions is not missing:
             rv.extensions.update(load_extensions(rv, extensions))
+
+        if enable_async is not missing:
+            rv.is_async = enable_async
 
         return _environment_config_check(rv)
 
