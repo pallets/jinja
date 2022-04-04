@@ -5,6 +5,9 @@ Version 3.1.2
 
 Unreleased
 
+-   Add parameters to ``Environment.overlay`` to match ``__init__``.
+    :issue:`1645`
+
 
 Version 3.1.1
 -------------
