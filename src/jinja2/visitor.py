@@ -43,8 +43,8 @@ class NodeVisitor:
 
     def generic_visit(self, node: Node, *args: t.Any, **kwargs: t.Any) -> t.Any:
         """Called if no explicit visitor function exists for a node."""
-        for node in node.iter_child_nodes():
-            self.visit(node, *args, **kwargs)
+        for child_node in node.iter_child_nodes():
+            self.visit(child_node, *args, **kwargs)
 
 
 class NodeTransformer(NodeVisitor):
