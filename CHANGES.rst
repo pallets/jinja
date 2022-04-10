@@ -7,6 +7,7 @@ Unreleased
 
 -   Add parameters to ``Environment.overlay`` to match ``__init__``.
     :issue:`1645`
+-   Handle race condition in ``FileSystemBytecodeCache``. :issue:`1654`
 
 
 Version 3.1.1
