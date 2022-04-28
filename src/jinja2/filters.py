@@ -1286,13 +1286,13 @@ def sync_do_sum(
         Total: {{ items|sum(attribute='price') }}
 
     .. versionchanged:: 2.6
-       The `attribute` parameter was added to allow suming up over
-       attributes.  Also the `start` parameter was moved on to the right.
+       The ``attribute`` parameter was added to allow summing up over
+       attributes.  Also the ``start`` parameter was moved on to the right.
     """
     if attribute is not None:
         iterable = map(make_attrgetter(environment, attribute), iterable)
 
-    return sum(iterable, start)
+    return sum(iterable, start)  # type: ignore[no-any-return, call-overload]
 
 
 @async_variant(sync_do_sum)  # type: ignore
