@@ -9,7 +9,7 @@ Unreleased
 Version 3.1.2
 -------------
 
-Unreleased
+Released 2022-04-28
 
 -   Add parameters to ``Environment.overlay`` to match ``__init__``.
     :issue:`1645`
