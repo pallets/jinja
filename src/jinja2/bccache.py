@@ -79,7 +79,7 @@ class Bucket:
             self.reset()
             return
 
-    def write_bytecode(self, f: t.BinaryIO) -> None:
+    def write_bytecode(self, f: t.IO[bytes]) -> None:
         """Dump the bytecode into the file or file like object passed."""
         if self.code is None:
             raise TypeError("can't write empty bucket")
@@ -262,13 +262,55 @@ class FileSystemBytecodeCache(BytecodeCache):
     def load_bytecode(self, bucket: Bucket) -> None:
         filename = self._get_cache_filename(bucket)
 
-        if os.path.exists(filename):
-            with open(filename, "rb") as f:
-                bucket.load_bytecode(f)
+        # Don't test for existence before opening the file, since the
+        # file could disappear after the test before the open.
+        try:
+            f = open(filename, "rb")
+        except (FileNotFoundError, IsADirectoryError, PermissionError):
+            # PermissionError can occur on Windows when an operation is
+            # in progress, such as calling clear().
+            return
+
+        with f:
+            bucket.load_bytecode(f)
 
     def dump_bytecode(self, bucket: Bucket) -> None:
-        with open(self._get_cache_filename(bucket), "wb") as f:
-            bucket.write_bytecode(f)
+        # Write to a temporary file, then rename to the real name after
+        # writing. This avoids another process reading the file before
+        # it is fully written.
+        name = self._get_cache_filename(bucket)
+        f = tempfile.NamedTemporaryFile(
+            mode="wb",
+            dir=os.path.dirname(name),
+            prefix=os.path.basename(name),
+            suffix=".tmp",
+            delete=False,
+        )
+
+        def remove_silent() -> None:
+            try:
+                os.remove(f.name)
+            except OSError:
+                # Another process may have called clear(). On Windows,
+                # another program may be holding the file open.
+                pass
+
+        try:
+            with f:
+                bucket.write_bytecode(f)
+        except BaseException:
+            remove_silent()
+            raise
+
+        try:
+            os.replace(f.name, name)
+        except OSError:
+            # Another process may have called clear(). On Windows,
+            # another program may be holding the file open.
+            remove_silent()
+        except BaseException:
+            remove_silent()
+            raise
 
     def clear(self) -> None:
         # imported lazily here because google app-engine doesn't support
