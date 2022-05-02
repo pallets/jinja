@@ -1678,6 +1678,9 @@ The following functions are available in the global scope by default:
 
     .. versionadded:: 2.10
 
+    .. versionchanged:: 3.2
+        Namespace attributes can be assigned to in multiple assignment.
+
 
 Extensions
 ----------

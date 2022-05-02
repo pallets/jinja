@@ -43,6 +43,8 @@ Unreleased
 -   ``urlize`` does not add ``mailto:`` to values like `@a@b`. :pr:`1870`
 -   Tests decorated with `@pass_context`` can be used with the ``|select``
     filter. :issue:`1624`
+-   Using ``set`` for multiple assignment (``a, b = 1, 2``) does not fail when the
+    target is a namespace attribute. :issue:`1413`
 
 
 Version 3.1.4

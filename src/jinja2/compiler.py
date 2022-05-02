@@ -1581,6 +1581,22 @@ class CodeGenerator(NodeVisitor):
 
     def visit_Assign(self, node: nodes.Assign, frame: Frame) -> None:
         self.push_assign_tracking()
+
+        # NSRef can only ever be used during assignment so we need to check
+        # to make sure that it is only being used to assign using a Namespace.
+        # This check is done here because it is used an expression during the
+        # assignment and therefore cannot have this check done when the NSRef
+        # node is visited
+        for nsref in node.find_all(nodes.NSRef):
+            ref = frame.symbols.ref(nsref.name)
+            self.writeline(f"if not isinstance({ref}, Namespace):")
+            self.indent()
+            self.writeline(
+                "raise TemplateRuntimeError"
+                '("cannot assign attribute on non-namespace object")'
+            )
+            self.outdent()
+
         self.newline(node)
         self.visit(node.target, frame)
         self.write(" = ")
@@ -1641,13 +1657,6 @@ class CodeGenerator(NodeVisitor):
         # `foo.bar` notation they will be parsed as a normal attribute access
         # when used anywhere but in a `set` context
         ref = frame.symbols.ref(node.name)
-        self.writeline(f"if not isinstance({ref}, Namespace):")
-        self.indent()
-        self.writeline(
-            "raise TemplateRuntimeError"
-            '("cannot assign attribute on non-namespace object")'
-        )
-        self.outdent()
         self.writeline(f"{ref}[{node.attr!r}]")
 
     def visit_Const(self, node: nodes.Const, frame: Frame) -> None:
