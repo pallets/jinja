@@ -1,5 +1,14 @@
 .. currentmodule:: jinja2
 
+Version 3.1.3
+-------------
+
+Unreleased
+
+-   Paths where the loader searched for the template were added
+    to the error message. :issue:`1661`
+
+
 Version 3.1.2
 -------------
 

@@ -215,7 +215,9 @@ class FileSystemLoader(BaseLoader):
 
             # Use normpath to convert Windows altsep to sep.
             return contents, os.path.normpath(filename), uptodate
-        raise TemplateNotFound(template)
+        raise TemplateNotFound(
+            f"{template} not found in the following search path(s): {self.searchpath}"
+        )
 
     def list_templates(self) -> t.List[str]:
         found = set()
