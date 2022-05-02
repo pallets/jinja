@@ -35,6 +35,8 @@ Unreleased
 -   Fix `copy`/`pickle` support for the internal ``missing`` object.
     :issue:`2027`
 -   ``Environment.overlay(enable_async)`` is applied correctly. :pr:`2061`
+-   Paths where the loader searched for the template were added
+    to the error message. :issue:`1661`
 
 
 Version 3.1.4
