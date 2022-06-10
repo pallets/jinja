@@ -38,7 +38,7 @@ Install and update using `pip`_:
 .. _pip: https://pip.pypa.io/en/stable/getting-started/
 
 
-In A Nutshell
+In a Nutshell
 -------------
 
 .. code-block:: jinja
