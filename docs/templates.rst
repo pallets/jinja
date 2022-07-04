@@ -599,7 +599,8 @@ first and pass it in to ``render``.
     else:
         layout = env.get_template("layout.html")
 
-    user_detail = env.get_template("user/detail.html", layout=layout)
+    user_detail = env.get_template("user/detail.html")
+    return user_detail.render(layout=layout)
 
 .. code-block:: jinja
 
