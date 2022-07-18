@@ -751,8 +751,8 @@ Now it can be used in templates:
     {% endif %}
 
 Some decorators are available to tell Jinja to pass extra information to
-the filter. The object is passed as the first argument, making the value
-being filtered the second argument.
+the test. The object is passed as the first argument, making the value
+being tested the second argument.
 
 -   :func:`pass_environment` passes the :class:`Environment`.
 -   :func:`pass_eval_context` passes the :ref:`eval-context`.
