@@ -84,7 +84,7 @@ In Django, the special variable for the loop context is called
 .. code-block:: django
 
     {% for item in items %}
-        {{ item }}
+        {{ forloop.counter }}. {{ item }}
     {% empty %}
         No items!
     {% endfor %}
@@ -95,7 +95,7 @@ and the ``else`` block is used for no loop items.
 .. code-block:: jinja
 
     {% for item in items %}
-        {{ loop.index}}. {{ item }}
+        {{ loop.index }}. {{ item }}
     {% else %}
         No items!
     {% endfor %}
