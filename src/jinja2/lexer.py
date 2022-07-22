@@ -260,7 +260,7 @@ class Failure:
         self.message = message
         self.error_class = cls
 
-    def __call__(self, lineno: int, filename: str) -> "te.NoReturn":
+    def __call__(self, lineno: int, filename: t.Optional[str]) -> "te.NoReturn":
         raise self.error_class(self.message, lineno, None, filename)
 
 
