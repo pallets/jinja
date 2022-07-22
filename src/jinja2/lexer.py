@@ -267,6 +267,10 @@ class Failure:
 class Token(t.NamedTuple):
     lineno: int
     type: str
+    """
+    ... versionchanged::3.2.0
+        changed type from `str` to `t.Any`
+    """
     value: t.Any
 
     def __str__(self) -> str:
@@ -462,6 +466,10 @@ class OptionalLStrip(tuple):
 
 class _Rule(t.NamedTuple):
     pattern: t.Pattern[str]
+    """
+    .. versionchanged::3.2.0
+        changed `t.Tuple[Failure]` to :class:`Failure`
+    """
     tokens: t.Union[str, t.Tuple[str, ...], Failure]
     command: t.Optional[str]
 

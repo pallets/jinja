@@ -5,6 +5,8 @@ Version 3.2.0
 
 Unreleased
 
+- Changed type of `lexer.Token.value` to `t.Any` :issue:`1687`
+- Fixed passing arguments to `TemplateSyntaxError` `lexer.Failure.__call__` :issue:`1688`
 
 Version 3.1.2
 -------------
