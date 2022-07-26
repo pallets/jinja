@@ -613,10 +613,7 @@ class ModuleLoader(BaseLoader):
 
     Example usage:
 
-    >>> loader = ChoiceLoader([
-    ...     ModuleLoader('/path/to/compiled/templates'),
-    ...     FileSystemLoader('/path/to/templates')
-    ... ])
+    >>> loader = ModuleLoader('/path/to/compiled/templates')
 
     Templates can be precompiled with :meth:`Environment.compile_templates`.
     """
