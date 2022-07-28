@@ -386,10 +386,7 @@ class PackageLoader(BaseLoader):
                 )
 
             # Package is a zip file.
-            prefix = (
-                self._template_root[len(self._archive) :].lstrip(os.sep)
-                + os.sep
-            )
+            prefix = self._template_root[len(self._archive) :].lstrip(os.sep) + os.sep
             offset = len(prefix)
 
             for name in self._loader._files.keys():  # type: ignore
