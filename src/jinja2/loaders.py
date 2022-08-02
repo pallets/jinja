@@ -28,7 +28,7 @@ def split_template_path(template: str) -> t.List[str]:
     pieces = []
     for piece in template.split("/"):
         if (
-            os.path.sep in piece
+            os.sep in piece
             or (os.path.altsep and os.path.altsep in piece)
             or piece == os.path.pardir
         ):
@@ -225,8 +225,8 @@ class FileSystemLoader(BaseLoader):
                 for filename in filenames:
                     template = (
                         os.path.join(dirpath, filename)[len(searchpath) :]
-                        .strip(os.path.sep)
-                        .replace(os.path.sep, "/")
+                        .strip(os.sep)
+                        .replace(os.sep, "/")
                     )
                     if template[:2] == "./":
                         template = template[2:]
@@ -274,12 +274,12 @@ class PackageLoader(BaseLoader):
         package_path: "str" = "templates",
         encoding: str = "utf-8",
     ) -> None:
-        package_path = os.path.normpath(package_path).rstrip(os.path.sep)
+        package_path = os.path.normpath(package_path).rstrip(os.sep)
 
         # normpath preserves ".", which isn't valid in zip paths.
         if package_path == os.path.curdir:
             package_path = ""
-        elif package_path[:2] == os.path.curdir + os.path.sep:
+        elif package_path[:2] == os.path.curdir + os.sep:
             package_path = package_path[2:]
 
         self.package_path = package_path
@@ -300,7 +300,7 @@ class PackageLoader(BaseLoader):
         if isinstance(loader, zipimport.zipimporter):
             self._archive = loader.archive
             pkgdir = next(iter(spec.submodule_search_locations))  # type: ignore
-            template_root = os.path.join(pkgdir, package_path).rstrip(os.path.sep)
+            template_root = os.path.join(pkgdir, package_path).rstrip(os.sep)
         else:
             roots: t.List[str] = []
 
@@ -373,9 +373,9 @@ class PackageLoader(BaseLoader):
             offset = len(self._template_root)
 
             for dirpath, _, filenames in os.walk(self._template_root):
-                dirpath = dirpath[offset:].lstrip(os.path.sep)
+                dirpath = dirpath[offset:].lstrip(os.sep)
                 results.extend(
-                    os.path.join(dirpath, name).replace(os.path.sep, "/")
+                    os.path.join(dirpath, name).replace(os.sep, "/")
                     for name in filenames
                 )
         else:
@@ -386,16 +386,13 @@ class PackageLoader(BaseLoader):
                 )
 
             # Package is a zip file.
-            prefix = (
-                self._template_root[len(self._archive) :].lstrip(os.path.sep)
-                + os.path.sep
-            )
+            prefix = self._template_root[len(self._archive) :].lstrip(os.sep) + os.sep
             offset = len(prefix)
 
             for name in self._loader._files.keys():  # type: ignore
                 # Find names under the templates directory that aren't directories.
-                if name.startswith(prefix) and name[-1] != os.path.sep:
-                    results.append(name[offset:].replace(os.path.sep, "/"))
+                if name.startswith(prefix) and name[-1] != os.sep:
+                    results.append(name[offset:].replace(os.sep, "/"))
 
         results.sort()
         return results
