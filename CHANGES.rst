@@ -5,6 +5,8 @@ Version 3.2.0
 
 Unreleased
 
+-   Use correct concat function for blocks evaluation. :issue:`1701`
+
 
 Version 3.1.2
 -------------
