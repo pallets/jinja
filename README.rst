@@ -58,7 +58,7 @@ Donate
 ------
 
 The Pallets organization develops and supports Jinja and other popular
-packages. In order to grow the community of contributors and users, and
+packages. To grow the community of contributors and users, and
 allow the maintainers to devote more time to the projects, `please
 donate today`_.
 
