@@ -322,7 +322,7 @@ class PackageLoader(BaseLoader):
         if template_root is None:
             raise ValueError(
                 f'PackageLoader could not find a "{package_path}" directory for the '
-                f'{package_name!r} package.'
+                f"{package_name!r} package."
             )
 
         self._template_root = template_root
