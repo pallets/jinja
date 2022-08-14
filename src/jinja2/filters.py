@@ -1518,7 +1518,7 @@ def sync_do_select(
     .. sourcecode:: jinja
 
         {{ numbers|select("odd") }}
-        {{ numbers|select("odd") }}
+        {{ numbers|select("even") }}
         {{ numbers|select("divisibleby", 3) }}
         {{ numbers|select("lessthan", 42) }}
         {{ strings|select("equalto", "mystring") }}
