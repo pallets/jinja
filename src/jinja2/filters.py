@@ -1598,6 +1598,7 @@ def sync_do_selectattr(
 
         {{ users|selectattr("is_active") }}
         {{ users|selectattr("email", "none") }}
+        {{ users|selectattr("email", "eq", "foo@bar.invalid") }}
 
     Similar to a generator comprehension such as:
 
@@ -1605,6 +1606,7 @@ def sync_do_selectattr(
 
         (u for user in users if user.is_active)
         (u for user in users if test_none(user.email))
+        (u for user in users if user.email == "foo@bar.invalid")
 
     .. versionadded:: 2.7
     """
