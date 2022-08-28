@@ -5,6 +5,8 @@ Version 3.2.0
 
 Unreleased
 
+- Add support for trailing commas on macro signatures and with statements. :pr:`1712`
+
 
 Version 3.1.2
 -------------
