@@ -617,3 +617,12 @@ class TestWith:
         """
         )
         assert tmpl.render(b=3, e=4) == "1|2|3|4|5"
+
+    def test_with_trailing_comma(self, env):
+        tmpl = env.from_string(
+            """\
+        {% with a=42, b=23, -%}
+            {{ a }} = {{ b }}
+        {% endwith -%}"""
+        )
+        assert tmpl.render().strip() == "42 = 23"
