@@ -275,6 +275,9 @@ class Parser:
         while self.stream.current.type != "block_end":
             if targets:
                 self.stream.expect("comma")
+            # support for trailing comma
+            if self.stream.current.type == "block_end":
+                break
             target = self.parse_assign_target()
             target.set_ctx("param")
             targets.append(target)
