@@ -423,6 +423,14 @@ class TestMacros:
         )
         assert tmpl.render() == "1|2"
 
+    def test_trailing_comma_call(self, env_trim):
+        tmpl = env_trim.from_string(
+            """\
+{% macro test(a) %}{{ a }}|[[{{ caller() }}]]{% endmacro %}\
+{% call test(a=42,) %}data{% endcall %}"""
+        )
+        assert tmpl.render() == "42|[[data]]"
+
     def test_include(self, env_trim):
         env_trim = Environment(
             loader=DictLoader(
