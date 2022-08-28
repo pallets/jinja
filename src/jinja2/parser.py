@@ -406,6 +406,9 @@ class Parser:
         while self.stream.current.type != "rparen":
             if args:
                 self.stream.expect("comma")
+            # support for trailing comma
+            if self.stream.current.type == "rparen":
+                break
             arg = self.parse_assign_target(name_only=True)
             arg.set_ctx("param")
             if self.stream.skip_if("assign"):
