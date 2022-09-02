@@ -91,4 +91,4 @@ this add this to ``config/environment.py``:
 
     config['pylons.strict_c'] = True
 
-.. _Pylons: https://pylonshq.com/
+.. _Pylons: https://pylonsproject.org/
