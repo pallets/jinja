@@ -579,6 +579,10 @@ class TestSyntax:
         tmpl = env.from_string("{{ - 1 ** 2 }}")
         assert tmpl.render() == "-1"
 
+    def test_pow_associative_from_left_to_right(self, env):
+        tmpl = env.from_string("{{ 2 ** 3 ** 2 }}")
+        assert tmpl.render() == "512"
+
 
 class TestLstripBlocks:
     def test_lstrip(self, env):
