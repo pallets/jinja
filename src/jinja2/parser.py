@@ -604,7 +604,7 @@ class Parser:
 
     def parse_math2(self) -> nodes.Expr:
         lineno = self.stream.current.lineno
-        left = self.parse_pow()
+        left = self.parse_unary()
         while self.stream.current.type in ("mul", "div", "floordiv", "mod"):
             cls = _math_nodes[self.stream.current.type]
             next(self.stream)
@@ -615,7 +615,7 @@ class Parser:
 
     def parse_pow(self) -> nodes.Expr:
         lineno = self.stream.current.lineno
-        left = self.parse_unary()
+        left = self.parse_primary()
         while self.stream.current.type == "pow":
             next(self.stream)
             right = self.parse_unary()
@@ -635,7 +635,7 @@ class Parser:
             next(self.stream)
             node = nodes.Pos(self.parse_unary(False), lineno=lineno)
         else:
-            node = self.parse_primary()
+            node = self.parse_pow()
         node = self.parse_postfix(node)
         if with_filter:
             node = self.parse_filter_expr(node)

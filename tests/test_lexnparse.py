@@ -575,6 +575,10 @@ class TestSyntax:
         tmpl = env.from_string('{{ -foo["bar"]|abs }}')
         assert tmpl.render(foo={"bar": 42}) == "42"
 
+    def test_negative_pow(self, env):
+        tmpl = env.from_string("{{ - 1 ** 2 }}")
+        assert tmpl.render() == "-1"
+
 
 class TestLstripBlocks:
     def test_lstrip(self, env):
