@@ -1608,8 +1608,7 @@ The following functions are available in the global scope by default:
 
     .. versionadded:: 2.1
 
-    .. method:: current
-        :property:
+    .. property:: current
 
         Return the current item. Equivalent to the item that will be
         returned next time :meth:`next` is called.
