@@ -1253,7 +1253,7 @@ class Template:
         t.blocks = namespace["blocks"]
 
         # render function and module
-        t.root_render_func = namespace["root"]  # type: ignore
+        t.root_render_func = namespace["root"]
         t._module = None
 
         # debug and loader helpers
@@ -1349,7 +1349,7 @@ class Template:
         ctx = self.new_context(dict(*args, **kwargs))
 
         try:
-            yield from self.root_render_func(ctx)  # type: ignore
+            yield from self.root_render_func(ctx)
         except Exception:
             yield self.environment.handle_exception()
 
@@ -1532,7 +1532,7 @@ class TemplateModule:
                     " API you are using."
                 )
 
-            body_stream = list(template.root_render_func(context))  # type: ignore
+            body_stream = list(template.root_render_func(context))
 
         self._body_stream = body_stream
         self.__dict__.update(context.get_exported())
@@ -1564,7 +1564,7 @@ class TemplateExpression:
 
     def __call__(self, *args: t.Any, **kwargs: t.Any) -> t.Optional[t.Any]:
         context = self._template.new_context(dict(*args, **kwargs))
-        consume(self._template.root_render_func(context))  # type: ignore
+        consume(self._template.root_render_func(context))
         rv = context.vars["result"]
         if self._undefined_to_none and isinstance(rv, Undefined):
             rv = None
