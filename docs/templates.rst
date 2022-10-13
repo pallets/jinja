@@ -1015,6 +1015,9 @@ template data.  Just wrap the code in the special `filter` section::
         This text becomes uppercase
     {% endfilter %}
 
+Filters that accept arguments can be called like this::
+
+    {% filter center(100) %}Center this{% endfilter %}
 
 .. _assignments:
 
