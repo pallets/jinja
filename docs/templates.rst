@@ -1174,6 +1174,19 @@ none of the templates exist.
 A variable, with either a template name or template object, can also be
 passed to the statment.
 
+The ``include`` entry could be created dynamically by passing a variable.
+Examples:
+
+.. code-block:: jinja
+
+   {% include '%s' % variable.foo %}
+
+or
+
+.. code-block:: jinja
+
+   {% include + variable.foo + %}
+
 .. _import:
 
 Import
