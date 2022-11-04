@@ -310,8 +310,8 @@ class CodeGenerator(NodeVisitor):
         if stream is None:
             stream = StringIO()
         self.environment = environment
-        self.name = name
-        self.filename = filename
+        self.name = str(name)
+        self.filename = str(filename)
         self.stream = stream
         self.created_block_context = False
         self.defer_init = defer_init
