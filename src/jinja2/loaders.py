@@ -123,6 +123,8 @@ class BaseLoader:
         # first we try to get the source for this template together
         # with the filename and the uptodate function.
         source, filename, uptodate = self.get_source(environment, name)
+        name = str(name)
+        filename = str(filename)
 
         # try to load the code from the bytecode cache if there is a
         # bytecode cache configured.
