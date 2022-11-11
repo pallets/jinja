@@ -5,6 +5,9 @@ Version 3.2.0
 
 Unreleased
 
+-   Add function decorator ``@render_time_only`` for filters and tests.
+    :issue:`1752`
+
 
 Version 3.1.2
 -------------

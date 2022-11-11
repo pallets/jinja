@@ -91,6 +91,8 @@ def render_time_only(f: F) -> F:
     always leave it for rendering phase.
 
     Can be used on filters and tests.
+
+    .. versionadded:: 3.2.0
     """
     f.jinja2_render_time_only = True  # type: ignore
     return f
