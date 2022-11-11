@@ -672,6 +672,15 @@ Now it can be used in templates:
     {{ article.pub_date|datetimeformat }}
     {{ article.pub_date|datetimeformat("%B %Y") }}
 
+If the call of a filter can be computed at compile time, then it will be
+resolved as a constant before rendering. For example, a filter called on the
+iterated variable of a ``for`` loop cannot be compiled to a constant since
+its argument is only resolved at render time ; but the function of a filter
+called on a constant in an ``if`` statement will be executed at compile time
+even if the condition of the ``if`` statement is not met. A filter can be
+prevented to be compiled to a constant by decorating the function with the
+``render_time_only`` decorator.
+
 Some decorators are available to tell Jinja to pass extra information to
 the filter. The object is passed as the first argument, making the value
 being filtered the second argument.
