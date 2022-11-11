@@ -92,7 +92,7 @@ def render_time_only(f: F) -> F:
 
     Can be used on filters and tests.
     """
-    f.jinja2_render_time_only = True
+    f.jinja2_render_time_only = True  # type: ignore
     return f
 
 

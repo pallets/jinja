@@ -760,7 +760,7 @@ class _FilterTestCommon(Expr):
         pass_arg = _PassArg.from_obj(func)  # type: ignore
 
         # Don't resolve functions decorated as render-time only
-        if getattr(func, "jinja2_render_time_only", False):
+        if hasattr(func, "jinja2_render_time_only"):
             raise Impossible()
 
         if func is None or pass_arg is _PassArg.context:
