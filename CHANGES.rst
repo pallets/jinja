@@ -41,6 +41,8 @@ Unreleased
     contain the templates directory. :issue:`1705`
 -   Improve annotations for methods returning copies. :pr:`1880`
 -   ``urlize`` does not add ``mailto:`` to values like `@a@b`. :pr:`1870`
+-   Tests decorated with `@pass_context`` can be used with the ``|select``
+    filter. :issue:`1624`
 
 
 Version 3.1.4

@@ -737,6 +737,18 @@ End"""
         )
         assert tmpl.render() == "hellohellohello"
 
+    def test_pass_context_with_select(self, env):
+        @pass_context
+        def is_foo(ctx, s):
+            assert ctx is not None
+            return s == "foo"
+
+        env.tests["foo"] = is_foo
+        tmpl = env.from_string(
+            "{% for x in ['one', 'foo'] | select('foo') %}{{ x }}{% endfor %}"
+        )
+        assert tmpl.render() == "foo"
+
 
 @pytest.mark.parametrize("unicode_char", ["\N{FORM FEED}", "\x85"])
 def test_unicode_whitespace(env, unicode_char):
