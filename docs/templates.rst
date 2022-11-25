@@ -1015,6 +1015,9 @@ template data.  Just wrap the code in the special `filter` section::
         This text becomes uppercase
     {% endfilter %}
 
+Filters that accept arguments can be called like this::
+
+    {% filter center(100) %}Center this{% endfilter %}
 
 .. _assignments:
 
@@ -1169,7 +1172,7 @@ none of the templates exist.
     {% include ['special_sidebar.html', 'sidebar.html'] ignore missing %}
 
 A variable, with either a template name or template object, can also be
-passed to the statment.
+passed to the statement.
 
 .. _import:
 
@@ -1608,8 +1611,7 @@ The following functions are available in the global scope by default:
 
     .. versionadded:: 2.1
 
-    .. method:: current
-        :property:
+    .. property:: current
 
         Return the current item. Equivalent to the item that will be
         returned next time :meth:`next` is called.
