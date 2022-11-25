@@ -2,7 +2,7 @@
 
 Unreleased
 
-- Fix a bug with lexer evaluation order of exponent. :issue:`1720` :issue:`1722`
+- Breaking change. The evaluation order of an exponent expression changed. Now it is more consistent with how it's going in pure python. :issue:`1720` :issue:`1722`
 
 
 Version 3.1.2
