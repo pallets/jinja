@@ -583,6 +583,18 @@ class TestSyntax:
         tmpl = env.from_string("{{ 2 ** 3 ** 2 }}")
         assert tmpl.render() == "512"
 
+    def test_pow_negative_base(self, env):
+        tmpl = env.from_string("{{ (- 1) ** 2 }}")
+        assert tmpl.render() == "1"
+
+    def test_pow_negative_base_variable_exponent(self, env):
+        tmpl = env.from_string("{{ (- 1) ** x }}", {"x": 2})
+        assert tmpl.render() == "1"
+
+    def test_negative_pow_variable_exponent(self, env):
+        tmpl = env.from_string("{{ - 1 ** x }}", {"x": 2})
+        assert tmpl.render() == "-1"
+
 
 class TestLstripBlocks:
     def test_lstrip(self, env):
