@@ -71,7 +71,9 @@ def find_referenced_templates(ast: nodes.Template) -> t.Iterator[t.Optional[str]
     ['layout.html', None]
 
     This function is useful for dependency tracking.  For example if you want
-    to rebuild parts of the website after a layout template has changed.
+    to rebuild parts of the website after a layout template has changed.  For
+    an alternative method with different pros and cons, see
+    `Environment.extract_parsed_names()`.
     """
     template_name: t.Any
 
