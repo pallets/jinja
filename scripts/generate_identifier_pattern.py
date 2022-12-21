@@ -1,8 +1,8 @@
-import itertools
 import os
 import re
 import sys
-
+import itertools
+from typing import List, Tuple 
 
 def get_characters():
     """Find every Unicode character that is valid in a Python `identifier`_ but
@@ -23,7 +23,7 @@ def get_characters():
             yield s
 
 
-def collapse_ranges(data):
+def collapse_ranges(data: List[int]):
     """Given a sorted list of unique characters, generate ranges representing
     sequential code points.
 
@@ -34,7 +34,7 @@ def collapse_ranges(data):
         yield b[0][1], b[-1][1]
 
 
-def build_pattern(ranges):
+def build_pattern(ranges: List[Tuple[int]]):
     """Output the regex pattern for ranges of characters.
 
     One and two character ranges output the individual characters.
