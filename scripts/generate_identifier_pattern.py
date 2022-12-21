@@ -1,8 +1,10 @@
+import itertools
 import os
 import re
 import sys
-import itertools
-from typing import List, Tuple 
+from typing import List
+from typing import Tuple
+
 
 def get_characters():
     """Find every Unicode character that is valid in a Python `identifier`_ but
