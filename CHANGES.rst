@@ -5,6 +5,9 @@ Version 3.2.0
 
 Unreleased
 
+- Fix ``unique()`` when chained with `reject()` or `rejectattr()`
+  :issue:`1781`
+
 
 Version 3.1.2
 -------------
