@@ -277,6 +277,13 @@ def test_slice(env_async, items):
     )
 
 
+def test_unique_with_async_gen(env_async):
+    items = ["a", "b", "c", "c", "a", "d", "z"]
+    tmpl = env_async.from_string("{{ items|reject('==', 'z')|unique|list }}")
+    out = tmpl.render(items=items)
+    assert out == "['a', 'b', 'c', 'd']"
+
+
 def test_custom_async_filter(env_async, run_async_fn):
     async def customfilter(val):
         return str(val)

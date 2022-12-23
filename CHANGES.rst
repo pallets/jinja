@@ -16,6 +16,8 @@ Unreleased
     :pr:`1960`
 -   The runtime uses the correct ``concat`` function for the current environment
     when calling block references. :issue:`1701`
+-   Make ``|unique`` async-aware, allowing it to be used after another
+    async-aware filter. :issue:`1781`
 
 
 Version 3.1.4
