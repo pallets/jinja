@@ -183,6 +183,7 @@ class TestFileSystemLoader:
 
 class TestModuleLoader:
     archive = None
+    mod_env = None
 
     def compile_down(self, prefix_loader, zip="deflated"):
         log = []
@@ -196,13 +197,14 @@ class TestModuleLoader:
         self.mod_env = Environment(loader=loaders.ModuleLoader(self.archive))
         return "".join(log)
 
-    def teardown(self):
-        if hasattr(self, "mod_env"):
+    def teardown_method(self):
+        if self.archive is not None:
             if os.path.isfile(self.archive):
                 os.remove(self.archive)
             else:
                 shutil.rmtree(self.archive)
             self.archive = None
+            self.mod_env = None
 
     def test_log(self, prefix_loader):
         log = self.compile_down(prefix_loader)

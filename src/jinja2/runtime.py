@@ -272,9 +272,9 @@ class Context:
         # Allow callable classes to take a context
         if (
             hasattr(__obj, "__call__")  # noqa: B004
-            and _PassArg.from_obj(__obj.__call__) is not None  # type: ignore
+            and _PassArg.from_obj(__obj.__call__) is not None
         ):
-            __obj = __obj.__call__  # type: ignore
+            __obj = __obj.__call__
 
         pass_arg = _PassArg.from_obj(__obj)
 
