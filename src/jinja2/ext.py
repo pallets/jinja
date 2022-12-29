@@ -291,14 +291,14 @@ class InternationalizationExtension(Extension):
 
         if hasattr(translations, "pgettext"):
             # Python < 3.8
-            pgettext = translations.pgettext  # type: ignore
+            pgettext = translations.pgettext
         else:
 
             def pgettext(c: str, s: str) -> str:
                 return s
 
         if hasattr(translations, "npgettext"):
-            npgettext = translations.npgettext  # type: ignore
+            npgettext = translations.npgettext
         else:
 
             def npgettext(c: str, s: str, p: str, n: int) -> str:

@@ -389,7 +389,7 @@ class PackageLoader(BaseLoader):
             prefix = self._template_root[len(self._archive) :].lstrip(os.sep) + os.sep
             offset = len(prefix)
 
-            for name in self._loader._files.keys():  # type: ignore
+            for name in self._loader._files.keys():
                 # Find names under the templates directory that aren't directories.
                 if name.startswith(prefix) and name[-1] != os.sep:
                     results.append(name[offset:].replace(os.sep, "/"))
