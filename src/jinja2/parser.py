@@ -275,6 +275,9 @@ class Parser:
         while self.stream.current.type != "block_end":
             if targets:
                 self.stream.expect("comma")
+            # support for trailing comma
+            if self.stream.current.type == "block_end":
+                break
             target = self.parse_assign_target()
             target.set_ctx("param")
             targets.append(target)
@@ -406,6 +409,9 @@ class Parser:
         while self.stream.current.type != "rparen":
             if args:
                 self.stream.expect("comma")
+            # support for trailing comma
+            if self.stream.current.type == "rparen":
+                break
             arg = self.parse_assign_target(name_only=True)
             arg.set_ctx("param")
             if self.stream.skip_if("assign"):
@@ -747,6 +753,7 @@ class Parser:
         while self.stream.current.type != "rbracket":
             if items:
                 self.stream.expect("comma")
+            # support for trailing comma
             if self.stream.current.type == "rbracket":
                 break
             items.append(self.parse_expression())
@@ -759,6 +766,7 @@ class Parser:
         while self.stream.current.type != "rbrace":
             if items:
                 self.stream.expect("comma")
+            # support for trailing comma
             if self.stream.current.type == "rbrace":
                 break
             key = self.parse_expression()
