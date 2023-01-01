@@ -160,3 +160,13 @@ def test_macro(env):
     result = t.render()
     assert result == 2
     assert isinstance(result, int)
+
+
+def test_block(env):
+    t = env.from_string(
+        "{% block b %}{% for i in range(1) %}{{ loop.index }}{% endfor %}"
+        "{% endblock %}{{ self.b() }}"
+    )
+    result = t.render()
+    assert result == 11
+    assert isinstance(result, int)
