@@ -259,6 +259,11 @@ class Environment:
         `enable_async`
             If set to true this enables async template execution which
             allows using async functions and generators.
+
+        `remember_parsed_names`
+            Should we remember parsed names?  This is useful for dynamic
+            dependency tracking, see `extract_parsed_names` for details.
+            Default is ``False``.
     """
 
     #: if this environment is sandboxed.  Modifying this variable won't make
@@ -313,6 +318,7 @@ class Environment:
         auto_reload: bool = True,
         bytecode_cache: t.Optional["BytecodeCache"] = None,
         enable_async: bool = False,
+        remember_parsed_names: bool = False,
     ):
         # !!Important notice!!
         #   The constructor accepts quite a few arguments that should be
@@ -364,6 +370,11 @@ class Environment:
 
         self.is_async = enable_async
         _environment_config_check(self)
+
+        # dependency tracking
+        self.parsed_names: t.Optional[t.List[str]] = (
+            [] if remember_parsed_names else None
+        )
 
     def add_extension(self, extension: t.Union[str, t.Type["Extension"]]) -> None:
         """Adds an extension after the environment was created.
@@ -614,7 +625,35 @@ class Environment:
         self, source: str, name: t.Optional[str], filename: t.Optional[str]
     ) -> nodes.Template:
         """Internal parsing function used by `parse` and `compile`."""
+        if name is not None and self.parsed_names is not None:
+            self.parsed_names.append(name)
         return Parser(self, source, name, filename).parse()
+
+    def extract_parsed_names(self) -> t.Optional[t.List[str]]:
+        """Return all template names that have been parsed so far, and clear the list.
+
+        This is enabled if `remember_parsed_names = True` was passed to the
+        `Environment` constructor, otherwise it returns `None`.  It can be used
+        after `Template.render()` to extract dependency information.  Compared
+        to `jinja2.meta.find_referenced_templates()`, it:
+
+        a. works on dynamic inheritance and includes
+        b. does not work unless and until you actually render the template
+
+        Many buildsystems are unable to support (b), but some do e.g. [1], the
+        key point being that if the target file does not exist, dependency
+        information is not needed since the target file must be built anyway.
+        In such cases, you may prefer this function due to (a).
+
+        [1] https://make.mad-scientist.net/papers/advanced-auto-dependency-generation/
+
+        .. versionadded:: 3.2
+        """
+        if self.parsed_names is None:
+            return None
+        names = self.parsed_names[:]
+        self.parsed_names.clear()
+        return names
 
     def lex(
         self,

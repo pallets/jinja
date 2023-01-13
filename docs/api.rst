@@ -140,6 +140,8 @@ useful if you want to dig deeper into Jinja or :ref:`develop extensions
 
     .. automethod:: overlay([options])
 
+    .. automethod:: extract_parsed_names()
+
     .. method:: undefined([hint, obj, name, exc])
 
         Creates a new :class:`Undefined` object for `name`.  This is useful

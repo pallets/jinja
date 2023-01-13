@@ -36,6 +36,24 @@ class TestExtendedAPI:
             tmpl = env.from_string('{{ foo["items"] }}')
             assert tmpl.render(foo={"items": 42}) == "42"
 
+    def test_extract_parsed_names(self, env):
+        templates = DictLoader(
+            {
+                "main": "{% set tpl = 'ba' + 'se' %}{% extends tpl %}",
+                "base": "{% set tpl = 'INC' %}{% include tpl.lower() %}",
+                "inc": "whatever",
+            }
+        )
+        env.loader = templates
+        assert env.get_template("main").render() == "whatever"
+        assert env.extract_parsed_names() is None
+
+        env = Environment(remember_parsed_names=True)
+        env.loader = templates
+        assert env.get_template("main").render() == "whatever"
+        assert env.extract_parsed_names() == ["main", "base", "inc"]
+        assert env.extract_parsed_names() == []
+
     def test_finalize(self):
         e = Environment(finalize=lambda v: "" if v is None else v)
         t = e.from_string("{% for item in seq %}|{{ item }}{% endfor %}")

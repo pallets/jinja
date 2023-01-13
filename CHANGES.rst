@@ -5,6 +5,9 @@ Version 3.2.0
 
 Unreleased
 
+-   Add ``Environment.extract_parsed_names`` to support tracking dynamic
+    inheritance or inclusion. :issue:`1776`
+
 
 Version 3.1.2
 -------------
