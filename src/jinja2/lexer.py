@@ -23,7 +23,7 @@ _lexer_cache: t.MutableMapping[t.Tuple, "Lexer"] = LRUCache(50)  # type: ignore
 
 # static regular expressions
 whitespace_re = re.compile(r"\s+")
-newline_re = re.compile(r"(\r\n|\r|\n)")
+newline_re = re.compile(r"\r\n|\r|\n")
 string_re = re.compile(
     r"('([^'\\]*(?:\\.[^'\\]*)*)'" r'|"([^"\\]*(?:\\.[^"\\]*)*)")', re.S
 )
@@ -183,7 +183,7 @@ def _describe_token_type(token_type: str) -> str:
 def describe_token(token: "Token") -> str:
     """Returns a description of the token."""
     if token.type == TOKEN_NAME:
-        return token.value
+        return str(token.value)
 
     return _describe_token_type(token.type)
 
@@ -260,14 +260,18 @@ class Failure:
         self.message = message
         self.error_class = cls
 
-    def __call__(self, lineno: int, filename: str) -> "te.NoReturn":
-        raise self.error_class(self.message, lineno, filename)
+    def __call__(self, lineno: int, filename: t.Optional[str]) -> "te.NoReturn":
+        raise self.error_class(self.message, lineno, None, filename)
 
 
 class Token(t.NamedTuple):
     lineno: int
     type: str
-    value: str
+    """
+    ... versionchanged::3.2.0
+        changed type from `str` to `t.Any`
+    """
+    value: t.Any
 
     def __str__(self) -> str:
         return describe_token(self)
@@ -462,7 +466,11 @@ class OptionalLStrip(tuple):
 
 class _Rule(t.NamedTuple):
     pattern: t.Pattern[str]
-    tokens: t.Union[str, t.Tuple[str, ...], t.Tuple[Failure]]
+    """
+    .. versionchanged::3.2.0
+        changed `t.Tuple[Failure]` to :class:`Failure`
+    """
+    tokens: t.Union[str, t.Tuple[str, ...], Failure]
     command: t.Optional[str]
 
 
@@ -542,7 +550,7 @@ class Lexer:
                     (TOKEN_COMMENT, TOKEN_COMMENT_END),
                     "#pop",
                 ),
-                _Rule(c(r"(.)"), (Failure("Missing end of comment tag"),), None),
+                _Rule(c(r"(.)"), Failure("Missing end of comment tag"), None),
             ],
             # blocks
             TOKEN_BLOCK_BEGIN: [
@@ -576,7 +584,7 @@ class Lexer:
                     OptionalLStrip(TOKEN_DATA, TOKEN_RAW_END),  # type: ignore
                     "#pop",
                 ),
-                _Rule(c(r"(.)"), (Failure("Missing end of raw directive"),), None),
+                _Rule(c(r"(.)"), Failure("Missing end of raw directive"), None),
             ],
             # line statements
             TOKEN_LINESTATEMENT_BEGIN: [
@@ -637,8 +645,6 @@ class Lexer:
             elif token == "keyword":
                 token = value_str
             elif token == TOKEN_NAME:
-                value = value_str
-
                 if not value.isidentifier():
                     raise TemplateSyntaxError(
                         "Invalid character in identifier", lineno, name, filename
@@ -678,7 +684,7 @@ class Lexer:
             Only ``\\n``, ``\\r\\n`` and ``\\r`` are treated as line
             breaks.
         """
-        lines = newline_re.split(source)[::2]
+        lines = newline_re.split(source)
 
         if not self.keep_trailing_newline and lines[-1] == "":
             del lines[-1]
@@ -718,6 +724,10 @@ class Lexer:
                 ):
                     continue
 
+                # failure group
+                if isinstance(tokens, Failure):
+                    raise tokens(lineno, filename)
+
                 # tuples support more options
                 if isinstance(tokens, tuple):
                     groups: t.Sequence[str] = m.groups()
@@ -750,17 +760,14 @@ class Lexer:
                             if l_pos > 0 or line_starting:
                                 # If there's only whitespace between the newline and the
                                 # tag, strip it.
-                                if whitespace_re.fullmatch(text, l_pos):
+                                if text[l_pos:].isspace():
                                     groups = [text[:l_pos], *groups[1:]]
 
                     for idx, token in enumerate(tokens):
-                        # failure group
-                        if token.__class__ is Failure:
-                            raise token(lineno, filename)
                         # bygroup is a bit more complex, in that case we
                         # yield for the current token the first named
                         # group that matched
-                        elif token == "#bygroup":
+                        if token == "#bygroup":
                             for key, value in m.groupdict().items():
                                 if value is not None:
                                     yield lineno, key, value
