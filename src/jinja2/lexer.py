@@ -447,7 +447,7 @@ def get_lexer(environment: "Environment") -> "Lexer":
     return lexer
 
 
-class OptionalLStrip(tuple):
+class OptionalLStrip(tuple):  # type: ignore[type-arg]
     """A special tuple for marking a point in the state that can have
     lstrip applied.
     """
