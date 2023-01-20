@@ -23,3 +23,6 @@ max-line-length = 80
 per-file-ignores =
     # __init__ exports names
     src/jinja2/__init__.py: F401
+    # not relevant to jinja's compiler
+    src/jinja2/compiler.py: B906
+    src/jinja2/idtracking.py: B906
