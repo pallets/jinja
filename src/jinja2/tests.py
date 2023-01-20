@@ -204,7 +204,7 @@ def test_escaped(value: t.Any) -> bool:
     return hasattr(value, "__html__")
 
 
-def test_in(value: t.Any, seq: t.Container) -> bool:
+def test_in(value: t.Any, seq: t.Container[t.Any]) -> bool:
     """Check if value is in seq.
 
     .. versionadded:: 2.10

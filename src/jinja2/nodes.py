@@ -56,7 +56,7 @@ class NodeType(type):
 
     def __new__(mcs, name, bases, d):  # type: ignore
         for attr in "fields", "attributes":
-            storage = []
+            storage: t.List[t.Any] = []
             storage.extend(getattr(bases[0] if bases else object, attr, ()))
             storage.extend(d.get(attr, ()))
             assert len(bases) <= 1, "multiple inheritance not allowed"
