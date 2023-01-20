@@ -5,6 +5,9 @@ Version 3.2.0
 
 Unreleased
 
+-   Use modern packaging metadata with ``pyproject.toml`` instead of ``setup.cfg``.
+    :pr:`1793`
+
 
 Version 3.1.2
 -------------
