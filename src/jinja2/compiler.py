@@ -724,7 +724,6 @@ class CodeGenerator(NodeVisitor):
         """
         self.writeline("resolve = context.resolve_or_missing")
         self.writeline("undefined = environment.undefined")
-        self.writeline("concat = environment.concat")
         # always use the standard Undefined class for the implicit else of
         # conditional expressions
         self.writeline("cond_expr_undefined = Undefined")

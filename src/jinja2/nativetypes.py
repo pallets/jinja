@@ -3,7 +3,6 @@ from ast import literal_eval
 from ast import parse
 from itertools import chain
 from itertools import islice
-from types import GeneratorType
 
 from . import nodes
 from .compiler import CodeGenerator
@@ -32,9 +31,7 @@ def native_concat(values: t.Iterable[t.Any]) -> t.Optional[t.Any]:
         if not isinstance(raw, str):
             return raw
     else:
-        if isinstance(values, GeneratorType):
-            values = chain(head, values)
-        raw = "".join([str(v) for v in values])
+        raw = "".join([str(v) for v in chain(head, values)])
 
     try:
         return literal_eval(
@@ -89,7 +86,6 @@ class NativeEnvironment(Environment):
     """An environment that renders templates to native Python types."""
 
     code_generator_class = NativeCodeGenerator
-    concat = staticmethod(native_concat)  # type: ignore
 
 
 class NativeTemplate(Template):
@@ -105,9 +101,7 @@ class NativeTemplate(Template):
         ctx = self.new_context(dict(*args, **kwargs))
 
         try:
-            return self.environment_class.concat(  # type: ignore
-                self.root_render_func(ctx)  # type: ignore
-            )
+            return native_concat(self.root_render_func(ctx))  # type: ignore
         except Exception:
             return self.environment.handle_exception()
 
@@ -120,7 +114,7 @@ class NativeTemplate(Template):
         ctx = self.new_context(dict(*args, **kwargs))
 
         try:
-            return self.environment_class.concat(  # type: ignore
+            return native_concat(
                 [n async for n in self.root_render_func(ctx)]  # type: ignore
             )
         except Exception:

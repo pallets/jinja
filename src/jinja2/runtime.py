@@ -49,6 +49,7 @@ exported = [
     "Markup",
     "TemplateRuntimeError",
     "missing",
+    "concat",
     "escape",
     "markup_join",
     "str_join",
