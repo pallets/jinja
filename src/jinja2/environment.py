@@ -283,6 +283,8 @@ class Environment:
     #: :class:`~jinja2.compiler.CodeGenerator` for more information.
     code_generator_class: t.Type["CodeGenerator"] = CodeGenerator
 
+    concat = "".join
+
     #: the context class that is used for templates.  See
     #: :class:`~jinja2.runtime.Context` for more information.
     context_class: t.Type[Context] = Context
@@ -1296,7 +1298,7 @@ class Template:
         ctx = self.new_context(dict(*args, **kwargs))
 
         try:
-            return concat(self.root_render_func(ctx))  # type: ignore
+            return self.environment.concat(self.root_render_func(ctx))  # type: ignore
         except Exception:
             self.environment.handle_exception()
 
@@ -1317,7 +1319,9 @@ class Template:
         ctx = self.new_context(dict(*args, **kwargs))
 
         try:
-            return concat([n async for n in self.root_render_func(ctx)])  # type: ignore
+            return self.environment.concat(  # type: ignore
+                [n async for n in self.root_render_func(ctx)]  # type: ignore
+            )
         except Exception:
             return self.environment.handle_exception()
 
