@@ -136,6 +136,7 @@ def test_string_concatenation(async_native_env):
         result = await t.render_async()
         assert isinstance(result, str)
         assert result == "not bad"
+
     asyncio.run(async_render())
 
 
