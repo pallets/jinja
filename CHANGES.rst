@@ -7,6 +7,8 @@ Unreleased
 
 -   Use modern packaging metadata with ``pyproject.toml`` instead of ``setup.cfg``.
     :pr:`1793`
+-   Additional test coverage for async rendering of native type templates
+    :issue:`1806`
 
 
 Version 3.1.2
