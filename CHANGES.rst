@@ -5,9 +5,11 @@ Version 3.2.0
 
 Unreleased
 
-- Fix ``unique()`` when chained with `reject()` or `rejectattr()`
-  :issue:`1781`
+-   Use modern packaging metadata with ``pyproject.toml`` instead of ``setup.cfg``.
+    :pr:`1793`
 
+-   Fix ``unique()`` when chained with `reject()` or `rejectattr()`.
+    :issue:`1781`
 
 Version 3.1.2
 -------------

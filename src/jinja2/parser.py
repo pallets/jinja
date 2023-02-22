@@ -859,7 +859,14 @@ class Parser:
 
         return nodes.Slice(lineno=lineno, *args)
 
-    def parse_call_args(self) -> t.Tuple:
+    def parse_call_args(
+        self,
+    ) -> t.Tuple[
+        t.List[nodes.Expr],
+        t.List[nodes.Keyword],
+        t.Union[nodes.Expr, None],
+        t.Union[nodes.Expr, None],
+    ]:
         token = self.stream.expect("lparen")
         args = []
         kwargs = []
@@ -950,7 +957,7 @@ class Parser:
             next(self.stream)
             name += "." + self.stream.expect("name").value
         dyn_args = dyn_kwargs = None
-        kwargs = []
+        kwargs: t.List[nodes.Keyword] = []
         if self.stream.current.type == "lparen":
             args, kwargs, dyn_args, dyn_kwargs = self.parse_call_args()
         elif self.stream.current.type in {

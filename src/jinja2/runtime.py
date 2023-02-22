@@ -259,7 +259,10 @@ class Context:
 
     @internalcode
     def call(
-        __self, __obj: t.Callable, *args: t.Any, **kwargs: t.Any  # noqa: B902
+        __self,  # noqa: B902
+        __obj: t.Callable[..., t.Any],
+        *args: t.Any,
+        **kwargs: t.Any,
     ) -> t.Union[t.Any, "Undefined"]:
         """Call the callable with the arguments and keyword arguments
         provided but inject the active context or environment as first
