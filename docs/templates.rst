@@ -1356,11 +1356,11 @@ but exists for completeness' sake.  The following operators are supported:
     ``{{ 1 / 2 }}`` is ``{{ 0.5 }}``.
 
 ``//``
-    Divide two numbers and return the truncated integer result.
+    Divide two numbers and floor the result (round off to the greatest integer less than or equal to the division with ``/``).
     ``{{ 20 // 7 }}`` is ``2``.
 
 ``%``
-    Calculate the remainder of an integer division.  ``{{ 11 % 7 }}`` is ``4``.
+    Calculate the modulo of an integer division.  ``{{ 11 % 7 }}`` is ``4``.
 
 ``*``
     Multiply the left operand with the right one.  ``{{ 2 * 2 }}`` would
