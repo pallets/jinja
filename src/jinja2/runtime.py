@@ -792,8 +792,8 @@ class Macro:
 
 
 class Undefined:
-    """The default undefined type.  This undefined type can be printed and
-    iterated over, but every other access will raise an :exc:`UndefinedError`:
+    """The default undefined type. This can be printed, iterated, and treated as
+    a boolean. Any other operation will raise an :exc:`UndefinedError`.
 
     >>> foo = Undefined(name='foo')
     >>> str(foo)
