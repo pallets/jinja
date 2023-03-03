@@ -202,7 +202,7 @@ option can also be set to strip tabs and spaces from the beginning of a
 line to the start of a block. (Nothing will be stripped if there are
 other characters before the start of the block.)
 
-With both `trim_blocks` and `lstrip_blocks` enabled, you can put block tags
+With both `trim_blocks` and `lstrip_blocks` disabled, you can put block tags
 on their own lines, and the entire block line will be removed when
 rendered, preserving the whitespace of the contents.  For example,
 without the `trim_blocks` and `lstrip_blocks` options, this template::
