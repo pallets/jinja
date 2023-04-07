@@ -39,7 +39,7 @@ def represent_groups(groups):
         if len(group) > 2:
             yield f"{group[0]}-{group[-1]}"
         else:
-            yield from group
+            yield group
 
 
 def main():
