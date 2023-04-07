@@ -7,6 +7,7 @@ Unreleased
 
 -   Use modern packaging metadata with ``pyproject.toml`` instead of ``setup.cfg``.
     :pr:`1793`
+-   Refactor the ``generate_identifier_pattern.py`` script. :issue:`1654`
 
 
 Version 3.1.2
