@@ -1,4 +1,3 @@
-import itertools
 import os
 import re
 import sys
@@ -16,48 +15,38 @@ def get_characters():
 
     _identifier: https://docs.python.org/3/reference/lexical_analysis.html#identifiers
     """
-    for cp in range(sys.maxunicode + 1):
-        s = chr(cp)
-
-        if ("a" + s).isidentifier() and not re.match(r"\w", s):
-            yield s
-
-
-def collapse_ranges(data):
-    """Given a sorted list of unique characters, generate ranges representing
-    sequential code points.
-
-    Source: https://stackoverflow.com/a/4629241/400617
-    """
-    for _, b in itertools.groupby(enumerate(data), lambda x: ord(x[1]) - x[0]):
-        b = list(b)
-        yield b[0][1], b[-1][1]
+    for codepage in range(sys.maxunicode + 1):
+        character = chr(codepage)
+        if ("a" + character).isidentifier() and not re.match(r"\w", character):
+            yield character
 
 
-def build_pattern(ranges):
-    """Output the regex pattern for ranges of characters.
-
-    One and two character ranges output the individual characters.
-    """
-    out = []
-
-    for a, b in ranges:
-        if a == b:  # single char
-            out.append(a)
-        elif ord(b) - ord(a) == 1:  # two chars, range is redundant
-            out.append(a)
-            out.append(b)
+def grouped_characters(characters):
+    """Emit groups of contiguous (adjacent) Unicode characters"""
+    character_group = next(characters)
+    for character in characters:
+        prev_character = chr(ord(character) - 1)
+        if character_group.endswith(prev_character):
+            character_group += character
         else:
-            out.append(f"{a}-{b}")
+            yield character_group
+            character_group = character
 
-    return "".join(out)
+
+def represent_groups(groups):
+    """Provide regex-compatible string representations of character groups"""
+    for group in groups:
+        if len(group) > 2:
+            yield f"{group[0]}-{group[-1]}"
+        else:
+            yield from group
 
 
 def main():
     """Build the regex pattern and write it to
     ``jinja2/_identifier.py``.
     """
-    pattern = build_pattern(collapse_ranges(get_characters()))
+    pattern = "".join(represent_groups(grouped_characters(get_characters())))
     filename = os.path.abspath(
         os.path.join(os.path.dirname(__file__), "..", "src", "jinja2", "_identifier.py")
     )
