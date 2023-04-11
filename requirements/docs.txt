@@ -27,7 +27,7 @@ packaging==22.0
     # via
     #   pallets-sphinx-themes
     #   sphinx
-pallets-sphinx-themes==2.0.3
+Pallets-Sphinx-Themes @ git+https://github.com/pallets/pallets-sphinx-themes.git@f8b91b7b74ab5fcd7feac8fb70694bbb1c7b5be0
     # via -r requirements/docs.in
 pygments==2.13.0
     # via sphinx
