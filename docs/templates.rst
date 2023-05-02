@@ -1369,7 +1369,10 @@ but exists for completeness' sake.  The following operators are supported:
 
 ``**``
     Raise the left operand to the power of the right operand.
-    ``{{ 2**3 }}`` would return ``8``.
+    ``{{ 2**3 }}`` would return ``8``
+
+    .. versionchanged:: 3.2
+        From 3.2, this operator has the same evaluation order as in Python. ``{{ 2 ** 3 ** 2 }}`` will be evaluated as ``2 ** (3 ** 2)``.
 
     Unlike Python, chained pow is evaluated left to right.
     ``{{ 3**3**3 }}`` is evaluated as ``(3**3)**3`` in Jinja, but would

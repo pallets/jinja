@@ -1,5 +1,10 @@
 .. currentmodule:: jinja2
 
+Unreleased
+
+- Breaking change. The evaluation order of an exponent expression changed. Now it is more consistent with how it's going in pure python. :issue:`1720` :issue:`1722`
+
+
 Version 3.1.2
 -------------
 

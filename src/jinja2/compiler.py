@@ -68,8 +68,9 @@ def _make_binop(op: str) -> t.Callable[["CodeGenerator", nodes.BinExpr, "Frame"]
             self.write(", ")
             self.visit(node.right, frame)
         else:
-            self.write("(")
+            self.write("((")
             self.visit(node.left, frame)
+            self.write(")")
             self.write(f" {op} ")
             self.visit(node.right, frame)
 
