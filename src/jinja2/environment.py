@@ -291,6 +291,8 @@ class Environment:
 
     template_class: t.Type["Template"]
 
+    parser_class: t.Type[Parser] = Parser
+
     def __init__(
         self,
         block_start_string: str = BLOCK_START_STRING,
@@ -616,7 +618,7 @@ class Environment:
         self, source: str, name: t.Optional[str], filename: t.Optional[str]
     ) -> nodes.Template:
         """Internal parsing function used by `parse` and `compile`."""
-        return Parser(self, source, name, filename).parse()
+        return self.parser_class(self, source, name, filename).parse()
 
     def lex(
         self,
@@ -799,7 +801,7 @@ class Environment:
 
         .. versionadded:: 2.1
         """
-        parser = Parser(self, source, state="variable")
+        parser = self.parser_class(self, source, state="variable")
         try:
             expr = parser.parse_expression()
             if not parser.stream.eos:

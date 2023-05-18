@@ -48,7 +48,7 @@ class Parser:
     extensions and can be used to parse expressions or statements.
     """
 
-    statement_keywords: frozenset[str] = _statement_keywords
+    statement_keywords: t.FrozenSet[str] = _statement_keywords
 
     def __init__(
         self,
