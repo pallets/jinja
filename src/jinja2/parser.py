@@ -48,6 +48,8 @@ class Parser:
     extensions and can be used to parse expressions or statements.
     """
 
+    statement_keywords: frozenset[str] = _statement_keywords
+
     def __init__(
         self,
         environment: "Environment",
@@ -70,6 +72,12 @@ class Parser:
         self._last_identifier = 0
         self._tag_stack: t.List[str] = []
         self._end_token_stack: t.List[t.Tuple[str, ...]] = []
+        unknown_statement_keywords = self.statement_keywords - _statement_keywords
+        if len(unknown_statement_keywords) > 0:
+            raise ValueError(
+                "Invalid statement keywords: "
+                f"{', '.join(sorted(unknown_statement_keywords))}"
+            )
 
     def fail(
         self,
@@ -170,7 +178,7 @@ class Parser:
         self._tag_stack.append(token.value)
         pop_tag = True
         try:
-            if token.value in _statement_keywords:
+            if token.value in self.statement_keywords:
                 f = getattr(self, f"parse_{self.stream.current.value}")
                 return f()  # type: ignore
             if token.value == "call":
