@@ -5,6 +5,7 @@ from jinja2 import Environment
 from jinja2 import TemplateRuntimeError
 from jinja2 import TemplateSyntaxError
 from jinja2 import UndefinedError
+from jinja2.parser import Parser
 
 
 @pytest.fixture
@@ -593,3 +594,59 @@ class TestWith:
         """
         )
         assert tmpl.render(b=3, e=4) == "1|2|3|4|5"
+
+
+class TestParser:
+    def test_restricted_statement_keywords(self):
+        # statement keywords without `if`
+        restricted_statement_keywords = {
+            "for",
+            "block",
+            "extends",
+            "print",
+            "macro",
+            "include",
+            "from",
+            "import",
+            "set",
+            "with",
+            "autoescape",
+        }
+
+        class CustomParser(Parser):
+            statement_keywords = restricted_statement_keywords
+
+        class CustomEnvironment(Environment):
+            parser_class = CustomParser
+
+        env = CustomEnvironment()
+        with pytest.raises(TemplateSyntaxError, match="Encountered unknown tag 'if'."):
+            env.from_string("""{% if true %}...{% endif %}""")
+
+    def test_invalid_statement_keywords(self):
+        # statement keywords `nonexistent` is invalid
+        new_statement_keywords = {
+            "for",
+            "if",
+            "block",
+            "extends",
+            "print",
+            "macro",
+            "include",
+            "from",
+            "import",
+            "set",
+            "with",
+            "autoescape",
+            "nonexistent",
+        }
+
+        class CustomParser(Parser):
+            statement_keywords = new_statement_keywords
+
+        class CustomEnvironment(Environment):
+            parser_class = CustomParser
+
+        env = CustomEnvironment()
+        with pytest.raises(ValueError, match="Invalid statement keywords: nonexistent"):
+            env.from_string("")
