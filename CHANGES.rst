@@ -7,6 +7,8 @@ Unreleased
 
 -   Use modern packaging metadata with ``pyproject.toml`` instead of ``setup.cfg``.
     :pr:`1793`
+-   Make ``Parser`` statement keywords configurable and make ``Parser`` configurable
+    for ``Environment``. :issue:`1850`
 
 
 Version 3.1.2

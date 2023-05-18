@@ -138,6 +138,15 @@ useful if you want to dig deeper into Jinja or :ref:`develop extensions
        template variables are handled.  For details, see
        :class:`~jinja2.runtime.Context`.
 
+    .. attribute:: parser_class
+
+       The Parser used internally.  This should not be changed
+       in most cases, unless you need to modify internals of how
+       templates are parsed.  For details, see
+       :class:`~jinja2.parser.Parser`.
+
+       .. versionadded:: 3.2
+
     .. automethod:: overlay([options])
 
     .. method:: undefined([hint, obj, name, exc])
