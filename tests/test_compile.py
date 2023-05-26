@@ -26,3 +26,15 @@ def test_import_as_with_context_deterministic(tmp_path):
     expect = [f"'bar{i}': " for i in range(10)]
     found = re.findall(r"'bar\d': ", content)[:10]
     assert found == expect
+
+
+def test_import_as_with_curly_braces_in_template_name():
+    env = Environment(
+        loader=DictLoader(
+            {
+                "template_with_{}": "{% import 'macro' as m %}",
+                "macro": "{% macro m() %}{% endmacro %}",
+            }
+        )
+    )
+    env.get_template("template_with_{}")

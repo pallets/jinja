@@ -7,6 +7,8 @@ Unreleased
 
 -   Fix compiler error when checking if required blocks in parent templates are
     empty. :pr:`1858`
+-   Fix f-string syntax error in code generation when importing a macro in a
+    template whose name contains curly braces. :issue: 1792
 
 
 Version 3.1.2
