@@ -8,6 +8,9 @@ Unreleased
 -   The sandboxed environment handles indirect calls to ``str.format``, such as
     by passing a stored reference to a filter that calls its argument.
     :ghsa:`q2x7-8rv6-6q7h`
+-   Escape template name before formatting it into error messages, to avoid
+    issues with names that contain f-string syntax.
+    :issue:`1792`, :ghsa:`gmj6-6f8f-6699`
 -   Sandbox does not allow ``clear`` and ``pop`` on known mutable sequence
     types. :issue:`2032`
 -   Calling sync ``render`` for an async template uses ``asyncio.run``.

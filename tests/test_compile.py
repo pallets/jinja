@@ -1,6 +1,9 @@
 import os
 import re
 
+import pytest
+
+from jinja2 import UndefinedError
 from jinja2.environment import Environment
 from jinja2.loaders import DictLoader
 
@@ -87,3 +90,19 @@ def test_block_set_vars_unpacking_deterministic(tmp_path):
         content,
     )[:10]
     assert found == expect
+
+
+def test_undefined_import_curly_name():
+    env = Environment(
+        loader=DictLoader(
+            {
+                "{bad}": "{% from 'macro' import m %}{{ m() }}",
+                "macro": "",
+            }
+        )
+    )
+
+    # Must not raise `NameError: 'bad' is not defined`, as that would indicate
+    # that `{bad}` is being interpreted as an f-string. It must be escaped.
+    with pytest.raises(UndefinedError):
+        env.get_template("{bad}").render()
