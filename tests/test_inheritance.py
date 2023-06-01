@@ -316,7 +316,6 @@ class TestInheritance:
         with required_block_check:
             t.render(t="if")
 
-
     def test_required_with_scope(self, env):
         env = Environment(
             loader=DictLoader(

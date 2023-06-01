@@ -313,13 +313,10 @@ class Parser:
         # with whitespace data
         if node.required:
             for body_node in node.body:
-                if (
-                    not isinstance(body_node, nodes.Output)
-                    or any(
-                        not isinstance(output_node, nodes.TemplateData)
-                        or not output_node.data.isspace()
-                        for output_node in body_node.nodes
-                    )
+                if not isinstance(body_node, nodes.Output) or any(
+                    not isinstance(output_node, nodes.TemplateData)
+                    or not output_node.data.isspace()
+                    for output_node in body_node.nodes
                 ):
                     self.fail("Required blocks can only contain comments or whitespace")
 
