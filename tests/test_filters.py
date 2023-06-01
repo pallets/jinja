@@ -870,4 +870,6 @@ class TestFilter:
 
         with pytest.raises(TemplateRuntimeError, match="No filter named 'f'"):
             t1.render(x=42)
+
+        with pytest.raises(TemplateRuntimeError, match="No filter named 'f'"):
             t2.render(x=42)

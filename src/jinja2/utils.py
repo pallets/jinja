@@ -182,7 +182,7 @@ def object_type_repr(obj: t.Any) -> str:
 
 def pformat(obj: t.Any) -> str:
     """Format an object using :func:`pprint.pformat`."""
-    from pprint import pformat  # type: ignore
+    from pprint import pformat
 
     return pformat(obj)
 

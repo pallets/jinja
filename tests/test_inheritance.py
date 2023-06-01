@@ -355,8 +355,11 @@ class TestInheritance:
             )
         )
         tmpl = env.get_template("child")
+
         with pytest.raises(TemplateSyntaxError):
             tmpl.render(default="default1", seq=list(range(3)))
+
+        with pytest.raises(TemplateSyntaxError):
             tmpl.render(default="default2", seq=list(range(3)))
 
 

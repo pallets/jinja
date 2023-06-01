@@ -701,7 +701,7 @@ class Environment:
 
         .. versionadded:: 2.5
         """
-        return compile(source, filename, "exec")  # type: ignore
+        return compile(source, filename, "exec")
 
     @typing.overload
     def compile(  # type: ignore
