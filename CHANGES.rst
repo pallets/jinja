@@ -5,6 +5,9 @@ Version 3.1.3
 
 Unreleased
 
+-   Fix compiler error when checking if required blocks in parent templates are
+    empty. :pr:`1858`
+
 
 Version 3.1.2
 -------------
