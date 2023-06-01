@@ -4,7 +4,6 @@ description = "A very fast and expressive template engine."
 readme = "README.rst"
 license = {text = "BSD-3-Clause"}
 maintainers = [{name = "Pallets", email = "contact@palletsprojects.com"}]
-authors = [{name = "Armin Ronacher", email = "armin.ronacher@active-4.com"}]
 classifiers = [
     "Development Status :: 5 - Production/Stable",
     "Environment :: Web Environment",
@@ -25,7 +24,6 @@ Documentation = "https://jinja.palletsprojects.com/"
 Changes = "https://jinja.palletsprojects.com/changes/"
 "Source Code" = "https://github.com/pallets/jinja/"
 "Issue Tracker" = "https://github.com/pallets/jinja/issues/"
-Twitter = "https://twitter.com/PalletsTeam"
 Chat = "https://discord.gg/pallets"
 
 [project.optional-dependencies]
@@ -42,7 +40,11 @@ version = {attr = "jinja2.__version__"}
 
 [tool.pytest.ini_options]
 testpaths = ["tests"]
-filterwarnings = ["error"]
+filterwarnings = [
+    "error",
+    # change in Python 3.12 beta causes warning from inside pytest
+    "ignore:ast:DeprecationWarning",
+]
 
 [tool.coverage.run]
 branch = true

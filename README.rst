@@ -73,6 +73,4 @@ Links
 -   PyPI Releases: https://pypi.org/project/Jinja2/
 -   Source Code: https://github.com/pallets/jinja/
 -   Issue Tracker: https://github.com/pallets/jinja/issues/
--   Website: https://palletsprojects.com/p/jinja/
--   Twitter: https://twitter.com/PalletsTeam
 -   Chat: https://discord.gg/pallets
