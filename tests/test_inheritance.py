@@ -287,26 +287,34 @@ class TestInheritance:
         env = Environment(
             loader=DictLoader(
                 {
-                    "default": "{% block x required %}data {# #}{% endblock %}",
-                    "default1": "{% block x required %}{% block y %}"
-                    "{% endblock %}  {% endblock %}",
-                    "default2": "{% block x required %}{% if true %}"
-                    "{% endif %}  {% endblock %}",
-                    "level1": "{% if default %}{% extends default %}"
-                    "{% else %}{% extends 'default' %}{% endif %}"
-                    "{%- block x %}CHILD{% endblock %}",
+                    "empty": "{% block x required %}{% endblock %}",
+                    "blank": "{% block x required %} {# c #}{% endblock %}",
+                    "text": "{% block x required %}data {# c #}{% endblock %}",
+                    "block": "{% block x required %}{% block y %}"
+                    "{% endblock %}{% endblock %}",
+                    "if": "{% block x required %}{% if true %}"
+                    "{% endif %}{% endblock %}",
+                    "top": "{% extends t %}{% block x %}CHILD{% endblock %}",
                 }
             )
         )
-        t = env.get_template("level1")
+        t = env.get_template("top")
+        assert t.render(t="empty") == "CHILD"
+        assert t.render(t="blank") == "CHILD"
 
-        with pytest.raises(
+        required_block_check = pytest.raises(
             TemplateSyntaxError,
             match="Required blocks can only contain comments or whitespace",
-        ):
-            assert t.render(default="default")
-            assert t.render(default="default2")
-            assert t.render(default="default3")
+        )
+
+        with required_block_check:
+            t.render(t="text")
+
+        with required_block_check:
+            t.render(t="block")
+
+        with required_block_check:
+            t.render(t="if")
 
     def test_required_with_scope(self, env):
         env = Environment(
@@ -347,8 +355,11 @@ class TestInheritance:
             )
         )
         tmpl = env.get_template("child")
+
         with pytest.raises(TemplateSyntaxError):
             tmpl.render(default="default1", seq=list(range(3)))
+
+        with pytest.raises(TemplateSyntaxError):
             tmpl.render(default="default2", seq=list(range(3)))
 
 
