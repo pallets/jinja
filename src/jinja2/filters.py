@@ -1522,7 +1522,7 @@ def sync_do_select(
     .. sourcecode:: jinja
 
         {{ numbers|select("odd") }}
-        {{ numbers|select("odd") }}
+        {{ numbers|select("even") }}
         {{ numbers|select("divisibleby", 3) }}
         {{ numbers|select("lessthan", 42) }}
         {{ strings|select("equalto", "mystring") }}
@@ -1602,6 +1602,7 @@ def sync_do_selectattr(
 
         {{ users|selectattr("is_active") }}
         {{ users|selectattr("email", "none") }}
+        {{ users|selectattr("email", "eq", "foo@bar.invalid") }}
 
     Similar to a generator comprehension such as:
 
@@ -1609,6 +1610,7 @@ def sync_do_selectattr(
 
         (u for user in users if user.is_active)
         (u for user in users if test_none(user.email))
+        (u for user in users if user.email == "foo@bar.invalid")
 
     .. versionadded:: 2.7
     """
@@ -1640,6 +1642,7 @@ def sync_do_rejectattr(
 
         {{ users|rejectattr("is_active") }}
         {{ users|rejectattr("email", "none") }}
+        {{ users|rejectattr("email", "eq", "foo@bar.invalid") }}
 
     Similar to a generator comprehension such as:
 
@@ -1647,6 +1650,7 @@ def sync_do_rejectattr(
 
         (u for user in users if not user.is_active)
         (u for user in users if not test_none(user.email))
+        (u for user in users if user.email != "foo@bar.invalid")
 
     .. versionadded:: 2.7
     """
