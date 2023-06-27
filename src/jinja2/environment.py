@@ -920,7 +920,7 @@ class Environment:
                 )
 
             def filter_func(x: str) -> bool:
-                return "." in x and x.rsplit(".", 1)[1] in extensions  # type: ignore
+                return "." in x and x.rsplit(".", 1)[1] in extensions
 
         if filter_func is not None:
             names = [name for name in names if filter_func(name)]
