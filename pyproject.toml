@@ -2,7 +2,7 @@
 name = "Jinja2"
 description = "A very fast and expressive template engine."
 readme = "README.rst"
-license = {text = "BSD-3-Clause"}
+license = {file = "LICENSE.rst"}
 maintainers = [{name = "Pallets", email = "contact@palletsprojects.com"}]
 classifiers = [
     "Development Status :: 5 - Production/Stable",
@@ -32,11 +32,24 @@ i18n = ["Babel>=2.7"]
 [project.entry-points."babel.extractors"]
 
 [build-system]
-requires = ["setuptools"]
-build-backend = "setuptools.build_meta"
+requires = ["flit_core<4"]
+build-backend = "flit_core.buildapi"
 
-[tool.setuptools.dynamic]
-version = {attr = "jinja2.__version__"}
+[tool.flit.module]
+name = "jinja2"
+
+[tool.flit.sdist]
+include = [
+    "docs/",
+    "examples/",
+    "requirements/",
+    "tests/",
+    "CHANGES.rst",
+    "tox.ini",
+]
+exclude = [
+    "docs/_build/",
+]
 
 [tool.pytest.ini_options]
 testpaths = ["tests"]
