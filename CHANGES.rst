@@ -7,6 +7,7 @@ Unreleased
 
 -   Use modern packaging metadata with ``pyproject.toml`` instead of ``setup.cfg``.
     :pr:`1793`
+-   Use ``flit_core`` instead of ``setuptools`` as build backend.
 -   Additional test coverage for async rendering of native type templates
     :issue:`1806`
 
