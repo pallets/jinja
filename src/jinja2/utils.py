@@ -453,7 +453,7 @@ class LRUCache:
     def __getnewargs__(self) -> t.Tuple:
         return (self.capacity,)
 
-    def copy(self) -> "LRUCache":
+    def copy(self) -> "te.Self":
         """Return a shallow copy of the instance."""
         rv = self.__class__(self.capacity)
         rv._mapping.update(self._mapping)
