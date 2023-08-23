@@ -121,7 +121,7 @@ def load_extensions(
     return result
 
 
-def _environment_config_check(environment: "Environment") -> "Environment":
+def _environment_config_check(environment: _env_bound) -> _env_bound:
     """Perform a sanity check on the environment."""
     assert issubclass(
         environment.undefined, Undefined
@@ -405,7 +405,7 @@ class Environment:
         auto_reload: bool = missing,
         bytecode_cache: t.Optional["BytecodeCache"] = missing,
         enable_async: bool = False,
-    ) -> "Environment":
+    ) -> "te.Self":
         """Create a new overlay environment that shares all the data with the
         current environment except for cache and the overridden attributes.
         Extensions cannot be removed for an overlayed environment.  An overlayed
