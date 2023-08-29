@@ -1784,7 +1784,7 @@ It's possible to translate strings in expressions with these functions:
 
 -   ``_(message)``: Alias for ``gettext``.
 -   ``gettext(message)``: Translate a message.
--   ``ngettext(singluar, plural, n)``: Translate a singular or plural
+-   ``ngettext(singular, plural, n)``: Translate a singular or plural
     message based on a count variable.
 -   ``pgettext(context, message)``: Like ``gettext()``, but picks the
     translation based on the context string.
