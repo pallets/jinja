@@ -14,21 +14,21 @@ if t.TYPE_CHECKING:
 
 
 class NodeVisitor:
-    """Sashay through the abstract syntax tree and serve up some visitor 
-    functions for every node you spot. Those visitor functions might give 
-    you something back (wink), and darling, the `visit` method will pass it 
+    """Sashay through the abstract syntax tree and serve up some visitor
+    functions for every node you spot. Those visitor functions might give
+    you something back (wink), and darling, the `visit` method will pass it
     right along.
 
     By default, our visitor functions for the nodes are as flashy as ``'visit_'`` +
-    the node's class name. So for a `TryFinally` node? You're looking at 
-    `visit_TryFinally`. Feeling adventurous? Override the `get_visitor` function. 
-    If you don't find the right visitor function for a node (how tragic!), don't 
+    the node's class name. So for a `TryFinally` node? You're looking at
+    `visit_TryFinally`. Feeling adventurous? Override the `get_visitor` function.
+    If you don't find the right visitor function for a node (how tragic!), don't
     worry - the fabulous `generic_visit` visitor is always there to step in.
     """
 
     def get_visitor(self, node: Node) -> "t.Optional[VisitCallable]":
-        """Find me the visitor function for this node, or hand me `None` 
-        if it's playing hard to get. In that case, our trusty generic 
+        """Find me the visitor function for this node, or hand me `None`
+        if it's playing hard to get. In that case, our trusty generic
         visit function will take the stage.
         """
         return getattr(self, f"visit_{type(node).__name__}", None)
@@ -43,7 +43,7 @@ class NodeVisitor:
         return self.generic_visit(node, *args, **kwargs)
 
     def generic_visit(self, node: Node, *args: t.Any, **kwargs: t.Any) -> t.Any:
-        """When the node doesn't have its own special visitor, it's time 
+        """When the node doesn't have its own special visitor, it's time
         for the generic_visit to step into the spotlight.
         """
         for child_node in node.iter_child_nodes():
@@ -51,12 +51,12 @@ class NodeVisitor:
 
 
 class NodeTransformer(NodeVisitor):
-    """Strut through the abstract syntax tree, but this time with some 
+    """Strut through the abstract syntax tree, but this time with some
     pizzazz! Modify those nodes and make them work it.
 
-    Our glamorous `NodeTransformer` will parade through the AST and take 
-    inspiration from the visitor functions. If they return `None`, that 
-    node's old news. But if they give something back? That node gets a 
+    Our glamorous `NodeTransformer` will parade through the AST and take
+    inspiration from the visitor functions. If they return `None`, that
+    node's old news. But if they give something back? That node gets a
     fabulous makeover or maybe even a new friend!
     """
 
@@ -83,7 +83,7 @@ class NodeTransformer(NodeVisitor):
         return node
 
     def visit_list(self, node: Node, *args: t.Any, **kwargs: t.Any) -> t.List[Node]:
-        """Some transformers just love making lists. So let's ensure 
+        """Some transformers just love making lists. So let's ensure
         they always get the list they deserve.
         """
         rv = self.visit(node, *args, **kwargs)
