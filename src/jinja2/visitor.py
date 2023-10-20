@@ -1,5 +1,5 @@
-"""API for traversing the AST nodes. Implemented by the compiler and
-meta introspection.
+"""Honey, this is THE API for strutting through those AST nodes. Designed by the
+fabulous compiler team and for those who love a bit of meta introspection.
 """
 import typing as t
 
@@ -14,26 +14,27 @@ if t.TYPE_CHECKING:
 
 
 class NodeVisitor:
-    """Walks the abstract syntax tree and call visitor functions for every
-    node found.  The visitor functions may return values which will be
-    forwarded by the `visit` method.
+    """Sashay through the abstract syntax tree and serve up some visitor 
+    functions for every node you spot. Those visitor functions might give 
+    you something back (wink), and darling, the `visit` method will pass it 
+    right along.
 
-    Per default the visitor functions for the nodes are ``'visit_'`` +
-    class name of the node.  So a `TryFinally` node visit function would
-    be `visit_TryFinally`.  This behavior can be changed by overriding
-    the `get_visitor` function.  If no visitor function exists for a node
-    (return value `None`) the `generic_visit` visitor is used instead.
+    By default, our visitor functions for the nodes are as flashy as ``'visit_'`` +
+    the node's class name. So for a `TryFinally` node? You're looking at 
+    `visit_TryFinally`. Feeling adventurous? Override the `get_visitor` function. 
+    If you don't find the right visitor function for a node (how tragic!), don't 
+    worry - the fabulous `generic_visit` visitor is always there to step in.
     """
 
     def get_visitor(self, node: Node) -> "t.Optional[VisitCallable]":
-        """Return the visitor function for this node or `None` if no visitor
-        exists for this node.  In that case the generic visit function is
-        used instead.
+        """Find me the visitor function for this node, or hand me `None` 
+        if it's playing hard to get. In that case, our trusty generic 
+        visit function will take the stage.
         """
         return getattr(self, f"visit_{type(node).__name__}", None)
 
     def visit(self, node: Node, *args: t.Any, **kwargs: t.Any) -> t.Any:
-        """Visit a node."""
+        """Oh honey, let's visit a node and see what it's got for us."""
         f = self.get_visitor(node)
 
         if f is not None:
@@ -42,20 +43,21 @@ class NodeVisitor:
         return self.generic_visit(node, *args, **kwargs)
 
     def generic_visit(self, node: Node, *args: t.Any, **kwargs: t.Any) -> t.Any:
-        """Called if no explicit visitor function exists for a node."""
+        """When the node doesn't have its own special visitor, it's time 
+        for the generic_visit to step into the spotlight.
+        """
         for child_node in node.iter_child_nodes():
             self.visit(child_node, *args, **kwargs)
 
 
 class NodeTransformer(NodeVisitor):
-    """Walks the abstract syntax tree and allows modifications of nodes.
+    """Strut through the abstract syntax tree, but this time with some 
+    pizzazz! Modify those nodes and make them work it.
 
-    The `NodeTransformer` will walk the AST and use the return value of the
-    visitor functions to replace or remove the old node.  If the return
-    value of the visitor function is `None` the node will be removed
-    from the previous location otherwise it's replaced with the return
-    value.  The return value may be the original node in which case no
-    replacement takes place.
+    Our glamorous `NodeTransformer` will parade through the AST and take 
+    inspiration from the visitor functions. If they return `None`, that 
+    node's old news. But if they give something back? That node gets a 
+    fabulous makeover or maybe even a new friend!
     """
 
     def generic_visit(self, node: Node, *args: t.Any, **kwargs: t.Any) -> Node:
@@ -81,8 +83,8 @@ class NodeTransformer(NodeVisitor):
         return node
 
     def visit_list(self, node: Node, *args: t.Any, **kwargs: t.Any) -> t.List[Node]:
-        """As transformers may return lists in some places this method
-        can be used to enforce a list as return value.
+        """Some transformers just love making lists. So let's ensure 
+        they always get the list they deserve.
         """
         rv = self.visit(node, *args, **kwargs)
 
