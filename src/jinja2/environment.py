@@ -1493,7 +1493,7 @@ class Template:
         """If this variable is `False` there is a newer version available."""
         if self._uptodate is None:
             return True
-        return self._uptodate()
+        return self._uptodate() if callable(self._uptodate) else self._uptodate
 
     @property
     def debug_info(self) -> t.List[t.Tuple[int, int]]:

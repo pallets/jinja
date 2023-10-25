@@ -11,6 +11,28 @@ from jinja2.utils import pass_context
 
 
 class TestCorner:
+    def test_uptodate_loader(self, env):
+        class UpToDateDictLoader(DictLoader):
+            def get_source(self, environment: "Environment", template: str):
+                contents, path, uptodate = super().get_source(environment, template)
+                return contents, path, True
+
+        env = Environment(
+            loader=UpToDateDictLoader(
+                {
+                    "a.html": """
+                        {%- set foo = 'bar' -%}
+                        {% include 'x.html' -%}{% include 'x.html' -%}
+                    """,
+                    "x.html": """{{ foo }}|{{ test }}""",
+                }
+            )
+        )
+
+        a = env.get_template("a.html")
+
+        assert a.render(test="x").strip() == "bar|xbar|x"
+
     def test_assigned_scoping(self, env):
         t = env.from_string(
             """
