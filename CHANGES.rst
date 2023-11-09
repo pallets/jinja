@@ -1,5 +1,19 @@
 .. currentmodule:: jinja2
 
+Unreleased
+
+-   Fix compiler. As compiled jinja blocks does not have info about
+    parent template scopes like autoescape, due to which it is ignoring those inherited
+    properties. So we made blocks compilation volatile, so that it will figure correct
+    property during rendering time. :issue:`1898`
+
+-   Fix NodeParser error. Ideally child templates body should contain blocks as first
+    child. because only blocks in child template are going to be replaced with
+    blocks in main template. So each node in child template body is inspected to
+    identify first block node and moving it into the template body.
+    These blocks will seamlessly placed in the main template body. :issue:`1898`
+
+
 Version 3.1.3
 -------------
 

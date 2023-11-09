@@ -920,6 +920,9 @@ class CodeGenerator(NodeVisitor):
             # interesting issues with identifier tracking.
             block_frame = Frame(eval_ctx)
             block_frame.block_frame = True
+            # during compile time we are not aware of parent template configuration,
+            # so it's better to decide child blocks configuration at runtime.
+            block_frame.eval_ctx.volatile = True
             undeclared = find_undeclared(block.body, ("self", "super"))
             if "self" in undeclared:
                 ref = block_frame.symbols.declare_parameter("self")
@@ -1406,7 +1409,7 @@ class CodeGenerator(NodeVisitor):
 
             if pass_arg is None:
 
-                def finalize(value: t.Any) -> t.Any:
+                def finalize(value: t.Any) -> t.Any:  # noqa: F811
                     return default(env_finalize(value))
 
             else:
@@ -1414,7 +1417,7 @@ class CodeGenerator(NodeVisitor):
 
                 if pass_arg == "environment":
 
-                    def finalize(value: t.Any) -> t.Any:
+                    def finalize(value: t.Any) -> t.Any:  # noqa: F811
                         return default(env_finalize(self.environment, value))
 
         self._finalize = self._FinalizeInfo(finalize, src)
