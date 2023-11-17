@@ -663,7 +663,7 @@ Here's a filter that formats datetime objects:
     def datetime_format(value, format="%H:%M %d-%m-%y"):
         return value.strftime(format)
 
-    environment.filters["datetime_format"] = datetime_format
+    environment.filters["datetimeformat"] = datetime_format
 
 Now it can be used in templates:
 
