@@ -666,8 +666,8 @@ Now it can be used in templates:
 
 .. sourcecode:: jinja
 
-    {{ article.pub_date|datetimeformat }}
-    {{ article.pub_date|datetimeformat("%B %Y") }}
+    {{ article.pub_date|datetime_format }}
+    {{ article.pub_date|datetime_format("%B %Y") }}
 
 Some decorators are available to tell Jinja to pass extra information to
 the filter. The object is passed as the first argument, making the value
