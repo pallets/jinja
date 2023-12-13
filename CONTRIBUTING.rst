@@ -92,7 +92,7 @@ First time setup
 
     .. code-block:: text
 
-        $ git remote add fork https://github.com/{username}/jinja
+        $ git remote add fork git@github.com:{username}/jinja.git
 
 -   Create a virtualenv.
 
