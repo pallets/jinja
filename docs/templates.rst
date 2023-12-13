@@ -1084,9 +1084,10 @@ Block Assignments
 
 Starting with Jinja 2.8, it's possible to also use block assignments to
 capture the contents of a block into a variable name.  This can be useful
-in some situations as an alternative for macros.  In that case, instead of
-using an equals sign and a value, you just write the variable name and then
-everything until ``{% endset %}`` is captured.
+in some situations as an alternative for macros. It can also be used to create
+multiline strings instead of triple quotes (''' and """), which Jinja does not
+support. In that case, instead of using an equals sign and a value, you just
+write the variable name and then everything until ``{% endset %}`` is captured.
 
 Example::
 
