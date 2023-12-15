@@ -8,6 +8,8 @@ Unreleased
 -   Fix compiler error when checking if required blocks in parent templates are
     empty. :pr:`1858`
 -   ``xmlattr`` filter does not allow keys with spaces. GHSA-h5c8-rqwp-cp95
+-   Make error messages stemming from invalid nesting of ``{% trans %}`` blocks
+    more helpful. :pr:`1916`
 
 
 Version 3.1.2
