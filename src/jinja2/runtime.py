@@ -1053,6 +1053,7 @@ del (
     StrictUndefined.__slots__,
 )
 
+
 class NeverUndefined(StrictUndefined):
     def __init__(self, *args, **kwargs):
         # ARGS: ("parameter 'myvar2' was not provided",)
