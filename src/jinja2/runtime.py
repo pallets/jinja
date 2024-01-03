@@ -1052,3 +1052,19 @@ del (
     DebugUndefined.__slots__,
     StrictUndefined.__slots__,
 )
+
+class NeverUndefined(StrictUndefined):
+    def __init__(self, *args, **kwargs):
+        # ARGS: ("parameter 'myvar2' was not provided",)
+        # KWARGS: {'name': 'myvar2'}
+        if len(args) == 1:
+            info = args[0]
+        elif "name" in kwargs.keys():
+            info = f"Undefined variable '{kwargs['name']}"
+        else:
+            infoList = ["Not allowing any undefined variable."]
+            infoList.append(f"ARGS: {args}")
+            infoList.append(f"KWARGS: {kwargs}")
+            info = "\n".join(infoList)
+
+        raise Exception(info)
