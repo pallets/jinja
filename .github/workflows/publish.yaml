@@ -63,10 +63,8 @@ jobs:
       # Try uploading to Test PyPI first, in case something fails.
       - uses: pypa/gh-action-pypi-publish@c7f29f7adef1a245bd91520e94867e5c6eedddcc
         with:
-          password: ${{ secrets.TEST_PYPI_TOKEN }}
           repository_url: https://test.pypi.org/legacy/
           packages_dir: artifact/
       - uses: pypa/gh-action-pypi-publish@c7f29f7adef1a245bd91520e94867e5c6eedddcc
         with:
-          password: ${{ secrets.PYPI_TOKEN }}
           packages_dir: artifact/
