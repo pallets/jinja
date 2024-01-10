@@ -859,7 +859,7 @@ class Parser:
         else:
             args.append(None)
 
-        return nodes.Slice(lineno=lineno, *args)
+        return nodes.Slice(lineno=lineno, *args)  # noqa: B026
 
     def parse_call_args(self) -> t.Tuple:
         token = self.stream.expect("lparen")
