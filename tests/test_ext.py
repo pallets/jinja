@@ -7,6 +7,7 @@ from jinja2 import DictLoader
 from jinja2 import Environment
 from jinja2 import nodes
 from jinja2 import pass_context
+from jinja2 import TemplateSyntaxError
 from jinja2.exceptions import TemplateAssertionError
 from jinja2.ext import Extension
 from jinja2.lexer import count_newlines
@@ -467,6 +468,18 @@ class TestInternationalization:
             (2, "pgettext", ("babel", "Hello World"), []),
             (3, "npgettext", ("babel", "%(users)s user", "%(users)s users", None), []),
         ]
+
+    def test_nested_trans_error(self):
+        s = "{% trans %}foo{% trans %}{% endtrans %}"
+        with pytest.raises(TemplateSyntaxError) as excinfo:
+            i18n_env.from_string(s)
+        assert "trans blocks can't be nested" in str(excinfo.value)
+
+    def test_trans_block_error(self):
+        s = "{% trans %}foo{% wibble bar %}{% endwibble %}{% endtrans %}"
+        with pytest.raises(TemplateSyntaxError) as excinfo:
+            i18n_env.from_string(s)
+        assert "saw `wibble`" in str(excinfo.value)
 
 
 class TestScope:
