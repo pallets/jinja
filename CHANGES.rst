@@ -9,7 +9,7 @@ Released 2024-01-10
     empty. :pr:`1858`
 -   ``xmlattr`` filter does not allow keys with spaces. GHSA-h5c8-rqwp-cp95
 -   Make error messages stemming from invalid nesting of ``{% trans %}`` blocks
-    more helpful. :pr:`1916`
+    more helpful. :pr:`1918`
 
 
 Version 3.1.2
