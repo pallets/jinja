@@ -920,6 +920,9 @@ class CodeGenerator(NodeVisitor):
             # interesting issues with identifier tracking.
             block_frame = Frame(eval_ctx)
             block_frame.block_frame = True
+            # during compile time we are not aware of parent template configuration,
+            # so it's better to decide child blocks configuration at runtime.
+            block_frame.eval_ctx.volatile = True
             undeclared = find_undeclared(block.body, ("self", "super"))
             if "self" in undeclared:
                 ref = block_frame.symbols.declare_parameter("self")

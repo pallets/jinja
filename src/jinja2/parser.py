@@ -1031,4 +1031,46 @@ class Parser:
         """Parse the whole template into a `Template` node."""
         result = nodes.Template(self.subparse(), lineno=1)
         result.set_environment(self.environment)
+        # ideally child templates body should contain blocks as first child.
+        # because only blocks are going to be replaced with blocks in main template.
+        # So we are using below method to move blocks as first child
+        # (items in template-node body list ).
+        # and other non-block nodes will remain as it is. And while rendering those
+        # non-block nodes will be ignored automatically.
+        result = self.parse_extend_blocks(result)
         return result
+
+    def parse_extend_blocks(self, template: nodes.Template) -> nodes.Template:
+        """Parse the whole template and move first found Block Node to the top."""
+
+        have_extends = template.find(nodes.Extends) is not None
+
+        if not have_extends:
+            return template
+
+        new_body = []
+        for node in template.body:
+            new_body.append(node)
+            new_body.extend(self.extract_first_child_block(node))
+        template.body = new_body
+        return template
+
+    def extract_first_child_block(
+        self, template: nodes.Node
+    ) -> typing.List[nodes.Node]:
+        """Remove first found block node from each child node."""
+        new_child: typing.List[nodes.Node] = []
+        counter = 0
+        if not hasattr(template, "body") or isinstance(template, nodes.Block):
+            return new_child
+        while len(template.body) > counter:
+            if not hasattr(template.body[counter], "body"):
+                counter += 1
+                continue
+
+            if isinstance(template.body[counter], nodes.Block):
+                new_child.append(template.body.pop(counter))
+                continue
+            new_child.extend(self.extract_first_child_block(template.body[counter]))
+            counter += 1
+        return new_child

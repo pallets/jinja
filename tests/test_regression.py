@@ -1,3 +1,5 @@
+import textwrap
+
 import pytest
 
 from jinja2 import DictLoader
@@ -8,6 +10,7 @@ from jinja2 import TemplateAssertionError
 from jinja2 import TemplateNotFound
 from jinja2 import TemplateSyntaxError
 from jinja2.utils import pass_context
+from jinja2.utils import select_autoescape
 
 
 class TestCorner:
@@ -735,6 +738,50 @@ End"""
             "{% endset %}{{ output }}"
         )
         assert tmpl.render() == "hellohellohello"
+
+    def test_autoescape_block_inheritance(self, env):
+        text = "hel'lo"
+        output = "Subject: hel'lo\nBody: hel&#39;lo"
+        templates = {
+            "base.html": textwrap.dedent(
+                """
+                Subject: {% autoescape false %}{% block subject %}
+                {% endblock %}{% endautoescape %}
+                Body: {% block body %}{% endblock %}
+            """
+            ).strip(),
+            "test1.html": textwrap.dedent(
+                """
+                {% extends 'base.html' %}
+                {% block subject %}{{ text }}{% endblock %}
+                {% block body %}{{ text }}{% endblock %}
+            """
+            ).strip(),
+            "test2.html": textwrap.dedent(
+                """
+                {% extends 'base.html' %}
+                {% autoescape false -%}
+                    {% block subject %}{{ text }}{% endblock %}
+                {%- endautoescape %}
+                {% block body %}{{ text }}{% endblock %}
+            """
+            ).strip(),
+            "test3.html": textwrap.dedent(
+                """
+                {% extends 'base.html' %}
+                {% block subject %}
+                    {%- autoescape false %}{{ text }}{% endautoescape -%}
+                {% endblock %}
+                {% block body %}{{ text }}{% endblock %}
+            """
+            ).strip(),
+        }
+
+        env = Environment(loader=DictLoader(templates), autoescape=select_autoescape())
+
+        assert env.get_template("test1.html").render(text=text) == output
+        assert env.get_template("test2.html").render(text=text) == output
+        assert env.get_template("test3.html").render(text=text) == output
 
 
 @pytest.mark.parametrize("unicode_char", ["\N{FORM FEED}", "\x85"])
