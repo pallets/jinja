@@ -324,6 +324,7 @@ def urlize(
         elif (
             "@" in middle
             and not middle.startswith("www.")
+            and not middle.startswith("@")
             and ":" not in middle
             and _email_re.match(middle)
         ):
