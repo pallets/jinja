@@ -21,6 +21,8 @@ Released 2024-01-10
 -   Make error messages stemming from invalid nesting of ``{% trans %}`` blocks
     more helpful. :pr:`1918`
 
+-   Fix ``unique()`` when chained with `reject()` or `rejectattr()`.
+    :issue:`1781`
 
 Version 3.1.2
 -------------
