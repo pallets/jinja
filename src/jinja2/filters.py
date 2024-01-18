@@ -823,8 +823,7 @@ def do_indent(
     if isinstance(s, Markup):
         indention = Markup(indention)
         newline = Markup(newline)
-
-    if not isinstance(s, str):
+    elif not isinstance(s, str):
         raise FilterArgumentError(
             f"argument to indent must be a string or Markup, got {s}"
         )
