@@ -8,6 +8,7 @@ from jinja2 import Environment
 from jinja2 import StrictUndefined
 from jinja2 import TemplateRuntimeError
 from jinja2 import UndefinedError
+from jinja2.exceptions import FilterArgumentError
 from jinja2.exceptions import TemplateAssertionError
 
 
@@ -178,6 +179,12 @@ class TestFilter:
         assert t.render() == "    jinja"
         t = env.from_string('{{ "jinja"|indent(blank=true) }}')
         assert t.render() == "jinja"
+
+    def test_indent_dict(self, env):
+        self._test_indent_multiline_template(env)
+        t = env.from_string("{{ mydict|indent }}")
+        with pytest.raises(FilterArgumentError):
+            t.render(mydict={"foo": "bar"})
 
     def test_indent_markup_input(self, env):
         """

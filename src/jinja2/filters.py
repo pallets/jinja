@@ -824,6 +824,11 @@ def do_indent(
         indention = Markup(indention)
         newline = Markup(newline)
 
+    if not isinstance(s, str):
+        raise FilterArgumentError(
+            f"argument to indent must be a string or Markup, got {s}"
+        )
+
     s += newline  # this quirk is necessary for splitlines method
 
     if blank:
