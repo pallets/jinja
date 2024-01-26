@@ -45,4 +45,5 @@ DEFAULT_POLICIES: t.Dict[str, t.Any] = {
     "json.dumps_function": None,
     "json.dumps_kwargs": {"sort_keys": True},
     "ext.i18n.trimmed": False,
+    "ext.i18n.newstyle_fallback_interpolation": False,
 }

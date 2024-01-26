@@ -53,6 +53,7 @@ newstyle_i18n_templates = {
     "novars.html": "{% trans %}%(hello)s{% endtrans %}",
     "vars.html": "{% trans %}{{ foo }}%(foo)s{% endtrans %}",
     "explicitvars.html": '{% trans foo="42" %}%(foo)s{% endtrans %}',
+    "broken_interpolation.html": "{% trans %}Username: {{ username }}{% endtrans %}",
 }
 
 
@@ -67,6 +68,7 @@ languages = {
         "Apple": {None: "Apfel", "fruit": "Apple"},
         "%(num)s apple": {None: "%(num)s Apfel", "fruit": "%(num)s Apple"},
         "%(num)s apples": {None: "%(num)s Äpfel", "fruit": "%(num)s Apples"},
+        "Username: %(username)s": "Nutzername: %(user_name)",
     }
 }
 
@@ -145,6 +147,14 @@ newstyle_i18n_env = Environment(
     loader=DictLoader(newstyle_i18n_templates), extensions=["jinja2.ext.i18n"]
 )
 newstyle_i18n_env.install_gettext_callables(  # type: ignore
+    gettext, ngettext, newstyle=True, pgettext=pgettext, npgettext=npgettext
+)
+
+newstyle_i18n_env_fallback = Environment(
+    loader=DictLoader(newstyle_i18n_templates), extensions=["jinja2.ext.i18n"]
+)
+newstyle_i18n_env_fallback.policies["ext.i18n.newstyle_fallback_interpolation"] = True
+newstyle_i18n_env_fallback.install_gettext_callables(  # type: ignore
     gettext, ngettext, newstyle=True, pgettext=pgettext, npgettext=npgettext
 )
 
@@ -622,6 +632,13 @@ class TestNewstyleInternationalization:
         tmpl = newstyle_i18n_env.get_template("npgettext_block")
         assert tmpl.render(LANGUAGE="de", apples=1) == "1 Apple"
         assert tmpl.render(LANGUAGE="de", apples=5) == "5 Apples"
+
+    def test_broken_translation_interpolation(self):
+        tmpl = newstyle_i18n_env.get_template("broken_interpolation.html")
+        with pytest.raises(KeyError):
+            tmpl.render(LANGUAGE="de", username="NewUser")
+        tmpl = newstyle_i18n_env_fallback.get_template("broken_interpolation.html")
+        assert tmpl.render(LANGUAGE="de", username="NewUser") == "Username: NewUser"
 
 
 class TestAutoEscape:

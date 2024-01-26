@@ -167,21 +167,30 @@ def _gettext_alias(
     return __context.call(__context.resolve("gettext"), *args, **kwargs)
 
 
-def _make_new_gettext(func: t.Callable[[str], str]) -> t.Callable[..., str]:
+def _make_new_gettext(
+    func: t.Callable[[str], str], newstyle_fallback_interpolation: bool
+) -> t.Callable[..., str]:
     @pass_context
     def gettext(__context: Context, __string: str, **variables: t.Any) -> str:
         rv = __context.call(func, __string)
         if __context.eval_ctx.autoescape:
             rv = Markup(rv)
-        # Always treat as a format string, even if there are no
-        # variables. This makes translation strings more consistent
-        # and predictable. This requires escaping
-        return rv % variables  # type: ignore
+        try:
+            # Always treat as a format string, even if there are no
+            # variables. This makes translation strings more consistent
+            # and predictable. This requires escaping
+            return rv % variables  # type: ignore
+        except KeyError:
+            if newstyle_fallback_interpolation:
+                return __string % variables
+            raise
 
     return gettext
 
 
-def _make_new_ngettext(func: t.Callable[[str, str, int], str]) -> t.Callable[..., str]:
+def _make_new_ngettext(
+    func: t.Callable[[str, str, int], str], newstyle_fallback_interpolation: bool
+) -> t.Callable[..., str]:
     @pass_context
     def ngettext(
         __context: Context,
@@ -194,13 +203,22 @@ def _make_new_ngettext(func: t.Callable[[str, str, int], str]) -> t.Callable[...
         rv = __context.call(func, __singular, __plural, __num)
         if __context.eval_ctx.autoescape:
             rv = Markup(rv)
-        # Always treat as a format string, see gettext comment above.
-        return rv % variables  # type: ignore
+        try:
+            # Always treat as a format string, see gettext comment above.
+            return rv % variables  # type: ignore
+        except KeyError:
+            if newstyle_fallback_interpolation:
+                if __num > 1:
+                    return __singular % variables
+                return __plural % variables
+            raise
 
     return ngettext
 
 
-def _make_new_pgettext(func: t.Callable[[str, str], str]) -> t.Callable[..., str]:
+def _make_new_pgettext(
+    func: t.Callable[[str, str], str], newstyle_fallback_interpolation: bool
+) -> t.Callable[..., str]:
     @pass_context
     def pgettext(
         __context: Context, __string_ctx: str, __string: str, **variables: t.Any
@@ -211,14 +229,19 @@ def _make_new_pgettext(func: t.Callable[[str, str], str]) -> t.Callable[..., str
         if __context.eval_ctx.autoescape:
             rv = Markup(rv)
 
-        # Always treat as a format string, see gettext comment above.
-        return rv % variables  # type: ignore
+        try:
+            # Always treat as a format string, see gettext comment above.
+            return rv % variables  # type: ignore
+        except KeyError:
+            if newstyle_fallback_interpolation:
+                return __string % variables
+            raise
 
     return pgettext
 
 
 def _make_new_npgettext(
-    func: t.Callable[[str, str, str, int], str]
+    func: t.Callable[[str, str, str, int], str], newstyle_fallback_interpolation: bool
 ) -> t.Callable[..., str]:
     @pass_context
     def npgettext(
@@ -236,8 +259,15 @@ def _make_new_npgettext(
         if __context.eval_ctx.autoescape:
             rv = Markup(rv)
 
-        # Always treat as a format string, see gettext comment above.
-        return rv % variables  # type: ignore
+        try:
+            # Always treat as a format string, see gettext comment above.
+            return rv % variables  # type: ignore
+        except KeyError:
+            if newstyle_fallback_interpolation:
+                if __num > 1:
+                    return __singular % variables
+                return __plural % variables
+            raise
 
     return npgettext
 
@@ -320,17 +350,31 @@ class InternationalizationExtension(Extension):
         pgettext: t.Optional[t.Callable[[str, str], str]] = None,
         npgettext: t.Optional[t.Callable[[str, str, str, int], str]] = None,
     ) -> None:
+        newstyle_fallback_interpolation = self.environment.policies[
+            "ext.i18n.newstyle_fallback_interpolation"
+        ]
         if newstyle is not None:
             self.environment.newstyle_gettext = newstyle  # type: ignore
         if self.environment.newstyle_gettext:  # type: ignore
-            gettext = _make_new_gettext(gettext)
-            ngettext = _make_new_ngettext(ngettext)
+            gettext = _make_new_gettext(
+                gettext, newstyle_fallback_interpolation=newstyle_fallback_interpolation
+            )
+            ngettext = _make_new_ngettext(
+                ngettext,
+                newstyle_fallback_interpolation=newstyle_fallback_interpolation,
+            )
 
             if pgettext is not None:
-                pgettext = _make_new_pgettext(pgettext)
+                pgettext = _make_new_pgettext(
+                    pgettext,
+                    newstyle_fallback_interpolation=newstyle_fallback_interpolation,
+                )
 
             if npgettext is not None:
-                npgettext = _make_new_npgettext(npgettext)
+                npgettext = _make_new_npgettext(
+                    npgettext,
+                    newstyle_fallback_interpolation=newstyle_fallback_interpolation,
+                )
 
         self.environment.globals.update(
             gettext=gettext, ngettext=ngettext, pgettext=pgettext, npgettext=npgettext
