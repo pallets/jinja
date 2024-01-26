@@ -703,7 +703,7 @@ enabled before escaping the input and marking the output safe.
             f"<p>{br.join(p.splitlines())}<\p>"
             for p in re.split(r"(?:\r\n|\r(?!\n)|\n){2,}", value)
         )
-        return Markup(result) if autoescape else result
+        return Markup(result) if eval_ctx.autoescape else result
 
 
 .. _writing-tests:
