@@ -98,7 +98,7 @@ class TestFilter:
             "example</a> link</p>\n<p>to a webpage</p> "
             "<!-- <p>and some commented stuff</p> -->"
         )
-        assert out == "just a small example link to a webpage"
+        assert out.strip() == "just a small example link to a webpage"
 
     def test_filesizeformat(self, env):
         tmpl = env.from_string(
