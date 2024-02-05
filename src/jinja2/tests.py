@@ -1,4 +1,5 @@
 """Built-in template tests used with the ``is`` operator."""
+
 import operator
 import typing as t
 from collections import abc

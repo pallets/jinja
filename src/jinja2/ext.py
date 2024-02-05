@@ -1,4 +1,5 @@
 """Extension API for adding custom tags and behavior."""
+
 import pprint
 import re
 import typing as t
@@ -23,18 +24,17 @@ if t.TYPE_CHECKING:
     from .parser import Parser
 
     class _TranslationsBasic(te.Protocol):
-        def gettext(self, message: str) -> str:
-            ...
+        def gettext(self, message: str) -> str: ...
 
         def ngettext(self, singular: str, plural: str, n: int) -> str:
             pass
 
     class _TranslationsContext(_TranslationsBasic):
-        def pgettext(self, context: str, message: str) -> str:
-            ...
+        def pgettext(self, context: str, message: str) -> str: ...
 
-        def npgettext(self, context: str, singular: str, plural: str, n: int) -> str:
-            ...
+        def npgettext(
+            self, context: str, singular: str, plural: str, n: int
+        ) -> str: ...
 
     _SupportedTranslations = t.Union[_TranslationsBasic, _TranslationsContext]
 

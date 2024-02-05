@@ -7,6 +7,7 @@ want. For example, loop unrolling doesn't work because unrolled loops
 would have a different scope. The solution would be a second syntax tree
 that stored the scoping rules.
 """
+
 import typing as t
 
 from . import nodes

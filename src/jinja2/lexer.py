@@ -3,6 +3,7 @@ is used to do some preprocessing. It filters out invalid operators like
 the bitshift operators we don't allow in templates. It separates
 template code and python code in expressions.
 """
+
 import re
 import typing as t
 from ast import literal_eval

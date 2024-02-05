@@ -1,4 +1,5 @@
 """Compiles nodes from the parser into Python code."""
+
 import typing as t
 from contextlib import contextmanager
 from functools import update_wrapper

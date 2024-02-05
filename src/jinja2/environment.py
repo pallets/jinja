@@ -1,6 +1,7 @@
 """Classes for managing templates and their runtime and compile time
 options.
 """
+
 import os
 import typing
 import typing as t
@@ -711,8 +712,7 @@ class Environment:
         filename: t.Optional[str] = None,
         raw: "te.Literal[False]" = False,
         defer_init: bool = False,
-    ) -> CodeType:
-        ...
+    ) -> CodeType: ...
 
     @typing.overload
     def compile(
@@ -722,8 +722,7 @@ class Environment:
         filename: t.Optional[str] = None,
         raw: "te.Literal[True]" = ...,
         defer_init: bool = False,
-    ) -> str:
-        ...
+    ) -> str: ...
 
     @internalcode
     def compile(
