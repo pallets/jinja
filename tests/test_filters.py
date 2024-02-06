@@ -812,6 +812,12 @@ class TestFilter:
         assert tmpl.render(users=users) == "jane"
 
     def test_json_dump(self):
+        env = Environment(autoescape=False)
+        t = env.from_string("{{ x|tojson }}")
+        assert t.render(x={"foo": "bar"}) == '{"foo": "bar"}'
+        assert t.render(x="\"ba&r'") == '"\\"ba&r\'"'
+        assert t.render(x="<bar>") == '"<bar>"'
+
         env = Environment(autoescape=True)
         t = env.from_string("{{ x|tojson }}")
         assert t.render(x={"foo": "bar"}) == '{"foo": "bar"}'
