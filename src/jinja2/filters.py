@@ -1,4 +1,5 @@
 """Built-in template filters used with the ``|`` operator."""
+import json
 import math
 import random
 import re
@@ -1680,9 +1681,9 @@ async def do_rejectattr(
 @pass_eval_context
 def do_tojson(
     eval_ctx: "EvalContext", value: t.Any, indent: t.Optional[int] = None
-) -> Markup:
+) -> t.Union[str, Markup]:
     """Serialize an object to a string of JSON, and mark it safe to
-    render in HTML. This filter is only for use in HTML documents.
+    render in HTML if autoescape.
 
     The returned string is safe to render in HTML documents and
     ``<script>`` tags. The exception is in HTML attributes that are
@@ -1702,6 +1703,12 @@ def do_tojson(
     if indent is not None:
         kwargs = kwargs.copy()
         kwargs["indent"] = indent
+
+    if not eval_ctx.autoescape:
+        if dumps is None:
+            dumps = json.dumps
+
+        return dumps(value, **kwargs)
 
     return htmlsafe_json_dumps(value, dumps=dumps, **kwargs)
 
