@@ -1708,7 +1708,7 @@ def do_tojson(
         if dumps is None:
             dumps = json.dumps
 
-        return dumps(value, **kwargs)
+        return soft_str(dumps(value, **kwargs))
 
     return htmlsafe_json_dumps(value, dumps=dumps, **kwargs)
 
