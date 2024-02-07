@@ -1668,6 +1668,8 @@ The following functions are available in the global scope by default:
 
     .. versionadded:: 2.10
 
+    .. versionchanged:: 3.2 Added support for assigning to namespace attributes as a part of multiple assignment
+
 
 Extensions
 ----------
