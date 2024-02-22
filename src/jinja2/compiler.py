@@ -1406,7 +1406,7 @@ class CodeGenerator(NodeVisitor):
 
             if pass_arg is None:
 
-                def finalize(value: t.Any) -> t.Any:
+                def finalize(value: t.Any) -> t.Any:  # noqa: F811
                     return default(env_finalize(value))
 
             else:
@@ -1414,7 +1414,7 @@ class CodeGenerator(NodeVisitor):
 
                 if pass_arg == "environment":
 
-                    def finalize(value: t.Any) -> t.Any:
+                    def finalize(value: t.Any) -> t.Any:  # noqa: F811
                         return default(env_finalize(self.environment, value))
 
         self._finalize = self._FinalizeInfo(finalize, src)
