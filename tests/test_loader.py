@@ -255,7 +255,7 @@ class TestModuleLoader:
             import gc
 
             gc.collect()
-        except BaseException:
+        except ModuleNotFoundError:
             pass
 
         assert name not in sys.modules

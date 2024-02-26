@@ -143,7 +143,7 @@ def fake_traceback(  # type: ignore
     # the new traceback without this frame.
     try:
         exec(code, globals, locals)
-    except BaseException:
+    except BaseException:  # noqa: B036
         return sys.exc_info()[2].tb_next  # type: ignore
 
 
