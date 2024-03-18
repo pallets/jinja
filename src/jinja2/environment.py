@@ -1340,10 +1340,23 @@ class Template:
         if self.environment.is_async:
             import asyncio
 
+            close = False
+
+            try:
+                loop = asyncio.get_running_loop()
+            except RuntimeError:
+                loop = asyncio.new_event_loop()
+                close = True
+
             async def to_list() -> t.List[str]:
                 return [x async for x in self.generate_async(*args, **kwargs)]
 
-            yield from asyncio.run(to_list())
+            try:
+                yield from loop.run_until_complete(to_list())
+            finally:
+                if close:
+                    loop.close()
+
             return
 
         ctx = self.new_context(dict(*args, **kwargs))
