@@ -1,6 +1,7 @@
 """A sandbox layer that ensures unsafe operations cannot be performed.
 Useful when the template itself comes from an untrusted source.
 """
+
 import operator
 import types
 import typing as t

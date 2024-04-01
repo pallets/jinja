@@ -1,4 +1,5 @@
 """The runtime functions and state used by compiled templates."""
+
 import functools
 import sys
 import typing as t
@@ -37,8 +38,7 @@ if t.TYPE_CHECKING:
             reciter: t.Iterable[V],
             loop_render_func: "LoopRenderFunc",
             depth: int = 0,
-        ) -> str:
-            ...
+        ) -> str: ...
 
 
 # these variables are exported to the template runtime

@@ -2,6 +2,7 @@
 some node tree helper functions used by the parser and compiler in order
 to normalize nodes.
 """
+
 import inspect
 import operator
 import typing as t
