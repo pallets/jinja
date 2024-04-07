@@ -7,6 +7,7 @@ Unreleased
 
 -   Calling sync ``render`` for an async template uses ``asyncio.run``.
     :pr:`1952`
+-   Avoid unclosed ``auto_aiter`` warnings. :pr:`1960`
 
 
 Version 3.1.4
