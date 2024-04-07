@@ -6,6 +6,9 @@ from functools import wraps
 from .utils import _PassArg
 from .utils import pass_eval_context
 
+if t.TYPE_CHECKING:
+    import typing_extensions as te
+
 V = t.TypeVar("V")
 
 
@@ -67,15 +70,27 @@ async def auto_await(value: t.Union[t.Awaitable["V"], "V"]) -> "V":
     return t.cast("V", value)
 
 
-async def auto_aiter(
+class _IteratorToAsyncIterator(t.Generic[V]):
+    def __init__(self, iterator: "t.Iterator[V]"):
+        self._iterator = iterator
+
+    def __aiter__(self) -> "te.Self":
+        return self
+
+    async def __anext__(self) -> V:
+        try:
+            return next(self._iterator)
+        except StopIteration as e:
+            raise StopAsyncIteration(e.value) from e
+
+
+def auto_aiter(
     iterable: "t.Union[t.AsyncIterable[V], t.Iterable[V]]",
 ) -> "t.AsyncIterator[V]":
     if hasattr(iterable, "__aiter__"):
-        async for item in t.cast("t.AsyncIterable[V]", iterable):
-            yield item
+        return iterable.__aiter__()
     else:
-        for item in iterable:
-            yield item
+        return _IteratorToAsyncIterator(iter(iterable))
 
 
 async def auto_to_list(
