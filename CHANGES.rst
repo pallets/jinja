@@ -10,6 +10,8 @@ Unreleased
 -   Avoid unclosed ``auto_aiter`` warnings. :pr:`1960`
 -   Return an ``aclose``-able ``AsyncGenerator`` from
     ``Template.generate_async``. :pr:`1960`
+-   Avoid leaving ``root_render_func()`` unclosed in
+    ``Template.generate_async``. :pr:`1960`
 
 
 Version 3.1.4
