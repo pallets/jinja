@@ -8,6 +8,7 @@ Unreleased
 -   Use modern packaging metadata with ``pyproject.toml`` instead of ``setup.cfg``.
     :pr:`1793`
 -   Use ``flit_core`` instead of ``setuptools`` as build backend.
+-   Avoid unclosed ``auto_aiter`` warnings. :pr:`1954`
 
 
 Version 3.1.3
