@@ -1346,7 +1346,7 @@ class Template:
 
     async def generate_async(
         self, *args: t.Any, **kwargs: t.Any
-    ) -> t.AsyncIterator[str]:
+    ) -> t.AsyncGenerator[str, object]:
         """An async version of :meth:`generate`.  Works very similarly but
         returns an async iterator instead.
         """
