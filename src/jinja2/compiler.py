@@ -987,7 +987,9 @@ class CodeGenerator(NodeVisitor):
             self.simple_write("event", frame)
             self.outdent()
             self.outdent()
-            self.writeline(f"finally: {self.choose_async('await gen.aclose()', 'gen.close()')}")
+            self.writeline(
+                f"finally: {self.choose_async('await gen.aclose()', 'gen.close()')}"
+            )
 
         self.outdent(level)
 
@@ -1076,7 +1078,9 @@ class CodeGenerator(NodeVisitor):
             self.writeline(f"{self.choose_async()}for event in gen:")
             loop_body()
             self.outdent()
-            self.writeline(f"finally: {self.choose_async('await gen.aclose()', 'gen.close()')}")
+            self.writeline(
+                f"finally: {self.choose_async('await gen.aclose()', 'gen.close()')}"
+            )
         elif self.environment.is_async:
             self.writeline(
                 "for event in (await template._get_default_module_async())"
