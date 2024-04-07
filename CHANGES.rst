@@ -8,7 +8,7 @@ Unreleased
 -   Use modern packaging metadata with ``pyproject.toml`` instead of ``setup.cfg``.
     :pr:`1793`
 -   Use ``flit_core`` instead of ``setuptools`` as build backend.
--   Return an ``aclose``-able ``AsyncGenerator`` from ``Template.generate_async``.
+-   Return an ``aclose``-able ``AsyncGenerator`` from ``Template.generate_async``.  :pr:`1957`
 
 
 Version 3.1.3
