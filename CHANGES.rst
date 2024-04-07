@@ -12,6 +12,8 @@ Unreleased
     ``Template.generate_async``. :pr:`1960`
 -   Avoid leaving ``root_render_func()`` unclosed in
     ``Template.generate_async``. :pr:`1960`
+-   Avoid leaving async generators unclosed in blocks, includes and extends.
+    :pr:`1960`
 
 
 Version 3.1.4
