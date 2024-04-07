@@ -8,7 +8,7 @@ Unreleased
 -   Use modern packaging metadata with ``pyproject.toml`` instead of ``setup.cfg``.
     :pr:`1793`
 -   Use ``flit_core`` instead of ``setuptools`` as build backend.
--   Avoid leaving ``root_render_func()`` unclosed in ``Template.generate_async``.
+-   Avoid leaving ``root_render_func()`` unclosed in ``Template.generate_async``. :pr:`1958`
 
 
 Version 3.1.3
