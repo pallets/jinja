@@ -686,3 +686,49 @@ def test_basic_generate_async(run_async_fn):
 
     rv = run_async_fn(func)
     assert rv == "["
+
+
+def test_include_generate_async(run_async_fn, test_env_async):
+    t = test_env_async.from_string('{% include "header" %}')
+
+    async def func():
+        agen = t.generate_async()
+        try:
+            return await agen.__anext__()
+        finally:
+            await agen.aclose()
+
+    rv = run_async_fn(func)
+    assert rv == "["
+
+
+def test_blocks_generate_async(run_async_fn):
+    t = Template(
+        "{% block foo %}<Test>{% endblock %}{{ self.foo() }}",
+        enable_async=True,
+        autoescape=True,
+    )
+
+    async def func():
+        agen = t.generate_async()
+        try:
+            return await agen.__anext__()
+        finally:
+            await agen.aclose()
+
+    rv = run_async_fn(func)
+    assert rv == "<Test>"
+
+
+def test_async_extend(run_async_fn, test_env_async):
+    t = test_env_async.from_string('{% extends "header" %}')
+
+    async def func():
+        agen = t.generate_async()
+        try:
+            return await agen.__anext__()
+        finally:
+            await agen.aclose()
+
+    rv = run_async_fn(func)
+    assert rv == "["
