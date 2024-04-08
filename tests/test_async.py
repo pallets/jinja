@@ -670,3 +670,19 @@ def test_getitem_after_call():
     t = env.from_string("{{ add_each(a, 2)[1:] }}")
     out = t.render(a=range(3))
     assert out == "[3, 4]"
+
+
+def test_basic_generate_async(run_async_fn):
+    t = Template(
+        "{% for item in [1, 2, 3] %}[{{ item }}]{% endfor %}", enable_async=True
+    )
+
+    async def func():
+        agen = t.generate_async()
+        try:
+            return await agen.__anext__()
+        finally:
+            await agen.aclose()
+
+    rv = run_async_fn(func)
+    assert rv == "["
