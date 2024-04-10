@@ -325,7 +325,7 @@ class Environment:
         auto_reload: bool = True,
         bytecode_cache: t.Optional["BytecodeCache"] = None,
         enable_async: bool = False,
-        lexer_provider: t.Optional[t.Callable] = None,
+        lexer_provider: t.Optional[t.Callable[["Environment"], Lexer]] = None,
     ):
         # !!Important notice!!
         #   The constructor accepts quite a few arguments that should be
