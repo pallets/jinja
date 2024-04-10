@@ -474,6 +474,9 @@ class Lexer:
     Multiple environments can share the same lexer.
     """
 
+    # Whether to ignore the raw_begin, raw_end tokens
+    ignore_raw_begin_end_tokens = True
+
     def __init__(self, environment: "Environment") -> None:
         # shortcuts
         e = re.escape
@@ -629,9 +632,11 @@ class Lexer:
                 token = TOKEN_BLOCK_BEGIN
             elif token == TOKEN_LINESTATEMENT_END:
                 token = TOKEN_BLOCK_END
-            # we are not interested in those tokens in the parser
             elif token in (TOKEN_RAW_BEGIN, TOKEN_RAW_END):
-                continue
+                if self.ignore_raw_begin_end_tokens:
+                    continue
+                else:
+                    value = value_str
             elif token == TOKEN_DATA:
                 value = self._normalize_newlines(value_str)
             elif token == "keyword":

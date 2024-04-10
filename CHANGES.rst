@@ -8,6 +8,11 @@ Unreleased
 -   Use modern packaging metadata with ``pyproject.toml`` instead of ``setup.cfg``.
     :pr:`1793`
 -   Use ``flit_core`` instead of ``setuptools`` as build backend.
+-   Add the property ``ignore_raw_begin_end_tokens`` to Lexer, as an option to keep
+    the raw_begin, raw_end tokens in the token stream. :pr:`1962`
+-   Add the ``lexer_provider`` property to Environment, so to allow inject your
+    customized Lexer instances for different use cases (e.g. testing). :pr:`1962`
+
 
 
 Version 3.1.3

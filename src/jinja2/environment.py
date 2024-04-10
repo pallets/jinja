@@ -123,6 +123,11 @@ def load_extensions(
     return result
 
 
+def default_lexer_provider(environment: "Environment") -> Lexer:
+    """Default lexer provider."""
+    return get_lexer(environment)
+
+
 def _environment_config_check(environment: "Environment") -> "Environment":
     """Perform a sanity check on the environment."""
     assert issubclass(
@@ -261,6 +266,11 @@ class Environment:
         `enable_async`
             If set to true this enables async template execution which
             allows using async functions and generators.
+        `lexer_provider`
+            Can provide your own method to create a Lexer, share lexers, or look up
+            existing lexers from cache. It enables the lexer customization. The default
+            is None, and will use the `default_lexer_provdier`
+            .. versionchanged:: 3.2
     """
 
     #: if this environment is sandboxed.  Modifying this variable won't make
@@ -315,6 +325,7 @@ class Environment:
         auto_reload: bool = True,
         bytecode_cache: t.Optional["BytecodeCache"] = None,
         enable_async: bool = False,
+        lexer_provider: t.Optional[t.Callable] = None,
     ):
         # !!Important notice!!
         #   The constructor accepts quite a few arguments that should be
@@ -363,6 +374,8 @@ class Environment:
 
         # load extensions
         self.extensions = load_extensions(self, extensions)
+
+        self.lexer_provider = lexer_provider or default_lexer_provider
 
         self.is_async = enable_async
         _environment_config_check(self)
@@ -454,7 +467,7 @@ class Environment:
     @property
     def lexer(self) -> Lexer:
         """The lexer for this environment."""
-        return get_lexer(self)
+        return self.lexer_provider(self)
 
     def iter_extensions(self) -> t.Iterator["Extension"]:
         """Iterates over the extensions by priority."""
