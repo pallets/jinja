@@ -5,8 +5,23 @@ Version 3.2.0
 
 Unreleased
 
+-   Use modern packaging metadata with ``pyproject.toml`` instead of ``setup.cfg``.
+    :pr:`1793`
+-   Use ``flit_core`` instead of ``setuptools`` as build backend.
 -   Add function decorator ``@render_time_only`` for filters and tests.
     :issue:`1752`
+
+
+Version 3.1.3
+-------------
+
+Released 2024-01-10
+
+-   Fix compiler error when checking if required blocks in parent templates are
+    empty. :pr:`1858`
+-   ``xmlattr`` filter does not allow keys with spaces. GHSA-h5c8-rqwp-cp95
+-   Make error messages stemming from invalid nesting of ``{% trans %}`` blocks
+    more helpful. :pr:`1918`
 
 
 Version 3.1.2

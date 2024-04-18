@@ -1,0 +1,81 @@
+[project]
+name = "Jinja2"
+description = "A very fast and expressive template engine."
+readme = "README.rst"
+license = {file = "LICENSE.rst"}
+maintainers = [{name = "Pallets", email = "contact@palletsprojects.com"}]
+classifiers = [
+    "Development Status :: 5 - Production/Stable",
+    "Environment :: Web Environment",
+    "Intended Audience :: Developers",
+    "License :: OSI Approved :: BSD License",
+    "Operating System :: OS Independent",
+    "Programming Language :: Python",
+    "Topic :: Internet :: WWW/HTTP :: Dynamic Content",
+    "Topic :: Text Processing :: Markup :: HTML",
+]
+requires-python = ">=3.7"
+dependencies = ["MarkupSafe>=2.0"]
+dynamic = ["version"]
+
+[project.urls]
+Donate = "https://palletsprojects.com/donate"
+Documentation = "https://jinja.palletsprojects.com/"
+Changes = "https://jinja.palletsprojects.com/changes/"
+"Source Code" = "https://github.com/pallets/jinja/"
+"Issue Tracker" = "https://github.com/pallets/jinja/issues/"
+Chat = "https://discord.gg/pallets"
+
+[project.optional-dependencies]
+i18n = ["Babel>=2.7"]
+
+[project.entry-points."babel.extractors"]
+
+[build-system]
+requires = ["flit_core<4"]
+build-backend = "flit_core.buildapi"
+
+[tool.flit.module]
+name = "jinja2"
+
+[tool.flit.sdist]
+include = [
+    "docs/",
+    "examples/",
+    "requirements/",
+    "tests/",
+    "CHANGES.rst",
+    "tox.ini",
+]
+exclude = [
+    "docs/_build/",
+]
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]
+filterwarnings = [
+    "error",
+]
+
+[tool.coverage.run]
+branch = true
+source = ["jinja2", "tests"]
+
+[tool.coverage.paths]
+source = ["src", "*/site-packages"]
+
+[tool.mypy]
+python_version = "3.7"
+files = ["src/jinja2"]
+show_error_codes = true
+pretty = true
+strict = true
+local_partial_types = true
+warn_unreachable = true
+
+[[tool.mypy.overrides]]
+module = [
+    "jinja2.defaults",
+    "markupsafe",
+]
+no_implicit_reexport = false

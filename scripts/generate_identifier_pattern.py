@@ -29,9 +29,9 @@ def collapse_ranges(data):
 
     Source: https://stackoverflow.com/a/4629241/400617
     """
-    for _, b in itertools.groupby(enumerate(data), lambda x: ord(x[1]) - x[0]):
-        b = list(b)
-        yield b[0][1], b[-1][1]
+    for _, g in itertools.groupby(enumerate(data), lambda x: ord(x[1]) - x[0]):
+        lb = list(g)
+        yield lb[0][1], lb[-1][1]
 
 
 def build_pattern(ranges):

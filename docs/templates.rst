@@ -1172,7 +1172,7 @@ none of the templates exist.
     {% include ['special_sidebar.html', 'sidebar.html'] ignore missing %}
 
 A variable, with either a template name or template object, can also be
-passed to the statment.
+passed to the statement.
 
 .. _import:
 

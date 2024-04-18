@@ -79,7 +79,7 @@ def get_spontaneous_environment(cls: t.Type[_env_bound], *args: t.Any) -> _env_b
 
 def create_cache(
     size: int,
-) -> t.Optional[t.MutableMapping[t.Tuple[weakref.ref, str], "Template"]]:
+) -> t.Optional[t.MutableMapping[t.Tuple["weakref.ref[BaseLoader]", str], "Template"]]:
     """Return the cache class for the given size."""
     if size == 0:
         return None
@@ -91,8 +91,10 @@ def create_cache(
 
 
 def copy_cache(
-    cache: t.Optional[t.MutableMapping],
-) -> t.Optional[t.MutableMapping[t.Tuple[weakref.ref, str], "Template"]]:
+    cache: t.Optional[
+        t.MutableMapping[t.Tuple["weakref.ref[BaseLoader]", str], "Template"]
+    ],
+) -> t.Optional[t.MutableMapping[t.Tuple["weakref.ref[BaseLoader]", str], "Template"]]:
     """Create an empty copy of the given cache."""
     if cache is None:
         return None
@@ -701,7 +703,7 @@ class Environment:
 
         .. versionadded:: 2.5
         """
-        return compile(source, filename, "exec")  # type: ignore
+        return compile(source, filename, "exec")
 
     @typing.overload
     def compile(  # type: ignore
@@ -814,7 +816,7 @@ class Environment:
 
     def compile_templates(
         self,
-        target: t.Union[str, os.PathLike],
+        target: t.Union[str, "os.PathLike[str]"],
         extensions: t.Optional[t.Collection[str]] = None,
         filter_func: t.Optional[t.Callable[[str], bool]] = None,
         zip: t.Optional[str] = "deflated",
@@ -920,7 +922,7 @@ class Environment:
                 )
 
             def filter_func(x: str) -> bool:
-                return "." in x and x.rsplit(".", 1)[1] in extensions  # type: ignore
+                return "." in x and x.rsplit(".", 1)[1] in extensions
 
         if filter_func is not None:
             names = [name for name in names if filter_func(name)]
@@ -1588,7 +1590,7 @@ class TemplateStream:
 
     def dump(
         self,
-        fp: t.Union[str, t.IO],
+        fp: t.Union[str, t.IO[t.Any]],
         encoding: t.Optional[str] = None,
         errors: t.Optional[str] = "strict",
     ) -> None:

@@ -47,7 +47,7 @@ def async_variant(normal_func):  # type: ignore
         if need_eval_context:
             wrapper = pass_eval_context(wrapper)
 
-        wrapper.jinja_async_variant = True
+        wrapper.jinja_async_variant = True  # type: ignore[attr-defined]
         return wrapper
 
     return decorator
@@ -74,7 +74,7 @@ async def auto_aiter(
         async for item in t.cast("t.AsyncIterable[V]", iterable):
             yield item
     else:
-        for item in t.cast("t.Iterable[V]", iterable):
+        for item in iterable:
             yield item
 
 

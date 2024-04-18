@@ -177,7 +177,9 @@ class FileSystemLoader(BaseLoader):
 
     def __init__(
         self,
-        searchpath: t.Union[str, os.PathLike, t.Sequence[t.Union[str, os.PathLike]]],
+        searchpath: t.Union[
+            str, "os.PathLike[str]", t.Sequence[t.Union[str, "os.PathLike[str]"]]
+        ],
         encoding: str = "utf-8",
         followlinks: bool = False,
     ) -> None:
@@ -389,7 +391,7 @@ class PackageLoader(BaseLoader):
             prefix = self._template_root[len(self._archive) :].lstrip(os.sep) + os.sep
             offset = len(prefix)
 
-            for name in self._loader._files.keys():  # type: ignore
+            for name in self._loader._files.keys():
                 # Find names under the templates directory that aren't directories.
                 if name.startswith(prefix) and name[-1] != os.sep:
                     results.append(name[offset:].replace(os.sep, "/"))
@@ -598,7 +600,10 @@ class ModuleLoader(BaseLoader):
     has_source_access = False
 
     def __init__(
-        self, path: t.Union[str, os.PathLike, t.Sequence[t.Union[str, os.PathLike]]]
+        self,
+        path: t.Union[
+            str, "os.PathLike[str]", t.Sequence[t.Union[str, "os.PathLike[str]"]]
+        ],
     ) -> None:
         package_name = f"_jinja2_module_templates_{id(self):x}"
 

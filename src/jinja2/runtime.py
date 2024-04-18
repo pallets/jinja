@@ -259,7 +259,10 @@ class Context:
 
     @internalcode
     def call(
-        __self, __obj: t.Callable, *args: t.Any, **kwargs: t.Any  # noqa: B902
+        __self,  # noqa: B902
+        __obj: t.Callable[..., t.Any],
+        *args: t.Any,
+        **kwargs: t.Any,
     ) -> t.Union[t.Any, "Undefined"]:
         """Call the callable with the arguments and keyword arguments
         provided but inject the active context or environment as first
@@ -272,9 +275,9 @@ class Context:
         # Allow callable classes to take a context
         if (
             hasattr(__obj, "__call__")  # noqa: B004
-            and _PassArg.from_obj(__obj.__call__) is not None  # type: ignore
+            and _PassArg.from_obj(__obj.__call__) is not None
         ):
-            __obj = __obj.__call__  # type: ignore
+            __obj = __obj.__call__
 
         pass_arg = _PassArg.from_obj(__obj)
 
@@ -927,9 +930,7 @@ def make_logging_undefined(
         logger.addHandler(logging.StreamHandler(sys.stderr))
 
     def _log_message(undef: Undefined) -> None:
-        logger.warning(  # type: ignore
-            "Template variable warning: %s", undef._undefined_message
-        )
+        logger.warning("Template variable warning: %s", undef._undefined_message)
 
     class LoggingUndefined(base):  # type: ignore
         __slots__ = ()
