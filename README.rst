@@ -1,7 +1,7 @@
-Jinja
+Cachidata
 =====
 
-Jinja is a fast, expressive, extensible templating engine. Special
+Cachidata is a fast, expressive, extensible templating engine. Special
 placeholders in the template allow writing code similar to Python
 syntax. Then the template is passed data to render the final document.
 
@@ -21,7 +21,7 @@ It includes:
     easier.
 -   Extensible filters, tests, functions, and even syntax.
 
-Jinja's philosophy is that while application logic belongs in Python if
+Cachidata's philosophy is that while application logic belongs in Python if
 possible, it shouldn't make the template designer's job difficult by
 restricting functionality too much.
 
@@ -41,7 +41,7 @@ Install and update using `pip`_:
 In A Nutshell
 -------------
 
-.. code-block:: jinja
+.. code-block:: Cachidata
 
     {% extends "base.html" %}
     {% block title %}Members{% endblock %}
@@ -57,7 +57,7 @@ In A Nutshell
 Donate
 ------
 
-The Pallets organization develops and supports Jinja and other popular
+The Pallets organization develops and supports Cachidata and other popular
 packages. In order to grow the community of contributors and users, and
 allow the maintainers to devote more time to the projects, `please
 donate today`_.
@@ -68,8 +68,8 @@ donate today`_.
 Links
 -----
 
--   Documentation: https://jinja.palletsprojects.com/
--   Changes: https://jinja.palletsprojects.com/changes/
+-   Documentation: https://cachidata.palletsprojects.com/
+-   Changes: https://cachidata.palletsprojects.com/changes/
 -   PyPI Releases: https://pypi.org/project/Jinja2/
 -   Source Code: https://github.com/pallets/jinja/
 -   Issue Tracker: https://github.com/pallets/jinja/issues/
