@@ -45,13 +45,11 @@ jobs:
       contents: write
     steps:
       - uses: actions/download-artifact@9c19ed7fe5d278cd354c7dfd5d3b88589c7e2395 # v4.1.6
-        with:
-          merge-multiple: true
       - name: create release
         run: >
           gh release create --draft --repo ${{ github.repository }}
           ${{ github.ref_name }}
-          *.intoto.jsonl/* dist/*
+          *.intoto.jsonl/* artifact/*
         env:
           GH_TOKEN: ${{ github.token }}
   publish-pypi:
@@ -66,12 +64,10 @@ jobs:
       id-token: write
     steps:
       - uses: actions/download-artifact@9c19ed7fe5d278cd354c7dfd5d3b88589c7e2395 # v4.1.6
-        with:
-          merge-multiple: true
       - uses: pypa/gh-action-pypi-publish@81e9d935c883d0b210363ab89cf05f3894778450 # v1.8.14
         with:
           repository-url: https://test.pypi.org/legacy/
-          packages-dir: dist/
+          packages-dir: artifact/
       - uses: pypa/gh-action-pypi-publish@81e9d935c883d0b210363ab89cf05f3894778450 # v1.8.14
         with:
-          packages-dir: dist/
+          packages-dir: artifact/
