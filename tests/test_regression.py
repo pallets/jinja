@@ -599,6 +599,7 @@ class TestBug:
 
     def test_markup_and_chainable_undefined(self):
         from markupsafe import Markup
+
         from jinja2.runtime import ChainableUndefined
 
         assert str(Markup(ChainableUndefined())) == ""

@@ -1,4 +1,5 @@
 """Parse tokens from the lexer into nodes for the compiler."""
+
 import typing
 import typing as t
 
@@ -10,6 +11,7 @@ from .lexer import describe_token_expr
 
 if t.TYPE_CHECKING:
     import typing_extensions as te
+
     from .environment import Environment
 
 _ImportInclude = t.TypeVar("_ImportInclude", nodes.Import, nodes.Include)
@@ -457,8 +459,7 @@ class Parser:
     @typing.overload
     def parse_assign_target(
         self, with_tuple: bool = ..., name_only: "te.Literal[True]" = ...
-    ) -> nodes.Name:
-        ...
+    ) -> nodes.Name: ...
 
     @typing.overload
     def parse_assign_target(
@@ -467,8 +468,7 @@ class Parser:
         name_only: bool = False,
         extra_end_rules: t.Optional[t.Tuple[str, ...]] = None,
         with_namespace: bool = False,
-    ) -> t.Union[nodes.NSRef, nodes.Name, nodes.Tuple]:
-        ...
+    ) -> t.Union[nodes.NSRef, nodes.Name, nodes.Tuple]: ...
 
     def parse_assign_target(
         self,
@@ -861,7 +861,14 @@ class Parser:
 
         return nodes.Slice(lineno=lineno, *args)  # noqa: B026
 
-    def parse_call_args(self) -> t.Tuple:
+    def parse_call_args(
+        self,
+    ) -> t.Tuple[
+        t.List[nodes.Expr],
+        t.List[nodes.Keyword],
+        t.Optional[nodes.Expr],
+        t.Optional[nodes.Expr],
+    ]:
         token = self.stream.expect("lparen")
         args = []
         kwargs = []
@@ -952,7 +959,7 @@ class Parser:
             next(self.stream)
             name += "." + self.stream.expect("name").value
         dyn_args = dyn_kwargs = None
-        kwargs = []
+        kwargs: t.List[nodes.Keyword] = []
         if self.stream.current.type == "lparen":
             args, kwargs, dyn_args, dyn_kwargs = self.parse_call_args()
         elif self.stream.current.type in {

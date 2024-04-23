@@ -1,6 +1,7 @@
 """API and implementations for loading templates from different data
 sources.
 """
+
 import importlib.util
 import os
 import posixpath
@@ -177,7 +178,9 @@ class FileSystemLoader(BaseLoader):
 
     def __init__(
         self,
-        searchpath: t.Union[str, os.PathLike, t.Sequence[t.Union[str, os.PathLike]]],
+        searchpath: t.Union[
+            str, "os.PathLike[str]", t.Sequence[t.Union[str, "os.PathLike[str]"]]
+        ],
         encoding: str = "utf-8",
         followlinks: bool = False,
     ) -> None:
@@ -601,7 +604,10 @@ class ModuleLoader(BaseLoader):
     has_source_access = False
 
     def __init__(
-        self, path: t.Union[str, os.PathLike, t.Sequence[t.Union[str, os.PathLike]]]
+        self,
+        path: t.Union[
+            str, "os.PathLike[str]", t.Sequence[t.Union[str, "os.PathLike[str]"]]
+        ],
     ) -> None:
         package_name = f"_jinja2_module_templates_{id(self):x}"
 

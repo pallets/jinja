@@ -3,6 +3,7 @@ is used to do some preprocessing. It filters out invalid operators like
 the bitshift operators we don't allow in templates. It separates
 template code and python code in expressions.
 """
+
 import re
 import typing as t
 from ast import literal_eval
@@ -15,6 +16,7 @@ from .utils import LRUCache
 
 if t.TYPE_CHECKING:
     import typing_extensions as te
+
     from .environment import Environment
 
 # cache for the lexers. Exists in order to be able to have multiple
@@ -447,7 +449,7 @@ def get_lexer(environment: "Environment") -> "Lexer":
     return lexer
 
 
-class OptionalLStrip(tuple):
+class OptionalLStrip(tuple):  # type: ignore[type-arg]
     """A special tuple for marking a point in the state that can have
     lstrip applied.
     """
