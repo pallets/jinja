@@ -150,7 +150,8 @@ class TestExtendedAPI:
         assert t.render(foo="<foo>") == "<foo>"
 
     def test_sandbox_max_range(self, env):
-        from jinja2.sandbox import SandboxedEnvironment, MAX_RANGE
+        from jinja2.sandbox import MAX_RANGE
+        from jinja2.sandbox import SandboxedEnvironment
 
         env = SandboxedEnvironment()
         t = env.from_string("{% for item in range(total) %}{{ item }}{% endfor %}")
@@ -264,7 +265,7 @@ class TestUndefined:
 
     def test_undefined_and_special_attributes(self):
         with pytest.raises(AttributeError):
-            Undefined("Foo").__dict__
+            Undefined("Foo").__dict__  # noqa B018
 
     def test_undefined_attribute_error(self):
         # Django's LazyObject turns the __class__ attribute into a
