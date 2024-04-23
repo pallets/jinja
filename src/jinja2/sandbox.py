@@ -1,14 +1,15 @@
 """A sandbox layer that ensures unsafe operations cannot be performed.
 Useful when the template itself comes from an untrusted source.
 """
+
 import operator
 import types
 import typing as t
-from _string import formatter_field_name_split  # type: ignore
 from collections import abc
 from collections import deque
 from string import Formatter
 
+from _string import formatter_field_name_split  # type: ignore
 from markupsafe import EscapeFormatter
 from markupsafe import Markup
 
@@ -37,7 +38,7 @@ UNSAFE_COROUTINE_ATTRIBUTES = {"cr_frame", "cr_code"}
 #: unsafe attributes on async generators
 UNSAFE_ASYNC_GENERATOR_ATTRIBUTES = {"ag_code", "ag_frame"}
 
-_mutable_spec: t.Tuple[t.Tuple[t.Type, t.FrozenSet[str]], ...] = (
+_mutable_spec: t.Tuple[t.Tuple[t.Type[t.Any], t.FrozenSet[str]], ...] = (
     (
         abc.MutableSet,
         frozenset(
@@ -80,7 +81,7 @@ _mutable_spec: t.Tuple[t.Tuple[t.Type, t.FrozenSet[str]], ...] = (
 )
 
 
-def inspect_format_method(callable: t.Callable) -> t.Optional[str]:
+def inspect_format_method(callable: t.Callable[..., t.Any]) -> t.Optional[str]:
     if not isinstance(
         callable, (types.MethodType, types.BuiltinMethodType)
     ) or callable.__name__ not in ("format", "format_map"):
@@ -350,7 +351,7 @@ class SandboxedEnvironment(Environment):
         s: str,
         args: t.Tuple[t.Any, ...],
         kwargs: t.Dict[str, t.Any],
-        format_func: t.Optional[t.Callable] = None,
+        format_func: t.Optional[t.Callable[..., t.Any]] = None,
     ) -> str:
         """If a format call is detected, then this is routed through this
         method so that our safety sandbox can be used for it.

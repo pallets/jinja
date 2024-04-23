@@ -1,4 +1,5 @@
 """Built-in template filters used with the ``|`` operator."""
+
 import math
 import random
 import re
@@ -28,6 +29,7 @@ from .utils import urlize
 
 if t.TYPE_CHECKING:
     import typing_extensions as te
+
     from .environment import Environment
     from .nodes import EvalContext
     from .runtime import Context
@@ -122,7 +124,7 @@ def make_multi_attrgetter(
 
 
 def _prepare_attribute_parts(
-    attr: t.Optional[t.Union[str, int]]
+    attr: t.Optional[t.Union[str, int]],
 ) -> t.List[t.Union[str, int]]:
     if attr is None:
         return []
@@ -142,7 +144,7 @@ def do_forceescape(value: "t.Union[str, HasHTML]") -> Markup:
 
 
 def do_urlencode(
-    value: t.Union[str, t.Mapping[str, t.Any], t.Iterable[t.Tuple[str, t.Any]]]
+    value: t.Union[str, t.Mapping[str, t.Any], t.Iterable[t.Tuple[str, t.Any]]],
 ) -> str:
     """Quote data for use in a URL path or query using UTF-8.
 
@@ -552,7 +554,7 @@ def do_default(
 @pass_eval_context
 def sync_do_join(
     eval_ctx: "EvalContext",
-    value: t.Iterable,
+    value: t.Iterable[t.Any],
     d: str = "",
     attribute: t.Optional[t.Union[str, int]] = None,
 ) -> str:
@@ -610,7 +612,7 @@ def sync_do_join(
 @async_variant(sync_do_join)  # type: ignore
 async def do_join(
     eval_ctx: "EvalContext",
-    value: t.Union[t.AsyncIterable, t.Iterable],
+    value: t.Union[t.AsyncIterable[t.Any], t.Iterable[t.Any]],
     d: str = "",
     attribute: t.Optional[t.Union[str, int]] = None,
 ) -> str:
@@ -1160,7 +1162,7 @@ def do_round(
 
 class _GroupTuple(t.NamedTuple):
     grouper: t.Any
-    list: t.List
+    list: t.List[t.Any]
 
     # Use the regular tuple repr to hide this subclass if users print
     # out the value during debugging.
@@ -1356,13 +1358,11 @@ def do_mark_unsafe(value: str) -> str:
 
 
 @typing.overload
-def do_reverse(value: str) -> str:
-    ...
+def do_reverse(value: str) -> str: ...
 
 
 @typing.overload
-def do_reverse(value: "t.Iterable[V]") -> "t.Iterable[V]":
-    ...
+def do_reverse(value: "t.Iterable[V]") -> "t.Iterable[V]": ...
 
 
 def do_reverse(value: t.Union[str, t.Iterable[V]]) -> t.Union[str, t.Iterable[V]]:
@@ -1416,26 +1416,28 @@ def do_attr(
 
 @typing.overload
 def sync_do_map(
-    context: "Context", value: t.Iterable, name: str, *args: t.Any, **kwargs: t.Any
-) -> t.Iterable:
-    ...
+    context: "Context",
+    value: t.Iterable[t.Any],
+    name: str,
+    *args: t.Any,
+    **kwargs: t.Any,
+) -> t.Iterable[t.Any]: ...
 
 
 @typing.overload
 def sync_do_map(
     context: "Context",
-    value: t.Iterable,
+    value: t.Iterable[t.Any],
     *,
     attribute: str = ...,
     default: t.Optional[t.Any] = None,
-) -> t.Iterable:
-    ...
+) -> t.Iterable[t.Any]: ...
 
 
 @pass_context
 def sync_do_map(
-    context: "Context", value: t.Iterable, *args: t.Any, **kwargs: t.Any
-) -> t.Iterable:
+    context: "Context", value: t.Iterable[t.Any], *args: t.Any, **kwargs: t.Any
+) -> t.Iterable[t.Any]:
     """Applies a filter on a sequence of objects or looks up an attribute.
     This is useful when dealing with lists of objects but you are really
     only interested in a certain value of it.
@@ -1485,32 +1487,30 @@ def sync_do_map(
 @typing.overload
 def do_map(
     context: "Context",
-    value: t.Union[t.AsyncIterable, t.Iterable],
+    value: t.Union[t.AsyncIterable[t.Any], t.Iterable[t.Any]],
     name: str,
     *args: t.Any,
     **kwargs: t.Any,
-) -> t.Iterable:
-    ...
+) -> t.Iterable[t.Any]: ...
 
 
 @typing.overload
 def do_map(
     context: "Context",
-    value: t.Union[t.AsyncIterable, t.Iterable],
+    value: t.Union[t.AsyncIterable[t.Any], t.Iterable[t.Any]],
     *,
     attribute: str = ...,
     default: t.Optional[t.Any] = None,
-) -> t.Iterable:
-    ...
+) -> t.Iterable[t.Any]: ...
 
 
 @async_variant(sync_do_map)  # type: ignore
 async def do_map(
     context: "Context",
-    value: t.Union[t.AsyncIterable, t.Iterable],
+    value: t.Union[t.AsyncIterable[t.Any], t.Iterable[t.Any]],
     *args: t.Any,
     **kwargs: t.Any,
-) -> t.AsyncIterable:
+) -> t.AsyncIterable[t.Any]:
     if value:
         func = prepare_map(context, args, kwargs)
 
@@ -1703,7 +1703,7 @@ def do_tojson(
 
 
 def prepare_map(
-    context: "Context", args: t.Tuple, kwargs: t.Dict[str, t.Any]
+    context: "Context", args: t.Tuple[t.Any, ...], kwargs: t.Dict[str, t.Any]
 ) -> t.Callable[[t.Any], t.Any]:
     if not args and "attribute" in kwargs:
         attribute = kwargs.pop("attribute")
@@ -1732,7 +1732,7 @@ def prepare_map(
 
 def prepare_select_or_reject(
     context: "Context",
-    args: t.Tuple,
+    args: t.Tuple[t.Any, ...],
     kwargs: t.Dict[str, t.Any],
     modfunc: t.Callable[[t.Any], t.Any],
     lookup_attr: bool,
@@ -1767,7 +1767,7 @@ def prepare_select_or_reject(
 def select_or_reject(
     context: "Context",
     value: "t.Iterable[V]",
-    args: t.Tuple,
+    args: t.Tuple[t.Any, ...],
     kwargs: t.Dict[str, t.Any],
     modfunc: t.Callable[[t.Any], t.Any],
     lookup_attr: bool,
@@ -1783,7 +1783,7 @@ def select_or_reject(
 async def async_select_or_reject(
     context: "Context",
     value: "t.Union[t.AsyncIterable[V], t.Iterable[V]]",
-    args: t.Tuple,
+    args: t.Tuple[t.Any, ...],
     kwargs: t.Dict[str, t.Any],
     modfunc: t.Callable[[t.Any], t.Any],
     lookup_attr: bool,

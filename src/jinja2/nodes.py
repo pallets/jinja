@@ -2,6 +2,7 @@
 some node tree helper functions used by the parser and compiler in order
 to normalize nodes.
 """
+
 import inspect
 import operator
 import typing as t
@@ -13,6 +14,7 @@ from .utils import _PassArg
 
 if t.TYPE_CHECKING:
     import typing_extensions as te
+
     from .environment import Environment
 
 _NodeBound = t.TypeVar("_NodeBound", bound="Node")
@@ -56,7 +58,7 @@ class NodeType(type):
 
     def __new__(mcs, name, bases, d):  # type: ignore
         for attr in "fields", "attributes":
-            storage = []
+            storage: t.List[t.Tuple[str, ...]] = []
             storage.extend(getattr(bases[0] if bases else object, attr, ()))
             storage.extend(d.get(attr, ()))
             assert len(bases) <= 1, "multiple inheritance not allowed"

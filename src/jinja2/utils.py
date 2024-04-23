@@ -152,7 +152,7 @@ def import_string(import_name: str, silent: bool = False) -> t.Any:
             raise
 
 
-def open_if_exists(filename: str, mode: str = "rb") -> t.Optional[t.IO]:
+def open_if_exists(filename: str, mode: str = "rb") -> t.Optional[t.IO[t.Any]]:
     """Returns a file descriptor for the filename if that file exists,
     otherwise ``None``.
     """
@@ -450,7 +450,7 @@ class LRUCache:
         self.__dict__.update(d)
         self._postinit()
 
-    def __getnewargs__(self) -> t.Tuple:
+    def __getnewargs__(self) -> t.Tuple[t.Any, ...]:
         return (self.capacity,)
 
     def copy(self) -> "LRUCache":

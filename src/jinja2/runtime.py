@@ -1,4 +1,5 @@
 """The runtime functions and state used by compiled templates."""
+
 import functools
 import sys
 import typing as t
@@ -28,7 +29,9 @@ F = t.TypeVar("F", bound=t.Callable[..., t.Any])
 
 if t.TYPE_CHECKING:
     import logging
+
     import typing_extensions as te
+
     from .environment import Environment
 
     class LoopRenderFunc(te.Protocol):
@@ -37,8 +40,7 @@ if t.TYPE_CHECKING:
             reciter: t.Iterable[V],
             loop_render_func: "LoopRenderFunc",
             depth: int = 0,
-        ) -> str:
-            ...
+        ) -> str: ...
 
 
 # these variables are exported to the template runtime
@@ -259,7 +261,10 @@ class Context:
 
     @internalcode
     def call(
-        __self, __obj: t.Callable, *args: t.Any, **kwargs: t.Any  # noqa: B902
+        __self,
+        __obj: t.Callable[..., t.Any],
+        *args: t.Any,
+        **kwargs: t.Any,  # noqa: B902
     ) -> t.Union[t.Any, "Undefined"]:
         """Call the callable with the arguments and keyword arguments
         provided but inject the active context or environment as first
@@ -586,7 +591,7 @@ class AsyncLoopContext(LoopContext):
 
     @staticmethod
     def _to_iterator(  # type: ignore
-        iterable: t.Union[t.Iterable[V], t.AsyncIterable[V]]
+        iterable: t.Union[t.Iterable[V], t.AsyncIterable[V]],
     ) -> t.AsyncIterator[V]:
         return auto_aiter(iterable)
 

@@ -365,11 +365,10 @@ class TestInheritance:
 
 class TestBugFix:
     def test_fixed_macro_scoping_bug(self, env):
-        assert (
-            Environment(
-                loader=DictLoader(
-                    {
-                        "test.html": """\
+        assert Environment(
+            loader=DictLoader(
+                {
+                    "test.html": """\
         {% extends 'details.html' %}
 
         {% macro my_macro() %}
@@ -380,7 +379,7 @@ class TestBugFix:
             {{ my_macro() }}
         {% endblock %}
             """,
-                        "details.html": """\
+                    "details.html": """\
         {% extends 'standard.html' %}
 
         {% macro my_macro() %}
@@ -396,17 +395,12 @@ class TestBugFix:
             {% endblock %}
         {% endblock %}
         """,
-                        "standard.html": """
+                    "standard.html": """
         {% block content %}&nbsp;{% endblock %}
         """,
-                    }
-                )
+                }
             )
-            .get_template("test.html")
-            .render()
-            .split()
-            == ["outer_box", "my_macro"]
-        )
+        ).get_template("test.html").render().split() == ["outer_box", "my_macro"]
 
     def test_double_extends(self, env):
         """Ensures that a template with more than 1 {% extends ... %} usage

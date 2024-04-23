@@ -5,6 +5,7 @@ slows down your application too much.
 Situations where this is useful are often forking web applications that
 are initialized on the first request.
 """
+
 import errno
 import fnmatch
 import marshal
@@ -20,14 +21,15 @@ from types import CodeType
 
 if t.TYPE_CHECKING:
     import typing_extensions as te
+
     from .environment import Environment
 
     class _MemcachedClient(te.Protocol):
-        def get(self, key: str) -> bytes:
-            ...
+        def get(self, key: str) -> bytes: ...
 
-        def set(self, key: str, value: bytes, timeout: t.Optional[int] = None) -> None:
-            ...
+        def set(
+            self, key: str, value: bytes, timeout: t.Optional[int] = None
+        ) -> None: ...
 
 
 bc_version = 5
