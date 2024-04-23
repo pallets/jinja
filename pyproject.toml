@@ -1,0 +1,98 @@
+[project]
+name = "Jinja2"
+description = "A very fast and expressive template engine."
+readme = "README.md"
+license = {file = "LICENSE.txt"}
+maintainers = [{name = "Pallets", email = "contact@palletsprojects.com"}]
+classifiers = [
+    "Development Status :: 5 - Production/Stable",
+    "Environment :: Web Environment",
+    "Intended Audience :: Developers",
+    "License :: OSI Approved :: BSD License",
+    "Operating System :: OS Independent",
+    "Programming Language :: Python",
+    "Topic :: Internet :: WWW/HTTP :: Dynamic Content",
+    "Topic :: Text Processing :: Markup :: HTML",
+    "Typing :: Typed",
+]
+requires-python = ">=3.7"
+dependencies = ["MarkupSafe>=2.0"]
+dynamic = ["version"]
+
+[project.urls]
+Donate = "https://palletsprojects.com/donate"
+Documentation = "https://jinja.palletsprojects.com/"
+Changes = "https://jinja.palletsprojects.com/changes/"
+Source = "https://github.com/pallets/jinja/"
+Chat = "https://discord.gg/pallets"
+
+[project.optional-dependencies]
+i18n = ["Babel>=2.7"]
+
+[project.entry-points."babel.extractors"]
+jinja2 = "jinja2.ext:babel_extract[i18n]"
+
+[build-system]
+requires = ["flit_core<4"]
+build-backend = "flit_core.buildapi"
+
+[tool.flit.module]
+name = "jinja2"
+
+[tool.flit.sdist]
+include = [
+    "docs/",
+    "requirements/",
+    "tests/",
+    "CHANGES.md",
+    "tox.ini",
+]
+exclude = [
+    "docs/_build/",
+]
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]
+filterwarnings = [
+    "error",
+]
+
+[tool.coverage.run]
+branch = true
+source = ["jinja2", "tests"]
+
+[tool.coverage.paths]
+source = ["src", "*/site-packages"]
+
+[tool.mypy]
+python_version = "3.8"
+files = ["src/jinja2"]
+show_error_codes = true
+pretty = true
+strict = true
+
+[tool.pyright]
+pythonVersion = "3.8"
+include = ["src/jinja2"]
+typeCheckingMode = "basic"
+
+[tool.ruff]
+src = ["src"]
+fix = true
+show-fixes = true
+output-format = "full"
+
+[tool.ruff.lint]
+select = [
+    "B",  # flake8-bugbear
+    "E",  # pycodestyle error
+    "F",  # pyflakes
+    "I",  # isort
+    "UP",  # pyupgrade
+    "W",  # pycodestyle warning
+]
+ignore-init-module-imports = true
+
+[tool.ruff.lint.isort]
+force-single-line = true
+order-by-type = false
