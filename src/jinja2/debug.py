@@ -118,26 +118,7 @@ def fake_traceback(  # type: ignore
         elif function.startswith("block_"):
             location = f"block {function[6:]!r}"
 
-    if sys.version_info >= (3, 8):
-        code = code.replace(co_name=location)
-    else:
-        code = CodeType(
-            code.co_argcount,
-            code.co_kwonlyargcount,
-            code.co_nlocals,
-            code.co_stacksize,
-            code.co_flags,
-            code.co_code,
-            code.co_consts,
-            code.co_names,
-            code.co_varnames,
-            code.co_filename,
-            location,
-            code.co_firstlineno,
-            code.co_lnotab,
-            code.co_freevars,
-            code.co_cellvars,
-        )
+    code = code.replace(co_name=location)
 
     # Execute the new code, which is guaranteed to raise, and return
     # the new traceback without this frame.

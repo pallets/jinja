@@ -5,6 +5,7 @@ Version 3.2.0
 
 Unreleased
 
+-   Drop support for Python 3.7.
 -   Use modern packaging metadata with ``pyproject.toml`` instead of ``setup.cfg``.
     :pr:`1793`
 -   Use ``flit_core`` instead of ``setuptools`` as build backend.

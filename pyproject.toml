@@ -15,7 +15,7 @@ classifiers = [
     "Topic :: Text Processing :: Markup :: HTML",
     "Typing :: Typed",
 ]
-requires-python = ">=3.7"
+requires-python = ">=3.8"
 dependencies = ["MarkupSafe>=2.0"]
 dynamic = ["version"]
 
