@@ -1,1 +1,3 @@
 mypy
+pyright
+pytest
