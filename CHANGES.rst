@@ -11,6 +11,12 @@ Unreleased
 -   Use ``flit_core`` instead of ``setuptools`` as build backend.
 
 
+Version 3.1.4
+-------------
+
+Unreleased
+
+
 Version 3.1.3
 -------------
 
