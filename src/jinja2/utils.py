@@ -450,9 +450,7 @@ class LRUCache:
         self.__dict__.update(d)
         self._postinit()
 
-    def __getnewargs__(
-        self,
-    ) -> t.Tuple[int,]:
+    def __getnewargs__(self) -> t.Tuple[t.Any, ...]:
         return (self.capacity,)
 
     def copy(self) -> "LRUCache":

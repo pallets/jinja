@@ -4,8 +4,8 @@ about: Report a bug in Jinja (not other projects which depend on Jinja)
 ---
 
 <!--
-This issue tracker is a tool to address bugs in Jinja itself. Please
-use Pallets Discord or Stack Overflow for questions about your own code.
+This issue tracker is a tool to address bugs in Jinja itself. Please use
+GitHub Discussions or the Pallets Discord for questions about your own code.
 
 Replace this comment with a clear outline of what the bug is.
 -->

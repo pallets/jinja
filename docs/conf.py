@@ -10,17 +10,25 @@ release, version = get_version("Jinja2")
 
 # General --------------------------------------------------------------
 
-master_doc = "index"
+default_role = "code"
 extensions = [
     "sphinx.ext.autodoc",
+    "sphinx.ext.extlinks",
     "sphinx.ext.intersphinx",
-    "pallets_sphinx_themes",
     "sphinxcontrib.log_cabinet",
-    "sphinx_issues",
+    "pallets_sphinx_themes",
 ]
+autodoc_member_order = "bysource"
 autodoc_typehints = "description"
-intersphinx_mapping = {"python": ("https://docs.python.org/3/", None)}
-issues_github_path = "pallets/jinja"
+autodoc_preserve_defaults = True
+extlinks = {
+    "issue": ("https://github.com/pallets/jinja/issues/%s", "#%s"),
+    "pr": ("https://github.com/pallets/jinja/pull/%s", "#%s"),
+    "ghsa": ("https://github.com/advisories/GHSA-%s", "GHSA-%s"),
+}
+intersphinx_mapping = {
+    "python": ("https://docs.python.org/3/", None),
+}
 
 # HTML -----------------------------------------------------------------
 
@@ -45,7 +53,3 @@ html_favicon = "_static/jinja-logo-sidebar.png"
 html_logo = "_static/jinja-logo-sidebar.png"
 html_title = f"Jinja Documentation ({version})"
 html_show_sourcelink = False
-
-# LaTeX ----------------------------------------------------------------
-
-latex_documents = [(master_doc, f"Jinja-{version}.tex", html_title, author, "manual")]

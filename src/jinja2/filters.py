@@ -1,4 +1,5 @@
 """Built-in template filters used with the ``|`` operator."""
+
 import math
 import random
 import re
@@ -28,6 +29,7 @@ from .utils import urlize
 
 if t.TYPE_CHECKING:
     import typing_extensions as te
+
     from .environment import Environment
     from .nodes import EvalContext
     from .runtime import Context
@@ -122,7 +124,7 @@ def make_multi_attrgetter(
 
 
 def _prepare_attribute_parts(
-    attr: t.Optional[t.Union[str, int]]
+    attr: t.Optional[t.Union[str, int]],
 ) -> t.List[t.Union[str, int]]:
     if attr is None:
         return []
@@ -142,7 +144,7 @@ def do_forceescape(value: "t.Union[str, HasHTML]") -> Markup:
 
 
 def do_urlencode(
-    value: t.Union[str, t.Mapping[str, t.Any], t.Iterable[t.Tuple[str, t.Any]]]
+    value: t.Union[str, t.Mapping[str, t.Any], t.Iterable[t.Tuple[str, t.Any]]],
 ) -> str:
     """Quote data for use in a URL path or query using UTF-8.
 
@@ -1356,13 +1358,11 @@ def do_mark_unsafe(value: str) -> str:
 
 
 @typing.overload
-def do_reverse(value: str) -> str:
-    ...
+def do_reverse(value: str) -> str: ...
 
 
 @typing.overload
-def do_reverse(value: "t.Iterable[V]") -> "t.Iterable[V]":
-    ...
+def do_reverse(value: "t.Iterable[V]") -> "t.Iterable[V]": ...
 
 
 def do_reverse(value: t.Union[str, t.Iterable[V]]) -> t.Union[str, t.Iterable[V]]:
@@ -1421,8 +1421,7 @@ def sync_do_map(
     name: str,
     *args: t.Any,
     **kwargs: t.Any,
-) -> t.Iterable[t.Any]:
-    ...
+) -> t.Iterable[t.Any]: ...
 
 
 @typing.overload
@@ -1432,8 +1431,7 @@ def sync_do_map(
     *,
     attribute: str = ...,
     default: t.Optional[t.Any] = None,
-) -> t.Iterable[t.Any]:
-    ...
+) -> t.Iterable[t.Any]: ...
 
 
 @pass_context
@@ -1493,8 +1491,7 @@ def do_map(
     name: str,
     *args: t.Any,
     **kwargs: t.Any,
-) -> t.Iterable[t.Any]:
-    ...
+) -> t.Iterable[t.Any]: ...
 
 
 @typing.overload
@@ -1504,8 +1501,7 @@ def do_map(
     *,
     attribute: str = ...,
     default: t.Optional[t.Any] = None,
-) -> t.Iterable[t.Any]:
-    ...
+) -> t.Iterable[t.Any]: ...
 
 
 @async_variant(sync_do_map)  # type: ignore

@@ -1,4 +1,5 @@
 """Built-in template tests used with the ``is`` operator."""
+
 import operator
 import typing as t
 from collections import abc
@@ -169,7 +170,7 @@ def test_sequence(value: t.Any) -> bool:
     """
     try:
         len(value)
-        value.__getitem__
+        value.__getitem__  # noqa B018
     except Exception:
         return False
 

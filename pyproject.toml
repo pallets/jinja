@@ -1,8 +1,8 @@
 [project]
 name = "Jinja2"
 description = "A very fast and expressive template engine."
-readme = "README.rst"
-license = {file = "LICENSE.rst"}
+readme = "README.md"
+license = {file = "LICENSE.txt"}
 maintainers = [{name = "Pallets", email = "contact@palletsprojects.com"}]
 classifiers = [
     "Development Status :: 5 - Production/Stable",
@@ -13,8 +13,9 @@ classifiers = [
     "Programming Language :: Python",
     "Topic :: Internet :: WWW/HTTP :: Dynamic Content",
     "Topic :: Text Processing :: Markup :: HTML",
+    "Typing :: Typed",
 ]
-requires-python = ">=3.7"
+requires-python = ">=3.8"
 dependencies = ["MarkupSafe>=2.0"]
 dynamic = ["version"]
 
@@ -22,14 +23,14 @@ dynamic = ["version"]
 Donate = "https://palletsprojects.com/donate"
 Documentation = "https://jinja.palletsprojects.com/"
 Changes = "https://jinja.palletsprojects.com/changes/"
-"Source Code" = "https://github.com/pallets/jinja/"
-"Issue Tracker" = "https://github.com/pallets/jinja/issues/"
+Source = "https://github.com/pallets/jinja/"
 Chat = "https://discord.gg/pallets"
 
 [project.optional-dependencies]
 i18n = ["Babel>=2.7"]
 
 [project.entry-points."babel.extractors"]
+jinja2 = "jinja2.ext:babel_extract[i18n]"
 
 [build-system]
 requires = ["flit_core<4"]
@@ -44,7 +45,7 @@ include = [
     "examples/",
     "requirements/",
     "tests/",
-    "CHANGES.rst",
+    "CHANGES.md",
     "tox.ini",
 ]
 exclude = [
@@ -65,7 +66,7 @@ source = ["jinja2", "tests"]
 source = ["src", "*/site-packages"]
 
 [tool.mypy]
-python_version = "3.7"
+python_version = "3.8"
 files = ["src/jinja2"]
 show_error_codes = true
 pretty = true
@@ -73,9 +74,28 @@ strict = true
 local_partial_types = true
 warn_unreachable = true
 
-[[tool.mypy.overrides]]
-module = [
-    "jinja2.defaults",
-    "markupsafe",
+[tool.pyright]
+pythonVersion = "3.8"
+include = ["src/jinja2"]
+typeCheckingMode = "basic"
+
+[tool.ruff]
+src = ["src"]
+fix = true
+show-fixes = true
+output-format = "full"
+
+[tool.ruff.lint]
+select = [
+    "B",  # flake8-bugbear
+    "E",  # pycodestyle error
+    "F",  # pyflakes
+    "I",  # isort
+    "UP",  # pyupgrade
+    "W",  # pycodestyle warning
 ]
-no_implicit_reexport = false
+ignore-init-module-imports = true
+
+[tool.ruff.lint.isort]
+force-single-line = true
+order-by-type = false
