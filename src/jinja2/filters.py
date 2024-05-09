@@ -250,7 +250,9 @@ def do_items(value: t.Union[t.Mapping[K, V], Undefined]) -> t.Iterator[t.Tuple[K
     yield from value.items()
 
 
-_space_re = re.compile(r"\s", flags=re.ASCII)
+# Check for characters that would move the parser state from key to value.
+# https://html.spec.whatwg.org/#attribute-name-state
+_attr_key_re = re.compile(r"[\s/>=]", flags=re.ASCII)
 
 
 @pass_eval_context
@@ -259,8 +261,14 @@ def do_xmlattr(
 ) -> str:
     """Create an SGML/XML attribute string based on the items in a dict.
 
-    If any key contains a space, this fails with a ``ValueError``. Values that
-    are neither ``none`` nor ``undefined`` are automatically escaped.
+    **Values** that are neither ``none`` nor ``undefined`` are automatically
+    escaped, safely allowing untrusted user input.
+
+    User input should not be used as **keys** to this filter. If any key
+    contains a space, ``/`` solidus, ``>`` greater-than sign, or ``=`` equals
+    sign, this fails with a ``ValueError``. Regardless of this, user input
+    should never be used as keys to this filter, or must be separately validated
+    first.
 
     .. sourcecode:: html+jinja
 
@@ -280,6 +288,10 @@ def do_xmlattr(
     As you can see it automatically prepends a space in front of the item
     if the filter returned something unless the second parameter is false.
 
+    .. versionchanged:: 3.1.4
+        Keys with ``/`` solidus, ``>`` greater-than sign, or ``=`` equals sign
+        are not allowed.
+
     .. versionchanged:: 3.1.3
         Keys with spaces are not allowed.
     """
@@ -289,8 +301,8 @@ def do_xmlattr(
         if value is None or isinstance(value, Undefined):
             continue
 
-        if _space_re.search(key) is not None:
-            raise ValueError(f"Spaces are not allowed in attributes: '{key}'")
+        if _attr_key_re.search(key) is not None:
+            raise ValueError(f"Invalid character in attribute name: {key!r}")
 
         items.append(f'{escape(key)}="{escape(value)}"')
 
