@@ -515,9 +515,6 @@ environment to compile different code behind the scenes in order to
 handle async and sync code in an asyncio event loop. This has the
 following implications:
 
--   Template rendering requires an event loop to be available to the
-    current thread. :func:`asyncio.get_running_loop` must return an
-    event loop.
 -   The compiled code uses ``await`` for functions and attributes, and
     uses ``async for`` loops. In order to support using both async and
     sync functions in this context, a small wrapper is placed around

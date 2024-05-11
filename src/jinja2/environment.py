@@ -1282,19 +1282,7 @@ class Template:
         if self.environment.is_async:
             import asyncio
 
-            close = False
-
-            try:
-                loop = asyncio.get_running_loop()
-            except RuntimeError:
-                loop = asyncio.new_event_loop()
-                close = True
-
-            try:
-                return loop.run_until_complete(self.render_async(*args, **kwargs))
-            finally:
-                if close:
-                    loop.close()
+            return asyncio.run(self.render_async(*args, **kwargs))
 
         ctx = self.new_context(dict(*args, **kwargs))
 
