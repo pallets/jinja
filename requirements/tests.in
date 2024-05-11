@@ -1,1 +1,2 @@
 pytest
+trio<=0.22.2  # for Python3.7 support
