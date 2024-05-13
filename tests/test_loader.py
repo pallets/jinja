@@ -363,7 +363,7 @@ def test_package_zip_source(package_zip_loader, template, expect):
 
 
 @pytest.mark.xfail(
-    sys.implementation.name == "pypy" or sys.version_info > (3, 13),
+    sys.implementation.name == "pypy",
     reason="zipimporter doesn't have a '_files' attribute",
     raises=TypeError,
 )
