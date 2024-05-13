@@ -55,7 +55,7 @@ def optimizeconst(f: F) -> F:
 
         return f(self, node, frame, **kwargs)
 
-    return update_wrapper(t.cast(F, new_func), f)
+    return update_wrapper(new_func, f)  # type: ignore[return-value]
 
 
 def _make_binop(op: str) -> t.Callable[["CodeGenerator", nodes.BinExpr, "Frame"], None]:
