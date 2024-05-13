@@ -1,6 +1,9 @@
+import asyncio
+import contextlib
 from collections import namedtuple
 
 import pytest
+import trio
 from markupsafe import Markup
 
 from jinja2 import Environment
@@ -26,10 +29,39 @@ def env_async():
     return Environment(enable_async=True)
 
 
+def _asyncio_run(async_fn, *args):
+    return asyncio.run(async_fn(*args))
+
+
+@pytest.fixture(params=[_asyncio_run, trio.run], ids=["asyncio", "trio"])
+def run_async_fn(request):
+    return request.param
+
+
+@contextlib.asynccontextmanager
+async def closing_factory():
+    async with contextlib.AsyncExitStack() as stack:
+
+        def closing(maybe_agen):
+            try:
+                aclose = maybe_agen.aclose
+            except AttributeError:
+                pass
+            else:
+                stack.push_async_callback(aclose)
+            return maybe_agen
+
+        yield closing
+
+
 @mark_dualiter("foo", lambda: range(10))
-def test_first(env_async, foo):
-    tmpl = env_async.from_string("{{ foo()|first }}")
-    out = tmpl.render(foo=foo)
+def test_first(env_async, foo, run_async_fn):
+    async def test():
+        async with closing_factory() as closing:
+            tmpl = env_async.from_string("{{ closing(foo())|first }}")
+            return await tmpl.render_async(foo=foo, closing=closing)
+
+    out = run_async_fn(test)
     assert out == "0"
 
 
@@ -245,18 +277,23 @@ def test_slice(env_async, items):
     )
 
 
-def test_custom_async_filter(env_async):
+def test_custom_async_filter(env_async, run_async_fn):
     async def customfilter(val):
         return str(val)
 
-    env_async.filters["customfilter"] = customfilter
-    tmpl = env_async.from_string("{{ 'static'|customfilter }} {{ arg|customfilter }}")
-    out = tmpl.render(arg="dynamic")
+    async def test():
+        env_async.filters["customfilter"] = customfilter
+        tmpl = env_async.from_string(
+            "{{ 'static'|customfilter }} {{ arg|customfilter }}"
+        )
+        return await tmpl.render_async(arg="dynamic")
+
+    out = run_async_fn(test)
     assert out == "static dynamic"
 
 
 @mark_dualiter("items", lambda: range(10))
-def test_custom_async_iteratable_filter(env_async, items):
+def test_custom_async_iteratable_filter(env_async, items, run_async_fn):
     async def customfilter(iterable):
         items = []
         async for item in auto_aiter(iterable):
@@ -265,9 +302,13 @@ def test_custom_async_iteratable_filter(env_async, items):
                 break
         return ",".join(items)
 
-    env_async.filters["customfilter"] = customfilter
-    tmpl = env_async.from_string(
-        "{{ items()|customfilter }} .. {{ [3, 4, 5, 6]|customfilter }}"
-    )
-    out = tmpl.render(items=items)
+    async def test():
+        async with closing_factory() as closing:
+            env_async.filters["customfilter"] = customfilter
+            tmpl = env_async.from_string(
+                "{{ closing(items())|customfilter }} .. {{ [3, 4, 5, 6]|customfilter }}"
+            )
+            return await tmpl.render_async(items=items, closing=closing)
+
+    out = run_async_fn(test)
     assert out == "0,1,2 .. 3,4,5"

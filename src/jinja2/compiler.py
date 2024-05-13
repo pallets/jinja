@@ -902,12 +902,15 @@ class CodeGenerator(NodeVisitor):
             if not self.environment.is_async:
                 self.writeline("yield from parent_template.root_render_func(context)")
             else:
-                self.writeline(
-                    "async for event in parent_template.root_render_func(context):"
-                )
+                self.writeline("agen = parent_template.root_render_func(context)")
+                self.writeline("try:")
+                self.indent()
+                self.writeline("async for event in agen:")
                 self.indent()
                 self.writeline("yield event")
                 self.outdent()
+                self.outdent()
+                self.writeline("finally: await agen.aclose()")
             self.outdent(1 + (not self.has_known_extends))
 
         # at this point we now have the blocks collected and can visit them too.
@@ -977,14 +980,20 @@ class CodeGenerator(NodeVisitor):
                 f"yield from context.blocks[{node.name!r}][0]({context})", node
             )
         else:
+            self.writeline(f"gen = context.blocks[{node.name!r}][0]({context})")
+            self.writeline("try:")
+            self.indent()
             self.writeline(
-                f"{self.choose_async()}for event in"
-                f" context.blocks[{node.name!r}][0]({context}):",
+                f"{self.choose_async()}for event in gen:",
                 node,
             )
             self.indent()
             self.simple_write("event", frame)
             self.outdent()
+            self.outdent()
+            self.writeline(
+                f"finally: {self.choose_async('await gen.aclose()', 'gen.close()')}"
+            )
 
         self.outdent(level)
 
@@ -1057,26 +1066,33 @@ class CodeGenerator(NodeVisitor):
             self.writeline("else:")
             self.indent()
 
-        skip_event_yield = False
+        def loop_body() -> None:
+            self.indent()
+            self.simple_write("event", frame)
+            self.outdent()
+
         if node.with_context:
             self.writeline(
-                f"{self.choose_async()}for event in template.root_render_func("
+                f"gen = template.root_render_func("
                 "template.new_context(context.get_all(), True,"
-                f" {self.dump_local_context(frame)})):"
+                f" {self.dump_local_context(frame)}))"
+            )
+            self.writeline("try:")
+            self.indent()
+            self.writeline(f"{self.choose_async()}for event in gen:")
+            loop_body()
+            self.outdent()
+            self.writeline(
+                f"finally: {self.choose_async('await gen.aclose()', 'gen.close()')}"
             )
         elif self.environment.is_async:
             self.writeline(
                 "for event in (await template._get_default_module_async())"
                 "._body_stream:"
             )
+            loop_body()
         else:
             self.writeline("yield from template._get_default_module()._body_stream")
-            skip_event_yield = True
-
-        if not skip_event_yield:
-            self.indent()
-            self.simple_write("event", frame)
-            self.outdent()
 
         if node.ignore_missing:
             self.outdent()

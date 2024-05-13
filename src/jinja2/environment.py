@@ -1284,19 +1284,7 @@ class Template:
         if self.environment.is_async:
             import asyncio
 
-            close = False
-
-            try:
-                loop = asyncio.get_running_loop()
-            except RuntimeError:
-                loop = asyncio.new_event_loop()
-                close = True
-
-            try:
-                return loop.run_until_complete(self.render_async(*args, **kwargs))
-            finally:
-                if close:
-                    loop.close()
+            return asyncio.run(self.render_async(*args, **kwargs))
 
         ctx = self.new_context(dict(*args, **kwargs))
 
@@ -1360,7 +1348,7 @@ class Template:
 
     async def generate_async(
         self, *args: t.Any, **kwargs: t.Any
-    ) -> t.AsyncIterator[str]:
+    ) -> t.AsyncGenerator[str, object]:
         """An async version of :meth:`generate`.  Works very similarly but
         returns an async iterator instead.
         """
@@ -1372,8 +1360,14 @@ class Template:
         ctx = self.new_context(dict(*args, **kwargs))
 
         try:
-            async for event in self.root_render_func(ctx):  # type: ignore
-                yield event
+            agen = self.root_render_func(ctx)
+            try:
+                async for event in agen:  # type: ignore
+                    yield event
+            finally:
+                # we can't use async with aclosing(...) because that's only
+                # in 3.10+
+                await agen.aclose()  # type: ignore
         except Exception:
             yield self.environment.handle_exception()
 
