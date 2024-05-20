@@ -18,6 +18,8 @@ Unreleased
     when calling block references. :issue:`1701`
 -   Make ``|unique`` async-aware, allowing it to be used after another
     async-aware filter. :issue:`1781`
+-   ``|int`` filter handles ``OverflowError`` from scientific notation.
+    :issue:`1921`
 
 
 Version 3.1.4
