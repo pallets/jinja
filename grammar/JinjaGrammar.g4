@@ -53,7 +53,7 @@ statement_import_variable
     ;
 
 statement_import_variable_list
-    : (statement_import_variable SP? COMMA SP?)+ statement_import_variable
+    : (statement_import_variable SP? COMMA SP?)* statement_import_variable
     ;
 
 statement_import
