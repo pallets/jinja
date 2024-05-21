@@ -71,7 +71,7 @@ COMMENT_OPEN        : '{#';
 COMMENT_CLOSE       : '#}';
 
 STRING_LITERAL                           : STRING_LITERAL_SINGLE_QUOTE | STRING_LITERAL_DOUBLE_QUOTE;
-fragment STRING_LITERAL_SINGLE_QUOTE     : '\'' (~[\\\r\n"])* '\'';
+fragment STRING_LITERAL_SINGLE_QUOTE     : '\'' (~[\\\r\n'])* '\'';
 fragment STRING_LITERAL_DOUBLE_QUOTE     : '"' (~[\\\r\n"])* '"';
 
 SP              : [ \t\f]+;
