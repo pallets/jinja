@@ -79,11 +79,13 @@ SP              : [ \t\f]+;
 // Statement identifiers for built-in statements
 
 STATEMENT_ID_BLOCK      : 'block';
+STATEMENT_END_ID_BLOCK  : 'endblock';
 STATEMENT_ID_FROM       : 'from';
 STATEMENT_ID_IMPORT     : 'import';
 STATEMENT_ID_INCLUDE    : 'include';
 STATEMENT_ID_RAW        : 'raw';
 STATEMENT_ID_SET        : 'set';
+STATEMENT_END_ID_SET    : 'endset';
 
 STATEMENT_ID_IMPORT_AS  : 'as';
 

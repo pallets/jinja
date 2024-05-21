@@ -8,6 +8,7 @@ start : expressions;
 
 expression
     : inline_statement
+    | block_statement
     ;
 
 expressions     : expression*;
@@ -24,6 +25,11 @@ list_literal_value
     ;
 
 variable_name : IDENTIFIER;
+
+statement_block
+    :
+    STATEMENT_ID_BLOCK SP IDENTIFIER
+    ;
 
 statement_include_template
     : STRING_LITERAL
@@ -61,23 +67,23 @@ statement_import
     | STATEMENT_ID_FROM SP statement_import_file SP STATEMENT_ID_IMPORT SP statement_import_variable_list (SP statement_include_context)?
     ;
 
-block_statement_id
-    : STATEMENT_ID_BLOCK
-    | STATEMENT_ID_SET
+block_end_statement_id
+    : STATEMENT_END_ID_BLOCK
+    | STATEMENT_END_ID_SET
     ;
 
-block_statement_with_parameters
-    : block_statement_id
-    | block_statement_id
-    ;
+// block_statement_with_parameters
+//     : block_statement_id
+//     | block_statement_id
+//     ;
 
 block_statement_without_parameters
-    : block_statement_id
+    : statement_block
     ;
 
 block_statement_start_content
     : block_statement_without_parameters
-    | block_statement_with_parameters
+    // | block_statement_with_parameters
     ;
 
 inline_statement_content
@@ -88,6 +94,6 @@ inline_statement_content
 inline_statement            : STATEMENT_OPEN inline_statement_content STATEMENT_CLOSE;
 
 block_statement_start       : STATEMENT_OPEN block_statement_start_content STATEMENT_CLOSE;
-block_statement_end         : STATEMENT_OPEN END_STATEMENT_ID_PREFIX block_statement_id STATEMENT_CLOSE;
+block_statement_end         : STATEMENT_OPEN block_end_statement_id STATEMENT_CLOSE;
 
 block_statement             : block_statement_start expressions block_statement_end;
