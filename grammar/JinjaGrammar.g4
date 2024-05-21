@@ -57,8 +57,8 @@ statement_import_variable_list
     ;
 
 statement_import
-    : STATEMENT_ID_IMPORT SP statement_import_file SP STATEMENT_ID_IMPORT_AS SP variable_name
-    | STATEMENT_ID_FROM SP statement_import_file SP STATEMENT_ID_IMPORT SP statement_import_variable_list
+    : STATEMENT_ID_IMPORT SP statement_import_file SP STATEMENT_ID_IMPORT_AS SP variable_name (SP statement_include_context)?
+    | STATEMENT_ID_FROM SP statement_import_file SP STATEMENT_ID_IMPORT SP statement_import_variable_list (SP statement_include_context)?
     ;
 
 block_statement_id
