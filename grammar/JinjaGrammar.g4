@@ -12,8 +12,19 @@ expression
 
 expressions     : expression*;
 
+list_literal            : LSQB SP? list_literal_values? SP? RSQB;
+list_literal_values
+    :
+    (list_literal_value SP? COMMA SP?)*
+    list_literal_value
+    ;
+list_literal_value
+    : STRING_LITERAL
+    ;
+
 statement_include_template_list
     : STRING_LITERAL
+    | list_literal
     ;
 
 statement_include_context
