@@ -22,7 +22,10 @@ statement_include_context
     ;
 
 statement_include
-    : STATEMENT_ID_INCLUDE (SP statement_include_template_list)?
+    : STATEMENT_ID_INCLUDE
+        (SP statement_include_template_list)?
+        (SP STATEMENT_INCLUDE_IGNORE_MISSING)?
+        (SP statement_include_context)?
     ;
 
 block_statement_id
