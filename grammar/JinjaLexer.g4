@@ -61,8 +61,8 @@ RARROW          : '->';
 ELLIPSIS        : '...';
 EXCLAMATION     : '!';
 
-STATEMENT_OPEN      : '{%';
-STATEMENT_CLOSE     : '%}';
+STATEMENT_OPEN      : '{%' SP?;
+STATEMENT_CLOSE     : SP? '%}';
 
 EXPRESSION_OPEN     : '{{';
 EXPRESSION_CLOSE    : '}}';
@@ -70,9 +70,11 @@ EXPRESSION_CLOSE    : '}}';
 COMMENT_OPEN        : '{#';
 COMMENT_CLOSE       : '#}';
 
-SP              : [ \t\f]+;
+STRING_LITERAL                           : STRING_LITERAL_SINGLE_QUOTE | STRING_LITERAL_DOUBLE_QUOTE;
+fragment STRING_LITERAL_SINGLE_QUOTE     : '\'' (~[\\\r\n"])* '\'';
+fragment STRING_LITERAL_DOUBLE_QUOTE     : '"' (~[\\\r\n"])* '"';
 
-IDENTIFIER      : [a-zA-Z_][a-zA-Z0-9_]*;
+SP              : [ \t\f]+;
 
 // Statement identifiers for built-in statements
 
@@ -81,5 +83,9 @@ STATEMENT_ID_IMPORT     : 'import';
 STATEMENT_ID_INCLUDE    : 'include';
 STATEMENT_ID_RAW        : 'raw';
 STATEMENT_ID_SET        : 'set';
+
+STATEMENT_INCLUDE_IGNORE_MISSING    : 'ignore missing';
+STATEMENT_INCLUDE_WITH_CONTEXT      : 'with context';
+STATEMENT_INCLUDE_WITHOUT_CONTEXT   : 'without context';
 
 END_STATEMENT_ID_PREFIX    : 'end';

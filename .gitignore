@@ -10,3 +10,4 @@ htmlcov/
 docs/_build/
 
 .antlr/
+*.input.txt
