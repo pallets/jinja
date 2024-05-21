@@ -84,6 +84,8 @@ STATEMENT_ID_INCLUDE    : 'include';
 STATEMENT_ID_RAW        : 'raw';
 STATEMENT_ID_SET        : 'set';
 
+STATEMENT_ID_IMPORT_AS  : 'as';
+
 STATEMENT_INCLUDE_IGNORE_MISSING    : 'ignore missing';
 STATEMENT_INCLUDE_WITH_CONTEXT      : 'with context';
 STATEMENT_INCLUDE_WITHOUT_CONTEXT   : 'without context';

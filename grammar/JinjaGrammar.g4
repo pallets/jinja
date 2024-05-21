@@ -25,7 +25,7 @@ list_literal_value
 
 variable_name : IDENTIFIER;
 
-statement_include_template_list
+statement_include_template
     : STRING_LITERAL
     | list_literal
     | variable_name
@@ -38,9 +38,18 @@ statement_include_context
 
 statement_include
     : STATEMENT_ID_INCLUDE
-        (SP statement_include_template_list)
+        (SP statement_include_template)
         (SP STATEMENT_INCLUDE_IGNORE_MISSING)?
         (SP statement_include_context)?
+    ;
+
+statement_import_file
+    : STRING_LITERAL
+    | variable_name
+    ;
+
+statement_import
+    : STATEMENT_ID_IMPORT SP statement_import_file SP STATEMENT_ID_IMPORT_AS SP variable_name
     ;
 
 block_statement_id
@@ -64,6 +73,7 @@ block_statement_start_content
 
 inline_statement_content
     : statement_include
+    | statement_import
     ;
 
 inline_statement            : STATEMENT_OPEN inline_statement_content STATEMENT_CLOSE;
