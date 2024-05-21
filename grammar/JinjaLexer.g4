@@ -89,3 +89,7 @@ STATEMENT_INCLUDE_WITH_CONTEXT      : 'with context';
 STATEMENT_INCLUDE_WITHOUT_CONTEXT   : 'without context';
 
 END_STATEMENT_ID_PREFIX    : 'end';
+
+IDENTIFIER                       : IDENTIFIER_START IDENTIFIER_CONTINUE*;
+fragment IDENTIFIER_START        : [a-zA-Z_];
+fragment IDENTIFIER_CONTINUE     : [a-zA-Z0-0_];

@@ -20,11 +20,15 @@ list_literal_values
     ;
 list_literal_value
     : STRING_LITERAL
+    | variable_name
     ;
+
+variable_name : IDENTIFIER;
 
 statement_include_template_list
     : STRING_LITERAL
     | list_literal
+    | variable_name
     ;
 
 statement_include_context
