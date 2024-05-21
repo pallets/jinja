@@ -8,3 +8,5 @@ dist/
 htmlcov/
 .tox/
 docs/_build/
+
+.antlr/
