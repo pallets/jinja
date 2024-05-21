@@ -48,8 +48,17 @@ statement_import_file
     | variable_name
     ;
 
+statement_import_variable
+    : variable_name (SP STATEMENT_ID_IMPORT_AS SP variable_name)?
+    ;
+
+statement_import_variable_list
+    : (statement_import_variable SP? COMMA SP?)+ statement_import_variable
+    ;
+
 statement_import
     : STATEMENT_ID_IMPORT SP statement_import_file SP STATEMENT_ID_IMPORT_AS SP variable_name
+    | STATEMENT_ID_FROM SP statement_import_file SP STATEMENT_ID_IMPORT SP statement_import_variable_list
     ;
 
 block_statement_id
