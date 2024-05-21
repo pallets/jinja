@@ -1,3 +1,4 @@
 pallets-sphinx-themes
 sphinx
 sphinxcontrib-log-cabinet
+importlib-resources

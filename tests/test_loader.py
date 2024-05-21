@@ -362,11 +362,6 @@ def test_package_zip_source(package_zip_loader, template, expect):
     assert up_to_date is None
 
 
-@pytest.mark.xfail(
-    sys.implementation.name == "pypy" or sys.version_info > (3, 13),
-    reason="zipimporter doesn't have a '_files' attribute",
-    raises=TypeError,
-)
 def test_package_zip_list(package_zip_loader):
     assert package_zip_loader.list_templates() == ["foo/test.html", "test.html"]
 

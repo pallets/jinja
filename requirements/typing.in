@@ -1,3 +1,4 @@
 mypy
 pyright
 pytest
+importlib-resources
