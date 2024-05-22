@@ -13,15 +13,25 @@ Jinja {
     
     inlineStatementContent
     = statement_extends
+    | statement_include
     
     statement_extends
     = statementId_extends sp stringLiteral
+    
+    statement_include
+    = statementId_include sp stringLiteral (sp importOptions_ignoreMissing)? (sp importOptions_contextManagement)?
     
     statementOpen = "{%"
     statementClose = "%}"
     
     statementId_extends = "extends"
+    statementId_include = "include"
     
+    importOptions_ignoreMissing = "ignore missing"
+    importOptions_contextManagement = importOptions_withContext | importOptions_withoutContext
+    importOptions_withContext = "with context"
+    importOptions_withoutContext = "without context"
+      
     stringLiteral = stringLiteral_single | stringLiteral_double
     
     stringLiteral_single = quote_single (~quote_single any)* quote_single
