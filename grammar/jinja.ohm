@@ -7,7 +7,27 @@ Jinja {
     
     expression
     = inlineStatement
+    | blockStatement
+
+	blockStatement
+    = blockStatement_open expressions blockStatement_close
     
+    blockStatement_open
+    = statementOpen sp? blockStatementOpenContent sp? statementClose
+    
+    blockStatementOpenContent
+    = statement_block
+    
+    blockStatement_close
+    = statementOpen sp? blockStatementCloseContent sp? statementClose
+
+	blockStatementCloseContent
+    = statementEnd_block
+    | blockStatementCloseContent_generic
+
+	blockStatementCloseContent_generic
+    = blockStatementId_end blockStatementId_list
+
     inlineStatement
     = statementOpen sp? inlineStatementContent sp? statementClose
     
@@ -16,6 +36,12 @@ Jinja {
     | statement_from
     | statement_import
     | statement_include
+    
+    statement_block
+    = statementId_block sp identifier (sp contextModifier_scoped)? (sp contextModifier_required)?
+    
+    statementEnd_block
+    = blockStatementId_end statementId_block (sp identifier)?
     
     statement_extends
     = statementId_extends sp statementExtends_file
@@ -51,12 +77,21 @@ Jinja {
     statementOpen = "{%"
     statementClose = "%}"
     
-    statementId_extends = "extends"
+	statementId_block = "block"
+	statementId_extends = "extends"
     statementId_from = "from"
     statementId_import = "import"
     statementId_include = "include"
     
+    blockStatementId_list
+    = statementId_block
+    
+    blockStatementId_end = "end"
+    
     statementModifier_as = "as"
+    
+    contextModifier_scoped = "scoped"
+    contextModifier_required = "required"
     
     importOptions_ignoreMissing = "ignore missing"
     importOptions_contextManagement = importOptions_withContext | importOptions_withoutContext
