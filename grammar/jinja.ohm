@@ -6,7 +6,8 @@ Jinja {
     = expression*
     
     expression
-    = inlineStatement
+    = content
+    | inlineStatement
     | blockStatement
 
 	blockStatement
@@ -17,6 +18,7 @@ Jinja {
     
     blockStatementOpenContent
     = statement_block
+    | statement_filter
     
     blockStatement_close
     = statementOpen sp? blockStatementCloseContent sp? statementClose
@@ -50,6 +52,9 @@ Jinja {
     = stringLiteral
     | variableName
     
+    statement_filter
+    = statementId_filter sp filterExpression
+    
     statement_from
     = statementId_from sp statementImport_file sp statementId_import sp statementFrom_variables (sp importOptions_contextManagement)?
     
@@ -72,19 +77,37 @@ Jinja {
     | listLiteral
     | variableName
     
+    content
+    = (~statementOpen any)+
+    
     variableName = identifier
+    
+    filterExpression
+    = filter_center
+    | filter_upper
+    
+    filter_center = filterId_center (parenthesis_left sp? filterCenter_parameters? sp? parenthesis_right)?
+    
+    filterCenter_parameters = digit+
+    
+    filter_upper = filterId_upper
+    
+    filterId_center = "center"
+    filterId_upper = "upper"
     
     statementOpen = "{%"
     statementClose = "%}"
     
 	statementId_block = "block"
 	statementId_extends = "extends"
+    statementId_filter = "filter"
     statementId_from = "from"
     statementId_import = "import"
     statementId_include = "include"
     
     blockStatementId_list
     = statementId_block
+    | statementId_filter
     
     blockStatementId_end = "end"
     
