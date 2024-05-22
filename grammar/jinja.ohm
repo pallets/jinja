@@ -13,6 +13,7 @@ Jinja {
     
     inlineStatementContent
     = statement_extends
+    | statement_from
     | statement_import
     | statement_include
     
@@ -22,6 +23,13 @@ Jinja {
     statementExtends_file
     = stringLiteral
     | variableName
+    
+    statement_from
+    = statementId_from sp statementImport_file sp statementId_import sp statementFrom_variables (sp importOptions_contextManagement)?
+    
+    statementFrom_variables
+    = (statementFrom_variable sp? comma sp?)* statementFrom_variable
+    statementFrom_variable = variableName (sp statementModifier_as sp variableName)?
     
     statement_import
     = statementId_import sp statementImport_file sp statementModifier_as sp variableName
@@ -44,6 +52,7 @@ Jinja {
     statementClose = "%}"
     
     statementId_extends = "extends"
+    statementId_from = "from"
     statementId_import = "import"
     statementId_include = "include"
     
