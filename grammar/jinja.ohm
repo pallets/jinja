@@ -16,10 +16,21 @@ Jinja {
     | statement_include
     
     statement_extends
-    = statementId_extends sp stringLiteral
+    = statementId_extends sp statementExtends_file
+    
+    statementExtends_file
+    = stringLiteral
+    | variableName
     
     statement_include
-    = statementId_include sp stringLiteral (sp importOptions_ignoreMissing)? (sp importOptions_contextManagement)?
+    = statementId_include sp statementInclude_file (sp importOptions_ignoreMissing)? (sp importOptions_contextManagement)?
+    
+    statementInclude_file
+    = stringLiteral
+    | listLiteral
+    | variableName
+    
+    variableName = identifier
     
     statementOpen = "{%"
     statementClose = "%}"
@@ -31,7 +42,13 @@ Jinja {
     importOptions_contextManagement = importOptions_withContext | importOptions_withoutContext
     importOptions_withContext = "with context"
     importOptions_withoutContext = "without context"
-      
+    
+    listLiteral = bracket_left listLiteral_values? bracket_right
+    listLiteral_values = sp? (listLiteral_value sp? comma sp?)* listLiteral_value sp?
+    listLiteral_value
+    = stringLiteral
+    | variableName
+    
     stringLiteral = stringLiteral_single | stringLiteral_double
     
     stringLiteral_single = quote_single (~quote_single any)* quote_single
@@ -39,6 +56,19 @@ Jinja {
 
 	quote_single = "'"
     quote_double = "\""
+    comma = ","
+    
+    bracket_left = "["
+    bracket_right = "]"
+    brace_left = "{"
+    brace_right = "}"
+    parenthesis_left = "("
+    parenthesis_right = ")"
+    
+    identifier = identifierStart identifierContinue*
+    
+    identifierStart = letter
+    identifierContinue = letter | digit | "_"
 
     sp = (" " | "\t")+
 }
