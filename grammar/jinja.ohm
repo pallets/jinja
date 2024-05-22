@@ -39,6 +39,7 @@ Jinja {
     | statement_from
     | statement_import
     | statement_include
+    | statement_setInline
     
     statement_block
     = statementId_block sp identifier (sp contextModifier_scoped)? (sp contextModifier_required)?
@@ -77,6 +78,15 @@ Jinja {
     = stringLiteral
     | listLiteral
     | variableName
+    
+    statement_setInline
+    = statementId_set sp variableName sp? equals sp? statementSet_value
+    
+    statementSet_value
+    = stringLiteral
+    | variableName
+    | listLiteral
+    | explicitTupleLiteral
     
     statement_setBlock
     = statementId_set sp variableName (sp verticalBar sp filterExpression)*
@@ -134,12 +144,19 @@ Jinja {
     listLiteral_values = sp? (listLiteral_value sp? comma sp?)* listLiteral_value sp?
     listLiteral_value
     = stringLiteral
+    | explicitTupleLiteral
     | variableName
     
     stringLiteral = stringLiteral_single | stringLiteral_double
     
     stringLiteral_single = quote_single (~quote_single any)* quote_single
     stringLiteral_double = quote_double (~quote_double any)* quote_double
+    
+    explicitTupleLiteral = parenthesis_left sp? tupleLiteral_values sp? parenthesis_right
+    
+    tupleLiteral_values = (sp? tupleLiteral_value sp? comma sp?)* tupleLiteral_value
+    tupleLiteral_value
+    = stringLiteral
 
 	quote_single = "'"
     quote_double = "\""
