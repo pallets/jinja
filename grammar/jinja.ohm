@@ -1,0 +1,34 @@
+Jinja {
+  Template
+    = expressions
+    
+    expressions
+    = expression*
+    
+    expression
+    = inlineStatement
+    
+    inlineStatement
+    = statementOpen sp? inlineStatementContent sp? statementClose
+    
+    inlineStatementContent
+    = statement_extends
+    
+    statement_extends
+    = statementId_extends sp stringLiteral
+    
+    statementOpen = "{%"
+    statementClose = "%}"
+    
+    statementId_extends = "extends"
+    
+    stringLiteral = stringLiteral_single | stringLiteral_double
+    
+    stringLiteral_single = quote_single (~quote_single any)* quote_single
+    stringLiteral_double = quote_double (~quote_double any)* quote_double
+
+	quote_single = "'"
+    quote_double = "\""
+
+    sp = (" " | "\t")+
+}
