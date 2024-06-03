@@ -329,7 +329,7 @@ class TokenStream:
         filename: t.Optional[str],
     ):
         self._iter = iter(generator)
-        self._pushed: "te.Deque[Token]" = deque()
+        self._pushed: te.Deque[Token] = deque()
         self.name = name
         self.filename = filename
         self.closed = False
