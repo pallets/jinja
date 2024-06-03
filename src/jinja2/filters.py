@@ -1116,7 +1116,7 @@ def do_batch(
         {%- endfor %}
         </table>
     """
-    tmp: "t.List[V]" = []
+    tmp: t.List[V] = []
 
     for item in value:
         if len(tmp) == linecount:

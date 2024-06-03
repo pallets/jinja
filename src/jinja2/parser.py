@@ -64,7 +64,7 @@ class Parser:
         self.filename = filename
         self.closed = False
         self.extensions: t.Dict[
-            str, t.Callable[["Parser"], t.Union[nodes.Node, t.List[nodes.Node]]]
+            str, t.Callable[[Parser], t.Union[nodes.Node, t.List[nodes.Node]]]
         ] = {}
         for extension in environment.iter_extensions():
             for tag in extension.tags:
