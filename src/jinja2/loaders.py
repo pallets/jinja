@@ -14,6 +14,8 @@ from hashlib import sha1
 from importlib import import_module
 from types import ModuleType
 
+import importlib_resources
+
 from .exceptions import TemplateNotFound
 from .utils import internalcode
 
@@ -371,6 +373,19 @@ class PackageLoader(BaseLoader):
     def list_templates(self) -> t.List[str]:
         results: t.List[str] = []
 
+        def _find_files_in_dir(path: importlib_resources.abc.Traversable) -> None:
+            if path.is_dir():
+                for sub_path in path.iterdir():
+                    _find_files_in_dir(sub_path)
+            else:
+                os_adjusted_path = str(path).replace(os.sep, "/")
+                if os_adjusted_path.startswith(
+                    self._template_root.replace(os.sep, "/")
+                ):
+                    results.append(
+                        os_adjusted_path[len(self._template_root) + len(os.sep) :]
+                    )
+
         if self._archive is None:
             # Package is a directory.
             offset = len(self._template_root)
@@ -382,20 +397,9 @@ class PackageLoader(BaseLoader):
                     for name in filenames
                 )
         else:
-            if not hasattr(self._loader, "_files"):
-                raise TypeError(
-                    "This zip import does not have the required"
-                    " metadata to list templates."
-                )
-
             # Package is a zip file.
-            prefix = self._template_root[len(self._archive) :].lstrip(os.sep) + os.sep
-            offset = len(prefix)
-
-            for name in self._loader._files.keys():
-                # Find names under the templates directory that aren't directories.
-                if name.startswith(prefix) and name[-1] != os.sep:
-                    results.append(name[offset:].replace(os.sep, "/"))
+            for path in importlib_resources.files(self.package_name).iterdir():
+                _find_files_in_dir(path)
 
         results.sort()
         return results

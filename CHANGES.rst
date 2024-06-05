@@ -9,6 +9,7 @@ Unreleased
 -   Use modern packaging metadata with ``pyproject.toml`` instead of ``setup.cfg``.
     :pr:`1793`
 -   Use ``flit_core`` instead of ``setuptools`` as build backend.
+-   Refactor ``PackageLoader`` to use ``importlib_resources`` to fix ``PackageLoader.list_templates()`` for Python 3.13.
 
 
 Version 3.1.5
