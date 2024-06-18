@@ -1,4 +1,3 @@
-import asyncio
 import math
 
 import pytest
@@ -128,7 +127,7 @@ def test_string_top_level(env):
     assert result == "Jinja"
 
 
-def test_string_concatenation(async_native_env):
+def test_string_concatenation(async_native_env, run_async_fn):
     async def async_render():
         t = async_native_env.from_string(
             "{%- macro x(y) -%}{{ y }}{%- endmacro -%}{{- x('not') }} {{ x('bad') -}}"
@@ -137,7 +136,7 @@ def test_string_concatenation(async_native_env):
         assert isinstance(result, str)
         assert result == "not bad"
 
-    asyncio.run(async_render())
+    run_async_fn(async_render)
 
 
 def test_tuple_of_variable_strings(env):
