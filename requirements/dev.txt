@@ -5,36 +5,36 @@
 #    pip-compile dev.in
 #
 alabaster==0.7.16
+    # via sphinx
+attrs==23.2.0
     # via
-    #   -r docs.txt
-    #   sphinx
-babel==2.14.0
-    # via
-    #   -r docs.txt
-    #   sphinx
+    #   outcome
+    #   trio
+babel==2.15.0
+    # via sphinx
+build==1.2.1
+    # via pip-tools
 cachetools==5.3.3
     # via tox
 certifi==2024.2.2
-    # via
-    #   -r docs.txt
-    #   requests
+    # via requests
 cfgv==3.4.0
     # via pre-commit
 chardet==5.2.0
     # via tox
 charset-normalizer==3.3.2
+    # via requests
+click==8.1.7
     # via
-    #   -r docs.txt
-    #   requests
+    #   pip-compile-multi
+    #   pip-tools
 colorama==0.4.6
     # via tox
 distlib==0.3.8
     # via virtualenv
 docutils==0.21.2
-    # via
-    #   -r docs.txt
-    #   sphinx
-filelock==3.13.4
+    # via sphinx
+filelock==3.14.0
     # via
     #   tox
     #   virtualenv
@@ -42,127 +42,107 @@ identify==2.5.36
     # via pre-commit
 idna==3.7
     # via
-    #   -r docs.txt
     #   requests
+    #   trio
 imagesize==1.4.1
-    # via
-    #   -r docs.txt
-    #   sphinx
+    # via sphinx
 iniconfig==2.0.0
-    # via
-    #   -r tests.txt
-    #   -r typing.txt
-    #   pytest
-jinja2==3.1.3
-    # via
-    #   -r docs.txt
-    #   sphinx
+    # via pytest
+jinja2==3.1.4
+    # via sphinx
 markupsafe==2.1.5
-    # via
-    #   -r docs.txt
-    #   jinja2
+    # via jinja2
 mypy==1.10.0
-    # via -r typing.txt
+    # via -r typing.in
 mypy-extensions==1.0.0
-    # via
-    #   -r typing.txt
-    #   mypy
+    # via mypy
 nodeenv==1.8.0
-    # via
-    #   -r typing.txt
-    #   pre-commit
-    #   pyright
+    # via pre-commit
+outcome==1.3.0.post0
+    # via trio
 packaging==24.0
     # via
-    #   -r docs.txt
-    #   -r tests.txt
-    #   -r typing.txt
+    #   build
     #   pallets-sphinx-themes
     #   pyproject-api
     #   pytest
     #   sphinx
     #   tox
 pallets-sphinx-themes==2.1.3
-    # via -r docs.txt
+    # via -r docs.in
+pip-compile-multi==2.6.3
+    # via -r dev.in
+pip-tools==7.4.1
+    # via pip-compile-multi
 platformdirs==4.2.1
     # via
     #   tox
     #   virtualenv
 pluggy==1.5.0
     # via
-    #   -r tests.txt
-    #   -r typing.txt
     #   pytest
     #   tox
-pre-commit==3.7.0
+pre-commit==3.7.1
     # via -r dev.in
-pygments==2.17.2
-    # via
-    #   -r docs.txt
-    #   sphinx
+pygments==2.18.0
+    # via sphinx
 pyproject-api==1.6.1
     # via tox
-pyright==1.1.360
-    # via -r typing.txt
-pytest==8.2.0
+pyproject-hooks==1.1.0
     # via
-    #   -r tests.txt
-    #   -r typing.txt
+    #   build
+    #   pip-tools
+pytest==8.2.0
+    # via -r tests.in
 pyyaml==6.0.1
     # via pre-commit
 requests==2.31.0
-    # via
-    #   -r docs.txt
-    #   sphinx
+    # via sphinx
+sniffio==1.3.1
+    # via trio
 snowballstemmer==2.2.0
-    # via
-    #   -r docs.txt
-    #   sphinx
+    # via sphinx
+sortedcontainers==2.4.0
+    # via trio
 sphinx==7.3.7
     # via
-    #   -r docs.txt
+    #   -r docs.in
     #   pallets-sphinx-themes
+    #   sphinx-issues
     #   sphinxcontrib-log-cabinet
+sphinx-issues==4.1.0
+    # via -r docs.in
 sphinxcontrib-applehelp==1.0.8
-    # via
-    #   -r docs.txt
-    #   sphinx
+    # via sphinx
 sphinxcontrib-devhelp==1.0.6
-    # via
-    #   -r docs.txt
-    #   sphinx
+    # via sphinx
 sphinxcontrib-htmlhelp==2.0.5
-    # via
-    #   -r docs.txt
-    #   sphinx
+    # via sphinx
 sphinxcontrib-jsmath==1.0.1
-    # via
-    #   -r docs.txt
-    #   sphinx
+    # via sphinx
 sphinxcontrib-log-cabinet==1.0.1
-    # via -r docs.txt
+    # via -r docs.in
 sphinxcontrib-qthelp==1.0.7
-    # via
-    #   -r docs.txt
-    #   sphinx
+    # via sphinx
 sphinxcontrib-serializinghtml==1.1.10
-    # via
-    #   -r docs.txt
-    #   sphinx
+    # via sphinx
+toposort==1.10
+    # via pip-compile-multi
 tox==4.15.0
     # via -r dev.in
+trio==0.25.0
+    # via -r tests.in
 typing-extensions==4.11.0
-    # via
-    #   -r typing.txt
-    #   mypy
+    # via mypy
 urllib3==2.2.1
-    # via
-    #   -r docs.txt
-    #   requests
-virtualenv==20.26.0
+    # via requests
+virtualenv==20.26.1
     # via
     #   pre-commit
     #   tox
+wheel==0.43.0
+    # via pip-tools
 
 # The following packages are considered to be unsafe in a requirements file:
+# pip
 # setuptools

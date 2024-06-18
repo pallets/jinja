@@ -428,7 +428,7 @@ class LRUCache:
     def __init__(self, capacity: int) -> None:
         self.capacity = capacity
         self._mapping: t.Dict[t.Any, t.Any] = {}
-        self._queue: "te.Deque[t.Any]" = deque()
+        self._queue: te.Deque[t.Any] = deque()
         self._postinit()
 
     def _postinit(self) -> None:

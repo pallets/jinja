@@ -2,7 +2,6 @@ import importlib.abc
 import importlib.machinery
 import importlib.util
 import os
-import platform
 import shutil
 import sys
 import tempfile
@@ -364,8 +363,8 @@ def test_package_zip_source(package_zip_loader, template, expect):
 
 
 @pytest.mark.xfail(
-    platform.python_implementation() == "PyPy",
-    reason="PyPy's zipimporter doesn't have a '_files' attribute.",
+    sys.implementation.name == "pypy" or sys.version_info > (3, 13),
+    reason="zipimporter doesn't have a '_files' attribute",
     raises=TypeError,
 )
 def test_package_zip_list(package_zip_loader):
