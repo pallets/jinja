@@ -1,9 +1,7 @@
-import asyncio
 import contextlib
 from collections import namedtuple
 
 import pytest
-import trio
 from markupsafe import Markup
 
 from jinja2 import Environment
@@ -27,15 +25,6 @@ def mark_dualiter(parameter, factory):
 @pytest.fixture
 def env_async():
     return Environment(enable_async=True)
-
-
-def _asyncio_run(async_fn, *args):
-    return asyncio.run(async_fn(*args))
-
-
-@pytest.fixture(params=[_asyncio_run, trio.run], ids=["asyncio", "trio"])
-def run_async_fn(request):
-    return request.param
 
 
 @contextlib.asynccontextmanager
