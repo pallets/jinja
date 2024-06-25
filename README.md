@@ -1,5 +1,5 @@
 # Jinja
-
+[![jinja2 Downloads Last Month](https://assets.piptrends.com/get-last-month-downloads-badge/jinja2.svg 'jinja2 Downloads Last Month by pip Trends')](https://piptrends.com/package/jinja2)
 Jinja is a fast, expressive, extensible templating engine. Special
 placeholders in the template allow writing code similar to Python
 syntax. Then the template is passed data to render the final document.
