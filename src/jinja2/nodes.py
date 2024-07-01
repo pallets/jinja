@@ -761,6 +761,10 @@ class _FilterTestCommon(Expr):
         func = env_map.get(self.name)
         pass_arg = _PassArg.from_obj(func)  # type: ignore
 
+        # Don't resolve functions decorated as render-time only
+        if hasattr(func, "jinja2_render_time_only"):
+            raise Impossible()
+
         if func is None or pass_arg is _PassArg.context:
             raise Impossible()
 
