@@ -1,7 +1,4 @@
-import asyncio
-
 import pytest
-import trio
 
 from jinja2 import ChainableUndefined
 from jinja2 import DictLoader
@@ -12,15 +9,6 @@ from jinja2.exceptions import TemplateNotFound
 from jinja2.exceptions import TemplatesNotFound
 from jinja2.exceptions import UndefinedError
 from jinja2.nativetypes import NativeEnvironment
-
-
-def _asyncio_run(async_fn, *args):
-    return asyncio.run(async_fn(*args))
-
-
-@pytest.fixture(params=[_asyncio_run, trio.run], ids=["asyncio", "trio"])
-def run_async_fn(request):
-    return request.param
 
 
 def test_basic_async(run_async_fn):

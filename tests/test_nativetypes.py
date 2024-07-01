@@ -13,6 +13,11 @@ def env():
     return NativeEnvironment()
 
 
+@pytest.fixture
+def async_native_env():
+    return NativeEnvironment(enable_async=True)
+
+
 def test_is_defined_native_return(env):
     t = env.from_string("{{ missing is defined }}")
     assert not t.render()
@@ -120,6 +125,18 @@ def test_string_top_level(env):
     t = env.from_string("'Jinja'")
     result = t.render()
     assert result == "Jinja"
+
+
+def test_string_concatenation(async_native_env, run_async_fn):
+    async def async_render():
+        t = async_native_env.from_string(
+            "{%- macro x(y) -%}{{ y }}{%- endmacro -%}{{- x('not') }} {{ x('bad') -}}"
+        )
+        result = await t.render_async()
+        assert isinstance(result, str)
+        assert result == "not bad"
+
+    run_async_fn(async_render)
 
 
 def test_tuple_of_variable_strings(env):

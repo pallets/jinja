@@ -1,9 +1,20 @@
+import asyncio
 from pathlib import Path
 
 import pytest
+import trio
 
 from jinja2 import loaders
 from jinja2.environment import Environment
+
+
+def _asyncio_run(async_fn, *args):
+    return asyncio.run(async_fn(*args))
+
+
+@pytest.fixture(params=[_asyncio_run, trio.run], ids=["asyncio", "trio"])
+def run_async_fn(request):
+    return request.param
 
 
 @pytest.fixture
