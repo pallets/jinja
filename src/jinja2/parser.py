@@ -1025,6 +1025,8 @@ class Parser:
                     else:
                         body.append(rv)
                     self.stream.expect("block_end")
+                elif token.type in ("raw_begin", "raw_end"):
+                    next(self.stream)
                 else:
                     raise AssertionError("internal parsing error")
 
