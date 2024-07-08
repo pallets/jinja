@@ -1,2 +1,2 @@
 pytest
-trio==0.22.2
+trio==0.25.1
