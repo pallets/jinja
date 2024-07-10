@@ -2,9 +2,11 @@ import pytest
 
 from jinja2 import Environment
 from jinja2 import nodes
+from jinja2 import select_autoescape
 from jinja2 import Template
 from jinja2 import TemplateSyntaxError
 from jinja2 import UndefinedError
+from jinja2.lexer import Lexer
 from jinja2.lexer import Token
 from jinja2.lexer import TOKEN_BLOCK_BEGIN
 from jinja2.lexer import TOKEN_BLOCK_END
@@ -40,6 +42,12 @@ class TestTokenStream:
         ]
 
 
+def _lexer_provider_to_test_raw_tokens(env):
+    lexer = Lexer(env)
+    lexer.ignore_raw_begin_end_tokens = False
+    return lexer
+
+
 class TestLexer:
     def test_raw1(self, env):
         tmpl = env.from_string(
@@ -67,6 +75,26 @@ class TestLexer:
             "bar\n{%- raw -%}\n\n  \n  2 spaces\n space{%- endraw -%}\nfoo"
         )
         assert tmpl.render() == "bar2 spaces\n spacefoo"
+
+    def test_raw5(self, env):
+        tmpl_str = (
+            "{{ tag }}{% raw %}<foo>{{ tag }}</foo>{% endraw %}|"
+            "{%raw%}{{ bar }}|{% baz %}{%       endraw    %}"
+        )
+        expected = "&lt;foo/&gt;<foo>{{ tag }}</foo>|{{ bar }}|{% baz %}"
+
+        # the lexer is all defaults
+        env = Environment(autoescape=select_autoescape(["html"]))
+        tmpl = env.from_string(tmpl_str)
+        assert tmpl.render(baz="test", tag="<foo/>") == expected
+
+        # changed the lexer provider
+        env = Environment(
+            autoescape=select_autoescape(["html"]),
+            lexer_provider=_lexer_provider_to_test_raw_tokens,
+        )
+        tmpl = env.from_string(tmpl_str)
+        assert tmpl.render(baz="test", tag="<foo/>") == expected
 
     def test_balancing(self, env):
         env = Environment("{%", "%}", "${", "}")
