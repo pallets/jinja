@@ -99,7 +99,7 @@ pluggy==1.5.0
     #   -r tests.txt
     #   pytest
     #   tox
-pre-commit==3.7.1
+pre-commit==3.8.0
     # via -r dev.in
 pygments==2.18.0
     # via
@@ -127,14 +127,11 @@ sortedcontainers==2.4.0
     # via
     #   -r tests.txt
     #   trio
-sphinx==7.3.7
+sphinx==8.0.2
     # via
     #   -r docs.txt
     #   pallets-sphinx-themes
-    #   sphinx-issues
     #   sphinxcontrib-log-cabinet
-sphinx-issues==4.1.0
-    # via -r docs.txt
 sphinxcontrib-applehelp==1.0.8
     # via
     #   -r docs.txt
@@ -163,7 +160,7 @@ sphinxcontrib-serializinghtml==1.1.10
     #   sphinx
 tox==4.15.1
     # via -r dev.in
-trio==0.25.1
+trio==0.26.0
     # via -r tests.txt
 typing-extensions==4.11.0
     # via
