@@ -1093,6 +1093,7 @@ class Environment:
         source: t.Union[str, nodes.Template],
         globals: t.Optional[t.MutableMapping[str, t.Any]] = None,
         template_class: t.Optional[t.Type["Template"]] = None,
+        filename: t.Optional[str] = None,
     ) -> "Template":
         """Load a template from a source string without using
         :attr:`loader`.
@@ -1104,10 +1105,13 @@ class Environment:
             cached, its globals are updated with any new items.
         :param template_class: Return an instance of this
             :class:`Template` class.
+        :param filename: The estimated filename of the template on
+            the file system. If the template came from a database or
+            memory this can be omitted
         """
         gs = self.make_globals(globals)
         cls = template_class or self.template_class
-        return cls.from_code(self, self.compile(source), gs, None)
+        return cls.from_code(self, self.compile(source, None, filename), gs, None)
 
     def make_globals(
         self, d: t.Optional[t.MutableMapping[str, t.Any]]
