@@ -238,6 +238,30 @@ class FileSystemLoader(BaseLoader):
         return sorted(found)
 
 
+if sys.version_info >= (3, 13):
+
+    def _get_zipimporter_files(z: t.Any) -> t.Dict[str, object]:
+        try:
+            get_files = z._get_files
+        except AttributeError as e:
+            raise TypeError(
+                "This zip import does not have the required"
+                " metadata to list templates."
+            ) from e
+        return get_files()
+else:
+
+    def _get_zipimporter_files(z: t.Any) -> t.Dict[str, object]:
+        try:
+            files = z._files
+        except AttributeError as e:
+            raise TypeError(
+                "This zip import does not have the required"
+                " metadata to list templates."
+            ) from e
+        return files  # type: ignore[no-any-return]
+
+
 class PackageLoader(BaseLoader):
     """Load templates from a directory in a Python package.
 
@@ -382,17 +406,13 @@ class PackageLoader(BaseLoader):
                     for name in filenames
                 )
         else:
-            if not hasattr(self._loader, "_files"):
-                raise TypeError(
-                    "This zip import does not have the required"
-                    " metadata to list templates."
-                )
+            files = _get_zipimporter_files(self._loader)
 
             # Package is a zip file.
             prefix = self._template_root[len(self._archive) :].lstrip(os.sep) + os.sep
             offset = len(prefix)
 
-            for name in self._loader._files.keys():
+            for name in files:
                 # Find names under the templates directory that aren't directories.
                 if name.startswith(prefix) and name[-1] != os.sep:
                     results.append(name[offset:].replace(os.sep, "/"))

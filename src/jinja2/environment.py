@@ -708,7 +708,7 @@ class Environment:
         return compile(source, filename, "exec")
 
     @typing.overload
-    def compile(  # type: ignore
+    def compile(
         self,
         source: t.Union[str, nodes.Template],
         name: t.Optional[str] = None,
