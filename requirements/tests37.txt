@@ -4,15 +4,15 @@
 #
 #    pip-compile tests37.in
 #
-attrs==23.2.0
+attrs==24.2.0
     # via
     #   outcome
     #   trio
-exceptiongroup==1.2.1
+exceptiongroup==1.2.2
     # via
     #   pytest
     #   trio
-idna==3.7
+idna==3.8
     # via trio
 importlib-metadata==6.7.0
     # via
