@@ -706,7 +706,7 @@ class Environment:
         return compile(source, filename, "exec")
 
     @typing.overload
-    def compile(  # type: ignore
+    def compile(
         self,
         source: t.Union[str, nodes.Template],
         name: t.Optional[str] = None,
@@ -1248,7 +1248,7 @@ class Template:
         namespace: t.MutableMapping[str, t.Any],
         globals: t.MutableMapping[str, t.Any],
     ) -> "Template":
-        t: "Template" = object.__new__(cls)
+        t: Template = object.__new__(cls)
         t.environment = environment
         t.globals = globals
         t.name = namespace["name"]

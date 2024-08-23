@@ -146,7 +146,7 @@ class Symbols:
 
     def dump_stores(self) -> t.Dict[str, str]:
         rv: t.Dict[str, str] = {}
-        node: t.Optional["Symbols"] = self
+        node: t.Optional[Symbols] = self
 
         while node is not None:
             for name in sorted(node.stores):
@@ -159,7 +159,7 @@ class Symbols:
 
     def dump_param_targets(self) -> t.Set[str]:
         rv = set()
-        node: t.Optional["Symbols"] = self
+        node: t.Optional[Symbols] = self
 
         while node is not None:
             for target, (instr, _) in self.loads.items():

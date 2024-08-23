@@ -5,11 +5,11 @@ Useful when the template itself comes from an untrusted source.
 import operator
 import types
 import typing as t
+from _string import formatter_field_name_split  # type: ignore
 from collections import abc
 from collections import deque
 from string import Formatter
 
-from _string import formatter_field_name_split  # type: ignore
 from markupsafe import EscapeFormatter
 from markupsafe import Markup
 

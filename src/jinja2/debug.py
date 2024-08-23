@@ -152,7 +152,7 @@ def get_template_locals(real_locals: t.Mapping[str, t.Any]) -> t.Dict[str, t.Any
     available at that point in the template.
     """
     # Start with the current template context.
-    ctx: "t.Optional[Context]" = real_locals.get("context")
+    ctx: t.Optional[Context] = real_locals.get("context")
 
     if ctx is not None:
         data: t.Dict[str, t.Any] = ctx.get_all().copy()

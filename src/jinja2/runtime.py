@@ -172,7 +172,7 @@ class Context:
     ):
         self.parent = parent
         self.vars: t.Dict[str, t.Any] = {}
-        self.environment: "Environment" = environment
+        self.environment: Environment = environment
         self.eval_ctx = EvalContext(self.environment, name)
         self.exported_vars: t.Set[str] = set()
         self.name = name

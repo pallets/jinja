@@ -67,7 +67,7 @@ async def auto_await(value: t.Union[t.Awaitable["V"], "V"]) -> "V":
     if inspect.isawaitable(value):
         return await t.cast("t.Awaitable[V]", value)
 
-    return t.cast("V", value)
+    return value
 
 
 class _IteratorToAsyncIterator(t.Generic[V]):
