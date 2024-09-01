@@ -86,6 +86,18 @@ class _PassArg(enum.Enum):
         return None
 
 
+def render_time_only(f: F) -> F:
+    """Never resolve the function as a constant during compilation, and
+    always leave it for rendering phase.
+
+    Can be used on filters and tests.
+
+    .. versionadded:: 3.2.0
+    """
+    f.jinja2_render_time_only = True  # type: ignore
+    return f
+
+
 def internalcode(f: F) -> F:
     """Marks the function as internally used"""
     internal_code.add(f.__code__)
