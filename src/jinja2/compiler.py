@@ -811,7 +811,7 @@ class CodeGenerator(NodeVisitor):
                 self.writeline("_block_vars.update({")
             else:
                 self.writeline("context.vars.update({")
-            for idx, name in enumerate(vars):
+            for idx, name in enumerate(sorted(vars)):
                 if idx:
                     self.write(", ")
                 ref = frame.symbols.ref(name)
