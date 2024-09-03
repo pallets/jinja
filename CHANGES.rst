@@ -14,6 +14,8 @@ Unreleased
     ``Template.generate_async``. :pr:`1960`
 -   Avoid leaving async generators unclosed in blocks, includes and extends.
     :pr:`1960`
+-   Make ``compile_templates`` deterministic for tuple unpacking in a
+    ``{% set ... %}`` call. :issue:`2021`
 
 
 Version 3.1.4
