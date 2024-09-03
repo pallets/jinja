@@ -821,7 +821,7 @@ class CodeGenerator(NodeVisitor):
             if len(public_names) == 1:
                 self.writeline(f"context.exported_vars.add({public_names[0]!r})")
             else:
-                names_str = ", ".join(map(repr, public_names))
+                names_str = ", ".join(map(repr, sorted(public_names)))
                 self.writeline(f"context.exported_vars.update(({names_str}))")
 
     # -- Statement Visitors
