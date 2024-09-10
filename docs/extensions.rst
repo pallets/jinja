@@ -39,6 +39,10 @@ After enabling, an application has to provide functions for ``gettext``,
 globally or when rendering. A ``_()`` function is added as an alias to
 the ``gettext`` function.
 
+A convenient way to provide these functions is to call one of the below
+methods depending on the translation system in use. If you do not require
+actual translation, use ``Environment.install_null_translations`` to
+install no-op functions.
 
 Environment Methods
 ~~~~~~~~~~~~~~~~~~~
