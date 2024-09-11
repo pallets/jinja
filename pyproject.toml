@@ -42,6 +42,7 @@ name = "jinja2"
 [tool.flit.sdist]
 include = [
     "docs/",
+    "examples/",
     "requirements/",
     "tests/",
     "CHANGES.md",
