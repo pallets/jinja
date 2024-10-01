@@ -1,3 +1,4 @@
+import copy
 import pickle
 import random
 from collections import deque
@@ -183,3 +184,14 @@ def test_consume():
     consume(x)
     with pytest.raises(StopIteration):
         next(x)
+
+
+@pytest.mark.parametrize("protocol", range(pickle.HIGHEST_PROTOCOL + 1))
+def test_pickle_missing(protocol: int) -> None:
+    """Test that missing can be pickled while remaining a singleton."""
+    assert pickle.loads(pickle.dumps(missing, protocol)) is missing
+
+
+def test_copy_missing() -> None:
+    """Test that missing can be copied while remaining a singleton."""
+    assert copy.copy(missing) is missing
