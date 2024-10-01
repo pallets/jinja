@@ -860,7 +860,11 @@ class Undefined:
 
     @internalcode
     def __getattr__(self, name: str) -> t.Any:
-        if name[:2] == "__":
+        # Raise AttributeError on requests for names that appear to be unimplemented
+        # dunder methods to keep Python's internal protocol probing behaviors working
+        # properly in cases where another exception type could cause unexpected or
+        # difficult-to-diagnose failures.
+        if name[:2] == "__" and name[-2:] == "__":
             raise AttributeError(name)
 
         return self._fail_with_undefined_error()
@@ -984,10 +988,20 @@ class ChainableUndefined(Undefined):
     def __html__(self) -> str:
         return str(self)
 
-    def __getattr__(self, _: str) -> "ChainableUndefined":
+    def __getattr__(self, name: str) -> "ChainableUndefined":
+        # Raise AttributeError on requests for names that appear to be unimplemented
+        # dunder methods to avoid confusing Python with truthy non-method objects that
+        # do not implement the protocol being probed for. e.g., copy.copy(Undefined())
+        # fails spectacularly if getattr(Undefined(), '__setstate__') returns an
+        # Undefined object instead of raising AttributeError to signal that it does not
+        # support that style of object initialization.
+        if name[:2] == "__" and name[-2:] == "__":
+            raise AttributeError(name)
+
         return self
 
-    __getitem__ = __getattr__  # type: ignore
+    def __getitem__(self, _name: str) -> "ChainableUndefined":  # type: ignore[override]
+        return self
 
 
 class DebugUndefined(Undefined):
@@ -1046,13 +1060,3 @@ class StrictUndefined(Undefined):
     __iter__ = __str__ = __len__ = Undefined._fail_with_undefined_error
     __eq__ = __ne__ = __bool__ = __hash__ = Undefined._fail_with_undefined_error
     __contains__ = Undefined._fail_with_undefined_error
-
-
-# Remove slots attributes, after the metaclass is applied they are
-# unneeded and contain wrong data for subclasses.
-del (
-    Undefined.__slots__,
-    ChainableUndefined.__slots__,
-    DebugUndefined.__slots__,
-    StrictUndefined.__slots__,
-)
