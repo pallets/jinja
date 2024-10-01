@@ -858,7 +858,11 @@ class Undefined:
 
     @internalcode
     def __getattr__(self, name: str) -> t.Any:
-        if name[:2] == "__":
+        # Raise AttributeError on requests for names that appear to be unimplemented
+        # dunder methods to keep Python's internal protocol probing behaviors working
+        # properly in cases where another exception type could cause unexpected or
+        # difficult-to-diagnose failures.
+        if name[:2] == "__" and name[-2:] == "__":
             raise AttributeError(name)
 
         return self._fail_with_undefined_error()
@@ -983,13 +987,18 @@ class ChainableUndefined(Undefined):
         return str(self)
 
     def __getattr__(self, name: str) -> "ChainableUndefined":
-        # unimplemented dunder methods returning Undefined break core Python protocols
-        if name[:2] == "__":
+        # Raise AttributeError on requests for names that appear to be unimplemented
+        # dunder methods to avoid confusing Python with truthy non-method objects that
+        # do not implement the protocol being probed for. e.g., copy.copy(Undefined())
+        # fails spectacularly if getattr(Undefined(), '__setstate__') returns an
+        # Undefined object instead of raising AttributeError to signal that it does not
+        # support that style of object initialization.
+        if name[:2] == "__" and name[-2:] == "__":
             raise AttributeError(name)
 
         return self
 
-    def __getitem__(self, _: str) -> "ChainableUndefined":  # type: ignore
+    def __getitem__(self, _name: str) -> "ChainableUndefined":  # type: ignore[override]
         return self
 
 
