@@ -1,10 +1,15 @@
 import copy
 import itertools
 import pickle
+
 import pytest
 
-from jinja2 import Template, Undefined, ChainableUndefined, DebugUndefined, \
-    StrictUndefined, TemplateRuntimeError
+from jinja2 import ChainableUndefined
+from jinja2 import DebugUndefined
+from jinja2 import StrictUndefined
+from jinja2 import Template
+from jinja2 import TemplateRuntimeError
+from jinja2 import Undefined
 from jinja2.runtime import LoopContext
 
 TEST_IDX_TEMPLATE_STR_1 = (
