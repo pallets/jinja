@@ -982,10 +982,15 @@ class ChainableUndefined(Undefined):
     def __html__(self) -> str:
         return str(self)
 
-    def __getattr__(self, _: str) -> "ChainableUndefined":
+    def __getattr__(self, name: str) -> "ChainableUndefined":
+        # unimplemented dunder methods returning Undefined break core Python protocols
+        if name[:2] == "__":
+            raise AttributeError(name)
+
         return self
 
-    __getitem__ = __getattr__  # type: ignore
+    def __getitem__(self, _: str) -> "ChainableUndefined":
+        return self
 
 
 class DebugUndefined(Undefined):
@@ -1044,13 +1049,3 @@ class StrictUndefined(Undefined):
     __iter__ = __str__ = __len__ = Undefined._fail_with_undefined_error
     __eq__ = __ne__ = __bool__ = __hash__ = Undefined._fail_with_undefined_error
     __contains__ = Undefined._fail_with_undefined_error
-
-
-# Remove slots attributes, after the metaclass is applied they are
-# unneeded and contain wrong data for subclasses.
-del (
-    Undefined.__slots__,
-    ChainableUndefined.__slots__,
-    DebugUndefined.__slots__,
-    StrictUndefined.__slots__,
-)
