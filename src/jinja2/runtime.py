@@ -989,7 +989,7 @@ class ChainableUndefined(Undefined):
 
         return self
 
-    def __getitem__(self, _: str) -> "ChainableUndefined":
+    def __getitem__(self, _: str) -> "ChainableUndefined":  # type: ignore
         return self
 
 
