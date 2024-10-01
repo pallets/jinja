@@ -9,6 +9,8 @@ Unreleased
 -   Use modern packaging metadata with ``pyproject.toml`` instead of ``setup.cfg``.
     :pr:`1793`
 -   Use ``flit_core`` instead of ``setuptools`` as build backend.
+-   Fix copy/deepcopy/pickle support for ``Undefined`` objects.
+    :pr:`2026`
 
 
 Version 3.1.5
