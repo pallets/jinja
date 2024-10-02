@@ -810,7 +810,11 @@ def do_urlize(
 
 
 def do_indent(
-    s: str, width: t.Union[int, str] = 4, first: bool = False, blank: bool = False
+    s: str,
+    width: t.Union[int, str] = 4,
+    first: bool = False,
+    blank: bool = False,
+    CRLF: bool = False,
 ) -> str:
     """Return a copy of the string with each line indented by 4 spaces. The
     first line and blank lines are not indented by default.
@@ -818,6 +822,7 @@ def do_indent(
     :param width: Number of spaces, or a string, to indent by.
     :param first: Don't skip indenting the first line.
     :param blank: Don't skip indenting empty lines.
+    :param CRLF: Use CRLF line breaks. The default is LF line breaks.
 
     .. versionchanged:: 3.0
         ``width`` can be a string.
@@ -831,8 +836,10 @@ def do_indent(
         indention = width
     else:
         indention = " " * width
-
-    newline = "\n"
+    if CRLF:
+        newline = "\r\n"
+    else:
+        newline = "\n"
 
     if isinstance(s, Markup):
         indention = Markup(indention)
