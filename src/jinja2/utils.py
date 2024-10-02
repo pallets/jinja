@@ -18,8 +18,17 @@ if t.TYPE_CHECKING:
 
 F = t.TypeVar("F", bound=t.Callable[..., t.Any])
 
-# special singleton representing missing values for the runtime
-missing: t.Any = type("MissingType", (), {"__repr__": lambda x: "missing"})()
+
+class _MissingType:
+    def __repr__(self) -> str:
+        return "missing"
+
+    def __reduce__(self) -> str:
+        return "missing"
+
+
+missing: t.Any = _MissingType()
+"""Special singleton representing missing values for the runtime."""
 
 internal_code: t.MutableSet[CodeType] = set()
 
