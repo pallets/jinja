@@ -837,7 +837,7 @@ def do_indent(
     else:
         indention = " " * width
 
-    newline = environment.newline_sequence
+    newline = str(environment.newline_sequence)
 
     if isinstance(s, Markup):
         indention = Markup(indention)
