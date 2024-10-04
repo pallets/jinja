@@ -58,6 +58,8 @@ class TestSandbox:
     def test_immutable_environment(self, env):
         env = ImmutableSandboxedEnvironment()
         pytest.raises(SecurityError, env.from_string("{{ [].append(23) }}").render)
+        pytest.raises(SecurityError, env.from_string("{{ [].clear() }}").render)
+        pytest.raises(SecurityError, env.from_string("{{ [1].pop() }}").render)
         pytest.raises(SecurityError, env.from_string("{{ {1:2}.clear() }}").render)
 
     def test_restricted(self, env):
