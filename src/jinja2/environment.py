@@ -609,6 +609,9 @@ class Environment:
 
         If you are :ref:`developing Jinja extensions <writing-extensions>`
         this gives you a good overview of the node tree generated.
+
+        .. versionchanged:: 3.2
+            Added `preserve_comments` parameter.
         """
         try:
             return self._parse(source, name, filename, preserve_comments)

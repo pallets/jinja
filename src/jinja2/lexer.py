@@ -614,7 +614,11 @@ class Lexer:
         state: t.Optional[str] = None,
         preserve_comments: bool = False,
     ) -> TokenStream:
-        """Calls tokeniter + tokenize and wraps it in a token stream."""
+        """Calls tokeniter + tokenize and wraps it in a token stream.
+
+        .. versionchanged:: 3.2
+            Added `preserve_comments` parameter.
+        """
         stream = self.tokeniter(source, name, filename, state)
         return TokenStream(
             self.wrap(stream, name, filename, preserve_comments), name, filename
@@ -629,6 +633,9 @@ class Lexer:
     ) -> t.Iterator[Token]:
         """This is called with the stream as returned by `tokenize` and wraps
         every token in a :class:`Token` and converts the value.
+
+        .. versionchanged:: 3.2
+            Added `preserve_comments` parameter.
         """
         ignored = ignored_tokens
         if preserve_comments:

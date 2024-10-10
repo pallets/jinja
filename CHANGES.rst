@@ -9,6 +9,7 @@ Unreleased
 -   Use modern packaging metadata with ``pyproject.toml`` instead of ``setup.cfg``.
     :pr:`1793`
 -   Use ``flit_core`` instead of ``setuptools`` as build backend.
+-   Add the ``preserve_comments`` parameter to ``Environment.parse`` to preserve comments in template ASTs. :pr:`2037`
 
 
 Version 3.1.5
