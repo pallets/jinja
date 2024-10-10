@@ -615,10 +615,7 @@ class Environment:
             self.handle_exception(source=source)
 
     def _parse(
-        self,
-        source: str,
-        name: t.Optional[str],
-        filename: t.Optional[str],
+        self, source: str, name: t.Optional[str], filename: t.Optional[str]
     ) -> nodes.Template:
         """Internal parsing function used by `parse` and `compile`."""
         return Parser(self, source, name, filename).parse()
