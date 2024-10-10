@@ -146,22 +146,7 @@ operator_re = re.compile(
     f"({'|'.join(re.escape(x) for x in sorted(operators, key=lambda x: -len(x)))})"
 )
 
-comment_tokens = frozenset(
-    [
-        TOKEN_COMMENT_BEGIN,
-        TOKEN_COMMENT,
-        TOKEN_COMMENT_END,
-        TOKEN_LINECOMMENT_BEGIN,
-        TOKEN_LINECOMMENT_END,
-        TOKEN_LINECOMMENT,
-    ]
-)
-ignored_tokens = frozenset(
-    [
-        TOKEN_WHITESPACE,
-        *comment_tokens,
-    ]
-)
+ignored_tokens = frozenset([TOKEN_WHITESPACE])
 ignore_if_empty = frozenset(
     [TOKEN_WHITESPACE, TOKEN_DATA, TOKEN_COMMENT, TOKEN_LINECOMMENT]
 )
@@ -612,37 +597,22 @@ class Lexer:
         name: t.Optional[str] = None,
         filename: t.Optional[str] = None,
         state: t.Optional[str] = None,
-        preserve_comments: bool = False,
     ) -> TokenStream:
-        """Calls tokeniter + tokenize and wraps it in a token stream.
-
-        .. versionchanged:: 3.2
-            Added `preserve_comments` parameter.
-        """
+        """Calls tokeniter + tokenize and wraps it in a token stream."""
         stream = self.tokeniter(source, name, filename, state)
-        return TokenStream(
-            self.wrap(stream, name, filename, preserve_comments), name, filename
-        )
+        return TokenStream(self.wrap(stream, name, filename), name, filename)
 
     def wrap(
         self,
         stream: t.Iterable[t.Tuple[int, str, str]],
         name: t.Optional[str] = None,
         filename: t.Optional[str] = None,
-        preserve_comments: bool = False,
     ) -> t.Iterator[Token]:
         """This is called with the stream as returned by `tokenize` and wraps
         every token in a :class:`Token` and converts the value.
-
-        .. versionchanged:: 3.2
-            Added `preserve_comments` parameter.
         """
-        ignored = ignored_tokens
-        if preserve_comments:
-            ignored -= comment_tokens
-
         for lineno, token, value_str in stream:
-            if token in ignored:
+            if token in ignored_tokens:
                 continue
 
             value: t.Any = value_str
