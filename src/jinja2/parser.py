@@ -57,9 +57,12 @@ class Parser:
         name: t.Optional[str] = None,
         filename: t.Optional[str] = None,
         state: t.Optional[str] = None,
+        preserve_comments: bool = False,
     ) -> None:
         self.environment = environment
-        self.stream = environment._tokenize(source, name, filename, state)
+        self.stream = environment._tokenize(
+            source, name, filename, state, preserve_comments
+        )
         self.name = name
         self.filename = filename
         self.closed = False
@@ -1025,6 +1028,11 @@ class Parser:
                     else:
                         body.append(rv)
                     self.stream.expect("block_end")
+                elif token.type == "comment_begin":
+                    flush_data()
+                    next(self.stream)
+                    body.append(nodes.Comment(next(self.stream).value))
+                    self.stream.expect("comment_end")
                 else:
                     raise AssertionError("internal parsing error")
 

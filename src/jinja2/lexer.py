@@ -146,15 +146,20 @@ operator_re = re.compile(
     f"({'|'.join(re.escape(x) for x in sorted(operators, key=lambda x: -len(x)))})"
 )
 
-ignored_tokens = frozenset(
+comment_tokens = frozenset(
     [
         TOKEN_COMMENT_BEGIN,
         TOKEN_COMMENT,
         TOKEN_COMMENT_END,
-        TOKEN_WHITESPACE,
         TOKEN_LINECOMMENT_BEGIN,
         TOKEN_LINECOMMENT_END,
         TOKEN_LINECOMMENT,
+    ]
+)
+ignored_tokens = frozenset(
+    [
+        TOKEN_WHITESPACE,
+        *comment_tokens,
     ]
 )
 ignore_if_empty = frozenset(
@@ -607,22 +612,30 @@ class Lexer:
         name: t.Optional[str] = None,
         filename: t.Optional[str] = None,
         state: t.Optional[str] = None,
+        preserve_comments: bool = False,
     ) -> TokenStream:
         """Calls tokeniter + tokenize and wraps it in a token stream."""
         stream = self.tokeniter(source, name, filename, state)
-        return TokenStream(self.wrap(stream, name, filename), name, filename)
+        return TokenStream(
+            self.wrap(stream, name, filename, preserve_comments), name, filename
+        )
 
     def wrap(
         self,
         stream: t.Iterable[t.Tuple[int, str, str]],
         name: t.Optional[str] = None,
         filename: t.Optional[str] = None,
+        preserve_comments: bool = False,
     ) -> t.Iterator[Token]:
         """This is called with the stream as returned by `tokenize` and wraps
         every token in a :class:`Token` and converts the value.
         """
+        ignored = ignored_tokens
+        if preserve_comments:
+            ignored -= comment_tokens
+
         for lineno, token, value_str in stream:
-            if token in ignored_tokens:
+            if token in ignored:
                 continue
 
             value: t.Any = value_str
@@ -631,6 +644,10 @@ class Lexer:
                 token = TOKEN_BLOCK_BEGIN
             elif token == TOKEN_LINESTATEMENT_END:
                 token = TOKEN_BLOCK_END
+            elif token == TOKEN_LINECOMMENT_BEGIN:
+                token = TOKEN_COMMENT_BEGIN
+            elif token == TOKEN_LINECOMMENT_END:
+                token = TOKEN_COMMENT_END
             # we are not interested in those tokens in the parser
             elif token in (TOKEN_RAW_BEGIN, TOKEN_RAW_END):
                 continue

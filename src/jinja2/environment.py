@@ -600,6 +600,7 @@ class Environment:
         source: str,
         name: t.Optional[str] = None,
         filename: t.Optional[str] = None,
+        preserve_comments: bool = False,
     ) -> nodes.Template:
         """Parse the sourcecode and return the abstract syntax tree.  This
         tree of nodes is used by the compiler to convert the template into
@@ -610,15 +611,21 @@ class Environment:
         this gives you a good overview of the node tree generated.
         """
         try:
-            return self._parse(source, name, filename)
+            return self._parse(source, name, filename, preserve_comments)
         except TemplateSyntaxError:
             self.handle_exception(source=source)
 
     def _parse(
-        self, source: str, name: t.Optional[str], filename: t.Optional[str]
+        self,
+        source: str,
+        name: t.Optional[str],
+        filename: t.Optional[str],
+        preserve_comments: bool = False,
     ) -> nodes.Template:
         """Internal parsing function used by `parse` and `compile`."""
-        return Parser(self, source, name, filename).parse()
+        return Parser(
+            self, source, name, filename, preserve_comments=preserve_comments
+        ).parse()
 
     def lex(
         self,
@@ -663,12 +670,13 @@ class Environment:
         name: t.Optional[str],
         filename: t.Optional[str] = None,
         state: t.Optional[str] = None,
+        preserve_comments: bool = False,
     ) -> TokenStream:
         """Called by the parser to do the preprocessing and filtering
         for all the extensions.  Returns a :class:`~jinja2.lexer.TokenStream`.
         """
         source = self.preprocess(source, name, filename)
-        stream = self.lexer.tokenize(source, name, filename, state)
+        stream = self.lexer.tokenize(source, name, filename, state, preserve_comments)
 
         for ext in self.iter_extensions():
             stream = ext.filter_stream(stream)  # type: ignore
