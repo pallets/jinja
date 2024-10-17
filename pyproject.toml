@@ -16,7 +16,7 @@ classifiers = [
     "Typing :: Typed",
 ]
 requires-python = ">=3.8"
-dependencies = ["MarkupSafe>=2.0"]
+dependencies = ["MarkupSafe>=2.0,<3.0"]
 dynamic = ["version"]
 
 [project.urls]
