@@ -209,7 +209,7 @@ def test_in(value: t.Any, seq: t.Container[t.Any]) -> bool:
     """Check if value is in seq.
     Opposite of the 'in' test, allowing use as a test in filters like 'selectattr'
 
-    .. versionadded:: ??
+    .. versionadded:: 2.10
     """
     return value in seq
 
@@ -217,7 +217,7 @@ def test_in(value: t.Any, seq: t.Container[t.Any]) -> bool:
 def test_contains(value: t.Any, seq: t.Container[t.Any]) -> bool:
     """Check if seq is in value.
 
-    .. versionadded:: 2.10
+    .. versionadded:: 3.1.5
     """
     return seq in value
 
