@@ -12,7 +12,7 @@ exceptiongroup==1.2.2
     # via
     #   pytest
     #   trio
-idna==3.8
+idna==3.10
     # via trio
 importlib-metadata==6.7.0
     # via
