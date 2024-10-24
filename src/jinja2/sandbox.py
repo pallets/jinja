@@ -60,7 +60,9 @@ _mutable_spec: t.Tuple[t.Tuple[t.Type[t.Any], t.FrozenSet[str]], ...] = (
     ),
     (
         abc.MutableSequence,
-        frozenset(["append", "reverse", "insert", "sort", "extend", "remove"]),
+        frozenset(
+            ["append", "clear", "pop", "reverse", "insert", "sort", "extend", "remove"]
+        ),
     ),
     (
         deque,
