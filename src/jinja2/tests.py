@@ -213,6 +213,15 @@ def test_in(value: t.Any, seq: t.Container[t.Any]) -> bool:
     return value in seq
 
 
+def test_contains(value: t.Any, seq: t.Container[t.Any]) -> bool:
+    """Check if value is in seq.
+    Opposite of the 'in' test, allowing use as a test in filters like 'selectattr'
+
+    .. versionadded:: 3.1.5
+    """
+    return seq in value
+
+
 TESTS = {
     "odd": test_odd,
     "even": test_even,
@@ -238,6 +247,7 @@ TESTS = {
     "sameas": test_sameas,
     "escaped": test_escaped,
     "in": test_in,
+    "contains": test_contains,
     "==": operator.eq,
     "eq": operator.eq,
     "equalto": operator.eq,
