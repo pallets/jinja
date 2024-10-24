@@ -207,10 +207,19 @@ def test_escaped(value: t.Any) -> bool:
 
 def test_in(value: t.Any, seq: t.Container[t.Any]) -> bool:
     """Check if value is in seq.
+    Opposite of the 'in' test, allowing use as a test in filters like 'selectattr'
+
+    .. versionadded:: ??
+    """
+    return value in seq
+
+
+def test_contains(value: t.Any, seq: t.Container[t.Any]) -> bool:
+    """Check if seq is in value.
 
     .. versionadded:: 2.10
     """
-    return value in seq
+    return seq in value
 
 
 TESTS = {
@@ -238,6 +247,7 @@ TESTS = {
     "sameas": test_sameas,
     "escaped": test_escaped,
     "in": test_in,
+    "contains": test_contains,
     "==": operator.eq,
     "eq": operator.eq,
     "equalto": operator.eq,
