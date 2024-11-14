@@ -1629,8 +1629,8 @@ def sync_do_selectattr(
 
     .. code-block:: python
 
-        (u for user in users if user.is_active)
-        (u for user in users if test_none(user.email))
+        (u for u in users if user.is_active)
+        (u for u in users if test_none(user.email))
 
     .. versionadded:: 2.7
     """
@@ -1667,8 +1667,8 @@ def sync_do_rejectattr(
 
     .. code-block:: python
 
-        (u for user in users if not user.is_active)
-        (u for user in users if not test_none(user.email))
+        (u for u in users if not user.is_active)
+        (u for u in users if not test_none(user.email))
 
     .. versionadded:: 2.7
     """
