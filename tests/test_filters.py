@@ -158,17 +158,18 @@ class TestFilter:
 
     @staticmethod
     def _test_indent_multiline_template(env, markup=False):
-        text = "\n".join(["", "foo bar", '"baz"', ""])
+        newline = env.newline_sequence
+        text = newline.join(["", "foo bar", '"baz"', ""])
         if markup:
             text = Markup(text)
         t = env.from_string("{{ foo|indent(2, false, false) }}")
-        assert t.render(foo=text) == '\n  foo bar\n  "baz"\n'
+        assert t.render(foo=text) == f'{newline}  foo bar{newline}  "baz"{newline}'
         t = env.from_string("{{ foo|indent(2, false, true) }}")
-        assert t.render(foo=text) == '\n  foo bar\n  "baz"\n  '
+        assert t.render(foo=text) == f'{newline}  foo bar{newline}  "baz"{newline}  '
         t = env.from_string("{{ foo|indent(2, true, false) }}")
-        assert t.render(foo=text) == '  \n  foo bar\n  "baz"\n'
+        assert t.render(foo=text) == f'  {newline}  foo bar{newline}  "baz"{newline}'
         t = env.from_string("{{ foo|indent(2, true, true) }}")
-        assert t.render(foo=text) == '  \n  foo bar\n  "baz"\n  '
+        assert t.render(foo=text) == f'  {newline}  foo bar{newline}  "baz"{newline}  '
 
     def test_indent(self, env):
         self._test_indent_multiline_template(env)
