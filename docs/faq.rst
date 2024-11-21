@@ -70,6 +70,8 @@ these document types.
 
 While automatic escaping means that you are less likely have an XSS
 problem, it also requires significant extra processing during compiling
-and rendering, which can reduce performance. Jinja uses MarkupSafe for
+and rendering, which can reduce performance. Jinja uses `MarkupSafe`_ for
 escaping, which provides optimized C code for speed, but it still
 introduces overhead to track escaping across methods and formatting.
+
+.. _MarkupSafe: https://markupsafe.palletsprojects.com/
