@@ -9,6 +9,8 @@ Unreleased
 -   Use modern packaging metadata with ``pyproject.toml`` instead of ``setup.cfg``.
     :pr:`1793`
 -   Use ``flit_core`` instead of ``setuptools`` as build backend.
+-   Add function decorator ``@render_time_only`` for filters and tests.
+    :issue:`1752`
 
 
 Version 3.1.5

@@ -8,6 +8,7 @@ from jinja2 import TemplateAssertionError
 from jinja2 import TemplateNotFound
 from jinja2 import TemplateSyntaxError
 from jinja2.utils import pass_context
+from jinja2.utils import render_time_only
 
 
 class TestCorner:
@@ -736,6 +737,31 @@ End"""
             "{% endset %}{{ output }}"
         )
         assert tmpl.render() == "hellohellohello"
+
+    def test_decorator_render_time_only_filter(self, env):
+        # Filter not decorated, should be resolved to constant during compilation
+        def filter_compile_time_const(content):
+            return "filter_compile_time_const_return"
+
+        env.filters["filter_compile_time_const"] = filter_compile_time_const
+
+        # Filter decorated, should not be resolved during compilation
+        @render_time_only
+        def filter_render_time_only(content):
+            return "filter_render_time_only_return"
+
+        env.filters["filter_render_time_only"] = filter_render_time_only
+
+        # Template to just call the two filters
+        tmpl = "{{0|filter_compile_time_const}}{{0|filter_render_time_only}}"
+
+        # Get the raw compiled template before rendering
+        tmpl_compile = env.compile(tmpl, raw=True)
+
+        # If filter was resolved during compilation, it generated a yield of
+        # its return value
+        assert "yield 'filter_compile_time_const_return'" in tmpl_compile
+        assert "yield 'filter_render_time_only_return'" not in tmpl_compile
 
 
 @pytest.mark.parametrize("unicode_char", ["\N{FORM FEED}", "\x85"])
