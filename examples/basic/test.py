@@ -6,9 +6,9 @@ env = Environment(
         {
             "child.html": """\
 {% extends default_layout or 'default.html' %}
-{% include helpers = 'helpers.html' %}
+{% import 'helpers.html' as helpers %}
 {% macro get_the_answer() %}42{% endmacro %}
-{% title = 'Hello World' %}
+{% set title = 'Hello World' %}
 {% block body %}
     {{ get_the_answer() }}
     {{ helpers.conspirate() }}
