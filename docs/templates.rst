@@ -1410,13 +1410,13 @@ For ``if`` statements, ``for`` filtering, and ``if`` expressions, it can be usef
 combine multiple expressions:
 
 ``and``
-    Return true if the left and the right operand are true.
+    For ``x and y``, if ``x`` is false, then the value is ``x``, else ``y``.
 
 ``or``
-    Return true if the left or the right operand are true.
+    For ``x or y``, if ``x`` is true, then ``x``, else ``y``.
 
 ``not``
-    negate a statement (see below).
+    Negate a statement (see below).
 
 ``(expr)``
     Parentheses group an expression.
