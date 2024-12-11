@@ -522,8 +522,8 @@ However, the name after the `endblock` word must match the block name.
 Block Nesting and Scope
 ~~~~~~~~~~~~~~~~~~~~~~~
 
-Blocks can be nested for more complex layouts.  However, per default blocks
-may not access variables from outer scopes::
+Blocks can be nested for more complex layouts.  However, default content in blocks
+may not access variables from outside the block::
 
     {% for item in seq %}
         <li>{% block loop_item %}{{ item }}{% endblock %}</li>
