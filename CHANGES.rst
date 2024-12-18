@@ -14,6 +14,8 @@ Unreleased
     ``Template.generate_async``. :pr:`1960`
 -   Avoid leaving async generators unclosed in blocks, includes and extends.
     :pr:`1960`
+-   Fix misleading error message when template does not exist.
+    :pr:`1995`
 
 
 Version 3.1.4
