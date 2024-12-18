@@ -715,6 +715,13 @@ class CondExpr(Expr):
         return self.expr2.as_const(eval_ctx)
 
 
+class Comment(Stmt):
+    """A template comment."""
+
+    fields = ("data",)
+    data: str
+
+
 def args_as_const(
     node: t.Union["_FilterTestCommon", "Call"], eval_ctx: t.Optional[EvalContext]
 ) -> t.Tuple[t.List[t.Any], t.Dict[t.Any, t.Any]]:
