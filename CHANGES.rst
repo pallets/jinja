@@ -1001,7 +1001,7 @@ Released 2008-07-17, codename Jinjavitus
     evaluates to ``false``.
 -   Improved error reporting for undefined values by providing a
     position.
--   ``filesizeformat`` filter uses decimal prefixes now per default and
+-   ``filesizeformat`` filter uses decimal prefixes now by default and
     can be set to binary mode with the second parameter.
 -   Fixed bug in finalizer
 

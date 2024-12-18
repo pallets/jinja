@@ -430,7 +430,7 @@ class DictLoader(BaseLoader):
 
     >>> loader = DictLoader({'index.html': 'source here'})
 
-    Because auto reloading is rarely useful this is disabled per default.
+    Because auto reloading is rarely useful this is disabled by default.
     """
 
     def __init__(self, mapping: t.Mapping[str, str]) -> None:

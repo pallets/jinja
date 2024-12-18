@@ -528,7 +528,7 @@ However, the name after the `endblock` word must match the block name.
 Block Nesting and Scope
 ~~~~~~~~~~~~~~~~~~~~~~~
 
-Blocks can be nested for more complex layouts.  However, per default blocks
+Blocks can be nested for more complex layouts.  However, by default blocks
 may not access variables from outer scopes::
 
     {% for item in seq %}
