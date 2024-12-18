@@ -21,7 +21,7 @@ for a neat trick.
 Usually child templates extend from one template that adds a basic HTML
 skeleton.  However it's possible to put the `extends` tag into an `if` tag to
 only extend from the layout template if the `standalone` variable evaluates
-to false which it does per default if it's not defined.  Additionally a very
+to false, which it does by default if it's not defined.  Additionally a very
 basic skeleton is added to the file so that if it's indeed rendered with
 `standalone` set to `True` a very basic HTML skeleton is added::
 
