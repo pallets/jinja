@@ -1412,27 +1412,31 @@ Comparisons
 Logic
 ~~~~~
 
-For ``if`` statements, ``for`` filtering, and ``if`` expressions, it can be useful to
-combine multiple expressions:
+For ``if`` statements, ``for`` filtering, and ``if`` expressions, it can be
+useful to combine multiple expressions.
 
 ``and``
-    Return true if the left and the right operand are true.
+    For ``x and y``, if ``x`` is false, then the value is ``x``, else ``y``. In
+    a boolean context, this will be treated as ``True`` if both operands are
+    truthy.
 
 ``or``
-    Return true if the left or the right operand are true.
+    For ``x or y``, if ``x`` is true, then the value is ``x``, else ``y``. In a
+    boolean context, this will be treated as ``True`` if at least one operand is
+    truthy.
 
 ``not``
-    negate a statement (see below).
+    For ``not x``, if ``x`` is false, then the value is ``True``, else
+    ``False``.
+
+    Prefer negating ``is`` and ``in`` using their infix notation:
+    ``foo is not bar`` instead of ``not foo is bar``; ``foo not in bar`` instead
+    of ``not foo in bar``. All other expressions require prefix notation:
+    ``not (foo and bar).``
 
 ``(expr)``
-    Parentheses group an expression.
-
-.. admonition:: Note
-
-    The ``is`` and ``in`` operators support negation using an infix notation,
-    too: ``foo is not bar`` and ``foo not in bar`` instead of ``not foo is bar``
-    and ``not foo in bar``.  All other expressions require a prefix notation:
-    ``not (foo and bar).``
+    Parentheses group an expression. This is used to change evaluation order, or
+    to make a long expression easier to read or less ambiguous.
 
 
 Other Operators
