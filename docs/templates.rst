@@ -202,10 +202,11 @@ option can also be set to strip tabs and spaces from the beginning of a
 line to the start of a block. (Nothing will be stripped if there are
 other characters before the start of the block.)
 
-With both `trim_blocks` and `lstrip_blocks` enabled, you can put block tags
-on their own lines, and the entire block line will be removed when
-rendered, preserving the whitespace of the contents.  For example,
-without the `trim_blocks` and `lstrip_blocks` options, this template::
+With both ``trim_blocks`` and ``lstrip_blocks`` disabled (the default), block
+tags on their own lines will be removed, but a blank line will remain and the
+spaces in the content will be preserved. For example, this template:
+
+.. code-block:: jinja
 
     <div>
         {% if True %}
@@ -213,7 +214,10 @@ without the `trim_blocks` and `lstrip_blocks` options, this template::
         {% endif %}
     </div>
 
-gets rendered with blank lines inside the div::
+With both ``trim_blocks`` and ``lstrip_blocks`` disabled, the template is
+rendered with blank lines inside the div:
+
+.. code-block:: text
 
     <div>
 
@@ -221,8 +225,10 @@ gets rendered with blank lines inside the div::
 
     </div>
 
-But with both `trim_blocks` and `lstrip_blocks` enabled, the template block
-lines are removed and other whitespace is preserved::
+With both ``trim_blocks`` and ``lstrip_blocks`` enabled, the template block
+lines are completely removed:
+
+.. code-block:: text
 
     <div>
             yay
