@@ -1,6 +1,15 @@
+import copy
 import itertools
+import pickle
 
+import pytest
+
+from jinja2 import ChainableUndefined
+from jinja2 import DebugUndefined
+from jinja2 import StrictUndefined
 from jinja2 import Template
+from jinja2 import TemplateRuntimeError
+from jinja2 import Undefined
 from jinja2.runtime import LoopContext
 
 TEST_IDX_TEMPLATE_STR_1 = (
@@ -73,3 +82,44 @@ def test_mock_not_pass_arg_marker():
     out = t.render(calc=Calc())
     # Would be "1" if context argument was passed.
     assert out == "0"
+
+
+_undefined_types = (Undefined, ChainableUndefined, DebugUndefined, StrictUndefined)
+
+
+@pytest.mark.parametrize("undefined_type", _undefined_types)
+def test_undefined_copy(undefined_type):
+    undef = undefined_type("a hint", ["foo"], "a name", TemplateRuntimeError)
+    copied = copy.copy(undef)
+
+    assert copied is not undef
+    assert copied._undefined_hint is undef._undefined_hint
+    assert copied._undefined_obj is undef._undefined_obj
+    assert copied._undefined_name is undef._undefined_name
+    assert copied._undefined_exception is undef._undefined_exception
+
+
+@pytest.mark.parametrize("undefined_type", _undefined_types)
+def test_undefined_deepcopy(undefined_type):
+    undef = undefined_type("a hint", ["foo"], "a name", TemplateRuntimeError)
+    copied = copy.deepcopy(undef)
+
+    assert copied._undefined_hint is undef._undefined_hint
+    assert copied._undefined_obj is not undef._undefined_obj
+    assert copied._undefined_obj == undef._undefined_obj
+    assert copied._undefined_name is undef._undefined_name
+    assert copied._undefined_exception is undef._undefined_exception
+
+
+@pytest.mark.parametrize("undefined_type", _undefined_types)
+def test_undefined_pickle(undefined_type):
+    undef = undefined_type("a hint", ["foo"], "a name", TemplateRuntimeError)
+    copied = pickle.loads(pickle.dumps(undef))
+
+    assert copied._undefined_hint is not undef._undefined_hint
+    assert copied._undefined_hint == undef._undefined_hint
+    assert copied._undefined_obj is not undef._undefined_obj
+    assert copied._undefined_obj == undef._undefined_obj
+    assert copied._undefined_name is not undef._undefined_name
+    assert copied._undefined_name == undef._undefined_name
+    assert copied._undefined_exception is undef._undefined_exception
