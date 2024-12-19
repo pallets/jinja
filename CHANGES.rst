@@ -24,6 +24,8 @@ Unreleased
     call. :issue:`2021`
 -   Fix dunder protocol (`copy`/`pickle`/etc) interaction with ``Undefined``
     objects. :issue:`2025`
+-   Fix `copy`/`pickle` support for the internal ``missing`` object.
+    :issue:`2027`
 
 
 Version 3.1.4
