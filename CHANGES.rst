@@ -14,6 +14,8 @@ Unreleased
     ``Template.generate_async``. :pr:`1960`
 -   Avoid leaving async generators unclosed in blocks, includes and extends.
     :pr:`1960`
+-   Added ``OverflowError`` to the list of exceptions caught by the
+    ``int`` filter. :issue:`1921`
 
 
 Version 3.1.4
