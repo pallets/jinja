@@ -999,7 +999,7 @@ def do_int(value: t.Any, default: int = 0, base: int = 10) -> int:
         # this quirk is necessary so that "42.23"|int gives 42.
         try:
             return int(float(value))
-        except (TypeError, ValueError):
+        except (TypeError, ValueError, OverflowError):
             return default
 
 
