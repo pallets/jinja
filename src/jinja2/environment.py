@@ -408,7 +408,7 @@ class Environment:
         cache_size: int = missing,
         auto_reload: bool = missing,
         bytecode_cache: t.Optional["BytecodeCache"] = missing,
-        enable_async: bool = False,
+        enable_async: bool = missing,
     ) -> "Environment":
         """Create a new overlay environment that shares all the data with the
         current environment except for cache and the overridden attributes.
