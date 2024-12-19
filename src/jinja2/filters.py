@@ -438,7 +438,7 @@ def do_sort(
 
 
 @pass_environment
-def do_unique(
+def sync_do_unique(
     environment: "Environment",
     value: "t.Iterable[V]",
     case_sensitive: bool = False,
@@ -468,6 +468,18 @@ def do_unique(
         if key not in seen:
             seen.add(key)
             yield item
+
+
+@async_variant(sync_do_unique)  # type: ignore
+async def do_unique(
+    environment: "Environment",
+    value: "t.Union[t.AsyncIterable[V], t.Iterable[V]]",
+    case_sensitive: bool = False,
+    attribute: t.Optional[t.Union[str, int]] = None,
+) -> "t.Iterator[V]":
+    return sync_do_unique(
+        environment, await auto_to_list(value), case_sensitive, attribute
+    )
 
 
 def _min_or_max(
