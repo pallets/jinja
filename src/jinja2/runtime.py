@@ -367,7 +367,7 @@ class BlockReference:
 
     @internalcode
     async def _async_call(self) -> str:
-        rv = concat(
+        rv = self._context.environment.concat(  # type: ignore
             [x async for x in self._stack[self._depth](self._context)]  # type: ignore
         )
 
@@ -381,7 +381,9 @@ class BlockReference:
         if self._context.environment.is_async:
             return self._async_call()  # type: ignore
 
-        rv = concat(self._stack[self._depth](self._context))
+        rv = self._context.environment.concat(  # type: ignore
+            self._stack[self._depth](self._context)
+        )
 
         if self._context.eval_ctx.autoescape:
             return Markup(rv)

@@ -14,6 +14,8 @@ Unreleased
     ``Template.generate_async``. :pr:`1960`
 -   Avoid leaving async generators unclosed in blocks, includes and extends.
     :pr:`1960`
+-   The runtime uses the correct ``concat`` function for the current environment
+    when calling block references. :issue:`1701`
 
 
 Version 3.1.4
