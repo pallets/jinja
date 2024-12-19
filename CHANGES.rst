@@ -20,6 +20,8 @@ Unreleased
     async-aware filter. :issue:`1781`
 -   ``|int`` filter handles ``OverflowError`` from scientific notation.
     :issue:`1921`
+-   Make compiling deterministic for tuple unpacking in a ``{% set ... %}``
+    call. :issue:`2021`
 
 
 Version 3.1.4
