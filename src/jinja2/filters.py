@@ -1780,7 +1780,7 @@ def prepare_select_or_reject(
         args = args[1 + off :]
 
         def func(item: t.Any) -> t.Any:
-            return context.environment.call_test(name, item, args, kwargs)
+            return context.environment.call_test(name, item, args, kwargs, context)
 
     except LookupError:
         func = bool  # type: ignore
