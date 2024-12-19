@@ -22,6 +22,8 @@ Unreleased
     :issue:`1921`
 -   Make compiling deterministic for tuple unpacking in a ``{% set ... %}``
     call. :issue:`2021`
+-   Fix dunder protocol (`copy`/`pickle`/etc) interaction with ``Undefined``
+    objects. :issue:`2025`
 
 
 Version 3.1.4
