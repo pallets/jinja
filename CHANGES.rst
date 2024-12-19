@@ -26,6 +26,8 @@ Unreleased
     objects. :issue:`2025`
 -   Fix `copy`/`pickle` support for the internal ``missing`` object.
     :issue:`2027`
+-   Sandbox does not allow ``clear`` and ``pop`` on known mutable sequence
+    types. :issue:`2032`
 
 
 Version 3.1.4
