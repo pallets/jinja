@@ -1142,12 +1142,12 @@ class CodeGenerator(NodeVisitor):
             self.writeline(f"if {frame.symbols.ref(alias)} is missing:")
             self.indent()
             message = (
-                "the template {included_template.__name__!r}"
-                f" (imported on {self.position(node)})"
-                f" does not export the requested name {name!r}"
+                'f"the template {included_template.__name__!r}" + '
+                f'"(imported on {self.position(node)})" + '
+                f'"does not export the requested name {name!r}"'
             )
             self.writeline(
-                f"{frame.symbols.ref(alias)} = undefined(f{message!r}, name={name!r})"
+                f"{frame.symbols.ref(alias)} = undefined({message}, name={name!r})"
             )
             self.outdent()
             if frame.toplevel:
