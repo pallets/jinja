@@ -406,7 +406,7 @@ class Environment:
         cache_size: int = missing,
         auto_reload: bool = missing,
         bytecode_cache: t.Optional["BytecodeCache"] = missing,
-        enable_async: bool = False,
+        enable_async: bool = missing,
     ) -> "Environment":
         """Create a new overlay environment that shares all the data with the
         current environment except for cache and the overridden attributes.
@@ -419,8 +419,11 @@ class Environment:
         copied over so modifications on the original environment may not shine
         through.
 
+        .. versionchanged:: 3.1.5
+            ``enable_async`` is applied correctly.
+
         .. versionchanged:: 3.1.2
-            Added the ``newline_sequence``,, ``keep_trailing_newline``,
+            Added the ``newline_sequence``, ``keep_trailing_newline``,
             and ``enable_async`` parameters to match ``__init__``.
         """
         args = dict(locals())
