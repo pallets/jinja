@@ -5,6 +5,9 @@ Version 3.1.5
 
 Unreleased
 
+-   The sandboxed environment handles indirect calls to ``str.format``, such as
+    by passing a stored reference to a filter that calls its argument.
+    :ghsa:`q2x7-8rv6-6q7h`
 -   Sandbox does not allow ``clear`` and ``pop`` on known mutable sequence
     types. :issue:`2032`
 -   Calling sync ``render`` for an async template uses ``asyncio.run``.
