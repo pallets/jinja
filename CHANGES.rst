@@ -37,6 +37,8 @@ Unreleased
 -   ``Environment.overlay(enable_async)`` is applied correctly. :pr:`2061`
 -   The error message from ``FileSystemLoader`` includes the paths that were
     searched. :issue:`1661`
+-   ``PackageLoader`` shows a clearer error message when the package does not
+    contain the templates directory. :issue:`1705`
 
 
 Version 3.1.4
