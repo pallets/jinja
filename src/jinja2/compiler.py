@@ -216,7 +216,7 @@ class Frame:
         # or compile time.
         self.soft_frame = False
 
-    def copy(self) -> "Frame":
+    def copy(self) -> "te.Self":
         """Create a copy of the current one."""
         rv = object.__new__(self.__class__)
         rv.__dict__.update(self.__dict__)
@@ -229,7 +229,7 @@ class Frame:
             return Frame(self.eval_ctx, level=self.symbols.level + 1)
         return Frame(self.eval_ctx, self)
 
-    def soft(self) -> "Frame":
+    def soft(self) -> "te.Self":
         """Return a soft frame.  A soft frame may not be modified as
         standalone thing as it shares the resources with the frame it
         was created of, but it's not a rootlevel frame any longer.

@@ -3,6 +3,9 @@ import typing as t
 from . import nodes
 from .visitor import NodeVisitor
 
+if t.TYPE_CHECKING:
+    import typing_extensions as te
+
 VAR_LOAD_PARAMETER = "param"
 VAR_LOAD_RESOLVE = "resolve"
 VAR_LOAD_ALIAS = "alias"
@@ -83,7 +86,7 @@ class Symbols:
             )
         return rv
 
-    def copy(self) -> "Symbols":
+    def copy(self) -> "te.Self":
         rv = object.__new__(self.__class__)
         rv.__dict__.update(self.__dict__)
         rv.refs = self.refs.copy()
