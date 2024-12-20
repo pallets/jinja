@@ -204,7 +204,12 @@ class FileSystemLoader(BaseLoader):
             if os.path.isfile(filename):
                 break
         else:
-            raise TemplateNotFound(template)
+            plural = "path" if len(self.searchpath) == 1 else "paths"
+            paths_str = ", ".join(repr(p) for p in self.searchpath)
+            raise TemplateNotFound(
+                template,
+                f"{template!r} not found in search {plural}: {paths_str}",
+            )
 
         with open(filename, encoding=self.encoding) as f:
             contents = f.read()

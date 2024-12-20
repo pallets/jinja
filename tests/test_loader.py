@@ -179,6 +179,24 @@ class TestFileSystemLoader:
         t = e.get_template("foo/test.html")
         assert t.filename == str(self.searchpath / "foo" / "test.html")
 
+    def test_error_includes_paths(self, env, filesystem_loader):
+        env.loader = filesystem_loader
+
+        with pytest.raises(TemplateNotFound) as info:
+            env.get_template("missing")
+
+        e_str = str(info.value)
+        assert e_str.startswith("'missing' not found in search path: ")
+
+        filesystem_loader.searchpath.append("other")
+
+        with pytest.raises(TemplateNotFound) as info:
+            env.get_template("missing")
+
+        e_str = str(info.value)
+        assert e_str.startswith("'missing' not found in search paths: ")
+        assert ", 'other'" in e_str
+
 
 class TestModuleLoader:
     archive = None
