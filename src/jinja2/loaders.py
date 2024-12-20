@@ -327,7 +327,6 @@ class PackageLoader(BaseLoader):
         assert loader is not None, "A loader was not found for the package."
         self._loader = loader
         self._archive = None
-        template_root = None
 
         if isinstance(loader, zipimport.zipimporter):
             self._archive = loader.archive
@@ -344,18 +343,23 @@ class PackageLoader(BaseLoader):
             elif spec.origin is not None:
                 roots.append(os.path.dirname(spec.origin))
 
+            if not roots:
+                raise ValueError(
+                    f"The {package_name!r} package was not installed in a"
+                    " way that PackageLoader understands."
+                )
+
             for root in roots:
                 root = os.path.join(root, package_path)
 
                 if os.path.isdir(root):
                     template_root = root
                     break
-
-        if template_root is None:
-            raise ValueError(
-                f"The {package_name!r} package was not installed in a"
-                " way that PackageLoader understands."
-            )
+            else:
+                raise ValueError(
+                    f"PackageLoader could not find a {package_path!r} directory"
+                    f" in the {package_name!r} package."
+                )
 
         self._template_root = template_root
 

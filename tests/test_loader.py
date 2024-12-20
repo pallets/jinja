@@ -429,3 +429,8 @@ def test_pep_451_import_hook():
         assert "test.html" in package_loader.list_templates()
     finally:
         sys.meta_path[:] = before
+
+
+def test_package_loader_no_dir() -> None:
+    with pytest.raises(ValueError, match="could not find a 'templates' directory"):
+        PackageLoader("jinja2")
