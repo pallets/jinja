@@ -34,6 +34,7 @@ Unreleased
     objects. :issue:`2025`
 -   Fix `copy`/`pickle` support for the internal ``missing`` object.
     :issue:`2027`
+-   ``Environment.overlay(enable_async)`` is applied correctly. :pr:`2061`
 
 
 Version 3.1.4

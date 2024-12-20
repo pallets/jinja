@@ -425,3 +425,11 @@ class TestLowLevel:
         env = CustomEnvironment()
         tmpl = env.from_string("{{ foo }}")
         assert tmpl.render() == "resolve-foo"
+
+
+def test_overlay_enable_async(env):
+    assert not env.is_async
+    assert not env.overlay().is_async
+    env_async = env.overlay(enable_async=True)
+    assert env_async.is_async
+    assert not env_async.overlay(enable_async=False).is_async
