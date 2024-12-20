@@ -641,21 +641,24 @@ class Parser:
         return node
 
     def parse_primary(self, with_namespace: bool = False) -> nodes.Expr:
+        """Parse a name or literal value. If ``with_namespace`` is enabled, also
+        parse namespace attr refs, for use in assignments."""
         token = self.stream.current
         node: nodes.Expr
         if token.type == "name":
+            next(self.stream)
             if token.value in ("true", "false", "True", "False"):
                 node = nodes.Const(token.value in ("true", "True"), lineno=token.lineno)
             elif token.value in ("none", "None"):
                 node = nodes.Const(None, lineno=token.lineno)
-            elif with_namespace and self.stream.look().type == "dot":
-                next(self.stream)  # token
-                next(self.stream)  # dot
-                attr = self.stream.current
+            elif with_namespace and self.stream.current.type == "dot":
+                # If namespace attributes are allowed at this point, and the next
+                # token is a dot, produce a namespace reference.
+                next(self.stream)
+                attr = self.stream.expect("name")
                 node = nodes.NSRef(token.value, attr.value, lineno=token.lineno)
             else:
                 node = nodes.Name(token.value, "load", lineno=token.lineno)
-            next(self.stream)
         elif token.type == "string":
             next(self.stream)
             buf = [token.value]
@@ -693,8 +696,9 @@ class Parser:
         if no commas where found.
 
         The default parsing mode is a full tuple.  If `simplified` is `True`
-        only names and literals are parsed.  The `no_condexpr` parameter is
-        forwarded to :meth:`parse_expression`.
+        only names and literals are parsed; ``with_namespace`` allows namespace
+        attr refs as well. The `no_condexpr` parameter is forwarded to
+        :meth:`parse_expression`.
 
         Because tuples do not require delimiters and may end in a bogus comma
         an extra hint is needed that marks the end of a tuple.  For example
