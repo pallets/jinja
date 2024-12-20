@@ -1581,6 +1581,29 @@ class CodeGenerator(NodeVisitor):
 
     def visit_Assign(self, node: nodes.Assign, frame: Frame) -> None:
         self.push_assign_tracking()
+
+        # ``a.b`` is allowed for assignment, and is parsed as an NSRef. However,
+        # it is only valid if it references a Namespace object. Emit a check for
+        # that for each ref here, before assignment code is emitted. This can't
+        # be done in visit_NSRef as the ref could be in the middle of a tuple.
+        seen_refs: t.Set[str] = set()
+
+        for nsref in node.find_all(nodes.NSRef):
+            if nsref.name in seen_refs:
+                # Only emit the check for each reference once, in case the same
+                # ref is used multiple times in a tuple, `ns.a, ns.b = c, d`.
+                continue
+
+            seen_refs.add(nsref.name)
+            ref = frame.symbols.ref(nsref.name)
+            self.writeline(f"if not isinstance({ref}, Namespace):")
+            self.indent()
+            self.writeline(
+                "raise TemplateRuntimeError"
+                '("cannot assign attribute on non-namespace object")'
+            )
+            self.outdent()
+
         self.newline(node)
         self.visit(node.target, frame)
         self.write(" = ")
@@ -1637,17 +1660,11 @@ class CodeGenerator(NodeVisitor):
         self.write(ref)
 
     def visit_NSRef(self, node: nodes.NSRef, frame: Frame) -> None:
-        # NSRefs can only be used to store values; since they use the normal
-        # `foo.bar` notation they will be parsed as a normal attribute access
-        # when used anywhere but in a `set` context
+        # NSRef is a dotted assignment target a.b=c, but uses a[b]=c internally.
+        # visit_Assign emits code to validate that each ref is to a Namespace
+        # object only. That can't be emitted here as the ref could be in the
+        # middle of a tuple assignment.
         ref = frame.symbols.ref(node.name)
-        self.writeline(f"if not isinstance({ref}, Namespace):")
-        self.indent()
-        self.writeline(
-            "raise TemplateRuntimeError"
-            '("cannot assign attribute on non-namespace object")'
-        )
-        self.outdent()
         self.writeline(f"{ref}[{node.attr!r}]")
 
     def visit_Const(self, node: nodes.Const, frame: Frame) -> None:
