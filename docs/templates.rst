@@ -1086,35 +1086,34 @@ Assignments use the `set` tag and can have multiple targets::
 Block Assignments
 ~~~~~~~~~~~~~~~~~
 
-.. versionadded:: 2.8
+It's possible to use `set` as a block to assign the content of the block to a
+variable. This can be used to create multi-line strings, since Jinja doesn't
+support Python's triple quotes (``"""``, ``'''``).
 
-Starting with Jinja 2.8, it's possible to also use block assignments to
-capture the contents of a block into a variable name.  This can be useful
-in some situations as an alternative for macros. It can also be used to create
-multiline strings instead of triple quotes (''' and """), which Jinja does not
-support. In that case, instead of using an equals sign and a value, you just
-write the variable name and then everything until ``{% endset %}`` is captured.
+Instead of using an equals sign and a value, you only write the variable name,
+and everything until ``{% endset %}`` is captured.
 
-Example::
+.. code-block:: jinja
 
     {% set navigation %}
         <li><a href="/">Index</a>
         <li><a href="/downloads">Downloads</a>
     {% endset %}
 
-The `navigation` variable then contains the navigation HTML source.
+Filters applied to the variable name will be applied to the block's content.
 
-.. versionchanged:: 2.10
-
-Starting with Jinja 2.10, the block assignment supports filters.
-
-Example::
+.. code-block:: jinja
 
     {% set reply | wordwrap %}
         You wrote:
         {{ message }}
     {% endset %}
 
+.. versionadded:: 2.8
+
+.. versionchanged:: 2.10
+
+    Block assignment supports filters.
 
 .. _extends:
 
