@@ -1141,9 +1141,14 @@ class CodeGenerator(NodeVisitor):
             )
             self.writeline(f"if {frame.symbols.ref(alias)} is missing:")
             self.indent()
+            # The position will contain the template name, and will be formatted
+            # into a string that will be compiled into an f-string. Curly braces
+            # in the name must be replaced with escapes so that they will not be
+            # executed as part of the f-string.
+            position = self.position(node).replace("{", "{{").replace("}", "}}")
             message = (
                 "the template {included_template.__name__!r}"
-                f" (imported on {self.position(node)})"
+                f" (imported on {position})"
                 f" does not export the requested name {name!r}"
             )
             self.writeline(
