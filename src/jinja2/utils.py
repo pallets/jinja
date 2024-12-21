@@ -18,8 +18,17 @@ if t.TYPE_CHECKING:
 
 F = t.TypeVar("F", bound=t.Callable[..., t.Any])
 
-# special singleton representing missing values for the runtime
-missing: t.Any = type("MissingType", (), {"__repr__": lambda x: "missing"})()
+
+class _MissingType:
+    def __repr__(self) -> str:
+        return "missing"
+
+    def __reduce__(self) -> str:
+        return "missing"
+
+
+missing: t.Any = _MissingType()
+"""Special singleton representing missing values for the runtime."""
 
 internal_code: t.MutableSet[CodeType] = set()
 
@@ -324,6 +333,8 @@ def urlize(
         elif (
             "@" in middle
             and not middle.startswith("www.")
+            # ignore values like `@a@b`
+            and not middle.startswith("@")
             and ":" not in middle
             and _email_re.match(middle)
         ):
@@ -453,7 +464,7 @@ class LRUCache:
     def __getnewargs__(self) -> t.Tuple[t.Any, ...]:
         return (self.capacity,)
 
-    def copy(self) -> "LRUCache":
+    def copy(self) -> "te.Self":
         """Return a shallow copy of the instance."""
         rv = self.__class__(self.capacity)
         rv._mapping.update(self._mapping)

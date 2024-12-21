@@ -3,6 +3,9 @@ import typing as t
 from . import nodes
 from .visitor import NodeVisitor
 
+if t.TYPE_CHECKING:
+    import typing_extensions as te
+
 VAR_LOAD_PARAMETER = "param"
 VAR_LOAD_RESOLVE = "resolve"
 VAR_LOAD_ALIAS = "alias"
@@ -83,7 +86,7 @@ class Symbols:
             )
         return rv
 
-    def copy(self) -> "Symbols":
+    def copy(self) -> "te.Self":
         rv = object.__new__(self.__class__)
         rv.__dict__.update(self.__dict__)
         rv.refs = self.refs.copy()
@@ -118,23 +121,20 @@ class Symbols:
             self._define_ref(name, load=(VAR_LOAD_RESOLVE, name))
 
     def branch_update(self, branch_symbols: t.Sequence["Symbols"]) -> None:
-        stores: t.Dict[str, int] = {}
+        stores: t.Set[str] = set()
+
         for branch in branch_symbols:
-            for target in branch.stores:
-                if target in self.stores:
-                    continue
-                stores[target] = stores.get(target, 0) + 1
+            stores.update(branch.stores)
+
+        stores.difference_update(self.stores)
 
         for sym in branch_symbols:
             self.refs.update(sym.refs)
             self.loads.update(sym.loads)
             self.stores.update(sym.stores)
 
-        for name, branch_count in stores.items():
-            if branch_count == len(branch_symbols):
-                continue
-
-            target = self.find_ref(name)  # type: ignore
+        for name in stores:
+            target = self.find_ref(name)
             assert target is not None, "should not happen"
 
             if self.parent is not None:

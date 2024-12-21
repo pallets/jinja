@@ -202,10 +202,11 @@ option can also be set to strip tabs and spaces from the beginning of a
 line to the start of a block. (Nothing will be stripped if there are
 other characters before the start of the block.)
 
-With both `trim_blocks` and `lstrip_blocks` enabled, you can put block tags
-on their own lines, and the entire block line will be removed when
-rendered, preserving the whitespace of the contents.  For example,
-without the `trim_blocks` and `lstrip_blocks` options, this template::
+With both ``trim_blocks`` and ``lstrip_blocks`` disabled (the default), block
+tags on their own lines will be removed, but a blank line will remain and the
+spaces in the content will be preserved. For example, this template:
+
+.. code-block:: jinja
 
     <div>
         {% if True %}
@@ -213,7 +214,10 @@ without the `trim_blocks` and `lstrip_blocks` options, this template::
         {% endif %}
     </div>
 
-gets rendered with blank lines inside the div::
+With both ``trim_blocks`` and ``lstrip_blocks`` disabled, the template is
+rendered with blank lines inside the div:
+
+.. code-block:: text
 
     <div>
 
@@ -221,8 +225,10 @@ gets rendered with blank lines inside the div::
 
     </div>
 
-But with both `trim_blocks` and `lstrip_blocks` enabled, the template block
-lines are removed and other whitespace is preserved::
+With both ``trim_blocks`` and ``lstrip_blocks`` enabled, the template block
+lines are completely removed:
+
+.. code-block:: text
 
     <div>
             yay
@@ -522,8 +528,8 @@ However, the name after the `endblock` word must match the block name.
 Block Nesting and Scope
 ~~~~~~~~~~~~~~~~~~~~~~~
 
-Blocks can be nested for more complex layouts.  However, per default blocks
-may not access variables from outer scopes::
+Blocks can be nested for more complex layouts. By default, a block may not
+access variables from outside the block (outer scopes)::
 
     {% for item in seq %}
         <li>{% block loop_item %}{{ item }}{% endblock %}</li>
@@ -1080,34 +1086,34 @@ Assignments use the `set` tag and can have multiple targets::
 Block Assignments
 ~~~~~~~~~~~~~~~~~
 
-.. versionadded:: 2.8
+It's possible to use `set` as a block to assign the content of the block to a
+variable. This can be used to create multi-line strings, since Jinja doesn't
+support Python's triple quotes (``"""``, ``'''``).
 
-Starting with Jinja 2.8, it's possible to also use block assignments to
-capture the contents of a block into a variable name.  This can be useful
-in some situations as an alternative for macros.  In that case, instead of
-using an equals sign and a value, you just write the variable name and then
-everything until ``{% endset %}`` is captured.
+Instead of using an equals sign and a value, you only write the variable name,
+and everything until ``{% endset %}`` is captured.
 
-Example::
+.. code-block:: jinja
 
     {% set navigation %}
         <li><a href="/">Index</a>
         <li><a href="/downloads">Downloads</a>
     {% endset %}
 
-The `navigation` variable then contains the navigation HTML source.
+Filters applied to the variable name will be applied to the block's content.
 
-.. versionchanged:: 2.10
-
-Starting with Jinja 2.10, the block assignment supports filters.
-
-Example::
+.. code-block:: jinja
 
     {% set reply | wordwrap %}
         You wrote:
         {{ message }}
     {% endset %}
 
+.. versionadded:: 2.8
+
+.. versionchanged:: 2.10
+
+    Block assignment supports filters.
 
 .. _extends:
 
@@ -1406,27 +1412,31 @@ Comparisons
 Logic
 ~~~~~
 
-For ``if`` statements, ``for`` filtering, and ``if`` expressions, it can be useful to
-combine multiple expressions:
+For ``if`` statements, ``for`` filtering, and ``if`` expressions, it can be
+useful to combine multiple expressions.
 
 ``and``
-    Return true if the left and the right operand are true.
+    For ``x and y``, if ``x`` is false, then the value is ``x``, else ``y``. In
+    a boolean context, this will be treated as ``True`` if both operands are
+    truthy.
 
 ``or``
-    Return true if the left or the right operand are true.
+    For ``x or y``, if ``x`` is true, then the value is ``x``, else ``y``. In a
+    boolean context, this will be treated as ``True`` if at least one operand is
+    truthy.
 
 ``not``
-    negate a statement (see below).
+    For ``not x``, if ``x`` is false, then the value is ``True``, else
+    ``False``.
+
+    Prefer negating ``is`` and ``in`` using their infix notation:
+    ``foo is not bar`` instead of ``not foo is bar``; ``foo not in bar`` instead
+    of ``not foo in bar``. All other expressions require prefix notation:
+    ``not (foo and bar).``
 
 ``(expr)``
-    Parentheses group an expression.
-
-.. admonition:: Note
-
-    The ``is`` and ``in`` operators support negation using an infix notation,
-    too: ``foo is not bar`` and ``foo not in bar`` instead of ``not foo is bar``
-    and ``not foo in bar``.  All other expressions require a prefix notation:
-    ``not (foo and bar).``
+    Parentheses group an expression. This is used to change evaluation order, or
+    to make a long expression easier to read or less ambiguous.
 
 
 Other Operators
@@ -1668,6 +1678,9 @@ The following functions are available in the global scope by default:
 
     .. versionadded:: 2.10
 
+    .. versionchanged:: 3.2
+        Namespace attributes can be assigned to in multiple assignment.
+
 
 Extensions
 ----------
@@ -1778,7 +1791,7 @@ It's possible to translate strings in expressions with these functions:
 
 -   ``_(message)``: Alias for ``gettext``.
 -   ``gettext(message)``: Translate a message.
--   ``ngettext(singluar, plural, n)``: Translate a singular or plural
+-   ``ngettext(singular, plural, n)``: Translate a singular or plural
     message based on a count variable.
 -   ``pgettext(context, message)``: Like ``gettext()``, but picks the
     translation based on the context string.

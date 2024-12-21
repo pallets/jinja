@@ -538,6 +538,14 @@ class TestSet:
         )
         assert tmpl.render() == "13|37"
 
+    def test_namespace_set_tuple(self, env_trim):
+        tmpl = env_trim.from_string(
+            "{% set ns = namespace(a=12, b=36) %}"
+            "{% set ns.a, ns.b = ns.a + 1, ns.b + 1 %}"
+            "{{ ns.a }}|{{ ns.b }}"
+        )
+        assert tmpl.render() == "13|37"
+
     def test_block_escaping_filtered(self):
         env = Environment(autoescape=True)
         tmpl = env.from_string(

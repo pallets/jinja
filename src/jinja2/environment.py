@@ -125,7 +125,7 @@ def load_extensions(
     return result
 
 
-def _environment_config_check(environment: "Environment") -> "Environment":
+def _environment_config_check(environment: _env_bound) -> _env_bound:
     """Perform a sanity check on the environment."""
     assert issubclass(
         environment.undefined, Undefined
@@ -408,8 +408,8 @@ class Environment:
         cache_size: int = missing,
         auto_reload: bool = missing,
         bytecode_cache: t.Optional["BytecodeCache"] = missing,
-        enable_async: bool = False,
-    ) -> "Environment":
+        enable_async: bool = missing,
+    ) -> "te.Self":
         """Create a new overlay environment that shares all the data with the
         current environment except for cache and the overridden attributes.
         Extensions cannot be removed for an overlayed environment.  An overlayed
@@ -421,8 +421,11 @@ class Environment:
         copied over so modifications on the original environment may not shine
         through.
 
+        .. versionchanged:: 3.1.5
+            ``enable_async`` is applied correctly.
+
         .. versionchanged:: 3.1.2
-            Added the ``newline_sequence``,, ``keep_trailing_newline``,
+            Added the ``newline_sequence``, ``keep_trailing_newline``,
             and ``enable_async`` parameters to match ``__init__``.
         """
         args = dict(locals())

@@ -14,8 +14,16 @@ Unreleased
 Version 3.1.5
 -------------
 
-Unreleased
+Released 2024-12-21
 
+-   The sandboxed environment handles indirect calls to ``str.format``, such as
+    by passing a stored reference to a filter that calls its argument.
+    :ghsa:`q2x7-8rv6-6q7h`
+-   Escape template name before formatting it into error messages, to avoid
+    issues with names that contain f-string syntax.
+    :issue:`1792`, :ghsa:`gmj6-6f8f-6699`
+-   Sandbox does not allow ``clear`` and ``pop`` on known mutable sequence
+    types. :issue:`2032`
 -   Calling sync ``render`` for an async template uses ``asyncio.run``.
     :pr:`1952`
 -   Avoid unclosed ``auto_aiter`` warnings. :pr:`1960`
@@ -25,6 +33,32 @@ Unreleased
     ``Template.generate_async``. :pr:`1960`
 -   Avoid leaving async generators unclosed in blocks, includes and extends.
     :pr:`1960`
+-   The runtime uses the correct ``concat`` function for the current environment
+    when calling block references. :issue:`1701`
+-   Make ``|unique`` async-aware, allowing it to be used after another
+    async-aware filter. :issue:`1781`
+-   ``|int`` filter handles ``OverflowError`` from scientific notation.
+    :issue:`1921`
+-   Make compiling deterministic for tuple unpacking in a ``{% set ... %}``
+    call. :issue:`2021`
+-   Fix dunder protocol (`copy`/`pickle`/etc) interaction with ``Undefined``
+    objects. :issue:`2025`
+-   Fix `copy`/`pickle` support for the internal ``missing`` object.
+    :issue:`2027`
+-   ``Environment.overlay(enable_async)`` is applied correctly. :pr:`2061`
+-   The error message from ``FileSystemLoader`` includes the paths that were
+    searched. :issue:`1661`
+-   ``PackageLoader`` shows a clearer error message when the package does not
+    contain the templates directory. :issue:`1705`
+-   Improve annotations for methods returning copies. :pr:`1880`
+-   ``urlize`` does not add ``mailto:`` to values like `@a@b`. :pr:`1870`
+-   Tests decorated with `@pass_context`` can be used with the ``|select``
+    filter. :issue:`1624`
+-   Using ``set`` for multiple assignment (``a, b = 1, 2``) does not fail when the
+    target is a namespace attribute. :issue:`1413`
+-   Using ``set`` in all branches of ``{% if %}{% elif %}{% else %}`` blocks
+    does not cause the variable to be considered initially undefined.
+    :issue:`1253`
 
 
 Version 3.1.4
@@ -1012,7 +1046,7 @@ Released 2008-07-17, codename Jinjavitus
     evaluates to ``false``.
 -   Improved error reporting for undefined values by providing a
     position.
--   ``filesizeformat`` filter uses decimal prefixes now per default and
+-   ``filesizeformat`` filter uses decimal prefixes now by default and
     can be set to binary mode with the second parameter.
 -   Fixed bug in finalizer
 

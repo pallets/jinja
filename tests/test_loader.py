@@ -179,6 +179,24 @@ class TestFileSystemLoader:
         t = e.get_template("foo/test.html")
         assert t.filename == str(self.searchpath / "foo" / "test.html")
 
+    def test_error_includes_paths(self, env, filesystem_loader):
+        env.loader = filesystem_loader
+
+        with pytest.raises(TemplateNotFound) as info:
+            env.get_template("missing")
+
+        e_str = str(info.value)
+        assert e_str.startswith("'missing' not found in search path: ")
+
+        filesystem_loader.searchpath.append("other")
+
+        with pytest.raises(TemplateNotFound) as info:
+            env.get_template("missing")
+
+        e_str = str(info.value)
+        assert e_str.startswith("'missing' not found in search paths: ")
+        assert ", 'other'" in e_str
+
 
 class TestModuleLoader:
     archive = None
@@ -411,3 +429,8 @@ def test_pep_451_import_hook():
         assert "test.html" in package_loader.list_templates()
     finally:
         sys.meta_path[:] = before
+
+
+def test_package_loader_no_dir() -> None:
+    with pytest.raises(ValueError, match="could not find a 'templates' directory"):
+        PackageLoader("jinja2")

@@ -24,7 +24,7 @@ autodoc_preserve_defaults = True
 extlinks = {
     "issue": ("https://github.com/pallets/jinja/issues/%s", "#%s"),
     "pr": ("https://github.com/pallets/jinja/pull/%s", "#%s"),
-    "ghsa": ("https://github.com/advisories/GHSA-%s", "GHSA-%s"),
+    "ghsa": ("https://github.com/pallets/jinja/security/advisories/GHSA-%s", "GHSA-%s"),
 }
 intersphinx_mapping = {
     "python": ("https://docs.python.org/3/", None),

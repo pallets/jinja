@@ -323,8 +323,6 @@ class TestUndefined:
         assert und1 == und2
         assert und1 != 42
         assert hash(und1) == hash(und2) == hash(Undefined())
-        with pytest.raises(AttributeError):
-            getattr(Undefined, "__slots__")  # noqa: B009
 
     def test_chainable_undefined(self):
         env = Environment(undefined=ChainableUndefined)
@@ -335,8 +333,6 @@ class TestUndefined:
         assert env.from_string("{{ foo.missing }}").render(foo=42) == ""
         assert env.from_string("{{ not missing }}").render() == "True"
         pytest.raises(UndefinedError, env.from_string("{{ missing - 1}}").render)
-        with pytest.raises(AttributeError):
-            getattr(ChainableUndefined, "__slots__")  # noqa: B009
 
         # The following tests ensure subclass functionality works as expected
         assert env.from_string('{{ missing.bar["baz"] }}').render() == ""
@@ -368,8 +364,6 @@ class TestUndefined:
             str(DebugUndefined(hint=undefined_hint))
             == f"{{{{ undefined value printed: {undefined_hint} }}}}"
         )
-        with pytest.raises(AttributeError):
-            getattr(DebugUndefined, "__slots__")  # noqa: B009
 
     def test_strict_undefined(self):
         env = Environment(undefined=StrictUndefined)
@@ -386,8 +380,6 @@ class TestUndefined:
             env.from_string('{{ missing|default("default", true) }}').render()
             == "default"
         )
-        with pytest.raises(AttributeError):
-            getattr(StrictUndefined, "__slots__")  # noqa: B009
         assert env.from_string('{{ "foo" if false }}').render() == ""
 
     def test_indexing_gives_undefined(self):
@@ -433,3 +425,11 @@ class TestLowLevel:
         env = CustomEnvironment()
         tmpl = env.from_string("{{ foo }}")
         assert tmpl.render() == "resolve-foo"
+
+
+def test_overlay_enable_async(env):
+    assert not env.is_async
+    assert not env.overlay().is_async
+    env_async = env.overlay(enable_async=True)
+    assert env_async.is_async
+    assert not env_async.overlay(enable_async=False).is_async

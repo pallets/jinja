@@ -89,7 +89,7 @@ class Extension:
     def __init__(self, environment: Environment) -> None:
         self.environment = environment
 
-    def bind(self, environment: Environment) -> "Extension":
+    def bind(self, environment: Environment) -> "te.Self":
         """Create a copy of this extension bound to another environment."""
         rv = object.__new__(self.__class__)
         rv.__dict__.update(self.__dict__)
