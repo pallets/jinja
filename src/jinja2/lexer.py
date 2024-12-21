@@ -262,7 +262,7 @@ class Failure:
         self.message = message
         self.error_class = cls
 
-    def __call__(self, lineno: int, filename: str) -> "te.NoReturn":
+    def __call__(self, lineno: int, filename: t.Optional[str]) -> "te.NoReturn":
         raise self.error_class(self.message, lineno, filename)
 
 
@@ -757,7 +757,7 @@ class Lexer:
 
                     for idx, token in enumerate(tokens):
                         # failure group
-                        if token.__class__ is Failure:
+                        if isinstance(token, Failure):
                             raise token(lineno, filename)
                         # bygroup is a bit more complex, in that case we
                         # yield for the current token the first named
@@ -778,7 +778,7 @@ class Lexer:
                             data = groups[idx]
 
                             if data or token not in ignore_if_empty:
-                                yield lineno, token, data
+                                yield lineno, token, data  # type: ignore[misc]
 
                             lineno += data.count("\n") + newlines_stripped
                             newlines_stripped = 0

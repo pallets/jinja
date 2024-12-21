@@ -4,7 +4,7 @@
 #
 #    pip-compile tests.in
 #
-attrs==24.2.0
+attrs==24.3.0
     # via
     #   outcome
     #   trio
@@ -14,11 +14,11 @@ iniconfig==2.0.0
     # via pytest
 outcome==1.3.0.post0
     # via trio
-packaging==24.1
+packaging==24.2
     # via pytest
 pluggy==1.5.0
     # via pytest
-pytest==8.3.3
+pytest==8.3.4
     # via -r tests.in
 sniffio==1.3.1
     # via trio
