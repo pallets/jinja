@@ -1,5 +1,8 @@
+import io
+import os
 import shutil
 import tempfile
+import typing as t
 from pathlib import Path
 
 import pytest
@@ -242,15 +245,53 @@ class TestStreaming:
         stream.disable_buffering()
         assert not stream.buffered
 
-    def test_dump_stream(self, env):
+
+class TestStreamingDump:
+    class CustomPathLike:
+        def __init__(self, path: Path):
+            self._path = path
+
+        def __fspath__(self):
+            return self._path.__fspath__()
+
+    class CustomWithWrite:
+        def __init__(self):
+            self._value = []
+
+        def write(self, value: bytes) -> None:
+            self._value.append(value)
+
+        def getvalue(self) -> bytes:
+            return b"".join(self._value)
+
+    class CustomWithWriteLines:
+        def __init__(self):
+            self._value = []
+
+        def writelines(self, value: t.Iterable[bytes]) -> None:
+            self._value += list(value)
+
+        def getvalue(self) -> bytes:
+            return b"".join(self._value)
+
+    @pytest.mark.parametrize("cast_to", [str, Path, os.fspath, CustomPathLike, bytes])
+    def test_dump_stream_file_path(self, env, cast_to):
         tmp = Path(tempfile.mkdtemp())
         try:
             tmpl = env.from_string("\u2713")
             stream = tmpl.stream()
-            stream.dump(str(tmp / "dump.txt"), "utf-8")
+            stream.dump(cast_to(tmp / "dump.txt"), "utf-8")
             assert (tmp / "dump.txt").read_bytes() == b"\xe2\x9c\x93"
         finally:
             shutil.rmtree(tmp)
+
+    @pytest.mark.parametrize("obj", [io.BytesIO, CustomWithWrite, CustomWithWriteLines])
+    def test_dump_stream_io(self, env, obj):
+        tmpl = env.from_string("\u2713")
+        stream = tmpl.stream()
+        _io = obj()
+        stream.dump(_io, "utf-8")
+        assert _io.getvalue() == b"\xe2\x9c\x93"
 
 
 class TestUndefined:
