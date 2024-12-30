@@ -61,6 +61,8 @@ if t.TYPE_CHECKING:
     from .ext import Extension
     from .loaders import BaseLoader
 
+    StrOrBytesPath = t.Union[str, bytes, "os.PathLike[str]", "os.PathLike[bytes]"]
+
 _env_bound = t.TypeVar("_env_bound", bound="Environment")
 
 
@@ -1592,7 +1594,7 @@ class TemplateStream:
 
     def dump(
         self,
-        fp: t.Union[str, t.IO[bytes]],
+        fp: t.Union["StrOrBytesPath", t.IO[bytes]],
         encoding: t.Optional[str] = None,
         errors: t.Optional[str] = "strict",
     ) -> None:
@@ -1604,16 +1606,19 @@ class TemplateStream:
 
             Template('Hello {{ name }}!').stream(name='foo').dump('hello.html')
         """
+        real_fp: t.IO[bytes]
+
         close = False
 
-        if isinstance(fp, str):
+        try:
+            real_fp = open(fp, "wb")  # type: ignore[arg-type]
+        except TypeError:
+            real_fp = fp  # type: ignore[assignment]
+        else:
+            close = True
+
             if encoding is None:
                 encoding = "utf-8"
-
-            real_fp: t.IO[bytes] = open(fp, "wb")
-            close = True
-        else:
-            real_fp = fp
 
         try:
             if encoding is not None:
@@ -1623,9 +1628,15 @@ class TemplateStream:
 
             if hasattr(real_fp, "writelines"):
                 real_fp.writelines(iterable)
-            else:
+            elif hasattr(real_fp, "write"):
                 for item in iterable:
                     real_fp.write(item)
+            else:
+                raise AttributeError(
+                    f"'{real_fp.__class__.__name__}' object has no attribute"
+                    f" 'write' or 'writelines'"
+                )
+
         finally:
             if close:
                 real_fp.close()
