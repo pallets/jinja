@@ -190,3 +190,13 @@ class TestStringFormatMap:
 
         with pytest.raises(SecurityError):
             t.render()
+
+    def test_attr_filter(self) -> None:
+        env = SandboxedEnvironment()
+        t = env.from_string(
+            """{{ "{0.__call__.__builtins__[__import__]}"
+                  | attr("format")(not_here) }}"""
+        )
+
+        with pytest.raises(SecurityError):
+            t.render()
