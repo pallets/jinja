@@ -26,16 +26,19 @@ def split_template_path(template: str) -> t.List[str]:
     """Split a path into segments and perform a sanity check.  If it detects
     '..' in the path it will raise a `TemplateNotFound` error.
     """
+    path = template
     pieces = []
-    for piece in template.split("/"):
-        if (
-            os.sep in piece
-            or (os.path.altsep and os.path.altsep in piece)
-            or piece == os.path.pardir
-        ):
+    while True:
+        path, tail = os.path.split(path)
+        piece = tail if tail else path
+
+        if piece == os.path.pardir:
             raise TemplateNotFound(template)
         elif piece and piece != ".":
-            pieces.append(piece)
+            pieces.insert(0, piece)
+        if not tail:
+            break
+
     return pieces
 
 
