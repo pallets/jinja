@@ -209,6 +209,22 @@ class TestTestsCase:
         )
         assert tmpl.render() == "True|True|False|True|False|True|False|True|False"
 
+    def test_contains(self, env):
+        tmpl = env.from_string(
+            '{{ "foo" is contains "o" }}|'
+            '{{ "foo" is contains "foo" }}|'
+            '{{ "foo" is contains "b" }}|'
+            "{{ ((1, 2)) is contains 1 }}|"
+            "{{ ((1, 2)) is contains 3 }}|"
+            "{{ [1, 2] is contains 1 }}|"
+            "{{ [1, 2] is contains 3 }}|"
+            '{{ {"foo": 1} is contains "foo" }}|'
+            '{{ {"bar": 1} is contains "baz" }}|'
+            '{{ [{"foo": "bar"}, {"foo": "fighter"}] | '
+            'selectattr("foo", "contains", "ba") | list | length }}'
+        )
+        assert tmpl.render() == "True|True|False|True|False|True|False|True|False|1"
+
 
 def test_name_undefined(env):
     with pytest.raises(TemplateAssertionError, match="No test named 'f'"):
