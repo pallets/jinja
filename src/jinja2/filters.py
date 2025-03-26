@@ -822,8 +822,13 @@ def do_urlize(
     return rv
 
 
+@pass_environment
 def do_indent(
-    s: str, width: t.Union[int, str] = 4, first: bool = False, blank: bool = False
+    environment: "Environment",
+    s: str,
+    width: t.Union[int, str] = 4,
+    first: bool = False,
+    blank: bool = False,
 ) -> str:
     """Return a copy of the string with each line indented by 4 spaces. The
     first line and blank lines are not indented by default.
@@ -845,7 +850,7 @@ def do_indent(
     else:
         indention = " " * width
 
-    newline = "\n"
+    newline = str(environment.newline_sequence)
 
     if isinstance(s, Markup):
         indention = Markup(indention)
