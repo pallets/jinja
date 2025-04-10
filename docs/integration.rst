@@ -92,3 +92,36 @@ this add this to ``config/environment.py``:
     config['pylons.strict_c'] = True
 
 .. _Pylons: https://pylonsproject.org/
+
+
+Litestar
+--------
+
+`Litestar`_ allows you to easily render templates using a built-in templating engines,
+including Jinja, and integrates it seamlessly into the framework.
+
+To use Jinja templates with Litestar, you can register it through the
+`template_config` parameter when creating an instance of the `Litestar`
+application. Here's an example of how to set it up:
+
+.. code-block:: python
+
+    from pathlib import Path
+    from litestar import Litestar
+    from litestar.contrib.jinja import JinjaTemplateEngine
+    from litestar.template.config import TemplateConfig
+
+    app = Litestar(
+        route_handlers=[],
+        template_config=TemplateConfig(
+            directory=Path("templates"),
+            engine=JinjaTemplateEngine,
+        ),
+    )
+
+This setup will allow you to use Jinja templates for rendering views in
+your Litestar app. The `directory` specifies where the template files are
+located, and the `engine` specifies which template engine to use, in this
+case, `JinjaTemplateEngine`.
+
+.. _Litestar: https://docs.litestar.dev/latest/usage/templating.html#registering-a-template-engine
