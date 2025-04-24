@@ -346,9 +346,7 @@ works roughly like this::
     def autoescape(template_name):
         if template_name is None:
             return False
-        if template_name.endswith(('.html', '.htm', '.xml'))
-            return True
-        return False
+        return template_name.endswith(('.html', '.htm', '.xml'))
 
 When implementing a guessing autoescape function, make sure you also
 accept `None` as valid template name.  This will be passed when generating
