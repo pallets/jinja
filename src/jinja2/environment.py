@@ -66,7 +66,7 @@ _env_bound = t.TypeVar("_env_bound", bound="Environment")
 
 # for direct template usage we have up to ten living environments
 @lru_cache(maxsize=10)
-def get_spontaneous_environment(cls: t.Type[_env_bound], *args: t.Any) -> _env_bound:
+def get_spontaneous_environment(cls: type[_env_bound], *args: t.Any) -> _env_bound:
     """Return a new spontaneous environment. A spontaneous environment
     is used for templates created directly rather than through an
     existing environment.
@@ -81,7 +81,7 @@ def get_spontaneous_environment(cls: t.Type[_env_bound], *args: t.Any) -> _env_b
 
 def create_cache(
     size: int,
-) -> t.Optional[t.MutableMapping[t.Tuple["weakref.ref[BaseLoader]", str], "Template"]]:
+) -> t.Optional[t.MutableMapping[tuple["weakref.ref[BaseLoader]", str], "Template"]]:
     """Return the cache class for the given size."""
     if size == 0:
         return None
@@ -94,9 +94,9 @@ def create_cache(
 
 def copy_cache(
     cache: t.Optional[
-        t.MutableMapping[t.Tuple["weakref.ref[BaseLoader]", str], "Template"]
+        t.MutableMapping[tuple["weakref.ref[BaseLoader]", str], "Template"]
     ],
-) -> t.Optional[t.MutableMapping[t.Tuple["weakref.ref[BaseLoader]", str], "Template"]]:
+) -> t.Optional[t.MutableMapping[tuple["weakref.ref[BaseLoader]", str], "Template"]]:
     """Create an empty copy of the given cache."""
     if cache is None:
         return None
@@ -109,8 +109,8 @@ def copy_cache(
 
 def load_extensions(
     environment: "Environment",
-    extensions: t.Sequence[t.Union[str, t.Type["Extension"]]],
-) -> t.Dict[str, "Extension"]:
+    extensions: t.Sequence[t.Union[str, type["Extension"]]],
+) -> dict[str, "Extension"]:
     """Load the extensions from the list and bind it to the environment.
     Returns a dict of instantiated extensions.
     """
@@ -118,7 +118,7 @@ def load_extensions(
 
     for extension in extensions:
         if isinstance(extension, str):
-            extension = t.cast(t.Type["Extension"], import_string(extension))
+            extension = t.cast(type["Extension"], import_string(extension))
 
         result[extension.identifier] = extension(environment)
 
@@ -127,9 +127,9 @@ def load_extensions(
 
 def _environment_config_check(environment: _env_bound) -> _env_bound:
     """Perform a sanity check on the environment."""
-    assert issubclass(
-        environment.undefined, Undefined
-    ), "'undefined' must be a subclass of 'jinja2.Undefined'."
+    assert issubclass(environment.undefined, Undefined), (
+        "'undefined' must be a subclass of 'jinja2.Undefined'."
+    )
     assert (
         environment.block_start_string
         != environment.variable_start_string
@@ -283,15 +283,15 @@ class Environment:
 
     #: the class that is used for code generation.  See
     #: :class:`~jinja2.compiler.CodeGenerator` for more information.
-    code_generator_class: t.Type["CodeGenerator"] = CodeGenerator
+    code_generator_class: type["CodeGenerator"] = CodeGenerator
 
     concat = "".join
 
     #: the context class that is used for templates.  See
     #: :class:`~jinja2.runtime.Context` for more information.
-    context_class: t.Type[Context] = Context
+    context_class: type[Context] = Context
 
-    template_class: t.Type["Template"]
+    template_class: type["Template"]
 
     def __init__(
         self,
@@ -307,9 +307,9 @@ class Environment:
         lstrip_blocks: bool = LSTRIP_BLOCKS,
         newline_sequence: "te.Literal['\\n', '\\r\\n', '\\r']" = NEWLINE_SEQUENCE,
         keep_trailing_newline: bool = KEEP_TRAILING_NEWLINE,
-        extensions: t.Sequence[t.Union[str, t.Type["Extension"]]] = (),
+        extensions: t.Sequence[t.Union[str, type["Extension"]]] = (),
         optimized: bool = True,
-        undefined: t.Type[Undefined] = Undefined,
+        undefined: type[Undefined] = Undefined,
         finalize: t.Optional[t.Callable[..., t.Any]] = None,
         autoescape: t.Union[bool, t.Callable[[t.Optional[str]], bool]] = False,
         loader: t.Optional["BaseLoader"] = None,
@@ -344,7 +344,7 @@ class Environment:
         self.keep_trailing_newline = keep_trailing_newline
 
         # runtime information
-        self.undefined: t.Type[Undefined] = undefined
+        self.undefined: type[Undefined] = undefined
         self.optimized = optimized
         self.finalize = finalize
         self.autoescape = autoescape
@@ -369,7 +369,7 @@ class Environment:
         self.is_async = enable_async
         _environment_config_check(self)
 
-    def add_extension(self, extension: t.Union[str, t.Type["Extension"]]) -> None:
+    def add_extension(self, extension: t.Union[str, type["Extension"]]) -> None:
         """Adds an extension after the environment was created.
 
         .. versionadded:: 2.5
@@ -399,9 +399,9 @@ class Environment:
         lstrip_blocks: bool = missing,
         newline_sequence: "te.Literal['\\n', '\\r\\n', '\\r']" = missing,
         keep_trailing_newline: bool = missing,
-        extensions: t.Sequence[t.Union[str, t.Type["Extension"]]] = missing,
+        extensions: t.Sequence[t.Union[str, type["Extension"]]] = missing,
         optimized: bool = missing,
-        undefined: t.Type[Undefined] = missing,
+        undefined: type[Undefined] = missing,
         finalize: t.Optional[t.Callable[..., t.Any]] = missing,
         autoescape: t.Union[bool, t.Callable[[t.Optional[str]], bool]] = missing,
         loader: t.Optional["BaseLoader"] = missing,
@@ -628,7 +628,7 @@ class Environment:
         source: str,
         name: t.Optional[str] = None,
         filename: t.Optional[str] = None,
-    ) -> t.Iterator[t.Tuple[int, str, str]]:
+    ) -> t.Iterator[tuple[int, str, str]]:
         """Lex the given sourcecode and return a generator that yields
         tokens as tuples in the form ``(lineno, token_type, value)``.
         This can be useful for :ref:`extension development <writing-extensions>`
@@ -677,7 +677,7 @@ class Environment:
             stream = ext.filter_stream(stream)  # type: ignore
 
             if not isinstance(stream, TokenStream):
-                stream = TokenStream(stream, name, filename)  # type: ignore[unreachable]
+                stream = TokenStream(stream, name, filename)
 
         return stream
 
@@ -902,7 +902,7 @@ class Environment:
         self,
         extensions: t.Optional[t.Collection[str]] = None,
         filter_func: t.Optional[t.Callable[[str], bool]] = None,
-    ) -> t.List[str]:
+    ) -> list[str]:
         """Returns a list of templates for this environment.  This requires
         that the loader supports the loader's
         :meth:`~BaseLoader.list_templates` method.
@@ -1074,9 +1074,7 @@ class Environment:
     @internalcode
     def get_or_select_template(
         self,
-        template_name_or_list: t.Union[
-            str, "Template", t.List[t.Union[str, "Template"]]
-        ],
+        template_name_or_list: t.Union[str, "Template", list[t.Union[str, "Template"]]],
         parent: t.Optional[str] = None,
         globals: t.Optional[t.MutableMapping[str, t.Any]] = None,
     ) -> "Template":
@@ -1095,7 +1093,7 @@ class Environment:
         self,
         source: t.Union[str, nodes.Template],
         globals: t.Optional[t.MutableMapping[str, t.Any]] = None,
-        template_class: t.Optional[t.Type["Template"]] = None,
+        template_class: t.Optional[type["Template"]] = None,
     ) -> "Template":
         """Load a template from a source string without using
         :attr:`loader`.
@@ -1154,13 +1152,13 @@ class Template:
 
     #: Type of environment to create when creating a template directly
     #: rather than through an existing environment.
-    environment_class: t.Type[Environment] = Environment
+    environment_class: type[Environment] = Environment
 
     environment: Environment
     globals: t.MutableMapping[str, t.Any]
     name: t.Optional[str]
     filename: t.Optional[str]
-    blocks: t.Dict[str, t.Callable[[Context], t.Iterator[str]]]
+    blocks: dict[str, t.Callable[[Context], t.Iterator[str]]]
     root_render_func: t.Callable[[Context], t.Iterator[str]]
     _module: t.Optional["TemplateModule"]
     _debug_info: str
@@ -1181,9 +1179,9 @@ class Template:
         lstrip_blocks: bool = LSTRIP_BLOCKS,
         newline_sequence: "te.Literal['\\n', '\\r\\n', '\\r']" = NEWLINE_SEQUENCE,
         keep_trailing_newline: bool = KEEP_TRAILING_NEWLINE,
-        extensions: t.Sequence[t.Union[str, t.Type["Extension"]]] = (),
+        extensions: t.Sequence[t.Union[str, type["Extension"]]] = (),
         optimized: bool = True,
-        undefined: t.Type[Undefined] = Undefined,
+        undefined: type[Undefined] = Undefined,
         finalize: t.Optional[t.Callable[..., t.Any]] = None,
         autoescape: t.Union[bool, t.Callable[[t.Optional[str]], bool]] = False,
         enable_async: bool = False,
@@ -1336,7 +1334,7 @@ class Template:
         if self.environment.is_async:
             import asyncio
 
-            async def to_list() -> t.List[str]:
+            async def to_list() -> list[str]:
                 return [x async for x in self.generate_async(*args, **kwargs)]
 
             yield from asyncio.run(to_list())
@@ -1376,7 +1374,7 @@ class Template:
 
     def new_context(
         self,
-        vars: t.Optional[t.Dict[str, t.Any]] = None,
+        vars: t.Optional[dict[str, t.Any]] = None,
         shared: bool = False,
         locals: t.Optional[t.Mapping[str, t.Any]] = None,
     ) -> Context:
@@ -1393,7 +1391,7 @@ class Template:
 
     def make_module(
         self,
-        vars: t.Optional[t.Dict[str, t.Any]] = None,
+        vars: t.Optional[dict[str, t.Any]] = None,
         shared: bool = False,
         locals: t.Optional[t.Mapping[str, t.Any]] = None,
     ) -> "TemplateModule":
@@ -1408,7 +1406,7 @@ class Template:
 
     async def make_module_async(
         self,
-        vars: t.Optional[t.Dict[str, t.Any]] = None,
+        vars: t.Optional[dict[str, t.Any]] = None,
         shared: bool = False,
         locals: t.Optional[t.Mapping[str, t.Any]] = None,
     ) -> "TemplateModule":
@@ -1498,7 +1496,7 @@ class Template:
         return self._uptodate()
 
     @property
-    def debug_info(self) -> t.List[t.Tuple[int, int]]:
+    def debug_info(self) -> list[tuple[int, int]]:
         """The debug info mapping."""
         if self._debug_info:
             return [
@@ -1636,7 +1634,7 @@ class TemplateStream:
         self.buffered = False
 
     def _buffered_generator(self, size: int) -> t.Iterator[str]:
-        buf: t.List[str] = []
+        buf: list[str] = []
         c_size = 0
         push = buf.append
 

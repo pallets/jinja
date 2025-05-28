@@ -87,7 +87,7 @@ def make_multi_attrgetter(
     environment: "Environment",
     attribute: t.Optional[t.Union[str, int]],
     postprocess: t.Optional[t.Callable[[t.Any], t.Any]] = None,
-) -> t.Callable[[t.Any], t.List[t.Any]]:
+) -> t.Callable[[t.Any], list[t.Any]]:
     """Returns a callable that looks up the given comma separated
     attributes from a passed object with the rules of the environment.
     Dots are allowed to access attributes of each attribute.  Integer
@@ -105,7 +105,7 @@ def make_multi_attrgetter(
 
     parts = [_prepare_attribute_parts(item) for item in split]
 
-    def attrgetter(item: t.Any) -> t.List[t.Any]:
+    def attrgetter(item: t.Any) -> list[t.Any]:
         items = [None] * len(parts)
 
         for i, attribute_part in enumerate(parts):
@@ -126,7 +126,7 @@ def make_multi_attrgetter(
 
 def _prepare_attribute_parts(
     attr: t.Optional[t.Union[str, int]],
-) -> t.List[t.Union[str, int]]:
+) -> list[t.Union[str, int]]:
     if attr is None:
         return []
 
@@ -145,7 +145,7 @@ def do_forceescape(value: "t.Union[str, HasHTML]") -> Markup:
 
 
 def do_urlencode(
-    value: t.Union[str, t.Mapping[str, t.Any], t.Iterable[t.Tuple[str, t.Any]]],
+    value: t.Union[str, t.Mapping[str, t.Any], t.Iterable[tuple[str, t.Any]]],
 ) -> str:
     """Quote data for use in a URL path or query using UTF-8.
 
@@ -166,7 +166,7 @@ def do_urlencode(
         return url_quote(value)
 
     if isinstance(value, dict):
-        items: t.Iterable[t.Tuple[str, t.Any]] = value.items()
+        items: t.Iterable[tuple[str, t.Any]] = value.items()
     else:
         items = value  # type: ignore
 
@@ -221,7 +221,7 @@ def do_lower(s: str) -> str:
     return soft_str(s).lower()
 
 
-def do_items(value: t.Union[t.Mapping[K, V], Undefined]) -> t.Iterator[t.Tuple[K, V]]:
+def do_items(value: t.Union[t.Mapping[K, V], Undefined]) -> t.Iterator[tuple[K, V]]:
     """Return an iterator over the ``(key, value)`` items of a mapping.
 
     ``x|items`` is the same as ``x.items()``, except if ``x`` is
@@ -346,7 +346,7 @@ def do_dictsort(
     case_sensitive: bool = False,
     by: 'te.Literal["key", "value"]' = "key",
     reverse: bool = False,
-) -> t.List[t.Tuple[K, V]]:
+) -> list[tuple[K, V]]:
     """Sort a dict and yield (key, value) pairs. Python dicts may not
     be in the order you want to display them in, so sort them first.
 
@@ -371,7 +371,7 @@ def do_dictsort(
     else:
         raise FilterArgumentError('You can only sort by either "key" or "value"')
 
-    def sort_func(item: t.Tuple[t.Any, t.Any]) -> t.Any:
+    def sort_func(item: tuple[t.Any, t.Any]) -> t.Any:
         value = item[pos]
 
         if not case_sensitive:
@@ -389,7 +389,7 @@ def do_sort(
     reverse: bool = False,
     case_sensitive: bool = False,
     attribute: t.Optional[t.Union[str, int]] = None,
-) -> "t.List[V]":
+) -> "list[V]":
     """Sort an iterable using Python's :func:`sorted`.
 
     .. sourcecode:: jinja
@@ -1058,7 +1058,7 @@ def do_striptags(value: "t.Union[str, HasHTML]") -> str:
 
 def sync_do_slice(
     value: "t.Collection[V]", slices: int, fill_with: "t.Optional[V]" = None
-) -> "t.Iterator[t.List[V]]":
+) -> "t.Iterator[list[V]]":
     """Slice an iterator and return a list of lists containing
     those items. Useful if you want to create a div containing
     three ul tags that represent columns:
@@ -1104,13 +1104,13 @@ async def do_slice(
     value: "t.Union[t.AsyncIterable[V], t.Iterable[V]]",
     slices: int,
     fill_with: t.Optional[t.Any] = None,
-) -> "t.Iterator[t.List[V]]":
+) -> "t.Iterator[list[V]]":
     return sync_do_slice(await auto_to_list(value), slices, fill_with)
 
 
 def do_batch(
     value: "t.Iterable[V]", linecount: int, fill_with: "t.Optional[V]" = None
-) -> "t.Iterator[t.List[V]]":
+) -> "t.Iterator[list[V]]":
     """
     A filter that batches items. It works pretty much like `slice`
     just the other way round. It returns a list of lists with the
@@ -1129,7 +1129,7 @@ def do_batch(
         {%- endfor %}
         </table>
     """
-    tmp: t.List[V] = []
+    tmp: list[V] = []
 
     for item in value:
         if len(tmp) == linecount:
@@ -1187,7 +1187,7 @@ def do_round(
 
 class _GroupTuple(t.NamedTuple):
     grouper: t.Any
-    list: t.List[t.Any]
+    list: list[t.Any]
 
     # Use the regular tuple repr to hide this subclass if users print
     # out the value during debugging.
@@ -1205,7 +1205,7 @@ def sync_do_groupby(
     attribute: t.Union[str, int],
     default: t.Optional[t.Any] = None,
     case_sensitive: bool = False,
-) -> "t.List[_GroupTuple]":
+) -> "list[_GroupTuple]":
     """Group a sequence of objects by an attribute using Python's
     :func:`itertools.groupby`. The attribute can use dot notation for
     nested access, like ``"address.city"``. Unlike Python's ``groupby``,
@@ -1289,7 +1289,7 @@ async def do_groupby(
     attribute: t.Union[str, int],
     default: t.Optional[t.Any] = None,
     case_sensitive: bool = False,
-) -> "t.List[_GroupTuple]":
+) -> "list[_GroupTuple]":
     expr = make_attrgetter(
         environment,
         attribute,
@@ -1358,7 +1358,7 @@ async def do_sum(
     return rv
 
 
-def sync_do_list(value: "t.Iterable[V]") -> "t.List[V]":
+def sync_do_list(value: "t.Iterable[V]") -> "list[V]":
     """Convert the value into a list.  If it was a string the returned list
     will be a list of characters.
     """
@@ -1366,7 +1366,7 @@ def sync_do_list(value: "t.Iterable[V]") -> "t.List[V]":
 
 
 @async_variant(sync_do_list)  # type: ignore
-async def do_list(value: "t.Union[t.AsyncIterable[V], t.Iterable[V]]") -> "t.List[V]":
+async def do_list(value: "t.Union[t.AsyncIterable[V], t.Iterable[V]]") -> "list[V]":
     return await auto_to_list(value)
 
 
@@ -1722,7 +1722,7 @@ def do_tojson(
 
 
 def prepare_map(
-    context: "Context", args: t.Tuple[t.Any, ...], kwargs: t.Dict[str, t.Any]
+    context: "Context", args: tuple[t.Any, ...], kwargs: dict[str, t.Any]
 ) -> t.Callable[[t.Any], t.Any]:
     if not args and "attribute" in kwargs:
         attribute = kwargs.pop("attribute")
@@ -1751,8 +1751,8 @@ def prepare_map(
 
 def prepare_select_or_reject(
     context: "Context",
-    args: t.Tuple[t.Any, ...],
-    kwargs: t.Dict[str, t.Any],
+    args: tuple[t.Any, ...],
+    kwargs: dict[str, t.Any],
     modfunc: t.Callable[[t.Any], t.Any],
     lookup_attr: bool,
 ) -> t.Callable[[t.Any], t.Any]:
@@ -1786,8 +1786,8 @@ def prepare_select_or_reject(
 def select_or_reject(
     context: "Context",
     value: "t.Iterable[V]",
-    args: t.Tuple[t.Any, ...],
-    kwargs: t.Dict[str, t.Any],
+    args: tuple[t.Any, ...],
+    kwargs: dict[str, t.Any],
     modfunc: t.Callable[[t.Any], t.Any],
     lookup_attr: bool,
 ) -> "t.Iterator[V]":
@@ -1802,8 +1802,8 @@ def select_or_reject(
 async def async_select_or_reject(
     context: "Context",
     value: "t.Union[t.AsyncIterable[V], t.Iterable[V]]",
-    args: t.Tuple[t.Any, ...],
-    kwargs: t.Dict[str, t.Any],
+    args: tuple[t.Any, ...],
+    kwargs: dict[str, t.Any],
     modfunc: t.Callable[[t.Any], t.Any],
     lookup_attr: bool,
 ) -> "t.AsyncIterator[V]":

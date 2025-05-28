@@ -80,7 +80,7 @@ class NodeTransformer(NodeVisitor):
                     setattr(node, field, new_node)
         return node
 
-    def visit_list(self, node: Node, *args: t.Any, **kwargs: t.Any) -> t.List[Node]:
+    def visit_list(self, node: Node, *args: t.Any, **kwargs: t.Any) -> list[Node]:
         """As transformers may return lists in some places this method
         can be used to enforce a list as return value.
         """

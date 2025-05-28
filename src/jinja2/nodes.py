@@ -19,7 +19,7 @@ if t.TYPE_CHECKING:
 
 _NodeBound = t.TypeVar("_NodeBound", bound="Node")
 
-_binop_to_func: t.Dict[str, t.Callable[[t.Any, t.Any], t.Any]] = {
+_binop_to_func: dict[str, t.Callable[[t.Any, t.Any], t.Any]] = {
     "*": operator.mul,
     "/": operator.truediv,
     "//": operator.floordiv,
@@ -29,13 +29,13 @@ _binop_to_func: t.Dict[str, t.Callable[[t.Any, t.Any], t.Any]] = {
     "-": operator.sub,
 }
 
-_uaop_to_func: t.Dict[str, t.Callable[[t.Any], t.Any]] = {
+_uaop_to_func: dict[str, t.Callable[[t.Any], t.Any]] = {
     "not": operator.not_,
     "+": operator.pos,
     "-": operator.neg,
 }
 
-_cmpop_to_func: t.Dict[str, t.Callable[[t.Any, t.Any], t.Any]] = {
+_cmpop_to_func: dict[str, t.Callable[[t.Any, t.Any], t.Any]] = {
     "eq": operator.eq,
     "ne": operator.ne,
     "gt": operator.gt,
@@ -58,7 +58,7 @@ class NodeType(type):
 
     def __new__(mcs, name, bases, d):  # type: ignore
         for attr in "fields", "attributes":
-            storage: t.List[t.Tuple[str, ...]] = []
+            storage: list[tuple[str, ...]] = []
             storage.extend(getattr(bases[0] if bases else object, attr, ()))
             storage.extend(d.get(attr, ()))
             assert len(bases) <= 1, "multiple inheritance not allowed"
@@ -119,8 +119,8 @@ class Node(metaclass=NodeType):
     all nodes automatically.
     """
 
-    fields: t.Tuple[str, ...] = ()
-    attributes: t.Tuple[str, ...] = ("lineno", "environment")
+    fields: tuple[str, ...] = ()
+    attributes: tuple[str, ...] = ("lineno", "environment")
     abstract = True
 
     lineno: int
@@ -148,7 +148,7 @@ class Node(metaclass=NodeType):
         self,
         exclude: t.Optional[t.Container[str]] = None,
         only: t.Optional[t.Container[str]] = None,
-    ) -> t.Iterator[t.Tuple[str, t.Any]]:
+    ) -> t.Iterator[tuple[str, t.Any]]:
         """This method iterates over all fields that are defined and yields
         ``(key, value)`` tuples.  Per default all fields are returned, but
         it's possible to limit that to some fields by providing the `only`
@@ -183,7 +183,7 @@ class Node(metaclass=NodeType):
             elif isinstance(item, Node):
                 yield item
 
-    def find(self, node_type: t.Type[_NodeBound]) -> t.Optional[_NodeBound]:
+    def find(self, node_type: type[_NodeBound]) -> t.Optional[_NodeBound]:
         """Find the first node of a given type.  If no such node exists the
         return value is `None`.
         """
@@ -193,7 +193,7 @@ class Node(metaclass=NodeType):
         return None
 
     def find_all(
-        self, node_type: t.Union[t.Type[_NodeBound], t.Tuple[t.Type[_NodeBound], ...]]
+        self, node_type: t.Union[type[_NodeBound], tuple[type[_NodeBound], ...]]
     ) -> t.Iterator[_NodeBound]:
         """Find all the nodes of a given type.  If the type is a tuple,
         the check is performed for any of the tuple items.
@@ -274,7 +274,7 @@ class Node(metaclass=NodeType):
                     _dump(value)
             buf.append(")")
 
-        buf: t.List[str] = []
+        buf: list[str] = []
         _dump(self)
         return "".join(buf)
 
@@ -297,7 +297,7 @@ class Template(Node):
     """
 
     fields = ("body",)
-    body: t.List[Node]
+    body: list[Node]
 
 
 class Output(Stmt):
@@ -306,7 +306,7 @@ class Output(Stmt):
     """
 
     fields = ("nodes",)
-    nodes: t.List["Expr"]
+    nodes: list["Expr"]
 
 
 class Extends(Stmt):
@@ -328,8 +328,8 @@ class For(Stmt):
     fields = ("target", "iter", "body", "else_", "test", "recursive")
     target: Node
     iter: Node
-    body: t.List[Node]
-    else_: t.List[Node]
+    body: list[Node]
+    else_: list[Node]
     test: t.Optional[Node]
     recursive: bool
 
@@ -339,9 +339,9 @@ class If(Stmt):
 
     fields = ("test", "body", "elif_", "else_")
     test: Node
-    body: t.List[Node]
-    elif_: t.List["If"]
-    else_: t.List[Node]
+    body: list[Node]
+    elif_: list["If"]
+    else_: list[Node]
 
 
 class Macro(Stmt):
@@ -352,9 +352,9 @@ class Macro(Stmt):
 
     fields = ("name", "args", "defaults", "body")
     name: str
-    args: t.List["Name"]
-    defaults: t.List["Expr"]
-    body: t.List[Node]
+    args: list["Name"]
+    defaults: list["Expr"]
+    body: list[Node]
 
 
 class CallBlock(Stmt):
@@ -364,16 +364,16 @@ class CallBlock(Stmt):
 
     fields = ("call", "args", "defaults", "body")
     call: "Call"
-    args: t.List["Name"]
-    defaults: t.List["Expr"]
-    body: t.List[Node]
+    args: list["Name"]
+    defaults: list["Expr"]
+    body: list[Node]
 
 
 class FilterBlock(Stmt):
     """Node for filter sections."""
 
     fields = ("body", "filter")
-    body: t.List[Node]
+    body: list[Node]
     filter: "Filter"
 
 
@@ -385,9 +385,9 @@ class With(Stmt):
     """
 
     fields = ("targets", "values", "body")
-    targets: t.List["Expr"]
-    values: t.List["Expr"]
-    body: t.List[Node]
+    targets: list["Expr"]
+    values: list["Expr"]
+    body: list[Node]
 
 
 class Block(Stmt):
@@ -399,7 +399,7 @@ class Block(Stmt):
 
     fields = ("name", "body", "scoped", "required")
     name: str
-    body: t.List[Node]
+    body: list[Node]
     scoped: bool
     required: bool
 
@@ -436,7 +436,7 @@ class FromImport(Stmt):
 
     fields = ("template", "names", "with_context")
     template: "Expr"
-    names: t.List[t.Union[str, t.Tuple[str, str]]]
+    names: list[t.Union[str, tuple[str, str]]]
     with_context: bool
 
 
@@ -461,7 +461,7 @@ class AssignBlock(Stmt):
     fields = ("target", "filter", "body")
     target: "Expr"
     filter: t.Optional["Filter"]
-    body: t.List[Node]
+    body: list[Node]
 
 
 class Expr(Node):
@@ -627,10 +627,10 @@ class Tuple(Literal):
     """
 
     fields = ("items", "ctx")
-    items: t.List[Expr]
+    items: list[Expr]
     ctx: str
 
-    def as_const(self, eval_ctx: t.Optional[EvalContext] = None) -> t.Tuple[t.Any, ...]:
+    def as_const(self, eval_ctx: t.Optional[EvalContext] = None) -> tuple[t.Any, ...]:
         eval_ctx = get_eval_context(self, eval_ctx)
         return tuple(x.as_const(eval_ctx) for x in self.items)
 
@@ -645,9 +645,9 @@ class List(Literal):
     """Any list literal such as ``[1, 2, 3]``"""
 
     fields = ("items",)
-    items: t.List[Expr]
+    items: list[Expr]
 
-    def as_const(self, eval_ctx: t.Optional[EvalContext] = None) -> t.List[t.Any]:
+    def as_const(self, eval_ctx: t.Optional[EvalContext] = None) -> list[t.Any]:
         eval_ctx = get_eval_context(self, eval_ctx)
         return [x.as_const(eval_ctx) for x in self.items]
 
@@ -658,11 +658,9 @@ class Dict(Literal):
     """
 
     fields = ("items",)
-    items: t.List["Pair"]
+    items: list["Pair"]
 
-    def as_const(
-        self, eval_ctx: t.Optional[EvalContext] = None
-    ) -> t.Dict[t.Any, t.Any]:
+    def as_const(self, eval_ctx: t.Optional[EvalContext] = None) -> dict[t.Any, t.Any]:
         eval_ctx = get_eval_context(self, eval_ctx)
         return dict(x.as_const(eval_ctx) for x in self.items)
 
@@ -674,9 +672,7 @@ class Pair(Helper):
     key: Expr
     value: Expr
 
-    def as_const(
-        self, eval_ctx: t.Optional[EvalContext] = None
-    ) -> t.Tuple[t.Any, t.Any]:
+    def as_const(self, eval_ctx: t.Optional[EvalContext] = None) -> tuple[t.Any, t.Any]:
         eval_ctx = get_eval_context(self, eval_ctx)
         return self.key.as_const(eval_ctx), self.value.as_const(eval_ctx)
 
@@ -688,7 +684,7 @@ class Keyword(Helper):
     key: str
     value: Expr
 
-    def as_const(self, eval_ctx: t.Optional[EvalContext] = None) -> t.Tuple[str, t.Any]:
+    def as_const(self, eval_ctx: t.Optional[EvalContext] = None) -> tuple[str, t.Any]:
         eval_ctx = get_eval_context(self, eval_ctx)
         return self.key, self.value.as_const(eval_ctx)
 
@@ -717,7 +713,7 @@ class CondExpr(Expr):
 
 def args_as_const(
     node: t.Union["_FilterTestCommon", "Call"], eval_ctx: t.Optional[EvalContext]
-) -> t.Tuple[t.List[t.Any], t.Dict[t.Any, t.Any]]:
+) -> tuple[list[t.Any], dict[t.Any, t.Any]]:
     args = [x.as_const(eval_ctx) for x in node.args]
     kwargs = dict(x.as_const(eval_ctx) for x in node.kwargs)
 
@@ -740,8 +736,8 @@ class _FilterTestCommon(Expr):
     fields = ("node", "name", "args", "kwargs", "dyn_args", "dyn_kwargs")
     node: Expr
     name: str
-    args: t.List[Expr]
-    kwargs: t.List[Pair]
+    args: list[Expr]
+    kwargs: list[Pair]
     dyn_args: t.Optional[Expr]
     dyn_kwargs: t.Optional[Expr]
     abstract = True
@@ -824,8 +820,8 @@ class Call(Expr):
 
     fields = ("node", "args", "kwargs", "dyn_args", "dyn_kwargs")
     node: Expr
-    args: t.List[Expr]
-    kwargs: t.List[Keyword]
+    args: list[Expr]
+    kwargs: list[Keyword]
     dyn_args: t.Optional[Expr]
     dyn_kwargs: t.Optional[Expr]
 
@@ -901,7 +897,7 @@ class Concat(Expr):
     """
 
     fields = ("nodes",)
-    nodes: t.List[Expr]
+    nodes: list[Expr]
 
     def as_const(self, eval_ctx: t.Optional[EvalContext] = None) -> str:
         eval_ctx = get_eval_context(self, eval_ctx)
@@ -915,7 +911,7 @@ class Compare(Expr):
 
     fields = ("expr", "ops")
     expr: Expr
-    ops: t.List["Operand"]
+    ops: list["Operand"]
 
     def as_const(self, eval_ctx: t.Optional[EvalContext] = None) -> t.Any:
         eval_ctx = get_eval_context(self, eval_ctx)
@@ -1152,7 +1148,7 @@ class Scope(Stmt):
     """An artificial scope."""
 
     fields = ("body",)
-    body: t.List[Node]
+    body: list[Node]
 
 
 class OverlayScope(Stmt):
@@ -1171,7 +1167,7 @@ class OverlayScope(Stmt):
 
     fields = ("context", "body")
     context: Expr
-    body: t.List[Node]
+    body: list[Node]
 
 
 class EvalContextModifier(Stmt):
@@ -1184,7 +1180,7 @@ class EvalContextModifier(Stmt):
     """
 
     fields = ("options",)
-    options: t.List[Keyword]
+    options: list[Keyword]
 
 
 class ScopedEvalContextModifier(EvalContextModifier):
@@ -1194,7 +1190,7 @@ class ScopedEvalContextModifier(EvalContextModifier):
     """
 
     fields = ("body",)
-    body: t.List[Node]
+    body: list[Node]
 
 
 # make sure nobody creates custom nodes

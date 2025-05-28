@@ -95,5 +95,5 @@ def auto_aiter(
 
 async def auto_to_list(
     value: "t.Union[t.AsyncIterable[V], t.Iterable[V]]",
-) -> t.List["V"]:
+) -> list["V"]:
     return [x async for x in auto_aiter(value)]

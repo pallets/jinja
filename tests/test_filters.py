@@ -357,7 +357,7 @@ class TestFilter:
     def test_urlize(self, env):
         tmpl = env.from_string('{{ "foo example.org bar"|urlize }}')
         assert tmpl.render() == (
-            'foo <a href="https://example.org" rel="noopener">' "example.org</a> bar"
+            'foo <a href="https://example.org" rel="noopener">example.org</a> bar'
         )
         tmpl = env.from_string('{{ "foo http://www.example.com/ bar"|urlize }}')
         assert tmpl.render() == (

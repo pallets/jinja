@@ -438,8 +438,8 @@ class LRUCache:
 
     def __init__(self, capacity: int) -> None:
         self.capacity = capacity
-        self._mapping: t.Dict[t.Any, t.Any] = {}
-        self._queue: te.Deque[t.Any] = deque()
+        self._mapping: dict[t.Any, t.Any] = {}
+        self._queue: deque[t.Any] = deque()
         self._postinit()
 
     def _postinit(self) -> None:
@@ -461,7 +461,7 @@ class LRUCache:
         self.__dict__.update(d)
         self._postinit()
 
-    def __getnewargs__(self) -> t.Tuple[t.Any, ...]:
+    def __getnewargs__(self) -> tuple[t.Any, ...]:
         return (self.capacity,)
 
     def copy(self) -> "te.Self":
@@ -552,7 +552,7 @@ class LRUCache:
             except ValueError:
                 pass
 
-    def items(self) -> t.Iterable[t.Tuple[t.Any, t.Any]]:
+    def items(self) -> t.Iterable[tuple[t.Any, t.Any]]:
         """Return a list of items."""
         result = [(key, self._mapping[key]) for key in list(self._queue)]
         result.reverse()

@@ -554,8 +554,7 @@ class TestNewstyleInternationalization:
             newstyle=True,
         )
         t = env.from_string(
-            '{% autoescape ae %}{{ gettext("foo", name='
-            '"<test>") }}{% endautoescape %}'
+            '{% autoescape ae %}{{ gettext("foo", name="<test>") }}{% endautoescape %}'
         )
         assert t.render(ae=True) == "<strong>Wert: &lt;test&gt;</strong>"
         assert t.render(ae=False) == "<strong>Wert: <test></strong>"
