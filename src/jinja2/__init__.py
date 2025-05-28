@@ -47,11 +47,11 @@ def __getattr__(name: str) -> t.Any:
 
         warnings.warn(
             "The `__version__` attribute is deprecated and will be removed in"
-            " Werkzeug 3.3. Use feature detection or"
-            ' `importlib.metadata.version("werkzeug")` instead.',
+            " Jinja 3.3. Use feature detection or"
+            ' `importlib.metadata.version("jinja2")` instead.',
             DeprecationWarning,
             stacklevel=2,
         )
-        return importlib.metadata.version("werkzeug")
+        return importlib.metadata.version("jinja2")
 
     raise AttributeError(name)
