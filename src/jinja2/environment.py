@@ -7,6 +7,7 @@ import typing
 import typing as t
 import weakref
 from collections import ChainMap
+from contextlib import aclosing
 from functools import lru_cache
 from functools import partial
 from functools import reduce
@@ -1361,14 +1362,11 @@ class Template:
         ctx = self.new_context(dict(*args, **kwargs))
 
         try:
-            agen = self.root_render_func(ctx)
-            try:
-                async for event in agen:  # type: ignore
+            agen: t.AsyncGenerator[str, None] = self.root_render_func(ctx)  # type: ignore[assignment]
+
+            async with aclosing(agen):
+                async for event in agen:
                     yield event
-            finally:
-                # we can't use async with aclosing(...) because that's only
-                # in 3.10+
-                await agen.aclose()  # type: ignore
         except Exception:
             yield self.environment.handle_exception()
 
