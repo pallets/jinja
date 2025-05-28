@@ -449,9 +449,7 @@ class TestAsyncForLoop:
 
     def test_reversed_bug(self, test_env_async):
         tmpl = test_env_async.from_string(
-            "{% for i in items %}{{ i }}"
-            "{% if not loop.last %}"
-            ",{% endif %}{% endfor %}"
+            "{% for i in items %}{{ i }}{% if not loop.last %},{% endif %}{% endfor %}"
         )
         assert tmpl.render(items=reversed([3, 2, 1])) == "1,2,3"
 

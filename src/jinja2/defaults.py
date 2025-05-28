@@ -36,7 +36,7 @@ DEFAULT_NAMESPACE = {
 }
 
 # default policies
-DEFAULT_POLICIES: t.Dict[str, t.Any] = {
+DEFAULT_POLICIES: dict[str, t.Any] = {
     "compiler.ascii_str": True,
     "urlize.rel": "noopener",
     "urlize.target": None,

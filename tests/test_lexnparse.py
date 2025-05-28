@@ -43,8 +43,7 @@ class TestTokenStream:
 class TestLexer:
     def test_raw1(self, env):
         tmpl = env.from_string(
-            "{% raw %}foo{% endraw %}|"
-            "{%raw%}{{ bar }}|{% baz %}{%       endraw    %}"
+            "{% raw %}foo{% endraw %}|{%raw%}{{ bar }}|{% baz %}{%       endraw    %}"
         )
         assert tmpl.render() == "foo|{{ bar }}|{% baz %}"
 

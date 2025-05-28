@@ -42,16 +42,16 @@ class Symbols:
 
         self.level: int = level
         self.parent = parent
-        self.refs: t.Dict[str, str] = {}
-        self.loads: t.Dict[str, t.Any] = {}
-        self.stores: t.Set[str] = set()
+        self.refs: dict[str, str] = {}
+        self.loads: dict[str, t.Any] = {}
+        self.stores: set[str] = set()
 
     def analyze_node(self, node: nodes.Node, **kwargs: t.Any) -> None:
         visitor = RootVisitor(self)
         visitor.visit(node, **kwargs)
 
     def _define_ref(
-        self, name: str, load: t.Optional[t.Tuple[str, t.Optional[str]]] = None
+        self, name: str, load: t.Optional[tuple[str, t.Optional[str]]] = None
     ) -> str:
         ident = f"l_{self.level}_{name}"
         self.refs[name] = ident
@@ -121,7 +121,7 @@ class Symbols:
             self._define_ref(name, load=(VAR_LOAD_RESOLVE, name))
 
     def branch_update(self, branch_symbols: t.Sequence["Symbols"]) -> None:
-        stores: t.Set[str] = set()
+        stores: set[str] = set()
 
         for branch in branch_symbols:
             stores.update(branch.stores)
@@ -144,8 +144,8 @@ class Symbols:
                     continue
             self.loads[target] = (VAR_LOAD_RESOLVE, name)
 
-    def dump_stores(self) -> t.Dict[str, str]:
-        rv: t.Dict[str, str] = {}
+    def dump_stores(self) -> dict[str, str]:
+        rv: dict[str, str] = {}
         node: t.Optional[Symbols] = self
 
         while node is not None:
@@ -157,7 +157,7 @@ class Symbols:
 
         return rv
 
-    def dump_param_targets(self) -> t.Set[str]:
+    def dump_param_targets(self) -> set[str]:
         rv = set()
         node: t.Optional[Symbols] = self
 

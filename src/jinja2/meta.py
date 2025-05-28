@@ -17,7 +17,7 @@ class TrackingCodeGenerator(CodeGenerator):
 
     def __init__(self, environment: "Environment") -> None:
         super().__init__(environment, "<introspection>", "<introspection>")
-        self.undeclared_identifiers: t.Set[str] = set()
+        self.undeclared_identifiers: set[str] = set()
 
     def write(self, x: str) -> None:
         """Don't write."""
@@ -31,7 +31,7 @@ class TrackingCodeGenerator(CodeGenerator):
                 self.undeclared_identifiers.add(param)
 
 
-def find_undeclared_variables(ast: nodes.Template) -> t.Set[str]:
+def find_undeclared_variables(ast: nodes.Template) -> set[str]:
     """Returns a set of all variables in the AST that will be looked up from
     the context at runtime.  Because at compile time it's not known which
     variables will be used depending on the path the execution takes at

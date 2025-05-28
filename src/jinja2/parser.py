@@ -35,7 +35,7 @@ _statement_keywords = frozenset(
 )
 _compare_operators = frozenset(["eq", "ne", "lt", "lteq", "gt", "gteq"])
 
-_math_nodes: t.Dict[str, t.Type[nodes.Expr]] = {
+_math_nodes: dict[str, type[nodes.Expr]] = {
     "add": nodes.Add,
     "sub": nodes.Sub,
     "mul": nodes.Mul,
@@ -63,21 +63,21 @@ class Parser:
         self.name = name
         self.filename = filename
         self.closed = False
-        self.extensions: t.Dict[
-            str, t.Callable[[Parser], t.Union[nodes.Node, t.List[nodes.Node]]]
+        self.extensions: dict[
+            str, t.Callable[[Parser], t.Union[nodes.Node, list[nodes.Node]]]
         ] = {}
         for extension in environment.iter_extensions():
             for tag in extension.tags:
                 self.extensions[tag] = extension.parse
         self._last_identifier = 0
-        self._tag_stack: t.List[str] = []
-        self._end_token_stack: t.List[t.Tuple[str, ...]] = []
+        self._tag_stack: list[str] = []
+        self._end_token_stack: list[tuple[str, ...]] = []
 
     def fail(
         self,
         msg: str,
         lineno: t.Optional[int] = None,
-        exc: t.Type[TemplateSyntaxError] = TemplateSyntaxError,
+        exc: type[TemplateSyntaxError] = TemplateSyntaxError,
     ) -> "te.NoReturn":
         """Convenience method that raises `exc` with the message, passed
         line number or last line number as well as the current name and
@@ -90,10 +90,10 @@ class Parser:
     def _fail_ut_eof(
         self,
         name: t.Optional[str],
-        end_token_stack: t.List[t.Tuple[str, ...]],
+        end_token_stack: list[tuple[str, ...]],
         lineno: t.Optional[int],
     ) -> "te.NoReturn":
-        expected: t.Set[str] = set()
+        expected: set[str] = set()
         for exprs in end_token_stack:
             expected.update(map(describe_token_expr, exprs))
         if end_token_stack:
@@ -138,7 +138,7 @@ class Parser:
 
     def fail_eof(
         self,
-        end_tokens: t.Optional[t.Tuple[str, ...]] = None,
+        end_tokens: t.Optional[tuple[str, ...]] = None,
         lineno: t.Optional[int] = None,
     ) -> "te.NoReturn":
         """Like fail_unknown_tag but for end of template situations."""
@@ -147,9 +147,7 @@ class Parser:
             stack.append(end_tokens)
         self._fail_ut_eof(None, stack, lineno)
 
-    def is_tuple_end(
-        self, extra_end_rules: t.Optional[t.Tuple[str, ...]] = None
-    ) -> bool:
+    def is_tuple_end(self, extra_end_rules: t.Optional[tuple[str, ...]] = None) -> bool:
         """Are we at the end of a tuple?"""
         if self.stream.current.type in ("variable_end", "block_end", "rparen"):
             return True
@@ -164,7 +162,7 @@ class Parser:
         nodes.Node.__init__(rv, f"fi{self._last_identifier}", lineno=lineno)
         return rv
 
-    def parse_statement(self) -> t.Union[nodes.Node, t.List[nodes.Node]]:
+    def parse_statement(self) -> t.Union[nodes.Node, list[nodes.Node]]:
         """Parse a single statement."""
         token = self.stream.current
         if token.type != "name":
@@ -194,8 +192,8 @@ class Parser:
                 self._tag_stack.pop()
 
     def parse_statements(
-        self, end_tokens: t.Tuple[str, ...], drop_needle: bool = False
-    ) -> t.List[nodes.Node]:
+        self, end_tokens: tuple[str, ...], drop_needle: bool = False
+    ) -> list[nodes.Node]:
         """Parse multiple statements into a list until one of the end tokens
         is reached.  This is used to parse the body of statements as it also
         parses template data if appropriate.  The parser checks first if the
@@ -272,8 +270,8 @@ class Parser:
 
     def parse_with(self) -> nodes.With:
         node = nodes.With(lineno=next(self.stream).lineno)
-        targets: t.List[nodes.Expr] = []
-        values: t.List[nodes.Expr] = []
+        targets: list[nodes.Expr] = []
+        values: list[nodes.Expr] = []
         while self.stream.current.type != "block_end":
             if targets:
                 self.stream.expect("comma")
@@ -466,7 +464,7 @@ class Parser:
         self,
         with_tuple: bool = True,
         name_only: bool = False,
-        extra_end_rules: t.Optional[t.Tuple[str, ...]] = None,
+        extra_end_rules: t.Optional[tuple[str, ...]] = None,
         with_namespace: bool = False,
     ) -> t.Union[nodes.NSRef, nodes.Name, nodes.Tuple]: ...
 
@@ -474,7 +472,7 @@ class Parser:
         self,
         with_tuple: bool = True,
         name_only: bool = False,
-        extra_end_rules: t.Optional[t.Tuple[str, ...]] = None,
+        extra_end_rules: t.Optional[tuple[str, ...]] = None,
         with_namespace: bool = False,
     ) -> t.Union[nodes.NSRef, nodes.Name, nodes.Tuple]:
         """Parse an assignment target.  As Jinja allows assignments to
@@ -686,7 +684,7 @@ class Parser:
         self,
         simplified: bool = False,
         with_condexpr: bool = True,
-        extra_end_rules: t.Optional[t.Tuple[str, ...]] = None,
+        extra_end_rules: t.Optional[tuple[str, ...]] = None,
         explicit_parentheses: bool = False,
         with_namespace: bool = False,
     ) -> t.Union[nodes.Tuple, nodes.Expr]:
@@ -720,7 +718,7 @@ class Parser:
             def parse() -> nodes.Expr:
                 return self.parse_expression(with_condexpr=with_condexpr)
 
-        args: t.List[nodes.Expr] = []
+        args: list[nodes.Expr] = []
         is_tuple = False
 
         while True:
@@ -753,7 +751,7 @@ class Parser:
 
     def parse_list(self) -> nodes.List:
         token = self.stream.expect("lbracket")
-        items: t.List[nodes.Expr] = []
+        items: list[nodes.Expr] = []
         while self.stream.current.type != "rbracket":
             if items:
                 self.stream.expect("comma")
@@ -765,7 +763,7 @@ class Parser:
 
     def parse_dict(self) -> nodes.Dict:
         token = self.stream.expect("lbrace")
-        items: t.List[nodes.Pair] = []
+        items: list[nodes.Pair] = []
         while self.stream.current.type != "rbrace":
             if items:
                 self.stream.expect("comma")
@@ -824,7 +822,7 @@ class Parser:
             arg = nodes.Const(attr_token.value, lineno=attr_token.lineno)
             return nodes.Getitem(node, arg, "load", lineno=token.lineno)
         if token.type == "lbracket":
-            args: t.List[nodes.Expr] = []
+            args: list[nodes.Expr] = []
             while self.stream.current.type != "rbracket":
                 if args:
                     self.stream.expect("comma")
@@ -839,7 +837,7 @@ class Parser:
 
     def parse_subscribed(self) -> nodes.Expr:
         lineno = self.stream.current.lineno
-        args: t.List[t.Optional[nodes.Expr]]
+        args: list[t.Optional[nodes.Expr]]
 
         if self.stream.current.type == "colon":
             next(self.stream)
@@ -871,9 +869,9 @@ class Parser:
 
     def parse_call_args(
         self,
-    ) -> t.Tuple[
-        t.List[nodes.Expr],
-        t.List[nodes.Keyword],
+    ) -> tuple[
+        list[nodes.Expr],
+        list[nodes.Keyword],
         t.Union[nodes.Expr, None],
         t.Union[nodes.Expr, None],
     ]:
@@ -967,7 +965,7 @@ class Parser:
             next(self.stream)
             name += "." + self.stream.expect("name").value
         dyn_args = dyn_kwargs = None
-        kwargs: t.List[nodes.Keyword] = []
+        kwargs: list[nodes.Keyword] = []
         if self.stream.current.type == "lparen":
             args, kwargs, dyn_args, dyn_kwargs = self.parse_call_args()
         elif self.stream.current.type in {
@@ -994,10 +992,10 @@ class Parser:
         return node
 
     def subparse(
-        self, end_tokens: t.Optional[t.Tuple[str, ...]] = None
-    ) -> t.List[nodes.Node]:
-        body: t.List[nodes.Node] = []
-        data_buffer: t.List[nodes.Node] = []
+        self, end_tokens: t.Optional[tuple[str, ...]] = None
+    ) -> list[nodes.Node]:
+        body: list[nodes.Node] = []
+        data_buffer: list[nodes.Node] = []
         add_data = data_buffer.append
 
         if end_tokens is not None:

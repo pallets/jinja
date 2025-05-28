@@ -21,7 +21,7 @@ if t.TYPE_CHECKING:
 
 # cache for the lexers. Exists in order to be able to have multiple
 # environments with the same lexer
-_lexer_cache: t.MutableMapping[t.Tuple, "Lexer"] = LRUCache(50)  # type: ignore
+_lexer_cache: t.MutableMapping[tuple, "Lexer"] = LRUCache(50)  # type: ignore
 
 # static regular expressions
 whitespace_re = re.compile(r"\s+")
@@ -210,7 +210,7 @@ def count_newlines(value: str) -> int:
     return len(newline_re.findall(value))
 
 
-def compile_rules(environment: "Environment") -> t.List[t.Tuple[str, str]]:
+def compile_rules(environment: "Environment") -> list[tuple[str, str]]:
     """Compiles all the rules from the environment into a list of rules."""
     e = re.escape
     rules = [
@@ -257,7 +257,7 @@ class Failure:
     """
 
     def __init__(
-        self, message: str, cls: t.Type[TemplateSyntaxError] = TemplateSyntaxError
+        self, message: str, cls: type[TemplateSyntaxError] = TemplateSyntaxError
     ) -> None:
         self.message = message
         self.error_class = cls
@@ -329,7 +329,7 @@ class TokenStream:
         filename: t.Optional[str],
     ):
         self._iter = iter(generator)
-        self._pushed: te.Deque[Token] = deque()
+        self._pushed: deque[Token] = deque()
         self.name = name
         self.filename = filename
         self.closed = False
@@ -464,7 +464,7 @@ class OptionalLStrip(tuple):  # type: ignore[type-arg]
 
 class _Rule(t.NamedTuple):
     pattern: t.Pattern[str]
-    tokens: t.Union[str, t.Tuple[str, ...], t.Tuple[Failure]]
+    tokens: t.Union[str, tuple[str, ...], tuple[Failure]]
     command: t.Optional[str]
 
 
@@ -484,7 +484,7 @@ class Lexer:
             return re.compile(x, re.M | re.S)
 
         # lexing rules for tags
-        tag_rules: t.List[_Rule] = [
+        tag_rules: list[_Rule] = [
             _Rule(whitespace_re, TOKEN_WHITESPACE, None),
             _Rule(float_re, TOKEN_FLOAT, None),
             _Rule(integer_re, TOKEN_INTEGER, None),
@@ -523,7 +523,7 @@ class Lexer:
         )
 
         # global lexing rules
-        self.rules: t.Dict[str, t.List[_Rule]] = {
+        self.rules: dict[str, list[_Rule]] = {
             "root": [
                 # directives
                 _Rule(
@@ -614,7 +614,7 @@ class Lexer:
 
     def wrap(
         self,
-        stream: t.Iterable[t.Tuple[int, str, str]],
+        stream: t.Iterable[tuple[int, str, str]],
         name: t.Optional[str] = None,
         filename: t.Optional[str] = None,
     ) -> t.Iterator[Token]:
@@ -672,7 +672,7 @@ class Lexer:
         name: t.Optional[str],
         filename: t.Optional[str] = None,
         state: t.Optional[str] = None,
-    ) -> t.Iterator[t.Tuple[int, str, str]]:
+    ) -> t.Iterator[tuple[int, str, str]]:
         """This method tokenizes the text and returns the tokens in a
         generator. Use this method if you just want to tokenize a template.
 
@@ -696,7 +696,7 @@ class Lexer:
 
         statetokens = self.rules[stack[-1]]
         source_length = len(source)
-        balancing_stack: t.List[str] = []
+        balancing_stack: list[str] = []
         newlines_stripped = 0
         line_starting = True
 

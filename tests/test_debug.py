@@ -23,9 +23,9 @@ class TestDebug:
 
         tb = format_exception(exc_info.type, exc_info.value, exc_info.tb)
         m = re.search(expected_tb.strip(), "".join(tb))
-        assert (
-            m is not None
-        ), f"Traceback did not match:\n\n{''.join(tb)}\nexpected:\n{expected_tb}"
+        assert m is not None, (
+            f"Traceback did not match:\n\n{''.join(tb)}\nexpected:\n{expected_tb}"
+        )
 
     def test_runtime_error(self, fs_env):
         def test():

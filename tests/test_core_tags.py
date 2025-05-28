@@ -191,9 +191,7 @@ class TestForLoop:
 
     def test_reversed_bug(self, env):
         tmpl = env.from_string(
-            "{% for i in items %}{{ i }}"
-            "{% if not loop.last %}"
-            ",{% endif %}{% endfor %}"
+            "{% for i in items %}{{ i }}{% if not loop.last %},{% endif %}{% endfor %}"
         )
         assert tmpl.render(items=reversed([3, 2, 1])) == "1,2,3"
 
