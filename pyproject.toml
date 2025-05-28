@@ -16,9 +16,7 @@ classifiers = [
     "Typing :: Typed",
 ]
 requires-python = ">=3.10"
-dependencies = [
-    "MarkupSafe>=2.0"
-]
+dependencies = ["MarkupSafe>=3.0"]
 dynamic = ["version"]
 
 [project.urls]
@@ -29,7 +27,7 @@ Source = "https://github.com/pallets/jinja/"
 Chat = "https://discord.gg/pallets"
 
 [project.optional-dependencies]
-i18n = ["Babel>=2.7"]
+i18n = ["Babel>=2.17"]
 
 [dependency-groups]
 dev = [
