@@ -25,7 +25,7 @@ def optimize(node: nodes.Node, environment: "Environment") -> nodes.Node:
 
 
 class Optimizer(NodeTransformer):
-    def __init__(self, environment: "t.Optional[Environment]") -> None:
+    def __init__(self, environment: "Environment | None") -> None:
         self.environment = environment
 
     def generic_visit(

@@ -7,11 +7,11 @@ if t.TYPE_CHECKING:
 class TemplateError(Exception):
     """Baseclass for all template errors."""
 
-    def __init__(self, message: t.Optional[str] = None) -> None:
+    def __init__(self, message: str | None = None) -> None:
         super().__init__(message)
 
     @property
-    def message(self) -> t.Optional[str]:
+    def message(self) -> str | None:
         return self.args[0] if self.args else None
 
 
@@ -25,12 +25,12 @@ class TemplateNotFound(IOError, LookupError, TemplateError):
 
     # Silence the Python warning about message being deprecated since
     # it's not valid here.
-    message: t.Optional[str] = None
+    message: str | None = None
 
     def __init__(
         self,
-        name: t.Optional[t.Union[str, "Undefined"]],
-        message: t.Optional[str] = None,
+        name: t.Union[str, "Undefined"] | None,
+        message: str | None = None,
     ) -> None:
         IOError.__init__(self, name)
 
@@ -65,7 +65,7 @@ class TemplatesNotFound(TemplateNotFound):
     def __init__(
         self,
         names: t.Sequence[t.Union[str, "Undefined"]] = (),
-        message: t.Optional[str] = None,
+        message: str | None = None,
     ) -> None:
         if message is None:
             from .runtime import Undefined
@@ -92,14 +92,14 @@ class TemplateSyntaxError(TemplateError):
         self,
         message: str,
         lineno: int,
-        name: t.Optional[str] = None,
-        filename: t.Optional[str] = None,
+        name: str | None = None,
+        filename: str | None = None,
     ) -> None:
         super().__init__(message)
         self.lineno = lineno
         self.name = name
         self.filename = filename
-        self.source: t.Optional[str] = None
+        self.source: str | None = None
 
         # this is set to True if the debug.translate_syntax_error
         # function translated the syntax error into a new traceback

@@ -262,7 +262,7 @@ class Failure:
         self.message = message
         self.error_class = cls
 
-    def __call__(self, lineno: int, filename: t.Optional[str]) -> "te.NoReturn":
+    def __call__(self, lineno: int, filename: str | None) -> "te.NoReturn":
         raise self.error_class(self.message, lineno, filename)
 
 
@@ -325,8 +325,8 @@ class TokenStream:
     def __init__(
         self,
         generator: t.Iterable[Token],
-        name: t.Optional[str],
-        filename: t.Optional[str],
+        name: str | None,
+        filename: str | None,
     ):
         self._iter = iter(generator)
         self._pushed: deque[Token] = deque()
@@ -364,7 +364,7 @@ class TokenStream:
         for _ in range(n):
             next(self)
 
-    def next_if(self, expr: str) -> t.Optional[Token]:
+    def next_if(self, expr: str) -> Token | None:
         """Perform the token test and return the token if it matched.
         Otherwise the return value is `None`.
         """
@@ -464,8 +464,8 @@ class OptionalLStrip(tuple):  # type: ignore[type-arg]
 
 class _Rule(t.NamedTuple):
     pattern: t.Pattern[str]
-    tokens: t.Union[str, tuple[str, ...], tuple[Failure]]
-    command: t.Optional[str]
+    tokens: str | tuple[str, ...] | tuple[Failure]
+    command: str | None
 
 
 class Lexer:
@@ -604,9 +604,9 @@ class Lexer:
     def tokenize(
         self,
         source: str,
-        name: t.Optional[str] = None,
-        filename: t.Optional[str] = None,
-        state: t.Optional[str] = None,
+        name: str | None = None,
+        filename: str | None = None,
+        state: str | None = None,
     ) -> TokenStream:
         """Calls tokeniter + tokenize and wraps it in a token stream."""
         stream = self.tokeniter(source, name, filename, state)
@@ -615,8 +615,8 @@ class Lexer:
     def wrap(
         self,
         stream: t.Iterable[tuple[int, str, str]],
-        name: t.Optional[str] = None,
-        filename: t.Optional[str] = None,
+        name: str | None = None,
+        filename: str | None = None,
     ) -> t.Iterator[Token]:
         """This is called with the stream as returned by `tokenize` and wraps
         every token in a :class:`Token` and converts the value.
@@ -669,9 +669,9 @@ class Lexer:
     def tokeniter(
         self,
         source: str,
-        name: t.Optional[str],
-        filename: t.Optional[str] = None,
-        state: t.Optional[str] = None,
+        name: str | None,
+        filename: str | None = None,
+        state: str | None = None,
     ) -> t.Iterator[tuple[int, str, str]]:
         """This method tokenizes the text and returns the tokens in a
         generator. Use this method if you just want to tokenize a template.

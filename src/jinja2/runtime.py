@@ -92,12 +92,12 @@ def str_join(seq: t.Iterable[t.Any]) -> str:
 
 def new_context(
     environment: "Environment",
-    template_name: t.Optional[str],
+    template_name: str | None,
     blocks: dict[str, t.Callable[["Context"], t.Iterator[str]]],
-    vars: t.Optional[dict[str, t.Any]] = None,
+    vars: dict[str, t.Any] | None = None,
     shared: bool = False,
-    globals: t.Optional[t.MutableMapping[str, t.Any]] = None,
-    locals: t.Optional[t.Mapping[str, t.Any]] = None,
+    globals: t.MutableMapping[str, t.Any] | None = None,
+    locals: t.Mapping[str, t.Any] | None = None,
 ) -> "Context":
     """Internal helper for context creation."""
     if vars is None:
@@ -166,9 +166,9 @@ class Context:
         self,
         environment: "Environment",
         parent: dict[str, t.Any],
-        name: t.Optional[str],
+        name: str | None,
         blocks: dict[str, t.Callable[["Context"], t.Iterator[str]]],
-        globals: t.Optional[t.MutableMapping[str, t.Any]] = None,
+        globals: t.MutableMapping[str, t.Any] | None = None,
     ):
         self.parent = parent
         self.vars: dict[str, t.Any] = {}
@@ -307,7 +307,7 @@ class Context:
                 " StopIteration exception"
             )
 
-    def derived(self, locals: t.Optional[dict[str, t.Any]] = None) -> "Context":
+    def derived(self, locals: dict[str, t.Any] | None = None) -> "Context":
         """Internal helper function to create a derived context.  This is
         used in situations where the system needs a new context in the same
         template that is independent.
@@ -399,7 +399,7 @@ class LoopContext:
     #: Current iteration of the loop, starting at 0.
     index0 = -1
 
-    _length: t.Optional[int] = None
+    _length: int | None = None
     _after: t.Any = missing
     _current: t.Any = missing
     _before: t.Any = missing
@@ -593,7 +593,7 @@ class AsyncLoopContext(LoopContext):
 
     @staticmethod
     def _to_iterator(  # type: ignore
-        iterable: t.Union[t.Iterable[V], t.AsyncIterable[V]],
+        iterable: t.Iterable[V] | t.AsyncIterable[V],
     ) -> t.AsyncIterator[V]:
         return auto_aiter(iterable)
 
@@ -671,7 +671,7 @@ class Macro:
         catch_kwargs: bool,
         catch_varargs: bool,
         caller: bool,
-        default_autoescape: t.Optional[bool] = None,
+        default_autoescape: bool | None = None,
     ):
         self._environment = environment
         self._func = func
@@ -817,9 +817,9 @@ class Undefined:
 
     def __init__(
         self,
-        hint: t.Optional[str] = None,
+        hint: str | None = None,
         obj: t.Any = missing,
-        name: t.Optional[str] = None,
+        name: str | None = None,
         exc: type[TemplateRuntimeError] = UndefinedError,
     ) -> None:
         self._undefined_hint = hint

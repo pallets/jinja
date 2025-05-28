@@ -285,9 +285,7 @@ class SandboxedEnvironment(Environment):
         """
         return self.unop_table[operator](arg)
 
-    def getitem(
-        self, obj: t.Any, argument: t.Union[str, t.Any]
-    ) -> t.Union[t.Any, Undefined]:
+    def getitem(self, obj: t.Any, argument: str | t.Any) -> t.Any | Undefined:
         """Subscribe an object from sandboxed code."""
         try:
             return obj[argument]
@@ -311,7 +309,7 @@ class SandboxedEnvironment(Environment):
                         return self.unsafe_undefined(obj, argument)
         return self.undefined(obj=obj, name=argument)
 
-    def getattr(self, obj: t.Any, attribute: str) -> t.Union[t.Any, Undefined]:
+    def getattr(self, obj: t.Any, attribute: str) -> t.Any | Undefined:
         """Subscribe an object from sandboxed code and prefer the
         attribute.  The attribute passed *must* be a bytestring.
         """
@@ -341,7 +339,7 @@ class SandboxedEnvironment(Environment):
             exc=SecurityError,
         )
 
-    def wrap_str_format(self, value: t.Any) -> t.Optional[t.Callable[..., str]]:
+    def wrap_str_format(self, value: t.Any) -> t.Callable[..., str] | None:
         """If the given value is a ``str.format`` or ``str.format_map`` method,
         return a new function than handles sandboxing. This is done at access
         rather than in :meth:`call`, so that calls made without ``call`` are

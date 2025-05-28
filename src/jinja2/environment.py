@@ -82,7 +82,7 @@ def get_spontaneous_environment(cls: type[_env_bound], *args: t.Any) -> _env_bou
 
 def create_cache(
     size: int,
-) -> t.Optional[t.MutableMapping[tuple["weakref.ref[BaseLoader]", str], "Template"]]:
+) -> t.MutableMapping[tuple["weakref.ref[BaseLoader]", str], "Template"] | None:
     """Return the cache class for the given size."""
     if size == 0:
         return None
@@ -94,10 +94,8 @@ def create_cache(
 
 
 def copy_cache(
-    cache: t.Optional[
-        t.MutableMapping[tuple["weakref.ref[BaseLoader]", str], "Template"]
-    ],
-) -> t.Optional[t.MutableMapping[tuple["weakref.ref[BaseLoader]", str], "Template"]]:
+    cache: t.MutableMapping[tuple["weakref.ref[BaseLoader]", str], "Template"] | None,
+) -> t.MutableMapping[tuple["weakref.ref[BaseLoader]", str], "Template"] | None:
     """Create an empty copy of the given cache."""
     if cache is None:
         return None
@@ -110,7 +108,7 @@ def copy_cache(
 
 def load_extensions(
     environment: "Environment",
-    extensions: t.Sequence[t.Union[str, type["Extension"]]],
+    extensions: t.Sequence[str | type["Extension"]],
 ) -> dict[str, "Extension"]:
     """Load the extensions from the list and bind it to the environment.
     Returns a dict of instantiated extensions.
@@ -302,17 +300,17 @@ class Environment:
         variable_end_string: str = VARIABLE_END_STRING,
         comment_start_string: str = COMMENT_START_STRING,
         comment_end_string: str = COMMENT_END_STRING,
-        line_statement_prefix: t.Optional[str] = LINE_STATEMENT_PREFIX,
-        line_comment_prefix: t.Optional[str] = LINE_COMMENT_PREFIX,
+        line_statement_prefix: str | None = LINE_STATEMENT_PREFIX,
+        line_comment_prefix: str | None = LINE_COMMENT_PREFIX,
         trim_blocks: bool = TRIM_BLOCKS,
         lstrip_blocks: bool = LSTRIP_BLOCKS,
         newline_sequence: "te.Literal['\\n', '\\r\\n', '\\r']" = NEWLINE_SEQUENCE,
         keep_trailing_newline: bool = KEEP_TRAILING_NEWLINE,
-        extensions: t.Sequence[t.Union[str, type["Extension"]]] = (),
+        extensions: t.Sequence[str | type["Extension"]] = (),
         optimized: bool = True,
         undefined: type[Undefined] = Undefined,
-        finalize: t.Optional[t.Callable[..., t.Any]] = None,
-        autoescape: t.Union[bool, t.Callable[[t.Optional[str]], bool]] = False,
+        finalize: t.Callable[..., t.Any] | None = None,
+        autoescape: bool | t.Callable[[str | None], bool] = False,
         loader: t.Optional["BaseLoader"] = None,
         cache_size: int = 400,
         auto_reload: bool = True,
@@ -370,7 +368,7 @@ class Environment:
         self.is_async = enable_async
         _environment_config_check(self)
 
-    def add_extension(self, extension: t.Union[str, type["Extension"]]) -> None:
+    def add_extension(self, extension: str | type["Extension"]) -> None:
         """Adds an extension after the environment was created.
 
         .. versionadded:: 2.5
@@ -394,17 +392,17 @@ class Environment:
         variable_end_string: str = missing,
         comment_start_string: str = missing,
         comment_end_string: str = missing,
-        line_statement_prefix: t.Optional[str] = missing,
-        line_comment_prefix: t.Optional[str] = missing,
+        line_statement_prefix: str | None = missing,
+        line_comment_prefix: str | None = missing,
         trim_blocks: bool = missing,
         lstrip_blocks: bool = missing,
         newline_sequence: "te.Literal['\\n', '\\r\\n', '\\r']" = missing,
         keep_trailing_newline: bool = missing,
-        extensions: t.Sequence[t.Union[str, type["Extension"]]] = missing,
+        extensions: t.Sequence[str | type["Extension"]] = missing,
         optimized: bool = missing,
         undefined: type[Undefined] = missing,
-        finalize: t.Optional[t.Callable[..., t.Any]] = missing,
-        autoescape: t.Union[bool, t.Callable[[t.Optional[str]], bool]] = missing,
+        finalize: t.Callable[..., t.Any] | None = missing,
+        autoescape: bool | t.Callable[[str | None], bool] = missing,
         loader: t.Optional["BaseLoader"] = missing,
         cache_size: int = missing,
         auto_reload: bool = missing,
@@ -466,9 +464,7 @@ class Environment:
         """Iterates over the extensions by priority."""
         return iter(sorted(self.extensions.values(), key=lambda x: x.priority))
 
-    def getitem(
-        self, obj: t.Any, argument: t.Union[str, t.Any]
-    ) -> t.Union[t.Any, Undefined]:
+    def getitem(self, obj: t.Any, argument: str | t.Any) -> t.Any | Undefined:
         """Get an item or attribute of an object but prefer the item."""
         try:
             return obj[argument]
@@ -500,12 +496,12 @@ class Environment:
 
     def _filter_test_common(
         self,
-        name: t.Union[str, Undefined],
+        name: str | Undefined,
         value: t.Any,
-        args: t.Optional[t.Sequence[t.Any]],
-        kwargs: t.Optional[t.Mapping[str, t.Any]],
-        context: t.Optional[Context],
-        eval_ctx: t.Optional[EvalContext],
+        args: t.Sequence[t.Any] | None,
+        kwargs: t.Mapping[str, t.Any] | None,
+        context: Context | None,
+        eval_ctx: EvalContext | None,
         is_filter: bool,
     ) -> t.Any:
         if is_filter:
@@ -556,10 +552,10 @@ class Environment:
         self,
         name: str,
         value: t.Any,
-        args: t.Optional[t.Sequence[t.Any]] = None,
-        kwargs: t.Optional[t.Mapping[str, t.Any]] = None,
-        context: t.Optional[Context] = None,
-        eval_ctx: t.Optional[EvalContext] = None,
+        args: t.Sequence[t.Any] | None = None,
+        kwargs: t.Mapping[str, t.Any] | None = None,
+        context: Context | None = None,
+        eval_ctx: EvalContext | None = None,
     ) -> t.Any:
         """Invoke a filter on a value the same way the compiler does.
 
@@ -577,10 +573,10 @@ class Environment:
         self,
         name: str,
         value: t.Any,
-        args: t.Optional[t.Sequence[t.Any]] = None,
-        kwargs: t.Optional[t.Mapping[str, t.Any]] = None,
-        context: t.Optional[Context] = None,
-        eval_ctx: t.Optional[EvalContext] = None,
+        args: t.Sequence[t.Any] | None = None,
+        kwargs: t.Mapping[str, t.Any] | None = None,
+        context: Context | None = None,
+        eval_ctx: EvalContext | None = None,
     ) -> t.Any:
         """Invoke a test on a value the same way the compiler does.
 
@@ -602,8 +598,8 @@ class Environment:
     def parse(
         self,
         source: str,
-        name: t.Optional[str] = None,
-        filename: t.Optional[str] = None,
+        name: str | None = None,
+        filename: str | None = None,
     ) -> nodes.Template:
         """Parse the sourcecode and return the abstract syntax tree.  This
         tree of nodes is used by the compiler to convert the template into
@@ -619,7 +615,7 @@ class Environment:
             self.handle_exception(source=source)
 
     def _parse(
-        self, source: str, name: t.Optional[str], filename: t.Optional[str]
+        self, source: str, name: str | None, filename: str | None
     ) -> nodes.Template:
         """Internal parsing function used by `parse` and `compile`."""
         return Parser(self, source, name, filename).parse()
@@ -627,8 +623,8 @@ class Environment:
     def lex(
         self,
         source: str,
-        name: t.Optional[str] = None,
-        filename: t.Optional[str] = None,
+        name: str | None = None,
+        filename: str | None = None,
     ) -> t.Iterator[tuple[int, str, str]]:
         """Lex the given sourcecode and return a generator that yields
         tokens as tuples in the form ``(lineno, token_type, value)``.
@@ -648,8 +644,8 @@ class Environment:
     def preprocess(
         self,
         source: str,
-        name: t.Optional[str] = None,
-        filename: t.Optional[str] = None,
+        name: str | None = None,
+        filename: str | None = None,
     ) -> str:
         """Preprocesses the source with all extensions.  This is automatically
         called for all parsing and compiling methods but *not* for :meth:`lex`
@@ -664,9 +660,9 @@ class Environment:
     def _tokenize(
         self,
         source: str,
-        name: t.Optional[str],
-        filename: t.Optional[str] = None,
-        state: t.Optional[str] = None,
+        name: str | None,
+        filename: str | None = None,
+        state: str | None = None,
     ) -> TokenStream:
         """Called by the parser to do the preprocessing and filtering
         for all the extensions.  Returns a :class:`~jinja2.lexer.TokenStream`.
@@ -685,8 +681,8 @@ class Environment:
     def _generate(
         self,
         source: nodes.Template,
-        name: t.Optional[str],
-        filename: t.Optional[str],
+        name: str | None,
+        filename: str | None,
         defer_init: bool = False,
     ) -> str:
         """Internal hook that can be overridden to hook a different generate
@@ -714,9 +710,9 @@ class Environment:
     @typing.overload
     def compile(
         self,
-        source: t.Union[str, nodes.Template],
-        name: t.Optional[str] = None,
-        filename: t.Optional[str] = None,
+        source: str | nodes.Template,
+        name: str | None = None,
+        filename: str | None = None,
         raw: "te.Literal[False]" = False,
         defer_init: bool = False,
     ) -> CodeType: ...
@@ -724,9 +720,9 @@ class Environment:
     @typing.overload
     def compile(
         self,
-        source: t.Union[str, nodes.Template],
-        name: t.Optional[str] = None,
-        filename: t.Optional[str] = None,
+        source: str | nodes.Template,
+        name: str | None = None,
+        filename: str | None = None,
         raw: "te.Literal[True]" = ...,
         defer_init: bool = False,
     ) -> str: ...
@@ -734,12 +730,12 @@ class Environment:
     @internalcode
     def compile(
         self,
-        source: t.Union[str, nodes.Template],
-        name: t.Optional[str] = None,
-        filename: t.Optional[str] = None,
+        source: str | nodes.Template,
+        name: str | None = None,
+        filename: str | None = None,
         raw: bool = False,
         defer_init: bool = False,
-    ) -> t.Union[str, CodeType]:
+    ) -> str | CodeType:
         """Compile a node or template source code.  The `name` parameter is
         the load name of the template after it was joined using
         :meth:`join_path` if necessary, not the filename on the file system.
@@ -821,10 +817,10 @@ class Environment:
     def compile_templates(
         self,
         target: t.Union[str, "os.PathLike[str]"],
-        extensions: t.Optional[t.Collection[str]] = None,
-        filter_func: t.Optional[t.Callable[[str], bool]] = None,
-        zip: t.Optional[str] = "deflated",
-        log_function: t.Optional[t.Callable[[str], None]] = None,
+        extensions: t.Collection[str] | None = None,
+        filter_func: t.Callable[[str], bool] | None = None,
+        zip: str | None = "deflated",
+        log_function: t.Callable[[str], None] | None = None,
         ignore_errors: bool = True,
     ) -> None:
         """Finds all the templates the loader can find, compiles them
@@ -901,8 +897,8 @@ class Environment:
 
     def list_templates(
         self,
-        extensions: t.Optional[t.Collection[str]] = None,
-        filter_func: t.Optional[t.Callable[[str], bool]] = None,
+        extensions: t.Collection[str] | None = None,
+        filter_func: t.Callable[[str], bool] | None = None,
     ) -> list[str]:
         """Returns a list of templates for this environment.  This requires
         that the loader supports the loader's
@@ -936,7 +932,7 @@ class Environment:
 
         return names
 
-    def handle_exception(self, source: t.Optional[str] = None) -> "te.NoReturn":
+    def handle_exception(self, source: str | None = None) -> "te.NoReturn":
         """Exception handling helper.  This is used internally to either raise
         rewritten exceptions or return a rendered traceback for the template.
         """
@@ -958,7 +954,7 @@ class Environment:
 
     @internalcode
     def _load_template(
-        self, name: str, globals: t.Optional[t.MutableMapping[str, t.Any]]
+        self, name: str, globals: t.MutableMapping[str, t.Any] | None
     ) -> "Template":
         if self.loader is None:
             raise TypeError("no loader for this environment specified")
@@ -985,8 +981,8 @@ class Environment:
     def get_template(
         self,
         name: t.Union[str, "Template"],
-        parent: t.Optional[str] = None,
-        globals: t.Optional[t.MutableMapping[str, t.Any]] = None,
+        parent: str | None = None,
+        globals: t.MutableMapping[str, t.Any] | None = None,
     ) -> "Template":
         """Load a template by name with :attr:`loader` and return a
         :class:`Template`. If the template does not exist a
@@ -1022,8 +1018,8 @@ class Environment:
     def select_template(
         self,
         names: t.Iterable[t.Union[str, "Template"]],
-        parent: t.Optional[str] = None,
-        globals: t.Optional[t.MutableMapping[str, t.Any]] = None,
+        parent: str | None = None,
+        globals: t.MutableMapping[str, t.Any] | None = None,
     ) -> "Template":
         """Like :meth:`get_template`, but tries loading multiple names.
         If none of the names can be loaded a :exc:`TemplatesNotFound`
@@ -1076,8 +1072,8 @@ class Environment:
     def get_or_select_template(
         self,
         template_name_or_list: t.Union[str, "Template", list[t.Union[str, "Template"]]],
-        parent: t.Optional[str] = None,
-        globals: t.Optional[t.MutableMapping[str, t.Any]] = None,
+        parent: str | None = None,
+        globals: t.MutableMapping[str, t.Any] | None = None,
     ) -> "Template":
         """Use :meth:`select_template` if an iterable of template names
         is given, or :meth:`get_template` if one name is given.
@@ -1092,9 +1088,9 @@ class Environment:
 
     def from_string(
         self,
-        source: t.Union[str, nodes.Template],
-        globals: t.Optional[t.MutableMapping[str, t.Any]] = None,
-        template_class: t.Optional[type["Template"]] = None,
+        source: str | nodes.Template,
+        globals: t.MutableMapping[str, t.Any] | None = None,
+        template_class: type["Template"] | None = None,
     ) -> "Template":
         """Load a template from a source string without using
         :attr:`loader`.
@@ -1112,7 +1108,7 @@ class Environment:
         return cls.from_code(self, self.compile(source), gs, None)
 
     def make_globals(
-        self, d: t.Optional[t.MutableMapping[str, t.Any]]
+        self, d: t.MutableMapping[str, t.Any] | None
     ) -> t.MutableMapping[str, t.Any]:
         """Make the globals map for a template. Any given template
         globals overlay the environment :attr:`globals`.
@@ -1157,34 +1153,34 @@ class Template:
 
     environment: Environment
     globals: t.MutableMapping[str, t.Any]
-    name: t.Optional[str]
-    filename: t.Optional[str]
+    name: str | None
+    filename: str | None
     blocks: dict[str, t.Callable[[Context], t.Iterator[str]]]
     root_render_func: t.Callable[[Context], t.Iterator[str]]
     _module: t.Optional["TemplateModule"]
     _debug_info: str
-    _uptodate: t.Optional[t.Callable[[], bool]]
+    _uptodate: t.Callable[[], bool] | None
 
     def __new__(
         cls,
-        source: t.Union[str, nodes.Template],
+        source: str | nodes.Template,
         block_start_string: str = BLOCK_START_STRING,
         block_end_string: str = BLOCK_END_STRING,
         variable_start_string: str = VARIABLE_START_STRING,
         variable_end_string: str = VARIABLE_END_STRING,
         comment_start_string: str = COMMENT_START_STRING,
         comment_end_string: str = COMMENT_END_STRING,
-        line_statement_prefix: t.Optional[str] = LINE_STATEMENT_PREFIX,
-        line_comment_prefix: t.Optional[str] = LINE_COMMENT_PREFIX,
+        line_statement_prefix: str | None = LINE_STATEMENT_PREFIX,
+        line_comment_prefix: str | None = LINE_COMMENT_PREFIX,
         trim_blocks: bool = TRIM_BLOCKS,
         lstrip_blocks: bool = LSTRIP_BLOCKS,
         newline_sequence: "te.Literal['\\n', '\\r\\n', '\\r']" = NEWLINE_SEQUENCE,
         keep_trailing_newline: bool = KEEP_TRAILING_NEWLINE,
-        extensions: t.Sequence[t.Union[str, type["Extension"]]] = (),
+        extensions: t.Sequence[str | type["Extension"]] = (),
         optimized: bool = True,
         undefined: type[Undefined] = Undefined,
-        finalize: t.Optional[t.Callable[..., t.Any]] = None,
-        autoescape: t.Union[bool, t.Callable[[t.Optional[str]], bool]] = False,
+        finalize: t.Callable[..., t.Any] | None = None,
+        autoescape: bool | t.Callable[[str | None], bool] = False,
         enable_async: bool = False,
     ) -> t.Any:  # it returns a `Template`, but this breaks the sphinx build...
         env = get_spontaneous_environment(
@@ -1220,7 +1216,7 @@ class Template:
         environment: Environment,
         code: CodeType,
         globals: t.MutableMapping[str, t.Any],
-        uptodate: t.Optional[t.Callable[[], bool]] = None,
+        uptodate: t.Callable[[], bool] | None = None,
     ) -> "Template":
         """Creates a template object from compiled code and the globals.  This
         is used by the loaders and environment to create a template object.
@@ -1372,9 +1368,9 @@ class Template:
 
     def new_context(
         self,
-        vars: t.Optional[dict[str, t.Any]] = None,
+        vars: dict[str, t.Any] | None = None,
         shared: bool = False,
-        locals: t.Optional[t.Mapping[str, t.Any]] = None,
+        locals: t.Mapping[str, t.Any] | None = None,
     ) -> Context:
         """Create a new :class:`Context` for this template.  The vars
         provided will be passed to the template.  Per default the globals
@@ -1389,9 +1385,9 @@ class Template:
 
     def make_module(
         self,
-        vars: t.Optional[dict[str, t.Any]] = None,
+        vars: dict[str, t.Any] | None = None,
         shared: bool = False,
-        locals: t.Optional[t.Mapping[str, t.Any]] = None,
+        locals: t.Mapping[str, t.Any] | None = None,
     ) -> "TemplateModule":
         """This method works like the :attr:`module` attribute when called
         without arguments but it will evaluate the template on every call
@@ -1404,9 +1400,9 @@ class Template:
 
     async def make_module_async(
         self,
-        vars: t.Optional[dict[str, t.Any]] = None,
+        vars: dict[str, t.Any] | None = None,
         shared: bool = False,
-        locals: t.Optional[t.Mapping[str, t.Any]] = None,
+        locals: t.Mapping[str, t.Any] | None = None,
     ) -> "TemplateModule":
         """As template module creation can invoke template code for
         asynchronous executions this method must be used instead of the
@@ -1421,7 +1417,7 @@ class Template:
         )
 
     @internalcode
-    def _get_default_module(self, ctx: t.Optional[Context] = None) -> "TemplateModule":
+    def _get_default_module(self, ctx: Context | None = None) -> "TemplateModule":
         """If a context is passed in, this means that the template was
         imported. Imported templates have access to the current
         template's globals by default, but they can only be accessed via
@@ -1448,7 +1444,7 @@ class Template:
         return self._module
 
     async def _get_default_module_async(
-        self, ctx: t.Optional[Context] = None
+        self, ctx: Context | None = None
     ) -> "TemplateModule":
         if ctx is not None:
             keys = ctx.globals_keys - self.globals.keys()
@@ -1522,7 +1518,7 @@ class TemplateModule:
         self,
         template: Template,
         context: Context,
-        body_stream: t.Optional[t.Iterable[str]] = None,
+        body_stream: t.Iterable[str] | None = None,
     ) -> None:
         if body_stream is None:
             if context.environment.is_async:
@@ -1562,7 +1558,7 @@ class TemplateExpression:
         self._template = template
         self._undefined_to_none = undefined_to_none
 
-    def __call__(self, *args: t.Any, **kwargs: t.Any) -> t.Optional[t.Any]:
+    def __call__(self, *args: t.Any, **kwargs: t.Any) -> t.Any | None:
         context = self._template.new_context(dict(*args, **kwargs))
         consume(self._template.root_render_func(context))
         rv = context.vars["result"]
@@ -1588,9 +1584,9 @@ class TemplateStream:
 
     def dump(
         self,
-        fp: t.Union[str, t.IO[bytes]],
-        encoding: t.Optional[str] = None,
-        errors: t.Optional[str] = "strict",
+        fp: str | t.IO[bytes],
+        encoding: str | None = None,
+        errors: str | None = "strict",
     ) -> None:
         """Dump the complete stream into a file or file-like object.
         Per default strings are written, if you want to encode

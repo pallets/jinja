@@ -74,7 +74,7 @@ class BaseLoader:
 
     def get_source(
         self, environment: "Environment", template: str
-    ) -> tuple[str, t.Optional[str], t.Optional[t.Callable[[], bool]]]:
+    ) -> tuple[str, str | None, t.Callable[[], bool] | None]:
         """Get the template source, filename and reload helper for a template.
         It's passed the environment and template name and has to return a
         tuple in the form ``(source, filename, uptodate)`` or raise a
@@ -109,7 +109,7 @@ class BaseLoader:
         self,
         environment: "Environment",
         name: str,
-        globals: t.Optional[t.MutableMapping[str, t.Any]] = None,
+        globals: t.MutableMapping[str, t.Any] | None = None,
     ) -> "Template":
         """Loads a template.  This method looks up the template in the cache
         or loads one by calling :meth:`get_source`.  Subclasses should not
@@ -364,14 +364,14 @@ class PackageLoader(BaseLoader):
 
     def get_source(
         self, environment: "Environment", template: str
-    ) -> tuple[str, str, t.Optional[t.Callable[[], bool]]]:
+    ) -> tuple[str, str, t.Callable[[], bool] | None]:
         # Use posixpath even on Windows to avoid "drive:" or UNC
         # segments breaking out of the search directory. Use normpath to
         # convert Windows altsep to sep.
         p = os.path.normpath(
             posixpath.join(self._template_root, *split_template_path(template))
         )
-        up_to_date: t.Optional[t.Callable[[], bool]]
+        up_to_date: t.Callable[[], bool] | None
 
         if self._archive is None:
             # Package is a directory.
@@ -475,18 +475,14 @@ class FunctionLoader(BaseLoader):
         self,
         load_func: t.Callable[
             [str],
-            t.Optional[
-                t.Union[
-                    str, tuple[str, t.Optional[str], t.Optional[t.Callable[[], bool]]]
-                ]
-            ],
+            str | tuple[str, str | None, t.Callable[[], bool] | None] | None,
         ],
     ) -> None:
         self.load_func = load_func
 
     def get_source(
         self, environment: "Environment", template: str
-    ) -> tuple[str, t.Optional[str], t.Optional[t.Callable[[], bool]]]:
+    ) -> tuple[str, str | None, t.Callable[[], bool] | None]:
         rv = self.load_func(template)
 
         if rv is None:
@@ -529,7 +525,7 @@ class PrefixLoader(BaseLoader):
 
     def get_source(
         self, environment: "Environment", template: str
-    ) -> tuple[str, t.Optional[str], t.Optional[t.Callable[[], bool]]]:
+    ) -> tuple[str, str | None, t.Callable[[], bool] | None]:
         loader, name = self.get_loader(template)
         try:
             return loader.get_source(environment, name)
@@ -543,7 +539,7 @@ class PrefixLoader(BaseLoader):
         self,
         environment: "Environment",
         name: str,
-        globals: t.Optional[t.MutableMapping[str, t.Any]] = None,
+        globals: t.MutableMapping[str, t.Any] | None = None,
     ) -> "Template":
         loader, local_name = self.get_loader(name)
         try:
@@ -580,7 +576,7 @@ class ChoiceLoader(BaseLoader):
 
     def get_source(
         self, environment: "Environment", template: str
-    ) -> tuple[str, t.Optional[str], t.Optional[t.Callable[[], bool]]]:
+    ) -> tuple[str, str | None, t.Callable[[], bool] | None]:
         for loader in self.loaders:
             try:
                 return loader.get_source(environment, template)
@@ -593,7 +589,7 @@ class ChoiceLoader(BaseLoader):
         self,
         environment: "Environment",
         name: str,
-        globals: t.Optional[t.MutableMapping[str, t.Any]] = None,
+        globals: t.MutableMapping[str, t.Any] | None = None,
     ) -> "Template":
         for loader in self.loaders:
             try:
@@ -665,7 +661,7 @@ class ModuleLoader(BaseLoader):
         self,
         environment: "Environment",
         name: str,
-        globals: t.Optional[t.MutableMapping[str, t.Any]] = None,
+        globals: t.MutableMapping[str, t.Any] | None = None,
     ) -> "Template":
         key = self.get_template_key(name)
         module = f"{self.package_name}.{key}"

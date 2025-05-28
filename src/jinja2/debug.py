@@ -11,7 +11,7 @@ if t.TYPE_CHECKING:
     from .runtime import Context
 
 
-def rewrite_traceback_stack(source: t.Optional[str] = None) -> BaseException:
+def rewrite_traceback_stack(source: str | None = None) -> BaseException:
     """Rewrite the current exception to replace any tracebacks from
     within compiled template code with tracebacks that look like they
     came from the template source.
@@ -74,7 +74,7 @@ def rewrite_traceback_stack(source: t.Optional[str] = None) -> BaseException:
 
 
 def fake_traceback(  # type: ignore
-    exc_value: BaseException, tb: t.Optional[TracebackType], filename: str, lineno: int
+    exc_value: BaseException, tb: TracebackType | None, filename: str, lineno: int
 ) -> TracebackType:
     """Produce a new traceback object that looks like it came from the
     template source instead of the compiled code. The filename, line
@@ -133,7 +133,7 @@ def get_template_locals(real_locals: t.Mapping[str, t.Any]) -> dict[str, t.Any]:
     available at that point in the template.
     """
     # Start with the current template context.
-    ctx: t.Optional[Context] = real_locals.get("context")
+    ctx: Context | None = real_locals.get("context")
 
     if ctx is not None:
         data: dict[str, t.Any] = ctx.get_all().copy()

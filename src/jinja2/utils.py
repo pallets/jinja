@@ -161,7 +161,7 @@ def import_string(import_name: str, silent: bool = False) -> t.Any:
             raise
 
 
-def open_if_exists(filename: str, mode: str = "rb") -> t.Optional[t.IO[t.Any]]:
+def open_if_exists(filename: str, mode: str = "rb") -> t.IO[t.Any] | None:
     """Returns a file descriptor for the filename if that file exists,
     otherwise ``None``.
     """
@@ -229,10 +229,10 @@ _email_re = re.compile(r"^\S+@\w[\w.-]*\.\w+$")
 
 def urlize(
     text: str,
-    trim_url_limit: t.Optional[int] = None,
-    rel: t.Optional[str] = None,
-    target: t.Optional[str] = None,
-    extra_schemes: t.Optional[t.Iterable[str]] = None,
+    trim_url_limit: int | None = None,
+    rel: str | None = None,
+    target: str | None = None,
+    extra_schemes: t.Iterable[str] | None = None,
 ) -> str:
     """Convert URLs in text into clickable links.
 
@@ -583,7 +583,7 @@ def select_autoescape(
     disabled_extensions: t.Collection[str] = (),
     default_for_string: bool = True,
     default: bool = False,
-) -> t.Callable[[t.Optional[str]], bool]:
+) -> t.Callable[[str | None], bool]:
     """Intelligently sets the initial value of autoescaping based on the
     filename of the template.  This is the recommended way to configure
     autoescaping if you do not want to write a custom function yourself.
@@ -621,7 +621,7 @@ def select_autoescape(
     enabled_patterns = tuple(f".{x.lstrip('.').lower()}" for x in enabled_extensions)
     disabled_patterns = tuple(f".{x.lstrip('.').lower()}" for x in disabled_extensions)
 
-    def autoescape(template_name: t.Optional[str]) -> bool:
+    def autoescape(template_name: str | None) -> bool:
         if template_name is None:
             return default_for_string
         template_name = template_name.lower()
@@ -635,7 +635,7 @@ def select_autoescape(
 
 
 def htmlsafe_json_dumps(
-    obj: t.Any, dumps: t.Optional[t.Callable[..., str]] = None, **kwargs: t.Any
+    obj: t.Any, dumps: t.Callable[..., str] | None = None, **kwargs: t.Any
 ) -> markupsafe.Markup:
     """Serialize an object to a string of JSON with :func:`json.dumps`,
     then replace HTML-unsafe characters with Unicode escapes and mark

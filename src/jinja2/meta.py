@@ -56,10 +56,10 @@ def find_undeclared_variables(ast: nodes.Template) -> set[str]:
 
 
 _ref_types = (nodes.Extends, nodes.FromImport, nodes.Import, nodes.Include)
-_RefType = t.Union[nodes.Extends, nodes.FromImport, nodes.Import, nodes.Include]
+_RefType = nodes.Extends | nodes.FromImport | nodes.Import | nodes.Include
 
 
-def find_referenced_templates(ast: nodes.Template) -> t.Iterator[t.Optional[str]]:
+def find_referenced_templates(ast: nodes.Template) -> t.Iterator[str | None]:
     """Finds all the referenced templates from the AST.  This will return an
     iterator over all the hardcoded template extensions, inclusions and
     imports.  If dynamic inheritance or inclusion is used, `None` will be
