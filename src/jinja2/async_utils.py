@@ -85,7 +85,7 @@ class _IteratorToAsyncIterator(t.Generic[V]):
 
 
 def auto_aiter(
-    iterable: "t.Union[t.AsyncIterable[V], t.Iterable[V]]",
+    iterable: "t.AsyncIterable[V] | t.Iterable[V]",
 ) -> "t.AsyncIterator[V]":
     if hasattr(iterable, "__aiter__"):
         return iterable.__aiter__()
@@ -94,6 +94,6 @@ def auto_aiter(
 
 
 async def auto_to_list(
-    value: "t.Union[t.AsyncIterable[V], t.Iterable[V]]",
+    value: "t.AsyncIterable[V] | t.Iterable[V]",
 ) -> list["V"]:
     return [x async for x in auto_aiter(value)]

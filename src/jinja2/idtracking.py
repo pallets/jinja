@@ -32,7 +32,7 @@ def symbols_for_node(
 
 class Symbols:
     def __init__(
-        self, parent: t.Optional["Symbols"] = None, level: t.Optional[int] = None
+        self, parent: t.Optional["Symbols"] = None, level: int | None = None
     ) -> None:
         if level is None:
             if parent is None:
@@ -50,16 +50,14 @@ class Symbols:
         visitor = RootVisitor(self)
         visitor.visit(node, **kwargs)
 
-    def _define_ref(
-        self, name: str, load: t.Optional[tuple[str, t.Optional[str]]] = None
-    ) -> str:
+    def _define_ref(self, name: str, load: tuple[str, str | None] | None = None) -> str:
         ident = f"l_{self.level}_{name}"
         self.refs[name] = ident
         if load is not None:
             self.loads[ident] = load
         return ident
 
-    def find_load(self, target: str) -> t.Optional[t.Any]:
+    def find_load(self, target: str) -> t.Any | None:
         if target in self.loads:
             return self.loads[target]
 
@@ -68,7 +66,7 @@ class Symbols:
 
         return None
 
-    def find_ref(self, name: str) -> t.Optional[str]:
+    def find_ref(self, name: str) -> str | None:
         if name in self.refs:
             return self.refs[name]
 
@@ -146,7 +144,7 @@ class Symbols:
 
     def dump_stores(self) -> dict[str, str]:
         rv: dict[str, str] = {}
-        node: t.Optional[Symbols] = self
+        node: Symbols | None = self
 
         while node is not None:
             for name in sorted(node.stores):
@@ -159,7 +157,7 @@ class Symbols:
 
     def dump_param_targets(self) -> set[str]:
         rv = set()
-        node: t.Optional[Symbols] = self
+        node: Symbols | None = self
 
         while node is not None:
             for target, (instr, _) in self.loads.items():

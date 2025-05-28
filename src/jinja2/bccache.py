@@ -27,9 +27,7 @@ if t.TYPE_CHECKING:
     class _MemcachedClient(te.Protocol):
         def get(self, key: str) -> bytes: ...
 
-        def set(
-            self, key: str, value: bytes, timeout: t.Optional[int] = None
-        ) -> None: ...
+        def set(self, key: str, value: bytes, timeout: int | None = None) -> None: ...
 
 
 bc_version = 5
@@ -60,7 +58,7 @@ class Bucket:
 
     def reset(self) -> None:
         """Resets the bucket (unloads the bytecode)."""
-        self.code: t.Optional[CodeType] = None
+        self.code: CodeType | None = None
 
     def load_bytecode(self, f: t.BinaryIO) -> None:
         """Loads bytecode from a file or file like object."""
@@ -149,9 +147,7 @@ class BytecodeCache:
         by a particular environment.
         """
 
-    def get_cache_key(
-        self, name: str, filename: t.Optional[t.Union[str]] = None
-    ) -> str:
+    def get_cache_key(self, name: str, filename: str | None = None) -> str:
         """Returns the unique hash key for this template name."""
         hash = sha1(name.encode("utf-8"))
 
@@ -168,7 +164,7 @@ class BytecodeCache:
         self,
         environment: "Environment",
         name: str,
-        filename: t.Optional[str],
+        filename: str | None,
         source: str,
     ) -> Bucket:
         """Return a cache bucket for the given template.  All arguments are
@@ -204,7 +200,7 @@ class FileSystemBytecodeCache(BytecodeCache):
     """
 
     def __init__(
-        self, directory: t.Optional[str] = None, pattern: str = "__jinja2_%s.cache"
+        self, directory: str | None = None, pattern: str = "__jinja2_%s.cache"
     ) -> None:
         if directory is None:
             directory = self._get_default_cache_dir()
@@ -377,7 +373,7 @@ class MemcachedBytecodeCache(BytecodeCache):
         self,
         client: "_MemcachedClient",
         prefix: str = "jinja2/bytecode/",
-        timeout: t.Optional[int] = None,
+        timeout: int | None = None,
         ignore_memcache_errors: bool = True,
     ):
         self.client = client

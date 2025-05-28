@@ -101,12 +101,12 @@ def _make_unop(
 def generate(
     node: nodes.Template,
     environment: "Environment",
-    name: t.Optional[str],
-    filename: t.Optional[str],
-    stream: t.Optional[t.TextIO] = None,
+    name: str | None,
+    filename: str | None,
+    stream: t.TextIO | None = None,
     defer_init: bool = False,
     optimized: bool = True,
-) -> t.Optional[str]:
+) -> str | None:
     """Generate the python source for a node tree."""
     if not isinstance(node, nodes.Template):
         raise TypeError("Can't compile non template nodes")
@@ -153,7 +153,7 @@ def find_undeclared(nodes: t.Iterable[nodes.Node], names: t.Iterable[str]) -> se
 
 
 class MacroRef:
-    def __init__(self, node: t.Union[nodes.Macro, nodes.CallBlock]) -> None:
+    def __init__(self, node: nodes.Macro | nodes.CallBlock) -> None:
         self.node = node
         self.accesses_caller = False
         self.accesses_kwargs = False
@@ -167,7 +167,7 @@ class Frame:
         self,
         eval_ctx: EvalContext,
         parent: t.Optional["Frame"] = None,
-        level: t.Optional[int] = None,
+        level: int | None = None,
     ) -> None:
         self.eval_ctx = eval_ctx
 
@@ -185,10 +185,10 @@ class Frame:
             # this for example affects {% filter %} or {% macro %}.  If a frame
             # is buffered this variable points to the name of the list used as
             # buffer.
-            self.buffer: t.Optional[str] = None
+            self.buffer: str | None = None
 
             # the name of the block we're in, otherwise None.
-            self.block: t.Optional[str] = None
+            self.block: str | None = None
 
         else:
             self.symbols = Symbols(parent.symbols, level=level)
@@ -299,9 +299,9 @@ class CodeGenerator(NodeVisitor):
     def __init__(
         self,
         environment: "Environment",
-        name: t.Optional[str],
-        filename: t.Optional[str],
-        stream: t.Optional[t.TextIO] = None,
+        name: str | None,
+        filename: str | None,
+        stream: t.TextIO | None = None,
         defer_init: bool = False,
         optimized: bool = True,
     ) -> None:
@@ -313,7 +313,7 @@ class CodeGenerator(NodeVisitor):
         self.stream = stream
         self.created_block_context = False
         self.defer_init = defer_init
-        self.optimizer: t.Optional[Optimizer] = None
+        self.optimizer: Optimizer | None = None
 
         if optimized:
             self.optimizer = Optimizer(environment)
@@ -342,7 +342,7 @@ class CodeGenerator(NodeVisitor):
 
         # the debug information
         self.debug_info: list[tuple[int, int]] = []
-        self._write_debug_info: t.Optional[int] = None
+        self._write_debug_info: int | None = None
 
         # the number of new lines before the next write()
         self._new_lines = 0
@@ -417,7 +417,7 @@ class CodeGenerator(NodeVisitor):
         """Outdent by step."""
         self._indentation -= step
 
-    def start_write(self, frame: Frame, node: t.Optional[nodes.Node] = None) -> None:
+    def start_write(self, frame: Frame, node: nodes.Node | None = None) -> None:
         """Yield or write into the frame buffer."""
         if frame.buffer is None:
             self.writeline("yield ", node)
@@ -430,7 +430,7 @@ class CodeGenerator(NodeVisitor):
             self.write(")")
 
     def simple_write(
-        self, s: str, frame: Frame, node: t.Optional[nodes.Node] = None
+        self, s: str, frame: Frame, node: nodes.Node | None = None
     ) -> None:
         """Simple shortcut for start_write + write + end_write."""
         self.start_write(frame, node)
@@ -462,14 +462,12 @@ class CodeGenerator(NodeVisitor):
             self._new_lines = 0
         self.stream.write(x)
 
-    def writeline(
-        self, x: str, node: t.Optional[nodes.Node] = None, extra: int = 0
-    ) -> None:
+    def writeline(self, x: str, node: nodes.Node | None = None, extra: int = 0) -> None:
         """Combination of newline and write."""
         self.newline(node, extra)
         self.write(x)
 
-    def newline(self, node: t.Optional[nodes.Node] = None, extra: int = 0) -> None:
+    def newline(self, node: nodes.Node | None = None, extra: int = 0) -> None:
         """Add one or more newlines before the next write."""
         self._new_lines = max(self._new_lines, 1 + extra)
         if node is not None and node.lineno != self._last_line:
@@ -478,9 +476,9 @@ class CodeGenerator(NodeVisitor):
 
     def signature(
         self,
-        node: t.Union[nodes.Call, nodes.Filter, nodes.Test],
+        node: nodes.Call | nodes.Filter | nodes.Test,
         frame: Frame,
-        extra_kwargs: t.Optional[t.Mapping[str, t.Any]] = None,
+        extra_kwargs: t.Mapping[str, t.Any] | None = None,
     ) -> None:
         """Writes a function call to the stream for the current node.
         A leading comma is added automatically.  The extra keyword
@@ -610,7 +608,7 @@ class CodeGenerator(NodeVisitor):
         return f"{self.choose_async()}def {name}"
 
     def macro_body(
-        self, node: t.Union[nodes.Macro, nodes.CallBlock], frame: Frame
+        self, node: nodes.Macro | nodes.CallBlock, frame: Frame
     ) -> tuple[Frame, MacroRef]:
         """Dump the function def of a macro or call block."""
         frame = frame.inner()
@@ -824,9 +822,7 @@ class CodeGenerator(NodeVisitor):
 
     # -- Statement Visitors
 
-    def visit_Template(
-        self, node: nodes.Template, frame: t.Optional[Frame] = None
-    ) -> None:
+    def visit_Template(self, node: nodes.Template, frame: Frame | None = None) -> None:
         assert frame is None, "no root frame allowed"
         eval_ctx = EvalContext(self.environment, self.name)
 
@@ -1096,7 +1092,7 @@ class CodeGenerator(NodeVisitor):
             self.outdent()
 
     def _import_common(
-        self, node: t.Union[nodes.Import, nodes.FromImport], frame: Frame
+        self, node: nodes.Import | nodes.FromImport, frame: Frame
     ) -> None:
         self.write(f"{self.choose_async('await ')}environment.get_template(")
         self.visit(node.template, frame)
@@ -1369,7 +1365,7 @@ class CodeGenerator(NodeVisitor):
         with_frame = frame.inner()
         with_frame.symbols.analyze_node(node)
         self.enter_frame(with_frame)
-        for target, expr in zip(node.targets, node.values):
+        for target, expr in zip(node.targets, node.values, strict=False):
             self.newline()
             self.visit(target, with_frame)
             self.write(" = ")
@@ -1382,8 +1378,8 @@ class CodeGenerator(NodeVisitor):
         self.visit(node.node, frame)
 
     class _FinalizeInfo(t.NamedTuple):
-        const: t.Optional[t.Callable[..., str]]
-        src: t.Optional[str]
+        const: t.Callable[..., str] | None
+        src: str | None
 
     @staticmethod
     def _default_finalize(value: t.Any) -> t.Any:
@@ -1393,7 +1389,7 @@ class CodeGenerator(NodeVisitor):
         """
         return str(value)
 
-    _finalize: t.Optional[_FinalizeInfo] = None
+    _finalize: _FinalizeInfo | None = None
 
     def _make_finalize(self) -> _FinalizeInfo:
         """Build the finalize function to be used on constants and at
@@ -1411,7 +1407,7 @@ class CodeGenerator(NodeVisitor):
         if self._finalize is not None:
             return self._finalize
 
-        finalize: t.Optional[t.Callable[..., t.Any]]
+        finalize: t.Callable[..., t.Any] | None
         finalize = default = self._default_finalize
         src = None
 
@@ -1509,7 +1505,7 @@ class CodeGenerator(NodeVisitor):
             self.indent()
 
         finalize = self._make_finalize()
-        body: list[t.Union[list[t.Any], nodes.Expr]] = []
+        body: list[list[t.Any] | nodes.Expr] = []
 
         # Evaluate constants at compile time if possible. Each item in
         # body will be either a list of static data or a node to be
@@ -1791,7 +1787,7 @@ class CodeGenerator(NodeVisitor):
 
     @contextmanager
     def _filter_test_common(
-        self, node: t.Union[nodes.Filter, nodes.Test], frame: Frame, is_filter: bool
+        self, node: nodes.Filter | nodes.Test, frame: Frame, is_filter: bool
     ) -> t.Iterator[None]:
         if self.environment.is_async:
             self.write("(await auto_await(")

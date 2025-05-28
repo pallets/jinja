@@ -74,7 +74,7 @@ class EvalContext:
     """
 
     def __init__(
-        self, environment: "Environment", template_name: t.Optional[str] = None
+        self, environment: "Environment", template_name: str | None = None
     ) -> None:
         self.environment = environment
         if callable(environment.autoescape):
@@ -91,7 +91,7 @@ class EvalContext:
         self.__dict__.update(old)
 
 
-def get_eval_context(node: "Node", ctx: t.Optional[EvalContext]) -> EvalContext:
+def get_eval_context(node: "Node", ctx: EvalContext | None) -> EvalContext:
     if ctx is None:
         if node.environment is None:
             raise RuntimeError(
@@ -137,7 +137,7 @@ class Node(metaclass=NodeType):
                     f"{type(self).__name__!r} takes 0 or {len(self.fields)}"
                     f" argument{'s' if len(self.fields) != 1 else ''}"
                 )
-            for name, arg in zip(self.fields, fields):
+            for name, arg in zip(self.fields, fields, strict=False):
                 setattr(self, name, arg)
         for attr in self.attributes:
             setattr(self, attr, attributes.pop(attr, None))
@@ -146,8 +146,8 @@ class Node(metaclass=NodeType):
 
     def iter_fields(
         self,
-        exclude: t.Optional[t.Container[str]] = None,
-        only: t.Optional[t.Container[str]] = None,
+        exclude: t.Container[str] | None = None,
+        only: t.Container[str] | None = None,
     ) -> t.Iterator[tuple[str, t.Any]]:
         """This method iterates over all fields that are defined and yields
         ``(key, value)`` tuples.  Per default all fields are returned, but
@@ -168,8 +168,8 @@ class Node(metaclass=NodeType):
 
     def iter_child_nodes(
         self,
-        exclude: t.Optional[t.Container[str]] = None,
-        only: t.Optional[t.Container[str]] = None,
+        exclude: t.Container[str] | None = None,
+        only: t.Container[str] | None = None,
     ) -> t.Iterator["Node"]:
         """Iterates over all direct child nodes of the node.  This iterates
         over all fields and yields the values of they are nodes.  If the value
@@ -183,7 +183,7 @@ class Node(metaclass=NodeType):
             elif isinstance(item, Node):
                 yield item
 
-    def find(self, node_type: type[_NodeBound]) -> t.Optional[_NodeBound]:
+    def find(self, node_type: type[_NodeBound]) -> _NodeBound | None:
         """Find the first node of a given type.  If no such node exists the
         return value is `None`.
         """
@@ -193,7 +193,7 @@ class Node(metaclass=NodeType):
         return None
 
     def find_all(
-        self, node_type: t.Union[type[_NodeBound], tuple[type[_NodeBound], ...]]
+        self, node_type: type[_NodeBound] | tuple[type[_NodeBound], ...]
     ) -> t.Iterator[_NodeBound]:
         """Find all the nodes of a given type.  If the type is a tuple,
         the check is performed for any of the tuple items.
@@ -250,7 +250,7 @@ class Node(metaclass=NodeType):
         return f"{type(self).__name__}({args_str})"
 
     def dump(self) -> str:
-        def _dump(node: t.Union[Node, t.Any]) -> None:
+        def _dump(node: Node | t.Any) -> None:
             if not isinstance(node, Node):
                 buf.append(repr(node))
                 return
@@ -330,7 +330,7 @@ class For(Stmt):
     iter: Node
     body: list[Node]
     else_: list[Node]
-    test: t.Optional[Node]
+    test: Node | None
     recursive: bool
 
 
@@ -436,7 +436,7 @@ class FromImport(Stmt):
 
     fields = ("template", "names", "with_context")
     template: "Expr"
-    names: list[t.Union[str, tuple[str, str]]]
+    names: list[str | tuple[str, str]]
     with_context: bool
 
 
@@ -469,7 +469,7 @@ class Expr(Node):
 
     abstract = True
 
-    def as_const(self, eval_ctx: t.Optional[EvalContext] = None) -> t.Any:
+    def as_const(self, eval_ctx: EvalContext | None = None) -> t.Any:
         """Return the value of the expression as constant or raise
         :exc:`Impossible` if this was not possible.
 
@@ -496,7 +496,7 @@ class BinExpr(Expr):
     operator: str
     abstract = True
 
-    def as_const(self, eval_ctx: t.Optional[EvalContext] = None) -> t.Any:
+    def as_const(self, eval_ctx: EvalContext | None = None) -> t.Any:
         eval_ctx = get_eval_context(self, eval_ctx)
 
         # intercepted operators cannot be folded at compile time
@@ -520,7 +520,7 @@ class UnaryExpr(Expr):
     operator: str
     abstract = True
 
-    def as_const(self, eval_ctx: t.Optional[EvalContext] = None) -> t.Any:
+    def as_const(self, eval_ctx: EvalContext | None = None) -> t.Any:
         eval_ctx = get_eval_context(self, eval_ctx)
 
         # intercepted operators cannot be folded at compile time
@@ -584,15 +584,15 @@ class Const(Literal):
     fields = ("value",)
     value: t.Any
 
-    def as_const(self, eval_ctx: t.Optional[EvalContext] = None) -> t.Any:
+    def as_const(self, eval_ctx: EvalContext | None = None) -> t.Any:
         return self.value
 
     @classmethod
     def from_untrusted(
         cls,
         value: t.Any,
-        lineno: t.Optional[int] = None,
-        environment: "t.Optional[Environment]" = None,
+        lineno: int | None = None,
+        environment: "Environment | None" = None,
     ) -> "Const":
         """Return a const object if the value is representable as
         constant value in the generated code, otherwise it will raise
@@ -611,7 +611,7 @@ class TemplateData(Literal):
     fields = ("data",)
     data: str
 
-    def as_const(self, eval_ctx: t.Optional[EvalContext] = None) -> str:
+    def as_const(self, eval_ctx: EvalContext | None = None) -> str:
         eval_ctx = get_eval_context(self, eval_ctx)
         if eval_ctx.volatile:
             raise Impossible()
@@ -630,7 +630,7 @@ class Tuple(Literal):
     items: list[Expr]
     ctx: str
 
-    def as_const(self, eval_ctx: t.Optional[EvalContext] = None) -> tuple[t.Any, ...]:
+    def as_const(self, eval_ctx: EvalContext | None = None) -> tuple[t.Any, ...]:
         eval_ctx = get_eval_context(self, eval_ctx)
         return tuple(x.as_const(eval_ctx) for x in self.items)
 
@@ -647,7 +647,7 @@ class List(Literal):
     fields = ("items",)
     items: list[Expr]
 
-    def as_const(self, eval_ctx: t.Optional[EvalContext] = None) -> list[t.Any]:
+    def as_const(self, eval_ctx: EvalContext | None = None) -> list[t.Any]:
         eval_ctx = get_eval_context(self, eval_ctx)
         return [x.as_const(eval_ctx) for x in self.items]
 
@@ -660,7 +660,7 @@ class Dict(Literal):
     fields = ("items",)
     items: list["Pair"]
 
-    def as_const(self, eval_ctx: t.Optional[EvalContext] = None) -> dict[t.Any, t.Any]:
+    def as_const(self, eval_ctx: EvalContext | None = None) -> dict[t.Any, t.Any]:
         eval_ctx = get_eval_context(self, eval_ctx)
         return dict(x.as_const(eval_ctx) for x in self.items)
 
@@ -672,7 +672,7 @@ class Pair(Helper):
     key: Expr
     value: Expr
 
-    def as_const(self, eval_ctx: t.Optional[EvalContext] = None) -> tuple[t.Any, t.Any]:
+    def as_const(self, eval_ctx: EvalContext | None = None) -> tuple[t.Any, t.Any]:
         eval_ctx = get_eval_context(self, eval_ctx)
         return self.key.as_const(eval_ctx), self.value.as_const(eval_ctx)
 
@@ -684,7 +684,7 @@ class Keyword(Helper):
     key: str
     value: Expr
 
-    def as_const(self, eval_ctx: t.Optional[EvalContext] = None) -> tuple[str, t.Any]:
+    def as_const(self, eval_ctx: EvalContext | None = None) -> tuple[str, t.Any]:
         eval_ctx = get_eval_context(self, eval_ctx)
         return self.key, self.value.as_const(eval_ctx)
 
@@ -697,9 +697,9 @@ class CondExpr(Expr):
     fields = ("test", "expr1", "expr2")
     test: Expr
     expr1: Expr
-    expr2: t.Optional[Expr]
+    expr2: Expr | None
 
-    def as_const(self, eval_ctx: t.Optional[EvalContext] = None) -> t.Any:
+    def as_const(self, eval_ctx: EvalContext | None = None) -> t.Any:
         eval_ctx = get_eval_context(self, eval_ctx)
         if self.test.as_const(eval_ctx):
             return self.expr1.as_const(eval_ctx)
@@ -712,7 +712,7 @@ class CondExpr(Expr):
 
 
 def args_as_const(
-    node: t.Union["_FilterTestCommon", "Call"], eval_ctx: t.Optional[EvalContext]
+    node: t.Union["_FilterTestCommon", "Call"], eval_ctx: EvalContext | None
 ) -> tuple[list[t.Any], dict[t.Any, t.Any]]:
     args = [x.as_const(eval_ctx) for x in node.args]
     kwargs = dict(x.as_const(eval_ctx) for x in node.kwargs)
@@ -738,12 +738,12 @@ class _FilterTestCommon(Expr):
     name: str
     args: list[Expr]
     kwargs: list[Pair]
-    dyn_args: t.Optional[Expr]
-    dyn_kwargs: t.Optional[Expr]
+    dyn_args: Expr | None
+    dyn_kwargs: Expr | None
     abstract = True
     _is_filter = True
 
-    def as_const(self, eval_ctx: t.Optional[EvalContext] = None) -> t.Any:
+    def as_const(self, eval_ctx: EvalContext | None = None) -> t.Any:
         eval_ctx = get_eval_context(self, eval_ctx)
 
         if eval_ctx.volatile:
@@ -788,9 +788,9 @@ class Filter(_FilterTestCommon):
     and is applied to the content of the block.
     """
 
-    node: t.Optional[Expr]  # type: ignore
+    node: Expr | None  # type: ignore
 
-    def as_const(self, eval_ctx: t.Optional[EvalContext] = None) -> t.Any:
+    def as_const(self, eval_ctx: EvalContext | None = None) -> t.Any:
         if self.node is None:
             raise Impossible()
 
@@ -822,8 +822,8 @@ class Call(Expr):
     node: Expr
     args: list[Expr]
     kwargs: list[Keyword]
-    dyn_args: t.Optional[Expr]
-    dyn_kwargs: t.Optional[Expr]
+    dyn_args: Expr | None
+    dyn_kwargs: Expr | None
 
 
 class Getitem(Expr):
@@ -834,7 +834,7 @@ class Getitem(Expr):
     arg: Expr
     ctx: str
 
-    def as_const(self, eval_ctx: t.Optional[EvalContext] = None) -> t.Any:
+    def as_const(self, eval_ctx: EvalContext | None = None) -> t.Any:
         if self.ctx != "load":
             raise Impossible()
 
@@ -858,7 +858,7 @@ class Getattr(Expr):
     attr: str
     ctx: str
 
-    def as_const(self, eval_ctx: t.Optional[EvalContext] = None) -> t.Any:
+    def as_const(self, eval_ctx: EvalContext | None = None) -> t.Any:
         if self.ctx != "load":
             raise Impossible()
 
@@ -876,14 +876,14 @@ class Slice(Expr):
     """
 
     fields = ("start", "stop", "step")
-    start: t.Optional[Expr]
-    stop: t.Optional[Expr]
-    step: t.Optional[Expr]
+    start: Expr | None
+    stop: Expr | None
+    step: Expr | None
 
-    def as_const(self, eval_ctx: t.Optional[EvalContext] = None) -> slice:
+    def as_const(self, eval_ctx: EvalContext | None = None) -> slice:
         eval_ctx = get_eval_context(self, eval_ctx)
 
-        def const(obj: t.Optional[Expr]) -> t.Optional[t.Any]:
+        def const(obj: Expr | None) -> t.Any | None:
             if obj is None:
                 return None
             return obj.as_const(eval_ctx)
@@ -899,7 +899,7 @@ class Concat(Expr):
     fields = ("nodes",)
     nodes: list[Expr]
 
-    def as_const(self, eval_ctx: t.Optional[EvalContext] = None) -> str:
+    def as_const(self, eval_ctx: EvalContext | None = None) -> str:
         eval_ctx = get_eval_context(self, eval_ctx)
         return "".join(str(x.as_const(eval_ctx)) for x in self.nodes)
 
@@ -913,7 +913,7 @@ class Compare(Expr):
     expr: Expr
     ops: list["Operand"]
 
-    def as_const(self, eval_ctx: t.Optional[EvalContext] = None) -> t.Any:
+    def as_const(self, eval_ctx: EvalContext | None = None) -> t.Any:
         eval_ctx = get_eval_context(self, eval_ctx)
         result = value = self.expr.as_const(eval_ctx)
 
@@ -989,7 +989,7 @@ class And(BinExpr):
 
     operator = "and"
 
-    def as_const(self, eval_ctx: t.Optional[EvalContext] = None) -> t.Any:
+    def as_const(self, eval_ctx: EvalContext | None = None) -> t.Any:
         eval_ctx = get_eval_context(self, eval_ctx)
         return self.left.as_const(eval_ctx) and self.right.as_const(eval_ctx)
 
@@ -999,7 +999,7 @@ class Or(BinExpr):
 
     operator = "or"
 
-    def as_const(self, eval_ctx: t.Optional[EvalContext] = None) -> t.Any:
+    def as_const(self, eval_ctx: EvalContext | None = None) -> t.Any:
         eval_ctx = get_eval_context(self, eval_ctx)
         return self.left.as_const(eval_ctx) or self.right.as_const(eval_ctx)
 
@@ -1082,7 +1082,7 @@ class MarkSafe(Expr):
     fields = ("expr",)
     expr: Expr
 
-    def as_const(self, eval_ctx: t.Optional[EvalContext] = None) -> Markup:
+    def as_const(self, eval_ctx: EvalContext | None = None) -> Markup:
         eval_ctx = get_eval_context(self, eval_ctx)
         return Markup(self.expr.as_const(eval_ctx))
 
@@ -1097,9 +1097,7 @@ class MarkSafeIfAutoescape(Expr):
     fields = ("expr",)
     expr: Expr
 
-    def as_const(
-        self, eval_ctx: t.Optional[EvalContext] = None
-    ) -> t.Union[Markup, t.Any]:
+    def as_const(self, eval_ctx: EvalContext | None = None) -> Markup | t.Any:
         eval_ctx = get_eval_context(self, eval_ctx)
         if eval_ctx.volatile:
             raise Impossible()

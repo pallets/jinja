@@ -25,7 +25,7 @@ class NodeVisitor:
     (return value `None`) the `generic_visit` visitor is used instead.
     """
 
-    def get_visitor(self, node: Node) -> "t.Optional[VisitCallable]":
+    def get_visitor(self, node: Node) -> "VisitCallable | None":
         """Return the visitor function for this node or `None` if no visitor
         exists for this node.  In that case the generic visit function is
         used instead.

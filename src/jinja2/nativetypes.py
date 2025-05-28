@@ -13,7 +13,7 @@ from .environment import Environment
 from .environment import Template
 
 
-def native_concat(values: t.Iterable[t.Any]) -> t.Optional[t.Any]:
+def native_concat(values: t.Iterable[t.Any]) -> t.Any | None:
     """Return a native Python type from the list of compiled nodes. If
     the result is a single node, its value is returned. Otherwise, the
     nodes are concatenated as strings. If the result can be parsed with
