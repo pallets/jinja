@@ -4,6 +4,7 @@ sources.
 
 import importlib.util
 import os
+import pathlib
 import posixpath
 import sys
 import typing as t
@@ -199,7 +200,8 @@ class FileSystemLoader(BaseLoader):
         for searchpath in self.searchpath:
             # Use posixpath even on Windows to avoid "drive:" or UNC
             # segments breaking out of the search directory.
-            filename = posixpath.join(searchpath, *pieces)
+            # Normalize path separators after that using pathlib.
+            filename = str(pathlib.Path(posixpath.join(searchpath, *pieces)))
 
             if os.path.isfile(filename):
                 break
@@ -366,10 +368,12 @@ class PackageLoader(BaseLoader):
         self, environment: "Environment", template: str
     ) -> tuple[str, str, t.Callable[[], bool] | None]:
         # Use posixpath even on Windows to avoid "drive:" or UNC
-        # segments breaking out of the search directory. Use normpath to
-        # convert Windows altsep to sep.
-        p = os.path.normpath(
-            posixpath.join(self._template_root, *split_template_path(template))
+        # segments breaking out of the search directory.
+        # Normalize path separators after that using pathlib.
+        p = str(
+            pathlib.Path(
+                posixpath.join(self._template_root, *split_template_path(template))
+            )
         )
         up_to_date: t.Callable[[], bool] | None
 
