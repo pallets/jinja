@@ -3,9 +3,9 @@
 Jinja
 =====
 
-.. image:: _static/jinja-logo.png
+.. image:: _static/jinja-horizontal.svg
     :align: center
-    :target: https://palletsprojects.com/p/jinja/
+    :height: 200px
 
 Jinja is a fast, expressive, extensible templating engine. Special
 placeholders in the template allow writing code similar to Python
