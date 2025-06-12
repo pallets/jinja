@@ -207,6 +207,12 @@ def test_simple_map(env_async, items):
     assert tmpl.render(items=items) == "6"
 
 
+@mark_dualiter("items", lambda: list("1423"))
+def test_simple_map_sort(env_async, items):
+    tmpl = env_async.from_string('{{ items()|map("int")|sort }}')
+    assert tmpl.render(items=items) == "[1, 2, 3, 4]"
+
+
 def test_map_sum(env_async):  # async map + async filter
     tmpl = env_async.from_string('{{ [[1,2], [3], [4,5,6]]|map("sum")|list }}')
     assert tmpl.render() == "[3, 3, 15]"

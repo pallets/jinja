@@ -383,7 +383,7 @@ def do_dictsort(
 
 
 @pass_environment
-def do_sort(
+def sync_do_sort(
     environment: "Environment",
     value: "t.Iterable[V]",
     reverse: bool = False,
@@ -436,6 +436,20 @@ def do_sort(
         environment, attribute, postprocess=ignore_case if not case_sensitive else None
     )
     return sorted(value, key=key_func, reverse=reverse)
+
+
+@async_variant(sync_do_sort)  # type: ignore
+async def do_sort(
+    environment: "Environment",
+    value: "t.Union[t.AsyncIterable[V], t.Iterable[V]]",
+    reverse: bool = False,
+    case_sensitive: bool = False,
+    attribute: t.Optional[t.Union[str, int]] = None,
+) -> "t.List[V]":
+    key_func = make_multi_attrgetter(
+        environment, attribute, postprocess=ignore_case if not case_sensitive else None
+    )
+    return sorted(await auto_to_list(value), key=key_func, reverse=reverse)
 
 
 @pass_environment
