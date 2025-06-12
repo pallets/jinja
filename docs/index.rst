@@ -3,7 +3,7 @@
 Jinja
 =====
 
-.. image:: _static/jinja-horizontal.svg
+.. image:: _static/jinja-name.svg
     :align: center
     :height: 200px
 
