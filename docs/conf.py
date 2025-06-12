@@ -50,6 +50,6 @@ html_sidebars = {
 singlehtml_sidebars = {"index": ["project.html", "localtoc.html", "ethicalads.html"]}
 html_static_path = ["_static"]
 html_favicon = "_static/jinja-icon.svg"
-html_logo = "_static/jinja-vertical.svg"
+html_logo = "_static/jinja-logo.svg"
 html_title = f"Jinja Documentation ({version})"
 html_show_sourcelink = False
