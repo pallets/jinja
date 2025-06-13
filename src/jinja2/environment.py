@@ -473,12 +473,12 @@ class Environment:
                 try:
                     attr = str(argument)
                 except Exception:
-                    pass
+                    return self.undefined(obj=obj, name=argument)
                 else:
                     try:
                         return getattr(obj, attr)
                     except AttributeError:
-                        pass
+                        return self.undefined(obj=obj, name=argument)
             return self.undefined(obj=obj, name=argument)
 
     def getattr(self, obj: t.Any, attribute: str) -> t.Any:
@@ -488,11 +488,10 @@ class Environment:
         try:
             return getattr(obj, attribute)
         except AttributeError:
-            pass
-        try:
-            return obj[attribute]
-        except (TypeError, LookupError, AttributeError):
-            return self.undefined(obj=obj, name=attribute)
+            try:
+                return obj[attribute]
+            except (TypeError, LookupError, AttributeError):
+                return self.undefined(obj=obj, name=attribute)
 
     def _filter_test_common(
         self,

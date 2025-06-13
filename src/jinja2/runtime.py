@@ -813,6 +813,7 @@ class Undefined:
         "_undefined_obj",
         "_undefined_name",
         "_undefined_exception",
+        "_undefined_context",
     )
 
     def __init__(
@@ -826,6 +827,10 @@ class Undefined:
         self._undefined_obj = obj
         self._undefined_name = name
         self._undefined_exception = exc
+
+        cause: BaseException | None
+        _, cause, _ = sys.exc_info()
+        self._undefined_context = cause
 
     @property
     def _undefined_message(self) -> str:
@@ -856,7 +861,10 @@ class Undefined:
         """Raise an :exc:`UndefinedError` when operations are performed
         on the undefined value.
         """
-        raise self._undefined_exception(self._undefined_message)
+        exception = self._undefined_exception(self._undefined_message)
+        if exception.__context__ is None:
+            exception.__context__ = self._undefined_context
+        raise exception
 
     @internalcode
     def __getattr__(self, name: str) -> t.Any:

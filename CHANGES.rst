@@ -13,6 +13,10 @@ Unreleased
 -   Use modern packaging metadata with ``pyproject.toml`` instead of ``setup.cfg``.
     :pr:`1793`
 -   Use ``flit_core`` instead of ``setuptools`` as build backend.
+-   When ``Undefined`` is created in an ``except`` block, the handled
+    exception is stored in a new  attribute, ``_undefined_context``,
+    and used as the default ``__context__`` for errors raised by
+    ``_fail_with_undefined_error``.
 
 
 Version 3.1.6
