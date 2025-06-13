@@ -256,7 +256,7 @@ class TestStreaming:
 
 @contextlib.contextmanager
 def raises_cause_chain(expected_exception, *expected_chain, **kwargs):
-    """Like ``, but assert a specific __cause__/__context__ chain
+    """Like pytest.raises, but assert a specific __cause__/__context__ chain
 
     Used `with pytest.raises(expected_exception):`, but additional positional
     arguments must match types of exceptions in the __cause__/__context__ chain
