@@ -146,17 +146,7 @@ operator_re = re.compile(
     f"({'|'.join(re.escape(x) for x in sorted(operators, key=lambda x: -len(x)))})"
 )
 
-ignored_tokens = frozenset(
-    [
-        TOKEN_COMMENT_BEGIN,
-        TOKEN_COMMENT,
-        TOKEN_COMMENT_END,
-        TOKEN_WHITESPACE,
-        TOKEN_LINECOMMENT_BEGIN,
-        TOKEN_LINECOMMENT_END,
-        TOKEN_LINECOMMENT,
-    ]
-)
+ignored_tokens = frozenset([TOKEN_WHITESPACE])
 ignore_if_empty = frozenset(
     [TOKEN_WHITESPACE, TOKEN_DATA, TOKEN_COMMENT, TOKEN_LINECOMMENT]
 )
@@ -631,6 +621,10 @@ class Lexer:
                 token = TOKEN_BLOCK_BEGIN
             elif token == TOKEN_LINESTATEMENT_END:
                 token = TOKEN_BLOCK_END
+            elif token == TOKEN_LINECOMMENT_BEGIN:
+                token = TOKEN_COMMENT_BEGIN
+            elif token == TOKEN_LINECOMMENT_END:
+                token = TOKEN_COMMENT_END
             # we are not interested in those tokens in the parser
             elif token in (TOKEN_RAW_BEGIN, TOKEN_RAW_END):
                 continue

@@ -313,6 +313,19 @@ and bar comment #}
         )
         assert_error("{% unknown_tag %}", "Encountered unknown tag 'unknown_tag'.")
 
+    def test_comment_preservation(self, env):
+        ast = env.parse("{# foo #}{{ bar }}")
+        assert len(ast.body) == 2
+        assert isinstance(ast.body[0], nodes.Comment)
+        assert ast.body[0].data == " foo "
+
+    def test_line_comment_preservation(self, env):
+        env = Environment(line_comment_prefix="#")
+        ast = env.parse("# foo\n{{ bar }}")
+        assert len(ast.body) == 2
+        assert isinstance(ast.body[0], nodes.Comment)
+        assert ast.body[0].data == " foo"
+
 
 class TestSyntax:
     def test_call(self, env):
