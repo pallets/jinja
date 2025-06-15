@@ -123,3 +123,27 @@ def test_undefined_pickle(undefined_type):
     assert copied._undefined_name is not undef._undefined_name
     assert copied._undefined_name == undef._undefined_name
     assert copied._undefined_exception is undef._undefined_exception
+
+
+@pytest.mark.parametrize("undefined_type", _undefined_types)
+def test_undefined_cause(undefined_type):
+    exception = ValueError("foo")
+    try:
+        raise exception
+    except ValueError:
+        undef = undefined_type()
+    assert undef._undefined_context is exception
+    try:
+        undef._fail_with_undefined_error()
+    except TemplateRuntimeError as exc:
+        assert exc.__context__ is exception
+
+
+@pytest.mark.parametrize("undefined_type", _undefined_types)
+def test_undefined_no_cause(undefined_type):
+    undef = undefined_type()
+    assert undef._undefined_context is None
+    try:
+        undef._fail_with_undefined_error()
+    except TemplateRuntimeError as exc:
+        assert exc.__context__ is None

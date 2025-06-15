@@ -1,3 +1,4 @@
+import contextlib
 import shutil
 import tempfile
 from pathlib import Path
@@ -253,6 +254,30 @@ class TestStreaming:
             shutil.rmtree(tmp)
 
 
+@contextlib.contextmanager
+def raises_cause_chain(expected_exception, *expected_chain, **kwargs):
+    """Like pytest.raises, but assert a specific __cause__/__context__ chain
+
+    Used `with pytest.raises(expected_exception):`, but additional positional
+    arguments must match types of exceptions in the __cause__/__context__ chain
+    ("The above exception was the direct cause of the following exception" and
+    "During handling of the above exception, another exception occurred" in
+    tracebacks).
+    """
+    with pytest.raises(expected_exception, **kwargs) as info:
+        yield info
+    got_chain = []
+    current = info.value
+    while current:
+        got_chain.append(type(current))
+        current = current.__cause__ or current.__context__
+    try:
+        assert got_chain == [expected_exception, *expected_chain]
+    except AssertionError as exc:
+        raise exc from info.value
+    return info
+
+
 class TestUndefined:
     def test_stopiteration_is_undefined(self):
         def test():
@@ -295,7 +320,8 @@ class TestUndefined:
         logging_undefined = make_logging_undefined(DebugLogger())
         env = Environment(undefined=logging_undefined)
         assert env.from_string("{{ missing }}").render() == ""
-        pytest.raises(UndefinedError, env.from_string("{{ missing.attribute }}").render)
+        with raises_cause_chain(UndefinedError):
+            env.from_string("{{ missing.attribute }}").render()
         assert env.from_string("{{ missing|list }}").render() == "[]"
         assert env.from_string("{{ missing is not defined }}").render() == "True"
         assert env.from_string("{{ foo.missing }}").render(foo=42) == ""
@@ -311,12 +337,14 @@ class TestUndefined:
     def test_default_undefined(self):
         env = Environment(undefined=Undefined)
         assert env.from_string("{{ missing }}").render() == ""
-        pytest.raises(UndefinedError, env.from_string("{{ missing.attribute }}").render)
+        with raises_cause_chain(UndefinedError):
+            env.from_string("{{ missing.attribute }}").render()
         assert env.from_string("{{ missing|list }}").render() == "[]"
         assert env.from_string("{{ missing is not defined }}").render() == "True"
         assert env.from_string("{{ foo.missing }}").render(foo=42) == ""
         assert env.from_string("{{ not missing }}").render() == "True"
-        pytest.raises(UndefinedError, env.from_string("{{ missing - 1}}").render)
+        with raises_cause_chain(UndefinedError):
+            env.from_string("{{ missing - 1}}").render()
         assert env.from_string("{{ 'foo' in missing }}").render() == "False"
         und1 = Undefined(name="x")
         und2 = Undefined(name="y")
@@ -332,7 +360,8 @@ class TestUndefined:
         assert env.from_string("{{ missing is not defined }}").render() == "True"
         assert env.from_string("{{ foo.missing }}").render(foo=42) == ""
         assert env.from_string("{{ not missing }}").render() == "True"
-        pytest.raises(UndefinedError, env.from_string("{{ missing - 1}}").render)
+        with raises_cause_chain(UndefinedError):
+            env.from_string("{{ missing - 1}}").render()
 
         # The following tests ensure subclass functionality works as expected
         assert env.from_string('{{ missing.bar["baz"] }}').render() == ""
@@ -351,7 +380,8 @@ class TestUndefined:
     def test_debug_undefined(self):
         env = Environment(undefined=DebugUndefined)
         assert env.from_string("{{ missing }}").render() == "{{ missing }}"
-        pytest.raises(UndefinedError, env.from_string("{{ missing.attribute }}").render)
+        with raises_cause_chain(UndefinedError):
+            env.from_string("{{ missing.attribute }}").render()
         assert env.from_string("{{ missing|list }}").render() == "[]"
         assert env.from_string("{{ missing is not defined }}").render() == "True"
         assert (
@@ -367,15 +397,21 @@ class TestUndefined:
 
     def test_strict_undefined(self):
         env = Environment(undefined=StrictUndefined)
-        pytest.raises(UndefinedError, env.from_string("{{ missing }}").render)
-        pytest.raises(UndefinedError, env.from_string("{{ missing.attribute }}").render)
-        pytest.raises(UndefinedError, env.from_string("{{ missing|list }}").render)
-        pytest.raises(UndefinedError, env.from_string("{{ 'foo' in missing }}").render)
+        with raises_cause_chain(UndefinedError):
+            env.from_string("{{ missing }}").render()
+        with raises_cause_chain(UndefinedError):
+            env.from_string("{{ missing.attribute }}").render()
+        with raises_cause_chain(UndefinedError):
+            env.from_string("{{ missing|list }}").render()
+        with raises_cause_chain(UndefinedError):
+            env.from_string("{{ 'foo' in missing }}").render()
         assert env.from_string("{{ missing is not defined }}").render() == "True"
-        pytest.raises(
-            UndefinedError, env.from_string("{{ foo.missing }}").render, foo=42
-        )
-        pytest.raises(UndefinedError, env.from_string("{{ not missing }}").render)
+        with raises_cause_chain(UndefinedError, TypeError, AttributeError):
+            env.from_string("{{ foo.missing }}").render(foo=42)
+        with raises_cause_chain(UndefinedError, AttributeError, TypeError):
+            env.from_string("{{ foo['missing'] }}").render(foo=42)
+        with raises_cause_chain(UndefinedError):
+            env.from_string("{{ not missing }}").render()
         assert (
             env.from_string('{{ missing|default("default", true) }}').render()
             == "default"
@@ -384,7 +420,8 @@ class TestUndefined:
 
     def test_indexing_gives_undefined(self):
         t = Template("{{ var[42].foo }}")
-        pytest.raises(UndefinedError, t.render, var=0)
+        with raises_cause_chain(UndefinedError, TypeError):
+            t.render(var=0)
 
     def test_none_gives_proper_error(self):
         with pytest.raises(UndefinedError, match="'None' has no attribute 'split'"):
